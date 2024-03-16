@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+
+    <meta name="description" content="A flexible tracker for collecting observational data">
+    <meta name="author" content="Morgan Rehnberg">
+
+    <link rel="stylesheet" href="css/bootstrap_5_3/bootstrap.min.css">
+
+    <style>
+
+      @font-face {
+        font-family: Good-Times;
+        src: url(good-times-rg.ttf);
+      }
+      @font-face {
+        font-family: Gotham-Bold;
+        src: url(Gotham-Bold.otf);
+      }
+      @font-face {
+        font-family: Gotham-Book;
+        src: url(Gotham-Book.otf);
+      }
+
+      html {
+        touch-action: manipulation;
+        word-wrap: break-word;
+        font-size: 25px;
+      }
+      H1 {
+        font-size: 50px;
+      }
+      H2 {
+        font-size: 40px;
+      }
+      .container-fluid {
+        touch-action: manipulation;
+        overflow-y: hidden;
+      }
+      .counter-button {
+        font-size: 60px;
+      }
+      .mastheadText {
+        font-size: 50px;
+      }
+      .seek-button {
+        font-family: Gotham-Bold;
+        font-size: 50px;
+        height: 100%;
+      }
+    </style>
+
+    <title>Flexible Tracker</title>
+
+  </head>
+
+  <body>
+    <div class="container-fluid">
+
+      <div id="connectionWarning" class="position-fixed row w-100" style="display: none; z-index:999;">
+        <div class="alert alert-danger col-auto mx-auto" role="alert">Server Connection Lost</div>
+      </div>
+
+      <div class="row mt-2 ">
+        <div class="col-12">
+          <H1>Flexible Tracker</H1>
+        </div>
+        <div class="col-12">
+          <div class="row">
+            <div class="col-6 col-sm-4 col-md-3 col-lg-2">
+              <button id="recordButton" class="btn btn-success w-100">Record</button>
+            </div>
+            <div class="col-6 col-sm-4 col-md-3 col-lg-2">
+              <button id="clearButton" class="btn btn-danger w-100">Clear</button>
+            </div>
+            <div class="col-12 col-md-5 mt-2">
+              <div class="input-group">
+                Select Template:
+                <select id="definitionListDropdown" class="form-select ms-3" style="width: 40%;">
+                  <option value=""></option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="cardRow" class="row mt-4"></div>
+    </div>
+
+  <script type="text/javascript" src="js/jquery-3.6.1.min.js"></script>
+  <script type="text/javascript" src="js/bootstrap_5_3/bootstrap.min.js"></script>
+  <script type="text/javascript" src="js/showdown.min.js"></script>
+
+  <script type="module" src="tracker.js"></script>
+
+  </body>
+
+</html>

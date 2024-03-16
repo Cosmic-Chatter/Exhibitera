@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+
+    <meta name="description" content="">
+    <meta name="author" content="Morgan Rehnberg">
+    <link rel="icon" type="image/x-icon" href="/_static/favicon.ico">
+    <link rel="stylesheet" href="word_cloud/word_cloud_viewer.css">
+    <link rel="manifest" href="_static/manifest.json" />
+    
+    <title>Constellation Word Cloud Viewer</title>
+
+  </head>
+
+  <body>
+
+    <!-- This div is used the profanity filer -->
+    <div id="profanityCheckingDiv" style="display: none;"></div>
+    <div id="promptText"></div>
+    <div id="wordCloudContainer"></div>
+
+    <script src="js/wordcloud2.js"></script>
+    <script src="js/jquery-3.6.1.min.js"></script>
+    <script src="js/jquery.profanityfilter.min.js"></script>
+    <script src="js/swearWords.js"></script>
+    <script src="js/pluralize-8.0.0.js"></script>
+    <script src="js/platform.js"></script>
+    <script type="text/javascript" src="js/html2canvas.min.js"></script>
+    <script type="module" src="word_cloud/word_cloud_viewer.js"></script>
+  </body>
+</html>

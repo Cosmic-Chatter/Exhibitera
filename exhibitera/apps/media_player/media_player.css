@@ -1,0 +1,71 @@
+:root {
+    /* Colors */
+    --background-color: black;
+  }
+
+/* Font definitions */
+@font-face {
+    font-family: "annotation-default";
+    src: url("../_fonts/OpenSans-Regular.ttf");
+}
+
+body,html {
+    margin: 0;
+    padding: 0;
+    background: var(--background-color);
+    background-size: cover;
+    background-position: center;
+    overflow: hidden;
+    height: 100vh;
+}
+.align-center {
+    transform: translate(-50%, 0);
+}
+.align-right {
+    transform: translate(-100%, 0);
+}
+.annotation {
+    user-select: none;
+    cursor: none;
+}
+
+#imageOverlay {
+    width: 100vw;
+    height: 100vh;
+    position: absolute;
+    line-height: 100%;
+    top: 0px;
+    left: 0px;
+    opacity: 0;
+    margin: 0;
+    padding: 0;
+    cursor: none;
+}
+#fullscreenImage {
+    max-width: 100vw;
+    max-height: 100vh;
+    vertical-align: middle;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    webkit-user-select: none;
+}
+#videoOverlay {
+    width: 100vw;
+    height: 100vh;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    opacity: 0;
+    cursor: none;
+}
+#fullscreenVideo {
+    width: 100%;
+    height: 100%;
+    user-select: none;
+    webkit-user-select: none;
+}
+#watermark {
+    position: absolute;
+    object-fit: contain;
+}

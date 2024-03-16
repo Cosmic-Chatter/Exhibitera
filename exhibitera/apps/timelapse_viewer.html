@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="description" content="">
+    <meta name="author" content="Morgan Rehnberg">
+    <link rel="icon" type="image/x-icon" href="../_static/favicon.ico">
+    <link rel="manifest" href="_static/manifest.json" />
+
+    <title>Constellation Timelapse Viewer</title>
+
+    <link rel="stylesheet" href="css/bootstrap_5_3/bootstrap.min.css">
+
+    <style>
+      :root {
+        --attractor-height: 70;
+        --attractor-background: rgba(0, 0, 0, 0.2);
+        --attractor-text-color: white;
+        --attractor-font-adjust: 0;
+        --attractor-font: "attractor-default";
+        --background-color: #22222E;
+      }
+      body, html {
+        margin: 0;
+        padding: 0;
+        background: var(--background-color);
+        background-size: cover;
+        background-position: center;
+        overflow: hidden;
+        touch-action: none;
+        height: 100%;
+        width: 100%;
+      }
+      .fullscreenImage {
+        max-width: 100vw;
+        max-height: 100vh;
+        width: 100%;
+        object-fit: contain;
+        vertical-align: middle;
+        margin: 0;
+        padding: 0;
+      }
+      #attractor {
+        position: fixed;
+        display: none;
+        height: calc(var(--attractor-height) * 1vh);
+        width: 100%;
+        top: calc((100vh - var(--attractor-height)* 1vh ) /2);
+        font-size: calc(5vmax + var(--attractor-font-adjust) * 1vmax);
+        color: var(--attractor-text-color);
+        background-color: var(--attractor-background);
+        font-family: var(--attractor-font);
+      }
+      #hand {
+        position: relative;
+        width: 6vw;
+        -webkit-animation: backandforth 3s ease 0s;
+        -webkit-animation-iteration-count:infinite;
+        animation: backandforth 3s ease 0s;
+        animation-iteration-count:infinite;
+      }
+      #handContainer {
+        position: absolute;
+        display: none;
+        left: 45vw;
+        top: 80vh;
+        width: 10vw;
+      }
+      #imageContainer {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        height: 100%;
+      }
+
+      @font-face {
+          font-family: "attractor-default";
+          src: url("../_fonts/OpenSans-Bold.ttf");
+      }
+
+      @-webkit-keyframes backandforth {0%{left:-57%;} 50%{left:100%;} 100%{left:-57%;}}
+
+      @keyframes backandforth {0%{left:-57%;} 50%{left:100%;} 100%{left:-57%;}}
+
+    </style>
+  </head>
+
+  <body  oncontextmenu="return false">
+    <div id="helperConnectionWarning" class="position-fixed row w-100" style="display: none; z-index:999;">
+      <div class="alert alert-danger col-auto mx-auto" role="alert">
+        <center>
+          <H4>Error: Cannot connect to System Helper!</H4>
+          Make sure the helper is running at <span id='helperConnectionWarningAddress'></span> and then restart Time-Lapse Viewer
+        </center>
+      </div>
+    </div>
+
+    <div id="attractor" class="align-items-center justify-content-center">
+      Attractor Text
+    </div>
+
+    <div id='imageContainer'>
+      <img id='img1' class="fullscreenImage" draggable="false"></img>
+      <img id='img2' class="fullscreenImage" draggable="false"></img>
+    </div>
+
+    <div id="handContainer">
+      <img id="hand" src="_static/icons/hand.svg"></img>
+    </div>
+
+
+  <script src="js/jquery-3.6.1.min.js"></script>
+  <script src="js/bootstrap_5_3/bootstrap.min.js"></script>
+  <script src="js/platform.js"></script>
+  <script type="text/javascript" src="js/html2canvas.min.js"></script>
+  <script type="module" src="timelapse_viewer/timelapse_viewer.js"></script>
+  </body>
+</html>

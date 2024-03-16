@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+
+    <meta name="description" content="">
+    <meta name="author" content="Morgan Rehnberg">
+    <link rel="icon" type="image/x-icon" href="../_static/favicon.ico">
+    <link rel="manifest" href="_static/manifest.json" />
+
+    <link rel="stylesheet" href="css/bootstrap_5_3/bootstrap.min.css">
+    <link rel="stylesheet" href="css/simple-keyboard.css">
+    <link rel="stylesheet" href="css/exhibitera-common.css">
+    <link rel="stylesheet" href="media_browser/media_browser.css">
+
+    <title>Media Browser</title>
+
+  </head>
+
+  <body>
+    <div class="container-fluid px-0 mx-0">
+
+      <div id="attractorOverlay">
+        <video id="attractorVideo" muted autoplay loop disablePictureInPicture="true" webkit-playsinline="true" playsinline="true"></video>
+        <img id="attractorImage">
+      </div>
+
+      <!-- Lightbox -->
+      <div id="mediaLightbox">
+        <div style='width: 100vw; height: 100vh;'>
+          <div class='row' style="height: 100%;">
+            <!-- <div class='hideLightboxTrigger col-2 pt-4'>
+            </div> -->
+            <div class='col-12 pt-4 pb-2 hideLightboxTrigger' style="max-height: 100%;">
+              <img id="mediaLightboxImage" class="lightboxMedia"></img>
+              <video id="mediaLightboxVideo" class="lightboxMedia" disablePictureInPicture="true" webkit-playsinline="true" playsinline="true"></video>
+              <div class="mx-5" id='mediaLightboxTitle'>
+              </div>
+              <div class="mx-5" id='mediaLightboxCaption'>
+              </div>
+              <div class="mx-5" id='mediaLightboxCredit'>
+              </div>              
+            </div>
+            <!-- <div class='hideLightboxTrigger col-1 pt-4'>
+            </div>
+            <div class="hideLightboxTrigger col-1 pt-4">
+              <button class='hideLightboxTrigger btn btn-lg btn-secondary' style="font-size: 50px;">╳</button>
+            </div> -->
+          </div>
+        </div>
+      </div>
+
+      <div id="displayPane" class="row w-100 px-0 mx-0 align-items-center justify-items-center">
+
+        <div class="col-2 col-lg-1 text-center">
+          <button id="previousPageButton" class='pageButton btn btn-lg btn-secondary'>←</button>
+
+          <div id="filterDropdown" class="btn-group dropup text-center">
+            <button type="button" class="btn btn-link w-100 h-100 px-0 py-0" data-bs-toggle="dropdown" aria-expanded="false">
+              <img height="100%" id="filterDropdownIcon" src="_static/icons/filter_black.svg">
+            </button>
+            <ul id="filterOptions" class="dropdown-menu">
+            </ul>
+          </div>
+        </div>
+        <div id="resultsPane" class="col-8 col-offset-2 col-offset-lg-0 col-lg-10 h-100">
+          <div id="resultsRow" class="row">
+          </div>
+        </div>
+        <div class="col-2 col-lg-1 text-center">
+          <button id="nextPageButton" class='pageButton btn btn-lg btn-secondary'>→</button>
+          
+          <div id="langSwitchDropdown" class="btn-group dropup text-center">
+            <button type="button" class="btn btn-link w-100 h-100 px-0 py-0" data-bs-toggle="dropdown" aria-expanded="false">
+              <img id="langSwitchDropdownIcon" src="_static/icons/translation-icon_black.svg">
+            </button>
+            <ul id="langSwitchOptions" class="dropdown-menu">
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  <script type="text/javascript" src="js/jquery-3.6.1.min.js"></script>
+  <script type="text/javascript" src="js/bootstrap_5_3/bootstrap.bundle.min.js"></script>
+  <script type="text/javascript" src="js/simple-keyboard.js"></script>
+  <script type="text/javascript" src="js/platform.js"></script>
+  <script type="text/javascript" src="js/html2canvas.min.js"></script>
+  <script type="module" src="media_browser/media_browser.js"></script>
+  </body>
+
+</html>

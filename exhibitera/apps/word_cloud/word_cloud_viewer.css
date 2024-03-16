@@ -1,0 +1,81 @@
+:root {
+    --background-color: #ffffff;
+    --prompt-color: #000;
+    --prompt-font: 'prompt-default';
+    --prompt-font-adjust: 0;
+}
+
+html {
+  touch-action: manipulation;
+  word-wrap: break-word;
+  overflow-y: hidden;
+  height: 100%;
+  position: relative;
+  padding: 0px;
+  margin: 0px;
+
+  /* Disable text selection */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+body {
+  overflow-x: hidden;
+  height: 100%;
+  position: relative;
+  padding: 0px;
+  margin: 0px;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background: var(--background-color);
+  background-size: cover;
+  background-position: center;
+}
+#promptText {
+  font-size: calc(10vmin + var(--prompt-font-adjust)*1vmin);
+  width: 100vw;
+  text-align: center;
+  font-weight: bold;
+  font-family: var(--prompt-font);
+  color: var(--prompt-color);
+}
+#wordCloudContainer {
+  width: 95vw;
+  margin-left: 2.5vw;
+  margin-right: 2.5vw;
+  overflow: visible;
+}
+.promptText-full {
+  margin: 2.5vw;
+  height: 12vh;
+  opacity: 1;
+}
+.promptText-none {
+  margin: 0vh;
+  height: 0vh;
+  opacity: 0;
+}
+.wordCloudContainer-full {
+  height: 95vh;
+  margin-top: 0vh;
+  margin-bottom: 2.5vh;
+  margin-top: 2.5vh;
+}
+.wordCloudContainer-small {
+  height: 76.5vh;
+  margin-top: 0vh;
+  margin-bottom: 2.5vh;
+}
+
+@font-face {
+  font-family: prompt-default;
+  src: url(../_fonts/OpenSans-Bold.ttf);
+}
+@font-face {
+  font-family: words-default;
+  src: url(../_fonts/OpenSans-Regular.ttf);
+}

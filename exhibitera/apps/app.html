@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="description" content="">
+    <meta name="author" content="Morgan Rehnberg">
+    <link rel="icon" type="image/x-icon" href="/_static/favicon.ico">
+    <link rel="manifest" href="_static/manifest.json" />
+
+    <title>Exhibitera Apps</title>
+
+    <link rel="stylesheet" href="css/bootstrap_5_3/bootstrap.min.css">
+
+    <style>
+      #welcomeDiv {
+        width: 50%;
+        margin-left: 25%;
+        margin-top: 25%;
+      }
+    </style>
+  </head>
+
+  <body>
+
+  <div id="helperConnectionWarning" class="position-fixed row w-100" style="display: none; z-index:999;">
+    <div class="alert alert-danger col-auto mx-auto" role="alert">
+      <center>
+        <H4>Error: Cannot connect to Exhibitera Apps!</H4>
+        Make sure the app is running at <span id='helperConnectionWarningAddress'></span> and then refresh the page.
+      </center>
+    </div>
+  </div>
+
+<main class="container">
+  <div id="welcomeDiv" class="alert alert-primary">
+    <div class="h3 text-center">Welcome to Exhibitera Apps</div>
+    <p id="standaloneWelcome">
+      This window will display your app's content, but first you need to create a definition. To do that, visit settings.
+    </p>
+    <p id="controlServerWelcome">
+      This window will display your app's content. To create or select a definition, visit the Hub web console at <code id="controlServerAddress"></code>. To stop using Control Server for this component, visit settings.
+    </p>
+    <div class="text-center">
+      <button id="settingsButton" class="btn btn-success">Go to settings</button>
+    </div>  
+  </div>
+</main>
+
+
+  <script src="js/jquery-3.6.1.min.js"></script>
+  <script src="js/bootstrap_5_3/bootstrap.bundle.min.js"></script>
+  <script src="js/platform.js"></script>
+  <script type="module" src="js/app.js"></script>
+  </body>
+
+</html>

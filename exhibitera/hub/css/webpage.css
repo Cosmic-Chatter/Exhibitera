@@ -1,0 +1,114 @@
+/* Styling for code snippets and tables in help text */
+pre {
+    background-color: #414242;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    margin-left: 10px;
+    padding-left: 10px;
+    padding-right: 10px;
+    margin-right: 10px;
+}
+table {
+    background-color: #414242;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    margin-left: 10px;
+    padding-left: 10px;
+    padding-right: 10px;
+    margin-right: 10px;
+    border-collapse: collapse;
+    border: 3px solid #8e184f;
+}
+tr, td, th {
+    padding-top: 5px;
+    padding-bottom: 5px;
+    margin-left: 10px;
+    padding-left: 10px;
+    padding-right: 10px;
+    margin-right: 10px;
+    border-collapse: collapse;
+    border: 1px solid #8e184f;
+}
+.componentContentButton {
+    width: 80% !important;
+    overflow-wrap: break-word;
+}
+.componentStatusButton {
+    overflow-wrap: break-word;
+    width: 75%;
+}
+.exhibitera-dialog {
+    max-width: min(95%, 750px); 
+    width: min(95%, 750px);
+}
+.container {
+    max-width: 1600px;
+}
+.contentThumbnail {
+    width: 100%;
+}
+.dropdown-item {
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+.handCursor {
+    cursor: pointer;
+}
+.schedule-date-specific {
+    background-color: rgba(91, 192, 222, 0.2);
+}
+#completedIssuesModalIssueRow {
+    max-height: 55vh;
+    min-height: 35vh;
+    overflow-y: auto;
+}
+#componentInfoModalDefinitionList {
+    height: 45vh;
+    overflow-y: auto;
+}
+#componentInfoModalDMXSceneList {
+    height: 45vh;
+    overflow-y: auto;
+}
+#componentInfoModalMaintenanceRelatedIssues {
+    height: 35vh;
+    overflow-y: scroll;
+}
+#editUserGroupsRow {
+    max-height: 20vh;
+    overflow-y: scroll;
+}
+#exhibitNameField {
+    font-size: 30px;
+}
+#galleryNameField {
+    font-size: 20px;
+}
+#issueMediaUploadFilename {
+    overflow-wrap: break-word!important;
+}
+#projectorStatusDetailTable {
+    background-color: #414242;
+    padding-top: 0px;
+    padding-bottom: 0px;
+    margin-bottom: 0px;
+    margin-left: 0px;
+    padding-left: 10px;
+    padding-right: 10px;
+    margin-right: 0px;
+    border-collapse: collapse;
+    border: 2px solid #8e184f;
+}
+#scheduleFromFileCurrentSchedule {
+    max-height: 45vh;
+    overflow-y: scroll;
+}
+#scheduleFromFileNewSchedule {
+    max-height: 45vh;
+    overflow-y: scroll;
+}
+#updateInfoModalChangelogContainer {
+    max-height: 60vh;
+    min-height: 15vh;
+    overflow-y: auto;
+}

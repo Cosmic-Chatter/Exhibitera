@@ -1,0 +1,52 @@
+/* Style for the color pickers */
+.clr-field {
+    width: 100%;
+}
+.clr-field button, .clr-field input {
+    width: 100%;
+    border-radius: 5px;
+    border: var(--bs-border-color);
+    border-width: 1px;
+    border-style: solid;
+}
+#previewContainer {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+#previewFrame {
+    transform-origin: 0 0;
+    position: absolute;
+    left: 0;
+    top: 0;
+    border: white;
+    border-width: 1px;
+    border-style: solid;
+    height: var(--previewHeight);
+}
+
+/* Classes for various preview aspect ratios */
+.preview-16x9 {
+    --previewHeight: 1080px;
+    width: 1920px;
+}
+.preview-9x16 {
+    --previewHeight: 1920px;
+    width: 1080px;
+}
+.preview-16x10 {
+    --previewHeight: 1200px;
+    width: 1920px;
+}
+.preview-10x16 {
+    --previewHeight: 1920px;
+    width: 1200px;
+}
+.preview-4x3 {
+    --previewHeight: 1440px;
+    width: 1920px;
+}
+.preview-3x4 {
+    --previewHeight: 1920px;
+    width: 1440px;
+}

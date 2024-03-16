@@ -1,0 +1,480 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+
+    <meta name="description" content="">
+    <meta name="author" content="Morgan Rehnberg">
+    <link rel="icon" type="image/x-icon" href="../_static/favicon.ico">
+
+    <link rel="stylesheet" href="../css/bootstrap_5_3/bootstrap.min.css">
+    <link rel="stylesheet" href="../css/coloris.min.css">
+    <link rel="stylesheet" href="../css/setup.css">
+
+    <title>Voting Kiosk Setup</title>
+
+  </head>
+
+  <body>
+    <div id="mainContainer" class="container mt-2 mb-5">
+
+      <!-- Password change modal -->
+      <div class="modal" tabindex="-1" role="dialog" id="passwordChangeModal">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Change your password</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <p class="fst-italic">Use the fields below to change you password. If you don't know your current password, your administrator can set a temporary password for you.</p>
+              
+              <label class="form-label mt-2" for="passwordChangeModalCurrentPassword">Current password</label>
+              <input class="form-control editUserField" type="password" id="passwordChangeModalCurrentPassword">
+              
+              <label class="form-label mt-2" for="passwordChangeModalNewPassword1">New password</label>
+              <input class="form-control editUserField" type="password" id="passwordChangeModalNewPassword1" autocomplete="new-password">
+
+              <label class="form-label mt-2" for="passwordChangeModalNewPassword2">Confirm new password</label>
+              <input class="form-control editUserField" type="password" id="passwordChangeModalNewPassword2" autocomplete="new-password">
+
+              <div class="text-danger mt-3">
+                <div id="passwordChangeModalNoCurrentPassWarning">You must enter your current password.</div>
+                <div id="passwordChangeModalBadCurrentPassWarning">The current password was incorrect.</div>
+                <div id="passwordChangeModalNoBlankPassWarning">The password cannot be blank.</div>
+                <div id="passwordChangeModalPassMismatchWarning">The new passwords do not match.</div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button id="passwordChangeModalSubmitButton" type="button" class="btn btn-primary">Change</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="appHelpModal" class="modal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered mw-100 w-75">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Help</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body"  style="max-height: 70vh; overflow-y: auto;">
+              <div class="row">
+                <div id='helpTextDiv' class="col-12"></div>
+              </div>
+
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-10" id="setupHeader">
+          <H2>Voting Kiosk Setup</H2>
+          Use this utility to create and edit voting kiosk configurations.
+        </div>
+
+        <div class="col-2">
+          <div id="loginMenu">
+            <button class="btn btn-outline-primary btn-sm dropdown-toggle float-end" type="button" data-bs-toggle="dropdown" aria-expanded="false">Log in</button>
+            <div class="dropdown-menu">
+              <div class="px-4 py-3">
+                <div class="mb-3">
+                  <label for="loginDropdownUsername" class="form-label">Username</label>
+                  <input type="text" class="form-control" id="loginDropdownUsername">
+                </div>
+                <div class="mb-3">
+                  <label for="loginDropdownPassword" class="form-label">Password</label>
+                  <input type="password" class="form-control" id="loginDropdownPassword">
+                </div>
+                <button id="loginSubmitButton" class="btn btn-primary">Log in</button>
+              </div>
+              <div class="dropdown-divider"></div>
+              <button class="dropdown-item" id="loginCreateAccountButton">Create account</button>
+              <a class="dropdown-item" href="#">Forgot password?</a>
+            </div>
+          </div>
+          <div id="userMenu" style="display: none;">
+            <button class="btn btn-outline-primary btn-sm dropdown-toggle float-end" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <span id="userMenuUserDisplayName" class="d-none d-sm-inline-block">Morgan Rehnberg</span>
+              <span id="userMenuUserShortName" class="d-sm-none">MR</span>
+              </button>
+            <div class="dropdown-menu">
+              <button class="dropdown-item" id="changePasswordButton">Change password</button>
+              <div class="dropdown-divider"></div>
+              <button class="dropdown-item" id="logoutButton">Log out</button>
+            </div>
+          </div>
+        </div>
+        <div id="helpNewAccountMessage" class="col-6 offset-3 alert alert-primary my-4">
+          <H4 class="text-center">Need an account?</H4>
+          Exhibitera requires a user account to access functionality. If you need an account, or your password to be reset, please contact your system administrator.
+        </div>
+        <div id="helpInsufficientPermissionstMessage" class="col-6 offset-3 alert alert-warning my-4" style="display: none;">
+          <H4 class="text-center">Insufficient Permissions</H4>
+          You do not have permission to edit this component. If you believe this is an error, contact your system administrator.
+        </div>
+      </div>
+      
+      <div id="setupTools" class="row my-1 gx-2 gy-2">
+        <div class="col-6 col-sm-2">
+          <div class="dropdown">
+            <button class="btn btn-primary dropdown-toggle w-100" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <span class="d-inline d-sm-none d-lg-inline">Create new</span>
+              <span class="d-none d-sm-inline d-lg-none">New</span>
+            </button>
+            <ul class="dropdown-menu">
+              <li><a id="newDefinitionButton" class="dropdown-item" href="#">Create blank definition</a></li>
+              <li><a id="cloneDefinitionButton" class="dropdown-item" href="#">Clone selected definition</a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="col-6 col-sm-2">
+          <button id="editDefinitionButton" class="btn btn-primary w-100">
+            <span class="d-inline d-sm-none d-lg-inline">Edit existing</span>
+            <span class="d-none d-sm-inline d-lg-none">Edit</span>
+          </button>
+        </div>
+        <div class="col-6 col-sm-4 col-lg-3 col-xl-2">
+          <select id="availableDefinitionSelect" class="form-select w-100">Edit existing</select>
+        </div>
+        <div class="col-3 col-sm-2 col-md-2 col-lg-1">
+          <button id="deleteDefinitionButton" class="btn btn-danger w-100">Delete</button>
+        </div>
+        <div class="col-3 col-sm-2 col-md-2 col-lg-1 ms-auto">
+          <button id="helpButton" class="btn btn-info w-100">Help</button>
+        </div>
+        <!-- Top toolbar -->
+        <div class="col-12 col-lg-12">
+          <div class="row mt-3 pb-2 gx-2 gy-2 border-top border-bottom">
+            <div class="col-2 col-sm-4 col-md-3 col-lg-2 col-xl-1">
+              <button id="definitionSaveButton" class="btn btn-success w-100 px-0">Save</button>
+            </div>
+            <div class="col-5 col-sm-4 col-md-3 col-lg-2">
+              <button id="previewRefreshButton" class="btn btn-info w-100">Refresh preview</button>
+            </div>
+            <div class="col-5 col-sm-4 col-md-3 col-lg-2">
+              <div class="dropdown">
+                <button class="btn btn-primary dropdown-toggle w-100" type="button" data-bs-toggle="dropdown" aria-expanded="false">Adjust preview</button>
+                <ul class="dropdown-menu">
+                  <li><h6 class="dropdown-header">Typical widescreen</h6></li>
+                  <li><a id="previewAspect16x9" class="dropdown-item" href="#">16x9 (horizontal)</a></li>
+                  <li><a id="previewAspect9x16" class="dropdown-item" href="#">9x16 (vertical)</a></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><h6 class="dropdown-header">Business widescreen</h6></li>
+                  <li><a id="previewAspect16x10" class="dropdown-item" href="#">16x10 (horizontal)</a></li>
+                  <li><a id="previewAspect10x16" class="dropdown-item" href="#">10x16 (vertical)</a></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><h6 class="dropdown-header">Fullscreen / iPad</h6></li>
+                  <li><a id="previewAspect4x3" class="dropdown-item" href="#">4x3 (horizontal)</a></li>
+                  <li><a id="previewAspect3x4" class="dropdown-item" href="#">3x4 (vertical)</a></li>
+                </ul>
+              </div>
+            </div>
+            <div class="col-6 col-sm-4 offset-sm-8 offset-md-0 col-md-3 col-xl-2 d-flex align-items-center">
+              <div class="form-check mb-0">
+                <input class="form-check-input" type="checkbox" value="" id="refreshOnChangeCheckbox" checked>
+                <label class="form-check-label small" for="refreshOnChangeCheckbox">
+                  Refresh on change
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row align-items-start">
+        <div id='editPane' class="col-6 col-lg-7">
+          <div class="row gy-2">
+            <div class="col-12 mt-2">
+
+              <h3>Settings</h3>
+              <div class="row gy-2">
+                <div class="col-12 col-md-6 col-lg-4">
+                  <label for="definitionNameInput" class="form-label">Definition name</label>
+                  <input type="text" class="form-control" id="definitionNameInput">
+                </div>
+                <div class="col-12 col-md-6 col-lg-4">
+                  <label for="behaviorInput_recording_interval" class="form-label">
+                    Recording interval
+                    <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="The interval in seconds that votes are batched and sent to Control Server." style="font-size: 0.55em;">?</span>
+                  </label>
+                  <input type="number" min="5" value="60" class="form-control behavior-input" data-property="recording_interval" id="behaviorInput_recording_interval">
+                </div>
+                <div class="col-12 col-md-6 col-lg-4">
+                  <label for="behaviorInput_touch_cooldown" class="form-label">
+                    Touch cooldown
+                    <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="The interval in seconds to wait before accepting another vote (helps to default spamming)." style="font-size: 0.55em;">?</span>
+                  </label>
+                  <input type="number" min="0" value="2" class="form-control behavior-input" id="behaviorInput_touch_cooldown" data-property="touch_cooldown">
+                </div>
+              </div>
+
+              <h3 class="mt-2">Content</h3>
+
+              <h4>Text</h4>
+              <div class="row gy-2">
+                <div class="col-12 col-md-6">
+                  <label for="headerInput" class="form-label">Header</label>
+                  <input data-def-key="header" type="text" class="form-control definition-text-input" id="headerInput">
+                </div>
+                <div class="col-12 col-md-6">
+                  <label for="subheaderInput" class="form-label">Subheader</label>
+                  <input data-def-key="subheader" type="text" class="form-control definition-text-input" id="subheaderInput">
+                </div>
+                <div class="col-12 col-md-6">
+                  <label for="footerInput" class="form-label">Footer</label>
+                  <input data-def-key="footer" type="text" class="form-control definition-text-input" id="footerInput">
+                </div>
+                <div class="col-12 col-md-6">
+                  <label for="subfooterInput" class="form-label">Subfooter</label>
+                  <input data-def-key="subfooter" type="text" class="form-control definition-text-input" id="subfooterInput">
+                </div>
+                <div class="col-12 col-md-6">
+                  <label for="success_messageInput" class="form-label">
+                    Success message
+                    <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="The success message appears after a button is pressed." style="font-size: 0.55em;">?</span>
+                  </label>
+                  <input data-def-key="success_message" type="text" class="form-control definition-text-input" placeholder="Thank you!" id="success_messageInput">
+                </div>
+              </div>
+
+              <H4 class="mt-2">Options</H4>
+              <div class="fst-italic">Add a button for each option in the survey.</div>
+              <button id="addOptionButton" class="btn btn-primary mt-2">Add option</button>
+              <div class="row">
+                <div class="col-6">
+                  <div id="optionRow" class="row gy-2 gx-2 mt-2"></div>
+                </div>
+                <div class="col-6">
+                  <div id="optionEditor" class="row border-start border-end py-2 gy-2">
+                    <div class="col-12">
+                      <label for="optionInput_label" class="form-label">Label</label>
+                      <input type="text" class="form-control option-input" id="optionInput_label" data-field="label">
+                    </div>
+                    <div class="col-12">
+                      <label for="optionInput_value" class="form-label">
+                        Value
+                        <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="Value will be the name of the column in the voting data spreadsheet." style="font-size: 0.55em;">?</span>
+                      </label>
+                      <input type="text" class="form-control option-input" data-field="value" id="optionInput_value">
+                    </div>
+                    <div class="col-12">
+                      <label for="optionInput_icon" class="form-label">Icon</label>
+                      <select class="form-select option-input" id="optionInput_icon" data-field="icon">
+                        <option value="">No icon</option>
+                        <option value="user">User-provided</option>
+                        <option disabled>Built-in</option>
+                        <option value="1-star_black">1 star (black)</option>
+                        <option value="1-star_white">1 star (white)</option>
+                        <option value="2-star_black">2 star (black)</option>
+                        <option value="2-star_white">2 star (white)</option>
+                        <option value="3-star_black">3 star (black)</option>
+                        <option value="3-star_white">3 star (white)</option>
+                        <option value="4-star_black">4 star (black)</option>
+                        <option value="4-star_white">4 star (white)</option>
+                        <option value="5-star_black">5 star (black)</option>
+                        <option value="5-star_white">5 star (white)</option>
+                        <option value="thumbs-down_black">Thumbs down (black)</option>
+                        <option value="thumbs-down_red">Thumbs down (red)</option>
+                        <option value="thumbs-down_white">Thumbs down (white)</option>
+                        <option value="thumbs-up_black">Thumbs up (black)</option>
+                        <option value="thumbs-up_green">Thumbs up (green)</option>
+                        <option value="thumbs-up_white">Thumbs up (white)</option>
+                      </select>
+                    </div>
+                    <div class="col-12">
+                      <div class="row">
+                        <div id="optionInput_icon_user_file_Col" class="col-12">
+                          <button id="optionInput_icon_user_file" class='btn btn-outline-primary w-100 text-break' data-field="icon_user_file">Select file</button>
+                        </div>
+                        <div id="optionInput_icon_user_file_DeleteButtonCol" class="col-12 col-lg-3 ps-lg-0 mt-2 mt-lg-0" style="display: none;">
+                          <button id="optionInput_icon_user_file_DeleteButton" class="btn btn-danger w-100 h-100"><span class='d-block d-lg-none'>Clear file</span><span class='d-none d-lg-block'>✕</span></button>
+                        </div>
+                      </div>
+                      
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <h3 class="mt-2">Appearance</h3>
+              <h4>Colors</h4>
+              <div class="row gy-2 mb-3">
+                <div class="col-12 col-lg-8 advanced-color-picker" data-constACP-name="Background" data-constACP-path="style>background"></div>
+                <div class="col-12 col-sm-6 col-lg-4">
+                  <label for="colorPicker_button-color" class="form-label">Buttons</label>
+                  <div>
+                    <input id="colorPicker_button-color" type="text" class="coloris color-picker form-control" value="#393A5A" data-property="button-color" data-default="#393A5A">
+                  </div>
+                </div>
+                <div class="col-12 col-sm-6 col-lg-4">
+                  <label for="colorPicker_button-touched-color" class="form-label">Buttons (touched)</label>
+                  <div>
+                    <input id="colorPicker_button-touched-color" type="text" class="coloris color-picker form-control" value="#706F8E" data-property="button-touched-color" data-default="#706F8E">
+                  </div>
+                </div>
+                <div class="col-12 col-sm-6 col-lg-4">
+                  <label for="colorPicker_success-message-color" class="form-label">Success message</label>
+                  <div>
+                    <input id="colorPicker_success-message-color" type="text" class="coloris color-picker form-control" value="#528e54" data-property="success-message-color" data-default="#528e54">
+                  </div>
+                </div>
+                <div class="col-12 col-sm-6 col-lg-4">
+                  <label for="colorPicker_header-color" class="form-label">Header text</label>
+                  <div>
+                    <input id="colorPicker_header-color" type="text" class="coloris color-picker form-control" value="#fff" data-property="header-color" data-default="#fff">
+                  </div>
+                </div>
+                <div class="col-12 col-sm-6 col-lg-4">
+                  <label for="colorPicker_subheader-color" class="form-label">Subheader text</label>
+                  <div>
+                    <input id="colorPicker_subheader-color" type="text" class="coloris color-picker form-control" value="#fff" data-property="subheader-color" data-default="#fff">
+                  </div>
+                </div>
+                <div class="col-12 col-sm-6 col-lg-4">
+                  <label for="colorPicker_footer-color" class="form-label">Footer text</label>
+                  <div>
+                    <input id="colorPicker_footer-color" type="text" class="coloris color-picker form-control" value="#fff" data-property="footer-color" data-default="#fff">
+                  </div>
+                </div>
+                <div class="col-12 col-sm-6 col-lg-4">
+                  <label for="colorPicker_subfooter-color" class="form-label">Subfooter text</label>
+                  <div>
+                    <input id="colorPicker_subfooter-color" type="text" class="coloris color-picker form-control" value="#fff" data-property="subfooter-color" data-default="#fff">
+                  </div>
+                </div>
+                <div class="col-12 col-sm-6 col-lg-4">
+                  <label for="colorPicker_button-text-color" class="form-label">Button text</label>
+                  <div>
+                    <input id="colorPicker_button-text-color" type="text" class="coloris color-picker form-control" value="#fff" data-property="button-text-color" data-default="#fff">
+                  </div>
+                </div>
+              </div>
+
+              <h4>Fonts</h4>
+              <div class="row gy-2">
+                <div class="col-12 col-md-6 col-lg-4 col-xl-3">
+                  <button id="manageFontsButton" class="btn btn-info w-100">Manage fonts</button>
+                </div>
+                <div class="col-0 col-lg-9"></div>
+
+                <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Header" data-constAFP-path="style>font>header" data-default="OpenSans-Bold.ttf"></div>
+
+                <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Subheader" data-constAFP-path="style>font>subheader" data-default="OpenSans-Regular.ttf"></div>
+
+                <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Footer" data-constAFP-path="style>font>footer" data-default="OpenSans-Bold.ttf"></div>
+
+                <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Subfooter" data-constAFP-path="style>font>subfooter" data-default="OpenSans-Regular.ttf"></div>
+
+                <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Buttons" data-constAFP-path="style>font>button" data-default="OpenSans-Regular.ttf"></div>
+              </div>
+
+              <h4 class="mt-2">Text size</h4>
+              <div class="row gy-2">
+                <div class="col-12 col-md-6 col-lg-4">
+                  <label for="headerTextSizeSlider" class="form-label">Header</label>
+                  <input id="headerTextSizeSlider" type="range" class="form-range text-size-slider" data-property="header" min="-2", max="4" start="0" step="0.5">
+                </div>
+                <div class="col-12 col-md-6 col-lg-4">
+                  <label for="subheaderTextSizeSlider" class="form-label">Subheader</label>
+                  <input id="subheaderTextSizeSlider" type="range" class="form-range text-size-slider" data-property="subheader" min="-1", max="2" start="0" step="0.25">
+                </div>
+                <div class="col-12 col-md-6 col-lg-4">
+                  <label for="footerTextSizeSlider" class="form-label">Footer</label>
+                  <input id="footerTextSizeSlider" type="range" class="form-range text-size-slider" data-property="footer" min="-1", max="3" start="0" step="0.5">
+                </div>
+                <div class="col-12 col-md-6 col-lg-4">
+                  <label for="subfooterTextSizeSlider" class="form-label">Subfooter</label>
+                  <input id="subfooterTextSizeSlider" type="range" class="form-range text-size-slider" data-property="subfooter" min="-1", max="2" start="0" step="0.25">
+                </div>
+                <div class="col-12 col-md-6 col-lg-4">
+                  <label for="buttonTextSizeSlider" class="form-label">Buttons</label>
+                  <input id="buttonTextSizeSlider" type="range" class="form-range text-size-slider" data-property="button" min="-2", max="3" start="0" step="0.5">
+                </div>
+              </div>
+
+              <h4 class="mt-2">Layout</h4>
+              <div class="row gy-2 mt-2">
+                <div class="col-12 col-md-6 col-lg-4">
+                  <label for="columnCountSelect" class="form-label">Number of columns</label>
+                  <select id="columnCountSelect" class="form-select">
+                    <option value="auto">Auto</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                  </select>
+                </div>
+                <div class="col-12 col-md-6 col-lg-4">
+                  <label for="headerToButtonsSlider" class="form-label">
+                    Header height
+                    <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="The amount of space allocated to the header and subheader." style="font-size: 0.55em;">?</span>
+                  </label>
+                  <input id="headerToButtonsSlider" type="range" class="form-range height-slider" min="0", max="50" start="20" step="5">
+                </div>
+                <div class="col-12 col-md-6 col-lg-4">
+                  <label for="headerPaddingHeightSlider" class="form-label">
+                    Header padding
+                    <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="Padding from the top of the display." style="font-size: 0.55em;">?</span>
+                  </label>
+                  <input id="headerPaddingHeightSlider" type="range" class="form-range padding-slider" data-property="header_padding" min="0", max="15" start="5" step="5" value="5">
+                </div>
+                <div class="col-12 col-md-6 col-lg-4">
+                  <label for="buttonsToFooterSlider" class="form-label">
+                    Footer height
+                    <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="The amount of space allocated to the footer and subfooter." style="font-size: 0.55em;">?</span>
+                  </label>
+                  <input id="buttonsToFooterSlider" type="range" class="form-range height-slider" min="0", max="50" start="20" step="5">
+                </div>
+                <div class="col-12 col-md-6 col-lg-4">
+                  <label for="footerPaddingHeightSlider" class="form-label">
+                    Footer padding
+                    <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="Padding from the bottom of the display." style="font-size: 0.55em;">?</span>
+                  </label>
+                  <input id="footerPaddingHeightSlider" type="range" class="form-range padding-slider" data-property="footer_padding" min="0", max="15" start="5" step="5" value="5">
+                </div>
+                <div class="col-12 col-md-6 col-lg-4">
+                  <label for="buttonPaddingHeightSlider" class="form-label">
+                    Button padding
+                    <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="Padding above and below the buttons." style="font-size: 0.55em;">?</span>
+                  </label>
+                  <input id="buttonPaddingHeightSlider" type="range" class="form-range padding-slider" data-property="button_padding" min="0", max="30" start="10" step="5">
+                </div>
+                <div class="col-12 col-md-6 col-lg-4">
+                  <label for="imageHeightSlider" class="form-label">
+                    Image size
+                    <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="The maximum height allowed for images." style="font-size: 0.55em;">?</span>
+                  </label>
+                  <input id="imageHeightSlider" type="range" class="form-range padding-slider" data-property="image_height" min="10", max="100" start="90" step="5">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id='previewPane' class="col-6 col-lg-5 sticky-top" style="z-index: 1;">
+          <div id="previewContainer" class="">
+            <iframe id="previewFrame" class="mt-3 preview-16x9" src="../voting_kiosk.html?standalone=true"></iframe>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  <script type="text/javascript" src="../js/jquery-3.6.1.min.js"></script>
+  <script type="text/javascript" src="../js/bootstrap_5_3/bootstrap.bundle.min.js"></script>
+  <script type="text/javascript" src="../js/showdown.min.js"></script>
+  <script type="text/javascript" src="../js/platform.js"></script>
+  <script type="text/javascript" src="../js/coloris.min.js"></script>
+  <script type="module" src="setup.js"></script>
+
+  </body>
+
+</html>

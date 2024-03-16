@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <link rel="icon" type="image/x-icon" href="/_static/favicon.ico">
+
+    <meta name="description" content="Constellation InfoStation">
+    <meta name="author" content="Morgan Rehnberg">
+
+    <title>Constellation InfoStation</title>
+
+    <link rel="stylesheet" href="css/bootstrap_5_3/bootstrap.min.css">
+    <link rel="stylesheet" href="InfoStation/infostation.css">
+    <link rel="manifest" href="_static/manifest.json" />
+
+  </head>
+
+  <body>
+    <main id='mainContainer' role="main" class="container-fluid px-0">
+
+      <div id="attractorOverlay">
+        <video id="attractorVideo" muted autoplay loop src=''></video>
+        <img id="attractorImage" src=""></img>
+      </div>
+
+      <div id="mastheadDiv">
+        <div id='masthead' class="text-center fw-bold"></div>
+      </div>
+      <div class="tab-content" id="nav-tabContent"></div>
+      <div id='buttonRow' class='row'></div>
+      <footer id='toolbar' class="fixed-bottom">
+        <div class='row h-100'>
+          <div class='col h-100 text-center'>
+            <button id="fontSizeDecreaseButton" type="button" class="btn btn-link h-100">
+              <img src="_static/icons/font_size_decrease.svg" height="60%">
+          </button>
+          </div>
+          <div class='col h-100 text-center'>
+              <button id="fontSizeIncreaseButton" type="button" class="btn btn-link h-100">
+                  <img src="_static/icons/font_size_increase.svg" height="60%">
+              </button>
+          </div>
+          <div class="col"></div>
+          <div class="col"></div>
+          <div class="col"></div>
+          <div class="col"></div>
+          <div class="col"></div>
+          <div class='col h-100'>
+              <div id="langSwitchDropdown" class="btn-group dropup w-100 h-100 text-center">
+                  <button type="button" class="btn btn-link" data-bs-toggle="dropdown" aria-expanded="false">
+                    <img src="_static/icons/translation-icon_white.svg" height="80%">
+                  </button>
+                  <ul id="langSwitchOptions" class="dropdown-menu">
+                  </ul>
+              </div>
+          </div>
+        </div>
+      </footer>
+    </main>
+  </body>
+
+  <script type="text/javascript" src="js/jquery-3.6.1.min.js"></script>
+  <script type="text/javascript" src="js/bootstrap_5_3/bootstrap.bundle.min.js"></script>
+  <script type="text/javascript" src="js/showdown.min.js"></script>
+  <script type="text/javascript" src="js/html2canvas.min.js"></script>
+  <script type="text/javascript" src="js/platform.js"></script>
+
+  <script type="module" src="InfoStation/infostation.js"></script>
+</html>

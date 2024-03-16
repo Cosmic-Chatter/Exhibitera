@@ -1,0 +1,572 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+
+    <meta name="description" content="A GUI for configuring the System Helper">
+    <meta name="author" content="Morgan Rehnberg">
+    <link rel="icon" type="image/x-icon" href="/_static/favicon.ico">
+
+    <link rel="stylesheet" href="css/bootstrap_5_3/bootstrap.min.css">
+
+    <style>
+      /* This styles the code snippets in help text */
+      pre {
+        background-color: #414242;
+        padding-top: 10px;
+        padding-bottom: 10px;
+        margin-left: 10px;
+        padding-left: 10px;
+        padding-right: 10px;
+        margin-right: 10px;
+      }
+      table {
+        background-color: #414242;
+        padding-top: 10px;
+        padding-bottom: 10px;
+        margin-left: 10px;
+        padding-left: 10px;
+        padding-right: 10px;
+        margin-right: 10px;
+        border-collapse: collapse;
+        border: 3px solid #8e184f;
+      }
+      tr, td, th {
+        padding-top: 5px;
+        padding-bottom: 5px;
+        margin-left: 10px;
+        padding-left: 10px;
+        padding-right: 10px;
+        margin-right: 10px;
+        border-collapse: collapse;
+        border: 1px solid #8e184f;
+      }
+
+      #updateInfoModalChangelogContainer {
+        max-height: 60vh;
+        min-height: 15vh;
+        overflow-y: auto;
+      }
+    </style>
+
+    <title>Component Configuration</title>
+
+  </head>
+
+  <body>
+    <div class="container-fluid mb-5">
+
+      <!-- Password change modal -->
+      <div class="modal" tabindex="-1" role="dialog" id="passwordChangeModal">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Change your password</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <p class="fst-italic">Use the fields below to change you password. If you don't know your current password, your administrator can set a temporary password for you.</p>
+              
+              <label class="form-label mt-2" for="passwordChangeModalCurrentPassword">Current password</label>
+              <input class="form-control editUserField" type="password" id="passwordChangeModalCurrentPassword">
+              
+              <label class="form-label mt-2" for="passwordChangeModalNewPassword1">New password</label>
+              <input class="form-control editUserField" type="password" id="passwordChangeModalNewPassword1" autocomplete="new-password">
+
+              <label class="form-label mt-2" for="passwordChangeModalNewPassword2">Confirm new password</label>
+              <input class="form-control editUserField" type="password" id="passwordChangeModalNewPassword2" autocomplete="new-password">
+
+              <div class="text-danger mt-3">
+                <div id="passwordChangeModalNoCurrentPassWarning">You must enter your current password.</div>
+                <div id="passwordChangeModalBadCurrentPassWarning">The current password was incorrect.</div>
+                <div id="passwordChangeModalNoBlankPassWarning">The password cannot be blank.</div>
+                <div id="passwordChangeModalPassMismatchWarning">The new passwords do not match.</div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button id="passwordChangeModalSubmitButton" type="button" class="btn btn-primary">Change</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row my-2">
+        <div class='col-10'>
+          <H2 class="d-none d-lg-inline">Exhibitera Component Configuration</H2>
+          <H3 class="d-none d-md-inline d-lg-none">Exhibitera Component Configuration</H3>
+          <H4 class="d-inline d-md-none">Exhibitera Component Configuration</H4>
+        </div>
+        <div class="col-2">
+          <div id="loginMenu">
+            <button class="btn btn-outline-primary btn-sm dropdown-toggle float-end" type="button" data-bs-toggle="dropdown" aria-expanded="false">Log in</button>
+            <div class="dropdown-menu">
+              <div class="px-4 py-3">
+                <div class="mb-3">
+                  <label for="loginDropdownUsername" class="form-label">Username</label>
+                  <input type="text" class="form-control" id="loginDropdownUsername">
+                </div>
+                <div class="mb-3">
+                  <label for="loginDropdownPassword" class="form-label">Password</label>
+                  <input type="password" class="form-control" id="loginDropdownPassword">
+                </div>
+                <button id="loginSubmitButton" class="btn btn-primary">Log in</button>
+              </div>
+              <div class="dropdown-divider"></div>
+              <button class="dropdown-item" id="loginCreateAccountButton">Create account</button>
+              <a class="dropdown-item" href="#">Forgot password?</a>
+            </div>
+          </div>
+          <div id="userMenu" style="display: none;">
+            <button class="btn btn-outline-primary btn-sm dropdown-toggle float-end" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <span id="userMenuUserDisplayName" class="d-none d-sm-inline-block">Morgan Rehnberg</span>
+              <span id="userMenuUserShortName" class="d-sm-none">MR</span>
+              </button>
+            <div class="dropdown-menu">
+              <button class="dropdown-item" id="changePasswordButton">Change password</button>
+              <div class="dropdown-divider"></div>
+              <button class="dropdown-item" id="logoutButton">Log out</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <nav>
+        <div class="nav nav-tabs" id="nav-tab" role="tablist">
+          <a class="nav-item nav-link active" id="nav-settings-tab" data-bs-toggle="tab" href="#nav-settings" role="tab" aria-controls="nav-settings" aria-selected="true">Settings</a>
+          <a class="nav-item nav-link" id="nav-apps-tab" data-bs-toggle="tab" href="#nav-apps" role="tab" aria-controls="nav-apps" aria-selected="false">Apps</a>
+          <a class="nav-item nav-link" id="nav-help-tab" data-bs-toggle="tab" href="#nav-help" role="tab" aria-controls="nav-help" aria-selected="false">Help</a>
+        </div>
+      </nav>
+
+      <div class="tab-content" id="nav-tabContent">
+        <div class="tab-pane fade show active" id="nav-settings" role="tabpanel" aria-labelledby="nav-settings-tab">
+
+          <!-- Software update details modal -->
+          <div class="modal" tabindex="-1"  id="updateInfoModal">
+            <div class="modal-dialog modal-dialog-centered modal-xl">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <div class="row w-100">
+                    <div class="col-12">
+                      <h4 class="modal-title" id="updateInfoModalTitle">Update Available</h4>
+                    </div>
+                    <div class="col-6 col-sm-4 col-md-3 pt-2">
+                      <div class="row ps-3 pe-1">
+                        <div class="col-9 bg-info text-dark font-weight-bold ps-2 py-1 rounded-start me-0 pe-0">Your version</div>
+                        <div id="updateInfoModalCurrentVersion" class="col-3  py-1 bg-warning text-dark font-weight-bold rounded-end ms-0 ps-2">1.0</div>
+                      </div>
+                    </div>
+                    <div class="col-6 col-sm-4 col-md-3 pt-2">
+                      <div class="row ps-1 pe-3">
+                        <div class="col-9 bg-info text-dark font-weight-bold ps-2 py-1 rounded-start me-0 pe-0">Latest version</div>
+                        <div id="updateInfoModalLatestVersion" class="col-3  py-1 bg-success font-weight-bold text-dark rounded-end ms-0 ps-2">2.0</div>
+                      </div>
+                    </div>
+                  </div>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <div class="row">
+                    <div class="col-6 border-right border-secondary">
+                      <H4>Installation instructions</H4>
+                      Follow these steps to update Exhibitera Apps:
+                      <ol>
+                        <li>Click <i>Download update</i> and download the correct zipped update file for your operating system.</li>
+                        <li>Unzip the download to find the <code>Exhibitera_Apps</code> executable.</li>
+                        <li>Close any app or terminal windows.</li>
+                        <li>Replace the existing <code>Exhibitera_Apps</code> file with the new one.</li>
+                        <li>Launch Exhibitera Apps to complete the update. You may need to restart your PC for the update to take full effect.</li>
+                      </ol>
+                      <strong>For best results, apply any Control Server update at the same time.</strong>
+                    </div>
+                    <div id="updateInfoModalChangelogContainer" class="col-6"></div>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+              </div>
+            </div>
+          </div>
+  
+          <div class='row'>
+            <div id="showUpdateInfoButtonCol" class="col-6 col-sm-4 col-md-3 col-xl-2 mt-2">
+              <button id="showUpdateInfoButton" class="btn btn-info w-100">Update available</button>
+            </div>
+            <div class="col-12 mt-3">
+              <button id="saveDefaultsButton" class='btn btn-primary' style="width: 150px;">Save changes</button>
+              <button id='manageContentButton' type="button" class="btn btn-info ms-2">Manage content</button>
+              <button id='launchAppButton' type="button" class="btn btn-success ms-2 app-link" data-app-link="app" data-web-link="/app.html">Launch app</button>
+            </div>
+          </div>
+          <!-- Basic settings -->
+          <div class="h4 mt-4">Basic settings</div>
+          <div class="row mt-2">
+            <!-- ID -->
+            <div id="IDInputGroup" class="col-6 col-sm-4 col-lg-3 col-xl-2">
+              <div class="mb-3">
+                <label for="IDInput" class="form-label">
+                  ID
+                  <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Every Exhibitera component must have a unique ID." style="font-size: 0.55em; color: black">?</span>
+                </label>
+                <input type="text" class="form-control" id="IDInput">
+              </div>
+            </div>
+            <!-- Definition -->
+            <div id="definitionSelectGroup" class="col-6 col-sm-4 col-lg-3 col-xl-2">
+              <div class="mb-3">
+                <label for="definitionSelect" class="form-label">
+                  Definition
+                  <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="The selected definition sets which app content will be displayed." style="font-size: 0.55em; color: black">?</span>
+                </label>
+                <select class="form-select" id="definitionSelect"></select>
+                <button id="definitionSelectListRefresh" class="btn btn-info w-100 mt-2">Refresh list</button>
+              </div>
+            </div>
+            <div class="col-12 col-sm-6 col-lg-5 col-xl-4">
+              <div class="alert alert-primary">
+                <H5>Need to create a new definition?</H5>
+                <span class="fst-italic">Go to the Apps tab to get started.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Control Server -->
+          <div class="h4 mt-2">Hub</div>
+          <p>
+            <i>Exhibitera Hub helps you configure and control multiple interactives from anywhere in your museum.</i>
+          </p>
+          <div class="row mt-2">
+            <div class="col-7 col-sm-4 col-lg-3 mb-2 d-flex align-items-center">
+              <div class="form-check form-switch">
+                <input class="form-check-input gui-toggle" type="checkbox" role="switch" id="useControlServerToggle">
+                <label class="form-check-label" for="useControlServerToggle">Use Control Server</label>
+              </div>
+            </div>
+            <div id="controlServerIPInputGroup" class="col-6 col-sm-4 col-lg-3 col-xl-2">
+              <div class="form-floating">
+                <input type="text" class="form-control" id="controlServerIPInput" placeholder="IP address">
+                <label for="controlServerIPInput">IP address</label>
+              </div>
+            </div>
+            <div id="controlServerPortInputGroup" class="col-5 col-sm-4 col-md-3 col-lg-2 col-xxl-1">
+              <div class="form-floating">
+                <input type="number" class="form-control" id="controlServerPortInput" placeholder="Port">
+                <label for="controlServerPortInput">Port</label>
+              </div>
+            </div>
+          </div>
+          <!-- Permissions -->
+          <div id="permissionsPane">
+            <div class="h5 mt-2">Permissions</div>
+            <p>
+              <i>Permissions enable you to adjust how much Control Server can affect the system.</i>
+            </p>
+            <div class="row mt-2 gy-2">
+              <!-- Audio permission -->
+              <div class="col-6 col-sm-4 col-md-2">
+                <label for="permissionsAudioInput" class="form-label">
+                  Audio
+                  <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Allow Control Server to toggle audio auto-play." style="font-size: 0.55em; color: black">?</span>
+                </label>
+                <select class="form-select" id="permissionsAudioInput">
+                  <option value="true">Allow</option>
+                  <option value="false">Disallow</option>
+                </select>
+              </div>
+              <!-- Refresh permission -->
+              <div class="col-6 col-sm-4 col-md-2">
+                <label for="permissionsRefreshInput" class="form-label">
+                  Refresh
+                  <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Allow Control Server to reload the app view." style="font-size: 0.55em; color: black">?</span>
+                </label>
+                <select class="form-select" id="permissionsRefreshInput">
+                  <option value="true">Allow</option>
+                  <option value="false">Disallow</option>
+                </select>
+              </div>
+              <!-- Restart permission -->
+              <div class="col-6 col-sm-4 col-md-2">
+                <label for="permissionsRestartInput" class="form-label">
+                  Restart
+                  <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Allow Control Server to restart the PC." style="font-size: 0.55em; color: black">?</span>
+                </label>
+                <select class="form-select" id="permissionsRestartInput">
+                  <option value="true">Allow</option>
+                  <option value="false">Disallow</option>
+                </select>
+              </div>
+              <!-- Shutdown permission -->
+              <div class="col-6 col-sm-4 col-md-2">
+                <label for="permissionsShutdownInput" class="form-label">
+                  Shutdown
+                  <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Allow Control Server to shut down the PC. Make sure you have Wake-on-LAN configured if you want to remotely start the PC." style="font-size: 0.55em; color: black">?</span>
+                </label>
+                <select class="form-select" id="permissionsShutdownInput">
+                  <option value="true">Allow</option>
+                  <option value="false">Disallow</option>
+                </select>
+              </div>
+              <!-- Sleep permission -->
+              <div class="col-6 col-sm-4 col-md-2">
+                <label for="permissionsSleepInput" class="form-label">
+                  Sleep
+                  <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Allow Control Server to put the display to sleep." style="font-size: 0.55em; color: black">?</span>
+                </label>
+                <select class="form-select" id="permissionsSleepInput">
+                  <option value="true">Allow</option>
+                  <option value="false">Disallow</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <!-- Smart Restart -->
+          <div id="smartRestartPane">
+            <div class="h5 mt-2">Smart Restart</div>
+          <p>
+            <i>Smart Restart helps you compenstate for a PC that occasionally drops a Wi-Fi connection. If the app cannot connect to Control Server for a given period of time, it can initiate a restat of the PC to regain the Wi-Fi connection.</i>
+          </p>
+          <div class="row mt-2">
+            <!-- Smart Restart mode -->
+            <div class="col-6 col-sm-4 col-md-3 col-xl-2">
+              <div class="mb-3">
+                <label for="smartRestartStateSelect" class="form-label">
+                  Mode
+                  <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Patient mode will only restart the PC outside of the active hours, while aggressive will restart it at any time." style="font-size: 0.55em; color: black">?</span>
+                </label>
+                <select class="form-select" id="smartRestartStateSelect">
+                  <option value="off">Off</option>
+                  <option value="patient">Patient</option>
+                  <option value="aggressive">Aggressive</option>
+                </select>
+              </div>
+            </div>
+            <!-- Smart Restart interval -->
+            <div class="col-6 col-sm-3 col-md-2 smart-restart-options-div">
+              <div class="mb-3">
+                <label for="smartRestartIntervalInput" class="form-label">
+                  Interval
+                  <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Time in seconds between checking in with Control Server." style="font-size: 0.55em; color: black">?</span>
+                </label>
+                <input type="number" class="form-control" id="smartRestartIntervalInput" value="60">
+              </div>
+            </div>
+            <!-- Smart Restart threshold -->
+            <div class="col-6 col-sm-3 col-md-2 smart-restart-options-div">
+              <div class="mb-3">
+                <label for="smartRestartThresholdInput" class="form-label">
+                  Threshold
+                  <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Time in seconds the PC must be out of contact for before a restart is attempted." style="font-size: 0.55em; color: black">?</span>
+                </label>
+                <input type="number" class="form-control" id="smartRestartThresholdInput" value="3600">
+              </div>
+            </div>
+            <!-- Active hours start -->
+            <div class="col-6 col-sm-3 col-lg-2 smart-restart-options-div">
+              <div class="mb-3">
+                <label for="activeHoursStartInput" class="form-label">
+                  Active hours start
+                  <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="The start of the period during which a restart will not be permitted in patient mode." style="font-size: 0.55em; color: black">?</span>
+                </label>
+                <input type="text" class="form-control" id="activeHoursStartInput" value="8 AM">
+              </div>
+            </div>
+            <!-- Active hours end -->
+            <div class="col-6 col-sm-3 col-lg-2 smart-restart-options-div">
+              <div class="mb-3">
+                <label for="activeHoursEndInput" class="form-label">
+                  Active hours end
+                  <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="The end of the period during which a restart will not be permitted in patient mode." style="font-size: 0.55em; color: black">?</span>
+                </label>
+                <input type="text" class="form-control" id="activeHoursEndInput" value="8 PM">
+              </div>
+            </div>
+          </div>
+          </div>
+          <!-- Remote display -->
+          <div class="h4 mt-2">Remote display</div>
+          <p>
+            <span class="badge bg-secondary">Advanced</span> <i>For more complex setups, it's possible to run Exhibitera Apps on this PC, but use a different device as the display. The most common use case for this approach is <b>using an iPad or other tablet as the display.</b></i>
+          </p>
+          <div id="remoteDisplayRestartRequiredWarning" class="alert alert-warning" style="display: none;">
+            This change will not take effect until you restart Exhibitera Apps.
+          </div>
+          <div class="row mt-2">
+            <div class="col-7 col-sm-4 col-lg-3 d-flex align-items-center">
+              <div class="form-check form-switch">
+                <input class="form-check-input gui-toggle" type="checkbox" role="switch" id="useRemoteDisplayToggle">
+                <label class="form-check-label" for="useRemoteDisplayToggle">Use a remote display</label>
+              </div>
+            </div>
+            <div id="remoteDisplayPortInputGroup" class="col-5 col-sm-4 col-md-3 col-lg-2 col-xxl-1">
+              <div class="form-floating">
+                <input type="number" class="form-control" id="remoteDisplayPortInput" placeholder="Port">
+                <label for="remoteDisplayPortInput">Port</label>
+              </div>
+            </div>
+          </div>
+        </div>
+  
+        <div class="tab-pane fade" id="nav-apps" role="tabpanel" aria-labelledby="nav-apps-tab">
+          <div class="row">
+
+            <!-- DMX Control -->
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3 mt-3">
+              <div class="card h-100">
+                <!-- <img src="..." class="card-img-top" alt="..."> -->
+                <div class="card-body">
+                  <h3 class="card-title">DMX Control</h3>
+                  <p class="card-text">Control DMX lighting.</p>
+                  <button class="btn btn-primary mt-1 app-link" data-app-link="dmx_control" data-web-link="/dmx_control.html?standalone=true">Launch</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Infostation -->
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3 mt-3">
+              <div class="card h-100">
+                <!-- <img src="..." class="card-img-top" alt="..."> -->
+                <div class="card-body">
+                  <h3 class="card-title">InfoStation</h3>
+                  <p class="card-text">Use a touchscreen to explore digital labels containing a combination of text, images, and videos.</p>
+                  <button data-app-link="infostation_setup" data-web-link="/InfoStation/setup.html" class="btn btn-primary mt-1 app-link">Configure</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Media Browser -->
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3  mt-3">
+              <div class="card h-100">
+                <!-- <img src="..." class="card-img-top" alt="..."> -->
+                <div class="card-body">
+                  <h3 class="card-title">Media Browser</h3>
+                  <p class="card-text">Scroll and filter a gallery of images using a touchscreen.</p>
+                  <button data-app-link="media_browser_setup" data-web-link="/media_browser/setup.html" class="btn btn-primary mt-1 app-link">Configure</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Media Player -->
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3  mt-3">
+              <div class="card  h-100">
+                <!-- <img src="..." class="card-img-top" alt="..."> -->
+                <div class="card-body">
+                  <h3 class="card-title">Media Player</h3>
+                  <p class="card-text">Digital signage app that loops any combination of audio, images, and video.</p>
+                  <button data-app-link="media_player_setup" data-web-link="/media_player/setup.html" class="btn btn-primary mt-1 app-link">Configure</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Other app -->
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3  mt-3">
+              <div class="card  h-100">
+                <!-- <img src="..." class="card-img-top" alt="..."> -->
+                <div class="card-body">
+                  <h3 class="card-title">Other App</h3>
+                  <p class="card-text">Configure an external app using the Exhibitera API.</p>
+                  <button data-app-link="other_setup" data-web-link="/other/setup.html" class="btn btn-primary mt-1 app-link">Configure</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Timelapse Viewer -->
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3  mt-3">
+              <div class="card h-100">
+                <!-- <img src="..." class="card-img-top" alt="..."> -->
+                <div class="card-body">
+                  <h3 class="card-title">Timelapse Viewer</h3>
+                  <p class="card-text">Use a variety of input devices to animate through a slideshow of timelapse images.</p>
+                  <button data-app-link="timelapse_viewer_setup" data-web-link="/timelapse_viewer/setup.html" class="btn btn-primary mt-1 app-link">Configure</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Timeline Explorer -->
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3  mt-3">
+              <div class="card h-100">
+                <!-- <img src="..." class="card-img-top" alt="..."> -->
+                <div class="card-body">
+                  <h3 class="card-title">Timeline Explorer</h3>
+                  <p class="card-text">Generate an interactive timeline from a spreadsheet.</p>
+                  <button data-app-link="timeline_explorer_setup" data-web-link="/timeline_explorer/setup.html" class="btn btn-primary mt-1 app-link">Configure</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Voting Kiosk -->
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3  mt-3">
+              <div class="card h-100">
+                <!-- <img src="..." class="card-img-top" alt="..."> -->
+                <div class="card-body">
+                  <h3 class="card-title">Voting Kiosk</h3>
+                  <p class="card-text">Collect single-question survey responses and store them on Control Server.</p>
+                  <button data-app-link="voting_kiosk_setup" data-web-link="/voting_kiosk/setup.html" class="btn btn-primary mt-1 app-link">Configure</button>
+                  <div id="votingKioskCSVDownloadDiv">
+                    <label for="votingKioskCSVDownloadSelect" class="form-label mt-2">
+                      Download data as CSV
+                    </label>
+                    <div class="row gy-2">
+                      <div class="col-12">
+                        <select class="form-select" id="votingKioskCSVDownloadSelect"></select>
+                      </div>
+                      <div class="col-12">
+                        <button id="votingKioskCSVDownloadButton" class="btn btn-info w-100">Download</button>
+                      </div>
+                    </div>
+                  </div>
+                  
+                </div>
+              </div>
+            </div>
+
+            <!-- Word Cloud -->
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3  mt-3">
+              <div class="card h-100">
+                <!-- <img src="..." class="card-img-top" alt="..."> -->
+                <div class="card-body">
+                  <h3 class="card-title">Word Cloud</h3>
+                  <p class="card-text">Collect responses and create a word cloud, with profanity checking.</p>
+                  <button data-app-link="word_cloud_input_setup" data-web-link="/word_cloud/setup_input.html" class="btn btn-primary mt-1 app-link">Configure input</button>
+                  <button data-app-link="word_cloud_viewer_setup" data-web-link="/word_cloud/setup_viewer.html" class="btn btn-primary mt-1 app-link">Configure viewer</button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+        <div class="tab-pane fade" id="nav-help" role="tabpanel" aria-labelledby="nav-help-tab">
+          <div class="row">
+            <div id="helpNewAccountMessage" class="col-6 offset-3 alert alert-primary my-4">
+              <H4 class="text-center">Need an account?</H4>
+              Exhibitera requires a user account to access functionality. If you need an account, or your password to be reset, please contact your system administrator.
+            </div>
+            <div id="helpInsufficientPermissionstMessage" class="col-6 offset-3 alert alert-warning my-4" style="display: none;">
+              <H4 class="text-center">Insufficient Permissions</H4>
+              You do not have permission to edit this component. If you believe this is an error, contact your system administrator.
+            </div>
+            <div class="col-12 mt-4">
+              <span class="alert alert-secondary">Version: <span id="versionSpan"></span></span>
+            </div>
+            <div id='mainHelpTextDiv' class="col-12 mt-4">
+              Help text coming soon.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  <script type="text/javascript" src="js/jquery-3.6.1.min.js"></script>
+  <!-- <script type="text/javascript" src="js/popper.min.js"></script> -->
+  <script type="text/javascript" src="js/bootstrap_5_3/bootstrap.bundle.min.js"></script>
+  <script type="text/javascript" src="js/showdown.min.js"></script>
+  <script type="text/javascript" src="js/platform.js"></script>
+  <script type="module" src="js/setup.js"></script>
+
+  </body>
+
+</html>

@@ -1,0 +1,7 @@
+/* Language switcher */
+.langSwitch-entry {
+    font-size: 2.5vmax;
+}
+#langSwitchOptions {
+    width: 20vmax;
+}

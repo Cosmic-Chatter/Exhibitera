@@ -1,0 +1,126 @@
+html,
+body {
+    touch-action: manipulation;
+    word-wrap: break-word;
+    font-size: 25px;
+    margin: 0px;
+    padding: 0px;
+    overflow: hidden;
+    background: var(--background-color);
+    background-size: cover;
+    background-position: center;
+}
+
+.button-col {
+    max-height: 100%;
+}
+
+.card {
+    font-family: var(--button-font);
+}
+.card-inactive {
+    background-color: var(--button-color);
+    transition: .5s ease-in-out all;
+}
+.card-active {
+    background-color: var(--button-touched-color);
+    transition: .1s ease-in-out all;
+}
+.card-body-full-landscape {
+    min-height: 15vh;
+    color: var(--button-text-color);
+}
+
+.card-body-full-portrait {
+    min-height: 10vh;
+    color: var(--button-text-color);
+}
+
+.card-body-empty {
+    height: 0vh;
+}
+
+.card-img-empty {
+    height: 0vh;
+}
+
+.card-img-top {
+    width: 100%;
+    max-height: calc(var(--image-height) * 1%);
+    object-fit: contain;
+    padding: 5%;
+}
+
+.card-text {
+    font-size: 2vmax;
+}
+
+.card-title {
+    font-size: calc(3vmax + var(--button-font-adjust)*1vmax);
+    text-align: center;
+    color: var(--button-text-color);
+}
+
+.noselect {
+    -webkit-touch-callout: none; /* iOS Safari */
+      -webkit-user-select: none; /* Safari */
+       -khtml-user-select: none; /* Konqueror HTML */
+         -moz-user-select: none; /* Old versions of Firefox */
+          -ms-user-select: none; /* Internet Explorer/Edge */
+              user-select: none; /* Non-prefixed version, currently
+                                    supported by Chrome, Edge, Opera and Firefox */
+  }
+
+#bottomRow {
+    height: 20vh;
+}
+
+#cardRow {
+    height: 60vh;
+}
+
+#footer {
+    text-align: center;
+    width: 100%;
+    font-size: calc(3vmax + var(--footer-font-adjust)*1vmax);
+    font-weight: bold;
+    color: var(--footer-color);
+    font-family: var(--footer-font);
+}
+
+#header {
+    text-align: center;
+    width: 100%;
+    font-size: calc(5vmax + var(--header-font-adjust)*1vmax);
+    font-weight: bold;
+    color: var(--header-color);
+    font-family: var(--header-font);
+}
+
+#subfooter {
+    text-align: center;
+    width: 100%;
+    font-size: calc(2vmax + var(--subfooter-font-adjust)*1vmax);
+    font-weight: lighter;
+    color: var(--subfooter-color);
+    font-family: var(--subfooter-font);
+}
+
+#subheader {
+    text-align: center;
+    width: 100%;
+    font-size: calc(2vmax + var(--subheader-font-adjust)*1vmax);
+    font-weight: lighter;
+    color: var(--subheader-color);
+    font-family: var(--subheader-font);
+}
+
+#successMessageBody {
+    font-size: 3vmax!important;
+    font-family: var(--button-font);
+    background-color: var(--success-message-color);
+}
+
+#topRow {
+    height: 20vh;
+}

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="description" content="">
+    <meta name="author" content="Morgan Rehnberg">
+    <link rel="icon" type="image/x-icon" href="/_static/favicon.ico">
+    <link rel="manifest" href="_static/manifest.json" />
+
+    <title>Constellation Media Player</title>
+
+    <link rel="stylesheet" href="css/bootstrap_5_3/bootstrap.min.css">
+    <link rel="stylesheet" href="media_player/media_player.css">
+
+    <style>
+      
+    </style>
+  </head>
+
+  <body>
+
+  <div id="helperConnectionWarning" class="position-fixed row w-100" style="display: none; z-index:999;">
+    <div class="alert alert-danger col-auto mx-auto" role="alert">
+      <center>
+        <H4>Error: Cannot connect to System Helper!</H4>
+        Make sure the helper is running at <span id='helperConnectionWarningAddress'></span> and then restart Media Player
+      </center>
+    </div>
+  </div>
+
+  <div id="videoOverlay">
+    <video id="fullscreenVideo" muted disablePictureInPicture="true" webkit-playsinline="true" playsinline="true">
+    </video>
+  </div>
+
+  <div id="imageOverlay" class="d-flex">
+    <center class="mx-auto my-auto">
+      <img id="fullscreenImage">
+    </center>
+  </img>
+  </div>
+
+  <audio id="audioPlayer" class="d-none" muted></audio>
+
+  <img id="watermark">
+
+  <script src="js/jquery-3.6.1.min.js"></script>
+  <script src="js/bootstrap_5_3/bootstrap.min.js"></script>
+  <script src="js/platform.js"></script>
+
+  <script type="module" src="media_player/media_player.js"></script>
+  </body>
+
+</html>

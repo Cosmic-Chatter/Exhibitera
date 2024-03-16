@@ -1,0 +1,14 @@
+aiofiles
+argon2-cffi
+cryptography
+fastapi
+icmplib
+psutil
+pydantic==1.10.11 
+pypjlink2
+python-dateutil
+python-multipart
+requests
+sse-starlette
+uvicorn
+wakeonlan

@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="description" content="">
+    <meta name="author" content="Morgan Rehnberg">
+    <link rel="icon" type="image/x-icon" href="/_static/favicon.ico">
+    <link rel="manifest" href="_static/manifest.json" />
+
+    <title>Constellation Timeline Explorer</title>
+
+    <link rel="stylesheet" href="css/bootstrap_5_3/bootstrap.min.css">
+    <link rel="stylesheet" href="timeline_explorer/timeline_explorer.css">
+  </head>
+
+  <body  oncontextmenu="return false">
+
+    <div id="attractorOverlay">
+        <video id="attractorVideo" muted autoplay loop disablePictureInPicture="true" webkit-playsinline="true" playsinline="true" src=""></video>
+        <img id="attractorImage" src=""></img>
+      </div>
+
+    <div id="header-pane" class="container-fluid">
+        <div class="row h-100 align-items-center">
+            <div class="col-12 text-center">
+                <H1 id="headerText"></H1> 
+            </div>
+        </div>
+    </div>
+
+    <div id="timeline-pane" class="container-fluid">
+        <div class="row">
+            <div class="col-12 timeline">
+                <ul id="timelineContainer">
+                </ul>
+            </div>
+        </div>
+    </div>
+      
+    <div id="tools-pane" class="container-fluid">
+        <div class='row h-100'>
+            <div class='col h-100 text-center'>
+              <button id="fontSizeDecreaseButton" type="button" class="btn btn-link h-100">
+                <img src="_static/icons/font_size_decrease.svg" height="60%">
+            </button>
+            </div>
+            <div class='col h-100 text-center'>
+                <button id="fontSizeIncreaseButton" type="button" class="btn btn-link h-100">
+                    <img src="_static/icons/font_size_increase.svg" height="60%">
+                </button>
+            </div>
+            <div class="col"></div>
+            <div class="col"></div>
+            <div class="col"></div>
+            <div class="col"></div>
+            <div class="col"></div>
+            <div class='col h-100'>
+                <div id="langSwitchDropdown" class="btn-group dropup w-100 h-100 text-center">
+                    <button type="button" class="btn btn-link" data-bs-toggle="dropdown" aria-expanded="false">
+                      <img src="_static/icons/translation-icon_white.svg" height="80%">
+                    </button>
+                    <ul id="langSwitchOptions" class="dropdown-menu">
+                    </ul>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <script src="js/jquery-3.6.1.min.js"></script>
+    <script src="js/bootstrap_5_3/bootstrap.bundle.min.js"></script>
+    <script src="js/platform.js"></script>
+    <script src="js/showdown.min.js"></script>
+    <script type="text/javascript" src="js/html2canvas.min.js"></script>
+    <script type="module" src="timeline_explorer/timeline_explorer.js"></script>
+  </body>
+</html>

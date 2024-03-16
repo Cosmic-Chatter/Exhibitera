@@ -1,0 +1,18 @@
+fastapi
+flask==2.2.4
+libusb
+pillow
+psutil
+pydantic==1.10.12
+PyDMXControl
+pyffmpeg; platform_machine != 'armv7l' # We need to bundle ffmpeg sepaartely for Raspberry Pi
+pyftdi
+pyobjc; sys_platform == 'darwin'
+pyserial
+python-dateutil
+python-multipart
+pyusb
+pywebview; sys_platform != 'linux'
+requests
+sockio
+uvicorn

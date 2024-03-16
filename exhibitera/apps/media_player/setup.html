@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+
+    <meta name="description" content="">
+    <meta name="author" content="Morgan Rehnberg">
+    <link rel="icon" type="image/x-icon" href="../_static/favicon.ico">
+
+    <link rel="stylesheet" href="../css/bootstrap_5_3/bootstrap.min.css">
+    <link rel="stylesheet" href="../css/coloris.min.css">
+    <link rel="stylesheet" href="../css/setup.css">
+    <link rel="stylesheet" href="setup.css">
+
+    <title>Media Player Setup</title>
+
+  </head>
+
+  <body>
+    <div id="mainContainer" class="container mt-2 mb-5">
+
+      <!-- Password change modal -->
+      <div class="modal" tabindex="-1" role="dialog" id="passwordChangeModal">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Change your password</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <p class="fst-italic">Use the fields below to change you password. If you don't know your current password, your administrator can set a temporary password for you.</p>
+              
+              <label class="form-label mt-2" for="passwordChangeModalCurrentPassword">Current password</label>
+              <input class="form-control editUserField" type="password" id="passwordChangeModalCurrentPassword">
+              
+              <label class="form-label mt-2" for="passwordChangeModalNewPassword1">New password</label>
+              <input class="form-control editUserField" type="password" id="passwordChangeModalNewPassword1" autocomplete="new-password">
+
+              <label class="form-label mt-2" for="passwordChangeModalNewPassword2">Confirm new password</label>
+              <input class="form-control editUserField" type="password" id="passwordChangeModalNewPassword2" autocomplete="new-password">
+
+              <div class="text-danger mt-3">
+                <div id="passwordChangeModalNoCurrentPassWarning">You must enter your current password.</div>
+                <div id="passwordChangeModalBadCurrentPassWarning">The current password was incorrect.</div>
+                <div id="passwordChangeModalNoBlankPassWarning">The password cannot be blank.</div>
+                <div id="passwordChangeModalPassMismatchWarning">The new passwords do not match.</div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button id="passwordChangeModalSubmitButton" type="button" class="btn btn-primary">Change</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="chooseURLModal" class="modal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Select media from URL</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div class="row gy-2">
+                <div class="col-12 fst-italic">
+                  Media URLs must link directly to the file. Embedded media, such as a   YouTube video, is not supported.
+                </div>
+                <div class="col-9">
+                  <input id="chooseURLModalInput" placeholder="Enter URL" class="form-control">
+                </div>
+                <div class="col-3">
+                  <button id="chooseURLModalFetchButton" class="btn btn-primary w-100">Fetch</button>
+                </div>
+                <div class="col-12">
+                  <video id="chooseURLModalPreviewVideo" class="w-100" style="max-height: 300px;" controls></video>
+                  <img id="chooseURLModalPreviewImage" class="w-100" style="max-height: 300px; object-fit: contain;"></img>
+                  <audio id="chooseURLModalPreviewAudio" class="w-100" controls></audio>
+                </div>
+                <div id="chooseURLModalError" class="col-12 text-danger text-center">
+                  Cannot detect the file type of this media. Make sure the URL includes a correct file extension.
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button id="chooseURLModalSubmitButton" type="button" class="btn btn-primary">Select</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="deleteAnnotationModal" class="modal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Are you sure?</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              Deleting an annotation cannot be undone.
+            </div>
+            <div class="modal-footer">
+              <button id="deleteAnnotationModalSubmitButton" type="button" class="btn btn-danger">Delete</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="annotateFromJSONModal" class="modal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: min(95%, 750px);
+        width: min(95%, 750px);">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 id="annotateFromJSONModalTitle" class="modal-title">Create an annotation from JSON</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div class="row gy-2">
+                <div class="col-12">
+                  <i>Every time the content loads, Media Player will fetch the selected JSON file and populate the annotation with the data from the chosen field.</i>
+                </div>
+                <div class="col-12 h5">
+                  1. Choose JSON file
+                </div>
+                <div class="col-3">
+                  <button id="annotateFromJSONModalFileSelect" class="btn btn-outline-primary w-100">Select file</button>
+                </div>
+                <div class="col-1 d-flex align-items-center"><span class="text-center w-100">or</span></div>
+                <div class="col-6">
+                  <input id="annotateFromJSONModalURLInput" class="form-control" type="text" placeholder="Enter URL">
+                </div>
+                <div class="col-2">
+                  <button id="annotateFromJSONModalFetchURLButton" class="btn btn-primary w-100">Fetch</button>
+                </div>
+                <div class="col-12 mt-3">
+                  <h5>2. Select field</h5>
+                  <ul id="annotateFromJSONModalTreeView" class="ps-0"></ul>
+                </div>
+                <div class="col-12 mt-3">
+                  <h5>3. Confirm path</h5>
+                  <input id="annotateFromJSONModalPath" class="form-control" type="text">
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button id="annotateFromJSONModalSubmitButton" type="button" class="btn btn-primary">Create</button>
+              <button id="annotateFromJSONModalCloseButton" type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="appHelpModal" class="modal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered mw-100 w-75">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Help</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body"  style="max-height: 70vh; overflow-y: auto;">
+              <div class="row">
+                <div id='helpTextDiv' class="col-12"></div>
+              </div>
+
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-10" id="setupHeader">
+          <H2>Media Player  Setup</H2>
+          Use this utility to create and edit Media Player configurations.
+          </div>
+
+        <div class="col-2">
+          <div id="loginMenu">
+            <button class="btn btn-outline-primary btn-sm dropdown-toggle float-end" type="button" data-bs-toggle="dropdown" aria-expanded="false">Log in</button>
+            <div class="dropdown-menu">
+              <div class="px-4 py-3">
+                <div class="mb-3">
+                  <label for="loginDropdownUsername" class="form-label">Username</label>
+                  <input type="text" class="form-control" id="loginDropdownUsername">
+                </div>
+                <div class="mb-3">
+                  <label for="loginDropdownPassword" class="form-label">Password</label>
+                  <input type="password" class="form-control" id="loginDropdownPassword">
+                </div>
+                <button id="loginSubmitButton" class="btn btn-primary">Log in</button>
+              </div>
+              <div class="dropdown-divider"></div>
+              <button class="dropdown-item" id="loginCreateAccountButton">Create account</button>
+              <a class="dropdown-item" href="#">Forgot password?</a>
+            </div>
+          </div>
+          <div id="userMenu" style="display: none;">
+            <button class="btn btn-outline-primary btn-sm dropdown-toggle float-end" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <span id="userMenuUserDisplayName" class="d-none d-sm-inline-block">Morgan Rehnberg</span>
+              <span id="userMenuUserShortName" class="d-sm-none">MR</span>
+              </button>
+            <div class="dropdown-menu">
+              <button class="dropdown-item" id="changePasswordButton">Change password</button>
+              <div class="dropdown-divider"></div>
+              <button class="dropdown-item" id="logoutButton">Log out</button>
+            </div>
+          </div>
+        </div>
+        <div id="helpNewAccountMessage" class="col-6 offset-3 alert alert-primary my-4">
+          <H4 class="text-center">Need an account?</H4>
+          Exhibitera requires a user account to access functionality. If you need an account, or your password to be reset, please contact your system administrator.
+        </div>
+        <div id="helpInsufficientPermissionstMessage" class="col-6 offset-3 alert alert-warning my-4" style="display: none;">
+          <H4 class="text-center">Insufficient Permissions</H4>
+          You do not have permission to edit this component. If you believe this is an error, contact your system administrator.
+        </div>
+      </div>
+      
+      <div id="setupTools" class="row my-1 gx-2 gy-2">
+        <div class="col-6 col-sm-2">
+          <div class="dropdown">
+            <button class="btn btn-primary dropdown-toggle w-100" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <span class="d-inline d-sm-none d-lg-inline">Create new</span>
+              <span class="d-none d-sm-inline d-lg-none">New</span>
+            </button>
+            <ul class="dropdown-menu">
+              <li><a id="newDefinitionButton" class="dropdown-item" href="#">Create blank definition</a></li>
+              <li><a id="cloneDefinitionButton" class="dropdown-item" href="#">Clone selected definition</a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="col-6 col-sm-2">
+          <button id="editDefinitionButton" class="btn btn-primary w-100">
+            <span class="d-inline d-sm-none d-lg-inline">Edit existing</span>
+            <span class="d-none d-sm-inline d-lg-none">Edit</span>
+          </button>
+        </div>
+        <div class="col-6 col-sm-4 col-lg-3 col-xl-2">
+          <select id="availableDefinitionSelect" class="form-select w-100">Edit existing</select>
+        </div>
+        <div class="col-3 col-sm-2 col-md-2 col-lg-1">
+          <button id="deleteDefinitionButton" class="btn btn-danger w-100">Delete</button>
+        </div>
+        <div class="col-3 col-sm-2 col-md-2 col-lg-1 ms-auto">
+          <button id="helpButton" class="btn btn-info w-100">Help</button>
+        </div>
+        <!-- Top toolbar -->
+        <div class="col-12 col-lg-12">
+          <div class="row mt-3 pb-2 gx-2 gy-2 border-top border-bottom">
+            <div class="col-2 col-sm-4 col-md-3 col-lg-2 col-xl-1">
+              <button id="definitionSaveButton" class="btn btn-success w-100 px-0">Save</button>
+            </div>
+            <div class="col-5 col-sm-4 col-md-3 col-lg-2">
+              <button id="previewRefreshButton" class="btn btn-info w-100">Refresh preview</button>
+            </div>
+            <div class="col-5 col-sm-4 col-md-3 col-lg-2">
+              <div class="dropdown">
+                <button class="btn btn-primary dropdown-toggle w-100" type="button" data-bs-toggle="dropdown" aria-expanded="false">Adjust preview</button>
+                <ul class="dropdown-menu">
+                  <li><h6 class="dropdown-header">Typical widescreen</h6></li>
+                  <li><a id="previewAspect16x9" class="dropdown-item" href="#">16x9 (horizontal)</a></li>
+                  <li><a id="previewAspect9x16" class="dropdown-item" href="#">9x16 (vertical)</a></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><h6 class="dropdown-header">Business widescreen</h6></li>
+                  <li><a id="previewAspect16x10" class="dropdown-item" href="#">16x10 (horizontal)</a></li>
+                  <li><a id="previewAspect10x16" class="dropdown-item" href="#">10x16 (vertical)</a></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><h6 class="dropdown-header">Fullscreen / iPad</h6></li>
+                  <li><a id="previewAspect4x3" class="dropdown-item" href="#">4x3 (horizontal)</a></li>
+                  <li><a id="previewAspect3x4" class="dropdown-item" href="#">3x4 (vertical)</a></li>
+                </ul>
+              </div>
+            </div>
+            <div class="col-6 col-sm-4 offset-sm-8 offset-md-0 col-md-3 col-xl-2 d-flex align-items-center">
+              <div class="form-check mb-0">
+                <input class="form-check-input" type="checkbox" value="" id="refreshOnChangeCheckbox" checked>
+                <label class="form-check-label small" for="refreshOnChangeCheckbox">
+                  Refresh on change
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row align-items-start">
+        <div id='editPane' class="col-6 col-lg-7">
+          <div class="row gy-2">
+            <div class="col-12 col-md-6">
+              <label for="definitionNameInput" class="form-label">Definition name</label>
+              <input type="text" class="form-control" id="definitionNameInput">
+            </div>
+
+            <div class="col-12 mt-2">
+              <h3>Content</h3>
+              <div class="row gy-2 align-items-center">
+                <div class="col-12 col-md-6 col-lg-4 col-xxl-3">
+                  <button id="manageContentButton" class="btn btn-primary w-100">Manage content</button>
+                </div>
+              </div>
+              <div class="row mt-2 gy-2 align-items-top">
+                <div class="col-12">Add and arrange the content for your definition:</div>
+                <div class="col-12 col-md-6 col-lg-4 col-xxl-3">
+                  <button id="addItemButton" class="btn btn-primary w-100">Add item</button>
+                </div>
+                <div id="itemList" class="col-12 row gy-2 align-items-start"></div>
+              </div>
+              <h4 class="mt-2">Watermark</h4>
+              <i>Add a small image, such as a logo, somewhere on the screen.</i>
+              <div class="row gy-2 mt-1">
+                <div class="col-12 col-md-8 col-lg-6">
+                  <div class="row">
+                    <div class="col-8 col-sm-9 col-md-8 col-lg-9 col-xxl-10 pe-0">
+                      <button id="watermarkSelect" class="btn btn-outline-primary w-100">Select file</button>
+                    </div>
+                    <div class="col-4 col-sm-3 col-md-4 col-lg-3 col-xxl-2">
+                      <button id="watermarkSelectClear" class="btn btn-danger align-self-center w-100">✕</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="row gy-2 mt-2">
+                <div class="col-12 col-md-4">
+                  <label for="watermarkXPos" class="form-label">Horizontal position</label>
+                  <input id="watermarkXPos" type="range" class="form-input w-100 watermark-slider" min="0" max="100" value="80" data-field="x_position">
+                </div>
+                <div class="col-12 col-md-4">
+                  <label for="watermarkYPos" class="form-label">Vertical position</label>
+                  <input id="watermarkYPos" type="range" class="form-input w-100 watermark-slider" min="0" max="100" value="80" data-field="y_position">
+                </div>
+                <div class="col-12 col-md-4">
+                  <label for="watermarkSize" class="form-label">Size</label>
+                  <input id="watermarkSize" type="range" class="form-input w-100 watermark-slider" min="5" max="20" value="10" step="2.5" data-field="size">
+                </div>
+              </div>
+              <h3 class="mt-3">Appearance</h3>
+              <h4>Colors</h4>
+              <div class="row gy-2 mb-3">
+                <div class="col-12 col-lg-8 advanced-color-picker" data-constACP-name="Background" data-constACP-path="style>background"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id='previewPane' class="col-6 col-lg-5 sticky-top" style="z-index: 1;">
+          <div id="previewContainer">
+            <iframe id="previewFrame" class="mt-3 preview-16x9" src="../media_player.html?standalone=true"></iframe>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  <script type="text/javascript" src="../js/jquery-3.6.1.min.js"></script>
+  <script type="text/javascript" src="../js/bootstrap_5_3/bootstrap.bundle.min.js"></script>
+  <script type="text/javascript" src="../js/showdown.min.js"></script>
+  <script type="text/javascript" src="../js/platform.js"></script>
+  <script type="text/javascript" src="../js/coloris.min.js"></script>
+  <script type="module" src="setup.js"></script>
+
+  </body>
+
+</html>

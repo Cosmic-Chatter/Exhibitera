@@ -1,0 +1,6 @@
+*.pyc
+*.log
+apps/content/*
+.DS_Store
+node_modules
+/venv_3_11/*

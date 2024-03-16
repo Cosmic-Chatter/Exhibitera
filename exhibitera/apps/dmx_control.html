@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="description" content="">
+    <meta name="author" content="Morgan Rehnberg">
+    <link rel="icon" type="image/x-icon" href="/_static/favicon.ico">
+
+    <title>Exhibitera DMX Control</title>
+
+    <link rel="stylesheet" href="css/bootstrap_5_3/bootstrap.min.css">
+    <link rel="stylesheet" href="css/coloris.min.css">
+
+    <style>
+      .channel-entry {
+        background-color: #2D648B;
+        color: white;
+      }
+      .meta-entry {
+        background-color: #142f43;
+        color: white;
+      }
+      /* Coloris formatting */
+      .clr-field button {
+        width: 100%;
+        height: 100%;
+      }
+      .fixture-header {
+        background-color: #28587B;
+        color: white;
+        font-weight: bold;
+        font-size: larger;
+      }
+      .meta-header {
+        background-color: #142f43;
+        color: white;
+        font-weight: bold;
+        font-size: larger;
+      }
+    </style>
+  </head>
+
+  <body>
+
+    <main role="main" class="container mb-4 pt-1 pt-md-3 px-md-5">
+
+      <!-- Help modal -->
+      <div id="appHelpModal" class="modal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered mw-100 w-75">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Help</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body"  style="max-height: 70vh; overflow-y: auto;">
+              <div class="row">
+                <div id='helpTextDiv' class="col-12"></div>
+              </div>
+
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add fixture modal -->
+      <div class="modal" tabindex="-1" role="dialog" id="addFixtureModal">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content" style="border:black 1px solid;">
+            <div class="modal-header">
+              <h4 class="modal-title">Add new fixture</h4>
+            </div>
+            <div class="modal-body">
+              <div class="row">
+                <div class="col-6 col-sm-8">
+                  <label for="addFixtureName" class="form-label">Fixture name</label>
+                  <input type="text" class="form-control" id="addFixtureName">
+                </div>
+                <div class="col-6 col-sm-4">
+                  <label for="addFixtureStartingChannel" class="form-label">Starting channel</label>
+                  <input type="number" min="1" max="512" class="form-control" id="addFixtureStartingChannel">
+                </div>
+
+                <div id="cloneFixtureGroup" class="col-12 mt-2">
+                  <label for="cloneFixtureList" class="form-label">Clone existing fixture</label>
+                  <div class="row">
+                    <div class="col-8">
+                      <select id="cloneFixtureList" class="form-select"></select>
+                    </div>
+                    <div class="col-4">
+                      <button id="cloneFixtureButton" class="btn btn-primary">Clone</button>
+                    </div>
+                  </div>
+
+                </div>
+
+                <div class="col-12 mt-2">
+                  <label  class="form-label">Channels</label>
+                  <div id="addFixtureChannelList" class="row" style="max-height: 25vh; overflow-y: auto;"></div>
+                  <button id="addFixtureAddChannelButton" class="btn btn-primary btn-sm mt-2">Add channel</button>
+                </div>
+              </div>
+              <div id="addFixtureChannelsOccupiedWarning" class="col-12 text-danger mt-2">
+                A fixture with these channels already exists!
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-primary" id="addFixtureFromModalButton">Add</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row mt-2 mb-2">
+        <div class="col-auto">
+          <H3>DMX Configuration</H3>
+        </div>
+        <div class="col-3 col-sm-2 col-md-2 col-xl-1 ms-auto">
+          <button id="helpButton" class="btn btn-info w-100">Help</button>
+        </div>
+      </div>
+
+      <ul class="nav nav-tabs" id="main-nav" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="universes-tab" data-bs-toggle="tab" data-bs-target="#universes-tab-pane" type="button" role="tab" aria-controls="universes-tab-pane" aria-selected="true">Universes</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="groups-tab" data-bs-toggle="tab" data-bs-target="#groups-tab-pane" type="button" role="tab" aria-controls="groups-tab-pane" aria-selected="false">Groups</button>
+        </li>
+      </ul>
+
+      <div class="tab-content" id="main-nav-content">
+
+        <!-- Universes tab -->
+        <div class="tab-pane fade show active" id="universes-tab-pane" role="tabpanel" aria-labelledby="universes-tab" tabindex="0">
+          <div class="row mt-2">
+
+            <!-- Missing device warning -->
+            <div id="missingDeviceWarning" class="col-12 mt-2">
+              <div class="row">
+                <div class="col-6 offset-3">
+                  <div class="alert alert-warning">
+                    <H5 class="text-center">Missing device</H5>
+                    <span class="fw-italic text-center">
+                      <p>An expected DMX controller is not found. Is everything connected? If you connect a device, you may need to restart Exhibitera Apps.</p>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- No universes warning -->
+            <div id="noUniverseWarning" class="col-12 mt-2">
+              <div class="row">
+                <div class="col-6 offset-3">
+                  <div class="alert alert-primary">
+                    <H5 class="text-center">No universes found</H5>
+                    <span class="fw-italic">
+                      <p>A DMX universe contains and controls up to 32 fixtures. You must have a USB-to-DMX controller for each unvierse.</p> 
+                      <p>Most setups should have only one universe.</p>
+                  </span>
+                    <center>
+                      <button id="showAddUniverseModalButton" class="btn btn-primary">Create universe</button>
+                    </center>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Add universe modal -->
+            <div class="modal" tabindex="-1" role="dialog" id="addUniverseModal">
+              <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content" style="border:black 1px solid;">
+                  <div class="modal-header">
+                    <h4 class="modal-title">Add new universe</h4>
+                  </div>
+                  <div class="modal-body">
+                    <div class="row gy-2">
+                      <div id="addUniverseMissingDriverWarning" class="col-12">
+                        <div class="alert alert-danger">This device requires a driver to interface with DMX devices. See the help tab for instructions on setting up the driver on Windows and Linux.</div>
+                      </div>
+                      <div class="col-6">
+                        <label for="addUniverseName" class="form-label">Universe name</label>
+                        <input type="text" class="form-control" id="addUniverseName">
+                      </div>
+                      <div class="col-6">
+                        <label for="addUniverseController" class="form-label">Controller</label>
+                        <select id="addUniverseController" class="form-select"></select>
+                      </div>
+                      <div class="col-12">
+                        <span id="addUniverseMissingNameWarning" class="text-danger">You must give the universe a name.</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="addUniverseFromModalButton">Add</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Edit universe modal -->
+            <div class="modal" tabindex="-1" role="dialog" id="editUniverseModal">
+              <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content" style="border:black 1px solid;">
+                  <div class="modal-header">
+                    <h4 class="modal-title">Edit universe: <span id="editUniverseModalName"></span></h4>
+                  </div>
+                  <div class="modal-body">
+                    <div class="row gy-2">
+                      <div class="col-8">
+                        <label for="editUniverseModalNameInput" class="form-label">Universe name</label>
+                        <input type="text" class="form-control" id="editUniverseModalNameInput">
+                      </div>
+                      <div class="col-12">
+                        <label class="form-label">Fixtures</label>
+                        <div id="editUniverseFixtureRow" class="row"></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-danger me-auto" id="editUniverseModalDeleteButton" data-bs-toggle="popover" title="Are you sure?" data-bs-content='<a id="universeDeletePopover" class="btn btn-danger w-100">Confirm</a>' data-bs-trigger="focus" data-bs-html="true">Delete</button>
+                    <button type="button" class="btn btn-primary" id="editUniverseModalSaveButton">Save</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Universe row -->
+            <div class="col-12">
+              <button id="createNewUniverseButton" class="btn btn-primary" style="display: none;">Create universe</button>
+            </div>
+            <div class="col-12 mt-2">
+              <div id='universeRow' class="row"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Groups tab -->
+        <div class="tab-pane fade" id="groups-tab-pane" role="tabpanel" aria-labelledby="groups-tab" tabindex="0">
+
+          <!-- No groups warning -->
+          <div class="row mt-2">
+            <div id="noGroupsWarning" class="col-12 mt-4">
+              <div class="row">
+                <div class="col-6 offset-3">
+                  <div class="alert alert-primary">
+                    <H5 class="text-center">No groups found</H5>
+                    <span class="fw-italic">
+                      <p>A <i>group</i> is a collection of DMX fixturess from one or more universes. Groups allow you to organize your fixtures in a way that is convenient for your needs.</p> 
+                      <p>Each fixture may be in multiple groups. Once you have a group, you can create a <i>scene</i>, which stores a set of values to be used at a later time.</p>
+                  </span>
+                    <center>
+                      <button id="createNewGroupFromWarningButton" class="btn btn-primary">Create group</button>
+                    </center>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Edit group modal -->
+          <div class="modal" tabindex="-1" role="dialog" id="editGroupModal">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+              <div class="modal-content" style="border:black 1px solid;">
+                <div class="modal-header">
+                  <h4 id="editGroupModalTitle" class="modal-title">Edit Group</h4>
+                </div>
+                <div class="modal-body">
+                  <div class="row">
+                    <div class="col-12 col-md-6">
+                      <label class="form-label" for="editGroupNameInput">Group name</label>
+                      <input type="text" id="editGroupNameInput" class="form-control">
+                    </div>
+                  </div>
+                  <label class="form-label mt-2">Fixtures to include</label>
+                  <div id="editGroupFixtureRow" class="row"></div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-danger me-auto" id="editGroupModalDeleteButton" data-bs-toggle="popover" title="Are you sure?" data-bs-content='<a id="groupDeletePopover" class="btn btn-danger w-100">Confirm</a>' data-bs-trigger="focus" data-bs-html="true">Delete</button>
+                  <button type="button" class="btn btn-primary" id="editGroupModalSaveButton">Save</button>
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Edit scene modal -->
+          <div class="modal" tabindex="-1" role="dialog" id="editSceneModal">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+              <div class="modal-content" style="border:black 1px solid;">
+                <div class="modal-header">
+                  <h4 id="editSceneModalTitle" class="modal-title">Add scene</h4>
+                </div>
+                <div class="modal-body">
+                  <div class="row mt-2">
+                    <div class="col-6">
+                      <label for="editSceneModalSceneName" class="form-label">Scene name</label>
+                      <input type="text" class="form-control" id="editSceneModalSceneName">
+                    </div>
+                    <div class="col-6">
+                      <label for="editSceneModalDurationInput" class="form-label">Transition time (milliseconds)</label>
+                      <input type="number" class="form-control" id="editSceneModalDurationInput" value="0">
+                    </div>
+                    <div class="col-12 mt-2">
+                      <label for="editSceneFixtureList">Fixtures to include</label>
+                      <div id='editSceneFixtureList' class="row"></div>
+                      <span class="text-warning">Saving this scene will set the current values for the selected fixtures.</span>
+                    </div>
+                  </div>
+                  
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-danger me-auto" id="editSceneModalDeleteButton">Delete</button>
+                  <button type="button" class="btn btn-primary" id="editSceneModalSaveButton">Save</button>
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Groups row -->
+          <div class="col-12">
+            <button id="createNewGroupButton" class="btn btn-primary" style="display: none;">Create group</button>
+          </div>
+          <div class="col-12 mt-2">
+            <div id='groupsRow' class="row"></div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+  <script src="js/jquery-3.6.1.min.js"></script>
+  <script src="js/bootstrap_5_3/bootstrap.bundle.min.js"></script>
+  <script src="js/platform.js"></script>
+  <script src="js/coloris.min.js"></script>
+  <script src="js/showdown.min.js"></script>
+
+  <script type="module" src="dmx_control/dmx_control.js"></script>
+  </body>
+
+</html>
