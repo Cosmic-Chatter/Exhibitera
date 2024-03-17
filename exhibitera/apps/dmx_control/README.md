@@ -12,7 +12,7 @@ DMX Control provides a flexible interface for controlling DMX lighting systems. 
 To interface with a DMX universe, you need a hardware DMX controller. DMX Control supports two devices, [OpenDMX](https://www.enttec.com/product/lighting-communication-protocols/dmx512/open-dmx-usb/) and [uDMX](https://www.anyma.ch/research/udmx/). Development work has happened exclusively with OpenDMX, so that is the suggested device.
 
 ### Networking
-If you plan to edit the DMX configuration from the device connected to the DMX controller, the network does not matter. However, if you plan to do configuration from a remote device (accessed, for instance, from Control Server), a fast, low-latency connection is important. To enable realtime lighting control, DMX Control sends many commands over the network during configuration. This works much more smoothly with a wired Ethernet connection.
+If you plan to edit the DMX configuration from the device connected to the DMX controller, the network does not matter. However, if you plan to do configuration from a remote device (accessed, for instance, from Hub), a fast, low-latency connection is important. To enable realtime lighting control, DMX Control sends many commands over the network during configuration. This works much more smoothly with a wired Ethernet connection.
 
 ### Operating system
 

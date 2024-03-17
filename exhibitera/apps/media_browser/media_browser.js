@@ -48,7 +48,7 @@ function createCard (obj) {
     console.log('here')
     thumb = 'thumbnails/' + String(obj[thumbnailKey])
   } else {
-    // Change the file extension to .jpg, since that is the default for Constellation
+    // Change the file extension to .jpg, since that is the default for Exhibitera
     let thumbName = String(obj[mediaKey])
     const dotIndex = thumbName.lastIndexOf('.')
     thumbName = thumbName.substring(0, dotIndex < 0 ? thumbName.length : dotIndex) + '.jpg'

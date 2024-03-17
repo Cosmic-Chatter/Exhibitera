@@ -3,7 +3,7 @@ import * as exExhibit from './exhibitera_exhibit.js'
 import * as exTools from './exhibitera_tools.js'
 
 export function deleteSchedule (name) {
-  // Send a message to the control server asking to delete the schedule
+  // Send a message to Hub asking to delete the schedule
   // file with the given name. The name should not include ".ini"
 
   exTools.makeServerRequest({
@@ -24,7 +24,7 @@ export function deleteSchedule (name) {
 }
 
 export function scheduleConvertToDateSpecific (date, dayName) {
-  // Send a message to the control server, asking to create a date-specific
+  // Send a message to Hub, asking to create a date-specific
   // schedule out of the given day name
 
   const requestDict = {
@@ -659,7 +659,7 @@ export function scheduleConfigureEditModal (scheduleName,
 
 export function sendScheduleUpdateFromModal () {
   // Gather necessary info from the schedule editing modal and send a
-  // message to the control server asking to add the given action
+  // message to Hub asking to add the given action
 
   const scheduleName = $('#scheduleEditModal').data('scheduleName')
   const time = $('#scheduleActionTimeInput').val().trim()
@@ -723,7 +723,7 @@ export function sendScheduleUpdateFromModal () {
 
 export function scheduleDeleteActionFromModal () {
   // Gather necessary info from the schedule editing modal and send a
-  // message to the control server asking to delete the given action
+  // message to Hub asking to delete the given action
 
   const scheduleName = $('#scheduleEditModal').data('scheduleName')
   const scheduleID = $('#scheduleEditModal').data('scheduleID')
@@ -899,7 +899,7 @@ export function convertFutureScheduleFromModal () {
 }
 
 function downloadScheduleAsCSV (name) {
-  // Get the given schedule as a CSV from Control Server and download for the user.
+  // Get the given schedule as a CSV from Hub and download for the user.
 
   exTools.makeServerRequest({
     method: 'GET',
@@ -920,7 +920,7 @@ function downloadScheduleAsCSV (name) {
 }
 
 function downloadScheduleAsJSON (name) {
-  // Get the given schedule as JSON from Control Server and download for the user.
+  // Get the given schedule as JSON from Hub and download for the user.
 
   exTools.makeServerRequest({
     method: 'GET',
@@ -994,7 +994,7 @@ export function previewScheduleFromFile () {
 }
 
 export function createScheduleFromFile () {
-  // Submit the upoaded schedule to Control Server for creation.
+  // Submit the upoaded schedule to Hub for creation.
 
   const jsonStr = document.getElementById('scheduleFromFileModal').getAttribute('data-schedule')
   if (jsonStr == null || jsonStr === '') return

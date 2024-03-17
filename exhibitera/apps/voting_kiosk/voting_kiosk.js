@@ -388,7 +388,7 @@ function sendData () {
     name: configurationName
   }
 
-  // Submit the data to Control Server or the helper, depending on if we're standalone
+  // Submit the data to Hub or the helper, depending on if we're standalone
   if (exCommon.config.standalone === true) {
     exCommon.makeHelperRequest(
       {

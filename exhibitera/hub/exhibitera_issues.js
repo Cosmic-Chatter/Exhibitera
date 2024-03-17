@@ -345,7 +345,7 @@ export function showArchivedIssuesModal () {
 }
 
 export function modifyIssue (id, mode) {
-  // Ask Control Server to remove or archive the specified issue
+  // Ask Hub to remove or archive the specified issue
   // mode is one of 'archive' or 'delete'
 
   return exTools.makeServerRequest({
@@ -627,7 +627,7 @@ function _rebuildIssueMediaUploadedList (filenames, append = false) {
 }
 
 export function issueMediaDelete (filenames) {
-  // Send a message to the control server, asking for the files to be deleted.
+  // Send a message to Hub, asking for the files to be deleted.
   // filenames is an array of strings
 
   const requestDict = { filenames }

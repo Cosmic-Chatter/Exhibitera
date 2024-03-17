@@ -1,4 +1,4 @@
-"""Helper functions for Control Server."""
+"""Helper functions for Hub."""
 
 # Standard imports
 import json

@@ -103,7 +103,7 @@ def smart_restart_act():
 
 
 def smart_restart_check():
-    """Restart the PC if we have lost connection to Control Server. This is often because the Wi-Fi has dropped."""
+    """Restart the PC if we have lost connection to Hub. This is often because the Wi-Fi has dropped."""
 
     # Start the next cycle immediately, so that a subsequent error can't disable Smart Restart
     timer = threading.Timer(config.smart_restart["interval"], smart_restart_check)

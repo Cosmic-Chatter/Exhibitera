@@ -290,7 +290,7 @@ let inactivityTimeout = 30
 // Language
 let defaultLang
 
-// Constellation stuff
+// Exhibitera stuff
 exCommon.configureApp({
   name: 'timeline_explorer',
   debug: true,

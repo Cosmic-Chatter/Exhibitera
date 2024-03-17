@@ -1120,7 +1120,7 @@ exSetup.configure({
 exCommon.askForDefaults(false)
   .then(() => {
     if (exCommon.config.standalone === false) {
-      // We are using Control Server, so attempt to log in
+      // We are using Hub, so attempt to log in
       exSetup.authenticateUser()
     } else {
       // Hide the login details

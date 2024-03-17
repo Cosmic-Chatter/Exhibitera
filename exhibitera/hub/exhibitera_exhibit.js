@@ -273,7 +273,7 @@ class BaseComponent {
   }
 
   updateFromServer (update) {
-    // Use a dictionary of values from Control Server to update this component.
+    // Use a dictionary of values from Hub to update this component.
 
     this.setStatus(update.status, update.maintenance_status)
 
@@ -655,7 +655,7 @@ export function createComponentFromUpdate (update) {
 }
 
 export function updateComponentFromServer (update) {
-  // Read the dictionary of component information from the control server
+  // Read the dictionary of component information from Hub
   // and use it to set up the component
 
   const obj = getExhibitComponent(update.id)
@@ -1871,7 +1871,7 @@ export function rebuildComponentInterface () {
 }
 
 export function queueCommand (id, cmd) {
-  // Function to send a command to the control server that will then
+  // Function to send a command to Hub that will then
   // be sent to the component the next time it pings the server
 
   const obj = getExhibitComponent(id)

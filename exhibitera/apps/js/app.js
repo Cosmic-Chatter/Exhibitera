@@ -20,7 +20,7 @@ exCommon.askForDefaults()
   .then(() => {
     console.log(exCommon.config)
     if (exCommon.config.standalone === false) {
-      // Using Control Server
+      // Using Hub
       document.getElementById('standaloneWelcome').style.display = 'none'
       document.getElementById('controlServerWelcome').style.display = 'block'
       document.getElementById('controlServerAddress').innerHTML = exCommon.config.serverAddress
@@ -29,7 +29,7 @@ exCommon.askForDefaults()
       setInterval(exCommon.sendPing, 5000)
       if (exCommon.config.connectionChecker != null) setInterval(exCommon.config.connectionChecker, 500)
     } else {
-      // Not using Control Server
+      // Not using Hub
       document.getElementById('standaloneWelcome').style.display = 'block'
       document.getElementById('controlServerWelcome').style.display = 'none'
       exCommon.loadDefinition(exCommon.config.currentDefinition)

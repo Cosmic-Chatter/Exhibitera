@@ -9,7 +9,7 @@ export const config = {
     sleep: false
   },
   autoplayAudio: false,
-  connectionChecker: null, // A function to check the connection with Control Server and act on it
+  connectionChecker: null, // A function to check the connection with Hub and act on it
   exhibiteraAppID: '',
   currentDefinition: '',
   currentExhibit: 'default',
@@ -28,7 +28,7 @@ export const config = {
   serverAddress: '',
   softwareUpdateLocation: 'https://raw.githubusercontent.com/Cosmic-Chatter/Constellation/main/apps/_static/version.txt',
   softwareVersion: 5,
-  standalone: false, // false == we are using Control Server
+  standalone: false, // false == we are using Hub
   updateParser: null, // Function used by readUpdate() to parse app-specific updates
   uuid: ''
 }
@@ -62,12 +62,12 @@ export function configureApp (opt = {}) {
     askForDefaults()
       .then(() => {
         if (config.standalone === false) {
-          // Using Control Server
+          // Using Hub
           sendPing()
           setInterval(sendPing, 5000)
           if (config.connectionChecker != null) setInterval(config.connectionChecker, 500)
         } else {
-          // Not using Control Server
+          // Not using Hub
           loadDefinition(config.currentDefinition)
             .then((result) => {
               config.definitionLoader(result.definition)
@@ -142,7 +142,7 @@ export function parseQueryString () {
 }
 
 export function sendPing () {
-  // Contact the control server and ask for any updates
+  // Contact Hub and ask for any updates
   if (config.serverAddress === '') {
     console.log('Aborting ping... no config.serverAddress')
     return
@@ -217,7 +217,7 @@ export function askForShutdown () {
 }
 
 function readServerUpdate (update) {
-  // Function to read a message from Control Server and take action based on the contents
+  // Function to read a message from Hub and take action based on the contents
   // 'update' should be an object
 
   let sendUpdate = false
@@ -486,7 +486,7 @@ export function stringToBool (str) {
 }
 
 export function sendAnalytics (data) {
-  // Take the provided dicitonary of data and send it to the control server
+  // Take the provided dicitonary of data and send it to Hub
 
   // Append the date and time of this recording
   const tzoffset = (new Date()).getTimezoneOffset() * 60000 // Time zone offset in milliseconds

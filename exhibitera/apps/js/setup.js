@@ -119,7 +119,7 @@ function saveConfiguration () {
   }
 
   if (defaults.system.standalone === false) {
-    // We are using Control Server, so update relevant defaults
+    // We are using Hub, so update relevant defaults
     defaults.app.id = document.getElementById('IDInput').value.trim()
     defaults.control_server = {
       ip_address: document.getElementById('controlServerIPInput').value.trim(),
@@ -142,7 +142,7 @@ function saveConfiguration () {
       end: document.getElementById('activeHoursEndInput').value.trim()
     }
   } else {
-    // We are not using Control Server
+    // We are not using Hub
     defaults.app.definition = document.getElementById('definitionSelect').value
   }
 
@@ -185,7 +185,7 @@ function saveConfiguration () {
 function configureInterface () {
   // Check the state of various toggles and show/hide interface elements as appropriate.
 
-  // Control Server
+  // Hub
   if (document.getElementById('useControlServerToggle').checked === true) {
     document.getElementById('IDInputGroup').style.display = 'block'
     document.getElementById('definitionSelectGroup').style.display = 'none'
@@ -432,13 +432,13 @@ markdownConverter.setFlavor('github')
 exCommon.askForDefaults(false)
   .then(() => {
     if (exCommon.config.standalone === false) {
-      // We are using Control Server, so attempt to log in
+      // We are using Hub, so attempt to log in
       exSetup.authenticateUser()
         .then(() => {
           configureUser(exSetup.config.user)
         })
         .catch(() => {
-          // This has likely failed because of no connection to Control Server
+          // This has likely failed because of no connection to Hub
         })
     } else {
       // Hide the login details

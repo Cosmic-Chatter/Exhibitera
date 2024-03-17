@@ -20,7 +20,7 @@ Hub coordinates communication between Exhibitera components and provides a web-b
 ## Setting up Hub
 
 ### Configuring your environment
-Many Exhibitera components will lose functionality if they cannot connect to Hub. Thus, it is paramount that Control Server runs in a computing environment that is as stable as possible.
+Many Exhibitera components will lose functionality if they cannot connect to Hub. Thus, it is paramount that Hub runs in a computing environment that is as stable as possible.
 
 #### Environment requirements
 * A static IP address.
@@ -28,7 +28,7 @@ Many Exhibitera components will lose functionality if they cannot connect to Hub
 
 #### Environment recommendations
 * A wired network connection is important to ensure a consistent connection.
-* No aspect of Exhibitera requires access to the public internet (except checking for updates), although Control Server should be on a machine with accurate network time.
+* No aspect of Exhibitera requires access to the public internet (except checking for updates), although Hub should be on a machine with accurate network time.
 
 ### First-time setup
 The first time you launch Hub, the terminal will launch an interactive setup wizard to walk you through basic configuration.
@@ -160,7 +160,7 @@ The _Analytics_ tab allows you to configure Flexible Tracker, a powerful tool fo
 
 <img src="images/tracker_example.jpg" style="width: 50%; float: right; border: 2px solid gray; margin: 5px;"></img>
 
-Flexible Tracker enables the collection of a wide variety of quantitative and qualitative data using Control Server. Collected data can then be downloaded as a standard CSV file for opening in any spreadsheet software.
+Flexible Tracker enables the collection of a wide variety of quantitative and qualitative data using Hub. Collected data can then be downloaded as a standard CSV file for opening in any spreadsheet software.
 
 ### Collection types
 Flexible Tracker can collect a variety of data types. Each type provides a widget that makes inputting the data easy and reliable.

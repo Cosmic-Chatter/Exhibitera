@@ -358,7 +358,7 @@ export function authenticateUser () {
 }
 
 function configureUser (userDict, login = true) {
-  // Take a dictionary of user details and set up Constellation to reflect it.
+  // Take a dictionary of user details and set up Exhibitera to reflect it.
   // set login=false to set up a logged out user
 
   if (Object.keys(userDict).length === 0) {

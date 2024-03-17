@@ -271,7 +271,7 @@
               <div class="col-6 col-sm-4 col-md-2">
                 <label for="permissionsAudioInput" class="form-label">
                   Audio
-                  <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Allow Control Server to toggle audio auto-play." style="font-size: 0.55em; color: black">?</span>
+                  <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Allow Hub to toggle audio auto-play." style="font-size: 0.55em; color: black">?</span>
                 </label>
                 <select class="form-select" id="permissionsAudioInput">
                   <option value="true">Allow</option>
@@ -282,7 +282,7 @@
               <div class="col-6 col-sm-4 col-md-2">
                 <label for="permissionsRefreshInput" class="form-label">
                   Refresh
-                  <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Allow Control Server to reload the app view." style="font-size: 0.55em; color: black">?</span>
+                  <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Allow Hub to reload the app view." style="font-size: 0.55em; color: black">?</span>
                 </label>
                 <select class="form-select" id="permissionsRefreshInput">
                   <option value="true">Allow</option>
@@ -293,7 +293,7 @@
               <div class="col-6 col-sm-4 col-md-2">
                 <label for="permissionsRestartInput" class="form-label">
                   Restart
-                  <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Allow Control Server to restart the PC." style="font-size: 0.55em; color: black">?</span>
+                  <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Allow Hub to restart the PC." style="font-size: 0.55em; color: black">?</span>
                 </label>
                 <select class="form-select" id="permissionsRestartInput">
                   <option value="true">Allow</option>
@@ -304,7 +304,7 @@
               <div class="col-6 col-sm-4 col-md-2">
                 <label for="permissionsShutdownInput" class="form-label">
                   Shutdown
-                  <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Allow Control Server to shut down the PC. Make sure you have Wake-on-LAN configured if you want to remotely start the PC." style="font-size: 0.55em; color: black">?</span>
+                  <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Allow Hub to shut down the PC. Make sure you have Wake-on-LAN configured if you want to remotely start the PC." style="font-size: 0.55em; color: black">?</span>
                 </label>
                 <select class="form-select" id="permissionsShutdownInput">
                   <option value="true">Allow</option>
@@ -315,7 +315,7 @@
               <div class="col-6 col-sm-4 col-md-2">
                 <label for="permissionsSleepInput" class="form-label">
                   Sleep
-                  <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Allow Control Server to put the display to sleep." style="font-size: 0.55em; color: black">?</span>
+                  <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Allow Hub to put the display to sleep." style="font-size: 0.55em; color: black">?</span>
                 </label>
                 <select class="form-select" id="permissionsSleepInput">
                   <option value="true">Allow</option>
@@ -328,7 +328,7 @@
           <div id="smartRestartPane">
             <div class="h5 mt-2">Smart Restart</div>
           <p>
-            <i>Smart Restart helps you compenstate for a PC that occasionally drops a Wi-Fi connection. If the app cannot connect to Control Server for a given period of time, it can initiate a restat of the PC to regain the Wi-Fi connection.</i>
+            <i>Smart Restart helps you compenstate for a PC that occasionally drops a Wi-Fi connection. If the app cannot connect to Hub for a given period of time, it can initiate a restat of the PC to regain the Wi-Fi connection.</i>
           </p>
           <div class="row mt-2">
             <!-- Smart Restart mode -->
@@ -350,7 +350,7 @@
               <div class="mb-3">
                 <label for="smartRestartIntervalInput" class="form-label">
                   Interval
-                  <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Time in seconds between checking in with Control Server." style="font-size: 0.55em; color: black">?</span>
+                  <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Time in seconds between checking in with Hub." style="font-size: 0.55em; color: black">?</span>
                 </label>
                 <input type="number" class="form-control" id="smartRestartIntervalInput" value="60">
               </div>
@@ -504,7 +504,7 @@
                 <!-- <img src="..." class="card-img-top" alt="..."> -->
                 <div class="card-body">
                   <h3 class="card-title">Voting Kiosk</h3>
-                  <p class="card-text">Collect single-question survey responses and store them on Control Server.</p>
+                  <p class="card-text">Collect single-question survey responses and store them on Hub.</p>
                   <button data-app-link="voting_kiosk_setup" data-web-link="/voting_kiosk/setup.html" class="btn btn-primary mt-1 app-link">Configure</button>
                   <div id="votingKioskCSVDownloadDiv">
                     <label for="votingKioskCSVDownloadSelect" class="form-label mt-2">

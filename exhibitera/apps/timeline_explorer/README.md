@@ -18,7 +18,7 @@ A simple spreadsheet might look like this:
 | 1901 | 3     | Edward VII | Edward VII, the eldest son of Queen Victoria, was heir apparent for more than 60 years before gaining the throne.                                      | Edward_VII.jpg |
 | 1910 | 2     | George V   | In a reign of more than 25 years, George V steered the British Empire through WWI and the run-up to WWII.                                              | George_V.tiff  |
 
-Each line in the spreadsheet will represent one item in the timeline. The media files (listed in the  `Image` column in this example). need to be uploaded to **_Constellation_** as content.
+Each line in the spreadsheet will represent one item in the timeline. The media files (listed in the  `Image` column in this example). need to be uploaded to **_Exhibitera_** as content.
 
 The `Level` column allows you to differentiate between events of different importance in the timeline by specifying a number from 1 to 4. Level 1 events are the most important and Level 4 are the least important.
 

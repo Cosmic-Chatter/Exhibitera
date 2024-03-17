@@ -18,12 +18,12 @@
 @CALL 1_copy_files.bat %1
 
 @if not exist %1\nircmd.exe (
-  @echo Constellation needs nircmd.exe to operate on Windows. Download from https://www.nirsoft.net/utils/nircmd.html and copy into the target directory.
+  @echo Exhibitera needs nircmd.exe to operate on Windows. Download from https://www.nirsoft.net/utils/nircmd.html and copy into the target directory.
   EXIT /B
 )
 
 @if not exist %1\libusb0.dll (
-  @echo Constellation needs libusb0.dll to operate on Windows. Download from https://www.dll-files.com/libusb0.dll.html and copy into the target directory.
+  @echo Exhibitera needs libusb0.dll to operate on Windows. Download from https://www.dll-files.com/libusb0.dll.html and copy into the target directory.
   EXIT /B
 )
 

@@ -6,7 +6,7 @@ Media Player provides a flexible digital signage platform for displaying collect
 When creating a definition, you can specify a display duration for each image. Audio and video always play for their full duration.
 
 ### Annotations
-Annotations enable you to add dynamic text to your media through the use of JSON-formatted data. Media Player supports accessing JSON from either a web link or a text file in the Constellation content directory.
+Annotations enable you to add dynamic text to your media through the use of JSON-formatted data. Media Player supports accessing JSON from either a web link or a text file in the Exhibitera content directory.
 
 JSON data is refreshed every time a piece of content is played. For definitions with multiple media files, this happens each time the annotated file is reached in the playlist. For definitions with a single file, this happens at the interval given by the `duration`.
 

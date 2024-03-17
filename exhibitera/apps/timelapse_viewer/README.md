@@ -7,7 +7,7 @@ Timelapse Viewer provides a flexible interface for exploring and animating timel
 ## Configuration
 
 ### Choosing hardware
-Timelapse Viewer works best in **_Constellation's_** default, locally-installed mode. This means that it is best to run Timelapse Viewer on a Linux or Windows PC connected to the display that you want to use. 
+Timelapse Viewer works best in **_Exhibitera's_** default, locally-installed mode. This means that it is best to run Timelapse Viewer on a Linux or Windows PC connected to the display that you want to use. 
 
 Connecting to a remote instance (such as using an iPad) is supported, but, since every frame of the animation must be transmitted over the network, performance is often less than ideal.
 

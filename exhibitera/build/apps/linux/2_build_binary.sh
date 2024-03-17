@@ -43,4 +43,4 @@ pyinstaller --clean --onefile \
             --add-data "voting_kiosk/icons/*:voting_kiosk/icons/." \
             --add-data "word_cloud/*:word_cloud/." \
             --add-data "word_cloud/js/*.js:word_cloud/js/." \
-            Constellation_Apps.py
+            Exhibitera_Apps.py

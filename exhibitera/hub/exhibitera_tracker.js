@@ -1,7 +1,7 @@
 import * as exTools from './exhibitera_tools.js'
 
 export function getAvailableDefinitions (complete) {
-  // Ask the control server to send a list of availble definition files
+  // Ask Hub to send a list of availble definition files
   // Pass a function and it will be called with the list as the
   // only parameter
 
@@ -17,7 +17,7 @@ export function getAvailableDefinitions (complete) {
 }
 
 export function getAvailableTrackerData (complete) {
-  // Ask the control server to send a list of availble data files
+  // Ask Hub to send a list of availble data files
   // Pass a function and it will be called with the list as the
   // only parameter
 
@@ -37,7 +37,7 @@ export function getAvailableTrackerData (complete) {
 }
 
 export function loadLayoutDefinition (name, complete) {
-  // Ask the control server to send a JSON dict with the layout definition
+  // Ask Hub to send a JSON dict with the layout definition
   // from the file with `name`
   // After the layout is retrieved, the function `complete` will be called
   // with the layout as the only parameter

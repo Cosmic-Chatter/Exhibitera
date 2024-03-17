@@ -32,7 +32,7 @@ function pageForward (current) {
     if (document.getElementById('useControlServerToggle').checked === true) {
       document.getElementById('basic-settings').style.display = 'block'
     } else {
-      // Skip basic settings if we're not using Control Server
+      // Skip basic settings if we're not using Hub
       populateSummary()
       document.getElementById('summary').style.display = 'block'
     }
@@ -60,7 +60,7 @@ function pageForward (current) {
 function populateSummary () {
   // Use the settings on the various pages to populate a summary of selected settings.
 
-  // Control Server
+  // Hub
   if (document.getElementById('useControlServerToggle').checked === true) {
     document.getElementById('summaryControlServerIP').innerHTML = document.getElementById('controlServerIPInput').value.trim()
     document.getElementById('summaryControlServerPort').innerHTML = document.getElementById('controlServerPortInput').value.trim()
@@ -115,7 +115,7 @@ function pageBack (current) {
 }
 
 function onUseControlServerToggle () {
-  // Called when the user toggles the switch to use Control Server
+  // Called when the user toggles the switch to use Hub
 
   if (document.getElementById('useControlServerToggle').checked === true) {
     document.getElementById('controlServerIPInputGroup').style.display = 'block'
@@ -196,5 +196,5 @@ if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').match
   document.querySelector('html').setAttribute('data-bs-theme', 'light')
 }
 
-// Set helper address for Constellation
+// Set helper address for Exhibitera
 exCommon.config.helperAddress = window.location.origin

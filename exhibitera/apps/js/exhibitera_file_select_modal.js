@@ -2,7 +2,7 @@
 import * as exCommon from './exhibitera_app_common.js'
 
 export function createFileSelectionModal (userOptions) {
-  // Build a standard Constellation file selection modal
+  // Build a standard Exhibitera file selection modal
 
   let options = {
     filetypes: [], // List of file types to allow ([] for all)

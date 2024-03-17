@@ -465,7 +465,7 @@ function getTimer (name) {
 
 function sendData () {
   // Collect the current value from each card, build a dictionary, and
-  // send it to the control server for storage.
+  // send it to Hub for storage.
 
   const resultDict = {}
 
