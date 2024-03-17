@@ -154,7 +154,6 @@ export function sendPing () {
       uuid: config.uuid,
       helperAddress: config.helperAddress,
       permissions: config.permissions,
-      constellation_app_id: config.exhibiteraAppID,
       platform_details: config.platformDetails,
       currentInteraction: config.currentInteraction
     }
@@ -688,7 +687,7 @@ export async function writeDefinition (definition) {
   // Send the given JSON definition to the helper to write to the content directory.
 
   // Tag the definition with some useful properties
-  definition.constellation_version = config.softwareVersion
+  definition.exhibitera_version = config.softwareVersion
   definition.lastEditedDate = new Date().toISOString()
   return makeHelperRequest({
     method: 'POST',

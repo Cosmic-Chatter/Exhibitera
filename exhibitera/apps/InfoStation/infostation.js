@@ -377,7 +377,7 @@ $('#fontSizeDecreaseButton').click(fontSizeDecrease)
 $('#fontSizeIncreaseButton').click(fontSizeIncrease)
 $('#attractorOverlay').click(hideAttractor)
 
-// Constellation stuff
+// Exhibitera stuff
 exCommon.configureApp({
   name: 'infostation',
   debug: true,

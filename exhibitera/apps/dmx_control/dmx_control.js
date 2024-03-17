@@ -1006,7 +1006,7 @@ function showUniverseEditModal (universeName, universeUUID) {
 }
 
 function updateUniverseFromModal () {
-  // Gather information from the editUniverseModal and send it to Control Server to make an update.
+  // Gather information from the editUniverseModal and send it to Hub to make an update.
 
   const uuid = $('#editUniverseModal').data('uuid')
   const currentName = $('#editUniverseModal').data('name')

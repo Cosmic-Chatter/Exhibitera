@@ -6,7 +6,7 @@ import logging
 import os
 from typing import Any, Union
 
-# Constellation imports
+# Exhibitera imports
 import config
 import exhibitera_tools as c_tools
 
@@ -150,7 +150,7 @@ def summarize_segments(segments: list[dict]) -> dict[str, float]:
 
 # Added in C5 to convert legacy C4 and below maintenance logs.
 def convert_legacy_maintenance_log(this_id: str) -> dict[str, Any] | None:
-    """Convert a maintenance .txt file to a dictionary for use with Constellation 5."""
+    """Convert a maintenance .txt file to a dictionary for use with Exhibitera 5."""
 
     path = c_tools.get_path(["maintenance-logs", this_id + ".txt"], user_file=True)
     if not os.path.exists(path):

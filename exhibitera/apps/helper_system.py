@@ -9,7 +9,7 @@ import threading
 import dateutil.parser
 import requests
 
-# Constellation imports
+# Exhibitera imports
 import config
 import helper_files
 import helper_utilities

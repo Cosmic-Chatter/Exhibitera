@@ -14,7 +14,7 @@ import icmplib
 import requests
 import wakeonlan
 
-# Constellation imports
+# Exhibitera imports
 import component_helpers
 import config
 import exhibitera_maintenance as c_maint
@@ -23,7 +23,7 @@ import projector_control
 
 
 class BaseComponent:
-    """A basic Constellation component."""
+    """A basic Exhibitera component."""
 
     def __init__(self, id_: str, groups: list[str],
                  description: str | None = None,
@@ -839,8 +839,11 @@ def read_exhibit_configuration(name: str):
     config.last_update_time = time.time()
 
 
-def update_exhibit_configuration(this_id: str, update: dict[str, Any], exhibit_name: str = ""):
-    """Update an exhibit configuration with the given data for a given id."""
+def update_exhibit_configuration(update: dict[str, Any],
+                                 component_id: str = "",
+                                 component_uuid: str = "",
+                                 exhibit_name: str = ""):
+    """Update an exhibit configuration with the given data for a given ID or UUID."""
 
     if exhibit_name == "" or exhibit_name is None:
         exhibit_name = config.current_exhibit
@@ -850,15 +853,33 @@ def update_exhibit_configuration(this_id: str, update: dict[str, Any], exhibit_n
 
     match_found = False
     for index, component in enumerate(exhibit_config):
-        if component["id"] == this_id:
-            exhibit_config[index] |= update
-            match_found = True
+        # Prefer UUID to ID from Exhibitera 5
+        if component_uuid != '' and 'uuid' in component:
+            if component["uuid"] == component_uuid:
+                exhibit_config[index] |= update
+                exhibit_config[index]["uuid"] = component_uuid
+                match_found = True
+        elif component_id != '' and 'id' in component:
+            if component["id"] == component_id:
+                exhibit_config[index] |= update
+                if component_uuid != '':
+                    exhibit_config[index]["uuid"] = component_uuid
+                match_found = True
     if not match_found:
-        exhibit_config.append({"id": this_id} | update)
+        new_entry = {}
+        if component_id != '':
+            new_entry['id'] = component_id
+        if component_uuid != '':
+            new_entry['uuid'] = component_uuid
+        new_entry |= update
+        exhibit_config.append(new_entry)
     config.exhibit_configuration = exhibit_config
 
     c_tools.write_json(exhibit_config, exhibit_path)
-    this_component = get_exhibit_component(component_id=this_id)
+    if component_uuid != "":
+        this_component = get_exhibit_component(component_uuid=component_uuid)
+    else:
+        this_component = get_exhibit_component(component_id=component_id)
     if this_component is not None:
         this_component.update_configuration()
 
@@ -906,7 +927,7 @@ def update_exhibit_component_status(data: dict[str, Any], ip: str):
         ip = "localhost"
 
     if "uuid" in data:
-        # This is the preferred way from Constellation 5 onwards
+        # This is the preferred way from Exhibitera 5 onwards
         component = get_exhibit_component(component_uuid=data["uuid"])
     else:
         # Legacy support
@@ -931,10 +952,6 @@ def update_exhibit_component_status(data: dict[str, Any], ip: str):
     else:
         if "error" in component.config:
             component.config.pop("error")
-    if "exhibitera_app_id" in data:
-        if component.config["app_name"] == "":
-            component.config["app_name"] = data["exhibitera_app_id"]
-            update_exhibit_configuration(data["id"], {"app_name": data["exhibitera_app_id"]})
     if "platform_details" in data:
         if isinstance(data["platform_details"], dict):
             component.platform_details.update(data["platform_details"])

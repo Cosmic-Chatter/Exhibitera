@@ -287,7 +287,7 @@ def execute_scheduled_action(action: str, target: Union[list, str, None], value:
             target = target[5:]
         print(f"Changing definition for {target} to {value}")
         logging.info("Changing definition for %s to %s", target, value)
-        c_exhibit.update_exhibit_configuration(target, {"content": [], "definition": value})
+        c_exhibit.update_exhibit_configuration({"definition": value}, component_id=target)
     elif action == 'set_dmx_scene' and target is not None and value is not None:
         if isinstance(value, list):
             value = value[0]

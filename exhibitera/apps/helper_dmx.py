@@ -8,7 +8,7 @@ from PyDMXControl.controllers import OpenDMXController, TransmittingController, 
 from PyDMXControl.profiles.defaults import Fixture
 from pyftdi.ftdi import Ftdi
 
-# Constellation modules
+# Exhibitera modules
 import config
 import helper_files
 
@@ -120,7 +120,7 @@ class DMXUniverse:
 
 
 class DMXFixture(Fixture):
-    """Constellation object for a DMX fixture"""
+    """Exhibitera object for a DMX fixture"""
 
     def __init__(self,
                  name: str,
@@ -510,7 +510,7 @@ def read_dmx_configuration() -> tuple[bool, str]:
 
 
 def activate_dmx() -> tuple[bool, str]:
-    """Perform setup actions to get ready to use DMX in Constellation.
+    """Perform setup actions to get ready to use DMX in Exhibitera.
 
     Returns True is DMX has been successfully activated (already or just now) and False otherwise.
     """

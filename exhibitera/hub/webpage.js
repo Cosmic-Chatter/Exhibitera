@@ -3,7 +3,7 @@
 import exConfig from './config.js'
 import * as exExhibit from './exhibitera_exhibit.js'
 import * as exGroup from './exhibitera_group.js'
-import * as exIssues from './exhibitera_groups.js'
+import * as exIssues from './exhibitera_issues.js'
 import * as exMaintenance from './exhibitera_maintenance.js'
 import * as exProjector from './exhibitera_projector.js'
 import * as exSchedule from './exhibitera_schedule.js'
@@ -228,7 +228,7 @@ function updateAvailableExhibits (exhibitList) {
 }
 
 function changeExhibit (warningShown) {
-  // Send a command to the control server to change the current exhibit
+  // Send a command to Hub to change the current exhibit
 
   if (warningShown === false) {
     $('#changeExhibitModal').modal('show')
@@ -375,7 +375,7 @@ function deleteTrackerTemplate (name = '') {
 }
 
 function parseUpdate (update) {
-  // Take a dictionary of updates from Control Server and act on them.
+  // Take a dictionary of updates from Hub and act on them.
 
   if ('gallery' in update) {
     setCurrentExhibitName(update.gallery.current_exhibit)
@@ -825,7 +825,7 @@ function parseQueryString () {
 }
 
 function createExhibit (name, cloneFrom) {
-  // Ask the control server to create a new exhibit with the given name.
+  // Ask Hub to create a new exhibit with the given name.
   // set cloneFrom = null if we are making a new exhibit from scratch.
   // set cloneFrom to the name of an existing exhibit to copy that exhibit
 
@@ -847,7 +847,7 @@ function createExhibit (name, cloneFrom) {
 }
 
 function deleteExhibit (name) {
-  // Ask the control server to delete the exhibit with the given name.
+  // Ask Hub to delete the exhibit with the given name.
 
   exTools.makeServerRequest({
     method: 'POST',
@@ -880,7 +880,7 @@ function deleteExhibitFromModal () {
 }
 
 function populateControlServerSettings () {
-  // Get the latest system settings from Control Server and build out the interface for changing them.
+  // Get the latest system settings from Hub and build out the interface for changing them.
 
   // Hide warnings and buttons
   document.getElementById('controlServerSettingsIPWarning').style.display = 'none'
@@ -1261,7 +1261,7 @@ exTracker.getAvailableDefinitions(populateTrackerTemplateSelect)
 
 exUsers.authenticateUser()
   .then(() => {
-    // Subscribe to updates from the control server once we're logged in (or not)
+    // Subscribe to updates from Hub once we're logged in (or not)
     const eventSource = new EventSource(exConfig.serverAddress + '/system/updateStream')
     eventSource.addEventListener('update', function (event) {
       const update = JSON.parse(event.data)

@@ -4,3 +4,5 @@ apps/content/*
 .DS_Store
 node_modules
 /venv_3_11/*
+/package.json
+/package-lock.json

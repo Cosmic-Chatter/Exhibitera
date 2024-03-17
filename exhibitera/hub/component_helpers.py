@@ -6,7 +6,7 @@ import threading
 import time
 from typing import Union
 
-# Constellation imports
+# Exhibitera imports
 import config
 
 

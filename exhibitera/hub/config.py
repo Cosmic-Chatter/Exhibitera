@@ -11,7 +11,7 @@ APP_PATH: str = ""
 EXEC_PATH: str = ""
 
 debug: bool = False  # True means print various debug info
-gallery_name: str = "Constellation"
+gallery_name: str = "Exhibitera"
 port: int = 8000
 ip_address: str = "localhost"
 last_update_time: float = 0  # Will hold time.time() of last change to the server

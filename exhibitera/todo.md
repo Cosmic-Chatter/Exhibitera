@@ -1,14 +1,9 @@
 # To-do list
 
 ## General
-- Rename ideas:
-  - ExhibitMate
-    - ExhibitMate Apps
-    - ExhibitMate Hub
-  - Exhibitera
-- Separate versioning for Control Server and Apps
+- Separate versioning for Hub and Apps
 
-## Control Server
+## Hub
 
 ### General
 - Add ability to edit exhibits without setting them
@@ -35,9 +30,9 @@
 - Create public API for adding schedule entries
 - Clone other schedule
 - Name date-specific schedule
-- Fix GUI issues when actions/targets
+- Transition schedule from component IDs to UUIDs
 
-## Constellation Apps
+## Apps
 
 ### General
 - Add heartbeat app

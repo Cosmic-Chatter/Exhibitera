@@ -12,7 +12,7 @@ from typing import Any, Union
 # Non-standard imports
 import psutil
 
-# Constellation imports
+# Exhibitera imports
 import config
 
 
@@ -184,7 +184,7 @@ def check_file_structure() -> None:
         try:
             os.mkdir(exhibits_dir)
             with open(os.path.join(exhibits_dir, "Default.json"), 'w', encoding="UTF-8") as f:
-                f.write("{}")
+                f.write("[]")
         except PermissionError:
             print("Error: unable to create 'exhibits' directory. Do you have write permission?")
 

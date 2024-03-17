@@ -23,7 +23,7 @@ try:
 except ModuleNotFoundError:
     ffmpeg_path = 'ffmpeg'
 
-# Constellation modules
+# Exhibitera modules
 import config
 
 
@@ -522,7 +522,7 @@ def _create_thumbnails_for_converted_video(process: subprocess.Popen):
 
 
 def get_thumbnail_name(filename: str, force_image=False) -> str:
-    """Return the filename converted to the appropriate Constellation thumbnail format.
+    """Return the filename converted to the appropriate Exhibitera thumbnail format.
 
     force_image = True returns a jpg thumbnail regardless of if the media is an image or video
     """

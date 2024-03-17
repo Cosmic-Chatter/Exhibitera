@@ -89,6 +89,8 @@ export function populateGroupsRow () {
   const groupRow = document.getElementById('settingsGroupsRow')
   groupRow.innerHTML = ''
 
+  if (exConfig.groups == null) exConfig.groups = []
+
   for (const group of exConfig.groups) {
     const groupCol = document.createElement('div')
     groupCol.classList = 'col'

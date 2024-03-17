@@ -3,7 +3,7 @@ import logging
 import threading
 import time
 
-# Constellation imports
+# Exhibitera imports
 import config
 import exhibitera_tools as c_tools
 import exhibitera_exhibit as c_exhibit

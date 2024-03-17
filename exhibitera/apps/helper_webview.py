@@ -1,7 +1,7 @@
 # Third-party modules
 import webview
 
-# Constellation modules
+# Exhibitera modules
 import config
 
 

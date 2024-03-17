@@ -322,6 +322,7 @@ export function loginFromDropdown () {
     }
   })
     .then((response) => {
+      console.log(response)
       if (response.success === true) {
         // Reload the page now that the authentication cookie is set.
         location.reload()

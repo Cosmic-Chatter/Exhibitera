@@ -25,10 +25,26 @@
         <div class="modal-dialog modal-dialog-centered exhibitera-dialog" role="document">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title">Welcome to Constellation 5</h5>
+              <h4 class="modal-title">Welcome to Exhibitera 5</h4>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body" style="max-height: 55vh; overflow-y: auto;">
+              <H5>Constellation is now Exhibitera</H5>
+              <p>
+                The name might be different, but the goal remains the same: a powerful yet flexible tool for building and maintaining museum exhibits. It's still free and open-source, built for the museum community by the community.
+              </p>
+              <H5>User management</H5>
+              <p>
+                Exhibitera 5 introduces a new user account system that enables administrators to restrict users to the tools specific to their role. Let educators create content without worrying that a mistake will affect the whole system. Give the maintenance team access to issue tracking without worrying about the schedule.
+              </p>
+              <H5>New ways to work with schedules</H5>
+              <p>
+                Create or download schedules as JSON or CSV files to work with them without having to use the web interface.
+              </p>
+              <H5>New tools for working with media</H5>
+              <p>
+                Media Player can now access files via URL and add dynamic text from JSON feeds. Users can now filter files in Media Browser with custom attributes. And new app preview layouts help ensure what you see is what your visitors will.
+              </p>
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -150,7 +166,7 @@
                     <div class="col d-flex flex-column justify-content-end">
                       <label class="form-label" for="editUserPermissionSettings">
                         Settings
-                        <span class="badge bg-danger ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Change fundamental Control Server settings, such as IP address or port." style="font-size: 0.55em; color: black">?</span>
+                        <span class="badge bg-danger ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Change fundamental Hub settings, such as IP address or port." style="font-size: 0.55em; color: black">?</span>
                       </label>
                       <select id="editUserPermissionSettings" class="form-select editUserField">
                         <option value="none">None</option>
@@ -537,7 +553,7 @@
                             <div class="col">
                               <label for="componentInfoModalBasicSettingsID" class="form-label">
                                 ID
-                                <span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Every Constellation component must have a unique ID." style="font-size: 0.55em; color: black">?</span>
+                                <span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Every Exhibitera component must have a unique ID." style="font-size: 0.55em; color: black">?</span>
                               </label>
                               <input id="componentInfoModalBasicSettingsID" class="form-control componentInfoBasicSetting" type="text">
                             </div>
@@ -553,7 +569,7 @@
                             <div class="col">
                               <label for="componentInfoModalSettingsAutoplayAudio" class="form-label">
                                 Audio
-                                <span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Allow Control Server to toggle audio auto-play." style="font-size: 0.55em; color: black">?</span>
+                                <span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Allow Hub to toggle audio auto-play." style="font-size: 0.55em; color: black">?</span>
                               </label>
                               <select class="form-select componentInfoSetting" id="componentInfoModalSettingsAutoplayAudio">
                                 <option value="true">Allow</option>
@@ -564,7 +580,7 @@
                             <div class="col">
                               <label for="componentInfoModalSettingsAllowRefresh" class="form-label">
                                 Refresh
-                                <span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Allow Control Server to reload the app view." style="font-size: 0.55em; color: black">?</span>
+                                <span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Allow Hub to reload the app view." style="font-size: 0.55em; color: black">?</span>
                               </label>
                               <select class="form-select componentInfoSetting" id="componentInfoModalSettingsAllowRefresh">
                                 <option value="true">Allow</option>
@@ -575,7 +591,7 @@
                             <div class="col">
                               <label for="componentInfoModalSettingsAllowRestart" class="form-label">
                                 Restart
-                                <span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Allow Control Server to restart the PC." style="font-size: 0.55em; color: black">?</span>
+                                <span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Allow Hub to restart the PC." style="font-size: 0.55em; color: black">?</span>
                               </label>
                               <select class="form-select componentInfoSetting" id="componentInfoModalSettingsAllowRestart">
                                 <option value="true">Allow</option>
@@ -586,7 +602,7 @@
                             <div class="col">
                               <label for="componentInfoModalSettingsAllowShutdown" class="form-label">
                                 Shutdown
-                                <span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Allow Control Server to shut down the PC. Make sure you have Wake-on-LAN configured if you want to remotely start the PC." style="font-size: 0.55em; color: black">?</span>
+                                <span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Allow Hub to shut down the PC. Make sure you have Wake-on-LAN configured if you want to remotely start the PC." style="font-size: 0.55em; color: black">?</span>
                               </label>
                               <select class="form-select componentInfoSetting" id="componentInfoModalSettingsAllowShutdown">
                                 <option value="true">Allow</option>
@@ -597,7 +613,7 @@
                             <div class="col">
                               <label for="componentInfoModalSettingsAllowSleep" class="form-label">
                                 Sleep
-                                <span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Allow Control Server to put the display to sleep." style="font-size: 0.55em; color: black">?</span>
+                                <span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Allow Hub to put the display to sleep." style="font-size: 0.55em; color: black">?</span>
                               </label>
                               <select class="form-select componentInfoSetting" id="componentInfoModalSettingsAllowSleep">
                                 <option value="true">Allow</option>
@@ -634,7 +650,7 @@
                         <div class="col col-6 col-sm-4 col-md-3">
                           <label for="componentInfoModalProjectorSettingsID" class="form-label">
                             ID
-                            <span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Every Constellation component must have a unique ID." style="font-size: 0.55em; color: black">?</span>
+                            <span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Every Exhibitera component must have a unique ID." style="font-size: 0.55em; color: black">?</span>
                           </label>
                           <input id="componentInfoModalProjectorSettingsID" class="form-control componentInfoProjectorSetting" type="text">
                         </div>
@@ -673,7 +689,7 @@
                         <div class="col col-6 col-md-4">
                           <label for="componentInfoModalStaticSettingsID" class="form-label">
                             ID
-                            <span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Every Constellation component must have a unique ID." style="font-size: 0.55em; color: black">?</span>
+                            <span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Every Exhibitera component must have a unique ID." style="font-size: 0.55em; color: black">?</span>
                           </label>
                           <input id="componentInfoModalStaticSettingsID" class="form-control componentInfoStaticSetting" type="text">
                         </div>
@@ -891,13 +907,13 @@
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-              <p>Control Server can manage network-connected projectors using the PJLink protocol. To connect a projector, you must first connect it via Ethernet, give it a static IP address, and activate PJLink on the projector.</p>
+              <p>Hub can manage network-connected projectors using the PJLink protocol. To connect a projector, you must first connect it via Ethernet, give it a static IP address, and activate PJLink on the projector.</p>
 
               <div class="row row-cols-2 gy-2">
                 <div class="col">
                   <label class="form-label" for="addProjectorModalIDField">
                     ID
-                    <span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" style="font-size: 0.55em; color: black" data-bs-original-title="Every component in Constellation must have a unique ID.">?</span>
+                    <span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" style="font-size: 0.55em; color: black" data-bs-original-title="Every component in Exhibitera must have a unique ID.">?</span>
                   </label>
                   <input id="addProjectorModalIDField" type="text" class="form-control">
                 </div>
@@ -947,13 +963,13 @@
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-              <p>Static components allow you to add non-Constellation exhibit elements to Control Server. This is useful for incorporating them into the maintenance tracking system.</p>
+              <p>Static components allow you to add non-Exhibitera exhibit elements to Hub. This is useful for incorporating them into the maintenance tracking system.</p>
 
               <div class="row">
                 <div class="col">
                   <label class="form-label" for="addStaticComponentModalIDField">
                     ID
-                    <span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" style="font-size: 0.55em; color: black" data-bs-original-title="Every component in Constellation must have a unique ID.">?</span>
+                    <span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" style="font-size: 0.55em; color: black" data-bs-original-title="Every component in Exhibitera must have a unique ID.">?</span>
                   </label>
                   <input id="addStaticComponentModalIDField" type="text" class="form-control">
                 </div>
@@ -989,13 +1005,13 @@
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-              <p>Control Server can send magic packets to activate wake on LAN. To set up a device, it must be connected via Ethernet and you must know the MAC address of the network adapter.</p>
+              <p>Hub can send magic packets to activate wake on LAN. To set up a device, it must be connected via Ethernet and you must know the MAC address of the network adapter.</p>
 
               <div class="row row-cols-2 gy-2">
                 <div class="col">
                   <label class="form-label" for="addWakeOnLANModalIDField">
                     ID
-                    <span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" style="font-size: 0.55em; color: black" data-bs-original-title="Every component in Constellation must have a unique ID.">?</span>
+                    <span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" style="font-size: 0.55em; color: black" data-bs-original-title="Every component in Exhibitera must have a unique ID.">?</span>
                   </label>
                   <input id="addWakeOnLANModalIDField" type="text" class="form-control">
                 </div>
@@ -1013,7 +1029,7 @@
                 <div class="col">
                   <label class="form-label" for="addWakeOnLANModalIPField">
                     IP address
-                    <span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" style="font-size: 0.55em; color: black" data-bs-original-title="If the device has a static IP address, add it here and Control Server will check if the device is online.">?</span>
+                    <span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" style="font-size: 0.55em; color: black" data-bs-original-title="If the device has a static IP address, add it here and Hub will check if the device is online.">?</span>
                   </label>
                   <input id="addWakeOnLANModalIPField" type="text" class="form-control">
                 </div>
@@ -1157,22 +1173,22 @@
                   <div class="row">
                     <div id="updateInfoModalControlServerInstructions" class="col-6 border-right border-secondary">
                       <H4>Installation instructions</H4>
-                      Follow these steps to update Control Server:
+                      Follow these steps to update Hub:
                       <ol>
                         <li>Click <i>Download update</i> and download the correct zipped update file for your operating system.</li>
-                        <li>Unzip the download to find the <code>control_server</code> executable.</li>
-                        <li>From the Control Server terminal window, press <code>Ctrl-c</code> to stop the server.</li>
+                        <li>Unzip the download to find the <code>Exhibitera_Hub</code> executable.</li>
+                        <li>From the Hub terminal window, press <code>Ctrl-c</code> to stop the server.</li>
                         <li>Replace the existing <code>control_server</code> file with the new one.</li>
-                        <li>Launch Control Server to complete the update.</li>
+                        <li>Launch Hub to complete the update.</li>
                       </ol>
-                      <strong>For best results, update Control Server and all its components at the same time.</strong>
+                      <strong>For best results, update Hub and all its components at the same time.</strong>
                     </div>
                     <div id="updateInfoModalAppsInstructions" class="col-6 border-right border-secondary">
                       <H4>Installation instructions</H4>
-                      Follow these steps to update Constellation Apps:
+                      Follow these steps to update Exhibitera Apps:
                       <ol>
                         <li>Click <i>Download update</i> and download the correct zipped update file for your operating system.</li>
-                        <li>Unzip the download to find the <code>Constellation_Apps</code> executable.</li>
+                        <li>Unzip the download to find the <code>Exhibitera_Apps</code> executable.</li>
                         <li>Close any app or terminal windows.</li>
                         <li>Replace the existing <code>Constellation_Apps</code> file with the new one.</li>
                         <li>Launch Constellation Apps to complete the update. You may need to restart your PC for the update to take full effect.</li>

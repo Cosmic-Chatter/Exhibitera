@@ -4,7 +4,7 @@ InfoStation provides a touchscreen interface for creating digital labels. It sup
 ## Configuration
 
 ### Choosing hardware
-InfoStation works best in **_Constellation's_** default, locally-installed mode. This means that it is best to run InfoStation on a Linux or Windows PC connected to the display that you want to use. 
+InfoStation works best in **_Exhibitera's_** default, locally-installed mode. This means that it is best to run InfoStation on a Linux or Windows PC connected to the display that you want to use. 
 
 Connecting to a remote instance (such as using an iPad) is supported, but, requires a stable network connection.
 

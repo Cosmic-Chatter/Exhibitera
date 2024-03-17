@@ -6,7 +6,7 @@ import * as exTools from './exhibitera_tools.js'
 import * as exUsers from './exhibitera_users.js'
 
 class BaseComponent {
-  // A basic Constellation component.
+  // A basic Exhibitera component.
 
   constructor (uuid, id, groups) {
     this.uuid = uuid
@@ -314,7 +314,7 @@ class BaseComponent {
 }
 
 class ExhibitComponent extends BaseComponent {
-  // A component representing an device running a Constellation App or using the API
+  // A component representing an device running a Exhibitera App or using the API
 
   constructor (uuid, id, groups) {
     super(uuid, id, groups)
@@ -373,15 +373,8 @@ class ExhibitComponent extends BaseComponent {
     if ('autoplay_audio' in update) {
       this.autoplay_audio = update.autoplay_audio
     }
-    if ('constellation_app_id' in update) {
-      // Deprecated in Exhibitera 5
-      this.exhibiteraAppId = update.constellation_app_id
-    }
     if ('definition' in update) {
       this.definition = update.definition
-    }
-    if ('exhibitera_app_id' in update) {
-      this.exhibiteraAppId = update.exhibitera_app_id
     }
     if ('helperAddress' in update) {
       this.helperAddress = update.helperAddress
@@ -1632,16 +1625,16 @@ export function submitDefinitionSelectionFromModal () {
 
   const definition = $('.definition-selected').data('definition')
   const id = $('#componentInfoModal').data('id')
+  const componentUUID = $('#componentInfoModal').data('uuid')
 
+  // Exhibitera 5 starts the transition from ID to UUID
   exTools.makeServerRequest({
     method: 'POST',
     endpoint: '/component/' + id + '/setDefinition',
-    params: { uuid: definition.uuid }
-  })
-  exTools.makeServerRequest({
-    method: 'POST',
-    endpoint: '/component/' + id + '/setApp',
-    params: { app_name: definition.app }
+    params: {
+      component_uuid: componentUUID,
+      definition_uuid: definition.uuid
+    }
   })
   document.getElementById('componentInfoModalDefinitionSaveButton').style.display = 'none'
 }

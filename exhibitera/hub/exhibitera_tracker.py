@@ -1,4 +1,4 @@
-"""Functions enabling the Constellation Flexible Tracker and Flexible Voter"""
+"""Functions enabling the Exhibitera Flexible Tracker."""
 
 # Standard modules
 import configparser
@@ -9,7 +9,7 @@ import logging
 import os
 from typing import Union
 
-# Constellation modules
+# Exhibitera modules
 import config
 import exhibitera_tools as c_tools
 

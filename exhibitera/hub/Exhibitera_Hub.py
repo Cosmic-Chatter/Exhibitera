@@ -85,7 +85,6 @@ def send_webpage_update():
     component_dict_list = []
     for item in ex_config.componentList:
         temp = {"class": "exhibitComponent",
-                "constellation_app_id": item.config["app_name"],
                 "helperAddress": item.helperAddress,
                 "id": item.id,
                 "ip_address": item.ip_address,
@@ -224,7 +223,7 @@ def command_line_setup() -> None:
     ex_tools.write_json(settings_dict, config_path)
 
     command_line_setup_print_gui()
-    print("Setup is complete! Control Server will now start.")
+    print("Setup is complete! Exhibitera Hub will now start.")
     print("")
 
 
@@ -507,6 +506,7 @@ def change_user_password(user_uuid: str,
 
     return {"success": True}
 
+
 # Exhibit component actions
 
 class Exhibit(BaseModel):
@@ -567,23 +567,15 @@ async def edit_component(request: Request,
     return {"success": True}
 
 
-@app.post("/component/{component_id}/setApp")
-async def set_component_app(component_id: str,
-                            app_name: str = Body(description="The app to be set.", embed=True)):
-    """Set the app for the component."""
-
-    ex_exhibit.update_exhibit_configuration(component_id, {"app_name": app_name})
-
-    return {"success": True}
-
-
 @app.post("/component/{component_id}/setDefinition")
 async def set_component_definition(component_id: str,
-                                   uuid: str = Body(description="The UUID of the definition file to be set.",
-                                                    embed=True)):
+                                   component_uuid: str = Body(description="The UUID of the component to modify."),
+                                   definition_uuid: str = Body(description="The UUID of the definition file to be set.")):
     """Set the definition for the component."""
 
-    ex_exhibit.update_exhibit_configuration(component_id, {"definition": uuid})
+    ex_exhibit.update_exhibit_configuration({"definition": definition_uuid},
+                                            component_id=component_id,
+                                            component_uuid=component_uuid)
 
     return {"success": True}
 
@@ -718,16 +710,6 @@ async def set_exhibit(exhibit: Exhibit = Body(embed=True)):
     # Update the components that the configuration has changed
     for component in ex_config.componentList:
         component.update_configuration()
-    return {"success": True, "reason": ""}
-
-
-@app.post("/exhibit/setComponentApp")
-async def set_component_app(component: ExhibitComponent,
-                            app_name: str = Body(description="The app to be set")):
-    """Change the active app for the given exhibit component."""
-
-    print(f"Changing app for {component.id}:", app_name)
-    ex_exhibit.update_exhibit_configuration(component.id, {"app_name": app_name})
     return {"success": True, "reason": ""}
 
 
@@ -1471,7 +1453,8 @@ async def convert_schedule(
 
 @app.post("/schedule/create")
 async def create_schedule(request: Request,
-                          entries: dict[str, dict] = Body(description="A dict of dicts that each define one entry in the schedule."),
+                          entries: dict[str, dict] = Body(
+                              description="A dict of dicts that each define one entry in the schedule."),
                           name: str = Body(description="The name for the schedule to be created.")):
     """Create a new schedule from an uploaded CSV file"""
 
@@ -1696,7 +1679,7 @@ async def update_schedule(
 
 @app.get("/system/getVersion")
 async def get_version():
-    """Return the current version of Control Server"""
+    """Return the current version of Hub"""
 
     return {"success": True, "version": ex_config.software_version}
 
@@ -1868,7 +1851,7 @@ if __name__ == "__main__":
     if ex_config.debug:
         log_level = "debug"
 
-    print(f"Launching Control Server for {ex_config.gallery_name}.")
+    print(f"Launching Exhibitera Hub for {ex_config.gallery_name}.")
     print(f"To access the server, visit http://{ex_config.ip_address}:{ex_config.port}")
 
     # Must use only one worker, since we are relying on the config module being in global

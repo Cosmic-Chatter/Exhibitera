@@ -325,7 +325,7 @@ async def load_definition(this_uuid: str):
 async def send_defaults(config: const_config = Depends(get_config)):
     config_to_send = config.defaults.copy()
 
-    # Add the current update availability to pass to the control server
+    # Add the current update availability to pass to Hub
     config_to_send["software_update"] = config.software_update
 
     config_to_send["availableContent"] = \

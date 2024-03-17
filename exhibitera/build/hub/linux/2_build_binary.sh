@@ -14,14 +14,14 @@ pyinstaller --clean --onefile  \
 			--add-data "tracker.js:." \
 			--add-data "config.js:." \
 			--add-data "version.txt:." \
-			--add-data "constellation_dmx.js:." \
-			--add-data "constellation_exhibit.js:." \
-			--add-data "constellation_issues.js:." \
-			--add-data "constellation_maintenance.js:." \
-			--add-data "constellation_projector.js:." \
-			--add-data "constellation_schedule.js:." \
-			--add-data "constellation_tools.js:." \
-			--add-data "constellation_tracker.js:." \
+			--add-data "exhibitera_dmx.js:." \
+			--add-data "exhibitera_exhibit.js:." \
+			--add-data "exhibitera_issues.js:." \
+			--add-data "exhibitera_maintenance.js:." \
+			--add-data "exhibitera_projector.js:." \
+			--add-data "exhibitera_schedule.js:." \
+			--add-data "exhibitera_tools.js:." \
+			--add-data "exhibitera_tracker.js:." \
 			--add-data "README.md:." \
 			--add-data "css/*:./css/." \
 			--add-data "css/bootstrap_5_3/*:./css/bootstrap_5_3/." \
@@ -29,4 +29,4 @@ pyinstaller --clean --onefile  \
 			--add-data "js/*:./js/." \
 			--add-data "icon/*:./icon/." \
 			--add-data "images/*:./images/." \
-		control_server.py
+		Exhibitera_Hub.py

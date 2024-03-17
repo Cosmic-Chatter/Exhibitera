@@ -15,7 +15,7 @@ from typing import Any, Union
 from PIL import ImageGrab
 from PIL.Image import Image
 
-# Constellation modules
+# Exhibitera modules
 import config
 import helper_files
 
@@ -213,10 +213,10 @@ def handle_missing_defaults_file():
 
     command_line_setup_print_gui()
 
-    print("--- Control Server ---")
+    print("--- Exhibitera Hub ---")
     print("")
-    print("Constellation Control Server helps you configure and control multiple")
-    print("interactives from anywhere in your museum. With Control Server, you can:")
+    print("Exhibitera Hub helps you configure and control multiple")
+    print("interactives from anywhere in your museum. With Hub, you can:")
     print("  - See the status of every interactive using Apps.")
     print("  - Power on or off many types of projectors.")
     print("  - Create daily schedules that automatically power on or off devices, change")
@@ -225,7 +225,7 @@ def handle_missing_defaults_file():
     print("  - Track exhibit maintenance.")
     print("")
 
-    control_server = input("Use Control Server [Y/N] (default: N): ").strip()
+    control_server = input("Use Hub [Y/N] (default: N): ").strip()
     if control_server.lower() == "y":
         defaults["system"]["standalone"] = False
     else:
@@ -234,12 +234,12 @@ def handle_missing_defaults_file():
     if defaults["system"]["standalone"] is False:
         command_line_setup_print_gui()
 
-        print("--- Control Server ---")
+        print("--- Exhibitera Hub ---")
         print("")
-        ip = input("Enter the Control Server's static IP address (default=localhost): ").strip()
+        ip = input("Enter the Hub's static IP address (default=localhost): ").strip()
         if ip == "":
             ip = "localhost"
-        port = input("Enter the Control Server's port (default=8082): ").strip()
+        port = input("Enter the Hub's port (default=8082): ").strip()
         if port == "":
             port = 8082
         defaults["hub"]["ip_address"] = ip
@@ -262,7 +262,7 @@ def handle_missing_defaults_file():
         command_line_setup_print_gui()
         print("--- Component Details ---")
         print("")
-        print(" Since we're using Control Server, we need to identify this component. Each app")
+        print(" Since we're using Hub, we need to identify this component. Each app")
         print("instance needs:")
         print("  - An ID, which uniquely identifies this component. A good ID might be")
         print("    something like 'Sports Intro Video'.")
@@ -283,7 +283,7 @@ def handle_missing_defaults_file():
 
         print("--- Screenshots ---")
         print("")
-        print("Through the web console on Constellation Control Server, you can peek at the")
+        print("Through the web console on Exhibitera Hub, you can peek at the")
         print("current state of the app by viewing a screenshot. These screenshots are  not")
         print("stored and never leave your local network.")
         print("")

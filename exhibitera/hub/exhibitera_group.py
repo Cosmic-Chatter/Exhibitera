@@ -4,7 +4,7 @@ import time
 from typing import Any
 import uuid
 
-# Constellation imports
+# Exhibitera imports
 import config
 import exhibitera_tools as c_tools
 

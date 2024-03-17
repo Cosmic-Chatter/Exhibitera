@@ -148,7 +148,7 @@ export function openMediaInNewTab (filenames, fileTypes) {
           -webkit-user-select: none;
         }
       </style>
-      <title>Control Server Media Viewer</title>
+      <title>Exhibitera Hub Media Viewer</title>
     </head>
     <body style="margin: 0px">
   `
@@ -241,9 +241,9 @@ export function rebuildNotificationList () {
       let notification
       if (itemError === 'software_update') {
         if (item === '__control_server') {
-          const labelName = 'Control Server: Software update available'
+          const labelName = 'Hub: Software update available'
           notification = createNotificationHTML(labelName, 'update')
-          notification.addEventListener('click', notification.addEventListener('click', () => { showUpdateInfoModal('Control Server', 'control_server', exConfig.errorDict[item].software_update) }))
+          notification.addEventListener('click', notification.addEventListener('click', () => { showUpdateInfoModal('Hub', 'control_server', exConfig.errorDict[item].software_update) }))
         } else {
           const labelName = item + ': Software update available'
           notification = createNotificationHTML(labelName, 'update')

@@ -7,7 +7,7 @@ to aid in deprecating them.
 # Standard imports
 import os
 
-# Constellation imports
+# Exhibitera imports
 import config
 import exhibitera_exhibit as c_exhibit
 import exhibitera_maintenance as c_maint

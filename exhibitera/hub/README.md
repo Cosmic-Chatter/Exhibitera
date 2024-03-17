@@ -1,10 +1,10 @@
-# Control Server
+# Exhibitera Hub
 
 ## Introduction
 
 <img src="images/Components_overview_tab.png" style="width: 50%; float: right; border: 2px solid gray; margin: 5px;"></img>
 
-Control Server coordinates communication between Constellation components and provides a web-based interface for controlling them. It also provides tools for collecting qualitative and quantitative data, tracking maintenance, and logging exhibit issues.
+Hub coordinates communication between Exhibitera components and provides a web-based interface for controlling them. It also provides tools for collecting qualitative and quantitative data, tracking maintenance, and logging exhibit issues.
 
 
 ## Terminology
@@ -17,36 +17,36 @@ Control Server coordinates communication between Constellation components and pr
 * `id`: A unique identifier for a given `component`. No two components can have the same `id`.
 * `group`: A user-defined grouping of components. For example, if you have multiple screens each displaying similar information, you might assign them all the group of "INFO SCREEN". Groups allow you to send the same command to multiple devices. Every component must have a group.
 
-## Setting up Control Server
+## Setting up Hub
 
 ### Configuring your environment
-Many Constellation components will lose functionality if they cannot connect to Control Server. Thus, it is paramount that Control Server runs in a computing environment that is as stable as possible.
+Many Exhibitera components will lose functionality if they cannot connect to Hub. Thus, it is paramount that Control Server runs in a computing environment that is as stable as possible.
 
 #### Environment requirements
 * A static IP address.
-* On Windows, some secondary functionality requires running Control Server with administrator privileges.
+* On Windows, some secondary functionality requires running Hub with administrator privileges.
 
 #### Environment recommendations
 * A wired network connection is important to ensure a consistent connection.
-* No aspect of Constellation requires access to the public internet (except checking for updates), although Control Server should be on a machine with accurate network time.
+* No aspect of Exhibitera requires access to the public internet (except checking for updates), although Control Server should be on a machine with accurate network time.
 
 ### First-time setup
-The first time you launch Control Server, the terminal will launch an interactive setup wizard to walk you through basic configuration.
+The first time you launch Hub, the terminal will launch an interactive setup wizard to walk you through basic configuration.
 
 Once the wizard has completed, the server will start. After this point, all configuration will take place via the web console.
 
 ### Connecting to the web console
-To access the web console from any device on the same subnet, open a browser and enter `http://[static_ip]:[port]`. Note that **_Constellation_** does not support HTTPS.
+To access the web console from any device on the same subnet, open a browser and enter `http://[static_ip]:[port]`. Note that **_Exhibitera_** does not support HTTPS.
 
 For example, if your static IP is `10.8.2.100`, and your port is the default `8082`, your web address would be `http://10.8.2.100:8082`. You can bookmark this address for future access.
 
 ### Configuration
-Basic settings, such as the IP address and port, can be configured from the _Settings_ tab. These settings may require Control Server to be restarted before they take effect.
+Basic settings, such as the IP address and port, can be configured from the _Settings_ tab. These settings may require Hub to be restarted before they take effect.
 
-Control Server enables you to manage and track several types of devices beyond the apps provided by Constellation Apps. These include projectors, PCs configured to respond to Wake on LAN requests, as well as a category for generic items. To add one of these items, click the _Add_ button on the _Components_ tab.
+Hub enables you to manage and track several types of devices beyond the apps provided by Exhibitera Apps. These include projectors, PCs configured to respond to Wake on LAN requests, as well as a category for generic items. To add one of these items, click the _Add_ button on the _Components_ tab.
 
 #### Controlling projectors
-Control Server can manage projectors over IP using the PJLink protocol.
+Hub can manage projectors over IP using the PJLink protocol.
 
 The PJLink protocol returns a defined set of information about the state of the connected projector. Each manufacturer implements the protocol slightly differently, so the available information may vary marginally.
 
@@ -54,13 +54,13 @@ To configure a PJLink projector, it should have a static IP address. Some projec
 
 #### Wake on LAN
 
-Control Server can send Wake on LAN magic packets to power on machines connected to its network. 
+Hub can send Wake on LAN magic packets to power on machines connected to its network. 
 
-To configure a component for Wake on LAN, you must specify its MAC address. If the given machine has a static IP address, you can also provide it. Control Server will ping that address at intervals to check if the machine is powered on. **To send pings on Windows, you must run Control Server with administrator privileges.**
+To configure a component for Wake on LAN, you must specify its MAC address. If the given machine has a static IP address, you can also provide it. Hub will ping that address at intervals to check if the machine is powered on. **To send pings on Windows, you must run Hub with administrator privileges.**
 
 #### Static Components
 
-In order to view the real-time status of a component, it must be either running Constellation Apps or sending pings that conform to the API. However, non-Constellation components can be added in order to make use of the maintenance tracking system.
+In order to view the real-time status of a component, it must be either running Exhibitera Apps or sending pings that conform to the API. However, non-Exhibitera components can be added in order to make use of the maintenance tracking system.
 
 ## Using the web console
 
@@ -86,7 +86,7 @@ The default view option is the real-time status of each component. The possible 
 | OFFLINE   | Component is not responding                                                                                                    | Projector is not responding              | WoL system is not responding                                                              |
 | STANDBY   | -                                                                                                                              | Projector is responding, but powered off | -                                                                                         |
 | STATIC    | Component has been added for maintenance tracking purposes.                                                                    | -                                        | -                                                                                         |
-| SYSTEM ON | The computer is on, but no Constellation software is responding.                                                               | -                                        | The WoL system is responding to pings                                                     |
+| SYSTEM ON | The computer is on, but no Exhibitera software is responding.                                                               | -                                        | The WoL system is responding to pings                                                     |
 | WAITING   | The component was recently ONLINE. There may only be a temporary connectivity issue.  This is common if a display is sleeping. | -                                        | -                                                                                         |
 | UNKNOWN   | -                                                                                                                              | -                                        | No IP address was supplied for this WoL system, so we cannot ping it to check its status. |
 
@@ -150,7 +150,7 @@ The _Maintenance_ tab organizes information about the current state of the galle
 
 #### Issues
 
-Issues enable you to track ongoing problems with galleries and components. You can attach images and videos to clarify the concern, connect it with a Constellation component, and assign the task to one or more staff members.
+Issues enable you to track ongoing problems with galleries and components. You can attach images and videos to clarify the concern, connect it with a Exhibitera component, and assign the task to one or more staff members.
 
 Known issues can be filtered by priority and who they are assigned to. Any issues attached to a given component will also appear on the component status view. Once a fix has been made, the issue can be marked as complete. This deletes any attached media and archives the issue for later reference.
 
@@ -186,9 +186,9 @@ With the left and right arrows, you can reorder how the widgets will appear. Bec
 
 ### Recording data
 
-To use Flexible Tracker for data collection, select your desired template from the web console settings view and click the _Launch_ button. All available templates will be available from the dropdown list. Once you are ready to send a session (one set of observations), press the Record button. This will transmit the data to Control Server for storage. Please note that a network connection to the server is required to send data; if such a connection is not available, a popup will appear and the Record button will be disabled.
+To use Flexible Tracker for data collection, select your desired template from the web console settings view and click the _Launch_ button. All available templates will be available from the dropdown list. Once you are ready to send a session (one set of observations), press the Record button. This will transmit the data to Hub for storage. Please note that a network connection to the server is required to send data; if such a connection is not available, a popup will appear and the Record button will be disabled.
 
-Data are stored in Control Server under `flexible-tracker/data/<template name>.txt`. Each row is a single JSON object representing one session.
+Data are stored in Hub under `flexible-tracker/data/<template name>.txt`. Each row is a single JSON object representing one session.
 
 ### Downloading and managing data
 
