@@ -1,5 +1,6 @@
 # Standard modules
 import datetime
+import getpass
 import os.path
 from typing import Any
 import uuid
@@ -210,11 +211,11 @@ def check_for_root_admin():
         match = False
         while match is False:
             while pass1.strip() == "":
-                pass1 = input("Enter password: ").strip()
+                pass1 = getpass.getpass(prompt="Enter password: ").strip()
                 if pass1 == "":
                     print("Password cannot be blank!")
             while pass2.strip() == "":
-                pass2 = input("Re-enter password to confirm: ").strip()
+                pass2 = getpass.getpass(prompt="Re-enter password to confirm: ").strip()
             if pass1 == pass2:
                 match = True
             else:

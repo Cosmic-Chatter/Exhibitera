@@ -1107,6 +1107,7 @@ def create_config():
 
         webview.start(func=bootstrap_app, args=available_port)
 
+
 if __name__ == "__main__":
     defaults_path = helper_files.get_path(['configuration', 'config.json'], user_file=True)
     if os.path.exists(defaults_path):
@@ -1132,7 +1133,7 @@ if __name__ == "__main__":
             print(f"Starting Exhibitera Apps on port {const_config.defaults['system']['port']}.")
         else:
             print(
-                f"Starting Exhibitera Apps for ID {const_config.defaults['app']['id']} of group {const_config.defaults['app']['group']} on port {const_config.defaults['system']['port']}.")
+                f"Starting Exhibitera Apps for ID {const_config.defaults['app']['id']} on port {const_config.defaults['system']['port']}.")
     else:
         # We need to create a config.json file based on user input.
         create_config()

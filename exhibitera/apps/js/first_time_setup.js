@@ -9,7 +9,7 @@ function pageForward (current) {
   } else if (current === 'control-server') {
     let moveOn = false
     const thisPage = document.getElementById('control-server')
-    const nextPage = document.getElementById('remote-display')
+    let nextPage
     const warning = document.getElementById('controlServerDetailsWarning')
 
     if (document.getElementById('useControlServerToggle').checked === true) {
@@ -17,11 +17,31 @@ function pageForward (current) {
         warning.style.display = 'block'
       } else {
         moveOn = true
+        nextPage = document.getElementById('hub-auth')
         warning.style.display = 'none'
+        document.getElementById('hub-auth-success').style.display = 'none'
+        document.getElementById('hub-auth-insufficient').style.display = 'none'
+        document.getElementById('hub-auth-failure').style.display = 'none'
+        document.getElementById('hub-auth-bad').style.display = 'none'
       }
     } else {
       moveOn = true
+      nextPage = document.getElementById('remote-display')
+
       warning.style.display = 'none'
+    }
+    if (moveOn === true) {
+      thisPage.style.display = 'none'
+      nextPage.style.display = 'block'
+    }
+  } else if (current === 'hub-auth') {
+    let moveOn = false
+    const thisPage = document.getElementById('hub-auth')
+    const nextPage = document.getElementById('remote-display')
+
+    if (document.getElementById('hub-auth').getAttribute('data-authenticated') === 'true') {
+      // Successfully authenticated
+      moveOn = true
     }
     if (moveOn === true) {
       thisPage.style.display = 'none'
@@ -39,9 +59,8 @@ function pageForward (current) {
   } else if (current === 'basic-settings') {
     let moveOn = false
     const IDInput = document.getElementById('IDInput')
-    const groupInput = document.getElementById('groupInput')
     const warning = document.getElementById('basicSettingsWarning')
-    if (IDInput.value.trim() === '' || groupInput.value.trim() === '') {
+    if (IDInput.value.trim() === '') {
       warning.style.display = 'block'
     } else {
       moveOn = true
@@ -82,7 +101,6 @@ function populateSummary () {
   }
   // Basic settings
   document.getElementById('summaryID').innerHTML = document.getElementById('IDInput').value.trim()
-  document.getElementById('summaryGroup').innerHTML = document.getElementById('groupInput').value.trim()
   if (document.getElementById('useControlServerToggle').checked === false) {
     document.getElementById('summaryBasicSettings').style.display = 'none'
   } else {
@@ -96,6 +114,9 @@ function pageBack (current) {
   if (current === 'control-server') {
     document.getElementById('control-server').style.display = 'none'
     document.getElementById('welcome').style.display = 'block'
+  } else if (current === 'hub-auth') {
+    document.getElementById('control-server').style.display = 'block'
+    document.getElementById('hub-auth').style.display = 'none'
   } else if (current === 'remote-display') {
     document.getElementById('remote-display').style.display = 'none'
     document.getElementById('control-server').style.display = 'block'
@@ -136,6 +157,53 @@ function onUseRemoteDisplayToggle () {
   }
 }
 
+function authenticateUser () {
+  // Use the provided user credentials to log in to Hub and confirm the user
+  // has the required permission.
+
+  const user = document.getElementById('loginUsername').value.trim()
+  const password = document.getElementById('loginPassword').value
+  const hubIP = document.getElementById('controlServerIPInput').value
+  const hubPort = document.getElementById('controlServerPortInput').value
+  const serverAddress = 'http://' + hubIP + ':' + hubPort
+
+  const successMsg = document.getElementById('hub-auth-success')
+  const permissionMsg = document.getElementById('hub-auth-insufficient')
+  const failureMsg = document.getElementById('hub-auth-failure')
+  const badConnectionMsg = document.getElementById('hub-auth-bad')
+
+  exCommon.makeRequest({
+    method: 'POST',
+    url: serverAddress,
+    endpoint: '/user/login',
+    params: { credentials: [user, password] }
+  })
+    .then((response) => {
+      if ('success' in response && response.success === true) {
+        failureMsg.style.display = 'none'
+        badConnectionMsg.style.display = 'none'
+        if (response.user.permissions.settings === 'edit') {
+          successMsg.style.display = 'block'
+          permissionMsg.style.display = 'none'
+          document.getElementById('hub-auth').setAttribute('data-authenticated', 'true')
+        } else {
+          successMsg.style.display = 'none'
+          permissionMsg.style.display = 'block'
+        }
+      } else {
+        successMsg.style.display = 'none'
+        permissionMsg.style.display = 'none'
+        failureMsg.style.display = 'block'
+      }
+    })
+    .catch(() => {
+      badConnectionMsg.style.display = 'block'
+      successMsg.style.display = 'none'
+      permissionMsg.style.display = 'none'
+      failureMsg.style.display = 'none'
+    })
+}
+
 function submitSettings () {
   // Collect the settings configured by the wizard and send them to the helper.
   const settings = {
@@ -146,7 +214,6 @@ function submitSettings () {
   }
   if (document.getElementById('useControlServerToggle').checked === true) {
     settings.system.standalone = false
-    settings.app.group = document.getElementById('groupInput').value.trim()
     settings.app.id = document.getElementById('IDInput').value.trim()
     settings.control_server.ip_address = document.getElementById('controlServerIPInput').value.trim()
     settings.control_server.port = parseInt(document.getElementById('controlServerPortInput').value.trim()) || 8082
@@ -188,6 +255,7 @@ Array.from(document.querySelectorAll('.back-button')).forEach((el) => {
 })
 document.getElementById('useControlServerToggle').addEventListener('change', onUseControlServerToggle)
 document.getElementById('useRemoteDisplayToggle').addEventListener('change', onUseRemoteDisplayToggle)
+document.getElementById('loginSubmitButton').addEventListener('click', authenticateUser)
 
 // Set color mode
 if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {

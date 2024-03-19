@@ -93,6 +93,55 @@
             </div>
           </div>
         </div>
+
+        <!-- Hub authentication check -->
+        <div id="hub-auth" class="col-12 wizard-pane" style="display: none;">
+          <div class="alert alert-primary">
+            <div class="h5 text-center">Log into Hub</div>
+            <p>
+              Log in to confirm that you have permission to add components to Hub.
+            </p>
+            <div class="row gy-2">
+              <div class="col-4">
+                <label for="loginUsername" class="form-label">Username</label>
+                <input type="text" class="form-control" id="loginUsername">  
+              </div>
+              <div class="col-4">
+                <label for="loginPassword" class="form-label">Password</label>
+                <input type="password" class="form-control" id="loginPassword">  
+              </div>
+              <div class="col-3 d-flex align-items-end">
+                <button id="loginSubmitButton" class="btn btn-primary w-100">Log in</button>
+              </div>
+              <div id="hub-auth-success" class="col-12" style="display: none;">
+                <div class="alert alert-success text-center">
+                  Successfully authenticated!
+                </div>
+              </div>
+              <div id="hub-auth-insufficient" class="col-12" style="display: none;">
+                <div class="alert alert-warning text-center">
+                  This user has insufficient permissions. The user must have the <i>Settings</i> permission of <i>edit</i>. 
+                </div>
+              </div>
+              <div id="hub-auth-failure" class="col-12" style="display: none;">
+                <div class="alert alert-danger text-center">
+                  The username or password is incorrect.
+                </div>
+              </div>
+              <div id="hub-auth-bad" class="col-12" style="display: none;">
+                <div class="alert alert-danger text-center">
+                  Cannot connect to Exhibitera Hub. Make sure the IP address and port are correct, and that Hub is running.
+                </div>
+              </div>
+            </div>
+
+            <div class="text-center mt-3">
+              <button data-page="hub-auth" class="btn btn-secondary back-button me-3">Back</button>
+              <button data-page="hub-auth" class="btn btn-success next-button ms-3">Next</button>
+            </div>
+          </div>
+        </div>
+
         <!-- Remote display -->
         <div id="remote-display" class="col-12 wizard-pane" style="display: none;">
           <div class="alert alert-primary">
@@ -130,13 +179,7 @@
           <div class="alert alert-primary">
             <div class="h5 text-center">What should we call this component?</div>
             <p>
-              Since we're using Hub, we need to identify this component. Each app instance needs:
-            </p>
-            <p>
-              An <b>ID</b>, which uniquely identifies this component. A good ID might be something like <i>Sports Intro Video</i>.
-            </p>
-            <p>
-              A <b>group</b>, which collects together related components. You might choose to group by gallery, such as <i>Sports Gallery</i>, by purpose, like <i>Video</i>, or something else.
+              Since we're using Hub, we need to identify this component. Each app instance needs an <b>ID</b>, which uniquely identifies this component. A good ID might be something like <i>Sports Intro Video</i>.
             </p>
             <div class="row mt-4">
               <div class="col-6">
@@ -145,14 +188,8 @@
                   <label for="IDInput">ID</label>
                 </div>
               </div>
-              <div class="col-6">
-                <div class="form-floating">
-                  <input type="text" class="form-control" id="groupInput" placeholder="Group">
-                  <label for="groupInput">Group</label>
-                </div>
-              </div>
               <div id="basicSettingsWarning" class="col-12 mt-3 text-warning" style="display: none;">
-                You must enter both an ID and a group for this component.
+                You must enter an ID for this component.
               </div>
             </div>
             
@@ -190,8 +227,6 @@
               <div class="h6">Identification</div>
               <p>
                 <b>ID:</b> <span id="summaryID"></span>
-                <br>
-                <b>Group:</b> <span id="summaryGroup"></span>
               </p>
             </div>
             <div class="text-center mt-3">

@@ -2,6 +2,8 @@
 import copy
 import errno
 import functools
+import getpass
+
 import psutil
 import os
 import socket
@@ -14,6 +16,7 @@ from typing import Any, Union
 # Non-standard modules
 from PIL import ImageGrab
 from PIL.Image import Image
+import requests
 
 # Exhibitera modules
 import config
@@ -199,7 +202,7 @@ def handle_missing_defaults_file():
 
     defaults = {
         "app": {},
-        "hub": {},
+        "control_server": {},
         "permissions": {},
         "system": {
             "remote_display": True
@@ -232,18 +235,48 @@ def handle_missing_defaults_file():
         defaults["system"]["standalone"] = True
 
     if defaults["system"]["standalone"] is False:
-        command_line_setup_print_gui()
+        while True:
+            command_line_setup_print_gui()
+            print("--- Exhibitera Hub ---")
+            print("")
+            ip = input("Enter Hub's static IP address (default=localhost): ").strip()
+            if ip == "":
+                ip = "localhost"
+            port = input("Enter Hub's port (default=8082): ").strip()
+            if port == "":
+                port = 8082
+            defaults["control_server"]["ip_address"] = ip
+            defaults["control_server"]["port"] = int(port)
 
-        print("--- Exhibitera Hub ---")
-        print("")
-        ip = input("Enter the Hub's static IP address (default=localhost): ").strip()
-        if ip == "":
-            ip = "localhost"
-        port = input("Enter the Hub's port (default=8082): ").strip()
-        if port == "":
-            port = 8082
-        defaults["hub"]["ip_address"] = ip
-        defaults["hub"]["port"] = int(port)
+            command_line_setup_print_gui()
+            print("--- Exhibitera Hub ---")
+            print("")
+            print('Log in to confirm that you have permission to add components to Hub.')
+            user = input('Username: ').strip()
+            password = getpass.getpass(prompt="Password: ")
+            try:
+                result = requests.post(f"http://{ip}:{port}/user/login", json={"credentials": (user, password)}).json()
+
+                if result.get("success", False) is True:
+                    # Check if user has required permission
+                    if result["user"]["permissions"]["settings"] == 'edit':
+                        break
+                    print("This user has insufficient permissions. The user must have the Settings")
+                    print("permission of 'edit'. ")
+                    choice = input("Try again (Y) or continue without Hub (N)? (default: Y): ").strip()
+                    if choice != "" and choice != "Y":
+                        break
+                else:
+                    print("The username or password is incorrect.")
+                    choice = input("Try again (Y) or continue without Hub (N)? (default: Y): ").strip()
+                    if choice != "" and choice != "Y":
+                        break
+            except requests.exceptions.ConnectionError:
+                print("Cannot connect to Exhibitera Hub. Make sure the IP address and port are correct,")
+                print("and that Hub is running.")
+                choice = input("Try again (Y) or continue without Hub (N)? (default: Y): ").strip()
+                if choice != "" and choice != "Y":
+                    break
 
     command_line_setup_print_gui()
 
@@ -263,21 +296,13 @@ def handle_missing_defaults_file():
         print("--- Component Details ---")
         print("")
         print(" Since we're using Hub, we need to identify this component. Each app")
-        print("instance needs:")
-        print("  - An ID, which uniquely identifies this component. A good ID might be")
-        print("    something like 'Sports Intro Video'.")
-        print("  - A group, which collects together related components. You might choose to")
-        print("    group by gallery, such as 'Sports Gallery', by purpose, like 'Video', or")
-        print("    something else.")
+        print("instance needs an ID, which uniquely identifies this component.")
+        print("A good ID might be something like 'Sports Intro Video'.")
 
         this_id = ""
         while this_id == "":
             this_id = input("Enter ID: ").strip()
-        group = ""
-        while group == "":
-            group = input("Enter group: ").strip()
         defaults["app"]["id"] = this_id
-        defaults["app"]["group"] = group
 
         command_line_setup_print_gui()
 
