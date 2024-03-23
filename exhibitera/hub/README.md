@@ -15,7 +15,7 @@ Hub coordinates communication between Exhibitera components and provides a web-b
 * `content`: Files such as text, images, videos, or spreadsheets that make up a `definition`.
 * `definition`: The specific configuration of a given `component`, made up of `content` and settings.
 * `id`: A unique identifier for a given `component`. No two components can have the same `id`.
-* `group`: A user-defined grouping of components. For example, if you have multiple screens each displaying similar information, you might assign them all the group of "INFO SCREEN". Groups allow you to send the same command to multiple devices. Every component must have a group.
+* `group`: A user-defined grouping of components. For example, if you have multiple screens each displaying similar information, you might assign them all the group of "Info Screen". Groups allow you to send the same command to multiple devices.
 
 ## Setting up Hub
 
