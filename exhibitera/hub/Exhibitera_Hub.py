@@ -302,23 +302,30 @@ def check_for_software_update() -> None:
     """Download the version.txt file from GitHub and check if there is an update"""
 
     print("Checking for update... ", end="")
+    ex_config.software_update_available = False
     try:
         for line in urllib.request.urlopen(
-                "https://raw.githubusercontent.com/Cosmic-Chatter/Constellation/main/control_server/version.txt"):
-            if float(line.decode('utf-8')) > ex_config.software_version:
+                "https://raw.githubusercontent.com/Cosmic-Chatter/Exhibitera/main/exhibitera/hub/version.txt"):
+            line_str = line.decode('utf-8')
+            if float(line_str) > ex_config.software_version:
                 ex_config.software_update_available = True
-                ex_config.software_update_available_version = line.decode('utf-8').strip()
+                ex_config.software_update_available_version = line_str.strip()
                 break
     except urllib.error.HTTPError:
         print("cannot connect to update server")
-        return
     except urllib.error.URLError:
         print("cannot connect to update server")
-        return
     if ex_config.software_update_available:
         print("update available!")
     else:
         print("the server is up to date.")
+
+    # Reset the timer to check for an update tomorrow
+    if ex_config.software_update_timer is not None:
+        ex_config.software_update_timer.cancel()
+    ex_config.software_update_timer = threading.Timer(86400, check_for_software_update)
+    ex_config.software_update_timer.daemon = True
+    ex_config.software_update_timer.start()
 
 
 # Check whether we have packaged with Pyinstaller and set the appropriate root path.

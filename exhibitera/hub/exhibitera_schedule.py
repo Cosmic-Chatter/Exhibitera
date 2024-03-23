@@ -199,7 +199,6 @@ def queue_json_schedule(schedule: dict) -> None:
             elif event["time_in_seconds"] == (config.json_next_event[0])["time_in_seconds"]:
                 config.json_next_event.append(event)
 
-            # print("scheduling timer: ", event)
             timer = threading.Timer(seconds_from_now,
                                     execute_scheduled_action,
                                     args=(event["action"], event["target"], event["value"]))

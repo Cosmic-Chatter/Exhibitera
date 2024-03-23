@@ -26,7 +26,6 @@ export const config = {
   },
   remoteDisplay: false, // false == we are using the webview app, true == browser
   serverAddress: '',
-  softwareUpdateLocation: 'https://raw.githubusercontent.com/Cosmic-Chatter/Constellation/main/apps/_static/version.txt',
   softwareVersion: 5,
   standalone: false, // false == we are using Hub
   updateParser: null, // Function used by readUpdate() to parse app-specific updates

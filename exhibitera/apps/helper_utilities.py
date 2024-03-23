@@ -1,9 +1,7 @@
 # Standard modules
 import copy
 import errno
-import functools
 import getpass
-
 import psutil
 import os
 import socket
@@ -11,6 +9,7 @@ import urllib, urllib.request, urllib.error
 import uuid
 import shutil
 import sys
+import threading
 from typing import Any, Union
 
 # Non-standard modules
@@ -29,7 +28,7 @@ def check_for_software_update():
     print("Checking for update... ", end="")
     try:
         for line in urllib.request.urlopen(
-                'https://raw.githubusercontent.com/Cosmic-Chatter/Constellation/main/apps/_static/version.txt',
+                'https://raw.githubusercontent.com/Cosmic-Chatter/Exhibitera/main/exhibitera/apps/_static/version.txt',
                 timeout=1):
             available_version = float(line.decode('utf-8'))
             if available_version > config.HELPER_SOFTWARE_VERSION:
@@ -41,14 +40,19 @@ def check_for_software_update():
                 break
     except urllib.error.HTTPError:
         print("cannot connect to update server")
-        return
     except urllib.error.URLError:
         print("network connection unavailable")
-        return
     if config.software_update["update_available"]:
         print("update available!")
     else:
         print("up to date.")
+
+    # Reset the timer to check for an update tomorrow
+    if config.software_update_timer is not None:
+        config.software_update_timer.cancel()
+    config.software_update_timer = threading.Timer(86400, check_for_software_update)
+    config.software_update_timer.daemon = True
+    config.software_update_timer.start()
 
 
 def get_local_address() -> str:

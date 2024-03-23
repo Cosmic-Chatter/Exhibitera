@@ -81,17 +81,16 @@ function showUpdateInfoModal (details) {
     endpoint: '/getDefaults'
   })
     .then((result) => {
-      console.log(result)
       const details = result.software_update
 
       $('#updateInfoModalCurrentVersion').html(details.current_version)
       $('#updateInfoModalLatestVersion').html(details.available_version)
-      $('#updateInfoModalDownloadButton').attr('href', 'https://github.com/Cosmic-Chatter/Constellation/releases/tag/' + details.available_version)
+      $('#updateInfoModalDownloadButton').attr('href', 'https://exhibitera.org/download/')
 
       // Get the changelog
       exCommon.makeRequest({
         method: 'GET',
-        url: 'https://raw.githubusercontent.com/Cosmic-Chatter/Constellation/main/control_server/changelog.md',
+        url: 'https://raw.githubusercontent.com/Cosmic-Chatter/Exhibitera/main/exhibitera/changelog.md',
         endpoint: '',
         rawResponse: true
       })

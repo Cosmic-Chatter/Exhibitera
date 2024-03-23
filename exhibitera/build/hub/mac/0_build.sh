@@ -11,7 +11,7 @@ fi
 
 
 if [ ! -e "$1/venv/bin/activate" ]; then
-  python3.11 -m venv "$1/venv/"
+  python3.12 -m venv "$1/venv/"
 fi
 
 rsync -a ../../../hub/* "$1/."

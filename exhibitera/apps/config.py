@@ -40,6 +40,7 @@ software_update: dict[str, Any] = {
     "current_version": str(HELPER_SOFTWARE_VERSION),
     "available_version": str(HELPER_SOFTWARE_VERSION)
 }
+software_update_timer: threading.Timer | None = None
 
 # If we are serving the HTML file from over the network, this will be set
 # to True. If the HTML file has been loaded locally, it will stay False
