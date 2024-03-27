@@ -12,7 +12,7 @@ export const config = {
   connectionChecker: null, // A function to check the connection with Hub and act on it
   exhibiteraAppID: '',
   currentDefinition: '',
-  currentExhibit: 'default',
+  currentExhibit: 'Default',
   currentInteraction: false,
   definitionLoader: null, // A function used by loadDefinition() to set up the specific app.
   errorDict: {},

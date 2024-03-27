@@ -16,12 +16,14 @@ pyinstaller --clean --onefile  \
 			--add-data "version.txt:." \
 			--add-data "exhibitera_dmx.js:." \
 			--add-data "exhibitera_exhibit.js:." \
+			--add-data "exhibitera_group.js:." \
 			--add-data "exhibitera_issues.js:." \
 			--add-data "exhibitera_maintenance.js:." \
 			--add-data "exhibitera_projector.js:." \
 			--add-data "exhibitera_schedule.js:." \
 			--add-data "exhibitera_tools.js:." \
 			--add-data "exhibitera_tracker.js:." \
+			--add-data "exhibitera_users.js:." \
 			--add-data "README.md:." \
 			--add-data "css/*:./css/." \
 			--add-data "css/bootstrap_5_3/*:./css/bootstrap_5_3/." \
