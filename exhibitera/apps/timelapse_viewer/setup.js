@@ -472,5 +472,6 @@ exCommon.askForDefaults(false)
     } else {
       // Hide the login details
       document.getElementById('loginMenu').style.display = 'none'
+      document.getElementById('helpNewAccountMessage').style.display = 'none'
     }
   })

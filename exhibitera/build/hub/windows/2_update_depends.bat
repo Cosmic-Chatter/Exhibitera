@@ -4,7 +4,7 @@ CALL %1\venv\Scripts\activate.bat
 
 python -m pip install --upgrade pip
 python -m pip install --upgrade pyinstaller
-python -m pip install --upgrade -r ..\..\requirements.txt
+python -m pip install --upgrade -r ..\..\..\hub\requirements.txt
 
 @GOTO :END
 

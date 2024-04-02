@@ -1,6 +1,6 @@
 @if [%~1]==[] goto :NoPath
 
-@Xcopy /E /I /q /y ..\..\* %1\*
+@Xcopy /E /I /q /y ..\..\..\apps\* %1\*
 
 @GOTO :END
 
