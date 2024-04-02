@@ -213,7 +213,7 @@ def command_line_setup() -> None:
         port = int(port)
     settings_dict["port"] = port
 
-    settings_dict["current_exhibit"] = "default"
+    settings_dict["current_exhibit"] = "Default"
     # Create this exhibit file if it doesn't exist
     if not os.path.exists(ex_tools.get_path(["exhibits", "Default.json"], user_file=True)):
         ex_exhibit.create_new_exhibit("default", None)

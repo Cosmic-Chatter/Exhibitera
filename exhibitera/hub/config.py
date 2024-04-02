@@ -62,7 +62,7 @@ serverRebootTime = None
 rebooting: bool = False  # This will be set to True from a background thread when it is time to reboot
 
 # Exhibit stuff
-current_exhibit: Union[str, None] = None  # The JSON file defining the current exhibit "name.json"
+current_exhibit: Union[str, None] = "Default.json"  # The JSON file defining the current exhibit "name.json"
 exhibit_configuration: Union[list[dict[str, Any]], None] = None
 exhibit_list: list[str] = []
 
