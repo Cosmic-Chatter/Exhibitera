@@ -89,7 +89,7 @@ function configureEditUserModalForNewUser () {
   document.getElementById('editUserPermissionUsers').value = 'none'
   document.getElementById('editUserPermissionGroups').value = 'none'
   document.getElementById('editUserGroupsRow').style.display = 'none'
-  populateEditUserGroupsRow({ edit: [], view: [] })
+  populateEditUserGroupsRow({ edit: [], edit_content: [], view: [] })
 }
 
 function configureEditUserModalForExistingUser (user) {
