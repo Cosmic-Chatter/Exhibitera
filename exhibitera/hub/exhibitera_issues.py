@@ -101,8 +101,9 @@ def remove_issue(this_id: str) -> None:
     issue = get_issue(this_id)
     if issue is not None:
         # First, if there are media files, delete them
-        if "media" in issue.details and len(issue.details["media"]) > 0:
-            delete_issue_media_file(issue.details["media"])
+        if "media" in issue.details and issue.details["media"] is not None:
+            if len(issue.details["media"]) > 0:
+                delete_issue_media_file(issue.details["media"])
 
         with config.issueLock:
             config.issueList = [x for x in config.issueList if x.details["id"] != this_id]
