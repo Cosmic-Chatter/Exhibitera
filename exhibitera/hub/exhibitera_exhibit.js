@@ -610,7 +610,8 @@ class ExhibitComponentGroup {
 
     document.getElementById('componentGroupsRow').appendChild(col)
     this.components.forEach((component) => {
-      componentList.appendChild(component.buildHTML(this.group))
+      const componentToAdd = component.buildHTML(this.group)
+      if (componentToAdd != null) componentList.appendChild()
     })
   }
 }
