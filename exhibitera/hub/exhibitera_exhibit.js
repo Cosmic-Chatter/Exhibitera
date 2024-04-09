@@ -611,7 +611,7 @@ class ExhibitComponentGroup {
     document.getElementById('componentGroupsRow').appendChild(col)
     this.components.forEach((component) => {
       const componentToAdd = component.buildHTML(this.group)
-      if (componentToAdd != null) componentList.appendChild()
+      if (componentToAdd != null) componentList.appendChild(componentToAdd)
     })
   }
 }
