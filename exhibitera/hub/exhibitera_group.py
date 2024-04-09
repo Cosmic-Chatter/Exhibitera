@@ -19,6 +19,9 @@ def refresh_last_update():
 def create_group(name: str, description: str) -> dict[str, Any]:
     """Create a new group, add it to the list, and return its details."""
 
+    if config.group_list is None:
+        config.group_list = []
+
     uuid_str = str(uuid.uuid4())
     group = {
         "name": name,
