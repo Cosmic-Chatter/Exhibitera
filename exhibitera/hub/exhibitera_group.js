@@ -176,3 +176,18 @@ export function deleteGroupFromModal () {
       $('#deleteGroupModal').modal('hide')
     })
 }
+
+export function populateGroupsForSelect(select) {
+  // Create Option entries for the given select corresponding to the groups.
+  // 'select' should the the DOM element that will hold the options
+
+  // Clear the select
+  select.innerHTML = ''
+  select.appendChild(new Option('Default', 'Default'))
+
+  if (exConfig.groups == null) exConfig.groups = []
+
+  for (const group of exConfig.groups) {
+    select.appendChild(new Option(group.name, group.uuid))
+  }
+}

@@ -1,15 +1,20 @@
+import * as exGroup from './exhibitera_group.js'
 import * as exTools from './exhibitera_tools.js'
 
 export function showAddProjectorModal () {
   // Prepare the modal for adding static components and show it.
 
+  const groupsField = document.getElementById('addProjectorModalGroupField')
+
+  // Rebuild the list of groups
+  exGroup.populateGroupsForSelect(groupsField)
+
   // Reset values
   document.getElementById('addProjectorModalIDField').value = ''
-  document.getElementById('addProjectorModalGroupField').value = ''
+  groupsField.value = 'Default'
 
   // Hide warnings
   document.getElementById('addProjectorModalIDError').style.display = 'none'
-  document.getElementById('addProjectorModalGroupError').style.display = 'none'
   document.getElementById('addProjectorModalIPError').style.display = 'none'
 
   $('#addProjectorModal').modal('show')
@@ -19,7 +24,7 @@ export function submitProjectorAdditionFromModal () {
   // Set up a new projector from the components tab modal
 
   // Check that the fields are properly filled out
-  const group = document.getElementById('addProjectorModalGroupField').value.trim()
+  let groups = Array.from(document.getElementById('addProjectorModalGroupField').querySelectorAll("option:checked"),e=>e.value)
   const id = document.getElementById('addProjectorModalIDField').value.trim()
   const ipAddress = document.getElementById('addProjectorModalIPField').value.trim()
 
@@ -29,12 +34,9 @@ export function submitProjectorAdditionFromModal () {
   } else {
     document.getElementById('addProjectorModalIDError').style.display = 'none'
   }
-  if (group === '') {
-    document.getElementById('addProjectorModalGroupError').style.display = 'block'
-    return
-  } else {
-    document.getElementById('addProjectorModalGroupError').style.display = 'none'
-  }
+  if (groups.length === 0) {
+    groups = ['Default']
+  } 
   if (ipAddress === '') {
     document.getElementById('addProjectorModalIPError').style.display = 'block'
     return
@@ -47,7 +49,7 @@ export function submitProjectorAdditionFromModal () {
     endpoint: '/projector/create',
     params: {
       id,
-      group,
+      groups,
       ip_address: ipAddress,
       password: document.getElementById('addProjectorModalPasswordField').value
     }

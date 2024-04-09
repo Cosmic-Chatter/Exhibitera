@@ -918,8 +918,8 @@
                   <input id="addProjectorModalIDField" type="text" class="form-control">
                 </div>
                 <div class="col">
-                  <label class="form-label" for="addProjectorModalGroupField">Group</label>
-                  <input id="addProjectorModalGroupField" type="text" class="form-control">
+                  <label class="form-label" for="addProjectorModalGroupField">Groups</label>
+                  <select id="addProjectorModalGroupField" type="text" class="form-control" multiple></select>
                 </div>
                 <div class="col">
                   <label class="form-label" for="addProjectorModalIPField">IP address</label>
@@ -936,9 +936,6 @@
               <div class="row gy-2 mt-2">
                 <div id="addProjectorModalIDError" class="col-12 text-danger">
                   You must give this projector an ID.
-                </div>
-                <div id="addProjectorModalGroupError" class="col-12 text-danger">
-                  You must put this projector in a group.
                 </div>
                 <div id="addProjectorModalIPError" class="col-12 text-danger">
                   You must input the static IP address for this projector.
@@ -974,16 +971,13 @@
                   <input id="addStaticComponentModalIDField" type="text" class="form-control">
                 </div>
                 <div class="col">
-                  <label class="form-label" for="addStaticComponentModalGroupField">Group</label>
-                  <input id="addStaticComponentModalGroupField" type="text" class="form-control">
+                  <label class="form-label" for="addStaticComponentModalGroupField">Groups</label>
+                  <select id="addStaticComponentModalGroupField" type="text" class="form-control" multiple></select>
                 </div>
               </div>
               <div class="row gy-2 mt-2">
                 <div id="addStaticComponentModalIDError" class="col-12 text-danger">
                   You must give this component an ID.
-                </div>
-                <div id="addStaticComponentModalGroupError" class="col-12 text-danger">
-                  You must put this component in a group.
                 </div>
               </div>
             </div>
@@ -1016,8 +1010,8 @@
                   <input id="addWakeOnLANModalIDField" type="text" class="form-control">
                 </div>
                 <div class="col">
-                  <label class="form-label" for="addWakeOnLANModalGroupField">Group</label>
-                  <input id="addWakeOnLANModalGroupField" type="text" class="form-control">
+                  <label class="form-label" for="addWakeOnLANModalGroupField">Groups</label>
+                  <select id="addWakeOnLANModalGroupField" type="text" class="form-control" multiple></select>
                 </div>
                 <div class="col">
                   <label class="form-label" for="addWakeOnLANModalMACField">
@@ -1037,9 +1031,6 @@
               <div class="row gy-2 mt-2">
                 <div id="addWakeOnLANModalIDError" class="col-12 text-danger">
                   You must give this device an ID.
-                </div>
-                <div id="addWakeOnLANModalGroupError" class="col-12 text-danger">
-                  You must put this device in a group.
                 </div>
                 <div id="addWakeOnLANModalMACError" class="col-12 text-danger">
                   You must input the MAC address for this device.

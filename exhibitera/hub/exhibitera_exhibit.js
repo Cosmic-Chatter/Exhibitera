@@ -1912,13 +1912,17 @@ export function queueCommand (id, cmd) {
 export function showAddStaticComponentsModal () {
   // Prepare the modal for adding static components and show it.
 
+  const groupsField = document.getElementById('addStaticComponentModalGroupField')
+
+  // Rebuild the list of groups
+  exGroup.populateGroupsForSelect(groupsField)
+
   // Reset values
   document.getElementById('addStaticComponentModalIDField').value = ''
-  document.getElementById('addStaticComponentModalGroupField').value = ''
+  groupsField.value = 'Default'
 
   // Hide warnings
   document.getElementById('addStaticComponentModalIDError').style.display = 'none'
-  document.getElementById('addStaticComponentModalGroupError').style.display = 'none'
 
   $('#addStaticComponentModal').modal('show')
 }
@@ -1927,7 +1931,7 @@ export function submitStaticComponentAdditionFromModal () {
   // Collect the ID and group from the modal and add it to the static configuration
 
   // Make sure the fields are properly completed
-  const group = document.getElementById('addStaticComponentModalGroupField').value.trim()
+  let groups = Array.from(document.getElementById('addStaticComponentModalGroupField').querySelectorAll("option:checked"),e=>e.value)
   const id = document.getElementById('addStaticComponentModalIDField').value.trim()
   if (id === '') {
     document.getElementById('addStaticComponentModalIDError').style.display = 'block'
@@ -1935,17 +1939,14 @@ export function submitStaticComponentAdditionFromModal () {
   } else {
     document.getElementById('addStaticComponentModalIDError').style.display = 'none'
   }
-  if (group === '') {
-    document.getElementById('addStaticComponentModalGroupError').style.display = 'block'
-    return
-  } else {
-    document.getElementById('addStaticComponentModalGroupError').style.display = 'none'
+  if (groups.length === 0) {
+    groups = ['Default']
   }
 
   exTools.makeServerRequest({
     method: 'POST',
     endpoint: '/component/static/create',
-    params: { id, group }
+    params: { id, groups }
   })
     .then((response) => {
       $('#addStaticComponentModal').modal('hide')
@@ -1955,15 +1956,19 @@ export function submitStaticComponentAdditionFromModal () {
 export function showAddWakeOnLANModal () {
   // Prepare the modal for adding wake on LAN and show it.
 
+  const groupsField = document.getElementById('addWakeOnLANModalGroupField')
+
+  // Rebuild the list of groups
+  exGroup.populateGroupsForSelect(groupsField)
+
   // Reset values
   document.getElementById('addWakeOnLANModalIDField').value = ''
-  document.getElementById('addWakeOnLANModalGroupField').value = ''
+  groupsField.value = 'Default'
   document.getElementById('addWakeOnLANModalIPField').value = ''
   document.getElementById('addWakeOnLANModalMACField').value = ''
 
   // Hide warnings
   document.getElementById('addWakeOnLANModalIDError').style.display = 'none'
-  document.getElementById('addWakeOnLANModalGroupError').style.display = 'none'
   document.getElementById('addWakeOnLANModalMACError').style.display = 'none'
   document.getElementById('addWakeOnLANModalBadMACError').style.display = 'none'
 
@@ -1974,7 +1979,7 @@ export function submitWakeOnLANAdditionFromModal () {
   // Collect details from the modal and add it to the Wake on LAN configuration
 
   // Check that the fields are properly filled out
-  const group = document.getElementById('addWakeOnLANModalGroupField').value.trim()
+  let groups = Array.from(document.getElementById('addWakeOnLANModalGroupField').querySelectorAll("option:checked"),e=>e.value)
   const id = document.getElementById('addWakeOnLANModalIDField').value.trim()
   const ipAddress = document.getElementById('addWakeOnLANModalIPField').value.trim()
   const macAddress = document.getElementById('addWakeOnLANModalMACField').value.trim()
@@ -1985,11 +1990,8 @@ export function submitWakeOnLANAdditionFromModal () {
   } else {
     document.getElementById('addWakeOnLANModalIDError').style.display = 'none'
   }
-  if (group === '') {
-    document.getElementById('addWakeOnLANModalGroupError').style.display = 'block'
-    return
-  } else {
-    document.getElementById('addWakeOnLANModalGroupError').style.display = 'none'
+  if (groups.length === 0) {
+    groups = ["Default"]
   }
   if (macAddress === '') {
     document.getElementById('addWakeOnLANModalMACError').style.display = 'block'
@@ -2009,7 +2011,7 @@ export function submitWakeOnLANAdditionFromModal () {
     method: 'POST',
     endpoint: '/component/WOL/create',
     params: {
-      group,
+      groups,
       id,
       ip_address: ipAddress,
       mac_address: macAddress
