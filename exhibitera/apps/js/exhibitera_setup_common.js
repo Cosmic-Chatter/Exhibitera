@@ -804,7 +804,7 @@ export function authenticateUser () {
   return exCommon.makeServerRequest({
     method: 'POST',
     endpoint: '/user/login',
-    withCredentials: true
+    params: {token}
   })
     .then((response) => {
       if (response.success === true) {

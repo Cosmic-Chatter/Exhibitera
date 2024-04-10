@@ -383,11 +383,13 @@ def get_config():
 def log_in(response: Response,
            request: Request,
            credentials: tuple[str, str] = Body(description="A tuple containing the username and password.",
-                                               default=("", ""), embed=True)
+                                               default=("", "")),
+           token: str = Body(description="An authentication cookie.", default="")
            ):
     """Authenticate the user and return the permissions and an authentication token."""
 
-    token = request.cookies.get("authToken", "")
+    if token == "":
+        token = request.cookies.get("authToken", "")
 
     success, user_uuid = ex_users.authenticate_user(token=token, credentials=credentials)
     if success is False:
