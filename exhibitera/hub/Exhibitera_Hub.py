@@ -305,7 +305,7 @@ def check_for_software_update() -> None:
     ex_config.software_update_available = False
     try:
         for line in urllib.request.urlopen(
-                "https://raw.githubusercontent.com/Cosmic-Chatter/Exhibitera/main/exhibitera/hub/version.txt"):
+                "https://raw.githubusercontent.com/Cosmic-Chatter/Exhibitera/main/exhibitera/hub/version.txt", timeout=2):
             line_str = line.decode('utf-8')
             if float(line_str) > ex_config.software_version:
                 ex_config.software_update_available = True
