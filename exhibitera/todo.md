@@ -1,5 +1,12 @@
 # To-do list
 
+## 5.0 beta bug fixes
+- Groups show up as UUID when selecting schedule targets
+- Certain projectors don't show wake/sleep from the dropdown
+- Remove static components from schedule target selector
+- Alphabetize entries in schedule selectors
+- Usernames don't render as display names in Issues
+
 ## General
 - Separate versioning for Hub and Apps
 
