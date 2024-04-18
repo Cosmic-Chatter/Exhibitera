@@ -431,7 +431,7 @@ export function showIssueEditModal (issueType, target) {
     .then((response) => {
       if (response.success === true) {
         response.users.forEach((user) => {
-          document.getElementById('issueAssignedToSelector').appendChild(new Option(user.display_name, user.username))
+          document.getElementById('issueAssignedToSelector').appendChild(new Option(user.display_name, user.uuid))
         })
       }
     })

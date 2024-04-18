@@ -412,7 +412,17 @@ function setScheduleActionTargetSelectorPopulateOptions (optionsToAdd) {
     sep.setAttribute('disabled', true)
     targetSelector.append(sep)
     exConfig.componentGroups.forEach((item) => {
-      targetSelector.append(new Option(item.group, '__group_' + item.group))
+      let groupName
+      try {
+        if (item.group === 'Default') {
+          groupName = 'Default'
+        } else {
+          groupName = exTools.getGroup(item.group).name
+        }
+      } catch {
+        groupName = 'Unknown group'
+      }
+      targetSelector.append(new Option(groupName, '__group_' + item.group))
     })
   }
   if (optionsToAdd.includes('ExhibitComponents') || optionsToAdd.includes('Projectors')) {
@@ -420,15 +430,17 @@ function setScheduleActionTargetSelectorPopulateOptions (optionsToAdd) {
     sep.setAttribute('disabled', true)
     targetSelector.append(sep)
 
+    const sortedComponents = exTools.sortExhibitComponentsByID()
+
     if (optionsToAdd.includes('ExhibitComponents')) {
-      exConfig.exhibitComponents.forEach((item) => {
-        if (item.type === 'exhibit_component' && item.exhibiteraAppId !== 'static_component') {
+      sortedComponents.forEach((item) => {
+        if (item.type === 'exhibit_component' && item.status !== exConfig.STATUS.STATIC) {
           targetSelector.append(new Option(item.id, '__id_' + item.id))
         }
       })
     }
     if (optionsToAdd.includes('Projectors')) {
-      exConfig.exhibitComponents.forEach((item) => {
+      sortedComponents.forEach((item) => {
         if (item.type === 'projector') {
           targetSelector.append(new Option(item.id, '__id_' + item.id))
         }
@@ -521,19 +533,17 @@ export function setScheduleActionValueSelector () {
       .then((response) => {
         if (action === 'set_definition') {
           // Convert the dictionary to an array, sorted by app ID
-          const defList = Object.values(response.definitions).sort(function (a, b) {
-            return (a.app < b.app) ? -1 : (a.app > b.app) ? 1 : 0
-          })
-          const seenApps = []
-          defList.forEach((def) => {
-            if (def.uuid.startsWith('__preview')) return
-            if (seenApps.includes(def.app) === false) {
-              seenApps.push(def.app)
-              const header = new Option(exExhibit.convertAppIDtoDisplayName(def.app))
-              header.setAttribute('disabled', true)
-              valueSelector.append(header)
-            }
-            valueSelector.append(new Option(def.name, def.uuid))
+
+          const appDict = exTools.sortDefinitionsByApp(response.definitions)
+          Object.keys(appDict).sort().forEach((app) => {
+            const header = new Option(exExhibit.convertAppIDtoDisplayName(app))
+            header.setAttribute('disabled', true)
+            valueSelector.append(header)
+
+            appDict[app].forEach((def) => {
+              const option = new Option(def.name, def.uuid)
+              valueSelector.append(option)
+            })
           })
         }
         // In the case of editing an action, preselect any existing values

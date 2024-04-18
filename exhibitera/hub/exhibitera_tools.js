@@ -352,11 +352,33 @@ export function sortDefinitionsByApp (defDict, dropPreview = true) {
   // Sort the arrays
   Object.keys(result).forEach((key) => {
     result[key] = result[key].sort((a, b) => {
-      return a.name.toLowerCase() - b.name.toLowerCase()
+      const aName = a.name.toLowerCase()
+      const bName = b.name.toLowerCase()
+      if (aName > bName) return 1
+      if (bName > aName) return -1
+      return 0
     })
   })
 
   return result
+}
+
+export function sortExhibitComponentsByID () {
+  // Take the list of components and return an array sorted
+  // alphabetically by their ID
+
+  return exConfig.exhibitComponents.sort(
+    function (a, b) {
+      const aID = a.id.toLowerCase()
+      const bID = b.id.toLowerCase()
+      if (aID > bID) {
+        return 1
+      } else if (bID > aID) {
+        return -1
+      }
+      return 0
+    }
+  )
 }
 
 export function checkPermission (action, neededLevel, group = null) {
@@ -415,6 +437,24 @@ export function getUserDisplayName (uuid) {
         }
       })
   })
+}
+
+export function getExhibitComponentGroup (group) {
+  // Function to search the componentGroups list for a given group id
+
+  const result = exConfig.componentGroups.find(obj => {
+    return obj.group === group
+  })
+  return result
+}
+
+export function getGroup (uuid) {
+  // Function to search the groups list for a given uuid
+
+  const result = exConfig.groups.find(obj => {
+    return obj.uuid === uuid
+  })
+  return result
 }
 
 export function uuid () {

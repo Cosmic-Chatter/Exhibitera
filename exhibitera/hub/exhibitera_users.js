@@ -292,7 +292,15 @@ export function populateUsers () {
     method: 'POST',
     endpoint: '/users/list'
   }).then((response) => {
-    for (const user of response.users) {
+    const sortedUsers = response.users.sort((a, b) => {
+      const aName = a.display_name.toLowerCase()
+      const bName = b.display_name.toLowerCase()
+      if (aName > bName) return 1
+      if (bName > aName) return -1
+      return 0
+    })
+
+    for (const user of sortedUsers) {
       const col = document.createElement('div')
       col.classList = 'col'
       usersRow.appendChild(col)

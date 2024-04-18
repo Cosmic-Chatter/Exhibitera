@@ -300,6 +300,15 @@ def create_user(username: str,
     return True, new_user.get_dict()
 
 
+def delete_user(uuid_str: str):
+    """Move a user to the deleted list."""
+
+    path = c_tools.get_path(["configuration", "deleted_users.json"], user_file=True)
+    deleted_users = c_tools.load_json(path)
+
+    user = get_user(uuid_str=uuid_str)
+
+
 def check_username_available(username: str) -> bool:
     """Check if the given username has already been claimed."""
 

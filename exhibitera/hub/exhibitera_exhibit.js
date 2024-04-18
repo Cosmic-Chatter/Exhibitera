@@ -39,7 +39,6 @@ class BaseComponent {
     if (this.status === exConfig.STATUS.STATIC && $('#componentsTabSettingsShowStatic').prop('checked') === false) {
       return
     }
-
     const displayName = this.id
     const thisId = this.id
     const cleanId = this.id.replaceAll(' ', '_')
@@ -193,7 +192,7 @@ class BaseComponent {
   remove () {
     // Remove the component from its ComponentGroup
     for (const group of this.groups) {
-      getExhibitComponentGroup(group).removeComponent(this.id)
+      exTools.getExhibitComponentGroup(group).removeComponent(this.id)
     }
 
     // Remove the component from the exhibitComponents list
@@ -214,13 +213,13 @@ class BaseComponent {
 
     // First, remove the component from any groups it is no longer in
     for (const group of this.groups) {
-      if (groups.includes(group) === false) getExhibitComponentGroup(group).removeComponent(this.id)
+      if (groups.includes(group) === false) exTools.getExhibitComponentGroup(group).removeComponent(this.id)
     }
 
     // Then, add component to any groups it was not in before
     for (const group of groups) {
       if (this.groups.includes(group) === false) {
-        let componentGroup = getExhibitComponentGroup(group)
+        let componentGroup = exTools.getExhibitComponentGroup(group)
         if (componentGroup == null) {
           // If this is the first component in the group, create the group first.
           componentGroup = new ExhibitComponentGroup(group)
@@ -454,7 +453,6 @@ class ExhibitComponentGroup {
   addComponent (component) {
     this.components.push(component)
     this.sortComponentList()
-    rebuildComponentInterface()
   }
 
   sortComponentList () {
@@ -625,7 +623,7 @@ export function createComponentFromUpdate (update) {
 
   // First, make sure the groups exist
   for (const group of update.groups) {
-    let matchingGroup = getExhibitComponentGroup(group)
+    let matchingGroup = exTools.getExhibitComponentGroup(group)
 
     if (matchingGroup == null) {
       matchingGroup = new ExhibitComponentGroup(group)
@@ -643,16 +641,16 @@ export function createComponentFromUpdate (update) {
     newComponent = new Projector(update.uuid, update.id, update.groups)
   }
 
-  newComponent.buildHTML()
   exConfig.exhibitComponents.push(newComponent)
 
   // Add the component to the right groups
   for (const group of update.groups) {
-    getExhibitComponentGroup(group).addComponent(newComponent)
+    exTools.getExhibitComponentGroup(group).addComponent(newComponent)
   }
 
-  // Finally, update the new component
+  // Finally, update the new component and rebuild everything
   newComponent.updateFromServer(update)
+  rebuildComponentInterface()
 }
 
 export function updateComponentFromServer (update) {
@@ -673,20 +671,11 @@ export function sendGroupCommand (group, cmd) {
   // Iterate through the components in the given group and queue the command
   // for each
 
-  group = getExhibitComponentGroup(group)
+  group = exTools.getExhibitComponentGroup(group)
   console.log(group, cmd)
   for (let i = 0; i < group.components.length; i++) {
     queueCommand(group.components[i].id, cmd)
   }
-}
-
-export function getExhibitComponentGroup (group) {
-  // Function to search the componentGroups list for a given group id
-
-  const result = exConfig.componentGroups.find(obj => {
-    return obj.group === group
-  })
-  return result
 }
 
 function setComponentInfoStatusMessage (msg) {
@@ -1931,7 +1920,7 @@ export function submitStaticComponentAdditionFromModal () {
   // Collect the ID and group from the modal and add it to the static configuration
 
   // Make sure the fields are properly completed
-  let groups = Array.from(document.getElementById('addStaticComponentModalGroupField').querySelectorAll("option:checked"),e=>e.value)
+  let groups = Array.from(document.getElementById('addStaticComponentModalGroupField').querySelectorAll('option:checked'), e => e.value)
   const id = document.getElementById('addStaticComponentModalIDField').value.trim()
   if (id === '') {
     document.getElementById('addStaticComponentModalIDError').style.display = 'block'
@@ -1979,7 +1968,7 @@ export function submitWakeOnLANAdditionFromModal () {
   // Collect details from the modal and add it to the Wake on LAN configuration
 
   // Check that the fields are properly filled out
-  let groups = Array.from(document.getElementById('addWakeOnLANModalGroupField').querySelectorAll("option:checked"),e=>e.value)
+  let groups = Array.from(document.getElementById('addWakeOnLANModalGroupField').querySelectorAll('option:checked'), e => e.value)
   const id = document.getElementById('addWakeOnLANModalIDField').value.trim()
   const ipAddress = document.getElementById('addWakeOnLANModalIPField').value.trim()
   const macAddress = document.getElementById('addWakeOnLANModalMACField').value.trim()
@@ -1991,7 +1980,7 @@ export function submitWakeOnLANAdditionFromModal () {
     document.getElementById('addWakeOnLANModalIDError').style.display = 'none'
   }
   if (groups.length === 0) {
-    groups = ["Default"]
+    groups = ['Default']
   }
   if (macAddress === '') {
     document.getElementById('addWakeOnLANModalMACError').style.display = 'block'
