@@ -1615,7 +1615,7 @@ export function submitDefinitionSelectionFromModal () {
 
   const definition = $('.definition-selected').data('definition')
   const id = $('#componentInfoModal').data('id')
-  const componentUUID = $('#componentInfoModal').data('uuid')
+  const componentUUID = document.getElementById('componentInfoModal').getAttribute('data-uuid')
 
   // Exhibitera 5 starts the transition from ID to UUID
   exTools.makeServerRequest({
