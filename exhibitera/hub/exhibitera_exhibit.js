@@ -548,7 +548,7 @@ class ExhibitComponentGroup {
     const mainButton = document.createElement('button')
     mainButton.classList = 'btn btn-secondary w-100 btn-lg'
     mainButton.setAttribute('type', 'button')
-    mainButton.innerHTML = exGroup.getGroupName(this.group)
+    mainButton.innerHTML = exTools.getGroupName(this.group)
     btnGroup.appendChild(mainButton)
 
     if (permission === 'edit') {

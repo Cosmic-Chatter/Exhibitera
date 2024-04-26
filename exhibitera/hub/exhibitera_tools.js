@@ -308,6 +308,15 @@ export function arraysEqual (a, b) {
   return true
 }
 
+export function getGroupName (uuid) {
+  // Return the name of a group given its UUID.
+
+  for (const group of exConfig.groups) {
+    if (group.uuid === uuid) return group.name
+  }
+  return uuid
+}
+
 export function sortComponentsByGroup () {
   // Return an object where the keys are group names and values are the list
   // of components matching that group
@@ -315,10 +324,12 @@ export function sortComponentsByGroup () {
   const result = {}
 
   exConfig.exhibitComponents.forEach((component) => {
-    if (component.group in result) {
-      result[component.group].push(component)
-    } else {
-      result[component.group] = [component]
+    for (const group of component.groups) {
+      if (group in result) {
+        result[group].push(component)
+      } else {
+        result[group] = [component]
+      }
     }
   })
 

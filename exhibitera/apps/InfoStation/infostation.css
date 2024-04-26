@@ -141,7 +141,6 @@ li {
 }
 .float-left {
   float: left;
-  width: 50%;
   padding-right: 2%;
   padding-bottom: 2%;
   padding-top: 2%;
@@ -161,7 +160,7 @@ li {
   padding-top: 2%;
 }
 .image {
-  width: 100%;
+  max-width: 100%;
 }
 .langSwitch-entry {
   font-size: 3vmin;
@@ -226,13 +225,13 @@ li {
 /* Handle portrait and landscape orientations */
 @media (orientation: portrait) {
   .float-right, .float-left {
-    width: 50%;
+    max-width: 50%;
   }
 }
 
 @media (orientation: landscape) {
   .float-right, .float-left {
-    width: 35%;
+    max-width: 35%;
   }
   .tabButtonCol {
     width: 100%;

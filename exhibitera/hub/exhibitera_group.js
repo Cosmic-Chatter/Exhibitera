@@ -1,15 +1,6 @@
 import exConfig from './config.js'
 import * as exTools from './exhibitera_tools.js'
 
-export function getGroupName (uuid) {
-  // Return the name of a group given its UUID.
-
-  for (const group of exConfig.groups) {
-    if (group.uuid === uuid) return group.name
-  }
-  return uuid
-}
-
 export function showEditGroupModal (uuid = '') {
   // Show the modal for creatng or editing a group
 
@@ -177,7 +168,7 @@ export function deleteGroupFromModal () {
     })
 }
 
-export function populateGroupsForSelect(select) {
+export function populateGroupsForSelect (select) {
   // Create Option entries for the given select corresponding to the groups.
   // 'select' should the the DOM element that will hold the options
 

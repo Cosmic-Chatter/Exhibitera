@@ -393,7 +393,7 @@ export function showIssueEditModal (issueType, target) {
   const components = exTools.sortComponentsByGroup()
 
   Object.keys(components).sort().forEach((group) => {
-    const header = new Option(group)
+    const header = new Option(exTools.getGroupName(group))
     header.setAttribute('disabled', true)
     issueRelatedComponentsSelector.appendChild(header)
     const sortedGroup = components[group].sort((a, b) => {

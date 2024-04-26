@@ -489,6 +489,21 @@ export function logoutUser () {
   location.reload()
 }
 
+export function deleteUser (uuid) {
+  // Ask the server to delete the given user.
+
+  exTools.makeServerRequest({
+    method: 'POST',
+    endpoint: '/user/' + uuid + '/delete'
+  })
+    .then((response) => {
+      if ('success' in response && response.success === true) {
+        populateUsers()
+        $('#editUserModal').modal('hide')
+      }
+    })
+}
+
 function configureSchedulePermissions () {
   // Configure the schedule to respect the level of user permission.
 

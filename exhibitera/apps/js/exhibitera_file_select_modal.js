@@ -124,8 +124,8 @@ export function createFileSelectionModal (userOptions) {
                     <div class='col-12 text-danger mt-2' id='exFileSelectModalUploadOverwriteWarning'>Warning: this upload will overwrite a file of the same name.</div>
 
                     <div id="exFileSelectModalDeleteMultipleButtonCol" class="col-6 col-sm-4" style="display: none;">
-                      <div id="exFileSelectModalDeleteMultipleFileButton">
-                        <button class='btn btn-danger w-100' data-bs-toggle='popover' title='Are you sure?' data-bs-content='<a id="fileDeleteMultiplePopover" class="btn btn-danger w-100">Confirm</a>' data-bs-trigger='focus' data-bs-html='true'>Delete multiple</button>
+                      <div>
+                        <button id="exFileSelectModalDeleteMultipleFileButton" class='btn btn-danger w-100' data-bs-toggle='popover' title='Are you sure?' data-bs-content='<a id="fileDeleteMultiplePopover" class="btn btn-danger w-100">Confirm</a>' data-bs-trigger='focus' data-bs-html='true'>Delete multiple</button>
                       </div>
                     </div>
                   </div>
@@ -208,8 +208,8 @@ export function createFileSelectionModal (userOptions) {
     }
 
     // Delete multiple
-    const deleteMultipleBUtton = document.getElementById('exFileSelectModalDeleteMultipleFileButton')
-    deleteMultipleBUtton.addEventListener('click', function () { deleteMultipleBUtton.focus() })
+    const deleteMultipleButton = document.getElementById('exFileSelectModalDeleteMultipleFileButton')
+    deleteMultipleButton.addEventListener('click', function () { deleteMultipleButton.focus() })
 
     if (document.body.getAttribute('data-fileMultipleDeletePopoverEventAdded') !== 'true') {
       // Only add this listener the first time we create a file select modal

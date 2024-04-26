@@ -69,3 +69,4 @@ exhibit_list: list[str] = []
 # User stuff
 encryption_key: bytes | None = None
 user_list: list = []
+user_display_name_cache: dict[str, str] = {}

@@ -300,13 +300,26 @@ def create_user(username: str,
     return True, new_user.get_dict()
 
 
-def delete_user(uuid_str: str):
+def delete_user(uuid_str: str) -> bool:
     """Move a user to the deleted list."""
 
     path = c_tools.get_path(["configuration", "deleted_users.json"], user_file=True)
     deleted_users = c_tools.load_json(path)
+    if deleted_users is None:
+        deleted_users = []
 
     user = get_user(uuid_str=uuid_str)
+    if user is None:
+        if config.debug is True:
+            print("delete_user: error: user does not exist: ", uuid_str)
+        return False
+    user_dict = user.get_dict()
+    user_dict["deleted_datetime"] = str(datetime.datetime.now())
+    deleted_users.append(user_dict)
+    c_tools.write_json(deleted_users, path)
+    config.user_list = [x for x in config.user_list if x.uuid != uuid_str]
+    save_users()
+    return True
 
 
 def check_username_available(username: str) -> bool:
@@ -406,3 +419,33 @@ def hash_password(password: str) -> str:
 
     return password_hasher.hash(bytes(password, 'UTF-8'),
                                 salt=bytes("Constellation", "UTF-8"))
+
+
+def refresh_display_name_cache():
+    """Create a cache of display names for all users, current and deleted."""
+
+    cache = {}
+    for user in config.user_list:
+        cache[user.uuid] = user.display_name
+
+    path = c_tools.get_path(["configuration", "deleted_users.json"], user_file=True)
+    deleted_users = c_tools.load_json(path)
+    if deleted_users is None:
+        deleted_users = []
+    for user in deleted_users:
+        cache[user["uuid"]] = user["display_name"]
+    config.user_display_name_cache = cache
+
+
+def get_user_display_name(uuid_str: str) -> str | None:
+    """Return the display name of the given UUID."""
+
+    if uuid_str in config.user_display_name_cache:
+        return config.user_display_name_cache[uuid_str]
+
+    # If it's not there, rebuild the cache and try again
+    refresh_display_name_cache()
+    if uuid_str in config.user_display_name_cache:
+        return config.user_display_name_cache[uuid_str]
+
+    return None

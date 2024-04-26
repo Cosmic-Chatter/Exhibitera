@@ -305,7 +305,8 @@ def check_for_software_update() -> None:
     ex_config.software_update_available = False
     try:
         for line in urllib.request.urlopen(
-                "https://raw.githubusercontent.com/Cosmic-Chatter/Exhibitera/main/exhibitera/hub/version.txt", timeout=2):
+                "https://raw.githubusercontent.com/Cosmic-Chatter/Exhibitera/main/exhibitera/hub/version.txt",
+                timeout=2):
             line_str = line.decode('utf-8')
             if float(line_str) > ex_config.software_version:
                 ex_config.software_update_available = True
@@ -464,6 +465,19 @@ def edit_user(request: Request,
     return {"success": success, "user": user.get_dict()}
 
 
+@app.post("/user/{uuid_str}/delete")
+def delete_user(request: Request,
+                uuid_str: str):
+    """Delete the given user"""
+
+    token = request.cookies.get("authToken", "")
+    success, authorizing_user, reason = ex_users.check_user_permission("users", "edit", token=token)
+    if success is False:
+        return {"success": False, "reason": reason}
+
+    return {"success": ex_users.delete_user(uuid_str)}
+
+
 @app.post("/users/list")
 def list_users(permissions: dict[str, str] = Body(description="A dictionary of permissions to match.",
                                                   default={},
@@ -488,10 +502,10 @@ def list_users(permissions: dict[str, str] = Body(description="A dictionary of p
 def get_user_display_name(user_uuid: str):
     """Get the display name for a user account."""
 
-    user = ex_users.get_user(uuid_str=user_uuid)
-    if user is None:
+    display_name = ex_users.get_user_display_name(user_uuid)
+    if display_name is None:
         return {"success": False, "reason": "user_does_not_exist"}
-    return {"success": True, "display_name": user.display_name}
+    return {"success": True, "display_name": display_name}
 
 
 @app.post('/user/{user_uuid}/changePassword')
@@ -579,7 +593,8 @@ async def edit_component(request: Request,
 @app.post("/component/{component_id}/setDefinition")
 async def set_component_definition(component_id: str,
                                    component_uuid: str = Body(description="The UUID of the component to modify."),
-                                   definition_uuid: str = Body(description="The UUID of the definition file to be set.")):
+                                   definition_uuid: str = Body(
+                                       description="The UUID of the definition file to be set.")):
     """Set the definition for the component."""
 
     ex_exhibit.update_exhibit_configuration({"definition": definition_uuid},

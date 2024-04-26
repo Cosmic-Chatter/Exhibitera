@@ -1,8 +1,6 @@
 # To-do list
 
 ## 5.0 beta bug fixes
-- Ability to delete users
-- Delete confirmation when group deleting files on Safari
 
 ## General
 - Separate versioning for Hub and Apps
@@ -35,12 +33,14 @@
 - Clone other schedule
 - Name date-specific schedule
 - Transition schedule from component IDs to UUIDs
+- GUI shortcut to switch definition and then switch it back
 
 ## Apps
 
 ### General
 - Add heartbeat app
 - Add map app
+- Add 3D model viewer app
 - Download files from content directory
 - Download definition file
 

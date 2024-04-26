@@ -21,6 +21,9 @@ Exhibitera 5 introduces a user account system that enables administrators to res
 - When creating or editing a definition, the preview can be configured for displays of different aspect ratios.
 - Rich previews help you select the perfect font.
 
+### InfoStation
+- Control image sizing more precisely with support for Markdown image sizes.
+
 ### Media Browser
 - Designate spreadsheet columns as filterable to allow users to sort the media collection.
 - Redesigned lightbox allows media to be bigger.

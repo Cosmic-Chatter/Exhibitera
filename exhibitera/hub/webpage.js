@@ -1116,9 +1116,13 @@ document.getElementById('manageExhibitModalExhibitThumbnailCheckbox').addEventLi
 // =========================
 // This event detects when the delete button has been clicked inside a popover
 document.addEventListener('click', (event) => {
-  if (event.target.getAttribute('id') === 'issueMediaDeleteButtonConfirmation') {
+  const id = event.target.getAttribute('id')
+  if (id === 'issueMediaDeleteButtonConfirmation') {
     const file = document.getElementById('issueMediaViewFromModalSelect').value
     exIssues.issueMediaDelete([file])
+  } else if (id === 'editUserDeleteButtonConfirmation') {
+    const user = document.getElementById('editUserModal').getAttribute('data-uuid')
+    exUsers.deleteUser(user)
   }
 })
 document.getElementById('issueModifyModalDeleteButton').addEventListener('click', () => {

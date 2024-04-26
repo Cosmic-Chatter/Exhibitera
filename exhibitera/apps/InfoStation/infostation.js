@@ -197,7 +197,10 @@ function _createTextTabContent (tabId, content) {
           const parent = $(child).parent()
           const div = document.createElement('div')
           div.append(child)
-          div.append(child.title)
+          const caption = document.createElement('div')
+          caption.classList = 'caption'
+          caption.append(child.title)
+          div.append(caption)
           parent.empty()
           parent.append(div)
 
