@@ -486,12 +486,10 @@ function _createAdvancedColorPicker (el, name, path) {
 
   // Add event listeners
   document.getElementById(`ACPModeSelect_${id}`).addEventListener('change', (event) => {
-    
     _onAdvancedColorPickerModeChange(id, path, event.target.value)
   })
 
   document.getElementById(`ACPColor_${id}`).addEventListener('change', (event) => {
-   
     updateWorkingDefinition([...path, 'color'], event.target.value)
     previewDefinition(true)
   })
