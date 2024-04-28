@@ -80,9 +80,6 @@ def write_json(data: dict, path: str | os.PathLike, append: bool = False, compac
 
     success = True
     reason = ""
-    """Clear out an extraneous property being set in the frontend. """
-    if 's' in data:
-        del data['s']
 
     if append:
         mode = 'a'
