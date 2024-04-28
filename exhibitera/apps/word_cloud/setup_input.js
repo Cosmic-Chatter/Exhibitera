@@ -221,6 +221,11 @@ document.getElementById('collectionNameInput').addEventListener('change', (event
 })
 document.getElementById('enableKeyboardInput').addEventListener('change',(event)=>{
   exSetup.updateWorkingDefinition(['behavior', 'enable_keyboard_input'], event.target.checked);
+  if(event.target.checked){
+    document.getElementById("previewFrame").src ='../word_cloud_input.html?standalone=true';
+  }else{
+    document.getElementById('previewFrame').src ='../word_cloud_input.html?standalone=true';
+  }
   exSetup.previewDefinition(true)
 });
 document.getElementById('maxInputLength').addEventListener('change',(event)=>{
