@@ -19,6 +19,10 @@ function AddKeyboardListeners(maxLength) {
       case 'Backspace':
         newVal = value.slice(0, value.length - 1);
         break;
+      case 'Meta':
+      case 'Control':
+      case 'CapsLock':
+      case 'Esc':
       case 'Shift':
       case 'Enter':
         break;
