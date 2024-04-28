@@ -2,7 +2,8 @@
 
 import * as exCommon from '../js/exhibitera_app_common.js'
 let maxCharCount = -1;
-let keyboard;
+const Keyboard = window.SimpleKeyboard.default;
+let keyboard ='';
 function AddKeyboardListeners(maxLength) {
   window.addEventListener('keydown', (event) => {
     let input = document.querySelector('#inputField')
@@ -31,12 +32,24 @@ function AddKeyboardListeners(maxLength) {
         newVal = value + event.key
     }
     input.value = newVal;
+    setLengthHint(newVal.length);
   })
+}
+function setLengthHint(length){
+  if(maxCharCount >0) {
+    if(length > 0){
+      document.getElementById('characterCount').innerText =`${length}/${maxCharCount}`;
+    }else{
+      document.getElementById('characterCount').innerText ='';
+    }
+  }
 }
 function clear() {
   $('#inputField').val('')
+  if(keyboard){
   keyboard.input.default = ''
   keyboard.input.inputField = ''
+  }
 }
 
 function getCleanText() {
@@ -220,14 +233,14 @@ function loadDefinition(definition) {
   setTimeout(() => exCommon.saveScreenshotAsThumbnail(definition.uuid + '.png'), 100)
 }
 
-const Keyboard = window.SimpleKeyboard.default
+
 
 // Add a listener to each input so we direct keyboard input to the right one
 document.querySelectorAll('.input').forEach(input => {
   input.addEventListener('focus', onInputFocus)
 })
 function onInputFocus(event) {
-  keyboard.setOptions({
+  keyboard?.setOptions({
     inputName: event.target.id
   })
 }
@@ -238,10 +251,11 @@ function onKeyPress(button) {
   if (button === '{lock}' || button === '{shift}') handleShiftButton()
 }
 document.querySelector('#inputField').addEventListener('input', event => {
-  keyboard.setInput(event.target.value)
+  keyboard?.setInput(event.target.value)
 })
 function onChange(input) {
   document.querySelector('#inputField').value = input
+  setLengthHint(input.length);
 }
 
 
