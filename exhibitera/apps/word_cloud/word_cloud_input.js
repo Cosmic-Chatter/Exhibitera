@@ -125,7 +125,7 @@ function loadDefinition (definition) {
     })
   }
 
-  // Backgorund settings
+  // Background settings
   if ('background' in definition.appearance) {
     exCommon.setBackground(definition.appearance.background, root, '#fff')
   }
@@ -158,7 +158,8 @@ function loadDefinition (definition) {
       root.style.setProperty('--' + key + '-font-adjust', value)
     })
   }
-
+ //Enable keyboard 
+ 
   // Send a thumbnail to the helper
   setTimeout(() => exCommon.saveScreenshotAsThumbnail(definition.uuid + '.png'), 100)
 }
@@ -212,3 +213,21 @@ let collectionName = 'default'
 
 document.getElementById('clearButton').addEventListener('click', clear)
 document.getElementById('submitButton').addEventListener('click', sendTextToServer)
+document.addEventListener('keydown',(event)=>{
+  console.log(event.key);
+  let input = document.querySelector('#inputField')
+  let value = input.value;
+  let newVal = value;
+  switch(event.key){
+    case 'Backspace':
+      newVal = value.slice(0,value.length-1);
+      break;
+    case 'Shift':
+    case 'Enter':
+      break;
+    
+    default:
+      newVal = value +event.key
+  }
+  input.value = newVal;
+})

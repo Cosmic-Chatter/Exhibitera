@@ -24,6 +24,8 @@ function initializeDefinition () {
           },
           attractor: {},
           behavior: {},
+          enableKeyboard:false,
+          maxWordLength:-1,
           content: {
             localization: {}
           }
@@ -38,6 +40,8 @@ function initializeDefinition () {
           },
           attractor: {},
           behavior: {},
+          enableKeyboard:false,
+          maxWordLength:-1,
           content: {
             localization: {}
           }
@@ -58,7 +62,8 @@ async function clearDefinitionInput (full = true) {
   // Definition details
   document.getElementById('definitionNameInput').value = ''
   document.getElementById('collectionNameInput').value = ''
-
+  document.getElementById('enableKeyboardInput').checked=false;
+  document.getElementById('maxInputLength').value='-1';
   // Content details
   document.getElementById('promptInput').value = ''
   Array.from(document.querySelectorAll('.localization-input')).forEach((el) => {
@@ -102,7 +107,16 @@ function editDefinition (uuid = '') {
   } else {
     document.getElementById('collectionNameInput').value = ''
   }
-
+  if('enable_keyboard_input' in def.behavior){
+    document.getElementById('enableKeyboardInput').checked = def.behavior.enable_keyboard_input;
+  }else{
+    document.getElementById('enableKeyboardInput').checked = false;
+  }
+  if('max_word_length' in def.behavior){
+    document.getElementById('maxInputLength').value = def.behavior.max_word_length;
+  }else{
+    document.getElementById('maxInputLength').value = -1;
+  }
   // Content
   if ('prompt' in def.content) {
     document.getElementById('promptInput').value = def.content.prompt
@@ -200,13 +214,23 @@ setTimeout(setUpColorPickers, 100)
 
 // Add event listeners
 // -------------------------------------------------------------
-
 // Settings
 document.getElementById('collectionNameInput').addEventListener('change', (event) => {
   exSetup.updateWorkingDefinition(['behavior', 'collection_name'], event.target.value)
   exSetup.previewDefinition(true)
 })
-
+document.getElementById('enableKeyboardInput').addEventListener('change',(event)=>{
+  exSetup.updateWorkingDefinition(['behavior', 'enable_keyboard_input'], event.target.checked);
+  exSetup.previewDefinition(true)
+});
+document.getElementById('maxInputLength').addEventListener('change',(event)=>{
+  exSetup.updateWorkingDefinition(['behavior', 'max_word_length'], event.target.value);
+  exSetup.previewDefinition(true);document.getElementById('enableKeyboardInput').addEventListener('change',(event)=>{
+    console.log(event.target.checked);
+    exSetup.updateWorkingDefinition(['behavior', 'enable_keyboard_input'], event.target.checked)
+    exSetup.previewDefinition(true)
+  });
+});
 // Content
 document.getElementById('promptInput').addEventListener('change', (event) => {
   exSetup.updateWorkingDefinition(['content', 'prompt'], event.target.value)
