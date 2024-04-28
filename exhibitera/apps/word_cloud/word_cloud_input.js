@@ -1,15 +1,13 @@
 /* global swearList */
 
 import * as exCommon from '../js/exhibitera_app_common.js'
-let maxWordLength = -1;
+let maxCharCount = -1;
 let keyboard;
 function AddKeyboardListeners(maxLength) {
   window.addEventListener('keydown', (event) => {
     let input = document.querySelector('#inputField')
     let value = input.value;
-    console.log(value.length);
-    console.log(maxWordLength);
-    if (maxWordLength > 0) {
+    if (maxCharCount > 0) {
       if (value.length >= maxLength && event.key !== 'Backspace') {
         return;
       }
@@ -112,12 +110,12 @@ function loadDefinition(definition) {
     collectionName = 'default'
   }
   let showKeyboard = true;
-  if ('max_word_length' in definition.behavior) {
-    maxWordLength = definition.behavior.max_word_length;
+  if ('max_char_count' in definition.behavior) {
+    maxCharCount = definition.behavior.max_char_count;
   }
   if ('enable_keyboard_input' in definition.behavior) {
     if (definition.behavior.enable_keyboard_input) {
-      AddKeyboardListeners(maxWordLength);
+      AddKeyboardListeners(maxCharCount);
       showKeyboard = false;
     }
   }
@@ -134,8 +132,8 @@ function loadDefinition(definition) {
           '{space}'
         ]
       },
-      maxLength: maxWordLength > 0 ? {
-        default: maxWordLength
+      maxLength: maxCharCount > 0 ? {
+        default: maxCharCount
       } : {}
     })
 
