@@ -6,4 +6,6 @@ node_modules
 /venv_3_11/*
 /package.json
 /package-lock.json
-/venv/*
+*/venv/*
+exhibitera/apps/configuration/*
+exhibitera/apps/definitions/*

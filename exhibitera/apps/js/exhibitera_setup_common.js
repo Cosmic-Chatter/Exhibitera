@@ -256,7 +256,12 @@ export function updateWorkingDefinition (property, value) {
   // 'property' should be an array of subproperties, e.g., ["style", "color", 'headerColor']
   // for definition.style.color.headerColor
 
-  exCommon.setObjectProperty($('#definitionSaveButton').data('workingDefinition'), property, value)
+  if(property && property[0].length<=1){
+    //occasionally the color library is providing a poperty with a large amount of single entries that clog up the definition json
+    console.log(`skipping ${property}`)
+    return;
+  }
+  exCommon.setObjectProperty($('#definitionSaveButton').data('workingDefinition'), property, value);
 }
 
 export function createLoginEventListeners () {
