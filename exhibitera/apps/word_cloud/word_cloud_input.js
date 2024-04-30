@@ -1,14 +1,14 @@
 /* global swearList */
 
 import * as exCommon from '../js/exhibitera_app_common.js'
-let maxCharCount = -1;
+let maxCharacterCount = -1;
 const Keyboard = window.SimpleKeyboard.default;
 let keyboard ='';
 function AddKeyboardListeners(maxLength) {
   window.addEventListener('keydown', (event) => {
     let input = document.querySelector('#inputField')
     let value = input.value;
-    if (maxCharCount > 0) {
+    if (maxCharacterCount > 0) {
       if (value.length >= maxLength && event.key !== 'Backspace') {
         return;
       }
@@ -36,9 +36,9 @@ function AddKeyboardListeners(maxLength) {
   })
 }
 function setLengthHint(length){
-  if(maxCharCount >0) {
+  if(maxCharacterCount >0) {
     if(length > 0){
-      document.getElementById('characterCount').innerText =`${length}/${maxCharCount}`;
+      document.getElementById('characterCount').innerText =`${length}/${maxCharacterCount}`;
     }else{
       document.getElementById('characterCount').innerText ='';
     }
@@ -123,12 +123,13 @@ function loadDefinition(definition) {
     collectionName = 'default'
   }
   let showKeyboard = true;
-  if ('max_char_count' in definition.behavior) {
-    maxCharCount = definition.behavior.max_char_count;
+  if ('max_character_count' in definition.behavior) {
+    maxCharacterCount = definition.behavior.max_character_count;
+    console.log(maxCharacterCount);
   }
   if ('enable_keyboard_input' in definition.behavior) {
     if (definition.behavior.enable_keyboard_input) {
-      AddKeyboardListeners(maxCharCount);
+      AddKeyboardListeners(maxCharacterCount);
       showKeyboard = false;
     }
   }
@@ -145,8 +146,8 @@ function loadDefinition(definition) {
           '{space}'
         ]
       },
-      maxLength: maxCharCount > 0 ? {
-        default: maxCharCount
+      maxLength: maxCharacterCount > 0 ? {
+        default: maxCharacterCount
       } : {}
     })
 
