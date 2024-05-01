@@ -15,6 +15,7 @@
     --clear-font: 'clear-default';
     --input-font: "input-default";
     --prompt-font-adjust: 0;
+    --input-font-hint-color:#776767;
 }
 
 html {
@@ -38,11 +39,22 @@ html {
     background-size: cover;
     background-position: center
   }
+  .annotatedInput{
+    position:relative;
+  }
   #inputField {
     font-size: 3vmax;
     font-family: var(--input-font);
     background-color: var(--input-background-color);
     color: var(--input-color);
+  }
+  #characterCount{
+    position: absolute;
+    top: 1.25rem;
+    right: 2rem;
+    font-size: 2vmax;
+    font-family: var(--input-font);
+    color: var(--input-font-hint-color);
   }
   #clearButton {
     font-size: 3vmax;

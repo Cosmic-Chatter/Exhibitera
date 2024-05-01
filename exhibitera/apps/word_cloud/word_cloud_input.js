@@ -1,14 +1,58 @@
 /* global swearList */
 
 import * as exCommon from '../js/exhibitera_app_common.js'
-
-function clear () {
+let maxCharacterCount = -1;
+const Keyboard = window.SimpleKeyboard.default;
+let keyboard ='';
+function AddKeyboardListeners(maxLength) {
+  window.addEventListener('keydown', (event) => {
+    let input = document.querySelector('#inputField')
+    let value = input.value;
+    if (maxCharacterCount > 0) {
+      if (value.length >= maxLength && event.key !== 'Backspace') {
+        return;
+      }
+    }
+    let newVal = value;
+    switch (event.key) {
+      case 'Backspace':
+        newVal = value.slice(0, value.length - 1);
+        break;
+      case 'Meta':
+      case 'Control':
+      case 'CapsLock':
+      case 'Esc':
+      case 'Shift':
+      case 'Enter':
+        break;
+      case 'Space':
+        newVal = value + ' ';
+        break;
+      default:
+        newVal = value + event.key
+    }
+    input.value = newVal;
+    setLengthHint(newVal.length);
+  })
+}
+function setLengthHint(length){
+  if(maxCharacterCount >0) {
+    if(length > 0){
+      document.getElementById('characterCount').innerText =`${length}/${maxCharacterCount}`;
+    }else{
+      document.getElementById('characterCount').innerText ='';
+    }
+  }
+}
+function clear() {
   $('#inputField').val('')
+  if(keyboard){
   keyboard.input.default = ''
   keyboard.input.inputField = ''
+  }
 }
 
-function getCleanText () {
+function getCleanText() {
   // Run the profanity checker on the input field
 
   $('#profanityCheckingDiv').html($('#inputField').val()).profanityFilter({ customSwears: swearList, replaceWith: '#' })
@@ -17,7 +61,7 @@ function getCleanText () {
   return ($('#profanityCheckingDiv').html().trim())
 }
 
-function sendTextToServer () {
+function sendTextToServer() {
   // Send the server the text that the user has inputted
   const text = getCleanText()
   const requestDict = {
@@ -51,7 +95,7 @@ function sendTextToServer () {
   }
 }
 
-function updateFunc (update) {
+function updateFunc(update) {
   // Read updates for word cloud-specific actions and act on them
 
   // This should be last to make sure the path has been updated
@@ -64,7 +108,7 @@ function updateFunc (update) {
   }
 }
 
-function loadDefinition (definition) {
+function loadDefinition(definition) {
   // Set up a new interface to collect input
 
   // Parse the settings and make the appropriate changes
@@ -78,29 +122,57 @@ function loadDefinition (definition) {
   } else {
     collectionName = 'default'
   }
+  let showKeyboard = true;
+  if ('max_character_count' in definition.behavior) {
+    maxCharacterCount = definition.behavior.max_character_count;
+    console.log(maxCharacterCount);
+  }
+  if ('enable_keyboard_input' in definition.behavior) {
+    if (definition.behavior.enable_keyboard_input) {
+      AddKeyboardListeners(maxCharacterCount);
+      showKeyboard = false;
+    }
+  }
+  if (showKeyboard || exCommon.config.hideKeyboard) {
+    //Enable keyboard 
+    keyboard = new Keyboard({
+      onChange: input => onChange(input),
+      onKeyPress: button => onKeyPress(button),
+      layout: {
+        default: [
+          'Q W E R T Y U I O P',
+          'A S D F G H J K L',
+          'Z X C V B N M {bksp}',
+          '{space}'
+        ]
+      },
+      maxLength: maxCharacterCount > 0 ? {
+        default: maxCharacterCount
+      } : {}
+    })
 
-  // Localization options
-  if ('placeholder' in definition.content.localization && definition.content.localization.placeholder.trim() !== '') {
-    document.getElementById('inputField').placeholder = definition.content.localization.placeholder
-  } else {
-    document.getElementById('inputField').placeholder = 'Type to enter response'
+    // Localization options
+    if ('placeholder' in definition.content.localization && definition.content.localization.placeholder.trim() !== '') {
+      document.getElementById('inputField').placeholder = definition.content.localization.placeholder
+    } else {
+      document.getElementById('inputField').placeholder = 'Type to enter response'
+    }
+    if ('clear' in definition.content.localization && definition.content.localization.clear.trim() !== '') {
+      document.getElementById('clearButton').innerHTML = definition.content.localization.clear
+    } else {
+      document.getElementById('clearButton').innerHTML = 'Clear'
+    }
+    if ('submit' in definition.content.localization && definition.content.localization.submit.trim() !== '') {
+      document.getElementById('submitButton').innerHTML = definition.content.localization.submit
+    } else {
+      document.getElementById('submitButton').innerHTML = 'Submit'
+    }
+    if ('backspace' in definition.content.localization && definition.content.localization.backspace.trim() !== '') {
+      document.querySelector('.hg-button-bksp').querySelector('span').innerHTML = definition.content.localization.backspace
+    } else {
+      document.querySelector('.hg-button-bksp').querySelector('span').innerHTML = 'backspace'
+    }
   }
-  if ('clear' in definition.content.localization && definition.content.localization.clear.trim() !== '') {
-    document.getElementById('clearButton').innerHTML = definition.content.localization.clear
-  } else {
-    document.getElementById('clearButton').innerHTML = 'Clear'
-  }
-  if ('submit' in definition.content.localization && definition.content.localization.submit.trim() !== '') {
-    document.getElementById('submitButton').innerHTML = definition.content.localization.submit
-  } else {
-    document.getElementById('submitButton').innerHTML = 'Submit'
-  }
-  if ('backspace' in definition.content.localization && definition.content.localization.backspace.trim() !== '') {
-    document.querySelector('.hg-button-bksp').querySelector('span').innerHTML = definition.content.localization.backspace
-  } else {
-    document.querySelector('.hg-button-bksp').querySelector('span').innerHTML = 'backspace'
-  }
-
   const root = document.querySelector(':root')
 
   // Color settings
@@ -125,7 +197,7 @@ function loadDefinition (definition) {
     })
   }
 
-  // Backgorund settings
+  // Background settings
   if ('background' in definition.appearance) {
     exCommon.setBackground(definition.appearance.background, root, '#fff')
   }
@@ -158,47 +230,36 @@ function loadDefinition (definition) {
       root.style.setProperty('--' + key + '-font-adjust', value)
     })
   }
-
   // Send a thumbnail to the helper
   setTimeout(() => exCommon.saveScreenshotAsThumbnail(definition.uuid + '.png'), 100)
 }
 
-const Keyboard = window.SimpleKeyboard.default
+
 
 // Add a listener to each input so we direct keyboard input to the right one
 document.querySelectorAll('.input').forEach(input => {
   input.addEventListener('focus', onInputFocus)
 })
-function onInputFocus (event) {
-  keyboard.setOptions({
+function onInputFocus(event) {
+  keyboard?.setOptions({
     inputName: event.target.id
   })
 }
-function onInputChange (event) {
+function onInputChange(event) {
   keyboard.setInput(event.target.value, event.target.id)
 }
-function onKeyPress (button) {
+function onKeyPress(button) {
   if (button === '{lock}' || button === '{shift}') handleShiftButton()
 }
 document.querySelector('#inputField').addEventListener('input', event => {
-  keyboard.setInput(event.target.value)
+  keyboard?.setInput(event.target.value)
 })
-function onChange (input) {
+function onChange(input) {
   document.querySelector('#inputField').value = input
+  setLengthHint(input.length);
 }
 
-const keyboard = new Keyboard({
-  onChange: input => onChange(input),
-  onKeyPress: button => onKeyPress(button),
-  layout: {
-    default: [
-      'Q W E R T Y U I O P',
-      'A S D F G H J K L',
-      'Z X C V B N M {bksp}',
-      '{space}'
-    ]
-  }
-})
+
 
 exCommon.configureApp({
   name: 'word_cloud_input',

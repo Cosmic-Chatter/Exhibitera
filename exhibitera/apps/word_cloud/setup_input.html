@@ -209,6 +209,24 @@
                   </label>
                   <input type="text" class="form-control" id="collectionNameInput">
                 </div>
+                <div class="col-12 col-md-6 col-lg-4">
+                  <label for="collectionNameInput" class="form-label">
+                    Physical keyboard
+                    <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="Enabling input from a physical keyboard will hide the onscreen keyboard. You should use a kiosk application to ensure users can't alt-tab to escape." style="font-size: 0.55em;">?</span>
+                  </label>
+                  <div class="form-check form-check-inline">
+                    <input type="checkbox" class="form-check-input" id="enableKeyboardInput">
+                    <label class="form-check-label" for="enableKeyboardInput">Enable Keyboard</label>
+                  </div>
+                  
+                </div>
+                <div class="col-12 col-md-6 col-lg-4">
+                  <label for="collectionNameInput" class="form-label">
+                    Max character count
+                    <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="The maximum number of characters entered (including spaces). Set to -1 for infinite length." style="font-size: 0.55em;">?</span>
+                  </label>
+                  <input type="number" class="form-control" id="maxCharacterCount" value="-1">
+                </div>
               </div>
 
               <h3 class="mt-2">Content</h3>
@@ -268,6 +286,12 @@
                   <label for="colorPicker_input" class="form-label">Input text</label>
                   <div>
                     <input id="colorPicker_input" type="text" class="coloris form-control" value="#000" data-property="input" data-default="#000">
+                  </div>
+                </div>
+                <div class="col-12 col-sm-6 col-lg-4">
+                  <label for="colorPicker_input-hint" class="form-label">Character count</label>
+                  <div>
+                    <input id="colorPicker_input-hint" type="text" class="coloris form-control" value="#776767" data-property="input-font-hint" data-default="#776767">
                   </div>
                 </div>
                 <div class="col-12 col-sm-6 col-lg-4">
