@@ -366,6 +366,23 @@
                   </label>
                   <input id="imageHeightSlider" type="range" calss="form-range layout-property-int" data-property="image_height" min="10" max="100" step="5" value="80">
                 </div>
+                <div class="col-12 col-md-6 col-lg-4 col-xxl-3">
+                  <label for="cornerRadiusSlider" class="form-label">
+                    Round image corners
+                  </label>
+                  <input id="cornerRadiusSlider" type="range" calss="form-range layout-property-int" data-property="corner_radius" min="0" max="50" step="1" value="0">
+                </div>
+                <div class="col-12 col-md-6 col-lg-4 col-xxl-3">
+                  <label for="imageShapeSelect" class="form-label">
+                    Image shape
+                  </label>
+                  <select id="imageShapeSelect" class="form-select" data-property="corner_radius">
+                    <option value="original">Original</option>
+                    <option value="square">Square</option>
+                    <option value="viewport">Match display</option>
+                    <option value="anti-viewport">Opposite display</option>
+                  </select>
+                </div>
               </div>
 
               <h4>Lightbox layout</h4>
@@ -418,6 +435,30 @@
                     <input id="colorPicker_filterTextColor" type="text" class="coloris form-control" value="#000000" data-property="filterTextColor" data-default="#000000">
                   </div>
                 </div>
+                <div class="col-12 col-sm-6 col-lg-4">
+                  <label for="colorPicker_lightboxBackgroundColor" class="form-label">Lightbox background</label>
+                  <div>
+                    <input id="colorPicker_lightboxBackgroundColor" type="text" class="coloris form-control" value="#000000ef" data-property="lightboxBackgroundColor" data-default="#000000ef">
+                  </div>
+                </div>
+                <div class="col-12 col-sm-6 col-lg-4">
+                  <label for="colorPicker_lightboxTitleColor" class="form-label">Lightbox title</label>
+                  <div>
+                    <input id="colorPicker_lightboxTitleColor" type="text" class="coloris form-control" value="#fff" data-property="lightboxTitleColor" data-default="#fff">
+                  </div>
+                </div>
+                <div class="col-12 col-sm-6 col-lg-4">
+                  <label for="colorPicker_lightboxCaptionColor" class="form-label">Lightbox caption</label>
+                  <div>
+                    <input id="colorPicker_lightboxCaptionColor" type="text" class="coloris form-control" value="#fff" data-property="lightboxCaptionColor" data-default="#fff">
+                  </div>
+                </div>
+                <div class="col-12 col-sm-6 col-lg-4">
+                  <label for="colorPicker_lightboxCreditColor" class="form-label">Lightbox credit</label>
+                  <div>
+                    <input id="colorPicker_lightboxCreditColor" type="text" class="coloris form-control" value="#fff" data-property="lightboxCreditColor" data-default="#fff">
+                  </div>
+                </div>
               </div>
 
               <h4>Fonts</h4>
@@ -460,11 +501,11 @@
                 </div>
                 <div class="col-12 col-md-6 col-lg-4">
                   <label for="filter_labelTextSizeSlider" class="form-label">Filter label</label>
-                  <input id="filter_labelTextSizeSlider" type="range" class="form-range text-size-slider" data-property="filter_label" min="-0.5", max="2" start="0" step="0.5">
+                  <input id="filter_labelTextSizeSlider" type="range" class="form-range text-size-slider" data-property="filter_label" min="-1.5", max="1.5" start="0" step="0.5">
                 </div>
                 <div class="col-12 col-md-6 col-lg-4">
                   <label for="filter_textTextSizeSlider" class="form-label">Filter text</label>
-                  <input id="filter_textTextSizeSlider" type="range" class="form-range text-size-slider" data-property="filter_text" min="-0.5", max="2" start="0" step="0.5">
+                  <input id="filter_textTextSizeSlider" type="range" class="form-range text-size-slider" data-property="filter_text" min="-1.5", max="1.5" start="0" step="0.5">
                 </div>
               </div>
             </div>

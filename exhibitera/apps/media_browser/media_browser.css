@@ -5,6 +5,10 @@
     --filterBackgroundColor: white;
     --filterLabelColor: black;
     --filterTextColor: black;
+    --lightboxBackgroundColor: #000000ef;
+    --lightboxTitleColor: white;
+    --lightboxCaptionColor: white;
+    --lightboxCreditColor: white;
 
     /* Font faces */
     --Header-font: 'Header-default';
@@ -80,8 +84,10 @@ body {
 }
 .cardCol {
 }
+.cardTitleContainer {
+    margin-top: 1vmax;
+}
 .cardTitle {
-    margin-top: 15px;
     font-size: calc(3vmax + var(--Title-font-adjust)*1vmax);
     font-family: var(--Title-font);
     color: var(--titleColor);
@@ -111,15 +117,13 @@ body {
     border: 0px;
 }
 .filter-entry {
-    font-size: 3vmin;
     font-family: var(--filter_text-font);
-    font-size: calc(3vmax + var(--filter_text-font-adjust)*1vmax);
+    font-size: calc(3vmin + var(--filter_text-font-adjust)*1vmin);
     color: var(--filterTextColor);
   }
 .filter-label {
-    font-size: 4vmin;
     font-family: var(--filter_label-font);
-    font-size: calc(3vmax + var(--filter_label-font-adjust)*1vmax);
+    font-size: calc(3vmin + var(--filter_label-font-adjust)*1vmin);
     color: var(--filterLabelColor);
 }
 .langSwitch-entry {
@@ -137,9 +141,7 @@ body {
     height: 100%;
 }
 .resultImg {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
+    object-fit: cover;
 }
 #attractorImage {
     position: fixed;
@@ -191,7 +193,7 @@ body {
     width: 100vw;
     top: 0vh;
     left: 0px;
-    background-color: rgba(0, 0, 0, 0.9);
+    background-color: var(--lightboxBackgroundColor);
     z-index: 1000;
     display: none;
     align-items: center;
@@ -199,14 +201,14 @@ body {
 }
 #mediaLightboxCaption {
     font-size: calc(2vmax + var(--Lightbox_caption-font-adjust)*1vmax);
-    color: white;
+    color: var(--lightboxCaptionColor);
     overflow-y: auto;
     height: 15%;
     font-family: var(--Lightbox_caption-font);
 }
 #mediaLightboxCredit {
     font-size: calc(1.5vmax + var(--Lightbox_credit-font-adjust)*1vmax);
-    color: white;
+    color: var(--lightboxCreditColor);
     padding-top: 10px;
     height: 6%;
     font-family: var(--Lightbox_credit-font);
@@ -221,7 +223,7 @@ body {
 #mediaLightboxTitle {
     text-align: center;
     font-size: calc(3vmax + var(--Lightbox_title-font-adjust)*1vmax);
-    color: white;
+    color: var(--lightboxTitleColor);
     height: 9%;
     font-family: var(--Lightbox_title-font);
 }
@@ -268,6 +270,9 @@ body {
     .hg-button {
         height: 100%!important;
     }
+    .resultImg {
+        height: 100%;
+    }
     .simple-keyboard {
         height: 100%;
     }
@@ -282,5 +287,8 @@ body {
     }
     .hg-standardBtn {
         height: 3.5vh!important;
+    }
+    .resultImg {
+        width: 100%;
     }
 }
