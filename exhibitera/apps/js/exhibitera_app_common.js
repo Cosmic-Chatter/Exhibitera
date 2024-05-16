@@ -151,6 +151,7 @@ export function sendPing () {
     const requestDict = {
       id: config.id,
       uuid: config.uuid,
+      exhibiteraAppID: config.exhibiteraAppID,
       helperAddress: config.helperAddress,
       permissions: config.permissions,
       platform_details: config.platformDetails,

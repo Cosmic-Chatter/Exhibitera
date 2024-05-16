@@ -85,6 +85,7 @@ def send_webpage_update():
     component_dict_list = []
     for item in ex_config.componentList:
         temp = {"class": "exhibitComponent",
+                "exhibiteraAppID": item.config["app_id"],
                 "helperAddress": item.helperAddress,
                 "id": item.id,
                 "ip_address": item.ip_address,

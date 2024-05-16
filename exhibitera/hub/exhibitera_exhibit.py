@@ -187,6 +187,7 @@ class ExhibitComponent(BaseComponent):
         self.platform_details: dict = {}
 
         self.config["definition"] = ""
+        self.config["app_id"] = ""
 
         self.status_manager = component_helpers.ComponentStatusManager(category)
 
@@ -955,6 +956,8 @@ def update_exhibit_component_status(data: dict[str, Any], ip: str):
     if "platform_details" in data:
         if isinstance(data["platform_details"], dict):
             component.platform_details.update(data["platform_details"])
+    if "exhibiteraAppID" in data:
+        component.config["app_id"] = data["exhibiteraAppID"]
 
 
 def read_descriptions_configuration():

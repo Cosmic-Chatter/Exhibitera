@@ -375,6 +375,9 @@ class ExhibitComponent extends BaseComponent {
     if ('definition' in update) {
       this.definition = update.definition
     }
+    if ('exhibiteraAppID' in update) {
+      this.exhibiteraAppId = update.exhibiteraAppID
+    }
     if ('helperAddress' in update) {
       this.helperAddress = update.helperAddress
     }
@@ -761,7 +764,7 @@ function showExhibitComponentInfo (id, groupUUID) {
 
   // Set up the upper-right dropdown menu with helpful details
   document.getElementById('exhibiteraComponentIdButton').innerHTML = convertAppIDtoDisplayName(obj.exhibiteraAppId)
-
+  console.log(obj)
   if (obj.ip_address != null && obj.ip_address !== '') {
     document.getElementById('componentInfoModalIPAddress').innerHTML = obj.ip_address
     document.getElementById('componentInfoModalIPAddressGroup').style.display = 'block'
