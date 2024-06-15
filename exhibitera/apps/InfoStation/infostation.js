@@ -32,10 +32,19 @@ function loadDefinition (definition) {
   }
 
   // Modify the style
+  // Layout
+  // First, reset to defaults (in case a style option doesn't exist in the definition)
+  root.style.setProperty('--button-size', 30)
+
+  // Then, apply the definition settings
+  if ('style' in definition && 'layout' in definition.style && 'button_size' in definition.style.layout) {
+    root.style.setProperty('--button-size', definition.style.layout.button_size)
+  }
+
   // Color
 
   // First, reset to defaults (in case a style option doesn't exist in the definition)
-  root.style.setProperty('--background-color', '#719abf')
+  { root.style.setProperty('--background-color', '#719abf') }
   root.style.setProperty('--header-color', '#706F8E')
   root.style.setProperty('--footer-color', '#706F8E')
   root.style.setProperty('--section-header-color', 'white')
@@ -130,21 +139,16 @@ function createButton (title, id) {
   const nButtons = $('#buttonRow').children().length
   const root = document.querySelector(':root')
   let rowClass
-  let numRows
 
   if (nButtons === 1) {
     rowClass = '1'
-    numRows = 0
   } else if (nButtons < 4) {
     rowClass = String(nButtons)
-    numRows = 1
   } else {
     rowClass = '4'
-    numRows = Math.ceil(nButtons / 4)
   }
 
-  root.style.setProperty('--button-rows', numRows)
-  document.getElementById('buttonRow').classList = 'row justify-content-center pt-3 pb-1 mx-1 gx-2 gy-2 row-cols-' + rowClass
+  document.getElementById('buttonRow').classList = 'row pt-3 pb-1 mx-1 gx-2 row-cols-' + rowClass
 }
 
 function createTextTab (definition) {

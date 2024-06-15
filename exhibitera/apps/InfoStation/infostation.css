@@ -26,6 +26,7 @@
 
   /* Misc */
   --button-rows: 1;
+  --button-size: 30;
 }
 
 /* Font definitions */
@@ -197,9 +198,7 @@ li {
   right: 0;
   bottom: 0;
 }
-#buttonRow {
-  height: calc(6vmax * var(--button-rows));
-}
+
 #masthead {
   font-size: calc(6vmax + var(--header-font-size-adjust)*1vmax);
   height: 10vh;
@@ -214,7 +213,7 @@ li {
   height: calc(85vmax - 6vmax * var(--button-rows));
   width: 100vw;
   overflow-x: hidden;
-  overflow-y: scroll;
+  overflow-y: auto;
 }
 #toolbar {
   background-color: var(--footer-color);
@@ -227,6 +226,21 @@ li {
   .float-right, .float-left {
     max-width: 50%;
   }
+  .tabButtonCol {
+    width: calc(1%*var(--button-size))
+  }
+  #buttonRow {
+    height: 7vmax;
+    overflow-y: auto;
+    flex-wrap: nowrap;
+    position: relative;
+  }
+  #nav-tabContent {
+    height: 78vh;
+    width: 100vw;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
 }
 
 @media (orientation: landscape) {
@@ -235,6 +249,7 @@ li {
   }
   .tabButtonCol {
     width: 100%;
+    height: calc(1%*var(--button-size))
   }
   #mastheadDiv {
     width: 30vw;
@@ -249,6 +264,8 @@ li {
   #buttonRow {
     width: 30vw;
     height: calc(100vh - 10vh - 5vmax);
+    overflow-y: auto;
+    --bs-gutter-y: 0.5rem;
   }
   #toolbar {
     width: 30vw;

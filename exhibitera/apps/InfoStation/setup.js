@@ -559,13 +559,11 @@ function deleteInfoStationTab (lang, uuid) {
   // Delete the given InfoStation tab
 
   const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
-
   delete workingDefinition.languages[lang].tabs[uuid]
-  const index = workingDefinition.languages[lang].tab_order.indexOf(uuid)
+  const index = workingDefinition.languages[lang].tab_order.indexOf(parseInt(uuid))
   workingDefinition.languages[lang].tab_order.splice(index, 1)
-
   $('#infostationTab_' + lang + '_' + uuid).remove()
-  $('infostationPane_' + lang + '_' + uuid).remove()
+  $('#infostationPane_' + lang + '_' + uuid).remove()
   $('.infostation-tab').click()
 }
 
@@ -699,6 +697,11 @@ document.getElementById('inactivityTimeoutField').addEventListener('change', (ev
 })
 
 // Style fields
+document.getElementById('buttonSizeSlider').addEventListener('change', (event) => {
+  exSetup.updateWorkingDefinition(['style', 'layout', 'button_size'], event.target.value)
+  exSetup.previewDefinition(true)
+})
+
 $('.coloris').change(function () {
   const value = $(this).val().trim()
   exSetup.updateWorkingDefinition(['style', 'color', $(this).data('property')], value)
@@ -732,6 +735,7 @@ document.addEventListener('click', (event) => {
     const split = event.target.getAttribute('id').split('_')
     const lang = split.slice(-2)[0]
     const uuid = split.slice(-1)[0]
+
     deleteInfoStationTab(lang, uuid)
     exSetup.previewDefinition(true)
   }

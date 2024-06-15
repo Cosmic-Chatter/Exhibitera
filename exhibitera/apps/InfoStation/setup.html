@@ -201,6 +201,7 @@
       </div>
       <div class="row align-items-start">
         <div id='editPane' class="col-6 col-lg-7">
+          <h3>Settings</h3>
           <div class="row gy-2">
             <div class="col-12 col-md-6">
               <label for="definitionNameInput" class="form-label">Definition name</label>
@@ -263,6 +264,16 @@
               <div class="tab-content" id="languageNavContent">
               </div>
               <h3>Appearance</h3>
+              <h4>Layout</h4>
+              <div class="row gy-2 mb-3"> 
+                <div class="col-12 col-md-6 col-lg-4">
+                  <label for="buttonSizeSlider" class="form-label">
+                    Tab button size
+                    <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Set the width (portrait view) or height (landscape view) of the tab buttons. The user can swipe to see additional buttons." style="font-size: 0.55em;">?</span>
+                  </label>
+                  <input id="buttonSizeSlider" type="range" class="form-range" data-property="header" min="10", max="100" start="30" step="5">
+                </div>
+              </div>
               <h4>Colors</h4>
               <div class="row gy-2 mb-3">
                 <div class="col-12 col-lg-8 advanced-color-picker" data-constACP-name="Background" data-constACP-path="style>background"></div>
