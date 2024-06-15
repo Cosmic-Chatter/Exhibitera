@@ -14,6 +14,8 @@
 ### General
 
 ### InfoStation
+- The button row is now scrollable for large numbers of buttons [Morgan Rehnberg]
+- Chane the size of buttons to fit your needs [Morgan Rehnberg]
 
 ### Media Browser
 - New style options give you greater control over the look and feel of Media Browser [Morgan Rehnberg] 
