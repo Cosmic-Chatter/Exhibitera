@@ -345,7 +345,7 @@ log_path: str = ex_tools.get_path(["hub.log"], user_file=True)
 logging.basicConfig(datefmt='%Y-%m-%d %H:%M:%S',
                     filename=log_path,
                     format='%(levelname)s, %(asctime)s, %(message)s',
-                    level=logging.DEBUG)
+                    level=logging.INFO)
 # signal.signal(signal.SIGINT, quit_handler)
 # signal.signal(signal.SIGTERM, quit_handler)
 sys.excepthook = error_handler

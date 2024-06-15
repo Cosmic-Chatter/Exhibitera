@@ -3,6 +3,7 @@
 ## Hub
 
 ### General
+- Changed logging behavior to reduce log sizes [Morgan Rehnberg]
 
 ### Schedule
 
