@@ -82,7 +82,7 @@ function createCard (obj) {
   col.appendChild(card)
 
   const imgCol = document.createElement('div')
-  imgCol.classList = 'col col-12'
+  imgCol.classList = 'col col-12 d-flex justify-content-center align-items-end'
 
   if ('image_height' in def.style.layout) {
     imgCol.style.height = String(def.style.layout.image_height) + '%'
@@ -96,11 +96,46 @@ function createCard (obj) {
   img.src = thumb
   img.setAttribute('id', 'Entry_' + id)
 
+  if ('corner_radius' in def.style.layout) {
+    img.style.borderRadius = String(def.style.layout.corner_radius) + '%'
+  } else {
+    img.style.borderRadius = '0%'
+  }
+  if ('thumbnail_shape' in def.style.layout) {
+    if (def.style.layout.thumbnail_shape === 'orignal') {
+      img.style.aspectRatio = ''
+    } else if (def.style.layout.thumbnail_shape === 'square') {
+      img.style.aspectRatio = 1
+    } else if (def.style.layout.thumbnail_shape === 'viewport') {
+      const height = window.innerHeight
+      const width = window.innerWidth
+      if (width >= height) {
+        img.style.aspectRatio = String(width/height)
+      } else {
+        img.style.aspectRatio = String(height/width)
+      }
+    } else if (def.style.layout.thumbnail_shape === 'anti-viewport') {
+      const height = window.innerHeight
+      const width = window.innerWidth
+      if (width >= height) {
+        img.style.aspectRatio = String(height/width)
+      } else {
+        img.style.aspectRatio = String(width/height)
+      }
+    }
+  } else {
+    img.style.aspectRatio = ''
+  }
+
   imgCol.appendChild(img)
 
-  if (('imageHeight' in def.style.layout && def.style.layout.image_height < 100) || !('imageHeight' in def.style.layout)) {
+  if (('image_height' in def.style.layout && def.style.layout.image_height < 100) || !('image_height' in def.style.layout)) {
     const titleCol = document.createElement('div')
-    titleCol.classList = 'col col-12 text-center'
+    titleCol.classList = 'col col-12 text-center cardTitleContainer'
+    
+    if ('image_height' in def.style.layout) {
+      titleCol.style.height = String(100-def.style.layout.image_height) + '%'
+    }
     card.appendChild(titleCol)
 
     const titleSpan = document.createElement('span')

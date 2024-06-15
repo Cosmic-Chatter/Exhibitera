@@ -1,3 +1,27 @@
+# **Exhibitera 5.1**
+
+## Hub
+
+### General
+
+### Schedule
+
+### Maintenance
+
+## Exhibitera Apps
+
+### General
+
+### InfoStation
+
+### Media Browser
+- New style options give you greater control over the look and feel of Media Browser [Morgan Rehnberg] 
+
+### Word Cloud
+- Support for using a hardware keyboard [Alex Averill]
+- Limit the number of characters a response can be [Alex Averill]
+
+
 # **Exhibitera 5**
 Exhibitera 5 introduces a user account system that enables administrators to restrict access to various features. Divide responsibility while minimizing risk with granular permissions and improved logging.
 

@@ -82,6 +82,8 @@ async function clearDefinitionInput (full = true) {
   document.getElementById('itemsPerPageInput').value = 12
   document.getElementById('numColsSelect').value = 6
   document.getElementById('imageHeightSlider').value = 80
+  document.getElementById('cornerRadiusSlider').value = 0
+  document.getElementById('imageShapeSelect').value = 'original'
 
   // Reset style options
   const colorInputs = ['titleColor', 'filterBackgroundColor', 'filterLabelColor', 'filterTextColor']
@@ -148,6 +150,16 @@ function editDefinition (uuid = '') {
     document.getElementById('numColsSelect').value = 6
   }
   document.getElementById('imageHeightSlider').value = def.style.layout.image_height
+  if ('corner_radius' in def.style.layout) {
+    document.getElementById('cornerRadiusSlider').value = def.style.layout.corner_radius
+  } else {
+    document.getElementById('cornerRadiusSlider').value = 0
+  }
+  if ('thumbnail_shape' in def.style.layout) {
+    document.getElementById('imageShapeSelect').value = def.style.layout.thumbnail_shape
+  } else {
+    document.getElementById('imageShapeSelect').value = 'original'
+  }
   document.getElementById('lightboxTitleHeightSlider').value = def.style.layout.lightbox_title_height
   document.getElementById('lightboxCaptionHeightSlider').value = def.style.layout.lightbox_caption_height
   document.getElementById('lightboxCreditHeightSlider').value = def.style.layout.lightbox_credit_height
@@ -1065,6 +1077,15 @@ document.getElementById('imageHeightSlider').addEventListener('input', (event) =
   exSetup.updateWorkingDefinition(['style', 'layout', 'image_height'], parseInt(event.target.value))
   exSetup.previewDefinition(true)
 })
+document.getElementById('cornerRadiusSlider').addEventListener('input', (event) => {
+  exSetup.updateWorkingDefinition(['style', 'layout', 'corner_radius'], parseInt(event.target.value))
+  exSetup.previewDefinition(true)
+})
+document.getElementById('imageShapeSelect').addEventListener('change', (event) => {
+  exSetup.updateWorkingDefinition(['style', 'layout', 'thumbnail_shape'], event.target.value)
+  exSetup.previewDefinition(true)
+})
+
 Array.from(document.querySelectorAll('.height-slider')).forEach((el) => {
   el.addEventListener('input', () => {
     const titleHeight = parseInt(document.getElementById('lightboxTitleHeightSlider').value)
