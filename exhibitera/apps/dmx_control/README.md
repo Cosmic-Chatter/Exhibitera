@@ -9,7 +9,7 @@ DMX Control provides a flexible interface for controlling DMX lighting systems. 
 ## Configuration
 
 ### Choosing hardware
-To interface with a DMX universe, you need a hardware DMX controller. DMX Control supports two devices, [OpenDMX](https://www.enttec.com/product/lighting-communication-protocols/dmx512/open-dmx-usb/) and [uDMX](https://www.anyma.ch/research/udmx/). Development work has happened exclusively with OpenDMX, so that is the suggested device.
+To interface with a DMX universe, you need a hardware DMX controller. DMX Control supports two devices,<a href="https://www.enttec.com/product/lighting-communication-protocols/dmx512/open-dmx-usb/" target="_blank">OpenDMX</a> and <a href="https://www.anyma.ch/research/udmx/" target="_blank">uDMX</a>. Development work has happened exclusively with OpenDMX, so that is the suggested device.
 
 ### Networking
 If you plan to edit the DMX configuration from the device connected to the DMX controller, the network does not matter. However, if you plan to do configuration from a remote device (accessed, for instance, from Hub), a fast, low-latency connection is important. To enable realtime lighting control, DMX Control sends many commands over the network during configuration. This works much more smoothly with a wired Ethernet connection.
@@ -17,7 +17,7 @@ If you plan to edit the DMX configuration from the device connected to the DMX c
 ### Operating system
 
 #### Windows
-To install the correct driver, download [Zadig](https://zadig.akeo.ie/) and follow these steps:
+To install the correct driver, download <a href="https://zadig.akeo.ie/" target="_blank">Zadig</a> and follow these steps:
 1. Ensure your DMX controller is plugged into a USB port
 2. Launch Zadig
 3. Click _Options_ > _List All Devices_
