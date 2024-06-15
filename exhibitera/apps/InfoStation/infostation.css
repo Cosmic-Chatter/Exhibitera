@@ -124,6 +124,7 @@ li {
   border-color: var(--section-border-color);
   border-width: 0.9vmin;
   box-shadow: 1vmin 1vmin var(--section-shadow-color);
+  overflow: auto;
 }
 .btn-primary {
   background-color: var(--tab-button-active-color)!important;

@@ -3,4 +3,4 @@ Exhibitera makes it easy to create, manage, and evaluate your digital exhibits. 
 
 **Maintainer**: Morgan Rehnberg
 
-**Contributors**: Alex Averill
+**Contributors**: Alex Averill, David Morgan
