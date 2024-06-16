@@ -26,7 +26,7 @@ export const config = {
   },
   remoteDisplay: false, // false == we are using the webview app, true == browser
   serverAddress: '',
-  softwareVersion: 5,
+  softwareVersion: 5.1,
   standalone: false, // false == we are using Hub
   updateParser: null, // Function used by readUpdate() to parse app-specific updates
   uuid: ''
