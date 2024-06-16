@@ -162,7 +162,7 @@ class DMXFixture(Fixture):
             self._set_name(name)
 
         if start_channel is not None:
-            self.__start_channel = start_channel
+            self._Fixture__start_channel = start_channel
 
         if channel_list is not None:
             self._Fixture__channels = []

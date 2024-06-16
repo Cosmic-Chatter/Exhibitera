@@ -15,6 +15,9 @@
 ### General
 - Better handling of long text in places like titles and captions [Morgan Rehnberg]
 
+### DMX Control
+- Fixtures can now be deleted or moved to a different channel range [Morgan Rehnberg]
+
 ### InfoStation
 - The button row is now scrollable for large numbers of buttons [Morgan Rehnberg]
 - Chane the size of buttons to fit your needs [Morgan Rehnberg]

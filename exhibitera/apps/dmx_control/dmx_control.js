@@ -29,6 +29,22 @@ class DMXUniverse {
     return newFixture
   }
 
+  removeFixture(fixtureUUID) {
+    // Remove the given fixture
+
+    const fixture = this.getFixtureByUUID(fixtureUUID)
+    console.log(fixtureUUID)
+
+    // Clear the channels from the channel map
+    console.log(fixture)
+    for (let i = fixture.startChannel; i < fixture.startChannel + fixture.channelList.length; i++) {
+      this.channelMap[i] = false
+    }
+
+    delete this.fixtures[fixture.name]
+    rebuildUniverseInterface()
+  }
+
   checkIfChannelsFree (startChannel, numChannels, fixtureUUID = null) {
     // Check if the given channels are available in the channelMap
     // If fixtureUUID != null, ignore overlaps with that fixture
@@ -140,6 +156,18 @@ class DMXFixture {
     this.valueMemory = {} // A place to store values temporarily when making changes.
     this.universe = null
     this.groups = [] // Hold the name of every group this fixture is in
+  }
+
+  remove() {
+    // Remove the fixture by removing it from any groups then its universe.
+
+    // Remove from any groups
+    for (const groupUUID of this.groups) {
+      getGroupByUUID(groupUUID).removeFixture(this.uuid)
+    }    
+
+    // Remove from universe
+    getUniverseByUUID(this.universe).removeFixture(this.uuid)
   }
 
   setChannelValues (valueDict) {
@@ -259,6 +287,7 @@ class DMXFixture {
 
     const col = document.createElement('div')
     col.classList = 'col-12 col-sm-6 col-lg-4 mt-2'
+    col.setAttribute('id', 'Fixture_' + this.uuid + '_for_' + collectionName)
 
     const row = document.createElement('div')
     row.classList = 'row mx-0'
@@ -435,6 +464,13 @@ class DMXFixtureGroup {
         this.fixtures[fixture.uuid].groups.push(this.uuid)
       }
     })
+  }
+
+  removeFixture(fixtureUUID) {
+    // Remove the given fixture
+    
+    delete this.fixtures[fixtureUUID]
+    rebuildGroupsInterface()
   }
 
   clearFixtures () {
@@ -1072,6 +1108,7 @@ function showAddFixtureModal (universeUUID, fixture = null) {
     $('#addFixtureModal').data('mode', 'add')
     document.getElementById('addFixtureName').value = ''
     document.getElementById('addFixtureFromModalButton').innerHTML = 'Add'
+    document.getElementById('deleteFixtureFromModalButton').style.display = 'none'
 
     // Find the next free channel
     const searchFunc = (el) => el === false
@@ -1096,6 +1133,7 @@ function showAddFixtureModal (universeUUID, fixture = null) {
     document.getElementById('addFixtureName').value = fixture.name
     document.getElementById('addFixtureFromModalButton').innerHTML = 'Save'
     document.getElementById('addFixtureStartingChannel').value = fixture.startChannel
+    document.getElementById('deleteFixtureFromModalButton').style.display = 'block'
 
     // Populate the current channels
     document.getElementById('cloneFixtureGroup').style.display = 'none'
@@ -1853,6 +1891,20 @@ $('#showAddUniverseModalButton').click(showAddUniverseMOdal)
 $('#addFixtureAddChannelButton').click(addChannelToModal)
 document.getElementById('addFixtureStartingChannel').addEventListener('input', updateModalChannelCounts)
 $('#addFixtureFromModalButton').click(addFixtureFromModal)
+document.getElementById('deleteFixtureFromModalButton').addEventListener('click', () => {
+  const fixtureUUID = $('#addFixtureModal').data('fixtureUUID')
+  exCommon.makeHelperRequest({
+    method: 'POST',
+    endpoint: '/DMX/fixture/remove',
+    params: {fixture_uuid: fixtureUUID}
+  })
+  .then((response) => {
+    if ('success' in response && response.success === true) {
+      getFixtureByUUID(fixtureUUID).remove()
+      $('#addFixtureModal').modal('hide')
+    }
+  })
+})
 $('#addUniverseFromModalButton').click(addUniverseFromModal)
 $('#editUniverseModalSaveButton').click(updateUniverseFromModal)
 document.getElementById('cloneFixtureButton').addEventListener('click', () => {
