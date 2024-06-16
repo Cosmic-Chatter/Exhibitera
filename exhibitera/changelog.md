@@ -8,6 +8,7 @@
 ### Schedule
 
 ### Maintenance
+- Change maintenance details and basic settings even if a component is offline [Morgan Rehnberg]
 
 ## Exhibitera Apps
 

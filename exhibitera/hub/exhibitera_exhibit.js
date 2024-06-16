@@ -708,9 +708,12 @@ function componentCannotConnect () {
 
   setComponentInfoStatusMessage('Cannot connect to component')
 
-  // Hide the tabs
-  document.getElementById('componentInfoModalTabList').style.display = 'none'
-  document.getElementById('componentInfoModalTabContainer').style.display = 'none'
+  // Hide things that can't be accessed when offline
+  document.getElementById('componentSettings').style.display = 'none'
+  document.getElementById('componentInfoModalDefinitionsTabButton').style.display = 'none'
+  $('#componentInfoModalMaintenanceTabButton').tab('show')
+  // document.getElementById('componentInfoModalTabList').style.display = 'none'
+  // document.getElementById('componentInfoModalTabContainer').style.display = 'none'
   document.getElementById('componentInfoModalViewScreenshot').style.display = 'none'
 }
 
@@ -718,9 +721,8 @@ function componentGoodConnection (screenshot = true) {
   // Configure the componentInfoModal for a good connection
 
   clearComponentInfoStatusMessage()
-  // Show the tabs
-  document.getElementById('componentInfoModalTabList').style.display = 'flex'
-  document.getElementById('componentInfoModalTabContainer').style.display = 'block'
+  // Show the tabs and other elements
+  document.getElementById('componentSettings').style.display = 'flex'
   if (screenshot) document.getElementById('componentInfoModalViewScreenshot').style.display = 'block'
 }
 
