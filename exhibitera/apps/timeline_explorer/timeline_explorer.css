@@ -206,6 +206,10 @@ time {
     background-color: var(--headerColor);
     font-family: var(--Header-font);
 }
+#headerText {
+  font-size: 4vmax;
+  height: 90%;
+}
 #tools-pane {
     background-color: var(--footerColor);
 }

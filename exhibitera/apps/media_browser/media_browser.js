@@ -1,4 +1,4 @@
-/* global bootstrap */
+/* global bootstrap textFit */
 
 import * as exCommon from '../js/exhibitera_app_common.js'
 
@@ -110,17 +110,17 @@ function createCard (obj) {
       const height = window.innerHeight
       const width = window.innerWidth
       if (width >= height) {
-        img.style.aspectRatio = String(width/height)
+        img.style.aspectRatio = String(width / height)
       } else {
-        img.style.aspectRatio = String(height/width)
+        img.style.aspectRatio = String(height / width)
       }
     } else if (def.style.layout.thumbnail_shape === 'anti-viewport') {
       const height = window.innerHeight
       const width = window.innerWidth
       if (width >= height) {
-        img.style.aspectRatio = String(height/width)
+        img.style.aspectRatio = String(height / width)
       } else {
-        img.style.aspectRatio = String(width/height)
+        img.style.aspectRatio = String(width / height)
       }
     }
   } else {
@@ -129,16 +129,17 @@ function createCard (obj) {
 
   imgCol.appendChild(img)
 
+  let titleSpan
   if (('image_height' in def.style.layout && def.style.layout.image_height < 100) || !('image_height' in def.style.layout)) {
     const titleCol = document.createElement('div')
     titleCol.classList = 'col col-12 text-center cardTitleContainer'
-    
+
     if ('image_height' in def.style.layout) {
-      titleCol.style.height = String(100-def.style.layout.image_height) + '%'
+      titleCol.style.height = String(100 - def.style.layout.image_height) + '%'
     }
     card.appendChild(titleCol)
 
-    const titleSpan = document.createElement('span')
+    titleSpan = document.createElement('div')
     titleSpan.classList = 'cardTitle'
     titleSpan.innerHTML = title
     titleCol.appendChild(titleSpan)
@@ -287,7 +288,17 @@ function _populateResultsRow (currentKey) {
   displayedResults.forEach((item, i) => {
     createCard(item)
   })
-  $('#resultsRow').fadeIn(200)
+  // Adjust card title font size to avoid overflows
+  // Don't allow text to get larger than wha the user
+  // has set.
+  const titles = document.getElementsByClassName('cardTitle')
+  if (titles.length > 0) {
+    const fontSize = parseFloat(window.getComputedStyle(titles[0], null).getPropertyValue('font-size'))
+    $('#resultsRow').show()
+    textFit(titles, { maxFontSize: fontSize })
+  } else {
+    $('#resultsRow').fadeIn(200)
+  }
 }
 
 function populateResultsRow (currentKey = '') {
@@ -603,16 +614,21 @@ function showMediaInLightbox (media, title = '', caption = '', credit = '') {
   // Set the img or video source to the provided media, set the caption, and reveal
   // the light box.
 
+  const def = $(document).data('browserDefinition')
+
   // Hide elements until image is loaded
   $('#mediaLightboxImage, #mediaLightboxVideo, #mediaLightboxTitle, #mediaLightboxCaption, #mediaLightboxCredit').hide()
 
-  document.getElementById('mediaLightboxTitle').innerHTML = title
+  const titleDiv = document.getElementById('mediaLightboxTitle')
+  const creditDiv = document.getElementById('mediaLightboxCredit')
+  titleDiv.innerHTML = title
+
   document.getElementById('mediaLightboxCaption').innerHTML = caption
 
   if (credit !== '' && credit != null) {
     document.getElementById('mediaLightboxCredit').innerHTML = 'Credit: ' + credit
   } else {
-    document.getElementById('mediaLightboxCredit').innerHTML = ''
+    creditDiv.innerHTML = ''
   }
 
   // Load the media with a callback to fade it in when it is loaded
@@ -629,8 +645,22 @@ function showMediaInLightbox (media, title = '', caption = '', credit = '') {
     video.play()
     $('#mediaLightboxVideo, #mediaLightboxTitle, #mediaLightboxCredit, #mediaLightboxCaption').fadeIn()
   }
-
-  $('#mediaLightbox').css('display', 'flex').animate({ opacity: 1, queue: false }, 100)
+  const titleFontSize = parseFloat(window.getComputedStyle(titleDiv, null).getPropertyValue('font-size'))
+  const creditFontSize = parseFloat(window.getComputedStyle(creditDiv, null).getPropertyValue('font-size'))
+  titleDiv.style.whiteSpace = 'normal'
+  creditDiv.style.whiteSpace = 'normal'
+  $('#mediaLightbox').css('display', 'flex').animate({ opacity: 1, queue: false }, 100, () => {
+    // Fit the various text elements
+    if ('layout' in def.style) {
+      if ('lightbox_title_height' in def.style.layout && def.style.layout.lightbox_title_height > 0) {
+        console.log('here')
+        textFit(titleDiv, { maxFontSize: titleFontSize })
+      }
+      if ('lightbox_credit_height' in def.style.layout && def.style.layout.lightbox_credit_height > 0) {
+        textFit(creditDiv, { maxFontSize: creditFontSize })
+      }
+    }
+  })
 }
 
 // const Keyboard = window.SimpleKeyboard.default

@@ -1,4 +1,4 @@
-/* global showdown */
+/* global showdown textFit */
 
 import * as exCommon from '../js/exhibitera_app_common.js'
 
@@ -129,6 +129,7 @@ function localize (lang) {
     createTimelineEntry(entry, lang)
   })
   $('#headerText').html(definition.languages[lang].header_text || '')
+  textFit($('#headerText'))
 }
 
 function createTimelineEntry (entry, langCode) {

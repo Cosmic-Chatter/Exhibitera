@@ -1,4 +1,4 @@
-/* global showdown */
+/* global showdown textFit */
 
 import * as exCommon from '../js/exhibitera_app_common.js'
 
@@ -102,6 +102,7 @@ function localize (lang) {
 
   if (definition.header != null) {
     document.getElementById('masthead').innerHTML = definition.header
+    textFit(document.getElementById('masthead'))
   } else {
     document.getElementById('masthead').innerHTML = ''
   }
@@ -137,7 +138,6 @@ function createButton (title, id) {
 
   // Adjust the number of columns based on the number of buttons that have been added
   const nButtons = $('#buttonRow').children().length
-  const root = document.querySelector(':root')
   let rowClass
 
   if (nButtons === 1) {

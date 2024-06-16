@@ -12,6 +12,7 @@
 ## Exhibitera Apps
 
 ### General
+- Better handling of long text in places like titles and captions [Morgan Rehnberg]
 
 ### InfoStation
 - The button row is now scrollable for large numbers of buttons [Morgan Rehnberg]

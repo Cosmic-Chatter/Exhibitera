@@ -91,6 +91,7 @@ body {
     font-size: calc(3vmax + var(--Title-font-adjust)*1vmax);
     font-family: var(--Title-font);
     color: var(--titleColor);
+    height: 80%;
 }
 .container-fluid {
     touch-action: manipulation;
