@@ -164,18 +164,18 @@ def check_file_structure() -> None:
         os.listdir(schedules_dir)
     except FileNotFoundError:
         print("Missing schedules directory. Creating now...")
-        try:
-            os.mkdir(schedules_dir)
-            default_schedule_list = ["monday.json", "tuesday.json",
-                                     "wednesday.json", "thursday.json",
-                                     "friday.json", "saturday.json",
-                                     "sunday.json"]
+        os.mkdir(schedules_dir)
+    try:
+        default_schedule_list = ["monday.json", "tuesday.json",
+                                 "wednesday.json", "thursday.json",
+                                 "friday.json", "saturday.json",
+                                 "sunday.json"]
 
-            for file in default_schedule_list:
-                with open(os.path.join(schedules_dir, file), 'w', encoding="UTF-8") as f:
-                    f.write("[]")
-        except PermissionError:
-            print("Error: unable to create 'schedules' directory. Do you have write permission?")
+        for file in default_schedule_list:
+            with open(os.path.join(schedules_dir, file), 'w', encoding="UTF-8") as f:
+                f.write("{}")
+    except PermissionError:
+        print("Error: unable to create 'schedules' directory. Do you have write permission?")
 
     try:
         os.listdir(exhibits_dir)

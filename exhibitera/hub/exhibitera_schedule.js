@@ -306,7 +306,7 @@ function createScheduleEntryHTML (item, scheduleID, scheduleName, scheduleType, 
     eventEditButton.style.border = '0px'
     eventEditButton.innerHTML = 'Edit'
     eventEditButton.addEventListener('click', function () {
-      scheduleConfigureEditModal(scheduleName, scheduleType.source, false, scheduleID, item.time, action, target, value)
+      scheduleConfigureEditModal(scheduleName, scheduleType, false, scheduleID, item.time, action, target, value)
     })
     eventEditButtonCol.appendChild(eventEditButton)
   } else {
