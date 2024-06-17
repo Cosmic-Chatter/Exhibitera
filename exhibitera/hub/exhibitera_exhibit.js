@@ -1,3 +1,4 @@
+import config from './config.js'
 import exConfig from './config.js'
 import * as constDMX from './exhibitera_dmx.js'
 import * as exGroup from './exhibitera_group.js'
@@ -703,10 +704,10 @@ function clearComponentInfoStatusMessage () {
   el.style.display = 'none'
 }
 
-function componentCannotConnect () {
+function componentCannotConnect (type = 'component') {
   // Configure the componentInfoModal for a failed connection.
 
-  setComponentInfoStatusMessage('Cannot connect to component')
+  setComponentInfoStatusMessage('Cannot connect to ' + type)
 
   // Hide things that can't be accessed when offline
   document.getElementById('componentSettings').style.display = 'none'
@@ -872,6 +873,11 @@ function showExhibitComponentInfo (id, groupUUID) {
     }
   } else if (obj.type === 'projector') {
     configureComponentInfoModalForProjector(obj)
+
+    if (obj.status === config.STATUS.OFFLINE) {
+      componentCannotConnect('projector')
+      document.getElementById('componentInfoModaProejctorTabButton').style.display = 'none'
+    }
   } else if (obj.type === 'wol_component') {
     configureComponentInfoModalForWakeOnLAN(obj)
   }
@@ -955,82 +961,26 @@ function configureComponentInfoModalForProjector (obj) {
   $('#componentInfoModaProejctorTabButton').tab('show')
 
   // // Projector status pane
+  document.getElementById('componentInfoModalProjectorWarningList').innerHTML = ''
 
-  // First, reset all the cell shadings
-  $('#projectorInfoLampState').parent().removeClass()
-  $('#projectorInfoFanState').parent().removeClass()
-  $('#projectorInfoFilterState').parent().removeClass()
-  $('#projectorInfoCoverState').parent().removeClass()
-  $('#projectorInfoOtherState').parent().removeClass()
-  $('#projectorInfoTempState').parent().removeClass()
-
-  // Then, go through and populate all the cells with as much information
-  // as we have. Shade cells red if an error is reported.
-  if ('power_state' in obj.state && obj.state.power_state !== '') {
-    $('#projectorInfoPowerState').html(obj.state.power_state)
-  } else {
-    $('#projectorInfoPowerState').html('-')
-  }
   if (('error_status' in obj.state) && (obj.state.error_status.constructor === Object)) {
-    if ('lamp' in obj.state.error_status) {
-      // Populate cell
-      $('#projectorInfoLampState').html(obj.state.error_status.lamp)
-      // Shade if error
-      if (obj.state.error_status.lamp === 'error') {
-        $('#projectorInfoLampState').parent().addClass('table-danger')
-      }
-    } else {
-      $('#projectorInfoLampState').html('-')
+    if (('lamp' in obj.state.error_status) && (obj.state.error_status.lamp !== 'ok')) {
+      createProjectorWarningEntry('Lamp', obj.state.error_status.lamp, 'A projector lamp or light engine may have blown.')
     }
-    if ('fan' in obj.state.error_status) {
-      // Populate cell
-      $('#projectorInfoFanState').html(obj.state.error_status.fan)
-      // Shade if error
-      if (obj.state.error_status.fan === 'error') {
-        $('#projectorInfoFanState').parent().addClass('table-danger')
-      }
-    } else {
-      $('#projectorInfoFanState').html('-')
+    if (('fan' in obj.state.error_status) && (obj.state.error_status.fan !== 'ok')) {
+        createProjectorWarningEntry('Fan', obj.state.error_status.fan, 'Fan warnings or errors are often related to the dust filter.')
     }
-    if ('filter' in obj.state.error_status) {
-      // Populate cell
-      $('#projectorInfoFilterState').html(obj.state.error_status.filter)
-      // Shade if error
-      if (obj.state.error_status.filter === 'error') {
-        $('#projectorInfoFilterState').parent().addClass('table-danger')
-      }
-    } else {
-      $('#projectorInfoFilterState').html('-')
+    if (('filter' in obj.state.error_status) && (obj.state.error_status.filter !== 'ok')) {
+      createProjectorWarningEntry('Filter', obj.state.error_status.filter, 'Filter warnings or errors usually indicate the dust filter needs to be cleaned.')
     }
-    if ('cover' in obj.state.error_status) {
-      // Populate cell
-      $('#projectorInfoCoverState').html(obj.state.error_status.cover)
-      // Shade if error
-      if (obj.state.error_status.cover === 'error') {
-        $('#projectorInfoCoverState').parent().addClass('table-danger')
-      }
-    } else {
-      $('#projectorInfoCoverState').html('-')
+    if (('cover' in obj.state.error_status) && (obj.state.error_status.cover !== 'ok')) {
+      createProjectorWarningEntry('Cover', obj.state.error_status.cover)
     }
-    if ('other' in obj.state.error_status) {
-      // Populate cell
-      $('#projectorInfoOtherState').html(obj.state.error_status.other)
-      // Shade if error
-      if (obj.state.error_status.other === 'error') {
-        $('#projectorInfoOtherState').parent().addClass('table-danger')
-      }
-    } else {
-      $('#projectorInfoOtherState').html('-')
+    if (('temperature' in obj.state.error_status) && (obj.state.error_status.temperature !== 'ok')) {
+      createProjectorWarningEntry('Temperature', obj.state.error_status.temperature, 'The projector may be overheating.')
     }
-    if ('temperature' in obj.state.error_status) {
-      // Populate cell
-      $('#projectorInfoTempState').html(obj.state.error_status.temperature)
-      // Shade if error
-      if (obj.state.error_status === 'error') {
-        $('#projectorInfoTempState').parent().addClass('table-danger')
-      }
-    } else {
-      $('#projectorInfoTempState').html('-')
+    if (('other' in obj.state.error_status) && (obj.state.error_status.other !== 'ok')) {
+      createProjectorWarningEntry('Other', obj.state.error_status.other, "An unspecified error. Consult the projector's menu for more information")
     }
   } else {
     $('#projectorInfoLampState').html('-')
@@ -1371,7 +1321,7 @@ function createProjectorLampStatusEntry (entry, number) {
   // Take a dictionary and turn it into HTML elements
 
   const containerCol = document.createElement('div')
-  containerCol.classList = 'col-6 col-sm-3 mb-3'
+  containerCol.classList = 'col-6 col-sm-4 mb-3'
   $(containerCol).data('config', entry)
   $('#componentInfoModalProjectorLampList').append(containerCol)
 
@@ -1421,6 +1371,70 @@ function createProjectorLampStatusEntry (entry, number) {
   hoursCol.style.borderBottomRightRadius = '0.25rem'
   hoursCol.innerHTML = String(entry[0]) + ' hours'
   row2.appendChild(hoursCol)
+}
+
+function createProjectorWarningEntry (entry, error, details="") {
+  // Take a dictionary and turn it into HTML elements representing a projector error
+
+  const containerCol = document.createElement('div')
+  containerCol.classList = 'col-6 col-sm-4 mb-3'
+  $(containerCol).data('config', entry)
+  document.getElementById('componentInfoModalProjectorWarningList').appendChild(containerCol)
+
+  const containerRow = document.createElement('div')
+  containerRow.classList = 'row px-1'
+  containerCol.appendChild(containerRow)
+
+  const topCol = document.createElement('div')
+  topCol.classList = 'col-12'
+  containerRow.appendChild(topCol)
+
+  const row1 = document.createElement('div')
+  row1.classList = 'row'
+  topCol.appendChild(row1)
+
+  const titleCol = document.createElement('div')
+  titleCol.classList = 'col-8 bg-primary text-white'
+  titleCol.style.fontSize = '18px'
+  titleCol.style.borderTopLeftRadius = '0.25rem'
+  titleCol.innerHTML = entry
+  row1.appendChild(titleCol)
+
+  const stateCol = document.createElement('div')
+  stateCol.classList = 'col-4 text-center py-1 '
+  stateCol.style.borderTopRightRadius = '0.25rem'
+  stateCol.innerHTML = error 
+  if (error == 'ok') {
+    stateCol.innerHTML = 'Ok'
+    stateCol.classList += ' bg-success text-white'
+  } else if (error == 'warning') {
+    stateCol.innerHTML = 'Warning'
+    stateCol.classList += ' bg-warning text-dark'
+  } else if (error == 'error') {
+    stateCol.innerHTML = 'Error'
+    stateCol.classList += ' bg-danger text-white'
+  }
+  row1.appendChild(stateCol)
+
+  if (details !== '') {
+    const bottomCol = document.createElement('div')
+    bottomCol.classList = 'col-12'
+    containerRow.appendChild(bottomCol)
+
+    const row2 = document.createElement('div')
+    row2.classList = 'row'
+    bottomCol.appendChild(row2)
+
+    const detailsCol = document.createElement('div')
+    detailsCol.classList = 'col-12 bg-secondary py-1 text-center text-white fst-italic small'
+    detailsCol.style.borderBottomLeftRadius = '0.25rem'
+    detailsCol.style.borderBottomRightRadius = '0.25rem'
+    detailsCol.innerHTML = details
+    row2.appendChild(detailsCol)
+  } else {
+    titleCol.style.borderBottomLeftRadius = '0.25rem'
+    stateCol.style.borderBottomRightRadius = '0.25rem'
+  }
 }
 
 export function removeExhibitComponentFromModal () {

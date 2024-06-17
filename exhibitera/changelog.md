@@ -5,7 +5,8 @@
 ### General
 - Changed logging behavior to reduce log sizes [Morgan Rehnberg]
 
-### Schedule
+### Projectors
+- New, cleaner layout for projector details, including hints for common errors and warnings [Morgan Rehnberg]
 
 ### Maintenance
 - Change maintenance details and basic settings even if a component is offline [Morgan Rehnberg]
@@ -20,7 +21,7 @@
 
 ### InfoStation
 - The button row is now scrollable for large numbers of buttons [Morgan Rehnberg]
-- Chane the size of buttons to fit your needs [Morgan Rehnberg]
+- Change the size of buttons to fit your needs [Morgan Rehnberg]
 - Better handling of images when they are larger than the text. [David Morgan]
 
 ### Media Browser
