@@ -25,6 +25,8 @@ def pjlink_send_command(connection: pypjlink.projector.Projector, command: str) 
             result = connection.get_errors()
         elif command == "get_model":
             result = connection.get_manufacturer() + " " + connection.get_product_name()
+        elif command == "get_mute":
+            result = connection.get_mute()
         elif command == "lamp_status":
             result = connection.get_lamps()
         elif command == "power_off":

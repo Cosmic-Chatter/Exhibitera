@@ -162,7 +162,7 @@ The _Analytics_ tab allows you to configure Flexible Tracker, a powerful tool fo
 
 Flexible Tracker enables the collection of a wide variety of quantitative and qualitative data using Hub. Collected data can then be downloaded as a standard CSV file for opening in any spreadsheet software.
 
-### Collection types
+#### Collection types
 Flexible Tracker can collect a variety of data types. Each type provides a widget that makes inputting the data easy and reliable.
 
 | Type     | Description                                                                                                                              |
@@ -174,7 +174,7 @@ Flexible Tracker can collect a variety of data types. Each type provides a widge
 | Text     | A textbox for inputting any text                                                                                                         |
 | Timer    | Records the number of seconds. Can be started and stopped by the user. "Exclusive" timers pause all other exclusive timers when started. |
 
-### Creating a template
+#### Creating a template
 
 <img src="images/tracker_template_edit.jpg" style="width: 50%; float: right; border: 2px solid gray; margin: 5px;"></img>
 
@@ -184,20 +184,20 @@ To create a template, navigate to the settings tab. In the Flexible Tracker sect
 
 With the left and right arrows, you can reorder how the widgets will appear. Because Flexible Tracker is a responsive web page, the exact arrangement of the widgets will depend on your device's screen size and shape.
 
-### Recording data
+#### Recording data
 
 To use Flexible Tracker for data collection, select your desired template from the web console settings view and click the _Launch_ button. All available templates will be available from the dropdown list. Once you are ready to send a session (one set of observations), press the Record button. This will transmit the data to Hub for storage. Please note that a network connection to the server is required to send data; if such a connection is not available, a popup will appear and the Record button will be disabled.
 
 Data are stored in Hub under `flexible-tracker/data/<template name>.txt`. Each row is a single JSON object representing one session.
 
-### Downloading and managing data
+#### Downloading and managing data
 
 Once you have collected some data, you can easily download it as a comma-separated values (CSV) file that cane be read by Microsoft Excel or another data analysis app. To do so, go to the settings view from the web console and select the appropriate template. Then, click the "Download data" button and a CSV download will be initiated in your browser.
 
 By clicking the _Clear data_ button, you can erase the existing data. This action cannot be undone.
 
 
-### Settings tab
+### Exhibits tab
 
 #### Changing the exhibit
 
@@ -205,4 +205,4 @@ Use the _Set current exhibit_ dropdown box to change the exhibit being displayed
 
 #### Creating and deleting exhibits
 
-You can create and delete exhibits from the settings tab. When creating an exhibit, you can either create an empty exhibit (no definition for any component), or you can clone the existing exhibit.
+When creating an exhibit, you can either create an empty exhibit (no definition for any component), or you can clone the existing exhibit.
