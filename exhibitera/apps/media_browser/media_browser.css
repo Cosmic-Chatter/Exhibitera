@@ -137,6 +137,7 @@ body {
     width: 100%;
     aspect-ratio: 1;
     padding: 0;
+    line-height: 100%;
 }
 .resultCard {
     height: 100%;

@@ -8,9 +8,9 @@ function changePage (val) {
       currentPage = 0
       break
     case 1:
-      currentPage += 1
-      if (currentPage * cardsPerPage > spreadsheet.length) {
-        currentPage -= 1
+      // Calculate if there are more cards to show
+      if ((currentPage + 1) * cardsPerPage < spreadsheet.length) {
+        currentPage += 1
       }
       break
     case -1:
@@ -202,6 +202,20 @@ function populateFilterOptions (order, filters) {
       select.appendChild(option)
     }
   }
+
+  // Finally, add an option that clears all the filter selections
+  const li = document.createElement('li')
+  filterOptionsEl.appendChild(li)
+
+  const div = document.createElement('div')
+  div.classList = 'd-flex justify-content-center w-100'
+  li.appendChild(div)
+
+  const clearButton = document.createElement('button')
+  clearButton.classList = 'btn btn-danger btn-lg mt-2'
+  clearButton.innerHTML = '✕'
+  clearButton.addEventListener('click', clearFilters)
+  div.appendChild(clearButton)
 }
 
 function _getFilterOptions (key) {
@@ -213,6 +227,15 @@ function _getFilterOptions (key) {
     if (key in row) resultDict[row[key]] = 1
   }
   return exCommon.sortAlphabetically(Object.keys(resultDict))
+}
+
+function clearFilters () {
+  // Clear any filters
+
+  Array.from(document.getElementsByClassName('filter-entry')).forEach((el) => {
+    el.value = ''
+  })
+  onFilterOptionChange()
 }
 
 function _populateResultsRow (currentKey) {
@@ -553,7 +576,7 @@ function localize (lang) {
     document.getElementById('filterDropdown').style.display = 'block'
     populateFilterOptions(definition.languages[lang].filter_order, definition.languages[lang].filters)
   } else {
-    // Clear any filters
+    // Delete any filter elements
     document.getElementById('filterOptions').innerHTML = ''
     // Hide the filter icon
     document.getElementById('filterDropdown').style.display = 'none'
