@@ -113,10 +113,13 @@ function configureEditUserModalForExistingUser (user) {
   if (user.permissions.components.edit.includes('__all')) {
     document.getElementById('editUserPermissionGroups').value = 'edit'
     document.getElementById('editUserGroupsRow').style.display = 'none'
+  } else if (user.permissions.components.edit_content.includes('__all')) {
+    document.getElementById('editUserPermissionGroups').value = 'edit_content'
+    document.getElementById('editUserGroupsRow').style.display = 'none'
   } else if (user.permissions.components.view.includes('__all')) {
     document.getElementById('editUserPermissionGroups').value = 'view'
     document.getElementById('editUserGroupsRow').style.display = 'none'
-  } else if (user.permissions.components.edit.length === 0 && user.permissions.components.view.length === 0) {
+  } else if (user.permissions.components.edit.length === 0 && user.permissions.components.edit_content.length === 0 && user.permissions.components.view.length === 0) {
     document.getElementById('editUserPermissionGroups').value = 'none'
     document.getElementById('editUserGroupsRow').style.display = 'none'
   } else {
@@ -412,7 +415,7 @@ function configureUser (userDict, login = true) {
   // Iterate through the tabs until we find one we can display.
   let match = ''
 
-  if (userDict.permissions.components.edit.length > 0 || userDict.permissions.components.view.length > 0) {
+  if (userDict.permissions.components.edit.length > 0 || userDict.permissions.components.edit_content.length > 0 || userDict.permissions.components.view.length > 0) {
     document.getElementById('nav-components-tab').style.setProperty('display', 'block', 'important')
     if (match === '') match = 'components'
   } else {

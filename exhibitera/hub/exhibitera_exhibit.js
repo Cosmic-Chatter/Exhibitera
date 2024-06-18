@@ -34,6 +34,8 @@ class BaseComponent {
     let permission = 'view'
     if (exUsers.checkUserPermission('components', 'edit', group)) {
       permission = 'edit'
+    } else if (exUsers.checkUserPermission('components', 'edit_content', group)) {
+      permission = 'edit_content'
     }
 
     // If the element is static and the 'Show STATIC' checkbox is not ticked, bail out
@@ -506,6 +508,8 @@ class ExhibitComponentGroup {
     let permission = 'view'
     if (exUsers.checkUserPermission('components', 'edit', this.group) === true) {
       permission = 'edit'
+    } else if (exUsers.checkUserPermission('components', 'edit_content', this.group) === true) {
+      permission = 'edit_content'
     }
 
     let onCmdName = ''
@@ -737,6 +741,10 @@ function showExhibitComponentInfo (id, groupUUID) {
     permission = 'edit'
     document.getElementById('componentInfoModalRemoveComponentButton').style.display = 'block'
     document.getElementById('componentInfoModalSettingsTabButton').style.display = 'block'
+  } else if (exUsers.checkUserPermission('components', 'edit_content', groupUUID) === true) {
+    permission = 'edit_content'
+    document.getElementById('componentInfoModalRemoveComponentButton').style.display = 'none'
+    document.getElementById('componentInfoModalSettingsTabButton').style.display = 'none'
   } else if (exUsers.checkUserPermission('components', 'view', groupUUID) === true) {
     permission = 'view'
     document.getElementById('componentInfoModalRemoveComponentButton').style.display = 'none'
@@ -749,6 +757,9 @@ function showExhibitComponentInfo (id, groupUUID) {
   let maintenancePermission
   if (exUsers.checkUserPermission('maintenance', 'edit', groupUUID) === true) {
     maintenancePermission = 'edit'
+    document.getElementById('componentInfoModalMaintenanceTabButton').style.display = 'block'
+  } else if (exUsers.checkUserPermission('maintenance', 'edit_content', groupUUID) === true) {
+    maintenancePermission = 'edit_content'
     document.getElementById('componentInfoModalMaintenanceTabButton').style.display = 'block'
   } else if (exUsers.checkUserPermission('maintenance', 'view', groupUUID) === true) {
     maintenancePermission = 'view'
@@ -849,7 +860,7 @@ function showExhibitComponentInfo (id, groupUUID) {
   document.getElementById('definitionTabAppFilterSelect').value = 'all'
   document.getElementById('definitionTabThumbnailsCheckbox').checked = true
   document.getElementById('componentInfoModalDefinitionSaveButton').style.display = 'none'
-  if (permission === 'edit') {
+  if (permission === 'edit' || permission === 'edit_content') {
     document.getElementById('componentInfoModalNewDefinitionButton').style.display = 'block'
   } else {
     document.getElementById('componentInfoModalNewDefinitionButton').style.display = 'none'
@@ -968,7 +979,7 @@ function configureComponentInfoModalForProjector (obj) {
       createProjectorWarningEntry('Lamp', obj.state.error_status.lamp, 'A projector lamp or light engine may have blown.')
     }
     if (('fan' in obj.state.error_status) && (obj.state.error_status.fan !== 'ok')) {
-        createProjectorWarningEntry('Fan', obj.state.error_status.fan, 'Fan warnings or errors are often related to the dust filter.')
+      createProjectorWarningEntry('Fan', obj.state.error_status.fan, 'Fan warnings or errors are often related to the dust filter.')
     }
     if (('filter' in obj.state.error_status) && (obj.state.error_status.filter !== 'ok')) {
       createProjectorWarningEntry('Filter', obj.state.error_status.filter, 'Filter warnings or errors usually indicate the dust filter needs to be cleaned.')
@@ -1373,7 +1384,7 @@ function createProjectorLampStatusEntry (entry, number) {
   row2.appendChild(hoursCol)
 }
 
-function createProjectorWarningEntry (entry, error, details="") {
+function createProjectorWarningEntry (entry, error, details = '') {
   // Take a dictionary and turn it into HTML elements representing a projector error
 
   const containerCol = document.createElement('div')
@@ -1403,14 +1414,14 @@ function createProjectorWarningEntry (entry, error, details="") {
   const stateCol = document.createElement('div')
   stateCol.classList = 'col-4 text-center py-1 '
   stateCol.style.borderTopRightRadius = '0.25rem'
-  stateCol.innerHTML = error 
-  if (error == 'ok') {
+  stateCol.innerHTML = error
+  if (error === 'ok') {
     stateCol.innerHTML = 'Ok'
     stateCol.classList += ' bg-success text-white'
-  } else if (error == 'warning') {
+  } else if (error === 'warning') {
     stateCol.innerHTML = 'Warning'
     stateCol.classList += ' bg-warning text-dark'
-  } else if (error == 'error') {
+  } else if (error === 'error') {
     stateCol.innerHTML = 'Error'
     stateCol.classList += ' bg-danger text-white'
   }
@@ -1509,7 +1520,8 @@ function populateComponentDefinitionList (definitions, thumbnails, permission) {
       name.classList.remove('btn-primary')
       name.classList.add('btn-success')
     }
-    if (permission === 'edit') {
+
+    if (permission === 'edit' || permission === 'edit_content') {
       name.addEventListener('click', () => {
         handleDefinitionItemSelection(uuid)
       })
@@ -1538,7 +1550,7 @@ function populateComponentDefinitionList (definitions, thumbnails, permission) {
     let html = `
     <a class="dropdown-item" href="${component.getHelperURL() + '/' + definition.app + '.html?standalone=true&definition=' + uuid}" target="_blank">Preview</a>
     `
-    if (permission === 'edit') {
+    if (permission === 'edit' || permission === 'edit_content') {
       let app = definition.app
       let page = 'setup.html'
       if (app === 'infostation') {
@@ -1561,7 +1573,7 @@ function populateComponentDefinitionList (definitions, thumbnails, permission) {
     if (thumbnails.includes(uuid + '.mp4')) {
       const thumbCol = document.createElement('div')
       thumbCol.classList = 'col-12 bg-secondary pt-2 definition-thumbnail'
-      if (permission === 'edit') {
+      if (permission === 'edit' || permission === 'edit_content') {
         thumbCol.addEventListener('click', () => {
           handleDefinitionItemSelection(uuid)
         })
@@ -1584,7 +1596,7 @@ function populateComponentDefinitionList (definitions, thumbnails, permission) {
     } else if (thumbnails.includes(uuid + '.jpg')) {
       const thumbCol = document.createElement('div')
       thumbCol.classList = 'col-12 bg-secondary pt-2 definition-thumbnail'
-      if (permission === 'edit') {
+      if (permission === 'edit' || permission === 'edit_content') {
         thumbCol.addEventListener('click', () => {
           handleDefinitionItemSelection(uuid)
         })
@@ -1603,7 +1615,7 @@ function populateComponentDefinitionList (definitions, thumbnails, permission) {
     app.classList = 'col-12 bg-secondary text-dark rounded-bottom pb-1'
     app.setAttribute('id', 'definitionButtonApp_' + uuid)
     app.innerHTML = convertAppIDtoDisplayName(definition.app)
-    if (permission === 'edit') {
+    if (permission === 'edit' || permission === 'edit_content') {
       app.addEventListener('click', () => {
         handleDefinitionItemSelection(uuid)
       })
