@@ -1013,7 +1013,6 @@ setTimeout(setUpColorPickers, 100)
 // -------------------------------------------------------------
 
 // Main buttons
-
 $('#languageAddButton').click(addLanguage)
 document.getElementById('manageContentButton').addEventListener('click', (event) => {
   exFileSelect.createFileSelectionModal({ manage: true })

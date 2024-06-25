@@ -1,4 +1,13 @@
 /* Style for the color pickers */
+.accordion-button {
+    font-size: 20px;
+    display: block;
+}
+.accordion-detail {
+    font-size: 12px;
+    font-style: italic;
+    padding-top: 7px;
+}
 .clr-field {
     width: 100%;
 }
@@ -23,6 +32,11 @@
     border-width: 1px;
     border-style: solid;
     height: var(--previewHeight);
+}
+
+#setupWizardModalBody {
+    height: 70vh;
+    overflow-y: auto;
 }
 
 /* Classes for various preview aspect ratios */

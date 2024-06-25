@@ -77,6 +77,174 @@
         </div>
       </div>
 
+      <!-- Setup wizard modal -->
+      <div id="setupWizardModal" class="modal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Create a new definition</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div id="setupWizardModalBody" class="modal-body">
+
+              <!-- Welcome -->
+              <div class="row wizard-pane">
+                <div class="col-8 offset-2 mt-3">
+                  <H4 class="text-center">Welcome to Media Browser!</H4>
+                  <i>
+                    <p>
+                      Media Browser displays collections of images and videos for users to explore. They can browse the collection, filter it based on attributes you choose, and view more information about a selected item.
+                    </p>
+                    <p>
+                      To create a Media Browser, you will need:
+                      <ul>
+                        <li>The image and video files you want to display;</li>
+                        <li>The media titles, captions, and any credit information you want users to see.</li>
+                      </ul>
+                    </p>
+                  </i>
+                  <div class="row">
+                    <div class="col-6 offset-3">
+                      <label class="form-label" for="wizardDefinitionNameInput">Definition name</label>
+                      <input class="form-control" id="wizardDefinitionNameInput" type="text">
+                    </div>
+                  </div>
+                  <div class="text-center mt-4">
+                    <button class="btn btn-primary">Get started</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Languages -->
+              <div class="row wizard-pane">
+                <div class="col-8 offset-2 mt-3">
+                  <H4 class="text-center">What languages will you include?</H4>
+                  <i>
+                    <p>
+                      Media Browser supports browsing in multiple languages. Select the langauges you want to include: 
+                    </p>
+                  </i>
+                  <button id="wizardAddLanguageButton" class="btn btn-primary">Add language</button>
+                  <div id="wizardLanguages" class="row mt-2 gy-2 row-cols-1 row-cols-md-2"></div>
+                  <div class="text-center mt-4">
+                    <button class="btn btn-secondary me-4">Back</button>
+                    <button class="btn btn-primary ms-4">Next</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Media info -->
+              <div class="row wizard-pane">
+                <div class="col-8 offset-2 mt-3">
+                  <H4 class="text-center">What media details will you include?</H4>
+                  <i>
+                    <p>
+                      Media Browser can display the following information about each media file. Choose which you would like to include:
+                    </p>
+                  </i>
+                  <div class="row gy-2 row-cols-1 row-cols-md-3">
+                    <div class="col">
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="" id="wizardCheckboxTitle" checked>
+                        <label class="form-check-label" for="wizardCheckboxTitle">
+                          Title
+                        </label>
+                      </div>
+                    </div>
+                    <div class="col">
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="" id="wizardCheckboxCaption" checked>
+                        <label class="form-check-label" for="wizardCheckboxCaption">
+                          Caption
+                        </label>
+                      </div>
+                    </div>
+                    <div class="col">
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="" id="wizardCheckboxCredit" checked>
+                        <label class="form-check-label" for="wizardCheckboxCredit">
+                          Credit
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="text-center mt-4">
+                    <button class="btn btn-secondary me-4">Back</button>
+                    <button class="btn btn-primary ms-4">Next</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Download spreadsheet -->
+              <div class="row wizard-pane">
+                <div class="col-8 offset-2 mt-3">
+                  <H4 class="text-center">Organize your media and details</H4>
+                  <i>
+                    <p>
+                      Media Browser organizes your media and their details using a simple spreadsheet. Based on the languages and details you have selected, a template has been generated. Download the template and edit it using software such as Microsoft Excel, Google Sheets, Apple Numbers, or LibreOffice Calc.
+                    </p>
+                    <p>
+                      <b>Each row of the spreadsheet represents one file in your media browser.</b> <i class="text-warning">Make sure to save the file in the CSV (comma-separated values) format.</i>
+                    </p>
+                  </i>
+                  <div class="w-100 text-center">
+                    <button id="wizardDownloadTemplateButton" class="btn btn-primary">Download blank template</button>
+                    <button id="wizardUploadTemplateButton" class="btn btn-info">Upload completed template</button>
+                  </div>
+                  <div class="text-center mt-4">
+                    <button class="btn btn-secondary me-4">Back</button>
+                    <button class="btn btn-primary ms-4">Next</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Upload media -->
+              <div class="row wizard-pane">
+                <div class="col-8 offset-2 mt-3">
+                  <H4 class="text-center">Add your media</H4>
+                  <i>
+                    <p>
+                      You must upload a media file matching each row of your spreadsheet. Media files should be images or videos in a supported file format (see <b>Help</b> for more infomation.)
+                    </p>
+                  </i>
+                  <div class="w-100 text-center">
+                    <button id="wizardDownloadTemplateButton" class="btn btn-primary">Download blank template</button>
+                    <button id="wizardUploadTemplateButton" class="btn btn-info">Upload completed template</button>
+                  </div>
+                  <div class="text-center mt-4">
+                    <button class="btn btn-secondary me-4">Back</button>
+                    <button class="btn btn-primary ms-4">Next</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Choose layout -->
+              <div class="row wizard-pane">
+                <div class="col-8 offset-2 mt-3">
+                  <H4 class="text-center">Choose your layout</H4>
+                  <i>
+                    <p>
+                      Media Browser supports displays in either a portrait (vertical) or landscape (horizontal) layout.
+                    </p>
+                  </i>
+                  <div class="w-100 text-center">
+                    <button id="wizardDownloadTemplateButton" class="btn btn-primary">Download blank template</button>
+                    <button id="wizardUploadTemplateButton" class="btn btn-info">Upload completed template</button>
+                  </div>
+                  <div class="text-center mt-4">
+                    <button class="btn btn-secondary me-4">Back</button>
+                    <button class="btn btn-primary ms-4">Next</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Check content modal -->
       <div id="checkContentModal" class="modal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered mw-100 w-75">
@@ -144,7 +312,7 @@
           </div>
         </div>
       </div>
-            
+      
       <div class="row">
         <div class="col-10" id="setupHeader">
           <H2>Media Browser  Setup</H2>
@@ -202,6 +370,9 @@
               <span class="d-none d-sm-inline d-lg-none">New</span>
             </button>
             <ul class="dropdown-menu">
+              <li><h6 class="dropdown-header">Basic</h6></li>
+              <li><a id="showWizardButton" class="dropdown-item" href="#">Guided setup</a></li>
+              <li><h6 class="dropdown-header">Advanced</h6></li>
               <li><a id="newDefinitionButton" class="dropdown-item" href="#">Create blank definition</a></li>
               <li><a id="cloneDefinitionButton" class="dropdown-item" href="#">Clone selected definition</a></li>
             </ul>
@@ -262,250 +433,296 @@
       </div>
       <div class="row align-items-start">
         <div id='editPane' class="col-6 col-lg-7">
-          <div class="row gy-2">
-            <div class="col-12 col-md-6">
-              <label for="definitionNameInput" class="form-label">Definition name</label>
-              <input type="text" class="form-control" id="definitionNameInput">
+
+          <div class="accordion mt-3" id="topLevelAccordion">
+            <!-- Basic details -->
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#basicDetails" aria-expanded="true" aria-controls="basicDetails">
+                  Basic details
+                  <div class="accordion-detail">Choose a spreadsheet, set up the attractor, and more.</div>
+                </button>
+              </h2>
+              <div id="basicDetails" class="accordion-collapse collapse show" data-bs-parent="#topLevelAccordion">
+                <div class="accordion-body">
+                  <div class="row gy-2">
+                    <div class="col-12 col-md-6">
+                      <label for="definitionNameInput" class="form-label">Definition name</label>
+                      <input type="text" class="form-control" id="definitionNameInput">
+                    </div>
+                    <div class="col-12 col-md-6">
+                      <label for="spreadsheetSelect" class="form-label">
+                        Spreadsheet
+                        <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="A CSV file in which each row represents one item in Media Browser." style="font-size: 0.55em;">?</span>
+                      </label>
+                      <div id="badSpreadsheetWarning" class="alert alert-danger" style="display: none;">Spreadsheet error detected in row <span id="badSpreadsheetWarningLineNumber"></span>. <span class="badge bg-warning ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="The most common error is a new line in the row. Use <br> to insert a new line instead." style="font-size: 0.55em;">?</span></div>
+                      <button id="spreadsheetSelect" class="btn btn-outline-primary w-100">Select file</button>
+                    </div>
+                    <div class="col-12 col-md-6">
+                      <div class="row">
+                        <label for="attractorSelect" class="form-label">
+                          Attractor
+                          <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="An attractor is a fullscreen image or video that takes over when the app is idle." style="font-size: 0.55em;">?</span>
+                        </label>
+                        <div class="col-8 col-sm-9 col-md-8 col-lg-9 col-xxl-10 pe-0">
+                          <button id="attractorSelect" class="btn btn-outline-primary w-100">Select file</button>
+                        </div>
+                        <div class="col-4 col-sm-3 col-md-4 col-lg-3 col-xxl-2">
+                          <button id="attractorSelectClear" class="btn btn-danger align-self-center w-100">✕</button>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-12 col-md-6 col-lg-4 col-xxl-3">
+                      <label for="inactivityTimeoutField" class="form-label">
+                        Inactivity timeout
+                        <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Seconds of inactivity before the attractor is shown." style="font-size: 0.55em;">?</span>
+                      </label>
+                      <input type="number" class="form-control" min="10" value="30" id="inactivityTimeoutField">
+                    </div>
+                    <!-- <div class="col-12 col-md-6">
+                      <div class="form-check mb-0">
+                        <input class="form-check-input" type="checkbox" value="" id="showSearchPaneCheckbox">
+                        <label class="form-check-label small" for="showSearchPaneCheckbox">
+                          Enable search and filter
+                        </label>
+                      </div>
+                    </div> -->
+                  </div>
+                </div>
+              </div>
             </div>
-            <div class="col-12 col-md-6">
-              <label for="spreadsheetSelect" class="form-label">Spreadsheet</label>
-              <div id="badSpreadsheetWarning" class="alert alert-danger" style="display: none;">Spreadsheet error detected in row <span id="badSpreadsheetWarningLineNumber"></span>. <span class="badge bg-warning ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="The most common error is a new line in the row. Use <br> to insert a new line instead." style="font-size: 0.55em;">?</span></div>
-              <button id="spreadsheetSelect" class="btn btn-outline-primary w-100">Select file</button>
+            <!-- Content -->
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#content" aria-expanded="false" aria-controls="content">
+                  Content
+                  <div class="accordion-detail">Utilize your spreadsheet and set up langauge options.</div>
+                </button>
+              </h2>
+              <div id="content" class="accordion-collapse collapse" data-bs-parent="#topLevelAccordion">
+                <div class="accordion-body">
+                  <div class="row gy-2">
+                    <div class="row gy-2 align-items-center">
+                      <div class="col-12 col-md-6 col-lg-4">
+                        <button id="manageContentButton" class="btn btn-primary w-100">Manage content</button>
+                      </div>
+                      <div class="col-12 col-md-6 col-lg-4">
+                        <button id="showCheckContentButton" class="btn btn-info w-100">Check content</button>
+                      </div>
+                      <div class="col-12 col-md-6 col-lg-4">
+                        <button id="optimizeContentButton" class="btn btn-info w-100">Optimize content</button>
+                      </div>
+                      <H5 class="mt-2">Add a langauge</H5>
+                      <i>For each language you suppot, you need to match columns in your spreadsheet to properties of the timeline.</i>
+                      <div class="col-12 col-md-6 col-lg-4">
+                        <label for="languageNameInput" class="form-label">Display name</label>
+                        <input type="text" placeholder="English" class="form-control" id="languageNameInput">
+                      </div>
+                      <div class="col-12 col-md-6 col-lg-4">
+                        <label for="languageCodeInput" class="form-label">Language code</label>
+                        <input type="text" placeholder="en" class="form-control" id="languageCodeInput">
+                      </div>
+                      <div class="col-12 col-md-6 col-lg-4 mt-3">
+                        <button id="languageAddButton" class="btn btn-primary w-100 mt-3">Add</button>
+                      </div>
+                      <div class="col-12 mt-1">
+                        <span id="languageAddEmptyFieldsWarning" class="text-danger">You must specify both a display name and a language code.</span>
+                        <span id="languageAddExistsWarning" class="text-danger">A language with that display name or language code already exists.</span>
+                      </div>
+                    </div>
+                    <H5>Current langauges</H5>
+                    <nav>
+                      <div id="languageNav" class="nav nav-tabs" role="tablist">
+                      </div>
+                    </nav>
+                    <div class="tab-content border-bottom" id="languageNavContent">
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div class="col-12 col-md-6">
-              <div class="row">
-                <label for="attractorSelect" class="form-label">
-                  Attractor
-                  <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="An attractor is a fullscreen image or video that takes over when the app is idle." style="font-size: 0.55em;">?</span>
-                </label>
-                <div class="col-8 col-sm-9 col-md-8 col-lg-9 col-xxl-10 pe-0">
-                  <button id="attractorSelect" class="btn btn-outline-primary w-100">Select file</button>
-                </div>
-                <div class="col-4 col-sm-3 col-md-4 col-lg-3 col-xxl-2">
-                  <button id="attractorSelectClear" class="btn btn-danger align-self-center w-100">✕</button>
-                </div>
-              </div>
-            </div>
-            <div class="col-12 col-md-6 col-lg-4 col-xxl-3">
-              <label for="inactivityTimeoutField" class="form-label">
-                Inactivity timeout
-                <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Seconds of inactivity before the attractor is shown." style="font-size: 0.55em;">?</span>
-              </label>
-              <input type="number" class="form-control" min="10" value="30" id="inactivityTimeoutField">
-            </div>
-            <!-- <div class="col-12 col-md-6">
-              <div class="form-check mb-0">
-                <input class="form-check-input" type="checkbox" value="" id="showSearchPaneCheckbox">
-                <label class="form-check-label small" for="showSearchPaneCheckbox">
-                  Enable search and filter
-                </label>
-              </div>
-            </div> -->
 
-            <div class="col-12 mt-2">
-              <h3>Content</h3>
-              <div class="row gy-2 align-items-center">
-                <div class="col-12 col-md-6 col-lg-4">
-                  <button id="manageContentButton" class="btn btn-primary w-100">Manage content</button>
-                </div>
-                <div class="col-12 col-md-6 col-lg-4">
-                  <button id="showCheckContentButton" class="btn btn-info w-100">Check content</button>
-                </div>
-                <div class="col-12 col-md-6 col-lg-4">
-                  <button id="optimizeContentButton" class="btn btn-info w-100">Optimize content</button>
-                </div>
-                <H5 class="mt-2">Add a langauge</H5>
-                <i>For each language you suppot, you need to match columns in your spreadsheet to properties of the timeline.</i>
-                <div class="col-12 col-md-6 col-lg-4">
-                  <label for="languageNameInput" class="form-label">Display name</label>
-                  <input type="text" placeholder="English" class="form-control" id="languageNameInput">
-                </div>
-                <div class="col-12 col-md-6 col-lg-4">
-                  <label for="languageCodeInput" class="form-label">Language code</label>
-                  <input type="text" placeholder="en" class="form-control" id="languageCodeInput">
-                </div>
-                <div class="col-12 col-md-6 col-lg-4 mt-3">
-                  <button id="languageAddButton" class="btn btn-primary w-100 mt-3">Add</button>
-                </div>
-                <div class="col-12 mt-1">
-                  <span id="languageAddEmptyFieldsWarning" class="text-danger">You must specify both a display name and a language code.</span>
-                  <span id="languageAddExistsWarning" class="text-danger">A language with that display name or language code already exists.</span>
-                </div>
-              </div>
-              <H5>Current langauges</H5>
-              <nav>
-                <div id="languageNav" class="nav nav-tabs" role="tablist">
-                </div>
-              </nav>
-              <div class="tab-content border-bottom" id="languageNavContent">
-              </div>
-
-              <h3 class="mt-2">Appearance</h3>
-
-              <h4>Grid layout</h4>
-              <div class="row gy-2 mb-3">
-                <div class="col-6 col-md-4">
-                  <label for="itemsPerPageInput" class="form-label">Items per page</label>
-                  <input type="number" min="1" value="12" class="form-control" id="itemsPerPageInput">
-                </div>
-                <div class="col-6 col-md-4">
-                  <label for="numColsSelect" class="form-label">Number of columns</label>
-                  <select id="numColsSelect" class="form-select">
-                    <option>1</option>
-                    <option>2</option>
-                    <option>3</option>
-                    <option>4</option>
-                    <option>5</option>
-                    <option selected="selected">6</option>
-                  </select>
-                </div>
-                <div class="col-12 col-md-6 col-lg-4 col-xxl-3">
-                  <label for="imageHeightSlider" class="form-label">
-                    Image height
-                    <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="How much of each item's vertical space should be used by the image." style="font-size: 0.55em;">?</span>
-                  </label>
-                  <input id="imageHeightSlider" type="range" calss="form-range layout-property-int" data-property="image_height" min="10" max="100" step="5" value="80">
-                </div>
-                <div class="col-12 col-md-6 col-lg-4 col-xxl-3">
-                  <label for="cornerRadiusSlider" class="form-label">
-                    Round image corners
-                  </label>
-                  <input id="cornerRadiusSlider" type="range" calss="form-range layout-property-int" data-property="corner_radius" min="0" max="50" step="1" value="0">
-                </div>
-                <div class="col-12 col-md-6 col-lg-4 col-xxl-3">
-                  <label for="imageShapeSelect" class="form-label">
-                    Image shape
-                  </label>
-                  <select id="imageShapeSelect" class="form-select" data-property="corner_radius">
-                    <option value="original">Original</option>
-                    <option value="square">Square</option>
-                    <option value="viewport">Match display</option>
-                    <option value="anti-viewport">Opposite display</option>
-                  </select>
-                </div>
-              </div>
-
-              <h4>Lightbox layout</h4>
-              <div class="row gy-2 mb-3">
-                <div class="col-12 col-md-6 col-lg-4">
-                  <label for="lightboxTitleHeightSlider" class="form-label">
-                    Title height
-                  </label>
-                  <input id="lightboxTitleHeightSlider" type="range" class="form-range height-slider" min="0", max="21" start="9" step="3">
-                </div>
-                <div class="col-12 col-md-6 col-lg-4">
-                  <label for="lightboxCaptionHeightSlider" class="form-label">
-                    Caption height
-                  </label>
-                  <input id="lightboxCaptionHeightSlider" type="range" class="form-range height-slider" min="0", max="25" start="15" step="5">
-                </div>
-                <div class="col-12 col-md-6 col-lg-4">
-                  <label for="lightboxCreditHeightSlider" class="form-label">
-                    Credit height
-                  </label>
-                  <input id="lightboxCreditHeightSlider" type="range" class="form-range height-slider" min="0", max="15" start="6" step="3">
-                </div>
-              </div>
-
-              <h4>Colors</h4>
-              <div class="row gy-2 mb-3">
-                <div class="col-12 col-lg-8 advanced-color-picker" data-constACP-name="Background" data-constACP-path="style>background"></div>
-
-                <div class="col-12 col-sm-6 col-lg-4">
-                  <label for="colorPicker_titleColor" class="form-label">Item title</label>
-                  <div>
-                    <input id="colorPicker_titleColor" type="text" class="coloris form-control" value="#000000" data-property="titleColor" data-default="#000000">
+            <!-- Appearance -->
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#appearance" aria-expanded="false" aria-controls="appearance">
+                  Appearance
+                  <div class="accordion-detail">Adjust colors, fonts, and text sizes, as well as the layout of the grid.</div>
+                </button>
+              </h2>
+              <div id="appearance" class="accordion-collapse collapse" data-bs-parent="#topLevelAccordion">
+                <div class="accordion-body">
+                  <div class="row gy-2">
+                    <div class="col-12 mt-2">
+              
+                      <h4>Grid layout</h4>
+                      <div class="row gy-2 mb-3">
+                        <div class="col-6 col-md-4">
+                          <label for="itemsPerPageInput" class="form-label">Items per page</label>
+                          <input type="number" min="1" value="12" class="form-control" id="itemsPerPageInput">
+                        </div>
+                        <div class="col-6 col-md-4">
+                          <label for="numColsSelect" class="form-label">Number of columns</label>
+                          <select id="numColsSelect" class="form-select">
+                            <option>1</option>
+                            <option>2</option>
+                            <option>3</option>
+                            <option>4</option>
+                            <option>5</option>
+                            <option selected="selected">6</option>
+                          </select>
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-4 col-xxl-3">
+                          <label for="imageHeightSlider" class="form-label">
+                            Image height
+                            <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="How much of each item's vertical space should be used by the image." style="font-size: 0.55em;">?</span>
+                          </label>
+                          <input id="imageHeightSlider" type="range" calss="form-range layout-property-int" data-property="image_height" min="10" max="100" step="5" value="80">
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-4 col-xxl-3">
+                          <label for="cornerRadiusSlider" class="form-label">
+                            Round image corners
+                          </label>
+                          <input id="cornerRadiusSlider" type="range" calss="form-range layout-property-int" data-property="corner_radius" min="0" max="50" step="1" value="0">
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-4 col-xxl-3">
+                          <label for="imageShapeSelect" class="form-label">
+                            Image shape
+                          </label>
+                          <select id="imageShapeSelect" class="form-select" data-property="corner_radius">
+                            <option value="original">Original</option>
+                            <option value="square">Square</option>
+                            <option value="viewport">Match display</option>
+                            <option value="anti-viewport">Opposite display</option>
+                          </select>
+                        </div>
+                      </div>
+        
+                      <h4>Lightbox layout</h4>
+                      <div class="row gy-2 mb-3">
+                        <div class="col-12 col-md-6 col-lg-4">
+                          <label for="lightboxTitleHeightSlider" class="form-label">
+                            Title height
+                          </label>
+                          <input id="lightboxTitleHeightSlider" type="range" class="form-range height-slider" min="0", max="21" start="9" step="3">
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-4">
+                          <label for="lightboxCaptionHeightSlider" class="form-label">
+                            Caption height
+                          </label>
+                          <input id="lightboxCaptionHeightSlider" type="range" class="form-range height-slider" min="0", max="25" start="15" step="5">
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-4">
+                          <label for="lightboxCreditHeightSlider" class="form-label">
+                            Credit height
+                          </label>
+                          <input id="lightboxCreditHeightSlider" type="range" class="form-range height-slider" min="0", max="15" start="6" step="3">
+                        </div>
+                      </div>
+        
+                      <h4>Colors</h4>
+                      <div class="row gy-2 mb-3">
+                        <div class="col-12 col-lg-8 advanced-color-picker" data-constACP-name="Background" data-constACP-path="style>background"></div>
+        
+                        <div class="col-12 col-sm-6 col-lg-4">
+                          <label for="colorPicker_titleColor" class="form-label">Item title</label>
+                          <div>
+                            <input id="colorPicker_titleColor" type="text" class="coloris form-control" value="#000000" data-property="titleColor" data-default="#000000">
+                          </div>
+                        </div>
+                        <div class="col-12 col-sm-6 col-lg-4">
+                          <label for="colorPicker_filterBackgroundColor" class="form-label">Filter background</label>
+                          <div>
+                            <input id="colorPicker_filterBackgroundColor" type="text" class="coloris form-control" value="#ffffff" data-property="filterBackgroundColor" data-default="#ffffff">
+                          </div>
+                        </div>
+                        <div class="col-12 col-sm-6 col-lg-4">
+                          <label for="colorPicker_filterLabelColor" class="form-label">Filter label</label>
+                          <div>
+                            <input id="colorPicker_filterLabelColor" type="text" class="coloris form-control" value="#000000" data-property="filterLabelColor" data-default="#000000">
+                          </div>
+                        </div>
+                        <div class="col-12 col-sm-6 col-lg-4">
+                          <label for="colorPicker_filterTextColor" class="form-label">Filter text</label>
+                          <div>
+                            <input id="colorPicker_filterTextColor" type="text" class="coloris form-control" value="#000000" data-property="filterTextColor" data-default="#000000">
+                          </div>
+                        </div>
+                        <div class="col-12 col-sm-6 col-lg-4">
+                          <label for="colorPicker_lightboxBackgroundColor" class="form-label">Lightbox background</label>
+                          <div>
+                            <input id="colorPicker_lightboxBackgroundColor" type="text" class="coloris form-control" value="#000000ef" data-property="lightboxBackgroundColor" data-default="#000000ef">
+                          </div>
+                        </div>
+                        <div class="col-12 col-sm-6 col-lg-4">
+                          <label for="colorPicker_lightboxTitleColor" class="form-label">Lightbox title</label>
+                          <div>
+                            <input id="colorPicker_lightboxTitleColor" type="text" class="coloris form-control" value="#fff" data-property="lightboxTitleColor" data-default="#fff">
+                          </div>
+                        </div>
+                        <div class="col-12 col-sm-6 col-lg-4">
+                          <label for="colorPicker_lightboxCaptionColor" class="form-label">Lightbox caption</label>
+                          <div>
+                            <input id="colorPicker_lightboxCaptionColor" type="text" class="coloris form-control" value="#fff" data-property="lightboxCaptionColor" data-default="#fff">
+                          </div>
+                        </div>
+                        <div class="col-12 col-sm-6 col-lg-4">
+                          <label for="colorPicker_lightboxCreditColor" class="form-label">Lightbox credit</label>
+                          <div>
+                            <input id="colorPicker_lightboxCreditColor" type="text" class="coloris form-control" value="#fff" data-property="lightboxCreditColor" data-default="#fff">
+                          </div>
+                        </div>
+                      </div>
+        
+                      <h4>Fonts</h4>
+                      <div class="row gy-2">
+                        <div class="col-12 col-md-6 col-lg-4 col-xl-3">
+                          <button id="manageFontsButton" class="btn btn-info w-100">Manage fonts</button>
+                        </div>
+                        <div class="col-0 col-lg-9"></div>
+        
+                        <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Item title" data-constAFP-path="style>font>Title" data-default="OpenSans-Bold.ttf"></div>
+        
+                        <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Lightbox title" data-constAFP-path="style>font>Lightbox_title" data-default="OpenSans-Bold.ttf"></div>
+        
+                        <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Lightbox caption" data-constAFP-path="style>font>Lightbox_caption" data-default="OpenSans-Regular.ttf"></div>
+        
+                        <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Lightbox credit" data-constAFP-path="style>font>Lightbox_credit" data-default="OpenSans-LightItalic.ttf"></div>
+        
+                        <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Filter label" data-constAFP-path="style>font>filter_label" data-default="OpenSans-Bold.ttf"></div>
+                        
+                        <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Filter text" data-constAFP-path="style>font>filter_text" data-default="OpenSans-Regular.ttf"></div>
+                      </div>
+        
+                      <h4 class="mt-2">Text size</h4>
+                      <div class="row gy-2">
+                        <div class="col-12 col-md-6 col-lg-4">
+                          <label for="TitleTextSizeSlider" class="form-label">Item title</label>
+                          <input id="TitleTextSizeSlider" type="range" class="form-range text-size-slider" data-property="Title" min="-1", max="2" start="0" step="0.25">
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-4">
+                          <label for="Lightbox_titleTextSizeSlider" class="form-label">Lightbox title</label>
+                          <input id="Lightbox_titleTextSizeSlider" type="range" class="form-range text-size-slider" data-property="Lightbox_title" min="-3", max="3" start="0" step="0.5">
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-4">
+                          <label for="Lightbox_captionTextSizeSlider" class="form-label">Lightbox caption</label>
+                          <input id="Lightbox_captionTextSizeSlider" type="range" class="form-range text-size-slider" data-property="Lightbox_caption" min="-1", max="2" start="0" step="0.5">
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-4">
+                          <label for="Lightbox_creditTextSizeSlider" class="form-label">Lightbox credit</label>
+                          <input id="Lightbox_creditTextSizeSlider" type="range" class="form-range text-size-slider" data-property="Lightbox_credit" min="-0.5", max="2" start="0" step="0.5">
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-4">
+                          <label for="filter_labelTextSizeSlider" class="form-label">Filter label</label>
+                          <input id="filter_labelTextSizeSlider" type="range" class="form-range text-size-slider" data-property="filter_label" min="-1.5", max="1.5" start="0" step="0.5">
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-4">
+                          <label for="filter_textTextSizeSlider" class="form-label">Filter text</label>
+                          <input id="filter_textTextSizeSlider" type="range" class="form-range text-size-slider" data-property="filter_text" min="-1.5", max="1.5" start="0" step="0.5">
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <div class="col-12 col-sm-6 col-lg-4">
-                  <label for="colorPicker_filterBackgroundColor" class="form-label">Filter background</label>
-                  <div>
-                    <input id="colorPicker_filterBackgroundColor" type="text" class="coloris form-control" value="#ffffff" data-property="filterBackgroundColor" data-default="#ffffff">
-                  </div>
-                </div>
-                <div class="col-12 col-sm-6 col-lg-4">
-                  <label for="colorPicker_filterLabelColor" class="form-label">Filter label</label>
-                  <div>
-                    <input id="colorPicker_filterLabelColor" type="text" class="coloris form-control" value="#000000" data-property="filterLabelColor" data-default="#000000">
-                  </div>
-                </div>
-                <div class="col-12 col-sm-6 col-lg-4">
-                  <label for="colorPicker_filterTextColor" class="form-label">Filter text</label>
-                  <div>
-                    <input id="colorPicker_filterTextColor" type="text" class="coloris form-control" value="#000000" data-property="filterTextColor" data-default="#000000">
-                  </div>
-                </div>
-                <div class="col-12 col-sm-6 col-lg-4">
-                  <label for="colorPicker_lightboxBackgroundColor" class="form-label">Lightbox background</label>
-                  <div>
-                    <input id="colorPicker_lightboxBackgroundColor" type="text" class="coloris form-control" value="#000000ef" data-property="lightboxBackgroundColor" data-default="#000000ef">
-                  </div>
-                </div>
-                <div class="col-12 col-sm-6 col-lg-4">
-                  <label for="colorPicker_lightboxTitleColor" class="form-label">Lightbox title</label>
-                  <div>
-                    <input id="colorPicker_lightboxTitleColor" type="text" class="coloris form-control" value="#fff" data-property="lightboxTitleColor" data-default="#fff">
-                  </div>
-                </div>
-                <div class="col-12 col-sm-6 col-lg-4">
-                  <label for="colorPicker_lightboxCaptionColor" class="form-label">Lightbox caption</label>
-                  <div>
-                    <input id="colorPicker_lightboxCaptionColor" type="text" class="coloris form-control" value="#fff" data-property="lightboxCaptionColor" data-default="#fff">
-                  </div>
-                </div>
-                <div class="col-12 col-sm-6 col-lg-4">
-                  <label for="colorPicker_lightboxCreditColor" class="form-label">Lightbox credit</label>
-                  <div>
-                    <input id="colorPicker_lightboxCreditColor" type="text" class="coloris form-control" value="#fff" data-property="lightboxCreditColor" data-default="#fff">
-                  </div>
-                </div>
-              </div>
-
-              <h4>Fonts</h4>
-              <div class="row gy-2">
-                <div class="col-12 col-md-6 col-lg-4 col-xl-3">
-                  <button id="manageFontsButton" class="btn btn-info w-100">Manage fonts</button>
-                </div>
-                <div class="col-0 col-lg-9"></div>
-
-                <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Item title" data-constAFP-path="style>font>Title" data-default="OpenSans-Bold.ttf"></div>
-
-                <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Lightbox title" data-constAFP-path="style>font>Lightbox_title" data-default="OpenSans-Bold.ttf"></div>
-
-                <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Lightbox caption" data-constAFP-path="style>font>Lightbox_caption" data-default="OpenSans-Regular.ttf"></div>
-
-                <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Lightbox credit" data-constAFP-path="style>font>Lightbox_credit" data-default="OpenSans-LightItalic.ttf"></div>
-
-                <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Filter label" data-constAFP-path="style>font>filter_label" data-default="OpenSans-Bold.ttf"></div>
-                
-                <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Filter text" data-constAFP-path="style>font>filter_text" data-default="OpenSans-Regular.ttf"></div>
-              </div>
-
-              <h4 class="mt-2">Text size</h4>
-              <div class="row gy-2">
-                <div class="col-12 col-md-6 col-lg-4">
-                  <label for="TitleTextSizeSlider" class="form-label">Item title</label>
-                  <input id="TitleTextSizeSlider" type="range" class="form-range text-size-slider" data-property="Title" min="-1", max="2" start="0" step="0.25">
-                </div>
-                <div class="col-12 col-md-6 col-lg-4">
-                  <label for="Lightbox_titleTextSizeSlider" class="form-label">Lightbox title</label>
-                  <input id="Lightbox_titleTextSizeSlider" type="range" class="form-range text-size-slider" data-property="Lightbox_title" min="-3", max="3" start="0" step="0.5">
-                </div>
-                <div class="col-12 col-md-6 col-lg-4">
-                  <label for="Lightbox_captionTextSizeSlider" class="form-label">Lightbox caption</label>
-                  <input id="Lightbox_captionTextSizeSlider" type="range" class="form-range text-size-slider" data-property="Lightbox_caption" min="-1", max="2" start="0" step="0.5">
-                </div>
-                <div class="col-12 col-md-6 col-lg-4">
-                  <label for="Lightbox_creditTextSizeSlider" class="form-label">Lightbox credit</label>
-                  <input id="Lightbox_creditTextSizeSlider" type="range" class="form-range text-size-slider" data-property="Lightbox_credit" min="-0.5", max="2" start="0" step="0.5">
-                </div>
-                <div class="col-12 col-md-6 col-lg-4">
-                  <label for="filter_labelTextSizeSlider" class="form-label">Filter label</label>
-                  <input id="filter_labelTextSizeSlider" type="range" class="form-range text-size-slider" data-property="filter_label" min="-1.5", max="1.5" start="0" step="0.5">
-                </div>
-                <div class="col-12 col-md-6 col-lg-4">
-                  <label for="filter_textTextSizeSlider" class="form-label">Filter text</label>
-                  <input id="filter_textTextSizeSlider" type="range" class="form-range text-size-slider" data-property="filter_text" min="-1.5", max="1.5" start="0" step="0.5">
                 </div>
               </div>
             </div>

@@ -21,7 +21,34 @@ export const config = {
   clearDefinition: null,
   loadDefinition: null,
   saveDefinition: null,
-  fontCache: {} // Keys with any value indicate that font has already been made
+  fontCache: {}, // Keys with any value indicate that font has already been made
+  languages: [
+    { code: 'ar-dz', name: 'عربي', name_en: 'Arabic (Algeria)' },
+    { code: 'ar-eg', name: 'عربي', name_en: 'Arabic (Egypt)' },
+    { code: 'ar-iq', name: 'عربي', name_en: 'Arabic (Iraq)' },
+    { code: 'ar-sa', name: 'عربي', name_en: 'Arabic (Saudi Arabia)' },
+    { code: 'ar-ae', name: 'عربي', name_en: 'Arabic (U.A.E.)' },
+    { code: 'bn', name: 'বাংলা', name_en: 'Bengali' },
+    { code: 'zh', name: '中国人', name_en: 'Chinese (China)' },
+    { code: 'zh-tw', name: '中国人', name_en: 'Chinese (Taiwan)' },
+    { code: 'en-au', name: 'English', name_en: 'English (Australia)' },
+    { code: 'en-nz', name: 'English', name_en: 'English (New Zealand)' },
+    { code: 'en-gb', name: 'English', name_en: 'English (U.K.)' },
+    { code: 'en-us', name: 'English', name_en: 'English (U.S.)' },
+    { code: 'fr', name: 'Français', name_en: 'French' },
+    { code: 'de', name: 'Deutsch', name_en: 'German' },
+    { code: 'hi', name: 'हिंदी', name_en: 'Hindi' },
+    { code: 'id', name: 'bahasa Indonesia', name_en: 'Indonesian' },
+    { code: 'it', name: 'Italiano', name_en: 'Italian' },
+    { code: 'jp', name: '日本語', name_en: 'Japanese' },
+    { code: 'kr', name: '한국인', name_en: 'Korean' },
+    { code: 'pt', name: 'Português', name_en: 'Portuguese (Portugal)' },
+    { code: 'pt-br', name: 'Português', name_en: 'Portuguese (Brazil)' },
+    { code: 'ru', name: 'Русский', name_en: 'Russian' },
+    { code: 'es-mx', name: 'Español', name_en: 'Spanish (Mexico)' },
+    { code: 'es', name: 'Español', name_en: 'Spanish (Spain)' },
+    { code: 'ur', name: 'اردو', name_en: 'Urdu' }
+  ]
 }
 
 export async function configure (options) {
@@ -206,6 +233,38 @@ export function getDefinitionByUUID (uuid = '') {
   return matchedDef
 }
 
+function showSetupWizard () {
+  // Show the modal for the setup wizard
+  $('#setupWizardModal').modal('show')
+}
+
+export function addWizardLanguage () {
+  // Create HTML for a new wizard language selector
+
+  const col = document.createElement('div')
+  col.classList = 'col'
+
+  const row = document.createElement('div')
+  row.classList = 'row gy-2'
+  col.appendChild(row)
+
+  const selectCol = document.createElement('col')
+  selectCol.classList = 'col col-12'
+  row.appendChild(selectCol)
+
+  const select = document.createElement('select')
+  select.classList = 'form-select'
+  selectCol.appendChild(select)
+
+  for (const lang of config.languages) {
+    const option = new Option(lang.name_en, lang.code)
+    select.appendChild(option)
+  }
+  select.value = 'en-gb'
+
+  document.getElementById('wizardLanguages').append(col)
+}
+
 function deleteDefinition () {
   // Delete the definition currently listed in the select.
 
@@ -256,12 +315,12 @@ export function updateWorkingDefinition (property, value) {
   // 'property' should be an array of subproperties, e.g., ["style", "color", 'headerColor']
   // for definition.style.color.headerColor
 
-  if(property && property[0].length<=1){
-    //occasionally the color library is providing a poperty with a large amount of single entries that clog up the definition json
+  if (property && property[0].length <= 1) {
+    // occasionally the color library is providing a poperty with a large amount of single entries that clog up the definition json
     console.log(`skipping ${property}`)
-    return;
+    return
   }
-  exCommon.setObjectProperty($('#definitionSaveButton').data('workingDefinition'), property, value);
+  exCommon.setObjectProperty($('#definitionSaveButton').data('workingDefinition'), property, value)
 }
 
 export function createLoginEventListeners () {
@@ -277,6 +336,10 @@ export function createLoginEventListeners () {
 
 function createEventListeners () {
   // Bind various event listeners to their elements.
+
+  // Wizard
+  document.getElementById('showWizardButton').addEventListener('click', showSetupWizard)
+  document.getElementById('wizardAddLanguageButton').addEventListener('click', addWizardLanguage)
 
   // New definition buttons
   document.getElementById('newDefinitionButton').addEventListener('click', () => {
@@ -809,7 +872,7 @@ export function authenticateUser () {
   return exCommon.makeServerRequest({
     method: 'POST',
     endpoint: '/user/login',
-    params: {token}
+    params: { token }
   })
     .then((response) => {
       if (response.success === true) {
