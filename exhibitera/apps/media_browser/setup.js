@@ -79,9 +79,10 @@ async function clearDefinitionInput (full = true) {
 
   // Reset layout options
   // document.getElementById('showSearchPaneCheckbox').checked = false
-  document.getElementById('itemsPerPageInput').value = 12
-  document.getElementById('numColsSelect').value = 6
+  document.getElementById('itemsPerPageInput').value = 6
+  document.getElementById('numColsSelect').value = 3
   document.getElementById('imageHeightSlider').value = 80
+  document.getElementById('titleHeightSlider').value = 100
   document.getElementById('cornerRadiusSlider').value = 0
   document.getElementById('imageShapeSelect').value = 'original'
 
@@ -149,7 +150,16 @@ function editDefinition (uuid = '') {
   } else {
     document.getElementById('numColsSelect').value = 6
   }
-  document.getElementById('imageHeightSlider').value = def.style.layout.image_height
+  if ('image_height' in def.style.layout) {
+    document.getElementById('imageHeightSlider').value = def.style.layout.image_height
+  } else {
+    document.getElementById('imageHeightSlider').value = 80
+  }
+  if ('title_height' in def.style.layout) {
+    document.getElementById('titleHeightSlider').value = def.style.layout.title_height
+  } else {
+    document.getElementById('titleHeightSlider').value = 20
+  }
   if ('corner_radius' in def.style.layout) {
     document.getElementById('cornerRadiusSlider').value = def.style.layout.corner_radius
   } else {
@@ -1075,6 +1085,10 @@ document.getElementById('numColsSelect').addEventListener('change', (event) => {
 })
 document.getElementById('imageHeightSlider').addEventListener('input', (event) => {
   exSetup.updateWorkingDefinition(['style', 'layout', 'image_height'], parseInt(event.target.value))
+  exSetup.previewDefinition(true)
+})
+document.getElementById('titleHeightSlider').addEventListener('input', (event) => {
+  exSetup.updateWorkingDefinition(['style', 'layout', 'title_height'], parseInt(event.target.value))
   exSetup.previewDefinition(true)
 })
 document.getElementById('cornerRadiusSlider').addEventListener('input', (event) => {
