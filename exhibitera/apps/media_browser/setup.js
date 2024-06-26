@@ -158,7 +158,7 @@ function editDefinition (uuid = '') {
   if ('title_height' in def.style.layout) {
     document.getElementById('titleHeightSlider').value = def.style.layout.title_height
   } else {
-    document.getElementById('titleHeightSlider').value = 20
+    document.getElementById('titleHeightSlider').value = 100
   }
   if ('corner_radius' in def.style.layout) {
     document.getElementById('cornerRadiusSlider').value = def.style.layout.corner_radius
