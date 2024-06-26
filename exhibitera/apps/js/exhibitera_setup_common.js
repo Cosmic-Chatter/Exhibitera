@@ -256,12 +256,12 @@ export function updateWorkingDefinition (property, value) {
   // 'property' should be an array of subproperties, e.g., ["style", "color", 'headerColor']
   // for definition.style.color.headerColor
 
-  if(property && property[0].length<=1){
-    //occasionally the color library is providing a poperty with a large amount of single entries that clog up the definition json
+  if (property && property[0].length <= 1) {
+    // occasionally the color library is providing a poperty with a large amount of single entries that clog up the definition json
     console.log(`skipping ${property}`)
-    return;
+    return
   }
-  exCommon.setObjectProperty($('#definitionSaveButton').data('workingDefinition'), property, value);
+  exCommon.setObjectProperty($('#definitionSaveButton').data('workingDefinition'), property, value)
 }
 
 export function createLoginEventListeners () {
@@ -809,7 +809,7 @@ export function authenticateUser () {
   return exCommon.makeServerRequest({
     method: 'POST',
     endpoint: '/user/login',
-    params: {token}
+    params: { token }
   })
     .then((response) => {
       if (response.success === true) {

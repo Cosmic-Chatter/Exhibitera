@@ -80,10 +80,6 @@ body {
     background-position: center;
     height: 100vh;
 }
-.card-body {
-}
-.cardCol {
-}
 .cardTitleContainer {
     margin-top: 1vmax;
 }
@@ -144,6 +140,7 @@ body {
 }
 .resultImg {
     object-fit: cover;
+    height: 100%;
 }
 #attractorImage {
     position: fixed;
@@ -250,11 +247,6 @@ body {
 #logoRegion {
     height: 100%;
 }
-#resultsPane {
-}
-#resultsRow {
-    padding-top: 2.5vh;
-}
 #searchInput {
     outline: none;
 }
@@ -273,7 +265,6 @@ body {
         height: 100%!important;
     }
     .resultImg {
-        height: 100%;
     }
     .simple-keyboard {
         height: 100%;
@@ -291,6 +282,5 @@ body {
         height: 3.5vh!important;
     }
     .resultImg {
-        width: 100%;
     }
 }
