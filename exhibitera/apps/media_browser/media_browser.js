@@ -66,16 +66,10 @@ function createCard (obj) {
 
   const col = document.createElement('div')
   col.classList = 'cardCol col align-items-center justify-content-center d-flex'
-  // Calculate the height of the card based on the number of rows
-
-  if ('show_search_and_filter' in def.style.layout && def.style.layout.show_search_and_filter === true) {
-    col.style.height = String(Math.round(60 / numRows)) + 'vh'
-  } else {
-    col.style.height = String(Math.round(95 / numRows)) + 'vh'
-  }
+  col.style.height = String(0.975 * window.innerHeight / numRows) + 'px'
 
   const card = document.createElement('div')
-  card.classList = 'resultCard row w-100'
+  card.classList = 'resultCard row w-100 d-flex align-content-center'
   card.addEventListener('click', function () {
     displayMedia(id)
   })
@@ -87,7 +81,7 @@ function createCard (obj) {
   if ('image_height' in def.style.layout) {
     imgCol.style.height = String(def.style.layout.image_height) + '%'
   } else {
-    imgCol.style.height = '70%'
+    imgCol.style.height = '80%'
   }
   card.appendChild(imgCol)
 
@@ -134,8 +128,13 @@ function createCard (obj) {
     const titleCol = document.createElement('div')
     titleCol.classList = 'col col-12 text-center cardTitleContainer'
 
-    if ('image_height' in def.style.layout) {
-      titleCol.style.height = String(100 - def.style.layout.image_height) + '%'
+    let imageHeight = 80
+    if ('image_height' in def.style.layout) imageHeight = def.style.layout.image_height
+
+    if ('title_height' in def.style.layout) {
+      titleCol.style.height = String(Math.round((100 - imageHeight) * def.style.layout.title_height / 100)) + '%'
+    } else {
+      titleCol.style.height = '100%'
     }
     card.appendChild(titleCol)
 
@@ -311,6 +310,7 @@ function _populateResultsRow (currentKey) {
   displayedResults.forEach((item, i) => {
     createCard(item)
   })
+
   // Adjust card title font size to avoid overflows
   // Don't allow text to get larger than wha the user
   // has set.
@@ -319,6 +319,10 @@ function _populateResultsRow (currentKey) {
     const fontSize = parseFloat(window.getComputedStyle(titles[0], null).getPropertyValue('font-size'))
     $('#resultsRow').show()
     textFit(titles, { maxFontSize: fontSize })
+    // Sometimes need to run twice on first load
+    setTimeout(() => {
+      textFit(titles, { maxFontSize: fontSize })
+    }, 10)
   } else {
     $('#resultsRow').fadeIn(200)
   }
@@ -418,7 +422,7 @@ function loadDefinition (def) {
     numCols = def.style.layout.num_columns
   } else {
     document.getElementById('resultsRow').classList = 'h-100 row row-cols-6'
-    numCols = 6
+    numCols = 3
   }
   if ('items_per_page' in def.style.layout) {
     cardsPerPage = parseInt(def.style.layout.items_per_page)
@@ -676,7 +680,6 @@ function showMediaInLightbox (media, title = '', caption = '', credit = '') {
     // Fit the various text elements
     if ('layout' in def.style) {
       if ('lightbox_title_height' in def.style.layout && def.style.layout.lightbox_title_height > 0) {
-        console.log('here')
         textFit(titleDiv, { maxFontSize: titleFontSize })
       }
       if ('lightbox_credit_height' in def.style.layout && def.style.layout.lightbox_credit_height > 0) {
