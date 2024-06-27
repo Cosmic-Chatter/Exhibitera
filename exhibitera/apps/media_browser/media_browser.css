@@ -247,6 +247,9 @@ body {
 #logoRegion {
     height: 100%;
 }
+#resultsRow {
+    padding-top: 2.5vh;
+}
 #searchInput {
     outline: none;
 }

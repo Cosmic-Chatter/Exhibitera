@@ -66,7 +66,7 @@ function createCard (obj) {
 
   const col = document.createElement('div')
   col.classList = 'cardCol col align-items-center justify-content-center d-flex'
-  col.style.height = String(window.innerHeight / numRows) + 'px'
+  col.style.height = String(0.975 * window.innerHeight / numRows) + 'px'
 
   const card = document.createElement('div')
   card.classList = 'resultCard row w-100 d-flex align-content-center'
@@ -319,6 +319,10 @@ function _populateResultsRow (currentKey) {
     const fontSize = parseFloat(window.getComputedStyle(titles[0], null).getPropertyValue('font-size'))
     $('#resultsRow').show()
     textFit(titles, { maxFontSize: fontSize })
+    // Sometimes need to run twice on first load
+    setTimeout(() => {
+      textFit(titles, { maxFontSize: fontSize })
+    }, 10)
   } else {
     $('#resultsRow').fadeIn(200)
   }
