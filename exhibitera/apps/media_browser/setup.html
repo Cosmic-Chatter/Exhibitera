@@ -224,12 +224,25 @@
                   <H4 class="text-center">Choose your layout</H4>
                   <i>
                     <p>
-                      Media Browser supports displays in either a portrait (vertical) or landscape (horizontal) layout.
+                      Media Browser supports displays in either a portrait (vertical) or landscape (horizontal) layout. You can also configure how many items are shown per page.
                     </p>
                   </i>
-                  <div class="w-100 text-center">
-                    <button id="wizardDownloadTemplateButton" class="btn btn-primary">Download blank template</button>
-                    <button id="wizardUploadTemplateButton" class="btn btn-info">Upload completed template</button>
+                  <div class="row gy-2 row-cols-md-2 row-cols-1">
+                    <div class="col">
+                      <label class="form-label" for="wizardOrientationSelect">Orientation</label>
+                      <select class="form-select" id="wizardOrientationSelect">
+                        <option value="horizontal">Horizontal</option>
+                        <option value="vertical">Vertical</option>
+                      </select>
+                    </div>
+                    <div class="col">
+                      <label class="form-label" for="wizardDensitySelect">Density</label>
+                      <select class="form-select" id="wizardDensitySelect">
+                        <option value="low">Low (2 items per page)</option>
+                        <option value="medium">Medium (6 items per page)</option>
+                        <option value="hight">High (8 items per page)</option>
+                      </select>
+                    </div>
                   </div>
                   <div class="text-center mt-4">
                     <button class="btn btn-secondary me-4">Back</button>
@@ -578,6 +591,13 @@
                             <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="How much of each item's vertical space should be used by the image." style="font-size: 0.55em;">?</span>
                           </label>
                           <input id="imageHeightSlider" type="range" calss="form-range layout-property-int" data-property="image_height" min="10" max="100" step="5" value="80">
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-4 col-xxl-3">
+                          <label for="titleHeightSlider" class="form-label">
+                            Title height
+                            <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="How much of each item's vertical space that is not used by the image should be used by the title. Titles that do not fit this space will have their text shrunk until they do." style="font-size: 0.55em;">?</span>
+                          </label>
+                          <input id="titleHeightSlider" type="range" calss="form-range layout-property-int" data-property="title_height" min="10" max="100" step="5" value="100">
                         </div>
                         <div class="col-12 col-md-6 col-lg-4 col-xxl-3">
                           <label for="cornerRadiusSlider" class="form-label">
