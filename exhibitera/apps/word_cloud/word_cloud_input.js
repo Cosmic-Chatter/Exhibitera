@@ -1,58 +1,58 @@
 /* global swearList */
 
 import * as exCommon from '../js/exhibitera_app_common.js'
-let maxCharacterCount = -1;
-const Keyboard = window.SimpleKeyboard.default;
-let keyboard ='';
-function AddKeyboardListeners(maxLength) {
+let maxCharacterCount = -1
+const Keyboard = window.SimpleKeyboard.default
+let keyboard = ''
+function AddKeyboardListeners (maxLength) {
   window.addEventListener('keydown', (event) => {
-    let input = document.querySelector('#inputField')
-    let value = input.value;
+    const input = document.querySelector('#inputField')
+    const value = input.value
     if (maxCharacterCount > 0) {
       if (value.length >= maxLength && event.key !== 'Backspace') {
-        return;
+        return
       }
     }
-    let newVal = value;
+    let newVal = value
     switch (event.key) {
       case 'Backspace':
-        newVal = value.slice(0, value.length - 1);
-        break;
+        newVal = value.slice(0, value.length - 1)
+        break
       case 'Meta':
       case 'Control':
       case 'CapsLock':
       case 'Esc':
       case 'Shift':
       case 'Enter':
-        break;
+        break
       case 'Space':
-        newVal = value + ' ';
-        break;
+        newVal = value + ' '
+        break
       default:
         newVal = value + event.key
     }
-    input.value = newVal;
-    setLengthHint(newVal.length);
+    input.value = newVal
+    setLengthHint(newVal.length)
   })
 }
-function setLengthHint(length){
-  if(maxCharacterCount >0) {
-    if(length > 0){
-      document.getElementById('characterCount').innerText =`${length}/${maxCharacterCount}`;
-    }else{
-      document.getElementById('characterCount').innerText ='';
+function setLengthHint (length) {
+  if (maxCharacterCount > 0) {
+    if (length > 0) {
+      document.getElementById('characterCount').innerText = `${length}/${maxCharacterCount}`
+    } else {
+      document.getElementById('characterCount').innerText = ''
     }
   }
 }
-function clear() {
+function clear () {
   $('#inputField').val('')
-  if(keyboard){
-  keyboard.input.default = ''
-  keyboard.input.inputField = ''
+  if (keyboard) {
+    keyboard.input.default = ''
+    keyboard.input.inputField = ''
   }
 }
 
-function getCleanText() {
+function getCleanText () {
   // Run the profanity checker on the input field
 
   $('#profanityCheckingDiv').html($('#inputField').val()).profanityFilter({ customSwears: swearList, replaceWith: '#' })
@@ -61,7 +61,7 @@ function getCleanText() {
   return ($('#profanityCheckingDiv').html().trim())
 }
 
-function sendTextToServer() {
+function sendTextToServer () {
   // Send the server the text that the user has inputted
   const text = getCleanText()
   const requestDict = {
@@ -95,7 +95,7 @@ function sendTextToServer() {
   }
 }
 
-function updateFunc(update) {
+function updateFunc (update) {
   // Read updates for word cloud-specific actions and act on them
 
   // This should be last to make sure the path has been updated
@@ -108,7 +108,7 @@ function updateFunc(update) {
   }
 }
 
-function loadDefinition(definition) {
+function loadDefinition (definition) {
   // Set up a new interface to collect input
 
   // Parse the settings and make the appropriate changes
@@ -122,19 +122,19 @@ function loadDefinition(definition) {
   } else {
     collectionName = 'default'
   }
-  let showKeyboard = true;
+  let showKeyboard = true
   if ('max_character_count' in definition.behavior) {
-    maxCharacterCount = definition.behavior.max_character_count;
-    console.log(maxCharacterCount);
+    maxCharacterCount = definition.behavior.max_character_count
+    console.log(maxCharacterCount)
   }
   if ('enable_keyboard_input' in definition.behavior) {
     if (definition.behavior.enable_keyboard_input) {
-      AddKeyboardListeners(maxCharacterCount);
-      showKeyboard = false;
+      AddKeyboardListeners(maxCharacterCount)
+      showKeyboard = false
     }
   }
   if (showKeyboard || exCommon.config.hideKeyboard) {
-    //Enable keyboard 
+    // Enable keyboard
     keyboard = new Keyboard({
       onChange: input => onChange(input),
       onKeyPress: button => onKeyPress(button),
@@ -146,9 +146,11 @@ function loadDefinition(definition) {
           '{space}'
         ]
       },
-      maxLength: maxCharacterCount > 0 ? {
-        default: maxCharacterCount
-      } : {}
+      maxLength: maxCharacterCount > 0
+        ? {
+            default: maxCharacterCount
+          }
+        : {}
     })
 
     // Localization options
@@ -199,7 +201,7 @@ function loadDefinition(definition) {
 
   // Background settings
   if ('background' in definition.appearance) {
-    exCommon.setBackground(definition.appearance.background, root, '#fff')
+    exCommon.setBackground(definition.appearance.background, root, '#fff', true)
   }
 
   // Font settings
@@ -234,32 +236,28 @@ function loadDefinition(definition) {
   setTimeout(() => exCommon.saveScreenshotAsThumbnail(definition.uuid + '.png'), 100)
 }
 
-
-
 // Add a listener to each input so we direct keyboard input to the right one
 document.querySelectorAll('.input').forEach(input => {
   input.addEventListener('focus', onInputFocus)
 })
-function onInputFocus(event) {
+function onInputFocus (event) {
   keyboard?.setOptions({
     inputName: event.target.id
   })
 }
-function onInputChange(event) {
+function onInputChange (event) {
   keyboard.setInput(event.target.value, event.target.id)
 }
-function onKeyPress(button) {
+function onKeyPress (button) {
   if (button === '{lock}' || button === '{shift}') handleShiftButton()
 }
 document.querySelector('#inputField').addEventListener('input', event => {
   keyboard?.setInput(event.target.value)
 })
-function onChange(input) {
+function onChange (input) {
   document.querySelector('#inputField').value = input
-  setLengthHint(input.length);
+  setLengthHint(input.length)
 }
-
-
 
 exCommon.configureApp({
   name: 'word_cloud_input',

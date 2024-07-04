@@ -254,7 +254,7 @@ function loadDefinition (definition) {
 
   // Backgorund settings
   if ('background' in definition.style) {
-    exCommon.setBackground(definition.style.background, root)
+    exCommon.setBackground(definition.style.background, root, '#22222E', true)
   }
 
   // Font settings

@@ -28,7 +28,7 @@ function loadDefinition (def) {
   // Backgorund settings
   const root = document.querySelector(':root')
   if ('style' in def && 'background' in def.style) {
-    exCommon.setBackground(def.style.background, root, '#000')
+    exCommon.setBackground(def.style.background, root, '#000', true)
   }
 
   // Watermark settings

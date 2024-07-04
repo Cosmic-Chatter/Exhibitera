@@ -235,7 +235,7 @@ function loadDefinition (definition) {
 
   // Backgorund settings
   if ('background' in definition.appearance) {
-    exCommon.setBackground(definition.appearance.background, root, '#fff')
+    exCommon.setBackground(definition.appearance.background, root, '#fff', true)
     WordCloudOptions.backgroundColor = 'transparent'
   }
 

@@ -42,6 +42,15 @@ function loadDefinition (def) {
     document.documentElement.style.setProperty('--' + key, def.style.color[key])
   })
 
+  if ('headerColor' in def.style.color) {
+    // Configure the status bar for PWAs
+    document.querySelector('meta[name="theme-color"]').setAttribute('content', def.style.color.headerColor)
+    document.querySelector('meta[name="msapplication-TileColor"]').setAttribute('content', def.style.color.headerColor)
+  } else {
+    document.querySelector('meta[name="theme-color"]').setAttribute('content', '#000')
+    document.querySelector('meta[name="msapplication-TileColor"]').setAttribute('content', '#000')
+  }
+
   // Backgorund settings
   if ('background' in def.style) {
     exCommon.setBackground(def.style.background, root, '#719abf')

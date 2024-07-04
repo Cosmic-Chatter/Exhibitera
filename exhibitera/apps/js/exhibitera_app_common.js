@@ -844,14 +844,28 @@ export function withExtension (path, ext) {
   return path.split('.').slice(0, -1).join('.') + '.' + ext
 }
 
-export function setBackground (details, root, defaultColor = '#22222E') {
+export function setBackground (details, root, defaultColor = '#22222E', setStatusBar = false) {
   // Take the 'background' section of a definition and use it to configure the background
+
+  if (setStatusBar === true) {
+    // Configure the status bar for PWAs to black by default
+    if (setStatusBar === true) {
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', '#000')
+      document.querySelector('meta[name="msapplication-TileColor"]').setAttribute('content', '#000')
+    }
+  }
 
   if (details.mode === 'color') {
     // Solid colors
     let color = defaultColor
     if ('color' in details) color = details.color
     root.style.setProperty('--background-color', color)
+
+    // Configure the status bar for PWAs to match the background
+    if (setStatusBar === true) {
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', color)
+      document.querySelector('meta[name="msapplication-TileColor"]').setAttribute('content', color)
+    }
   } else if (details.mode === 'gradient') {
     // Gradient
     let angle = 0
@@ -865,7 +879,6 @@ export function setBackground (details, root, defaultColor = '#22222E') {
     root.style.setProperty('--background-color', grad)
   } else if (details.mode === 'image') {
     // Image
-    console.log()
     root.style.setProperty('--background-color', `url(../content/${details.image})`)
   }
 }

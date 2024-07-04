@@ -473,7 +473,7 @@ function loadDefinition (def) {
 
   // Backgorund settings
   if ('background' in def.style) {
-    exCommon.setBackground(def.style.background, root, '#fff')
+    exCommon.setBackground(def.style.background, root, '#fff', true)
   }
 
   // Set icon colors based on the background color.
@@ -680,10 +680,18 @@ function showMediaInLightbox (media, title = '', caption = '', credit = '') {
     // Fit the various text elements
     if ('layout' in def.style) {
       if ('lightbox_title_height' in def.style.layout && def.style.layout.lightbox_title_height > 0) {
-        textFit(titleDiv, { maxFontSize: titleFontSize })
+        try {
+          textFit(titleDiv, { maxFontSize: titleFontSize })
+        } catch {
+          // Ignore a failed resieze
+        }
       }
       if ('lightbox_credit_height' in def.style.layout && def.style.layout.lightbox_credit_height > 0) {
-        textFit(creditDiv, { maxFontSize: creditFontSize })
+        try {
+          textFit(creditDiv, { maxFontSize: creditFontSize })
+        } catch {
+          // Ignore a failed resieze
+        }
       }
     }
   })
