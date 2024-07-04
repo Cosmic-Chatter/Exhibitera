@@ -66,6 +66,15 @@ function loadDefinition (definition) {
     document.documentElement.style.setProperty('--' + key + '-color', definition.style.color[key])
   })
 
+  if ('header' in definition.style.color) {
+    // Configure the status bar for PWAs
+    document.querySelector('meta[name="theme-color"]').setAttribute('content', definition.style.color.header)
+    document.querySelector('meta[name="msapplication-TileColor"]').setAttribute('content', definition.style.color.header)
+  } else {
+    document.querySelector('meta[name="theme-color"]').setAttribute('content', '#000')
+    document.querySelector('meta[name="msapplication-TileColor"]').setAttribute('content', '#000')
+  }
+
   // Backgorund settings
   if ('background' in definition.style) {
     exCommon.setBackground(definition.style.background, root, '#719abf')

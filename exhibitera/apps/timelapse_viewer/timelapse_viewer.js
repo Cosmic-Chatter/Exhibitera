@@ -75,7 +75,7 @@ function loadDefinition (definition) {
 
   // Backgorund settings
   if ('background' in definition.style) {
-    exCommon.setBackground(definition.style.background, root, '#22222E')
+    exCommon.setBackground(definition.style.background, root, '#22222E', true)
   }
 
   showAttractor()
