@@ -26,6 +26,7 @@ pyinstaller --clean --onefile \
             --add-data "js/showdown.min.js:js/." \
             --add-data "js/simple-keyboard.js:js/." \
             --add-data "js/swearWords.js:js/." \
+            --add-data "js/textFit.min.js:js/." \
             --add-data "js/wordcloud2.js:js/." \
             --add-data "js/bootstrap_5_3/*:js/bootstrap_5_3/." \
             --add-data "css/bootstrap_5_3/*:css/bootstrap_5_3/." \
