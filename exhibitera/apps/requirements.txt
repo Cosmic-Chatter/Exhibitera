@@ -3,7 +3,7 @@ flask==2.2.4
 libusb
 pillow
 psutil
-pydantic==1.10.12
+pydantic==1.10.17
 PyDMXControl
 pyffmpeg; platform_machine != 'aarch64' # We need to bundle ffmpeg sepaartely for Raspberry Pi
 pyftdi
