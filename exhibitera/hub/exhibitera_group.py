@@ -35,7 +35,7 @@ def create_group(name: str, description: str) -> dict[str, Any]:
     return group
 
 
-def edit_group(uuid_str, name: str | None = None, description: str | None = None) -> bool:
+def edit_group(uuid_str: str, name: str | None = None, description: str | None = None) -> bool:
     """Try to edit a group and return whether the group was found."""
 
     match = False

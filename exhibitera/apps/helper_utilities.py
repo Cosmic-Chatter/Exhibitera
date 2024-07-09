@@ -149,7 +149,7 @@ def update_defaults(data: dict[str, Any], cull: bool = False):
         print("helper_utilities.update_defaults: update written.")
 
 
-def deep_merge(source, destination):
+def deep_merge(source: dict, destination: dict):
     """ Merge  a series of nested dictionaries. Merge source INTO destination
 
     From https://stackoverflow.com/questions/20656135/python-deep-merge-dictionary-data/20666342#20666342
@@ -324,7 +324,7 @@ def handle_missing_defaults_file():
     update_defaults(defaults, cull=True)
 
 
-def find_available_port(start=8000):
+def find_available_port(start: int = 8000) -> int:
     """Find the next available port and return it."""
 
     this_port = start

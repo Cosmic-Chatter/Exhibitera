@@ -34,14 +34,14 @@ class ComponentStatusManager:
         else:
             self.set_status("ONLINE")
 
-    def set_status(self, status):
+    def set_status(self, status: str):
         if self.status != status:
             config.last_update_time = time.time()
 
         self.status = status
         self.start_timer(status)
 
-    def expire_timer(self, mode):
+    def expire_timer(self, mode: str):
         """When the timer expires, change the status and start a new timer, if needed."""
 
         if mode == "ACTIVE":
@@ -55,7 +55,7 @@ class ComponentStatusManager:
 
         return
 
-    def start_timer(self, mode):
+    def start_timer(self, mode: str):
         timer_durations = {
             "ACTIVE": 10,
             "ONLINE": 30,

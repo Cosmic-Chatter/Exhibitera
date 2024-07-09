@@ -42,7 +42,7 @@ def on_moved(x, y):
     pass
 
 
-def show_webview_window(app, reload=False):
+def show_webview_window(app: str, reload: bool = False):
     """Create a window for the given app, or bring it to the front if it already exists.
     If reload=True, reload the window if it already exists.
     """

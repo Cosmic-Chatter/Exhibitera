@@ -9,9 +9,6 @@ import exhibitera_tools as c_tools
 import exhibitera_exhibit as c_exhibit
 
 
-
-
-
 def poll_projectors():
     """Ask each projector to send a status update at an interval.
     """
