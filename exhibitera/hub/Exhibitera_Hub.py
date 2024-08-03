@@ -1776,14 +1776,9 @@ async def handle_ping(data: dict[str, Any], request: Request):
 
     ex_exhibit.update_exhibit_component_status(data, request.client.host)
 
-    if "uuid" in data:
-        # Preferred way from Exhibitera 5
-        component = ex_exhibit.get_exhibit_component(component_uuid=data['uuid'])
-    else:
-        # Legacy support
-        component = ex_exhibit.get_exhibit_component(component_id=data['id'])
-
+    component = ex_exhibit.get_exhibit_component(component_uuid=data['uuid'])
     dict_to_send = component.config.copy()
+
     if len(dict_to_send["commands"]) > 0:
         # Clear the command list now that we are sending
         component.config["commands"] = []
