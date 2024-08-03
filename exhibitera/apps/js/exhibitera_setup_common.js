@@ -338,8 +338,8 @@ function createEventListeners () {
   // Bind various event listeners to their elements.
 
   // Wizard
-  document.getElementById('showWizardButton').addEventListener('click', showSetupWizard)
-  document.getElementById('wizardAddLanguageButton').addEventListener('click', addWizardLanguage)
+  // document.getElementById('showWizardButton').addEventListener('click', showSetupWizard)
+  // document.getElementById('wizardAddLanguageButton').addEventListener('click', addWizardLanguage)
 
   // New definition buttons
   document.getElementById('newDefinitionButton').addEventListener('click', () => {
