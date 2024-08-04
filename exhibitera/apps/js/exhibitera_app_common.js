@@ -721,6 +721,8 @@ export function guessMimetype (filename) {
     return 'audio'
   } else if (['otf', 'ttf', 'woff', 'woff2'].includes(ext)) {
     return 'font'
+  } else if (['csv'].includes(ext)) {
+    return 'spreadsheet'
   }
 }
 

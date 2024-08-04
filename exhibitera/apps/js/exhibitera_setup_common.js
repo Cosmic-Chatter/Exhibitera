@@ -58,6 +58,7 @@ export async function configure (options) {
     app: null,
     clearDefinition: null,
     initializeDefinition: null,
+    initializeWizard: null,
     loadDefinition: null,
     saveDefinition: null
   }
@@ -67,12 +68,14 @@ export async function configure (options) {
   // Make sure we have the options we need
   if (options.app == null) throw new Error("The options must include the 'app' field.")
   if (options.initializeDefinition == null) throw new Error("The options must include the 'initializeDefinition' field referencing the appropriate function.")
+  if (options.initializeWizard == null) throw new Error("The options must include the 'initializeWizard' field referencing the appropriate function.")
   if (options.loadDefinition == null) throw new Error("The options must include the 'loadDefinition' field referencing the appropriate function.")
   if (options.saveDefinition == null) throw new Error("The options must include the 'saveDefinition' field referencing the appropriate function.")
 
   config.app = options.app
   config.clearDefinition = options.clearDefinition
   config.initializeDefinition = options.initializeDefinition
+  config.initializeWizard = options.initializeWizard
   config.loadDefinition = options.loadDefinition
   config.saveDefinition = options.saveDefinition
 
@@ -233,8 +236,10 @@ export function getDefinitionByUUID (uuid = '') {
   return matchedDef
 }
 
-function showSetupWizard () {
+async function showSetupWizard () {
   // Show the modal for the setup wizard
+
+  await config.initializeWizard()
   $('#setupWizardModal').modal('show')
 }
 

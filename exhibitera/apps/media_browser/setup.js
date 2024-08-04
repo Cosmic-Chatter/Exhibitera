@@ -48,6 +48,136 @@ function initializeDefinition () {
   })
 }
 
+async function initializeWizard () {
+  // Setup the wizard
+
+  await initializeDefinition()
+
+  // Hide all but the welcome screen
+  Array.from(document.querySelectorAll('.wizard-pane')).forEach((el) => {
+    el.style.display = 'none'
+  })
+  document.getElementById('wizardPane_Welcome').style.display = 'block'
+
+  // Reset fields
+  document.getElementById('wizardUploadTemplateButton').setAttribute('data-spreadsheet', '')
+}
+
+async function wizardForward (currentPage) {
+  // Check if the wizard is ready to advance and perform the move
+
+  if (currentPage === 'Welcome') {
+    const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
+    if (defName !== '') {
+      document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'none'
+      wizardGoTo('Languages')
+    } else {
+      document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'block'
+    }
+  } else if (currentPage === 'Languages') {
+    if (document.getElementById('wizardLanguages').children.length > 0) {
+      document.getElementById('wizardLanguagesBlankWarning').style.display = 'none'
+      wizardGoTo('MediaInfo')
+    } else {
+      document.getElementById('wizardLanguagesBlankWarning').style.display = 'block'
+    }
+  } else if (currentPage === 'MediaInfo') {
+    wizardGoTo('Spreadsheet')
+  } else if (currentPage === 'Spreadsheet') {
+    const selectedFile = document.getElementById('wizardUploadTemplateButton').getAttribute('data-spreadsheet')
+    if (selectedFile !== '') {
+      document.getElementById('wizardUploadTemplateBlankWarning').style.display = 'none'
+      wizardGoTo('MediaUpload')
+    } else {
+      document.getElementById('wizardUploadTemplateBlankWarning').style.display = 'block'
+    }
+  } else if (currentPage === 'MediaUpload') {
+    // Check that each file listed in the spreadsheet has an uploaded copy.
+    const spreadsheet = document.getElementById('wizardUploadTemplateButton').getAttribute('data-spreadsheet')
+    const missing = await _checkContentExists(spreadsheet, ['Media filename'])
+
+    if (missing.length === 0) {
+      document.getElementById('wizardUploadMediaMissingWarning').style.display = 'none'
+      document.getElementById('wizardUploadMediaMissingRow').style.display = 'none'
+      wizardGoTo('Layout')
+    } else {
+      const missingRow = document.getElementById('wizardUploadMediaMissingRow')
+      missingRow.innerHTML = ''
+      missingRow.style.display = 'flex'
+      document.getElementById('wizardUploadMediaMissingWarning').style.display = 'block'
+
+      for (const item of missing) {
+        const col = document.createElement('div')
+        col.classList = 'col-12 col-md-4'
+        col.innerHTML = item
+        missingRow.appendChild(col)
+      }
+    }
+  }
+}
+
+function wizardBack (currentPage) {
+  // Move the wizard back one page
+
+  if (currentPage === 'Languages') {
+    wizardGoTo('Welcome')
+  } else if (currentPage === 'MediaInfo') {
+    wizardGoTo('Languages')
+  } else if (currentPage === 'Spreadsheet') {
+    wizardGoTo('MediaInfo')
+  } else if (currentPage === 'MediaUpload') {
+    wizardGoTo('Spreadsheet')
+  } else if (currentPage === 'Layout') {
+    wizardGoTo('MediaUpload')
+  }
+}
+
+function wizardGoTo (page) {
+  Array.from(document.querySelectorAll('.wizard-pane')).forEach((el) => {
+    el.style.display = 'none'
+  })
+  document.getElementById('wizardPane_' + page).style.display = 'block'
+  console.log('wizardPane_' + page)
+}
+
+function generateSpreadsheetTemplate () {
+  // Based on selections made in the wizard, generate a template spreadsheet and download it to the user's system.
+
+  const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
+
+  const languages = []
+  for (const child of document.getElementById('wizardLanguages').children) {
+    const lang = child.querySelector('select').value
+    if (languages.includes(lang) === false) languages.push(lang)
+  }
+
+  const details = []
+  if (document.getElementById('wizardCheckboxTitle').checked === true) details.push('Title')
+  if (document.getElementById('wizardCheckboxCaption').checked === true) details.push('Caption')
+  if (document.getElementById('wizardCheckboxCredit').checked === true) details.push('Credit')
+
+  // Loop through the various combinations to make the header line for the CSV file
+  let csv = 'Media filename'
+  for (const lang of languages) {
+    for (const detail of details) {
+      csv += ', ' + detail + ' (' + lang + ')'
+    }
+  }
+
+  // Add a second line so it looks like a spreadsheet
+  csv += '\n'
+  for (let i = 0; i < languages.length * details.length; i++) csv += ', '
+
+  // Initiate file download
+  const element = document.createElement('a')
+  element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(csv))
+  element.setAttribute('download', defName + ' - media list.csv')
+  element.style.display = 'none'
+  document.body.appendChild(element)
+  element.click()
+  document.body.removeChild(element)
+}
+
 async function clearDefinitionInput (full = true) {
   // Clear all input related to a defnition
 
@@ -774,61 +904,76 @@ function onSpreadsheetFileChange () {
     })
 }
 
-function checkContentExists () {
+async function checkContentExists () {
   // Cross-check content from the spreadsheet with files in the content directory.
 
   const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
-  const imageKeys = []
-  document.getElementById('missingContentWarningField').innerHTML = ''
+  const mediaKeys = []
+  const missingContentField = document.getElementById('missingContentWarningField')
 
-  // Loop through the defintion and collect any unique image keys
+  missingContentField.innerHTML = ''
+
+  // Loop through the defintion and collect any unique media keys
   Object.keys(workingDefinition.languages).forEach((lang) => {
-    if (imageKeys.includes(workingDefinition.languages[lang].media_key) === false) {
-      imageKeys.push(workingDefinition.languages[lang].media_key)
+    if (mediaKeys.includes(workingDefinition.languages[lang].media_key) === false) {
+      mediaKeys.push(workingDefinition.languages[lang].media_key)
     }
   })
 
-  // Get a list of available content
-  let availableContent
-  const missingContent = []
-  exCommon.makeHelperRequest({
-    method: 'GET',
-    endpoint: '/getAvailableContent'
-  })
-    .then((result) => {
-      availableContent = result.all_exhibits
-      // Retrieve the spreadsheet and check the content for each image key against the available content
-      exCommon.makeHelperRequest({
-        method: 'GET',
-        endpoint: '/content/' + workingDefinition.spreadsheet,
-        rawResponse: true,
-        noCache: true
-      })
-        .then((raw) => {
-          const spreadsheet = exCommon.csvToJSON(raw).json
-          spreadsheet.forEach((row) => {
-            imageKeys.forEach((key) => {
-              if (row[key].trim() === '') return
-              if (availableContent.includes(row[key]) === false) missingContent.push(row[key])
-            })
-          })
-          const missingContentField = document.getElementById('missingContentWarningField')
-          if (missingContent.length === 0) {
-            missingContentField.classList.add('text-success')
-            missingContentField.classList.remove('text-danger')
-            missingContentField.innerHTML = 'No missing content!'
-          } else {
-            missingContentField.classList.add('text-danger')
-            missingContentField.classList.remove('text-success')
-            let html = '<b>Missing content found:</b><ul>'
-            missingContent.forEach((file) => {
-              html += '<li>' + file + '</li>'
-            })
-            html += '</ul>'
-            missingContentField.innerHTML = html
-          }
-        })
+  const missingContent = await _checkContentExists(workingDefinition.spreadsheet, mediaKeys)
+
+  if (missingContent.length === 0) {
+    missingContentField.classList.add('text-success')
+    missingContentField.classList.remove('text-danger')
+    missingContentField.innerHTML = 'No missing content!'
+  } else {
+    missingContentField.classList.add('text-danger')
+    missingContentField.classList.remove('text-success')
+    let html = '<b>Missing content found:</b><ul>'
+    missingContent.forEach((file) => {
+      html += '<li>' + file + '</li>'
     })
+    html += '</ul>'
+    missingContentField.innerHTML = html
+  }
+}
+
+function _checkContentExists (spreadsheet, keys) {
+  // Take the given spreadsheet filename and media keys and cross check with
+  // the files available in the content directory. Return the names of any
+  // files that do not exist.
+
+  return new Promise(function (resolve, reject) {
+    // Get a list of available content
+
+    let availableContent
+    const missingContent = []
+
+    exCommon.makeHelperRequest({
+      method: 'GET',
+      endpoint: '/getAvailableContent'
+    })
+      .then((result) => {
+        availableContent = result.all_exhibits
+        // Retrieve the spreadsheet and check the content for each image key against the available content
+        exCommon.makeHelperRequest({
+          method: 'GET',
+          endpoint: '/content/' + spreadsheet,
+          rawResponse: true,
+          noCache: true
+        })
+          .then((raw) => {
+            const spreadsheet = exCommon.csvToJSON(raw).json
+            spreadsheet.forEach((row) => {
+              keys.forEach((key) => {
+                if (row[key].trim() === '') return
+                if (availableContent.includes(row[key]) === false) missingContent.push(row[key])
+              })
+            })
+            resolve(missingContent)
+          })
+      })
+  })
 }
 
 function showOptimizeContentModal () {
@@ -1022,6 +1167,39 @@ setTimeout(setUpColorPickers, 100)
 // Add event listeners
 // -------------------------------------------------------------
 
+// Wizard
+
+// Connect the forward and back buttons
+Array.from(document.querySelectorAll('.wizard-forward')).forEach((el) => {
+  el.addEventListener('click', () => {
+    wizardForward(el.getAttribute('data-current-page'))
+  })
+})
+Array.from(document.querySelectorAll('.wizard-back')).forEach((el) => {
+  el.addEventListener('click', () => {
+    wizardBack(el.getAttribute('data-current-page'))
+  })
+})
+
+document.getElementById('wizardDownloadTemplateButton').addEventListener('click', generateSpreadsheetTemplate)
+document.getElementById('wizardUploadTemplateButton').addEventListener('click', () => {
+  exFileSelect.createFileSelectionModal({
+    filetypes: ['csv'],
+    multiple: false
+  })
+    .then((selectedFiles) => {
+      document.getElementById('wizardUploadTemplateButton').setAttribute('data-spreadsheet', selectedFiles[0])
+    })
+})
+
+document.getElementById('wizardUploadMediaButton').addEventListener('click', () => {
+  exFileSelect.createFileSelectionModal({
+    filetypes: ['image', 'video'],
+    manage: true,
+    multiple: true
+  })
+})
+
 // Main buttons
 $('#languageAddButton').click(addLanguage)
 document.getElementById('manageContentButton').addEventListener('click', (event) => {
@@ -1147,6 +1325,7 @@ exSetup.configure({
   app: 'media_browser',
   clearDefinition: clearDefinitionInput,
   initializeDefinition,
+  initializeWizard,
   loadDefinition: editDefinition,
   saveDefinition
 })

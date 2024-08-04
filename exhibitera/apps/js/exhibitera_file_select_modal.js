@@ -372,46 +372,7 @@ function _populateComponentContent (fileDict, options) {
 
     // Thumbnail
     const thumbContainer = entry.querySelector('.const-file-thumb-container')
-
-    let thumb
-    const thumbRoot = file.replace(/\.[^/.]+$/, '')
-
-    if (mimetype === 'image' && thumbnailList.includes(thumbRoot + '.jpg')) {
-      thumb = document.createElement('img')
-      thumb.src = exCommon.config.helperAddress + '/thumbnails/' + thumbRoot + '.jpg'
-    } else if (mimetype === 'video' && thumbnailList.includes(thumbRoot + '.mp4')) {
-      thumb = document.createElement('video')
-      thumb.setAttribute('loop', true)
-      thumb.setAttribute('autoplay', true)
-      thumb.setAttribute('disablePictureInPicture', true)
-      thumb.setAttribute('webkit-playsinline', true)
-      thumb.setAttribute('playsinline', true)
-      thumb.src = exCommon.config.helperAddress + '/thumbnails/' + thumbRoot + '.mp4'
-    } else if (mimetype === 'audio') {
-      thumb = document.createElement('img')
-      thumb.src = exCommon.config.helperAddress + getDefaultAudioIcon()
-    } else if (mimetype === 'font') {
-      thumb = document.createElement('div')
-      thumb.classList = 'd-flex justify-content-center align-items-center'
-      const thumbInner = document.createElement('div')
-      thumb.appendChild(thumbInner)
-      thumbInner.innerHTML = 'AaBb123'
-
-      const clearFontName = file.replaceAll('.', '').replaceAll(' ', '') + 'Preview'
-      const fontDef = new FontFace(clearFontName, 'url(' + encodeURI(exCommon.config.helperAddress + '/content/' + file) + ')')
-      document.fonts.add(fontDef)
-      thumbInner.style.setProperty('Font-Family', clearFontName)
-      thumbInner.style.fontSize = '25px'
-      thumbInner.style.overflow = 'hidden'
-    } else {
-      // We don't have a thumbnail
-      thumb = document.createElement('img')
-      thumb.src = exCommon.config.helperAddress + getDefaultDocumentImage()
-    }
-    thumbContainer.appendChild(thumb)
-    thumb.style.width = '100%'
-    thumb.style.height = '50px'
-    thumb.style.objectFit = 'contain'
+    _populateThumbnail(file, thumbContainer, thumbnailList)
     if (showThumbs === false) thumbContainer.style.display = 'none'
 
     // Filename
@@ -419,6 +380,77 @@ function _populateComponentContent (fileDict, options) {
     filename.innerHTML = shortenFilename(file)
     filename.title = file
   })
+}
+
+function _populateThumbnail (file, thumbContainer, thumbnailList, retries = 3) {
+  // Retrieve an appropriate thumbnail for the content and add it to the container.
+  // If a thumbnail doesn't exist, the function will be rerun the number of times
+  // given by retries. This gives time for a thumbnail to be generated after an upload.
+
+  let thumb
+  const mimetype = exCommon.guessMimetype(file)
+  const thumbRoot = file.replace(/\.[^/.]+$/, '')
+  thumbContainer.innerHTML = '' // Clear in case we're replacing an existing thumbnail
+
+  if (mimetype === 'image' && thumbnailList.includes(thumbRoot + '.jpg')) {
+    thumb = document.createElement('img')
+    thumb.src = exCommon.config.helperAddress + '/thumbnails/' + thumbRoot + '.jpg'
+  } else if (mimetype === 'video' && thumbnailList.includes(thumbRoot + '.mp4')) {
+    thumb = document.createElement('video')
+    thumb.setAttribute('loop', true)
+    thumb.setAttribute('autoplay', true)
+    thumb.setAttribute('disablePictureInPicture', true)
+    thumb.setAttribute('webkit-playsinline', true)
+    thumb.setAttribute('playsinline', true)
+    thumb.src = exCommon.config.helperAddress + '/thumbnails/' + thumbRoot + '.mp4'
+  } else if (mimetype === 'audio') {
+    thumb = document.createElement('img')
+    thumb.src = exCommon.config.helperAddress + getDefaultAudioIcon()
+  } else if (mimetype === 'spreadsheet') {
+    thumb = document.createElement('img')
+    thumb.src = exCommon.config.helperAddress + getDefaultSpreadsheetImage()
+  } else if (mimetype === 'font') {
+    thumb = document.createElement('div')
+    thumb.classList = 'd-flex justify-content-center align-items-center'
+    const thumbInner = document.createElement('div')
+    thumb.appendChild(thumbInner)
+    thumbInner.innerHTML = 'AaBb123'
+
+    const clearFontName = file.replaceAll('.', '').replaceAll(' ', '') + 'Preview'
+    const fontDef = new FontFace(clearFontName, 'url(' + encodeURI(exCommon.config.helperAddress + '/content/' + file) + ')')
+    document.fonts.add(fontDef)
+    thumbInner.style.setProperty('Font-Family', clearFontName)
+    thumbInner.style.fontSize = '25px'
+    thumbInner.style.overflow = 'hidden'
+  } else {
+    // We don't have a thumbnail
+    thumb = document.createElement('img')
+    thumb.src = exCommon.config.helperAddress + getDefaultDocumentImage()
+
+    let waitTime
+    if (mimetype === 'video') {
+      waitTime = 2000
+    } else waitTime = 200
+
+    if (retries > 0) {
+      setTimeout(() => {
+        exCommon.makeHelperRequest({
+          method: 'GET',
+          endpoint: '/files/' + file + '/getThumbnail'
+        })
+          .then((result) => {
+            if ('success' in result && result.success === true) {
+              thumbnailList.push(result.thumbnail)
+              _populateThumbnail(file, thumbContainer, thumbnailList, retries - 1)
+            }
+          })
+      }, waitTime)
+    }
+  }
+  thumbContainer.appendChild(thumb)
+  thumb.style.width = '100%'
+  thumb.style.height = '50px'
+  thumb.style.objectFit = 'contain'
 }
 
 function shortenFilename (filename) {
@@ -477,7 +509,11 @@ function previewFile (file, thumbnailList) {
     vid.style.display = 'none'
     aud.parentElement.style.display = 'none'
     font.style.display = 'none'
-    img.src = exCommon.config.helperAddress + getDefaultDocumentImage()
+    if (mimetype === 'spreadsheet') {
+      img.src = exCommon.config.helperAddress + getDefaultSpreadsheetImage()
+    } else {
+      img.src = exCommon.config.helperAddress + getDefaultDocumentImage()
+    }
   }
 }
 
@@ -488,6 +524,15 @@ function getDefaultDocumentImage () {
   if (mode === 'dark') return '/_static/icons/document_white.svg'
   else if (mode === 'light') return '/_static/icons/document_black.svg'
   else return '/_static/icons/document_black.svg'
+}
+
+function getDefaultSpreadsheetImage () {
+  // Return the approriate thumbnail based on whether dark mode is enabled.
+
+  const mode = document.querySelector('html').getAttribute('data-bs-theme')
+  if (mode === 'dark') return '/_static/icons/spreadsheet_white.svg'
+  else if (mode === 'light') return '/_static/icons/spreadsheet_black.svg'
+  else return '/_static/icons/spreadsheet_black.svg'
 }
 
 export function getDefaultAudioIcon () {

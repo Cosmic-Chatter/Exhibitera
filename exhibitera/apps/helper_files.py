@@ -360,18 +360,22 @@ def create_thumbnail(filename: str, mimetype: str, block: bool = False, width: i
             _, video_details = get_video_file_details(filename)
             duration_sec = round(video_details["duration"])
             file_path = get_path(['content', filename], user_file=True)
+            temp_path = get_path(['thumbnails', with_extension("temp_" + filename, 'mp4')], user_file=True)
+            thumb_path = get_path(['thumbnails', with_extension(filename, 'mp4')], user_file=True)
 
-            # Then, create the video thumbnail
+            # Then, create the video thumbnail. We create in a temporary location so that the thumbnail doesn't
+            # appear until the file is fully finished.
             proc = subprocess.Popen([ffmpeg_path, "-y", "-i", file_path,
                                      "-filter:v",
                                      f'fps=1,setpts=({min(duration_sec, 10)}/{duration_sec})*PTS,scale={width}:-2',
-                                     "-an",
-                                     get_path(['thumbnails', with_extension(filename, 'mp4')], user_file=True)])
-            if block:
-                try:
-                    proc.communicate(timeout=3600)  # 1 hour
-                except subprocess.TimeoutExpired:
-                    proc.kill()
+                                     "-an", temp_path
+                                     ])
+            try:
+                proc.communicate(timeout=3600)  # 1 hour
+            except subprocess.TimeoutExpired:
+                proc.kill()
+            os.rename(temp_path, thumb_path)
+
             # Finally, create the image thumbnail from the halfway point
             proc = subprocess.Popen([ffmpeg_path, "-y", '-ss', str(round(duration_sec / 2)), '-i', file_path,
                                      '-vframes', '1', "-vf", f"scale={width}:-1",

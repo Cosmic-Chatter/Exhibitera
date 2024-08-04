@@ -255,6 +255,17 @@ def upload_thumbnail(files: list[UploadFile] = File(),
     return {"success": True}
 
 
+@app.get('/files/{filename}/getThumbnail')
+def get_thumbnail(filename: str):
+    """Return the filename of the thumbnail for the given file, if it exists."""
+
+    thumb_filename, mimetype = helper_files.get_thumbnail(filename)
+
+    if thumb_filename is not None:
+        return {"success": True, "thumbnail": os.path.basename(thumb_filename), "mimetype": mimetype}
+    return {"success": False, "reason": "Thumbnail does not exist"}
+
+
 @app.get('/system/getPlatformDetails')
 async def get_platform_details():
     """Return details on the current operating system."""
