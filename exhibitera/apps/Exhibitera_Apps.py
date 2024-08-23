@@ -443,19 +443,19 @@ async def write_raw_text(text: str = Body(description='The data to write.'),
         response = {"success": False,
                     "reason": "Invalid mode field: must be 'a' (append, [default]) or 'w' (overwrite)"}
         return response
-    success, reason = helper_files.write_raw_text(text, name + ".txt", mode=mode)
+    success, reason = helper_files.write_raw_text(text, helper_files.with_extension(name, 'txt'), mode=mode)
     response = {"success": success, "reason": reason}
     return response
 
 
 @app.post("/data/getRawText")
-async def read_raw_text(name: str = Body(description='The name of the file to read.')):
+async def read_raw_text(name: str = Body(description='The name of the file to read.', embed=True)):
     """Load the given file and return the raw text."""
 
     if not helper_files.filename_safe(name):
         return {"success": False, "reason": "Invalid character in filename"}
 
-    result, success, reason = helper_files.get_raw_text(name)
+    result, success, reason = helper_files.get_raw_text(helper_files.with_extension(name, 'txt'))
 
     response = {"success": success, "reason": reason, "text": result}
     return response
