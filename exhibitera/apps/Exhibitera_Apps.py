@@ -64,6 +64,9 @@ app.add_middleware(
 app.mount("/dmx_control",
           StaticFiles(directory=helper_files.get_path(["dmx_control"])),
           name="dmx_control")
+app.mount("/image_compare",
+          StaticFiles(directory=helper_files.get_path(["image_compare"])),
+          name="image_compare")
 app.mount("/InfoStation",
           StaticFiles(directory=helper_files.get_path(["InfoStation"])),
           name="InfoStation")

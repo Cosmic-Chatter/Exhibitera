@@ -1,0 +1,183 @@
+/* Pulsing hand keyframes */
+@-webkit-keyframes pulsing {0%{width:40%;} 50%{width:50%;} 100%{width:40%;}}
+
+@keyframes pulsing {0%{width:40%;} 50%{width:50%;} 100%{width:40%;}}
+
+/* Slding hand keyframes */
+@-webkit-keyframes backandforth {0%{left:-57%;} 50%{left:100%;} 100%{left:-57%;}}
+
+@keyframes backandforth {0%{left:-57%;} 50%{left:100%;} 100%{left:-57%;}}
+
+* {
+    box-sizing: border-box;
+    touch-action: none;
+    }
+
+html, body {
+    background-color: black;
+    touch-action: none;
+    overflow: hidden;
+    -webkit-user-select: none; 
+    user-select: none; 
+}
+.body-text {
+    color: #f3e9f3;
+    font-family: 'Futura-PT-Book';
+    font-size: 33px;
+    -webkit-user-select: none; 
+    user-select: none; 
+}
+.button-label {
+    color: #f3e9f3;
+    font-family: "Futura-PT-Book";
+    font-size: 35px;
+    text-align: center;
+    width: 100%;
+}
+
+.comp-image {
+    height: 100%;
+}
+.icon-image {
+    border-radius: 18px;
+}
+.img-comp-container {
+    position: relative;
+    height: 100vh;
+}
+
+.img-comp-img {
+    position: absolute;
+    width: 100%;
+    height: 100vh;
+    object-fit: contain;
+    overflow: hidden;
+}
+
+.img-comp-img img {
+    display: block;
+}
+
+.img-comp-slider {
+    position: absolute;
+    z-index: 9;
+    cursor: ew-resize;
+    /*set the appearance of the slider:*/
+    width: 40px;
+    height: 40px;
+    background-color: #2196F3;
+    opacity: 0.7;
+    border-radius: 50%;
+    font-size: 35px;
+    color: black;
+    display: flex;
+    justify-content: center;
+    align-items: center; 
+}
+.lang-switch {
+    right: 20px;
+    bottom: 20px;
+}
+.modal-title {
+    color: #f3e9f3;
+    font-size: 65px;
+    font-family: 'Bely-Display';
+    text-align: center;
+}
+.name-label {
+    position: absolute;
+    color: #f3e9f3;
+    font-size: 45px;
+    top: 50%;
+    transform: translate(0%, -50%);
+    background-color: rgba(0,0,0,0.5);
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-top: 10px;
+    padding-bottom: 3px;
+    border-radius: 10px;;
+    font-family: 'Futura-PT-Heavy';
+}
+.overlay-button {
+    position: absolute;
+    color: #f3e9f3;
+    font-size: 35px;
+    background-color: rgba(66, 66, 66, 0.75);
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-top: 10px;
+    padding-bottom: 3px;
+    border-radius: 10px;;
+    font-family: 'Futura-PT-Heavy';
+}
+#pulsingHand {
+    position: relative;
+    transform: rotate(-20deg);
+    -webkit-animation: pulsing 3s ease 0s;
+    -webkit-animation-iteration-count:infinite;
+    animation: pulsing 3s ease 0s;
+    animation-iteration-count:infinite;
+}
+#pulsingHandContainer {
+    position: absolute;
+    left: 49vw;
+    top: 45vh;
+    width: 10vw;
+}
+#slidingHand {
+    position: relative;
+    width: 6vw;
+    -webkit-animation: backandforth 3s ease 0s;
+    -webkit-animation-iteration-count:infinite;
+    animation: backandforth 3s ease 0s;
+    animation-iteration-count:infinite;
+}
+#slidingHandContainer {
+    position: absolute;
+    left: 45vw;
+    top: 50vh;
+    width: 10vw;
+}
+#homeButton {
+    bottom: 20px;
+    left: 20px;
+    background-color: #754588;
+}
+#hubbleButton {
+    bottom: 20px;
+    left: 1020px;
+    width: 350px;
+}
+#hubbleLabel {
+    right: 20px;
+}
+#mainMenu {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 10;
+    width: 100vw;
+    height: 100vh;
+    background-color: black;
+}
+#subtitle {
+    color: #f3e9f3;
+    font-size: 30px;
+    font-family: 'Futura-PT-Book';
+    padding-bottom: 35px;
+}
+#title {
+    color: #f3e9f3;
+    text-align: center;
+    font-size: 75px;
+    font-family: 'Bely-Display';
+    padding-top: 100px;
+}
+#webbButton {
+    bottom: 20px;
+    right: 1020px;
+    width: 350px;
+}
+#webbLabel {
+    left: 20px;
+}
