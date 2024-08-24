@@ -81,7 +81,7 @@ function createCard (obj) {
   if ('image_height' in def.style.layout) {
     imgCol.style.height = String(def.style.layout.image_height) + '%'
   } else {
-    imgCol.style.height = '80%'
+    imgCol.style.height = '70%'
   }
   card.appendChild(imgCol)
 
@@ -128,13 +128,13 @@ function createCard (obj) {
     const titleCol = document.createElement('div')
     titleCol.classList = 'col col-12 text-center cardTitleContainer'
 
-    let imageHeight = 80
+    let imageHeight = 70
     if ('image_height' in def.style.layout) imageHeight = def.style.layout.image_height
 
     if ('title_height' in def.style.layout) {
       titleCol.style.height = String(Math.round((100 - imageHeight) * def.style.layout.title_height / 100)) + '%'
     } else {
-      titleCol.style.height = '100%'
+      titleCol.style.height = '50%'
     }
     card.appendChild(titleCol)
 
@@ -421,13 +421,13 @@ function loadDefinition (def) {
     document.getElementById('resultsRow').classList = 'h-100 row row-cols-' + String(def.style.layout.num_columns)
     numCols = def.style.layout.num_columns
   } else {
-    document.getElementById('resultsRow').classList = 'h-100 row row-cols-6'
+    document.getElementById('resultsRow').classList = 'h-100 row row-cols-3'
     numCols = 3
   }
   if ('items_per_page' in def.style.layout) {
     cardsPerPage = parseInt(def.style.layout.items_per_page)
   } else {
-    cardsPerPage = 12
+    cardsPerPage = 6
   }
   numRows = Math.ceil(cardsPerPage / numCols)
 

@@ -60,7 +60,19 @@ async function initializeWizard () {
   document.getElementById('wizardPane_Welcome').style.display = 'block'
 
   // Reset fields
+  document.getElementById('wizardDefinitionNameInput').value = ''
+  document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'none'
+  document.getElementById('wizardLanguages').innerHTML = ''
+  document.getElementById('wizardLanguagesBlankWarning').style.display = 'none'
+  document.getElementById('wizardCheckboxTitle').checked = true
+  document.getElementById('wizardCheckboxCaption').checked = true
+  document.getElementById('wizardCheckboxCredit').checked = true
   document.getElementById('wizardUploadTemplateButton').setAttribute('data-spreadsheet', '')
+  document.getElementById('wizardUploadTemplateBlankWarning').style.display = 'none'
+  document.getElementById('wizardUploadMediaMissingWarning').style.display = 'none'
+  document.getElementById('wizardUploadMediaMissingRow').innerHTML = ''
+  document.getElementById('wizardOrientationSelect').value = 'horizontal'
+  document.getElementById('wizardDensitySelect').value = '2'
 }
 
 async function wizardForward (currentPage) {
@@ -113,6 +125,8 @@ async function wizardForward (currentPage) {
         missingRow.appendChild(col)
       }
     }
+  } else if (currentPage === 'Layout') {
+    wizardCreateDefinition()
   }
 }
 
@@ -138,6 +152,94 @@ function wizardGoTo (page) {
   })
   document.getElementById('wizardPane_' + page).style.display = 'block'
   console.log('wizardPane_' + page)
+}
+
+async function wizardCreateDefinition () {
+  // Use the provided details to build a definition file.
+
+  // Definition name
+  const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
+  exSetup.updateWorkingDefinition(['name'], defName)
+
+  // Langauges
+  let first = true
+  for (const langEl of document.getElementById('wizardLanguages').children) {
+    const lang = langEl.querySelector('select').value
+    const langDef = {
+      caption_key: null,
+      code: lang,
+      credit_key: null,
+      default: first,
+      display_name: exSetup.getLanguageDisplayName(lang),
+      filter_order: [],
+      filters: {},
+      media_key: 'Media filename',
+      title_key: null
+    }
+    if (document.getElementById('wizardCheckboxTitle').checked === true) {
+      langDef.title_key = 'Title (' + lang + ')'
+    }
+    if (document.getElementById('wizardCheckboxCaption').checked === true) {
+      langDef.caption_key = 'Caption (' + lang + ')'
+    }
+    if (document.getElementById('wizardCheckboxCredit').checked === true) {
+      langDef.credit_key = 'Credit (' + lang + ')'
+    }
+    first = false
+    exSetup.updateWorkingDefinition(['languages', lang], langDef)
+  }
+
+  // Basics
+  exSetup.updateWorkingDefinition(['name'], document.getElementById('wizardDefinitionNameInput').value.trim())
+  exSetup.updateWorkingDefinition(['spreadsheet'], document.getElementById('wizardUploadTemplateButton').getAttribute('data-spreadsheet'))
+
+  // Layout
+  const orientation = document.getElementById('wizardOrientationSelect').value
+  const density = parseInt(document.getElementById('wizardDensitySelect').value)
+  const layoutDef = {
+    corner_radius: 10,
+    items_per_page: density,
+    thumbnail_shape: 'square'
+  }
+
+  if (orientation === 'horizontal' && density === 2) {
+    layoutDef.imageHeight = 70
+    layoutDef.num_columns = 2
+    layoutDef.title_height = 40
+  } else if (orientation === 'vertical' && density === 2) {
+    layoutDef.imageHeight = 80
+    layoutDef.num_columns = 1
+    layoutDef.title_height = 70
+  } else if (orientation === 'horizontal' && density === 6) {
+    layoutDef.imageHeight = 75
+    layoutDef.num_columns = 3
+    layoutDef.title_height = 100
+  } else if (orientation === 'vertical' && density === 6) {
+    layoutDef.imageHeight = 65
+    layoutDef.num_columns = 2
+    layoutDef.title_height = 70
+  } else if (orientation === 'horizontal' && density === 8) {
+    layoutDef.imageHeight = 65
+    layoutDef.num_columns = 4
+    layoutDef.title_height = 65
+  } else if (orientation === 'vertical' && density === 8) {
+    layoutDef.imageHeight = 70
+    layoutDef.num_columns = 2
+    layoutDef.title_height = 85
+  }
+
+  exSetup.updateWorkingDefinition(['style', 'layout'], layoutDef)
+  $('#setupWizardModal').modal('hide')
+
+  if (orientation === 'horizontal') {
+    exSetup.configurePreview('16x9', true)
+  } else exSetup.configurePreview('9x16', true)
+
+  await saveDefinition(defName)
+  await exCommon.getAvailableDefinitions(exCommon.config.app)
+  editDefinition($('#definitionSaveButton').data('workingDefinition').uuid)
+
+  console.log($('#definitionSaveButton').data('workingDefinition'))
 }
 
 function generateSpreadsheetTemplate () {
@@ -250,6 +352,9 @@ function editDefinition (uuid = '') {
   $('#definitionSaveButton').data('initialDefinition', structuredClone(def))
   $('#definitionSaveButton').data('workingDefinition', structuredClone(def))
 
+  // Configure preview behavior
+  exSetup.configurePreviewFromDefinition(def)
+
   $('#definitionNameInput').val(def.name)
 
   // Spreadsheet
@@ -283,12 +388,12 @@ function editDefinition (uuid = '') {
   if ('image_height' in def.style.layout) {
     document.getElementById('imageHeightSlider').value = def.style.layout.image_height
   } else {
-    document.getElementById('imageHeightSlider').value = 80
+    document.getElementById('imageHeightSlider').value = 70
   }
   if ('title_height' in def.style.layout) {
     document.getElementById('titleHeightSlider').value = def.style.layout.title_height
   } else {
-    document.getElementById('titleHeightSlider').value = 100
+    document.getElementById('titleHeightSlider').value = 50
   }
   if ('corner_radius' in def.style.layout) {
     document.getElementById('cornerRadiusSlider').value = def.style.layout.corner_radius
@@ -341,11 +446,12 @@ function editDefinition (uuid = '') {
   let first = null
   Object.keys(def.languages).forEach((lang) => {
     const langDef = def.languages[lang]
+    const displayNameEn = exSetup.getLanguageDisplayName(langDef.code, true)
     if (first == null) {
-      createLanguageTab(lang, langDef.display_name)
+      createLanguageTab(lang, displayNameEn)
       first = lang
     } else {
-      createLanguageTab(lang, langDef.display_name)
+      createLanguageTab(lang, displayNameEn)
     }
     $('#languagePane_' + lang).removeClass('active').removeClass('show')
 
@@ -361,25 +467,29 @@ function editDefinition (uuid = '') {
   document.getElementById('previewFrame').src = '../media_browser.html?standalone=true&definition=' + def.uuid
 }
 
-function addLanguage () {
-  // Collect details from the language fields and add a new supported language to the definition.
+function populateLanguagePicker () {
+  // Build the language picker based on available languages
 
-  const displayName = $('#languageNameInput').val().trim()
-  const code = $('#languageCodeInput').val().trim()
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
-
-  // Check if fields are full
-  if (displayName === '' || code === '') {
-    $('#languageAddEmptyFieldsWarning').show()
-    return
-  } else {
-    $('#languageAddEmptyFieldsWarning').hide()
+  const select = document.getElementById('languageSelect')
+  for (const lang of exSetup.config.languages) {
+    const option = new Option(lang.name_en, lang.code)
+    select.appendChild(option)
   }
+  select.value = 'en-gb'
+}
+
+function addLanguage () {
+  // Add a new supported language to the definition.
+
+  const code = document.getElementById('languageSelect').value
+  const displayNameEn = exSetup.getLanguageDisplayName(code, true)
+  const displayName = exSetup.getLanguageDisplayName(code)
+  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
 
   // Check if name or code already exist
   let error = false
   Object.keys(workingDefinition.languages).forEach((key) => {
-    if (key === code || workingDefinition.languages[key].display_name === displayName) {
+    if (key === code) {
       $('#languageAddExistsWarning').show()
       error = true
     } else {
@@ -397,7 +507,7 @@ function addLanguage () {
     code,
     default: defaultLang
   }
-  createLanguageTab(code, displayName)
+  createLanguageTab(code, displayNameEn)
 
   $('#definitionSaveButton').data('workingDefinition', structuredClone(workingDefinition))
   $('#languageNameInput').val('')
@@ -831,16 +941,16 @@ function onFlagUploadChange (lang) {
   xhr.send(formData)
 }
 
-function saveDefinition () {
+async function saveDefinition (name = '') {
   // Collect inputted information to save the definition
 
   const definition = $('#definitionSaveButton').data('workingDefinition')
   const initialDefinition = $('#definitionSaveButton').data('initialDefinition')
   definition.app = 'media_browser'
-  definition.name = $('#definitionNameInput').val()
+  if (name === '') definition.name = $('#definitionNameInput').val()
   definition.uuid = initialDefinition.uuid
 
-  exCommon.writeDefinition(definition)
+  return exCommon.writeDefinition(definition)
     .then((result) => {
       if ('success' in result && result.success === true) {
         console.log('Saved!')
@@ -1317,6 +1427,9 @@ if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').match
 } else {
   document.querySelector('html').setAttribute('data-bs-theme', 'light')
 }
+
+// Populate available languages
+populateLanguagePicker()
 
 // Set helper address for use with exCommon.makeHelperRequest
 exCommon.config.helperAddress = window.location.origin

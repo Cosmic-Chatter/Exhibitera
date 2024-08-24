@@ -77,6 +77,40 @@
         </div>
       </div>
 
+      <!-- Welcome modal -->
+      <div id="appWelcomeModal" class="modal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Welcome to Media Browser</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body"  style="max-height: 70vh; overflow-y: auto;">
+              <div class="row gy-2 row-cols-1 row-cols-md-2">
+                <div class="col">
+                  <div class="card h-100">
+                    <div class="card-body d-flex flex-column">
+                      <h5 class="card-title text-center">Guided Setup</h5>
+                      <p class="card-text">Get started with step-by-step instructions. You can always fine-tune things afterwards.</p>
+                      <button id="appWelcomeModalWizardButton" class="btn btn-primary w-100 mt-auto">Start Guided Setup</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="col">
+                  <div class="card h-100">
+                    <div class="card-body d-flex flex-column">
+                      <h5 class="card-title text-center">Custom Setup</h5>
+                      <p class="card-text">Fully control all attributes from the beginning. <span class='badge text-bg-secondary'>Advanced</span></p>
+                      <button class="btn btn-primary w-100 mt-auto" data-bs-dismiss="modal">Start Custom Setup</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Setup wizard modal -->
       <div id="setupWizardModal" class="modal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
         <div class="modal-dialog modal-dialog-centered modal-xl">
@@ -252,15 +286,15 @@
                     <div class="col">
                       <label class="form-label" for="wizardDensitySelect">Density</label>
                       <select class="form-select" id="wizardDensitySelect">
-                        <option value="low">Low (2 items per page)</option>
-                        <option value="medium">Medium (6 items per page)</option>
-                        <option value="hight">High (8 items per page)</option>
+                        <option value="2">Low (2 items per page)</option>
+                        <option value="6">Medium (6 items per page)</option>
+                        <option value="8">High (8 items per page)</option>
                       </select>
                     </div>
                   </div>
                   <div class="text-center mt-4">
                     <button class="btn btn-secondary me-4 wizard-back" data-current-page="Layout">Back</button>
-                    <button class="btn btn-primary ms-4 wizard-forward" data-current-page="Layout">Next</button>
+                    <button class="btn btn-primary ms-4 wizard-forward" data-current-page="Layout">Finish</button>
                   </div>
                 </div>
               </div>
@@ -313,7 +347,7 @@
                   This tool optimizes the resolution of your content to maximize performance. It accounts for the resolution of your screen, as well as the number of items per page. If you change these elements, you should re-optimize your content. The original files remain unaltered.
                 </div>
                 <div class="col-6">
-                  <label for="resolutionSelect" class="form-label">Display resolution</label>
+                  <label for="resolutionSelect" class="form-label mt-2">Display resolution</label>
                   <select id="resolutionSelect" class="form-select">
                     <option value="3840_2160">4K landscape (3840x2160)</option>
                     <option value="2160_3840">4K portrait (2160x3840)</option>
@@ -540,21 +574,15 @@
                         <button id="optimizeContentButton" class="btn btn-info w-100">Optimize content</button>
                       </div>
                       <H5 class="mt-2">Add a langauge</H5>
-                      <i>For each language you suppot, you need to match columns in your spreadsheet to properties of the timeline.</i>
-                      <div class="col-12 col-md-6 col-lg-4">
-                        <label for="languageNameInput" class="form-label">Display name</label>
-                        <input type="text" placeholder="English" class="form-control" id="languageNameInput">
+                      <i>For each language you suppot, you need to match columns in your spreadsheet to properties of the browser.</i>
+                      <div class="col-12 col-md-6">
+                        <select id="languageSelect" class="form-select"></select>
                       </div>
                       <div class="col-12 col-md-6 col-lg-4">
-                        <label for="languageCodeInput" class="form-label">Language code</label>
-                        <input type="text" placeholder="en" class="form-control" id="languageCodeInput">
-                      </div>
-                      <div class="col-12 col-md-6 col-lg-4 mt-3">
-                        <button id="languageAddButton" class="btn btn-primary w-100 mt-3">Add</button>
+                        <button id="languageAddButton" class="btn btn-primary w-100">Add</button>
                       </div>
                       <div class="col-12 mt-1">
-                        <span id="languageAddEmptyFieldsWarning" class="text-danger">You must specify both a display name and a language code.</span>
-                        <span id="languageAddExistsWarning" class="text-danger">A language with that display name or language code already exists.</span>
+                        <span id="languageAddExistsWarning" class="text-danger">You have already included this language.</span>
                       </div>
                     </div>
                     <H5>Current langauges</H5>
@@ -604,14 +632,14 @@
                             Image height
                             <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="How much of each item's vertical space should be used by the image." style="font-size: 0.55em;">?</span>
                           </label>
-                          <input id="imageHeightSlider" type="range" calss="form-range layout-property-int" data-property="image_height" min="10" max="100" step="5" value="80">
+                          <input id="imageHeightSlider" type="range" calss="form-range layout-property-int" data-property="image_height" min="10" max="100" step="5" value="70">
                         </div>
                         <div class="col-12 col-md-6 col-lg-4 col-xxl-3">
                           <label for="titleHeightSlider" class="form-label">
                             Title height
                             <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="How much of each item's vertical space that is not used by the image should be used by the title. Titles that do not fit this space will have their text shrunk until they do." style="font-size: 0.55em;">?</span>
                           </label>
-                          <input id="titleHeightSlider" type="range" calss="form-range layout-property-int" data-property="title_height" min="10" max="100" step="5" value="100">
+                          <input id="titleHeightSlider" type="range" calss="form-range layout-property-int" data-property="title_height" min="10" max="100" step="5" value="50">
                         </div>
                         <div class="col-12 col-md-6 col-lg-4 col-xxl-3">
                           <label for="cornerRadiusSlider" class="form-label">

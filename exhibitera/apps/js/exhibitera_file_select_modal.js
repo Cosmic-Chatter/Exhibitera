@@ -365,10 +365,11 @@ function _populateComponentContent (fileDict, options) {
 
     // Checkbox
     const check = entry.querySelector('.const-file-select-box')
-    check.addEventListener('click', (event) => {
-      selectFile(event.target, options.multiple)
-    })
     check.setAttribute('data-filename', file)
+
+    entry.addEventListener('click', (event) => {
+      selectFile(check, options.multiple)
+    })
 
     // Thumbnail
     const thumbContainer = entry.querySelector('.const-file-thumb-container')
@@ -545,7 +546,7 @@ export function getDefaultAudioIcon () {
 }
 
 function selectFile (target, allowMultiple) {
-  // Called when the user clicks the checkbox on a file. If allowMultiple=false,
+  // Called when the user clicks on a file. If allowMultiple=false,
   // selecting one file unselects the others.
 
   if (target.classList.contains('const-file-selected')) {

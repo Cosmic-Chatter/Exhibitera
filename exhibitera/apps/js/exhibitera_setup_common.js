@@ -142,6 +142,17 @@ function configureGUIForUser (user) {
     })
 }
 
+export function getLanguageDisplayName (langCode, en = false) {
+  // Return the display name for the given language code.
+  // By default, the name will be returned in that language.
+
+  const lang = config.languages.find(({ code }) => code === langCode)
+
+  if (lang == null) return langCode
+  if (en === true) return lang.name_en
+  return lang.name
+}
+
 export function showAppHelpModal (app) {
   // Ask the helper to send the relavent README.md file and display it in the modal
 
@@ -217,6 +228,7 @@ export function configureFromQueryString () {
     document.getElementById('availableDefinitionSelect').value = searchParams.get('definition')
   } else {
     if (config.clearDefinition != null) config.clearDefinition()
+    $('#appWelcomeModal').modal('show')
   }
 }
 
@@ -345,6 +357,10 @@ function createEventListeners () {
   // Wizard
   document.getElementById('showWizardButton').addEventListener('click', showSetupWizard)
   document.getElementById('wizardAddLanguageButton').addEventListener('click', addWizardLanguage)
+  document.getElementById('appWelcomeModalWizardButton').addEventListener('click', () => {
+    $('#appWelcomeModal').modal('hide')
+    showSetupWizard()
+  })
 
   // New definition buttons
   document.getElementById('newDefinitionButton').addEventListener('click', () => {
@@ -369,22 +385,36 @@ function createEventListeners () {
 
   // configure preview options
   document.getElementById('previewAspect16x9').addEventListener('click', () => {
-    configurePreview('16x9')
+    const autoRefresh = $('#refreshOnChangeCheckbox').prop('checked')
+    configurePreview('16x9', autoRefresh)
   })
   document.getElementById('previewAspect9x16').addEventListener('click', () => {
-    configurePreview('9x16')
+    const autoRefresh = $('#refreshOnChangeCheckbox').prop('checked')
+    configurePreview('9x16', autoRefresh)
   })
   document.getElementById('previewAspect16x10').addEventListener('click', () => {
-    configurePreview('16x10')
+    const autoRefresh = $('#refreshOnChangeCheckbox').prop('checked')
+    configurePreview('16x10', autoRefresh)
   })
   document.getElementById('previewAspect10x16').addEventListener('click', () => {
-    configurePreview('10x16')
+    const autoRefresh = $('#refreshOnChangeCheckbox').prop('checked')
+    configurePreview('10x16', autoRefresh)
   })
   document.getElementById('previewAspect4x3').addEventListener('click', () => {
-    configurePreview('4x3')
+    const autoRefresh = $('#refreshOnChangeCheckbox').prop('checked')
+    configurePreview('4x3', autoRefresh)
   })
   document.getElementById('previewAspect3x4').addEventListener('click', () => {
-    configurePreview('3x4')
+    const autoRefresh = $('#refreshOnChangeCheckbox').prop('checked')
+    configurePreview('3x4', autoRefresh)
+  })
+
+  document.getElementById('refreshOnChangeCheckbox').addEventListener('change', () => {
+    const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+    const autoRefresh = $('#refreshOnChangeCheckbox').prop('checked')
+    let previewRatio = '16x9'
+    if ('setup' in workingDefinition) previewRatio = workingDefinition.setup.preview_ratio
+    configurePreview(previewRatio, autoRefresh)
   })
 
   // Help button
@@ -423,10 +453,15 @@ function createDefinitionDeletePopup () {
   })
 }
 
-function configurePreview (ratio) {
+export function configurePreview (ratio, autoRefresh) {
   // Toggle the preview between various aspect ratios and orientations.
 
+  updateWorkingDefinition(['setup', 'preview_ratio'], ratio)
+  updateWorkingDefinition(['setup', 'auto_refresh'], autoRefresh)
+
   const previewFrame = document.getElementById('previewFrame')
+  document.getElementById('refreshOnChangeCheckbox').checked = autoRefresh
+
   // First, remove all ratio classes
   previewFrame.classList.remove('preview-16x9')
   previewFrame.classList.remove('preview-9x16')
@@ -439,6 +474,21 @@ function configurePreview (ratio) {
 
   resizePreview()
   previewDefinition()
+}
+
+export function configurePreviewFromDefinition (def) {
+  // Use the setup section of def to configur the preview behavior
+
+  const behavior = {
+    preview_ratio: '16x9',
+    auto_refresh: true
+  }
+
+  if ('setup' in def) {
+    if ('preview_ratio' in def.setup) behavior.preview_ratio = def.setup.preview_ratio
+    if ('auto_refresh' in def.setup) behavior.auto_refresh = def.setup.auto_refresh
+  }
+  configurePreview(behavior.preview_ratio, behavior.auto_refresh)
 }
 
 function resizePreview () {
@@ -483,6 +533,7 @@ export function previewDefinition (automatic = false) {
   }
 
   const def = $('#definitionSaveButton').data('workingDefinition')
+
   // Set the uuid to a temp one
   def.uuid = '__preview_' + config.app
   exCommon.writeDefinition(def)
