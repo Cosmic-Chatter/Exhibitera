@@ -11,6 +11,7 @@ import subprocess
 import sys
 import threading
 from typing import Any, Union
+import zipfile
 
 # Non-standard imports
 import mimetypes
@@ -158,6 +159,20 @@ def get_raw_text(name: str) -> tuple[str, bool, str]:
         reason = f"You do not have read permission for the file {file_path}"
 
     return result, success, reason
+
+
+def create_zip(zip_filename: str, files_to_zip: [str]) -> bool:
+    """Create a zip archive of the given files"""
+
+    zip_filename = with_extension(zip_filename, 'zip')
+
+    with zipfile.ZipFile(get_path(["temp", zip_filename], user_file=True), 'w') as myzip:
+        for file in files_to_zip:
+            file_path = get_path(["content", file], user_file=True)
+            if os.path.exists(file_path):
+                myzip.write(file_path, arcname=file)
+
+    return True
 
 
 def create_csv(file_path: str | os.PathLike, filename: str = "") -> str:
@@ -609,7 +624,7 @@ def get_directory_contents(directory: str, absolute: bool = False) -> list:
 def check_directory_structure():
     """Make sure the appropriate content directories are present and create them if they are not."""
 
-    dir_list = ["configuration", "content", "data", "definitions", "static", "thumbnails"]
+    dir_list = ["configuration", "content", "data", "definitions", "static", "temp", "thumbnails"]
 
     for directory in dir_list:
         content_path = get_path([directory], user_file=True)

@@ -1,3 +1,13 @@
+# **Exhibitera 5.2**
+
+## Hub
+
+## Exhibitera Apps
+
+### General
+- Files uploaded as `content` can be downloaded using the file picker [Morgan Rehnberg]
+
+
 # **Exhibitera 5.1**
 
 ## Hub

@@ -13,9 +13,11 @@ import uuid
 
 # Third-party modules
 from fastapi import FastAPI, Body, Depends, File, Form, HTTPException, UploadFile
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
+from starlette.background import BackgroundTasks
 import uvicorn
 
 # Exhibitera modules
@@ -110,6 +112,10 @@ app.mount("/static",
           StaticFiles(directory=helper_files.get_path(
               ["static"], user_file=True)),
           name="static")
+app.mount("/temp",
+          StaticFiles(directory=helper_files.get_path(
+              ["temp"], user_file=True)),
+          name="temp")
 app.mount("/thumbnails",
           StaticFiles(directory=helper_files.get_path(
               ["thumbnails"], user_file=True)),
@@ -253,6 +259,18 @@ def upload_thumbnail(files: list[UploadFile] = File(),
             # Finally, delete the source file
             os.remove(temp_path)
     return {"success": True}
+
+
+@app.post('/files/createZip')
+def create_zip(background_tasks: BackgroundTasks,
+               files: list[str] = Body(description="A list of the files to be zipped. Files must be in the content directory."),
+               zip_filename: str = Body(description="The filename of the zip file to be created.")):
+    """Create a ZIP file containing the given files."""
+
+    helper_files.create_zip(zip_filename, files)
+    zip_path = helper_files.get_path(["temp", zip_filename], user_file=True)
+    background_tasks.add_task(os.remove, zip_path)
+    return FileResponse(zip_path, filename=zip_filename)
 
 
 @app.get('/system/getPlatformDetails')
