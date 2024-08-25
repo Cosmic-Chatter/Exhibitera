@@ -228,7 +228,9 @@ export function configureFromQueryString () {
     document.getElementById('availableDefinitionSelect').value = searchParams.get('definition')
   } else {
     if (config.clearDefinition != null) config.clearDefinition()
-    $('#appWelcomeModal').modal('show')
+    if (config.loggedIn) {
+      $('#appWelcomeModal').modal('show')
+    }
   }
 }
 
