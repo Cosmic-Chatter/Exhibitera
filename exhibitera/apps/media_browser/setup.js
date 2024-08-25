@@ -71,6 +71,7 @@ async function initializeWizard () {
   document.getElementById('wizardUploadTemplateBlankWarning').style.display = 'none'
   document.getElementById('wizardUploadMediaMissingWarning').style.display = 'none'
   document.getElementById('wizardUploadMediaMissingRow').innerHTML = ''
+  document.getElementById('wizardUploadMediaBadKeyWarning').style.display = 'none'
   document.getElementById('wizardOrientationSelect').value = 'horizontal'
   document.getElementById('wizardDensitySelect').value = '2'
 }
@@ -106,7 +107,16 @@ async function wizardForward (currentPage) {
   } else if (currentPage === 'MediaUpload') {
     // Check that each file listed in the spreadsheet has an uploaded copy.
     const spreadsheet = document.getElementById('wizardUploadTemplateButton').getAttribute('data-spreadsheet')
-    const missing = await _checkContentExists(spreadsheet, ['Media filename'])
+    let missing = []
+    try {
+      missing = await _checkContentExists(spreadsheet, ['Media filename'])
+      document.getElementById('wizardUploadMediaBadKeyWarning').style.display = 'none'
+    } catch (e) {
+      if (String(e).slice(0, 14) === 'Error: bad_key') {
+        document.getElementById('wizardUploadMediaBadKeyWarning').style.display = 'block'
+        return
+      }
+    }
 
     if (missing.length === 0) {
       document.getElementById('wizardUploadMediaMissingWarning').style.display = 'none'
@@ -1076,6 +1086,10 @@ function _checkContentExists (spreadsheet, keys) {
             const spreadsheet = exCommon.csvToJSON(raw).json
             spreadsheet.forEach((row) => {
               keys.forEach((key) => {
+                if ((key in row) === false) {
+                  reject(new Error('bad_key: ' + key))
+                  return
+                }
                 if (row[key].trim() === '') return
                 if (availableContent.includes(row[key]) === false) missingContent.push(row[key])
               })
