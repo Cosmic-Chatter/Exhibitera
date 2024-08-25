@@ -162,7 +162,7 @@
                     </p>
                   </i>
                   <button id="wizardAddLanguageButton" class="btn btn-primary">Add language</button>
-                  <div id="wizardLanguages" class="row mt-2 gy-2 row-cols-1 row-cols-md-2"></div>
+                  <div id="wizardLanguages" class="row mt-2 gy-2 row-cols-1 row-cols-lg-2"></div>
                   <div id="wizardLanguagesBlankWarning" class="mt-2 text-warning" style="display: none;">
                     You must add at least one language.
                   </div>
@@ -227,9 +227,13 @@
                       <b>Each row of the spreadsheet represents one file in your media browser.</b> <i class="text-warning">Make sure to save the file in the CSV (comma-separated values) format.</i>
                     </p>
                   </i>
-                  <div class="w-100 text-center">
-                    <button id="wizardDownloadTemplateButton" class="btn btn-primary">Download blank template</button>
-                    <button id="wizardUploadTemplateButton" class="btn btn-info">Upload completed template</button>
+                  <div class="row">
+                    <div class="col-6 col-xl-4 offset-xl-2">
+                      <button id="wizardDownloadTemplateButton" class="btn btn-primary w-100">Download blank template</button>
+                    </div>
+                    <div class="col-6 col-xl-4">
+                      <button id="wizardUploadTemplateButton" class="btn btn-info">Upload completed template</button>
+                    </div>
                   </div>
                   <div id="wizardUploadTemplateBlankWarning" class="text-warning mt-2" style="display: none;">
                     You must select an uploaded spreadsheet listing your media.

@@ -265,8 +265,8 @@ export function addWizardLanguage () {
   row.classList = 'row gy-2'
   col.appendChild(row)
 
-  const selectCol = document.createElement('col')
-  selectCol.classList = 'col col-12'
+  const selectCol = document.createElement('div')
+  selectCol.classList = 'col-9 pe-1'
   row.appendChild(selectCol)
 
   const select = document.createElement('select')
@@ -278,6 +278,18 @@ export function addWizardLanguage () {
     select.appendChild(option)
   }
   select.value = 'en-gb'
+
+  const deleteCol = document.createElement('div')
+  deleteCol.classList = 'col-3 ps-1'
+  row.appendChild(deleteCol)
+
+  const deleteButton = document.createElement('button')
+  deleteButton.classList = 'btn btn-danger w-100'
+  deleteButton.innerHTML = '×'
+  deleteCol.appendChild(deleteButton)
+  deleteButton.addEventListener('click', () => {
+    col.remove()
+  })
 
   document.getElementById('wizardLanguages').append(col)
 }
