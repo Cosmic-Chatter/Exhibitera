@@ -11,9 +11,7 @@ resetTimer()
 /* Get the width and height of the img element */
 const w = overlay.offsetWidth
 const h = overlay.offsetHeight
-
-/* Set the width of the overlay element to 50%: */
-overlay.style.width = (w / 2) + 'px'
+const overlayImg = document.getElementById('overlayImg')
 
 /* Position the slider in the middle: */
 const slider = document.getElementById('slider')
@@ -43,32 +41,10 @@ overlay.addEventListener('touchend', slideFinish)
 base.addEventListener('mouseup', slideFinish)
 base.addEventListener('touchend', slideFinish)
 
-// Respond to choosing different objects
-document.getElementById('eagle_button').addEventListener('click', () => {
-  loadImages('eagle_nebula')
-})
-document.getElementById('deep_field_button').addEventListener('click', () => {
-  loadImages('deep_field')
-})
-document.getElementById('southern_ring_button').addEventListener('click', () => {
-  loadImages('southern_ring')
-})
-document.getElementById('stephans_quintet_button').addEventListener('click', () => {
-  loadImages('stephans_quintet')
-})
-document.getElementById('tarantula_button').addEventListener('click', () => {
-  loadImages('tarantula_nebula')
-})
-document.getElementById('macs_button').addEventListener('click', () => {
-  loadImages('macs')
-})
-
 // Buttons
 document.getElementById('homeButton').addEventListener('click', () => {
   document.getElementById('mainMenu').style.display = 'block'
 })
-document.getElementById('langSwitch1').addEventListener('click', toggleLang)
-document.getElementById('langSwitch2').addEventListener('click', toggleLang)
 
 function slideReady (e) {
   /* Prevent any other actions that may occur when moving over the image: */
@@ -111,54 +87,43 @@ function getCursorPos (e) {
 }
 
 function slide (x) {
-  /* Resize the image: */
-  overlay.style.width = x + 'px'
-  /* Position the slider: */
-  slider.style.left = overlay.offsetWidth - (slider.offsetWidth / 2) + 'px'
+  // Adjust the view based on the current input position
+
+  const xPercent = 100 * x / w
+  const xPercentStr = String(xPercent) + '%'
+
+  // Move overlay image mask
+  overlayImg.style.clipPath = 'polygon(0% 0%, ' + xPercentStr + ' 0%, ' + xPercentStr + ' 100%, 0% 100%)'
+
+  // Move slider icon
+  slider.style.left = (x) - (slider.offsetWidth / 2) + 'px'
 
   // Hide the labels as needed
-  if (x < 205) {
+  if (xPercent < 12) {
     document.getElementById('image2Label').style.display = 'none'
   } else {
     document.getElementById('image2Label').style.display = 'block'
   }
-  if (x > 1690) {
+  if (xPercent > 88) {
     document.getElementById('image1Label').style.display = 'none'
   } else {
     document.getElementById('image1Label').style.display = 'block'
   }
 }
 
-function loadImages (object) {
+function loadImages (item) {
   // Load the images corresponding to the given object
 
-  document.getElementById('pulsingHandContainer').style.display = 'none'
+  // document.getElementById('pulsingHandContainer').style.display = 'none'
 
   const overlayImg = document.getElementById('overlayImg')
   const baseImg = document.getElementById('baseImg')
 
-  if (object === 'eagle_nebula') {
-    overlayImg.src = 'images/Webb_Pillars_of_Creation.jpg'
-    baseImg.src = 'images/Hubble_Pillars_of_Creation.jpg'
-  } else if (object === 'deep_field') {
-    overlayImg.src = 'images/Webb_Deep_Field.jpeg'
-    baseImg.src = 'images/Hubble_Deep_Field.jpeg'
-  } else if (object === 'macs') {
-    overlayImg.src = 'images/Webb_MACS_0416.jpeg'
-    baseImg.src = 'images/Hubble_MACS_0416.jpeg'
-  } else if (object === 'southern_ring') {
-    overlayImg.src = 'images/Webb_Southern_Ring.jpg'
-    baseImg.src = 'images/Hubble_Southern_Ring.jpg'
-  } else if (object === 'stephans_quintet') {
-    overlayImg.src = 'images/Webb_stephans_quintet.jpg'
-    baseImg.src = 'images/Hubble_stephans_quintet.jpg'
-  } else if (object === 'tarantula_nebula') {
-    overlayImg.src = 'images/Webb_Tarantula_Nebula.jpg'
-    baseImg.src = 'images/Hubble_Tarantula_Nebula.jpg'
-  }
+  overlayImg.src = exCommon.config.helperAddress + '/content/' + item.image2
+  baseImg.src = exCommon.config.helperAddress + '/content/' + item.image1
 
   // Reset the slider to the middle
-  slide(960)
+  slide(w / 2)
 
   // Hide the menu
   document.getElementById('mainMenu').style.display = 'none'
@@ -167,17 +132,42 @@ function loadImages (object) {
 function loadDefinition (definition) {
   // A function to configure content based on the provided configuration.
 
+  populateItemList(definition)
 }
 
-function toggleLang () {
-  // Switch to the other language
+function populateItemList (def) {
+  // Using the details in the defintion, build an icon for each image pair.
 
-  if (currentLang === 'en') {
-    currentLang = 'es'
-    localize('es')
-  } else {
-    currentLang = 'en'
-    localize('en')
+  const itemRow = document.getElementById('itemList')
+  itemRow.innerHTML = ''
+
+  for (const uuid of def.content_order) {
+    const item = def.content[uuid]
+
+    const col = document.createElement('div')
+    col.classList = 'col mx-0 px-0'
+    col.style.position = 'relative'
+    col.addEventListener('click', () => {
+      loadImages(item)
+    })
+    itemRow.appendChild(col)
+
+    const img1 = document.createElement('img')
+    img1.classList = 'w-100 icon-image icon-image-top'
+    img1.src = exCommon.config.helperAddress + '/thumbnails/' + item.image1
+    col.appendChild(img1)
+
+    const img2 = document.createElement('img')
+    img2.classList = 'w-100 icon-image icon-image-bottom'
+    img2.src = exCommon.config.helperAddress + '/thumbnails/' + item.image2
+    img2.style.position = 'absolute'
+    img2.style.top = 0
+    img2.style.left = 0
+    col.appendChild(img2)
+
+    const label = document.createElement('div')
+    label.classList = 'button-label'
+    label.innerHTML = item.name
   }
 }
 

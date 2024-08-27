@@ -62,12 +62,6 @@ async function clearDefinitionInput (full = true) {
   })
 
   document.getElementById('itemList').innerHTML = ''
-  const watermarkSelect = document.getElementById('watermarkSelect')
-  watermarkSelect.innerHTML = 'Select file'
-  watermarkSelect.setAttribute('data-filename', '')
-  document.getElementById('watermarkXPos').value = '80'
-  document.getElementById('watermarkYPos').value = '80'
-  document.getElementById('watermarkSize').value = '10'
 }
 
 function editDefinition (uuid = '') {
@@ -178,25 +172,16 @@ function createItemHTML (item, num) {
   card.appendChild(cardBody)
 
   const numberCol = document.createElement('div')
-  numberCol.classList = 'col-1'
+  numberCol.classList = 'col-12'
   cardBody.appendChild(numberCol)
 
   const number = document.createElement('div')
-  number.classList = 'w-100 fw-bold h4 mb-3'
+  number.classList = 'w-100 fw-bold h4 mb-3 text-center'
   number.innerHTML = num
   numberCol.appendChild(number)
 
-  const nameCol = document.createElement('div')
-  nameCol.classList = 'col-11'
-  cardBody.appendChild(nameCol)
-
-  const name = document.createElement('div')
-  name.classList = 'w-100 mb-3 file-field'
-  name.innerHTML = item.filename
-  nameCol.appendChild(name)
-
   const image1Pane = document.createElement('div')
-  image1Pane.classList = 'col-12 col-md-6'
+  image1Pane.classList = 'col-12 col-md-6 d-flex flex-column justify-content-end'
   cardBody.appendChild(image1Pane)
 
   const image1Row = document.createElement('div')
@@ -204,7 +189,7 @@ function createItemHTML (item, num) {
   image1Pane.appendChild(image1Row)
 
   const previewImage1Col = document.createElement('div')
-  previewImage1Col.classList = 'col-12 col-md-6'
+  previewImage1Col.classList = 'col-12'
   image1Row.appendChild(previewImage1Col)
 
   const image1 = document.createElement('img')
@@ -212,7 +197,11 @@ function createItemHTML (item, num) {
   image1.style.maxHeight = '200px'
   image1.style.width = '100%'
   image1.style.objectFit = 'contain'
-  image1.style.display = 'none'
+  if ((item.image1 !== '') && (item.image1 != null)) {
+    image1.src = exCommon.config.helperAddress + '/thumbnails/' + item.image1
+  } else {
+    image1.style.display = 'none'
+  }
   previewImage1Col.appendChild(image1)
 
   const selectImage1Col = document.createElement('div')
@@ -221,11 +210,27 @@ function createItemHTML (item, num) {
 
   const selectImage1Button = document.createElement('button')
   selectImage1Button.classList = 'btn btn-outline-primary w-100'
-  selectImage1Button.innerHTML = 'Select image 1'
+  if ((item.image1 !== '') && (item.image1 != null)) {
+    selectImage1Button.innerHTML = item.image1
+  } else {
+    selectImage1Button.innerHTML = 'Select image 1'
+  }
   selectImage1Col.appendChild(selectImage1Button)
 
+  selectImage1Button.addEventListener('click', () => {
+    exFileSelect.createFileSelectionModal({ filetypes: ['image'], multiple: false })
+      .then((result) => {
+        const file = result[0]
+        selectImage1Button.innerHTML = file
+        image1.src = exCommon.config.helperAddress + '/thumbnails/' + file
+        exSetup.updateWorkingDefinition(['content', item.uuid, 'image1'], file)
+        image1.style.display = 'block'
+        exSetup.previewDefinition(true)
+      })
+  })
+
   const image2Pane = document.createElement('div')
-  image2Pane.classList = 'col-12 col-md-6'
+  image2Pane.classList = 'col-12 col-md-6 d-flex flex-column justify-content-end'
   cardBody.appendChild(image2Pane)
 
   const image2Row = document.createElement('div')
@@ -233,7 +238,7 @@ function createItemHTML (item, num) {
   image2Pane.appendChild(image2Row)
 
   const previewImage2Col = document.createElement('div')
-  previewImage2Col.classList = 'col-12 col-md-6'
+  previewImage2Col.classList = 'col-12'
   image2Row.appendChild(previewImage2Col)
 
   const image2 = document.createElement('img')
@@ -241,7 +246,11 @@ function createItemHTML (item, num) {
   image2.style.maxHeight = '200px'
   image2.style.width = '100%'
   image2.style.objectFit = 'contain'
-  image2.style.display = 'none'
+  if ((item.image2 !== '') && (item.image2 != null)) {
+    image2.src = exCommon.config.helperAddress + '/thumbnails/' + item.image2
+  } else {
+    image2.style.display = 'none'
+  }
   previewImage2Col.appendChild(image2)
 
   const selectImage2Col = document.createElement('div')
@@ -250,7 +259,22 @@ function createItemHTML (item, num) {
 
   const selectImage2Button = document.createElement('button')
   selectImage2Button.classList = 'btn btn-outline-primary w-100'
-  selectImage2Button.innerHTML = 'Select image 2'
+  if ((item.image2 !== '') && (item.image2 != null)) {
+    selectImage2Button.innerHTML = item.image2
+  } else {
+    selectImage2Button.innerHTML = 'Select image 2'
+  }
+  selectImage2Button.addEventListener('click', () => {
+    exFileSelect.createFileSelectionModal({ filetypes: ['image'], multiple: false })
+      .then((result) => {
+        const file = result[0]
+        selectImage2Button.innerHTML = file
+        image2.src = exCommon.config.helperAddress + '/thumbnails/' + file
+        exSetup.updateWorkingDefinition(['content', item.uuid, 'image2'], file)
+        image2.style.display = 'block'
+        exSetup.previewDefinition(true)
+      })
+  })
   selectImage2Col.appendChild(selectImage2Button)
 
   const modifyPane = document.createElement('div')
@@ -262,7 +286,7 @@ function createItemHTML (item, num) {
   modifyPane.appendChild(modifyRow)
 
   const orderButtonsCol = document.createElement('div')
-  orderButtonsCol.classList = 'col-12 mt-2'
+  orderButtonsCol.classList = 'col-6 mt-2'
   modifyRow.appendChild(orderButtonsCol)
 
   const orderButtonsRow = document.createElement('div')
@@ -294,7 +318,7 @@ function createItemHTML (item, num) {
   orderButtonRightCol.appendChild(orderButtonRight)
 
   const deleteCol = document.createElement('div')
-  deleteCol.classList = 'col-12'
+  deleteCol.classList = 'col-6'
   modifyRow.appendChild(deleteCol)
 
   const deleteButton = document.createElement('button')
@@ -873,15 +897,6 @@ function rebuildItemList () {
   })
 }
 
-function onWatermarkFileChange () {
-  // Called when a new image is selected.
-
-  const file = document.getElementById('watermarkSelect').getAttribute('data-filename')
-  exSetup.updateWorkingDefinition(['watermark', 'file'], file)
-
-  exSetup.previewDefinition(true)
-}
-
 // Set color mode
 if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
   document.querySelector('html').setAttribute('data-bs-theme', 'dark')
@@ -922,10 +937,6 @@ setTimeout(setUpColorPickers, 100)
 // -------------------------------------------------------------
 
 // Main buttons
-
-document.getElementById('manageContentButton').addEventListener('click', (event) => {
-  exFileSelect.createFileSelectionModal({ manage: true, filetypes: ['audio', 'image', 'video'] })
-})
 
 // Content
 document.getElementById('addItemButton').addEventListener('click', (event) => {

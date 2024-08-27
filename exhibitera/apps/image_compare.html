@@ -55,7 +55,7 @@
         <img id="baseImg" class="comp-image" src="">
       </div>
       <div id="slider" class="img-comp-slider">
-        <div>↔</div>
+        <div id="slider-icon">↔</div>
       </div>
       <div id="overlayDiv" class="img-comp-img img-comp-overlay">
         <img id="overlayImg" class="comp-image" src="">
@@ -64,8 +64,12 @@
 
     <!-- Bottom row of buttons -->
     <button id="homeButton" class="overlay-button">Home</button>
-    <button id="image2Button" class="overlay-button" type="button" data-bs-toggle="modal" data-bs-target="#image2Modal"></button>
-    <button id="image1Button" data-bs-toggle="modal" data-bs-target="#image1Modal" class="overlay-button"></button>
+    <button id="image2Button" class="overlay-button" type="button" data-bs-toggle="modal" data-bs-target="#image2Modal">
+      About top
+    </button>
+    <button id="image1Button" data-bs-toggle="modal" data-bs-target="#image1Modal" class="overlay-button">
+      About bottom
+    </button>
 
     <!-- Swiping hand indicator -->
     <div id="slidingHandContainer">
@@ -74,45 +78,23 @@
 
     <!-- Telescope labels -->
     <div id="image2Label" class="name-label">
+      Top
     </div>
     <div id="image1Label" class="name-label">
+      Bottom
     </div>
 
     <!-- Main menu -->
     <div id="mainMenu" class="">
       <div class="col-12">
-        <div id="title">One Object, Two Views</div>
+        <div id="title"></div>
       </div>
-      <div id="subtitle" class="col-8 offset-2">NASA's <strong>James Webb Space Telescope</strong>, launched in 2021, is often referred to as the successor to its famous <strong>Hubble Space Telescope</strong>. But the two telescopes see the universe in different ways. Use the images below to compare their views.</div>
+      <div id="subtitle" class="col-8 offset-2"></div>
       <div class="col-8 offset-2">
-        <div class="row row-cols-3 gy-4 gx-5">
-          <div id="eagle_button" class="col">
-            <img class="w-100 icon-image" src="">
-            <div id="eagle_buttonLabel" class="button-label">Eagle Nebula</div>
-          </div>
-          <div id="deep_field_button" class="col">
-            <!-- pulsing hand indicator -->
-            <div id="pulsingHandContainer">
-              <img id="pulsingHand" src="_static/icons/hand.svg"></img>
-            </div>
-            <img class="w-100 icon-image" src="">
-            <div id="deep_field_buttonName" class="button-label">SMACS 0723</div>
-          </div>
-          <div id="southern_ring_button" class="col">
-            <img class="w-100 icon-image" src="">
-            <div id="southern_ring_buttonName" class="button-label">Southern Ring Nebula</div>
-          </div>
-          <div id="stephans_quintet_button" class="col">
-            <img class="w-100 icon-image" src="">
-            <div id="stephans_quintet_buttonName" class="button-label">Stephan's Quintet</div>
-          </div>
-          <div id="tarantula_button" class="col">
-            <img class="w-100 icon-image" src="">
-            <div id="tarantula_buttonName" class="button-label">Tarantula Nebula</div>
-          </div>
-          <div id="macs_button" class="col">
-            <img class="w-100 icon-image" src="">
-            <div id="macs_buttonName" class="button-label">MACS 0416</div>
+        <div id="itemList" class="row row-cols-3 gy-4 gx-5">
+          <!-- pulsing hand indicator -->
+          <div id="pulsingHandContainer">
+            <img id="pulsingHand" src="_static/icons/hand.svg"></img>
           </div>
         </div>
       </div>
