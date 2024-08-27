@@ -145,17 +145,20 @@ function populateItemList (def) {
     const item = def.content[uuid]
 
     const col = document.createElement('div')
-    col.classList = 'col mx-0 px-0'
-    col.style.position = 'relative'
+    col.classList = 'col'
     col.addEventListener('click', () => {
       loadImages(item)
     })
     itemRow.appendChild(col)
 
+    const iconContainer = document.createElement('div')
+    iconContainer.classList = 'icon-container'
+    col.appendChild(iconContainer)
+
     const img1 = document.createElement('img')
     img1.classList = 'w-100 icon-image icon-image-top'
     img1.src = exCommon.config.helperAddress + '/thumbnails/' + item.image1
-    col.appendChild(img1)
+    iconContainer.appendChild(img1)
 
     const img2 = document.createElement('img')
     img2.classList = 'w-100 icon-image icon-image-bottom'
@@ -163,11 +166,12 @@ function populateItemList (def) {
     img2.style.position = 'absolute'
     img2.style.top = 0
     img2.style.left = 0
-    col.appendChild(img2)
+    iconContainer.appendChild(img2)
 
     const label = document.createElement('div')
     label.classList = 'button-label'
     label.innerHTML = item.name
+    col.appendChild(label)
   }
 }
 

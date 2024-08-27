@@ -22,17 +22,16 @@ html, body {
 }
 .body-text {
     color: #f3e9f3;
-    font-family: 'Futura-PT-Book';
-    font-size: 33px;
+    font-size: 1.7vmax;
     -webkit-user-select: none; 
     user-select: none; 
 }
 .button-label {
     color: #f3e9f3;
-    font-family: "Futura-PT-Book";
-    font-size: 35px;
+    font-size: 1.8vmax;
     text-align: center;
     width: 100%;
+    margin-top: 1vh;
 }
 
 .comp-image {
@@ -40,8 +39,17 @@ html, body {
     width: 100%;
     object-fit: contain;
 }
+.icon-container{
+    width: 100%;
+    aspect-ratio: 16/9;
+    border-radius: 0.9vmax;
+    position: relative;
+    overflow: hidden;
+}
 .icon-image {
-    border-radius: 18px;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 .icon-image-top {
     clip-path: polygon(0% 0%,
@@ -80,7 +88,7 @@ html, body {
     background-color: #2196F3;
     opacity: 0.7;
     border-radius: 50%;
-    font-size: 35px;
+    font-size: 1.8vmax;
     color: black;
     display: flex;
     justify-content: center;
@@ -88,35 +96,32 @@ html, body {
 }
 .modal-title {
     color: #f3e9f3;
-    font-size: 65px;
-    font-family: 'Bely-Display';
+    font-size: 3.4vmax;
     text-align: center;
 }
 .name-label {
     position: absolute;
     color: #f3e9f3;
-    font-size: 45px;
+    font-size: 2.3vmax;
     top: 50%;
     transform: translate(0%, -50%);
     background-color: rgba(0,0,0,0.5);
-    padding-left: 20px;
-    padding-right: 20px;
-    padding-top: 10px;
-    padding-bottom: 3px;
-    border-radius: 10px;;
-    font-family: 'Futura-PT-Heavy';
+    padding-left: 1vw;
+    padding-right: 1vw;
+    padding-top: 1vh;
+    padding-bottom: 0.3vh;
+    border-radius: 0.5vmax;
 }
 .overlay-button {
     position: absolute;
     color: #f3e9f3;
-    font-size: 35px;
+    font-size: 1.8vmax;
     background-color: rgba(66, 66, 66, 0.75);
-    padding-left: 20px;
-    padding-right: 20px;
-    padding-top: 10px;
-    padding-bottom: 3px;
-    border-radius: 10px;;
-    font-family: 'Futura-PT-Heavy';
+    padding-left: 1vw;
+    padding-right: 1vw;
+    padding-top: 1vh;
+    padding-bottom: 0.3vh;
+    border-radius: 0.5vmax;
 }
 #pulsingHand {
     position: relative;
@@ -147,17 +152,17 @@ html, body {
     width: 10vw;
 }
 #homeButton {
-    bottom: 20px;
-    left: 20px;
+    bottom: 1.85vh;
+    left:  1vw;
     background-color: #754588;
 }
 #image1Button {
-    bottom: 20px;
-    left: 1020px;
-    width: 350px;
+    bottom: 1.85vh;
+    left: 53vw;
+    width: 18vw;
 }
 #image1Label {
-    right: 20px;
+    right: 1vw;
 }
 #mainMenu {
     position: absolute;
@@ -170,24 +175,22 @@ html, body {
 }
 #subtitle {
     color: #f3e9f3;
-    font-size: 30px;
-    font-family: 'Futura-PT-Book';
-    padding-bottom: 35px;
+    font-size: 1.5vmax;
+    padding-bottom: 3.2vh;
 }
 #title {
     color: #f3e9f3;
     text-align: center;
-    font-size: 75px;
-    font-family: 'Bely-Display';
-    padding-top: 100px;
+    font-size: 3.9vmax;
+    padding-top: 9.3vh;
 }
 #image2Button {
-    bottom: 20px;
-    right: 1020px;
-    width: 350px;
+    bottom: 1.85vh;
+    right: 53vw;
+    width: 18vw;
 }
 #image2Label {
-    left: 20px;
+    left: 1vw;
 }
 #slider-icon{
     font-size: 2vmax;
