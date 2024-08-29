@@ -285,6 +285,34 @@ function createItemHTML (item, num) {
   modifyRow.classList = 'row gy-2'
   modifyPane.appendChild(modifyRow)
 
+  const optionsCol = document.createElement('div')
+  optionsCol.classList = 'col-12'
+  modifyRow.appendChild(optionsCol)
+
+  const fullscreenImageCheckboxContainer = document.createElement('div')
+  fullscreenImageCheckboxContainer.classList = 'form-check'
+  optionsCol.appendChild(fullscreenImageCheckboxContainer)
+
+  const fullscreenImageCheckbox = document.createElement('input')
+  fullscreenImageCheckbox.classList = 'form-check-input'
+  fullscreenImageCheckbox.setAttribute('type', 'checkbox')
+  fullscreenImageCheckbox.setAttribute('id', 'fullscreenImageCheckbox_' + String(num))
+  fullscreenImageCheckbox.checked = true
+  fullscreenImageCheckbox.addEventListener('change', (event) => {
+    exSetup.updateWorkingDefinition(['content', item.uuid, 'show_fullscreen'], event.target.checked)
+    exSetup.previewDefinition(true)
+  })
+  fullscreenImageCheckboxContainer.appendChild(fullscreenImageCheckbox)
+
+  const fullscreenImageCheckboxLabel = document.createElement('label')
+  fullscreenImageCheckboxLabel.classList = 'form-check-label'
+  fullscreenImageCheckboxLabel.setAttribute('for', 'fullscreenImageCheckbox_' + String(num))
+  fullscreenImageCheckboxLabel.innerHTML = `
+  Show images fullscreen
+  <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="Images that don't match the display's aspect ratio will be enlarged to fill the screen. Some content may be cut off, but the image will not be distorted." style="font-size: 0.55em;">?</span>
+  `
+  fullscreenImageCheckboxContainer.appendChild(fullscreenImageCheckboxLabel)
+
   const orderButtonsCol = document.createElement('div')
   orderButtonsCol.classList = 'col-6 mt-2'
   modifyRow.appendChild(orderButtonsCol)

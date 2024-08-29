@@ -118,9 +118,18 @@ function loadImages (item) {
 
   const overlayImg = document.getElementById('overlayImg')
   const baseImg = document.getElementById('baseImg')
-
+  console.log(item)
   overlayImg.src = exCommon.config.helperAddress + '/content/' + item.image2
   baseImg.src = exCommon.config.helperAddress + '/content/' + item.image1
+
+  // Configure whether the images should be shown fullscreen
+  if ('show_fullscreen' in item && item.show_fullscreen === false) {
+    overlayImg.classList.add('comp-image-contain')
+    baseImg.classList.add('comp-image-contain')
+  } else {
+    overlayImg.classList.remove('comp-image-contain')
+    baseImg.classList.remove('comp-image-contain')
+  }
 
   // Reset the slider to the middle
   slide(w / 2)
@@ -140,6 +149,7 @@ function populateItemList (def) {
 
   const itemRow = document.getElementById('itemList')
   itemRow.innerHTML = ''
+  console.log(def)
 
   for (const uuid of def.content_order) {
     const item = def.content[uuid]

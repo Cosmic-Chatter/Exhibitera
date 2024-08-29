@@ -37,7 +37,10 @@ html, body {
 .comp-image {
     height: 100%;
     width: 100%;
-    object-fit: contain;
+    object-fit: cover;
+}
+.comp-image-contain {
+    object-fit: contain!important;
 }
 .icon-container{
     width: 100%;
