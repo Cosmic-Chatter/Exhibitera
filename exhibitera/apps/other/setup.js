@@ -144,6 +144,10 @@ exCommon.config.helperAddress = window.location.origin
 
 // Settings
 document.getElementById('pathInput').addEventListener('change', (event) => {
+  // Fix common errors with the app path
+  if (event.target.value.slice(0, 8) === '/static/') event.target.value = event.target.value.slice(1)
+  if (event.target.value.slice(0, 7) !== 'static/') event.target.value = 'static/' + event.target.value
+
   exSetup.updateWorkingDefinition(['path'], event.target.value)
   exSetup.previewDefinition()
 })
