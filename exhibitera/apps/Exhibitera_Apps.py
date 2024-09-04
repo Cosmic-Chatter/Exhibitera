@@ -12,7 +12,7 @@ from typing import Any
 import uuid
 
 # Third-party modules
-from fastapi import FastAPI, Body, Depends, File, Form, HTTPException, UploadFile
+from fastapi import FastAPI, Body, Depends, File, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, Response
@@ -282,12 +282,12 @@ async def get_platform_details():
         "os_version": platform.release()
     }
 
-    os = sys.platform
-    if os == "darwin":
-        os = 'macOS'
-    elif os == "win32":
-        os = "Windows"
-    details["os"] = os
+    plat = sys.platform
+    if plat == "darwin":
+        plat = 'macOS'
+    elif plat == "win32":
+        plat = "Windows"
+    details["os"] = plat
 
     return details
 
@@ -750,8 +750,8 @@ async def create_dmx_group(name: str = Body(description="The name of the group t
     new_group = helper_dmx.create_group(name)
 
     fixtures = []
-    for uuid in fixture_list:
-        fixtures.append(helper_dmx.get_fixture(uuid))
+    for fixture_uuid in fixture_list:
+        fixtures.append(helper_dmx.get_fixture(fixture_uuid))
     new_group.add_fixtures(fixtures)
     helper_dmx.write_dmx_configuration()
 
@@ -777,15 +777,15 @@ async def edit_dmx_group(group_uuid: str,
 
     if len(fixture_list) > 0:
         # First, remove any fixtures that are in the group, but not in fixture_list
-        for uuid in group.fixtures.copy():
-            if uuid not in fixture_list:
-                group.remove_fixture(uuid)
+        for fixture_uuid in group.fixtures.copy():
+            if fixture_uuid not in fixture_list:
+                group.remove_fixture(fixture_uuid)
 
         # Then, loop through fixture_list and add any that are not included in the group
         fixtures_to_add = []
-        for uuid in fixture_list:
-            if uuid not in group.fixtures:
-                fixture = helper_dmx.get_fixture(uuid)
+        for fixture_uuid in fixture_list:
+            if fixture_uuid not in group.fixtures:
+                fixture = helper_dmx.get_fixture(fixture_uuid)
                 if fixture is not None:
                     fixtures_to_add.append(fixture)
 
@@ -1129,8 +1129,7 @@ def create_config():
 if __name__ == "__main__":
     defaults_path = helper_files.get_path(['configuration', 'config.json'], user_file=True)
     if os.path.exists(defaults_path):
-        success = helper_utilities.read_defaults()
-        if success is False:
+        if helper_utilities.read_defaults() is False:
             create_config()
             helper_utilities.read_defaults()
 
