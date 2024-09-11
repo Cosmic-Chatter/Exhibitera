@@ -912,7 +912,7 @@ async def get_tracker_raw_text(data: dict[str, Any], tracker_type: str):
         response = {"success": False,
                     "reason": "Request missing 'name' field."}
         return response
-    result, success, reason = ex_track.get_raw_text(data["name"] + ".txt", tracker_type)
+    result, success, reason = ex_track.get_raw_text(ex_tools.with_extension(data["name"], 'txt'), tracker_type)
     response = {"success": success, "reason": reason, "text": result}
     return response
 
@@ -939,7 +939,7 @@ async def submit_tracker_data(data: dict[str, Any], tracker_type: str):
         response = {"success": False,
                     "reason": "Request missing 'data' or 'name' field."}
         return response
-    file_path = ex_tools.get_path([tracker_type, "data", data["name"] + ".txt"], user_file=True)
+    file_path = ex_tools.get_path([tracker_type, "data", ex_tools.with_extension(data["name"], 'txt')], user_file=True)
     success, reason = ex_track.write_JSON(data["data"], file_path)
     response = {"success": success, "reason": reason}
     return response
@@ -961,7 +961,10 @@ async def submit_tracker_raw_text(data: dict[str, Any], tracker_type: str):
         response = {"success": False,
                     "reason": "Invalid mode field: must be 'a' (append, [default]) or 'w' (overwrite)"}
         return response
-    success, reason = ex_track.write_raw_text(data["text"], data["name"] + ".txt", kind=tracker_type, mode=mode)
+    success, reason = ex_track.write_raw_text(data["text"],
+                                              ex_tools.with_extension(data["name"], 'txt'),
+                                              kind=tracker_type,
+                                              mode=mode)
     response = {"success": success, "reason": reason}
     return response
 

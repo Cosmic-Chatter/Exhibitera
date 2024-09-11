@@ -291,15 +291,17 @@ function readServerUpdate (update) {
     })
       .then((result) => {
         if ('success' in result && result.success === false) return
+
         const def = result.definition
-        console.log(def)
-        if ('app' in def &&
-          def.app !== config.exhibiteraAppID &&
-          def.app !== '') {
-          console.log('Switching to app', def.app)
-          let otherPath = ''
-          if (def.app === 'other') otherPath = def.path
-          gotoApp(def.app, otherPath)
+        if ('app' in def && def.app !== '') {
+          if (
+            (def.app !== config.exhibiteraAppID) ||
+          (config.exhibiteraAppID === 'other' && def.path !== location.pathname.slice(1))
+          ) {
+            let otherPath = ''
+            if (def.app === 'other') otherPath = def.path
+            gotoApp(def.app, otherPath)
+          }
         }
       })
   }
@@ -390,15 +392,17 @@ function readHelperUpdate (update, changeApp = true) {
     })
       .then((result) => {
         if ('success' in result && result.success === false) return
+
         const def = result.definition
-        console.log(def)
-        if ('app' in def &&
-        def.app !== config.exhibiteraAppID &&
-        def.app !== '') {
-          console.log('Switching to app', def.app)
-          let otherPath = ''
-          if (def.app === 'other') otherPath = def.path
-          gotoApp(def.app, otherPath)
+        if ('app' in def && def.app !== '') {
+          if (
+            (def.app !== config.exhibiteraAppID) ||
+          (config.exhibiteraAppID === 'other' && def.path !== location.pathname.slice(1))
+          ) {
+            let otherPath = ''
+            if (def.app === 'other') otherPath = def.path
+            gotoApp(def.app, otherPath)
+          }
         }
       })
   }
