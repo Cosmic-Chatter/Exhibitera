@@ -448,8 +448,9 @@ function loadDefinition (def) {
   }
   if ('lightbox_image_height' in def.style.layout) {
     document.getElementById('mediaLightboxImage').style.height = String(def.style.layout.lightbox_image_height) + '%'
+    document.getElementById('mediaLightboxVideo').style.height = String(def.style.layout.lightbox_image_height) + '%'
   } else {
-    document.getElementById('mediaLightboxImage').style.height = '70%'
+    document.getElementById('mediaLightboxVideo').style.height = '70%'
   }
 
   // Modify the style
