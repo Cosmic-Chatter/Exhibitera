@@ -322,7 +322,6 @@ def delete_file(file: str, absolute: bool = False):
                 json.dump(config.thumbnail_archive, f, indent=2, sort_keys=True)
 
 
-
 def rename_file(old_name: str, new_name: str, absolute: bool = False):
     """Rename the given file."""
 
@@ -341,8 +340,8 @@ def rename_file(old_name: str, new_name: str, absolute: bool = False):
             "reason": f"File {new_path} already exists."
         }
 
+    # V1 thumbnails
     thumb_path, _ = get_thumbnail(old_name)
-
     print(f"Renaming file {old_path} to {new_path}")
     logging.info("Renaming file %s to %s", old_path, new_path)
 
@@ -365,6 +364,29 @@ def rename_file(old_name: str, new_name: str, absolute: bool = False):
             "error": "file_not_found",
             "reason": f"File {old_path} does not exist."
         }
+
+    # V2 thumbnails
+    load_thumbnail_archive()
+    if old_name in config.thumbnail_archive:
+        config.thumbnail_archive[new_name] = {}
+        for size_key in config.thumbnail_archive[old_name]:
+            config.thumbnail_archive[new_name][size_key] = {}
+            for mimetype_key in config.thumbnail_archive[old_name][size_key]:
+                old_thumb_path_v2 = get_path(
+                    ["thumbnails", "v2", config.thumbnail_archive[old_name][size_key][mimetype_key]], user_file=True)
+                new_thumb_name = get_thumbnail_name(with_extension(new_name, mimetype_key), v2=True, width=size_key)
+                new_thumb_path_v2 = get_path(
+                    ["thumbnails", "v2", new_thumb_name], user_file=True)
+                os.rename(old_thumb_path_v2, new_thumb_path_v2)
+                config.thumbnail_archive[new_name][size_key][mimetype_key] = new_thumb_name
+        del config.thumbnail_archive[old_name]
+
+        # Write updated archive to disk
+        archive_path = get_path(["thumbnails", "v2", "thumbnail_archive.json"])
+        with config.thumbnail_lock:
+            with open(archive_path, 'w', encoding='UTF-8') as f:
+                json.dump(config.thumbnail_archive, f, indent=2, sort_keys=True)
+
     return {"success": True}
 
 
@@ -431,6 +453,8 @@ def create_thumbnail(filename: str,
     """
 
     file_path = get_path(['content', filename], user_file=True)
+    if not os.path.exists(file_path):
+        return False, "file_does_not_exist"
 
     try:
         if mimetype == "image":

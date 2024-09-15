@@ -202,16 +202,20 @@ async def create_thumbnail_video_from_frames(
     return {"success": success}
 
 
+@app.get('/files/{filename}/thumbnail')
 @app.get('/files/{filename}/thumbnail/{width}')
-def get_v2_thumbnail(filename: str, width: str):
+def get_v2_thumbnail(filename: str, width: str = "400", force_image: bool = False):
     """
 
+    :param force_image: Always return a jpg thumbnail, even for videos
     :param filename: The name of a file in the content directory
     :param width: The width of the file to be returned
     :return: Image or video data for the requested thumbnail
     """
 
-    thumbnail_path, mimetype = helper_files.get_thumbnail(filename, v2=True, width=width)
+    thumbnail_path, mimetype = helper_files.get_thumbnail(filename, v2=True, width=width, force_image=force_image)
+    if not os.path.exists(thumbnail_path):
+        return FileResponse(helper_files.get_path(["_static", "icons", "document_missing.svg"]))
     return FileResponse(thumbnail_path)
 
 
