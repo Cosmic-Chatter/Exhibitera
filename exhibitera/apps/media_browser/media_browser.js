@@ -478,8 +478,14 @@ function loadDefinition (def) {
   }
 
   // Set icon colors based on the background color.
-  const backgroundColor = exCommon.getColorAsRGBA(document.body, 'background')
-  const backgroundClassification = exCommon.classifyColor(backgroundColor)
+  let backgroundClassification = 'dark'
+  try {
+    const backgroundColor = exCommon.getColorAsRGBA(document.body, 'background')
+    backgroundClassification = exCommon.classifyColor(backgroundColor)
+  } catch (e) {
+
+  }
+
   if (backgroundClassification === 'light') {
     document.getElementById('langSwitchDropdownIcon').src = '_static/icons/translation-icon_black.svg'
     document.getElementById('filterDropdownIcon').src = '_static/icons/filter_black.svg'
