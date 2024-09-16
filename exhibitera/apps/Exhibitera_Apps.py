@@ -1,10 +1,8 @@
 # Standard modules
 from functools import lru_cache, partial
-import io
 import logging
 import mimetypes
 import os
-import platform
 import shutil
 import sys
 import threading
@@ -15,7 +13,7 @@ import uuid
 from fastapi import FastAPI, Body, Depends, File, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, Response
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.background import BackgroundTasks
 import uvicorn
@@ -276,6 +274,7 @@ def create_zip(background_tasks: BackgroundTasks,
     background_tasks.add_task(os.remove, zip_path)
     return FileResponse(zip_path, filename=zip_filename)
 
+
 @app.get("/getDefaults")
 async def send_defaults(config: const_config = Depends(get_config)):
     config_to_send = config.defaults.copy()
@@ -328,6 +327,7 @@ async def do_shutdown():
 @app.get("/wakeDisplay")
 async def do_wake():
     helper_system.wake_display()
+
 
 @app.post("/file/delete")
 async def delete_file(file: str | list[str] = Body(description="The file(s) to delete", embed=True)):

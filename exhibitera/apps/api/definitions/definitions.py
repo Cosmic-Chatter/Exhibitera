@@ -1,27 +1,23 @@
 # Standard modules
-from functools import lru_cache, partial
-import io
-import logging
-import mimetypes
-import os
-import platform
-import shutil
-import sys
-import threading
 from typing import Any
 import uuid
-import helper_utilities
-import helper_files
 
+# Third-party modules
 from fastapi import APIRouter
 from fastapi import  Body
+
+# Exhibitera modules
+import helper_files
+
 router = APIRouter()
+
 
 @router.get("/definitions/{app_id}/getAvailable")
 async def get_available_definitions(app_id: str):
     """Return a list of all the definitions for the given app."""
 
     return {"success": True, "definitions": helper_files.get_available_definitions(app_id)}
+
 
 @router.post("/definitions/write")
 async def write_definition(definition: dict[str, Any] = Body(description="The JSON dictionary to write.", embed=True)):
@@ -35,6 +31,7 @@ async def write_definition(definition: dict[str, Any] = Body(description="The JS
                                  user_file=True)
     helper_files.write_json(definition, path)
     return {"success": True, "uuid": definition["uuid"]}
+
 
 @router.get("/definitions/{this_uuid}/delete")
 async def delete_definition(this_uuid: str):
@@ -55,4 +52,3 @@ async def load_definition(this_uuid: str):
     if definition is None:
         return {"success": False, "reason": f"The definition {this_uuid} does not exist."}
     return {"success": True, "definition": definition}
-

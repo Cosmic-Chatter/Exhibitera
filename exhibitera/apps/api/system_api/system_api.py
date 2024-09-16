@@ -1,20 +1,17 @@
 # Standard modules
-from functools import lru_cache, partial
 import io
-import logging
-import mimetypes
-import os
 import platform
-import shutil
 import sys
-import threading
-from typing import Any
-import uuid
-import helper_utilities
+
+# Third-party modules
 from fastapi import APIRouter
 from fastapi.responses import Response
 
+# Exhibitera modules
+import helper_utilities
+
 router = APIRouter()
+
 
 @router.get('/system/getPlatformDetails')
 async def get_platform_details():
@@ -33,6 +30,8 @@ async def get_platform_details():
     details["os"] = plat
 
     return details
+
+
 @router.get('/system/getScreenshot', responses={200: {"content": {"image/png": {}}}}, response_class=Response)
 async def get_screenshot():
     """Capture a screenshot and return it as a JPEG response."""
