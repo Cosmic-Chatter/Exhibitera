@@ -7,6 +7,7 @@ import io
 import json
 import logging
 import os
+import pathlib
 import subprocess
 import sys
 import threading
@@ -299,10 +300,26 @@ def delete_file(file: str, absolute: bool = False):
     with config.content_file_lock:
         os.remove(file_path)
 
+    # V1 thumbnails
     thumb_path, _ = get_thumbnail(file)
     if thumb_path is not None and os.path.exists(thumb_path):
         with config.content_file_lock:
             os.remove(thumb_path)
+
+    # V2 thumbnails
+    load_thumbnail_archive()
+    if file in config.thumbnail_archive:
+        for size_key in config.thumbnail_archive[file]:
+            for mimetype_key in config.thumbnail_archive[file][size_key]:
+                thumb_path_v2 = get_path(["thumbnails", "v2", config.thumbnail_archive[file][size_key][mimetype_key]], user_file=True)
+                os.remove(thumb_path_v2)
+        del config.thumbnail_archive[file]
+
+        # Write updated archive to disk
+        archive_path = get_path(["thumbnails", "v2", "thumbnail_archive.json"])
+        with config.thumbnail_lock:
+            with open(archive_path, 'w', encoding='UTF-8') as f:
+                json.dump(config.thumbnail_archive, f, indent=2, sort_keys=True)
 
 
 def rename_file(old_name: str, new_name: str, absolute: bool = False):
@@ -323,8 +340,8 @@ def rename_file(old_name: str, new_name: str, absolute: bool = False):
             "reason": f"File {new_path} already exists."
         }
 
+    # V1 thumbnails
     thumb_path, _ = get_thumbnail(old_name)
-
     print(f"Renaming file {old_path} to {new_path}")
     logging.info("Renaming file %s to %s", old_path, new_path)
 
@@ -347,41 +364,136 @@ def rename_file(old_name: str, new_name: str, absolute: bool = False):
             "error": "file_not_found",
             "reason": f"File {old_path} does not exist."
         }
+
+    # V2 thumbnails
+    load_thumbnail_archive()
+    if old_name in config.thumbnail_archive:
+        config.thumbnail_archive[new_name] = {}
+        for size_key in config.thumbnail_archive[old_name]:
+            config.thumbnail_archive[new_name][size_key] = {}
+            for mimetype_key in config.thumbnail_archive[old_name][size_key]:
+                old_thumb_path_v2 = get_path(
+                    ["thumbnails", "v2", config.thumbnail_archive[old_name][size_key][mimetype_key]], user_file=True)
+                new_thumb_name = get_thumbnail_name(with_extension(new_name, mimetype_key), v2=True, width=size_key)
+                new_thumb_path_v2 = get_path(
+                    ["thumbnails", "v2", new_thumb_name], user_file=True)
+                os.rename(old_thumb_path_v2, new_thumb_path_v2)
+                config.thumbnail_archive[new_name][size_key][mimetype_key] = new_thumb_name
+        del config.thumbnail_archive[old_name]
+
+        # Write updated archive to disk
+        archive_path = get_path(["thumbnails", "v2", "thumbnail_archive.json"])
+        with config.thumbnail_lock:
+            with open(archive_path, 'w', encoding='UTF-8') as f:
+                json.dump(config.thumbnail_archive, f, indent=2, sort_keys=True)
+
     return {"success": True}
 
 
-def create_thumbnail(filename: str, mimetype: str, block: bool = False, width: int = 400) -> tuple[bool, str]:
+def update_thumbnail_archive(filename: str, width: str | int, thumb_name: str, write: bool = True) -> None:
+    """ Update the dict listing all filenames
+
+    :param write: Write updated archive to disk.
+    :param filename: The original name of the media file
+    :param width: The width in pixels of the thumbnail
+    :param thumb_name: The filename of the thumbnail (in the thumbnails/v2 directory)
+    :return: None
+    """
+
+    load_thumbnail_archive()
+    width = str(width)
+
+    if filename not in config.thumbnail_archive:
+        config.thumbnail_archive[filename] = {}
+    if width not in config.thumbnail_archive[filename]:
+        config.thumbnail_archive[filename][width] = {}
+    if thumb_name.lower().endswith('.jpg'):
+        config.thumbnail_archive[filename][width]['jpg'] = thumb_name
+    elif thumb_name.lower().endswith('.mp4'):
+        config.thumbnail_archive[filename][width]['mp4'] = thumb_name
+
+    # Write updated archive to disk
+    if write is True:
+        archive_path = get_path(["thumbnails", "v2", "thumbnail_archive.json"])
+        with config.thumbnail_lock:
+            with open(archive_path, 'w', encoding='UTF-8') as f:
+                json.dump(config.thumbnail_archive, f, indent=2, sort_keys=True)
+
+
+def load_thumbnail_archive() -> None:
+    """
+    Load the thumbnail archive, if needed.
+    :return: None
+    """
+
+    if config.thumbnail_archive is not None:
+        return
+
+    archive_path = get_path(["thumbnails", "v2", "thumbnail_archive.json"])
+    with config.thumbnail_lock:
+        if os.path.exists(archive_path):
+            with open(archive_path, 'r', encoding='UTF-8') as f:
+                config.thumbnail_archive = json.load(f)
+        else:
+            config.thumbnail_archive = {}
+
+
+def create_thumbnail(filename: str,
+                     mimetype: str,
+                     block: bool = False,
+                     width: int = 400,
+                     v2: bool = False) -> tuple[bool, str]:
     """Create a thumbnail from the given media file and add it to the thumbnails directory.
 
     If the input is an image, a jpg is created. If the input is a video, a short preview mp4 and a
     jpg are created.
 
     Set block=True to block the calling thread when creating thumbnails.
+    Set v2=True when generating this thumbnail for the advanced thumbnail system
     """
+
+    file_path = get_path(['content', filename], user_file=True)
+    if not os.path.exists(file_path):
+        return False, "file_does_not_exist"
 
     try:
         if mimetype == "image":
-            proc = subprocess.Popen([ffmpeg_path, "-y",
-                                     "-i", get_path(['content', filename], user_file=True),
-                                     "-vf", f"scale={width}:-1",
-                                     get_path(['thumbnails', with_extension(filename, 'jpg')], user_file=True)])
+            if v2 is True:
+                thumb_filename = get_thumbnail_name(filename, width=width, v2=True)
+                thumb_path = get_path(['thumbnails', 'v2', thumb_filename], user_file=True)
+            else:
+                thumb_filename = with_extension(filename, 'jpg')
+                thumb_path = get_path(['thumbnails', thumb_filename], user_file=True)
+
+            proc = subprocess.Popen([ffmpeg_path, "-y", "-i", file_path, "-vf", f"scale={width}:-1", thumb_path])
             if block:
                 try:
                     proc.communicate(timeout=3600)  # 1 hour
                 except subprocess.TimeoutExpired:
                     proc.kill()
+            if v2 is True:
+                update_thumbnail_archive(filename, width, thumb_filename)
         elif mimetype == "video":
+            if v2 is True:
+                thumb_filename_image = get_thumbnail_name(filename, width=width, v2=True, force_image=True)
+                thumb_filename_video = get_thumbnail_name(filename, width=width, v2=True)
+                thumb_path_image = get_path(['thumbnails', 'v2', thumb_filename_image], user_file=True)
+                thumb_path_video = get_path(['thumbnails', 'v2', thumb_filename_video], user_file=True)
+            else:
+                thumb_filename_image = with_extension(filename, 'jpg')
+                thumb_filename_video = with_extension(filename, 'mp4')
+                thumb_path_image = get_path(['thumbnails', thumb_filename_image], user_file=True)
+                thumb_path_video = get_path(['thumbnails', thumb_filename_video], user_file=True)
+
             # First, find the length of the video
             _, video_details = get_video_file_details(filename)
             duration_sec = round(video_details["duration"])
-            file_path = get_path(['content', filename], user_file=True)
 
             # Then, create the video thumbnail
             proc = subprocess.Popen([ffmpeg_path, "-y", "-i", file_path,
                                      "-filter:v",
                                      f'fps=1,setpts=({min(duration_sec, 10)}/{duration_sec})*PTS,scale={width}:-2',
-                                     "-an",
-                                     get_path(['thumbnails', with_extension(filename, 'mp4')], user_file=True)])
+                                     "-an", thumb_path_video])
             if block:
                 try:
                     proc.communicate(timeout=3600)  # 1 hour
@@ -389,13 +501,15 @@ def create_thumbnail(filename: str, mimetype: str, block: bool = False, width: i
                     proc.kill()
             # Finally, create the image thumbnail from the halfway point
             proc = subprocess.Popen([ffmpeg_path, "-y", '-ss', str(round(duration_sec / 2)), '-i', file_path,
-                                     '-vframes', '1', "-vf", f"scale={width}:-1",
-                                     get_path(['thumbnails', with_extension(filename, 'jpg')], user_file=True)])
+                                     '-vframes', '1', "-vf", f"scale={width}:-1", thumb_path_image])
             if block:
                 try:
                     proc.communicate(timeout=3600)  # 1 hour
                 except subprocess.TimeoutExpired:
                     proc.kill()
+            if v2 is True:
+                update_thumbnail_archive(filename, width, thumb_filename_image, False)
+                update_thumbnail_archive(filename, width, thumb_filename_video)
     except OSError as e:
         print("create_thumbnail: error:", e)
         return False, 'OSError'
@@ -536,12 +650,13 @@ def _create_thumbnails_for_converted_video(process: subprocess.Popen):
     create_missing_thumbnails()
 
 
-def get_thumbnail_name(filename: str, force_image=False) -> str:
+def get_thumbnail_name(filename: str, force_image: bool = False, v2: bool = False, width: str | int = "400") -> str:
     """Return the filename converted to the appropriate Exhibitera thumbnail format.
 
     force_image = True returns a jpg thumbnail regardless of if the media is an image or video
     """
 
+    width = str(width)
     mimetype, _ = mimetypes.guess_type(filename)
     try:
         mimetype = mimetype.split("/")[0]
@@ -553,26 +668,35 @@ def get_thumbnail_name(filename: str, force_image=False) -> str:
     if mimetype == "audio":
         return get_path(["_static", "icons", "audio_black.png"])
     elif mimetype == "image" or force_image is True:
-        return with_extension(filename, "jpg")
+        if v2 is True:
+            return pathlib.Path(filename).stem + '_' + str(width) + '.jpg'
+        else:
+            return with_extension(filename, "jpg")
     elif mimetype == "video":
-        return with_extension(filename, "mp4")
+        if v2 is True:
+            return pathlib.Path(filename).stem + '_' + str(width) + '.mp4'
+        else:
+            return with_extension(filename, "mp4")
 
     return ""
 
 
-def get_thumbnail(filename: str, force_image=False) -> (Union[str, None], str):
+def get_thumbnail(filename: str,
+                  force_image: bool = False,
+                  v2: bool = False,
+                  width: int | str = "400") -> (str | None, str):
     """Check the thumbnails directory for a file corresponding to the given filename and return its path and mimetype.
 
     force_image=True returns a jpg thumbnail even for videos.
     """
 
-    thumb_name = get_thumbnail_name(filename)
+    thumb_name = get_thumbnail_name(filename, force_image=force_image, v2=v2, width=width)
     mimetype, _ = mimetypes.guess_type(filename)
 
     try:
         mimetype = mimetype.split("/")[0]
     except AttributeError:
-        if filename[-5:].lower() == '.webp':
+        if filename.lower().endswith('.webp'):
             mimetype = 'image'
         else:
             print(f"get_thumbnail: bad mimetype {mimetype} for file {filename}")
@@ -582,17 +706,22 @@ def get_thumbnail(filename: str, force_image=False) -> (Union[str, None], str):
         print(f"get_thumbnail: thumbnail name is blank.")
         return None, mimetype
 
-    thumb_path = get_path(["thumbnails", thumb_name], user_file=True)
+    if v2 is True:
+        thumb_path = get_path(["thumbnails", "v2", thumb_name], user_file=True)
+        if not os.path.exists(thumb_path):
+            create_thumbnail(filename, mimetype, block=True, width=width, v2=True)
+    else:
+        thumb_path = get_path(["thumbnails", thumb_name], user_file=True)
 
-    if not os.path.exists(thumb_path):
-        print(f"get_thumbnail: thumbnail does not exist.")
-        return None, mimetype
+        if not os.path.exists(thumb_path):
+            print(f"get_thumbnail: thumbnail does not exist.")
+            return None, mimetype
 
     return thumb_path, mimetype
 
 
-def create_missing_thumbnails():
-    """Check the content directory for files without thumbnails and create them"""
+def create_missing_thumbnails() -> None:
+    """Check the content directory for files without thumbnails and create them."""
 
     content = get_all_directory_contents("content")
 

@@ -389,7 +389,8 @@ function _populateComponentContent (fileDict, options) {
 
     if (mimetype === 'image' && thumbnailList.includes(thumbRoot + '.jpg')) {
       thumb = document.createElement('img')
-      thumb.src = exCommon.config.helperAddress + '/thumbnails/' + thumbRoot + '.jpg'
+      // thumb.src = exCommon.config.helperAddress + '/thumbnails/' + thumbRoot + '.jpg'
+      thumb.src = exCommon.config.helperAddress + '/files/' + file + '/thumbnail/240'
     } else if (mimetype === 'video' && thumbnailList.includes(thumbRoot + '.mp4')) {
       thumb = document.createElement('video')
       thumb.setAttribute('loop', true)
@@ -397,7 +398,8 @@ function _populateComponentContent (fileDict, options) {
       thumb.setAttribute('disablePictureInPicture', true)
       thumb.setAttribute('webkit-playsinline', true)
       thumb.setAttribute('playsinline', true)
-      thumb.src = exCommon.config.helperAddress + '/thumbnails/' + thumbRoot + '.mp4'
+      // thumb.src = exCommon.config.helperAddress + '/thumbnails/' + thumbRoot + '.mp4'
+      thumb.src = exCommon.config.helperAddress + '/files/' + file + '/thumbnail/240'
     } else if (mimetype === 'audio') {
       thumb = document.createElement('img')
       thumb.src = exCommon.config.helperAddress + getDefaultAudioIcon()
@@ -466,13 +468,15 @@ function previewFile (file, thumbnailList) {
     vid.style.display = 'none'
     font.style.display = 'none'
     aud.parentElement.style.display = 'none'
-    img.src = exCommon.config.helperAddress + '/thumbnails/' + thumbRoot + '.jpg'
+    // img.src = exCommon.config.helperAddress + '/thumbnails/' + thumbRoot + '.jpg'
+    img.src = exCommon.config.helperAddress + '/files/' + file + '/thumbnail/240'
   } else if (mimetype === 'video' && thumbnailList.includes(thumbRoot + '.mp4')) {
     img.style.display = 'none'
     vid.style.display = 'block'
     font.style.display = 'none'
     aud.parentElement.style.display = 'none'
-    vid.src = exCommon.config.helperAddress + '/thumbnails/' + thumbRoot + '.mp4'
+    // vid.src = exCommon.config.helperAddress + '/thumbnails/' + thumbRoot + '.mp4'
+    vid.src = exCommon.config.helperAddress + '/files/' + file + '/thumbnail/240'
   } else if (mimetype === 'audio') {
     img.style.display = 'none'
     vid.style.display = 'none'
