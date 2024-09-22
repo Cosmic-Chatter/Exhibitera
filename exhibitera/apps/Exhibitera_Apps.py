@@ -26,7 +26,7 @@ import helper_system
 import helper_utilities
 
 # Api Modules 
-from api.system_api import system_api
+from api.system import system
 from api.definitions import definitions
 # If we're not on Linux, prepare to use the webview
 if sys.platform != 'linux':
@@ -122,7 +122,7 @@ app.mount("/thumbnails",
               ["thumbnails"], user_file=True)),
           name="thumbnails")
 
-app.include_router(system_api.router)
+app.include_router(system.router)
 app.include_router(definitions.router)
 @lru_cache()
 def get_config():
