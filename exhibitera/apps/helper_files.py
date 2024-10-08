@@ -650,6 +650,29 @@ def _create_thumbnails_for_converted_video(process: subprocess.Popen):
     create_missing_thumbnails()
 
 
+def get_mimetype(filename: str) -> str:
+    """Return the kind of media file given by filename."""
+
+    extension = os.path.splitext(filename)[1].lower()[1:]  # form of "jpg"
+    mimetype = ""
+
+    # First, try the mimetypes module
+    mimetype_guess, _ = mimetypes.guess_type(filename)
+    try:
+        mimetype = mimetype_guess.split("/")[0]
+    except AttributeError:
+        mimetype = ""
+
+    if mimetype is not None and mimetype != "":
+        return mimetype
+
+    # Check for 3D models
+    if extension in ["fbx", "glb", "obj", "stl", "usdz"]:
+        return "model"
+
+    return ""
+
+
 def get_thumbnail_name(filename: str, force_image: bool = False, v2: bool = False, width: str | int = "400") -> str:
     """Return the filename converted to the appropriate Exhibitera thumbnail format.
 
@@ -657,14 +680,8 @@ def get_thumbnail_name(filename: str, force_image: bool = False, v2: bool = Fals
     """
 
     width = str(width)
-    mimetype, _ = mimetypes.guess_type(filename)
-    try:
-        mimetype = mimetype.split("/")[0]
-    except AttributeError:
-        if filename[-5:].lower() == '.webp':
-            mimetype = 'image'
-        else:
-            return ""
+    mimetype = get_mimetype(filename)
+
     if mimetype == "audio":
         return get_path(["_static", "icons", "audio_black.png"])
     elif mimetype == "image" or force_image is True:
@@ -672,6 +689,8 @@ def get_thumbnail_name(filename: str, force_image: bool = False, v2: bool = Fals
             return pathlib.Path(filename).stem + '_' + str(width) + '.jpg'
         else:
             return with_extension(filename, "jpg")
+    elif mimetype == "model":
+        return get_path(["_static", "icons", "model_black.svg"])
     elif mimetype == "video":
         if v2 is True:
             return pathlib.Path(filename).stem + '_' + str(width) + '.mp4'
@@ -691,16 +710,11 @@ def get_thumbnail(filename: str,
     """
 
     thumb_name = get_thumbnail_name(filename, force_image=force_image, v2=v2, width=width)
-    mimetype, _ = mimetypes.guess_type(filename)
-
-    try:
-        mimetype = mimetype.split("/")[0]
-    except AttributeError:
-        if filename.lower().endswith('.webp'):
-            mimetype = 'image'
-        else:
+    mimetype = get_mimetype(filename)
+    if mimetype == "":
+        if config.debug:
             print(f"get_thumbnail: bad mimetype {mimetype} for file {filename}")
-            return None, ''
+        return None, ''
 
     if thumb_name == "":
         print(f"get_thumbnail: thumbnail name is blank.")

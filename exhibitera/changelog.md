@@ -7,6 +7,8 @@
 ### General
 - Files uploaded as `content` can be downloaded using the file picker [Morgan Rehnberg]
 
+### Media Player
+- Experimental support for 3D models [Morgan Rehnberg]
 
 # **Exhibitera 5.1**
 

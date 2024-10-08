@@ -14,6 +14,7 @@ export const config = {
   currentDefinition: '',
   currentExhibit: 'Default',
   currentInteraction: false,
+  definition: {}, // Holds the current definition
   definitionLoader: null, // A function used by loadDefinition() to set up the specific app.
   errorDict: {},
   fontCache: {},
@@ -53,6 +54,7 @@ export function configureApp (opt = {}) {
     if (searchParams.has('definition')) {
       loadDefinition(searchParams.get('definition'))
         .then((result) => {
+          config.definition = result.definition
           config.definitionLoader(result.definition)
         })
     }
@@ -69,6 +71,7 @@ export function configureApp (opt = {}) {
           // Not using Hub
           loadDefinition(config.currentDefinition)
             .then((result) => {
+              config.definition = result.definition
               config.definitionLoader(result.definition)
             })
         }
@@ -725,7 +728,10 @@ export function guessMimetype (filename) {
     return 'audio'
   } else if (['otf', 'ttf', 'woff', 'woff2'].includes(ext)) {
     return 'font'
+  } else if (['fbx', 'glb', 'obj', 'stl', 'usdz'].includes(ext)) {
+    return 'model'
   }
+  return ''
 }
 
 export function loadDefinition (defName) {

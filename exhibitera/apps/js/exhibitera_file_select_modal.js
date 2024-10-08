@@ -403,6 +403,9 @@ function _populateComponentContent (fileDict, options) {
     } else if (mimetype === 'audio') {
       thumb = document.createElement('img')
       thumb.src = exCommon.config.helperAddress + getDefaultAudioIcon()
+    } else if (mimetype === 'model') {
+      thumb = document.createElement('img')
+      thumb.src = exCommon.config.helperAddress + getDefaultModelIcon()
     } else if (mimetype === 'font') {
       thumb = document.createElement('div')
       thumb.classList = 'd-flex justify-content-center align-items-center'
@@ -468,14 +471,12 @@ function previewFile (file, thumbnailList) {
     vid.style.display = 'none'
     font.style.display = 'none'
     aud.parentElement.style.display = 'none'
-    // img.src = exCommon.config.helperAddress + '/thumbnails/' + thumbRoot + '.jpg'
     img.src = exCommon.config.helperAddress + '/files/' + file + '/thumbnail/240'
   } else if (mimetype === 'video' && thumbnailList.includes(thumbRoot + '.mp4')) {
     img.style.display = 'none'
     vid.style.display = 'block'
     font.style.display = 'none'
     aud.parentElement.style.display = 'none'
-    // vid.src = exCommon.config.helperAddress + '/thumbnails/' + thumbRoot + '.mp4'
     vid.src = exCommon.config.helperAddress + '/files/' + file + '/thumbnail/240'
   } else if (mimetype === 'audio') {
     img.style.display = 'none'
@@ -483,6 +484,12 @@ function previewFile (file, thumbnailList) {
     font.style.display = 'none'
     aud.parentElement.style.display = 'flex'
     aud.src = exCommon.config.helperAddress + '/content/' + file
+  } else if (mimetype === 'model') {
+    img.style.display = 'block'
+    vid.style.display = 'none'
+    font.style.display = 'none'
+    aud.parentElement.style.display = 'none'
+    img.src = exCommon.config.helperAddress + getDefaultModelIcon()
   } else if (mimetype === 'font') {
     img.style.display = 'none'
     vid.style.display = 'none'
@@ -502,22 +509,40 @@ function previewFile (file, thumbnailList) {
   }
 }
 
-function getDefaultDocumentImage () {
+function getDefaultDocumentImage (png = false) {
   // Return the approriate thumbnail based on whether dark mode is enabled.
 
+  let ext = 'svg'
+  if (png === true) ext = 'png'
+
   const mode = document.querySelector('html').getAttribute('data-bs-theme')
-  if (mode === 'dark') return '/_static/icons/document_white.svg'
-  else if (mode === 'light') return '/_static/icons/document_black.svg'
-  else return '/_static/icons/document_black.svg'
+  if (mode === 'dark') return '/_static/icons/document_white.' + ext
+  else if (mode === 'light') return '/_static/icons/document_black.' + ext
+  else return '/_static/icons/document_black.' + ext
 }
 
-export function getDefaultAudioIcon () {
-  // Return the approriate thumbnail based on whether dark mode is enabled.
+export function getDefaultAudioIcon (png = false) {
+  // Return the approriate audio thumbnail based on whether dark mode is enabled.
+
+  let ext = 'svg'
+  if (png === true) ext = 'png'
 
   const mode = document.querySelector('html').getAttribute('data-bs-theme')
-  if (mode === 'dark') return '/_static/icons/audio_white.svg'
-  else if (mode === 'light') return '/_static/icons/audio_black.svg'
-  else return '/_static/icons/audio_black.svg'
+  if (mode === 'dark') return '/_static/icons/audio_white.' + ext
+  else if (mode === 'light') return '/_static/icons/audio_black.' + ext
+  else return '/_static/icons/audio_black.' + ext
+}
+
+export function getDefaultModelIcon (png = false) {
+  // Return the approriate model thumbnail based on whether dark mode is enabled.
+
+  let ext = 'svg'
+  if (png === true) ext = 'png'
+
+  const mode = document.querySelector('html').getAttribute('data-bs-theme')
+  if (mode === 'dark') return '/_static/icons/model_white.' + ext
+  else if (mode === 'light') return '/_static/icons/model_black.' + ext
+  else return '/_static/icons/model_black.' + ext
 }
 
 function selectFile (target, allowMultiple) {
