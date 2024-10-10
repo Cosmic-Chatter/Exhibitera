@@ -8,15 +8,25 @@ function changePage (val) {
       currentPage = 0
       break
     case 1:
-      // Calculate if there are more cards to show
-      if ((currentPage + 1) * cardsPerPage < spreadsheet.length) {
-        currentPage += 1
+      currentPage += 1
+      if (currentPage * cardsPerPage >= spreadsheet.length) {
+        if (('behavior' in exCommon.config.definition) && ('loop_results' in exCommon.config.definition.behavior) && (exCommon.config.definition.behavior.loop_results === false)) {
+          currentPage -= 1
+        } else {
+          // If there are not more cards to show, go page to the first page.
+          currentPage = 0
+        }
       }
       break
     case -1:
       currentPage -= 1
       if (currentPage < 0) {
-        currentPage = 0
+        if (('behavior' in exCommon.config.definition) && ('loop_results' in exCommon.config.definition.behavior) && (exCommon.config.definition.behavior.loop_results === false)) {
+          currentPage = 0
+        } else {
+          // Loop back to last page
+          currentPage = Math.floor((spreadsheet.length - 1 / cardsPerPage))
+        }
       }
       break
     default:
@@ -152,6 +162,8 @@ function hideMediaLightBox () {
 
   const video = document.getElementById('mediaLightboxVideo')
   video.pause()
+  videoPlaying = false
+  resetActivityTimer()
 
   const temp = function () { $('#mediaLightbox').css('display', 'none') }
   $('#mediaLightbox').animate({ opacity: 0, queue: false }, { complete: temp, duration: 100 })
@@ -242,7 +254,7 @@ function _populateResultsRow (currentKey) {
   // currentKey accounts for the key being pressed right now, which is not
   // yet part of the input value
 
-  $('#resultsRow').empty()
+  document.getElementById('resultsRow').innerHTML = ''
 
   // const input = $('#searchInput').val()
   // // Filter on search terms
@@ -304,16 +316,25 @@ function _populateResultsRow (currentKey) {
   // Sort by the number of matches, so better results rise to the top.
   filteredData.sort((a, b) => b.matchCount - a.matchCount)
 
+  // If there are fewer matches than the max allowed per page, hide the arrows.
+  if (filteredData.length <= cardsPerPage) {
+    document.getElementById('previousPageButton').style.display = 'none'
+    document.getElementById('nextPageButton').style.display = 'none'
+  } else {
+    document.getElementById('previousPageButton').style.display = 'block'
+    document.getElementById('nextPageButton').style.display = 'block'
+  }
+
   // Make sure we have the correct number of results to display
   const displayedResults = filteredData.slice(cardsPerPage * currentPage, cardsPerPage * (currentPage + 1))
+
   // Create a card for each item and add it to the display
   displayedResults.forEach((item, i) => {
     createCard(item)
   })
 
   // Adjust card title font size to avoid overflows
-  // Don't allow text to get larger than wha the user
-  // has set.
+  // Don't allow text to get larger than wha the user has set.
   const titles = document.getElementsByClassName('cardTitle')
   if (titles.length > 0) {
     const fontSize = parseFloat(window.getComputedStyle(titles[0], null).getPropertyValue('font-size'))
