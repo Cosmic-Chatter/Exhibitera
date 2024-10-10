@@ -16,3 +16,4 @@ pywebview; sys_platform != 'linux'
 requests
 sockio
 uvicorn
+pytest

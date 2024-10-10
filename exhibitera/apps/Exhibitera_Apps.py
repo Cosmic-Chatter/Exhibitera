@@ -1,10 +1,8 @@
 # Standard modules
 from functools import lru_cache, partial
-import io
 import logging
 import mimetypes
 import os
-import platform
 import shutil
 import sys
 import threading
@@ -15,7 +13,7 @@ import uuid
 from fastapi import FastAPI, Body, Depends, File, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, Response
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.background import BackgroundTasks
 import uvicorn
@@ -27,6 +25,9 @@ import helper_files
 import helper_system
 import helper_utilities
 
+# Api Modules 
+from api.system import system
+from api.definitions import definitions
 # If we're not on Linux, prepare to use the webview
 if sys.platform != 'linux':
     import webview
@@ -121,7 +122,8 @@ app.mount("/thumbnails",
               ["thumbnails"], user_file=True)),
           name="thumbnails")
 
-
+app.include_router(system.router)
+app.include_router(definitions.router)
 @lru_cache()
 def get_config():
     return const_config
@@ -290,72 +292,6 @@ def create_zip(background_tasks: BackgroundTasks,
     return FileResponse(zip_path, filename=zip_filename)
 
 
-@app.get('/system/getPlatformDetails')
-async def get_platform_details():
-    """Return details on the current operating system."""
-
-    details = {
-        "architecture": platform.architecture()[0],
-        "os_version": platform.release()
-    }
-
-    plat = sys.platform
-    if plat == "darwin":
-        plat = 'macOS'
-    elif plat == "win32":
-        plat = "Windows"
-    details["os"] = plat
-
-    return details
-
-
-@app.get('/system/getScreenshot', responses={200: {"content": {"image/png": {}}}}, response_class=Response)
-async def get_screenshot():
-    """Capture a screenshot and return it as a JPEG response."""
-
-    image = helper_utilities.capture_screenshot()
-    byte_array = io.BytesIO()
-    image.save(byte_array, format='JPEG', quality=85)
-    byte_array = byte_array.getvalue()
-    return Response(content=byte_array,
-                    media_type="image/jpeg",
-                    headers={
-                        "Pragma-directive": "no-cache",
-                        "Cache-directive": "no-cache",
-                        "Cache-control": "no-cache",
-                        "Pragma": "no-cache",
-                        "Expires": "0"
-                    })
-
-
-@app.get("/definitions/{app_id}/getAvailable")
-async def get_available_definitions(app_id: str):
-    """Return a list of all the definitions for the given app."""
-
-    return {"success": True, "definitions": helper_files.get_available_definitions(app_id)}
-
-
-@app.get("/definitions/{this_uuid}/delete")
-async def delete_definition(this_uuid: str):
-    """Delete the given definition."""
-
-    path = helper_files.get_path(["definitions", helper_files.with_extension(this_uuid, "json")], user_file=True)
-    helper_files.delete_file(path)
-
-    return {"success": True}
-
-
-@app.get("/definitions/{this_uuid}/load")
-async def load_definition(this_uuid: str):
-    """Load the given definition and return the JSON."""
-
-    path = helper_files.get_path(["definitions", helper_files.with_extension(this_uuid, "json")], user_file=True)
-    definition = helper_files.load_json(path)
-    if definition is None:
-        return {"success": False, "reason": f"The definition {this_uuid} does not exist."}
-    return {"success": True, "definition": definition}
-
-
 @app.get("/getDefaults")
 async def send_defaults(config: const_config = Depends(get_config)):
     config_to_send = config.defaults.copy()
@@ -408,20 +344,6 @@ async def do_shutdown():
 @app.get("/wakeDisplay")
 async def do_wake():
     helper_system.wake_display()
-
-
-@app.post("/definitions/write")
-async def write_definition(definition: dict[str, Any] = Body(description="The JSON dictionary to write.", embed=True)):
-    """Save the given JSON data to a definition file in the content directory."""
-
-    if "uuid" not in definition or definition["uuid"] == "":
-        # Add a unique identifier
-        definition["uuid"] = str(uuid.uuid4())
-    path = helper_files.get_path(["definitions",
-                                  helper_files.with_extension(definition["uuid"], ".json")],
-                                 user_file=True)
-    helper_files.write_json(definition, path)
-    return {"success": True, "uuid": definition["uuid"]}
 
 
 @app.post("/file/delete")
