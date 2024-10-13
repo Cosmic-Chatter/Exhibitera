@@ -1,5 +1,6 @@
 # Standard modules
 from functools import lru_cache, partial
+import io
 import logging
 import mimetypes
 import os
@@ -11,11 +12,12 @@ import uuid
 
 # Third-party modules
 from fastapi import FastAPI, Body, Depends, File, UploadFile
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.background import BackgroundTasks
+import platform
 import uvicorn
 
 # Exhibitera modules
@@ -136,7 +138,7 @@ async def root():
 
 @app.get("/{file_name}.html", response_class=HTMLResponse)
 async def serve_html(file_name):
-    # First try a local file and then a Exhibitera file
+    # First try a local file and then an Exhibitera file
     file_path = helper_files.get_path([file_name + ".html"], user_file=True)
     if not os.path.isfile(file_path):
         file_path = helper_files.get_path([file_name + ".html"], user_file=False)
@@ -147,7 +149,7 @@ async def serve_html(file_name):
 
 @app.get("/README.md", response_class=HTMLResponse)
 async def serve_readme():
-    # First try a local file and then a Exhibitera file
+    # First try a local file and then an Exhibitera file
     file_path = helper_files.get_path(["README.md"])
     with open(file_path, "r") as f:
         file = str(f.read())
@@ -285,15 +287,11 @@ def create_zip(background_tasks: BackgroundTasks,
                files: list[str] = Body(description="A list of the files to be zipped. Files must be in the content directory."),
                zip_filename: str = Body(description="The filename of the zip file to be created.")):
     """Create a ZIP file containing the given files."""
-@app.get('/files/{filename}/getThumbnail')
-def get_thumbnail(filename: str):
-    """Return the filename of the thumbnail for the given file, if it exists."""
 
-    thumb_filename, mimetype = helper_files.get_thumbnail(filename)
-
-    if thumb_filename is not None:
-        return {"success": True, "thumbnail": os.path.basename(thumb_filename), "mimetype": mimetype}
-    return {"success": False, "reason": "Thumbnail does not exist"}
+    helper_files.create_zip(zip_filename, files)
+    zip_path = helper_files.get_path(["temp", zip_filename], user_file=True)
+    background_tasks.add_task(os.remove, zip_path)
+    return FileResponse(zip_path, filename=zip_filename)
 
 
 @app.get('/system/getPlatformDetails')
@@ -334,10 +332,6 @@ async def get_screenshot():
                     })
 
 
-    helper_files.create_zip(zip_filename, files)
-    zip_path = helper_files.get_path(["temp", zip_filename], user_file=True)
-    background_tasks.add_task(os.remove, zip_path)
-    return FileResponse(zip_path, filename=zip_filename)
 
 
 @app.get("/getDefaults")
@@ -1084,7 +1078,7 @@ def _start_server(port=None):
     if port is None:
         port = int(const_config.defaults["system"]["port"])
 
-    # Must use only one worker, since we are relying on the config module being in global)
+    # Must use only one worker, since we are relying on the config module being in global
     uvicorn.run(app,
                 host="",
                 port=port,

@@ -319,10 +319,6 @@ function _populateComponentContent (fileDict, options) {
   const fileRow = document.getElementById('exFileSelectModalFileList')
   // Alphabetize the list
   const fileList = fileDict.all_exhibits.sort(function (a, b) { return a.localeCompare(b) })
-  let thumbnailList = fileDict.thumbnails
-  if (thumbnailList == null) {
-    thumbnailList = []
-  }
 
   // Clear any existing files
   fileRow.innerHTML = ''
@@ -371,7 +367,7 @@ function _populateComponentContent (fileDict, options) {
       })
       event.target.classList.add('bg-secondary', 'text-dark')
       const file = event.target.getAttribute('data-filename')
-      previewFile(file, thumbnailList)
+      previewFile(file)
     })
 
     // Checkbox
@@ -384,7 +380,7 @@ function _populateComponentContent (fileDict, options) {
 
     // Thumbnail
     const thumbContainer = entry.querySelector('.const-file-thumb-container')
-    _populateThumbnail(file, thumbContainer, thumbnailList)
+    _populateThumbnail(file, thumbContainer)
     if (showThumbs === false) thumbContainer.style.display = 'none'
 
     // Filename
@@ -394,55 +390,32 @@ function _populateComponentContent (fileDict, options) {
   })
 }
 
-function _populateThumbnail (file, thumbContainer, thumbnailList, retries = 3) {
+function _populateThumbnail (file, thumbContainer) {
   // Retrieve an appropriate thumbnail for the content and add it to the container.
   // If a thumbnail doesn't exist, the function will be rerun the number of times
   // given by retries. This gives time for a thumbnail to be generated after an upload.
 
   let thumb
   const mimetype = exCommon.guessMimetype(file)
-  const thumbRoot = file.replace(/\.[^/.]+$/, '')
   thumbContainer.innerHTML = '' // Clear in case we're replacing an existing thumbnail
 
-    if (mimetype === 'image' && thumbnailList.includes(thumbRoot + '.jpg')) {
-      thumb = document.createElement('img')
-      // thumb.src = exCommon.config.helperAddress + '/thumbnails/' + thumbRoot + '.jpg'
-      thumb.src = exCommon.config.helperAddress + '/files/' + file + '/thumbnail/240'
-    } else if (mimetype === 'video' && thumbnailList.includes(thumbRoot + '.mp4')) {
-      thumb = document.createElement('video')
-      thumb.setAttribute('loop', true)
-      thumb.setAttribute('autoplay', true)
-      thumb.setAttribute('disablePictureInPicture', true)
-      thumb.setAttribute('webkit-playsinline', true)
-      thumb.setAttribute('playsinline', true)
-      // thumb.src = exCommon.config.helperAddress + '/thumbnails/' + thumbRoot + '.mp4'
-      thumb.src = exCommon.config.helperAddress + '/files/' + file + '/thumbnail/240'
-    } else if (mimetype === 'audio') {
-      thumb = document.createElement('img')
-      thumb.src = exCommon.config.helperAddress + getDefaultAudioIcon()
-    } else if (mimetype === 'model') {
-      thumb = document.createElement('img')
-      thumb.src = exCommon.config.helperAddress + getDefaultModelIcon()
-    } else if (mimetype === 'font') {
-      thumb = document.createElement('div')
-      thumb.classList = 'd-flex justify-content-center align-items-center'
-      const thumbInner = document.createElement('div')
-      thumb.appendChild(thumbInner)
-      thumbInner.innerHTML = 'AaBb123'
-  if (mimetype === 'image' && thumbnailList.includes(thumbRoot + '.jpg')) {
+  if (mimetype === 'image') {
     thumb = document.createElement('img')
-    thumb.src = exCommon.config.helperAddress + '/thumbnails/' + thumbRoot + '.jpg'
-  } else if (mimetype === 'video' && thumbnailList.includes(thumbRoot + '.mp4')) {
+    thumb.src = exCommon.config.helperAddress + '/files/' + file + '/thumbnail/240'
+  } else if (mimetype === 'video') {
     thumb = document.createElement('video')
     thumb.setAttribute('loop', true)
     thumb.setAttribute('autoplay', true)
     thumb.setAttribute('disablePictureInPicture', true)
     thumb.setAttribute('webkit-playsinline', true)
     thumb.setAttribute('playsinline', true)
-    thumb.src = exCommon.config.helperAddress + '/thumbnails/' + thumbRoot + '.mp4'
+    thumb.src = exCommon.config.helperAddress + '/files/' + file + '/thumbnail/240'
   } else if (mimetype === 'audio') {
     thumb = document.createElement('img')
     thumb.src = exCommon.config.helperAddress + getDefaultAudioIcon()
+  } else if (mimetype === 'model') {
+    thumb = document.createElement('img')
+    thumb.src = exCommon.config.helperAddress + getDefaultModelIcon()
   } else if (mimetype === 'spreadsheet') {
     thumb = document.createElement('img')
     thumb.src = exCommon.config.helperAddress + getDefaultSpreadsheetImage()
@@ -463,26 +436,6 @@ function _populateThumbnail (file, thumbContainer, thumbnailList, retries = 3) {
     // We don't have a thumbnail
     thumb = document.createElement('img')
     thumb.src = exCommon.config.helperAddress + getDefaultDocumentImage()
-
-    let waitTime
-    if (mimetype === 'video') {
-      waitTime = 2000
-    } else waitTime = 200
-
-    if (retries > 0) {
-      setTimeout(() => {
-        exCommon.makeHelperRequest({
-          method: 'GET',
-          endpoint: '/files/' + file + '/getThumbnail'
-        })
-          .then((result) => {
-            if ('success' in result && result.success === true) {
-              thumbnailList.push(result.thumbnail)
-              _populateThumbnail(file, thumbContainer, thumbnailList, retries - 1)
-            }
-          })
-      }, waitTime)
-    }
   }
   thumbContainer.appendChild(thumb)
   thumb.style.width = '100%'
@@ -499,7 +452,7 @@ function shortenFilename (filename) {
   return filename
 }
 
-function previewFile (file, thumbnailList) {
+function previewFile (file) {
   // Take the given filename and fill the preview with its details
 
   const img = document.getElementById('exFileSelectModalFilePreviewImage')
@@ -516,16 +469,15 @@ function previewFile (file, thumbnailList) {
   download.href = exCommon.config.helperAddress + '/content/' + file
   download.download = file
 
-  const thumbRoot = file.replace(/\.[^/.]+$/, '')
   const mimetype = exCommon.guessMimetype(file)
 
-  if (mimetype === 'image' && thumbnailList.includes(thumbRoot + '.jpg')) {
+  if (mimetype === 'image') {
     img.style.display = 'block'
     vid.style.display = 'none'
     font.style.display = 'none'
     aud.parentElement.style.display = 'none'
     img.src = exCommon.config.helperAddress + '/files/' + file + '/thumbnail/240'
-  } else if (mimetype === 'video' && thumbnailList.includes(thumbRoot + '.mp4')) {
+  } else if (mimetype === 'video') {
     img.style.display = 'none'
     vid.style.display = 'block'
     font.style.display = 'none'
@@ -552,17 +504,19 @@ function previewFile (file, thumbnailList) {
     const fontDef = new FontFace('fontPreview', 'url(' + encodeURI(exCommon.config.helperAddress + '/content/' + file) + ')')
     document.fonts.add(fontDef)
     font.style.setProperty('Font-Family', 'fontPreview')
+  } else if (mimetype === 'spreadsheet') {
+    img.style.display = 'block'
+    vid.style.display = 'none'
+    aud.parentElement.style.display = 'none'
+    font.style.display = 'none'
+    img.src = exCommon.config.helperAddress + getDefaultSpreadsheetImage()
   } else {
     // We have something other than an image or video, or we are missing a thumbnail
     img.style.display = 'block'
     vid.style.display = 'none'
     aud.parentElement.style.display = 'none'
     font.style.display = 'none'
-    if (mimetype === 'spreadsheet') {
-      img.src = exCommon.config.helperAddress + getDefaultSpreadsheetImage()
-    } else {
-      img.src = exCommon.config.helperAddress + getDefaultDocumentImage()
-    }
+    img.src = exCommon.config.helperAddress + getDefaultDocumentImage()
   }
 }
 
@@ -578,11 +532,6 @@ function getDefaultDocumentImage (png = false) {
   else return '/_static/icons/document_black.' + ext
 }
 
-export function getDefaultAudioIcon (png = false) {
-  // Return the approriate audio thumbnail based on whether dark mode is enabled.
-
-  let ext = 'svg'
-  if (png === true) ext = 'png'
 function getDefaultSpreadsheetImage () {
   // Return the approriate thumbnail based on whether dark mode is enabled.
 
@@ -592,8 +541,11 @@ function getDefaultSpreadsheetImage () {
   else return '/_static/icons/spreadsheet_black.svg'
 }
 
-export function getDefaultAudioIcon () {
+export function getDefaultAudioIcon (png = false) {
   // Return the approriate thumbnail based on whether dark mode is enabled.
+
+  let ext = 'svg'
+  if (png === true) ext = 'png'
 
   const mode = document.querySelector('html').getAttribute('data-bs-theme')
   if (mode === 'dark') return '/_static/icons/audio_white.' + ext
