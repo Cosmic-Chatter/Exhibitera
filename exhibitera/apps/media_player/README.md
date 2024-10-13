@@ -1,9 +1,9 @@
 # Media Player
 
-Media Player provides a flexible digital signage platform for displaying collections of audio, images, and videos. Dynamic signage can be created by retrieving and updating data from JSON sources.
+Media Player provides a flexible digital signage platform for displaying collections of audio, images, videos, and 3D models. Dynamic signage can be created by retrieving and updating data from JSON sources.
 
 ## Configuration
-When creating a definition, you can specify a display duration for each image. Audio and video always play for their full duration.
+When creating a definition, you can specify a display duration for each image and 3D model. Audio and video always play for their full duration.
 
 ### Annotations
 Annotations enable you to add dynamic text to your media through the use of JSON-formatted data. Media Player supports accessing JSON from either a web link or a text file in the Exhibitera content directory.
@@ -20,3 +20,6 @@ Exhibitera Apps recognizes the following media file formats:
 | Audio | `aac`, `m4a`, `mp3`, `oga`, `ogg`, `weba`, `wav`            |
 | Image | `bmp`, `heic`, `jpeg`, `jpg`, `png`, `tif`, `tiff`,  `webp` |
 | Video | `m4v`, `mov`, `mp4`, `mpeg`,    `mpg`,  `ogv`, `webm`       |
+| 3D model | `glb`, `obj` |
+
+**A note on 3D models**: The use of 3D models is currently experimental. Performance may be poor on slower systems and extended use of 3D models may cause app crashes.

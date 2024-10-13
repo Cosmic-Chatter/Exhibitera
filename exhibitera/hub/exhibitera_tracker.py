@@ -21,7 +21,11 @@ def create_CSV(file_path: Union[str, os.PathLike], filename: str = "") -> str:
     try:
         with open(file_path, 'r', encoding="UTF-8") as f:
             for line in f.readlines():
-                dict_list.append(json.loads(line))
+                try:
+                    dict_list.append(json.loads(line))
+                except json.decoder.JSONDecodeError:
+                    print("createCSV: error: skipping line with invalid JSON: " + line)
+                    pass
     except FileNotFoundError:
         return ""
     return JSON_list_to_CSV(dict_list, filename=filename)

@@ -313,6 +313,9 @@ async function clearDefinitionInput (full = true) {
   attractorSelect.innerHTML = 'Select file'
   attractorSelect.setAttribute('data-filename', '')
 
+  // Looping
+  document.getElementById('loopResultsCheckbox').checked = true
+
   // Definition details
   $('#definitionNameInput').val('')
   $('#languageNav').empty()
@@ -382,6 +385,11 @@ function editDefinition (uuid = '') {
     document.getElementById('inactivityTimeoutField').value = def.inactivity_timeout
   } else {
     document.getElementById('inactivityTimeoutField').value = 30
+  }
+
+  // Page looping
+  if (('behavior' in def) && 'loop_results' in def.behavior) {
+    document.getElementById('loopResultsCheckbox').checked = def.behavior.loop_results
   }
 
   // Set the layout options
@@ -1368,6 +1376,11 @@ document.getElementById('attractorSelectClear').addEventListener('click', (event
 
 document.getElementById('inactivityTimeoutField').addEventListener('change', (event) => {
   exSetup.updateWorkingDefinition(['inactivity_timeout'], event.target.value)
+  exSetup.previewDefinition(true)
+})
+
+document.getElementById('loopResultsCheckbox').addEventListener('change', (event) => {
+  exSetup.updateWorkingDefinition(['behavior', 'loop_results'], event.target.checked)
   exSetup.previewDefinition(true)
 })
 

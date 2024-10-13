@@ -1,10 +1,8 @@
 # Standard modules
 from functools import lru_cache, partial
-import io
 import logging
 import mimetypes
 import os
-import platform
 import shutil
 import sys
 import threading
@@ -12,10 +10,12 @@ from typing import Any
 import uuid
 
 # Third-party modules
-from fastapi import FastAPI, Body, Depends, File, Form, HTTPException, UploadFile
+from fastapi import FastAPI, Body, Depends, File, UploadFile
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, Response
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.background import BackgroundTasks
 import uvicorn
 
 # Exhibitera modules
@@ -25,6 +25,9 @@ import helper_files
 import helper_system
 import helper_utilities
 
+# Api Modules
+from api.system import system
+from api.definitions import definitions
 # If we're not on Linux, prepare to use the webview
 if sys.platform != 'linux':
     import webview
@@ -110,12 +113,17 @@ app.mount("/static",
           StaticFiles(directory=helper_files.get_path(
               ["static"], user_file=True)),
           name="static")
+app.mount("/temp",
+          StaticFiles(directory=helper_files.get_path(
+              ["temp"], user_file=True)),
+          name="temp")
 app.mount("/thumbnails",
           StaticFiles(directory=helper_files.get_path(
               ["thumbnails"], user_file=True)),
           name="thumbnails")
 
-
+app.include_router(system.router)
+app.include_router(definitions.router)
 @lru_cache()
 def get_config():
     return const_config
@@ -196,13 +204,30 @@ async def create_thumbnail_video_from_frames(
     return {"success": success}
 
 
+@app.get('/files/{filename}/thumbnail')
+@app.get('/files/{filename}/thumbnail/{width}')
+def get_v2_thumbnail(filename: str, width: str = "400", force_image: bool = False):
+    """
+
+    :param force_image: Always return a jpg thumbnail, even for videos
+    :param filename: The name of a file in the content directory
+    :param width: The width of the file to be returned
+    :return: Image or video data for the requested thumbnail
+    """
+
+    thumbnail_path, mimetype = helper_files.get_thumbnail(filename, v2=True, width=width, force_image=force_image)
+    if not os.path.exists(thumbnail_path):
+        return FileResponse(helper_files.get_path(["_static", "icons", "document_missing.svg"]))
+    return FileResponse(thumbnail_path)
+
+
 @app.post('/files/generateThumbnail')
 def generate_thumbnail(source: str | list[str] = Body(description='The file(s) in content to generate thumbnails for'),
                        mimetype: str | list[str] = Body(
                            description='One of [image | video] that gives the mimetype of the file. Must have the same length as source.'),
                        width: int = Body(description="The pixel width of the thumbnails.",
                                          default=400)):
-    """Generate new thumbnail(s) from files in teh content directory"""
+    """Generate new thumbnail(s) from files in the content directory"""
 
     if isinstance(source, str):
         source = [source]
@@ -255,6 +280,11 @@ def upload_thumbnail(files: list[UploadFile] = File(),
     return {"success": True}
 
 
+@app.post('/files/createZip')
+def create_zip(background_tasks: BackgroundTasks,
+               files: list[str] = Body(description="A list of the files to be zipped. Files must be in the content directory."),
+               zip_filename: str = Body(description="The filename of the zip file to be created.")):
+    """Create a ZIP file containing the given files."""
 @app.get('/files/{filename}/getThumbnail')
 def get_thumbnail(filename: str):
     """Return the filename of the thumbnail for the given file, if it exists."""
@@ -304,32 +334,10 @@ async def get_screenshot():
                     })
 
 
-@app.get("/definitions/{app_id}/getAvailable")
-async def get_available_definitions(app_id: str):
-    """Return a list of all the definitions for the given app."""
-
-    return {"success": True, "definitions": helper_files.get_available_definitions(app_id)}
-
-
-@app.get("/definitions/{this_uuid}/delete")
-async def delete_definition(this_uuid: str):
-    """Delete the given definition."""
-
-    path = helper_files.get_path(["definitions", helper_files.with_extension(this_uuid, "json")], user_file=True)
-    helper_files.delete_file(path)
-
-    return {"success": True}
-
-
-@app.get("/definitions/{this_uuid}/load")
-async def load_definition(this_uuid: str):
-    """Load the given definition and return the JSON."""
-
-    path = helper_files.get_path(["definitions", helper_files.with_extension(this_uuid, "json")], user_file=True)
-    definition = helper_files.load_json(path)
-    if definition is None:
-        return {"success": False, "reason": f"The definition {this_uuid} does not exist."}
-    return {"success": True, "definition": definition}
+    helper_files.create_zip(zip_filename, files)
+    zip_path = helper_files.get_path(["temp", zip_filename], user_file=True)
+    background_tasks.add_task(os.remove, zip_path)
+    return FileResponse(zip_path, filename=zip_filename)
 
 
 @app.get("/getDefaults")
@@ -386,20 +394,6 @@ async def do_wake():
     helper_system.wake_display()
 
 
-@app.post("/definitions/write")
-async def write_definition(definition: dict[str, Any] = Body(description="The JSON dictionary to write.", embed=True)):
-    """Save the given JSON data to a definition file in the content directory."""
-
-    if "uuid" not in definition or definition["uuid"] == "":
-        # Add a unique identifier
-        definition["uuid"] = str(uuid.uuid4())
-    path = helper_files.get_path(["definitions",
-                                  helper_files.with_extension(definition["uuid"], ".json")],
-                                 user_file=True)
-    helper_files.write_json(definition, path)
-    return {"success": True, "uuid": definition["uuid"]}
-
-
 @app.post("/file/delete")
 async def delete_file(file: str | list[str] = Body(description="The file(s) to delete", embed=True)):
     """Delete the specified file(s) from the content directory"""
@@ -454,19 +448,19 @@ async def write_raw_text(text: str = Body(description='The data to write.'),
         response = {"success": False,
                     "reason": "Invalid mode field: must be 'a' (append, [default]) or 'w' (overwrite)"}
         return response
-    success, reason = helper_files.write_raw_text(text, name + ".txt", mode=mode)
+    success, reason = helper_files.write_raw_text(text, helper_files.with_extension(name, 'txt'), mode=mode)
     response = {"success": success, "reason": reason}
     return response
 
 
 @app.post("/data/getRawText")
-async def read_raw_text(name: str = Body(description='The name of the file to read.')):
+async def read_raw_text(name: str = Body(description='The name of the file to read.', embed=True)):
     """Load the given file and return the raw text."""
 
     if not helper_files.filename_safe(name):
         return {"success": False, "reason": "Invalid character in filename"}
 
-    result, success, reason = helper_files.get_raw_text(name)
+    result, success, reason = helper_files.get_raw_text(helper_files.with_extension(name, 'txt'))
 
     response = {"success": success, "reason": reason, "text": result}
     return response
@@ -743,8 +737,8 @@ async def create_dmx_group(name: str = Body(description="The name of the group t
     new_group = helper_dmx.create_group(name)
 
     fixtures = []
-    for uuid in fixture_list:
-        fixtures.append(helper_dmx.get_fixture(uuid))
+    for fixture_uuid in fixture_list:
+        fixtures.append(helper_dmx.get_fixture(fixture_uuid))
     new_group.add_fixtures(fixtures)
     helper_dmx.write_dmx_configuration()
 
@@ -770,15 +764,15 @@ async def edit_dmx_group(group_uuid: str,
 
     if len(fixture_list) > 0:
         # First, remove any fixtures that are in the group, but not in fixture_list
-        for uuid in group.fixtures.copy():
-            if uuid not in fixture_list:
-                group.remove_fixture(uuid)
+        for fixture_uuid in group.fixtures.copy():
+            if fixture_uuid not in fixture_list:
+                group.remove_fixture(fixture_uuid)
 
         # Then, loop through fixture_list and add any that are not included in the group
         fixtures_to_add = []
-        for uuid in fixture_list:
-            if uuid not in group.fixtures:
-                fixture = helper_dmx.get_fixture(uuid)
+        for fixture_uuid in fixture_list:
+            if fixture_uuid not in group.fixtures:
+                fixture = helper_dmx.get_fixture(fixture_uuid)
                 if fixture is not None:
                     fixtures_to_add.append(fixture)
 
@@ -1122,8 +1116,7 @@ def create_config():
 if __name__ == "__main__":
     defaults_path = helper_files.get_path(['configuration', 'config.json'], user_file=True)
     if os.path.exists(defaults_path):
-        success = helper_utilities.read_defaults()
-        if success is False:
+        if helper_utilities.read_defaults() is False:
             create_config()
             helper_utilities.read_defaults()
 

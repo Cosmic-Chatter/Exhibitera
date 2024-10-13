@@ -152,7 +152,13 @@ function createThumbnail () {
   const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
   const files = []
   workingDefinition.content_order.forEach((uuid) => {
-    files.push(workingDefinition.content[uuid].filename)
+    if (exCommon.guessMimetype(workingDefinition.content[uuid].filename) === 'audio') {
+      // Pass
+    } else if (exCommon.guessMimetype(workingDefinition.content[uuid].filename) === 'model') {
+      // Pass
+    } else {
+      files.push(workingDefinition.content[uuid].filename)
+    }
   })
 
   exCommon.makeHelperRequest({
@@ -253,7 +259,7 @@ function createItemHTML (item, num) {
   selectFile.style.cursor = 'pointer'
   selectFile.addEventListener('click', () => {
     exFileSelect.createFileSelectionModal({
-      filetypes: ['audio', 'image', 'video'],
+      filetypes: ['audio', 'image', 'video', 'glb', 'mtl', 'obj'],
       multiple: false
     })
       .then((result) => {
@@ -313,13 +319,14 @@ function createItemHTML (item, num) {
   durationLabel.classList = 'form-label'
   durationLabel.innerHTML = `
   Duration
-  <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="The number of seconds the image should be displayed." style="font-size: 0.55em;">?</span>
+  <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="The number of seconds the media should be displayed." style="font-size: 0.55em;">?</span>
   `
   durationCol.appendChild(durationLabel)
 
   const durationInput = document.createElement('input')
   durationInput.classList = 'form-control'
   durationInput.setAttribute('placeholder', 30)
+  durationInput.setAttribute('min', 1)
   durationInput.setAttribute('type', 'number')
   durationInput.value = item.duration
   durationInput.addEventListener('input', (event) => {
@@ -331,14 +338,116 @@ function createItemHTML (item, num) {
       durationVal = parseFloat(inputStr)
     }
     exSetup.updateWorkingDefinition(['content', item.uuid, 'duration'], durationVal)
+    exSetup.previewDefinition(true)
   })
+
   durationCol.appendChild(durationInput)
-  if (exCommon.guessMimetype(item.filename) === 'image') {
+  if (['image', 'model'].includes(exCommon.guessMimetype(item.filename))) {
     durationCol.style.display = 'block'
   } else {
     durationCol.style.display = 'none'
   }
 
+  // Rotation
+  const rotationCol = document.createElement('div')
+  rotationCol.classList = 'col-12 mt-2 rotation-col'
+  modifyRow.appendChild(rotationCol)
+
+  const rotationLabel = document.createElement('label')
+  rotationLabel.classList = 'form-label'
+  rotationLabel.innerHTML = `
+  Rotation
+  <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="The number of rotations of the model to perform." style="font-size: 0.55em;">?</span>
+  `
+  rotationCol.appendChild(rotationLabel)
+
+  const rotationInput = document.createElement('input')
+  rotationInput.classList = 'form-control'
+  rotationInput.setAttribute('placeholder', 0)
+  rotationInput.setAttribute('min', 0)
+  rotationInput.setAttribute('type', 'number')
+  rotationInput.value = item.rotations
+  rotationInput.addEventListener('input', (event) => {
+    const inputStr = event.target.value
+    let rotationVal
+    if (inputStr.trim() === '') {
+      rotationVal = 0
+    } else {
+      rotationVal = parseFloat(inputStr)
+    }
+    exSetup.updateWorkingDefinition(['content', item.uuid, 'rotations'], rotationVal)
+    exSetup.previewDefinition(true)
+  })
+  rotationCol.appendChild(rotationInput)
+  if (['model'].includes(exCommon.guessMimetype(item.filename))) {
+    rotationCol.style.display = 'block'
+  } else {
+    rotationCol.style.display = 'none'
+  }
+
+  // Material
+  const materialCol = document.createElement('div')
+  materialCol.classList = 'col-12 mt-2 material-col'
+  modifyRow.appendChild(materialCol)
+
+  const materialRow = document.createElement('div')
+  materialRow.classList = 'row'
+  materialCol.appendChild(materialRow)
+
+  const materialInputCol = document.createElement('div')
+  materialInputCol.classList = 'col-9 mt-2 pe-1'
+  materialRow.appendChild(materialInputCol)
+
+  const materialLabel = document.createElement('label')
+  materialLabel.classList = 'form-label'
+  materialLabel.innerHTML = `
+  Material
+  <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="An optional .mtl texture file for the object." style="font-size: 0.55em;">?</span>
+  `
+  materialInputCol.appendChild(materialLabel)
+
+  const materialInput = document.createElement('button')
+  materialInput.classList = 'btn btn-outline-primary w-100'
+  if (('material' in item) && (item.material !== '') && (item.material != null)) {
+    materialInput.innerHTML = item.material
+  } else {
+    materialInput.innerHTML = 'Select material'
+  }
+  materialInputCol.appendChild(materialInput)
+
+  materialInput.addEventListener('click', () => {
+    exFileSelect.createFileSelectionModal({
+      filetypes: ['mtl'],
+      multiple: false
+    }).then((files) => {
+      const file = files[0]
+      exSetup.updateWorkingDefinition(['content', item.uuid, 'material'], file)
+      exSetup.previewDefinition(true)
+      materialInput.innerHTML = file
+    })
+  })
+
+  const materialClearCol = document.createElement('div')
+  materialClearCol.classList = 'col-3 ps-1 mt-2 d-flex align-items-end'
+  materialRow.appendChild(materialClearCol)
+
+  const materialClear = document.createElement('button')
+  materialClear.classList = 'btn btn-danger w-100'
+  materialClear.innerHTML = '×'
+  materialClearCol.appendChild(materialClear)
+  materialClear.addEventListener('click', () => {
+    exSetup.updateWorkingDefinition(['content', item.uuid, 'material'], '')
+    exSetup.previewDefinition(true)
+    materialInput.innerHTML = 'Select material'
+  })
+
+  if (item.filename.toLowerCase().endsWith('obj')) {
+    materialCol.style.display = 'block'
+  } else {
+    materialCol.style.display = 'none'
+  }
+
+  // Cache
   const cacheCol = document.createElement('div')
   cacheCol.classList = 'col-12 mt-2 cache-col'
   modifyRow.appendChild(cacheCol)
@@ -926,6 +1035,10 @@ function setItemContent (uuid, itemEl, file, type = 'file') {
     video.style.display = 'none'
     // Hide the duration input
     itemEl.querySelector('.duration-col').style.display = 'none'
+    // Hide the rotation input
+    itemEl.querySelector('.rotation-col').style.display = 'none'
+    // Hide the material input
+    itemEl.querySelector('.material-col').style.display = 'none'
   } else if (mimetype === 'image') {
     if (type === 'file') {
       image.src = '/thumbnails/' + exCommon.withExtension(file, 'jpg')
@@ -936,6 +1049,21 @@ function setItemContent (uuid, itemEl, file, type = 'file') {
     video.style.display = 'none'
     // Show the duration input
     itemEl.querySelector('.duration-col').style.display = 'block'
+    // Hide the rotation input
+    itemEl.querySelector('.rotation-col').style.display = 'none'
+    // Hide the material input
+    itemEl.querySelector('.material-col').style.display = 'none'
+  } else if (mimetype === 'model') {
+    image.src = exFileSelect.getDefaultModelIcon()
+    image.style.display = 'block'
+    video.style.display = 'none'
+    // Show the duration input
+    itemEl.querySelector('.duration-col').style.display = 'block'
+    // Show the rotation input
+    itemEl.querySelector('.rotation-col').style.display = 'block'
+    if (file.toLowerCase().endsWith('obj')) {
+      itemEl.querySelector('.material-col').style.display = 'block'
+    } else itemEl.querySelector('.material-col').style.display = 'none'
   } else if (mimetype === 'video') {
     if (type === 'file') {
       video.src = '/thumbnails/' + exCommon.withExtension(file, 'mp4')
@@ -946,6 +1074,10 @@ function setItemContent (uuid, itemEl, file, type = 'file') {
     image.style.display = 'none'
     // Hide the duration input
     itemEl.querySelector('.duration-col').style.display = 'none'
+    // Hide the rotation input
+    itemEl.querySelector('.rotation-col').style.display = 'none'
+    // Hide the material input
+    itemEl.querySelector('.material-col').style.display = 'none'
   }
 }
 
@@ -1043,7 +1175,7 @@ setTimeout(setUpColorPickers, 100)
 // Main buttons
 
 document.getElementById('manageContentButton').addEventListener('click', (event) => {
-  exFileSelect.createFileSelectionModal({ manage: true, filetypes: ['audio', 'image', 'video'] })
+  exFileSelect.createFileSelectionModal({ manage: true, filetypes: ['audio', 'image', 'video', 'glb', 'mtl', 'obj'] })
 })
 
 // Content

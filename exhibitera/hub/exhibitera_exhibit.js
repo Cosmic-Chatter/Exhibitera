@@ -24,6 +24,11 @@ class BaseComponent {
     this.lastContactDateTime = null
   }
 
+  cleanID () {
+    // Return the ID sanitized of bad characters for DOM selectors.
+    return this.id.replaceAll(' ', '_').replaceAll('.', '_').replaceAll('#', '_').replaceAll("'", '_').replaceAll('"', '_').replaceAll('/', '_').replaceAll('\\', '_')
+  }
+
   buildHTML (group) {
     // Function to build the HTML representation of this component
     // and add it to the row of the parent group
@@ -44,7 +49,7 @@ class BaseComponent {
     }
     const displayName = this.id
     const thisId = this.id
-    const cleanId = this.id.replaceAll(' ', '_')
+    const cleanId = this.cleanID()
 
     const col = document.createElement('div')
     col.classList = 'col mt-1'
@@ -244,7 +249,7 @@ class BaseComponent {
   setStatus (status, maintenanceStatus) {
     // Set the component's status and change the GUI to reflect the change.
 
-    const cleanId = this.id.replaceAll(' ', '_')
+    const cleanId = this.cleanID()
 
     this.status = exConfig.STATUS[status]
     this.maintenanceStatus = exConfig.MAINTANANCE_STATUS[maintenanceStatus]
@@ -456,6 +461,12 @@ class ExhibitComponentGroup {
     this.buildHTML()
   }
 
+  cleanID () {
+    // Return the ID sanitized of characters unsafe for DOM selectors.
+
+    return this.group.replaceAll(' ', '_').replaceAll('.', '_').replaceAll('#', '_').replaceAll("'", '_').replaceAll('"', '_').replaceAll('/', '_').replaceAll('\\', '_')
+  }
+
   addComponent (component) {
     this.components.push(component)
     this.sortComponentList()
@@ -605,7 +616,7 @@ class ExhibitComponentGroup {
 
     const componentList = document.createElement('div')
     componentList.classList = 'row'
-    componentList.setAttribute('id', thisGroup.replaceAll(' ', '_') + 'ComponentList')
+    componentList.setAttribute('id', this.cleanID() + 'ComponentList')
     if (numToDisplay > 7) {
       componentList.classList.add('row-cols-2', 'row-cols-sm-3', 'row-cols-md-4')
     } else {

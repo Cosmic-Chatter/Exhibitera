@@ -1,6 +1,5 @@
 *.pyc
 *.log
-apps/content/*
 .DS_Store
 node_modules
 /venv_3_11/*
@@ -9,3 +8,5 @@ node_modules
 */venv/*
 exhibitera/apps/configuration/*
 exhibitera/apps/definitions/*
+/exhibitera/apps/static/*
+exhibitera/apps/content/*

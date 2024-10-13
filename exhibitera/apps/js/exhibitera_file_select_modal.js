@@ -73,29 +73,32 @@ export function createFileSelectionModal (userOptions) {
                   </div>
                 </div>
                 <div class='col-6 col-lg-12 mt-2 text-center h6' style="word-wrap: break-word">
-                <span id="exFileSelectModalFilePreviewFilename" ></span>
-                <div id="exFileSelectModalFilePreviewEditContainer" class='row align-items-center'>
-                  <div class='col-12'>
-                    <input id="exFileSelectModalFilePreviewEditField" type='text' class='form-control'>
+                  <span id="exFileSelectModalFilePreviewFilename" ></span>
+                  <div id="exFileSelectModalFilePreviewEditContainer" class='row align-items-center'>
+                    <div class='col-12'>
+                      <input id="exFileSelectModalFilePreviewEditField" type='text' class='form-control'>
+                    </div>
+                    <div id="exFileSelectModalFilePreviewEditFileExistsWarning" class='col-12 text-danger text-center mt-2'>
+                    A file with this name already exists.
+                    </div>
+                    <div class='col-6 col-sm-3 offset-sm-3 mt-2'>
+                      <button id="exFileSelectModalFilePreviewEditCancelButton" class='btn btn-danger btn-sm w-100'>✕</button>
+                    </div>
+                    <div class='col-6 col-sm-3 mt-2'>
+                      <button id="exFileSelectModalFilePreviewEditSaveButton" class='btn btn-success btn-sm w-100'>✓</button>
+                    </div>
                   </div>
-                  <div id="exFileSelectModalFilePreviewEditFileExistsWarning" class='col-12 text-danger text-center mt-2'>
-                  A file with this name already exists.
-                  </div>
-                  <div class='col-6 col-sm-3 offset-sm-3 mt-2'>
-                    <button id="exFileSelectModalFilePreviewEditCancelButton" class='btn btn-danger btn-sm w-100'>✕</button>
-                  </div>
-                  <div class='col-6 col-sm-3 mt-2'>
-                    <button id="exFileSelectModalFilePreviewEditSaveButton" class='btn btn-success btn-sm w-100'>✓</button>
-                  </div>
-                </div>
-                
-                <div class='row'>
-                  <div class='col-12 col-sm-6'>
-                    <button id="exFileSelectModalRenameFileButton" class='btn btn-sm btn-info w-100 mt-3'>Rename</button>
-                  </div>
-                  <div class='col-12 col-sm-6'>
-                    <button id="exFileSelectModalDeleteFileButton" class='btn btn-sm btn-danger w-100 mt-3' data-bs-toggle='popover' title='Are you sure?' data-bs-content='<a id="fileDeletePopover" class="btn btn-danger w-100">Confirm</a>' data-bs-trigger='focus' data-bs-html='true'>Delete</button>
-                  </div>
+
+                  <div class='row'>
+                    <div class='col-12 col-sm-6'>
+                      <button id="exFileSelectModalRenameFileButton" class='btn btn-sm btn-info w-100 mt-3'>Rename</button>
+                    </div>
+                    <div class='col-12 col-sm-6'>
+                      <button id="exFileSelectModalDeleteFileButton" class='btn btn-sm btn-danger w-100 mt-3' data-bs-toggle='popover' title='Are you sure?' data-bs-content='<a id="fileDeletePopover" class="btn btn-danger w-100">Confirm</a>' data-bs-trigger='focus' data-bs-html='true'>Delete</button>
+                    </div>
+                    <div class='col-12 col-sm-6'>
+                      <a id="exFileSelectModalDownloadFileButton" class='btn btn-sm btn-info w-100 mt-3'>Download</a>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -126,6 +129,11 @@ export function createFileSelectionModal (userOptions) {
                     <div id="exFileSelectModalDeleteMultipleButtonCol" class="col-6 col-sm-4" style="display: none;">
                       <div>
                         <button id="exFileSelectModalDeleteMultipleFileButton" class='btn btn-danger w-100' data-bs-toggle='popover' title='Are you sure?' data-bs-content='<a id="fileDeleteMultiplePopover" class="btn btn-danger w-100">Confirm</a>' data-bs-trigger='focus' data-bs-html='true'>Delete multiple</button>
+                      </div>
+                    </div>
+                    <div id="exFileSelectModalDownloadMultipleButtonCol" class="col-6 col-sm-4" style="display: none;">
+                      <div>
+                        <button id="exFileSelectModalDownloadMultipleFileButton" class='btn btn-info w-100'>Download multiple</button>
                       </div>
                     </div>
                   </div>
@@ -219,6 +227,9 @@ export function createFileSelectionModal (userOptions) {
       })
       document.body.setAttribute('data-fileMultipleDeletePopoverEventAdded', 'true')
     }
+
+    // Download multiple
+    document.getElementById('exFileSelectModalDownloadMultipleButtonCol').addEventListener('click', downloadMultipleFiles)
 
     // Choose button
     document.getElementById('exFileSelectModalChooseButton').addEventListener('click', () => {
@@ -393,6 +404,31 @@ function _populateThumbnail (file, thumbContainer, thumbnailList, retries = 3) {
   const thumbRoot = file.replace(/\.[^/.]+$/, '')
   thumbContainer.innerHTML = '' // Clear in case we're replacing an existing thumbnail
 
+    if (mimetype === 'image' && thumbnailList.includes(thumbRoot + '.jpg')) {
+      thumb = document.createElement('img')
+      // thumb.src = exCommon.config.helperAddress + '/thumbnails/' + thumbRoot + '.jpg'
+      thumb.src = exCommon.config.helperAddress + '/files/' + file + '/thumbnail/240'
+    } else if (mimetype === 'video' && thumbnailList.includes(thumbRoot + '.mp4')) {
+      thumb = document.createElement('video')
+      thumb.setAttribute('loop', true)
+      thumb.setAttribute('autoplay', true)
+      thumb.setAttribute('disablePictureInPicture', true)
+      thumb.setAttribute('webkit-playsinline', true)
+      thumb.setAttribute('playsinline', true)
+      // thumb.src = exCommon.config.helperAddress + '/thumbnails/' + thumbRoot + '.mp4'
+      thumb.src = exCommon.config.helperAddress + '/files/' + file + '/thumbnail/240'
+    } else if (mimetype === 'audio') {
+      thumb = document.createElement('img')
+      thumb.src = exCommon.config.helperAddress + getDefaultAudioIcon()
+    } else if (mimetype === 'model') {
+      thumb = document.createElement('img')
+      thumb.src = exCommon.config.helperAddress + getDefaultModelIcon()
+    } else if (mimetype === 'font') {
+      thumb = document.createElement('div')
+      thumb.classList = 'd-flex justify-content-center align-items-center'
+      const thumbInner = document.createElement('div')
+      thumb.appendChild(thumbInner)
+      thumbInner.innerHTML = 'AaBb123'
   if (mimetype === 'image' && thumbnailList.includes(thumbRoot + '.jpg')) {
     thumb = document.createElement('img')
     thumb.src = exCommon.config.helperAddress + '/thumbnails/' + thumbRoot + '.jpg'
@@ -474,6 +510,12 @@ function previewFile (file, thumbnailList) {
   document.getElementById('exFileSelectModalFilePreviewFilename').innerHTML = file
   document.getElementById('exFileSelectModalFilePreview').setAttribute('data-filename', file)
 
+  // Configure downlaod button
+
+  const download = document.getElementById('exFileSelectModalDownloadFileButton')
+  download.href = exCommon.config.helperAddress + '/content/' + file
+  download.download = file
+
   const thumbRoot = file.replace(/\.[^/.]+$/, '')
   const mimetype = exCommon.guessMimetype(file)
 
@@ -482,19 +524,25 @@ function previewFile (file, thumbnailList) {
     vid.style.display = 'none'
     font.style.display = 'none'
     aud.parentElement.style.display = 'none'
-    img.src = exCommon.config.helperAddress + '/thumbnails/' + thumbRoot + '.jpg'
+    img.src = exCommon.config.helperAddress + '/files/' + file + '/thumbnail/240'
   } else if (mimetype === 'video' && thumbnailList.includes(thumbRoot + '.mp4')) {
     img.style.display = 'none'
     vid.style.display = 'block'
     font.style.display = 'none'
     aud.parentElement.style.display = 'none'
-    vid.src = exCommon.config.helperAddress + '/thumbnails/' + thumbRoot + '.mp4'
+    vid.src = exCommon.config.helperAddress + '/files/' + file + '/thumbnail/240'
   } else if (mimetype === 'audio') {
     img.style.display = 'none'
     vid.style.display = 'none'
     font.style.display = 'none'
     aud.parentElement.style.display = 'flex'
     aud.src = exCommon.config.helperAddress + '/content/' + file
+  } else if (mimetype === 'model') {
+    img.style.display = 'block'
+    vid.style.display = 'none'
+    font.style.display = 'none'
+    aud.parentElement.style.display = 'none'
+    img.src = exCommon.config.helperAddress + getDefaultModelIcon()
   } else if (mimetype === 'font') {
     img.style.display = 'none'
     vid.style.display = 'none'
@@ -518,15 +566,23 @@ function previewFile (file, thumbnailList) {
   }
 }
 
-function getDefaultDocumentImage () {
+function getDefaultDocumentImage (png = false) {
   // Return the approriate thumbnail based on whether dark mode is enabled.
 
+  let ext = 'svg'
+  if (png === true) ext = 'png'
+
   const mode = document.querySelector('html').getAttribute('data-bs-theme')
-  if (mode === 'dark') return '/_static/icons/document_white.svg'
-  else if (mode === 'light') return '/_static/icons/document_black.svg'
-  else return '/_static/icons/document_black.svg'
+  if (mode === 'dark') return '/_static/icons/document_white.' + ext
+  else if (mode === 'light') return '/_static/icons/document_black.' + ext
+  else return '/_static/icons/document_black.' + ext
 }
 
+export function getDefaultAudioIcon (png = false) {
+  // Return the approriate audio thumbnail based on whether dark mode is enabled.
+
+  let ext = 'svg'
+  if (png === true) ext = 'png'
 function getDefaultSpreadsheetImage () {
   // Return the approriate thumbnail based on whether dark mode is enabled.
 
@@ -540,9 +596,21 @@ export function getDefaultAudioIcon () {
   // Return the approriate thumbnail based on whether dark mode is enabled.
 
   const mode = document.querySelector('html').getAttribute('data-bs-theme')
-  if (mode === 'dark') return '/_static/icons/audio_white.svg'
-  else if (mode === 'light') return '/_static/icons/audio_black.svg'
-  else return '/_static/icons/audio_black.svg'
+  if (mode === 'dark') return '/_static/icons/audio_white.' + ext
+  else if (mode === 'light') return '/_static/icons/audio_black.' + ext
+  else return '/_static/icons/audio_black.' + ext
+}
+
+export function getDefaultModelIcon (png = false) {
+  // Return the approriate model thumbnail based on whether dark mode is enabled.
+
+  let ext = 'svg'
+  if (png === true) ext = 'png'
+
+  const mode = document.querySelector('html').getAttribute('data-bs-theme')
+  if (mode === 'dark') return '/_static/icons/model_white.' + ext
+  else if (mode === 'light') return '/_static/icons/model_black.' + ext
+  else return '/_static/icons/model_black.' + ext
 }
 
 function selectFile (target, allowMultiple) {
@@ -568,8 +636,10 @@ function selectFile (target, allowMultiple) {
   if (allowMultiple === true) {
     if (document.querySelectorAll('.const-file-select-box.const-file-selected').length > 1) {
       document.getElementById('exFileSelectModalDeleteMultipleButtonCol').style.display = 'block'
+      document.getElementById('exFileSelectModalDownloadMultipleButtonCol').style.display = 'block'
     } else {
       document.getElementById('exFileSelectModalDeleteMultipleButtonCol').style.display = 'none'
+      document.getElementById('exFileSelectModalDownloadMultipleButtonCol').style.display = 'none'
     }
   }
 }
@@ -585,6 +655,7 @@ function selectAllFiles () {
   })
 
   document.getElementById('exFileSelectModalDeleteMultipleButtonCol').style.display = 'block'
+  document.getElementById('exFileSelectModalDownloadMultipleButtonCol').style.display = 'block'
 }
 
 function deselectAllFiles () {
@@ -698,6 +769,41 @@ function deleteFiles (files) {
           entry.parentElement.removeChild(entry)
         })
       }
+    })
+}
+
+function downloadMultipleFiles () {
+  // Download all selected files as a ZIP.
+
+  const filesToDownload = document.querySelectorAll('.const-file-select-box.const-file-selected')
+  const filenamesToDownload = []
+  filesToDownload.forEach((el) => {
+    filenamesToDownload.push(el.getAttribute('data-filename'))
+  })
+
+  fetch(exCommon.config.helperAddress + '/files/createZip',
+    {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+
+      },
+      body: JSON.stringify({
+        zip_filename: 'files.zip',
+        files: filenamesToDownload
+      })
+    }
+  )
+    .then((response) => response.blob())
+    .then((blob) => {
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'files.zip'
+      document.body.appendChild(a) // append the element to the dom
+      a.click()
+      a.remove() // afterwards, remove the element
     })
 }
 

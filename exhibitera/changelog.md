@@ -1,3 +1,19 @@
+# **Exhibitera 5.2**
+
+## Hub
+
+## Exhibitera Apps
+
+### General
+- Files uploaded as `content` can be downloaded using the file picker [Morgan Rehnberg]
+
+### Media Browser
+- Reaching the last page of results now loops back to the beginning by default [Marcello Badolato, Morgan Rehnberg]
+- When only one page of results is available, the page change buttons hide automatically [Morgan Rehnberg]
+
+### Media Player
+- Experimental support for 3D models [Morgan Rehnberg]
+
 # **Exhibitera 5.1**
 
 ## Hub

@@ -1,3 +1,4 @@
+/* global Js3dModelViewer */
 import * as exCommon from '../js/exhibitera_app_common.js'
 
 function updateParser (update) {
@@ -18,8 +19,8 @@ function updateParser (update) {
 }
 
 function loadDefinition (def) {
-  // Take an object parsed from an INI string and use it to load a new set of contet
-
+  // Take the definition and use it to load a new set of contet
+  exCommon.config.definition = def
   exCommon.config.sourceList = []
   def.content_order.forEach((uuid) => {
     exCommon.config.sourceList.push(def.content[uuid])
@@ -101,6 +102,9 @@ async function changeMedia (source) {
   const image = document.getElementById('fullscreenImage')
   const imageContainer = document.getElementById('imageOverlay')
   const audio = document.getElementById('audioPlayer')
+  const model = document.getElementById('modelViewer')
+  const modelContainer = document.getElementById('modelOverlay')
+
   let filename
   if (('type' in source) === false || source.type === 'file') {
     filename = 'content/' + source.filename
@@ -114,13 +118,14 @@ async function changeMedia (source) {
 
   // Split off the extension
   const split = source.filename.split('.')
-  const ext = split[split.length - 1]
+  const ext = split[split.length - 1].toLowerCase()
 
-  if (['mp4', 'mpeg', 'm4v', 'webm', 'mov', 'ogv', 'mpg'].includes(ext.toLowerCase())) {
+  if (['mp4', 'mpeg', 'm4v', 'webm', 'mov', 'ogv', 'mpg'].includes(ext)) {
     // Video file
     clearTimeout(sourceAdvanceTimer) // Only used for pictures
     videoContainer.style.opacity = 1
     imageContainer.style.opacity = 0
+    modelContainer.style.opacity = 0
     audio.pause()
     if (video.src !== filename) {
       video.pause()
@@ -140,20 +145,22 @@ async function changeMedia (source) {
     } else {
       video.loop = true
     }
-  } else if (['png', 'jpg', 'jpeg', 'tiff', 'tif', 'bmp', 'heic', 'webp'].includes(ext.toLowerCase())) {
+  } else if (['png', 'jpg', 'jpeg', 'tiff', 'tif', 'bmp', 'heic', 'webp'].includes(ext)) {
     // Image file
     video.pause()
     audio.pause()
     videoContainer.style.opacity = 0
+    modelContainer.style.opacity = 0
     image.src = filename
     imageContainer.style.opacity = 1
     clearTimeout(sourceAdvanceTimer)
     sourceAdvanceTimer = setTimeout(gotoNextSource, source.duration * 1000)
-  } else if (['aac', 'm4a', 'mp3', 'oga', 'ogg', 'weba', 'wav'].includes(ext.toLowerCase())) {
+  } else if (['aac', 'm4a', 'mp3', 'oga', 'ogg', 'weba', 'wav'].includes(ext)) {
     // Audio file
     video.pause()
     videoContainer.style.opacity = 0
     imageContainer.style.opacity = 0
+    modelContainer.style.opacity = 0
 
     if (audio.src !== filename) {
       audio.pause()
@@ -173,6 +180,53 @@ async function changeMedia (source) {
     } else {
       audio.loop = true
     }
+  } else if (['obj', 'glb'].includes(ext)) {
+    // 3D model
+    videoContainer.style.opacity = 0
+    imageContainer.style.opacity = 0
+    modelContainer.style.opacity = 1
+
+    let backgroundColor = 'rgb(0, 0, 0)'
+    if (exCommon.config.definition.style.background.mode === 'color') {
+      backgroundColor = exCommon.config.definition.style.background.color
+    }
+
+    const scene = Js3dModelViewer.prepareScene(model, {
+      grid: false,
+      background: backgroundColor,
+      trackball: false
+    })
+
+    let time = source.duration * 1000
+    const rotateMesh = (mesh) => {
+      mesh.rotateY(source.rotations * 2 * Math.PI / 60 / source.duration)
+      time = time - 16.67
+      if (time > 0) { setTimeout(() => { rotateMesh(mesh) }, 16.67) }
+    }
+
+    let material = null
+    if (('material' in source) && (source.material !== '') && (source.material != null)) material = '/content/' + source.material
+
+    if (ext === 'obj') {
+      Js3dModelViewer.loadObject(scene, filename, material, (mesh) => {
+        if (source.rotations > 0) {
+          rotateMesh(mesh)
+        }
+      })
+    } else if (ext === 'glb') {
+      Js3dModelViewer.loadGlb(scene, filename, (mesh) => {
+        if (source.rotations) {
+          rotateMesh(mesh.scene)
+        }
+      })
+    }
+    clearTimeout(sourceAdvanceTimer)
+    sourceAdvanceTimer = setTimeout(() => {
+      gotoNextSource()
+      setTimeout(() => {
+        document.getElementById('modelViewer').innerHTML = ''
+      }, 500)
+    }, source.duration * 1000)
   }
 
   // Annotations

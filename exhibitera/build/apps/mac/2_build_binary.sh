@@ -10,6 +10,8 @@ pyinstaller --clean --onefile \
             --add-data "*.html:."\
             --add-data "*.md:."\
             --add-data "*.txt:."\
+            --add-data "api/definitions/definitions.py:api/definitions/." \
+            --add-data "api/system/system.py:api/system/." \
             --add-data "js/app.js:js/." \
             --add-data "js/coloris.min.js:js/." \
             --add-data "js/exhibitera_app_common.js:js/." \
@@ -17,8 +19,9 @@ pyinstaller --clean --onefile \
             --add-data "js/exhibitera_setup_common.js:js/." \
             --add-data "js/first_time_setup.js:js/." \
             --add-data "js/html2canvas.min.js:js/." \
-            --add-data "js/jquery-3.6.1.min.js:js/." \
+            --add-data "js/jquery-3.7.1.min.js:js/." \
             --add-data "js/jquery.profanityfilter.min.js:js/." \
+            --add-data "js/js-3d-model-viewer.min.js:js/." \
             --add-data "js/platform.js:js/." \
             --add-data "js/pluralize-8.0.0.js:js/." \
             --add-data "js/popper.min.js:js/." \

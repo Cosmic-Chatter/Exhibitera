@@ -14,6 +14,7 @@ export const config = {
   currentDefinition: '',
   currentExhibit: 'Default',
   currentInteraction: false,
+  definition: {}, // Holds the current definition
   definitionLoader: null, // A function used by loadDefinition() to set up the specific app.
   errorDict: {},
   fontCache: {},
@@ -53,6 +54,7 @@ export function configureApp (opt = {}) {
     if (searchParams.has('definition')) {
       loadDefinition(searchParams.get('definition'))
         .then((result) => {
+          config.definition = result.definition
           config.definitionLoader(result.definition)
         })
     }
@@ -69,6 +71,7 @@ export function configureApp (opt = {}) {
           // Not using Hub
           loadDefinition(config.currentDefinition)
             .then((result) => {
+              config.definition = result.definition
               config.definitionLoader(result.definition)
             })
         }
@@ -291,15 +294,17 @@ function readServerUpdate (update) {
     })
       .then((result) => {
         if ('success' in result && result.success === false) return
+
         const def = result.definition
-        console.log(def)
-        if ('app' in def &&
-          def.app !== config.exhibiteraAppID &&
-          def.app !== '') {
-          console.log('Switching to app', def.app)
-          let otherPath = ''
-          if (def.app === 'other') otherPath = def.path
-          gotoApp(def.app, otherPath)
+        if ('app' in def && def.app !== '') {
+          if (
+            (def.app !== config.exhibiteraAppID) ||
+          (config.exhibiteraAppID === 'other' && def.path !== location.pathname.slice(1))
+          ) {
+            let otherPath = ''
+            if (def.app === 'other') otherPath = def.path
+            gotoApp(def.app, otherPath)
+          }
         }
       })
   }
@@ -390,15 +395,17 @@ function readHelperUpdate (update, changeApp = true) {
     })
       .then((result) => {
         if ('success' in result && result.success === false) return
+
         const def = result.definition
-        console.log(def)
-        if ('app' in def &&
-        def.app !== config.exhibiteraAppID &&
-        def.app !== '') {
-          console.log('Switching to app', def.app)
-          let otherPath = ''
-          if (def.app === 'other') otherPath = def.path
-          gotoApp(def.app, otherPath)
+        if ('app' in def && def.app !== '') {
+          if (
+            (def.app !== config.exhibiteraAppID) ||
+          (config.exhibiteraAppID === 'other' && def.path !== location.pathname.slice(1))
+          ) {
+            let otherPath = ''
+            if (def.app === 'other') otherPath = def.path
+            gotoApp(def.app, otherPath)
+          }
         }
       })
   }
@@ -721,9 +728,12 @@ export function guessMimetype (filename) {
     return 'audio'
   } else if (['otf', 'ttf', 'woff', 'woff2'].includes(ext)) {
     return 'font'
+  } else if (['fbx', 'glb', 'obj', 'stl', 'usdz'].includes(ext)) {
+    return 'model'
   } else if (['csv'].includes(ext)) {
     return 'spreadsheet'
   }
+  return ''
 }
 
 export function loadDefinition (defName) {
