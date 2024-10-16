@@ -20,7 +20,7 @@ export const config = {
   availableDefinitions: {},
   clearDefinition: null,
   loadDefinition: null,
-  saveDefinition: null,
+  onDefinitionSave: null,
   fontCache: {}, // Keys with any value indicate that font has already been made
   languages: [
     { code: 'ar-dz', name: 'عربي', name_en: 'Arabic (Algeria)' },
@@ -60,7 +60,7 @@ export async function configure (options) {
     initializeDefinition: null,
     initializeWizard: null,
     loadDefinition: null,
-    saveDefinition: null
+    onDefinitionSave: null
   }
 
   options = { ...defaults, ...options } // Merge in user-supplied options
@@ -70,14 +70,13 @@ export async function configure (options) {
   if (options.initializeDefinition == null) throw new Error("The options must include the 'initializeDefinition' field referencing the appropriate function.")
   if (options.initializeWizard == null) throw new Error("The options must include the 'initializeWizard' field referencing the appropriate function.")
   if (options.loadDefinition == null) throw new Error("The options must include the 'loadDefinition' field referencing the appropriate function.")
-  if (options.saveDefinition == null) throw new Error("The options must include the 'saveDefinition' field referencing the appropriate function.")
 
   config.app = options.app
   config.clearDefinition = options.clearDefinition
   config.initializeDefinition = options.initializeDefinition
   config.initializeWizard = options.initializeWizard
   config.loadDefinition = options.loadDefinition
-  config.saveDefinition = options.saveDefinition
+  if (options.onDefinitionSave != null) config.onDefinitionSave = options.onDefinitionSave
 
   await config.initializeDefinition()
   const userFonts = await getUserFonts()
@@ -354,6 +353,33 @@ export function updateWorkingDefinition (property, value) {
   exCommon.setObjectProperty($('#definitionSaveButton').data('workingDefinition'), property, value)
 }
 
+export async function saveDefinition (name = '') {
+  // Collect inputted information to save the definition
+
+  const definition = $('#definitionSaveButton').data('workingDefinition')
+  const initialDefinition = $('#definitionSaveButton').data('initialDefinition')
+  definition.app = config.app
+  if (name === '') definition.name = $('#definitionNameInput').val()
+  definition.uuid = initialDefinition.uuid
+
+  return exCommon.writeDefinition(definition)
+    .then((result) => {
+      if ('success' in result && result.success === true) {
+        // Update the UUID in case we have created a new definition
+        $('#definitionSaveButton').data('initialDefinition', structuredClone(definition))
+
+        // If we have a completion handler, call it with the definition
+        if (config.onDefinitionSave != null) config.onDefinitionSave($('#definitionSaveButton').data('workingDefinition'))
+        exCommon.getAvailableDefinitions(config.app)
+          .then((response) => {
+            if ('success' in response && response.success === true) {
+              populateAvailableDefinitions(response.definitions)
+            }
+          })
+      }
+    })
+}
+
 export function createLoginEventListeners () {
   // Bind event listeners for login elements
 
@@ -370,7 +396,11 @@ function createEventListeners () {
 
   // Wizard
   document.getElementById('showWizardButton').addEventListener('click', showSetupWizard)
-  document.getElementById('wizardAddLanguageButton').addEventListener('click', addWizardLanguage)
+  try {
+    document.getElementById('wizardAddLanguageButton').addEventListener('click', addWizardLanguage)
+  } catch {
+    // Ignore if there is no wizard language button
+  }
   document.getElementById('appWelcomeModalWizardButton').addEventListener('click', () => {
     $('#appWelcomeModal').modal('hide')
     showSetupWizard()
@@ -389,7 +419,7 @@ function createEventListeners () {
 
   // Save definition button
   document.getElementById('definitionSaveButton').addEventListener('click', () => {
-    config.saveDefinition()
+    saveDefinition()
   })
 
   // Preview definition button

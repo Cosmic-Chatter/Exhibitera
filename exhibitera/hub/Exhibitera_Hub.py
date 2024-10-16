@@ -14,12 +14,11 @@ import json
 import logging
 import os
 import shutil
-import signal
 import socket
 import sys
 import time
 import traceback
-from typing import Annotated, Any, Union
+from typing import Any, Union
 import urllib.request
 import uvicorn
 

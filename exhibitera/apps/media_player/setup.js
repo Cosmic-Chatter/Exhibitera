@@ -5,7 +5,7 @@ import * as exFileSelect from '../js/exhibitera_file_select_modal.js'
 import * as exSetup from '../js/exhibitera_setup_common.js'
 
 function initializeDefinition () {
-  // Create a blank definition at save it to workingDefinition.
+  // Create a blank definition and save it to workingDefinition.
 
   return new Promise(function (resolve, reject) {
     // Get a new temporary uuid
@@ -116,34 +116,6 @@ function editDefinition (uuid = '') {
 
   // Configure the preview frame
   document.getElementById('previewFrame').src = '../media_player.html?standalone=true&definition=' + def.uuid
-}
-
-function saveDefinition () {
-  // Collect inputted information to save the definition
-
-  const definition = $('#definitionSaveButton').data('workingDefinition')
-  const initialDefinition = $('#definitionSaveButton').data('initialDefinition')
-  definition.app = 'media_player'
-  definition.name = $('#definitionNameInput').val()
-  definition.uuid = initialDefinition.uuid
-
-  exCommon.writeDefinition(definition)
-    .then((result) => {
-      if ('success' in result && result.success === true) {
-        console.log('Saved!')
-        // Create a thumbnail
-        createThumbnail()
-
-        // Update the UUID in case we have created a new definition
-        $('#definitionSaveButton').data('initialDefinition', structuredClone(definition))
-        exCommon.getAvailableDefinitions('media_player')
-          .then((response) => {
-            if ('success' in response && response.success === true) {
-              exSetup.populateAvailableDefinitions(response.definitions)
-            }
-          })
-      }
-    })
 }
 
 function createThumbnail () {
@@ -1254,7 +1226,7 @@ exSetup.configure({
   clearDefinition: clearDefinitionInput,
   initializeDefinition,
   loadDefinition: editDefinition,
-  saveDefinition
+  onDefinitionSave: createThumbnail
 })
 
 exCommon.askForDefaults(false)

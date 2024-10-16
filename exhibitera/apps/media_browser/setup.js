@@ -245,7 +245,7 @@ async function wizardCreateDefinition () {
     exSetup.configurePreview('16x9', true)
   } else exSetup.configurePreview('9x16', true)
 
-  await saveDefinition(defName)
+  await exSetup.saveDefinition(defName)
   await exCommon.getAvailableDefinitions(exCommon.config.app)
   editDefinition($('#definitionSaveButton').data('workingDefinition').uuid)
 
@@ -959,31 +959,6 @@ function onFlagUploadChange (lang) {
   xhr.send(formData)
 }
 
-async function saveDefinition (name = '') {
-  // Collect inputted information to save the definition
-
-  const definition = $('#definitionSaveButton').data('workingDefinition')
-  const initialDefinition = $('#definitionSaveButton').data('initialDefinition')
-  definition.app = 'media_browser'
-  if (name === '') definition.name = $('#definitionNameInput').val()
-  definition.uuid = initialDefinition.uuid
-
-  return exCommon.writeDefinition(definition)
-    .then((result) => {
-      if ('success' in result && result.success === true) {
-        console.log('Saved!')
-        // Update the UUID in case we have created a new definition
-        $('#definitionSaveButton').data('initialDefinition', structuredClone(definition))
-        exCommon.getAvailableDefinitions('media_browser')
-          .then((response) => {
-            if ('success' in response && response.success === true) {
-              exSetup.populateAvailableDefinitions(response.definitions)
-            }
-          })
-      }
-    })
-}
-
 function onAttractorFileChange () {
   // Called when a new image or video is selected.
 
@@ -1466,8 +1441,7 @@ exSetup.configure({
   clearDefinition: clearDefinitionInput,
   initializeDefinition,
   initializeWizard,
-  loadDefinition: editDefinition,
-  saveDefinition
+  loadDefinition: editDefinition
 })
 
 exCommon.askForDefaults(false)

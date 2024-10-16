@@ -4,7 +4,7 @@ import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exSetup from '../js/exhibitera_setup_common.js'
 import * as exFileSelect from '../js/exhibitera_file_select_modal.js'
 
-function initializeDefinition() {
+function initializeDefinition () {
   // Create a blank definition at save it to workingDefinition.
 
   return new Promise(function (resolve, reject) {
@@ -25,7 +25,7 @@ function initializeDefinition() {
           attractor: {},
           behavior: {
             enable_keyboard_input: false,
-            max_character_count: -1,
+            max_character_count: -1
           },
           content: {
             localization: {}
@@ -42,7 +42,7 @@ function initializeDefinition() {
           attractor: {},
           behavior: {
             enable_keyboard_input: false,
-            max_character_count: -1,
+            max_character_count: -1
           },
           content: {
             localization: {}
@@ -54,7 +54,7 @@ function initializeDefinition() {
   })
 }
 
-async function clearDefinitionInput(full = true) {
+async function clearDefinitionInput (full = true) {
   // Clear all input related to a defnition
 
   if (full === true) {
@@ -64,8 +64,8 @@ async function clearDefinitionInput(full = true) {
   // Definition details
   document.getElementById('definitionNameInput').value = ''
   document.getElementById('collectionNameInput').value = ''
-  document.getElementById('enableKeyboardInput').checked = false;
-  document.getElementById('maxCharacterCount').value = '-1';
+  document.getElementById('enableKeyboardInput').checked = false
+  document.getElementById('maxCharacterCount').value = '-1'
   // Content details
   document.getElementById('promptInput').value = ''
   Array.from(document.querySelectorAll('.localization-input')).forEach((el) => {
@@ -95,7 +95,7 @@ async function clearDefinitionInput(full = true) {
   document.getElementById('promptTextSizeSlider').value = 0
 }
 
-function editDefinition(uuid = '') {
+function editDefinition (uuid = '') {
   // Populate the given definition for editing.
 
   clearDefinitionInput(false)
@@ -110,14 +110,14 @@ function editDefinition(uuid = '') {
     document.getElementById('collectionNameInput').value = ''
   }
   if ('enable_keyboard_input' in def.behavior) {
-    document.getElementById('enableKeyboardInput').checked = def.behavior.enable_keyboard_input;
+    document.getElementById('enableKeyboardInput').checked = def.behavior.enable_keyboard_input
   } else {
-    document.getElementById('enableKeyboardInput').checked = false;
+    document.getElementById('enableKeyboardInput').checked = false
   }
   if ('max_character_count' in def.behavior) {
-    document.getElementById('maxCharacterCount').value = def.behavior.max_character_count;
+    document.getElementById('maxCharacterCount').value = def.behavior.max_character_count
   } else {
-    document.getElementById('maxCharacterCount').value = -1;
+    document.getElementById('maxCharacterCount').value = -1
   }
   // Content
   if ('prompt' in def.content) {
@@ -165,33 +165,8 @@ function editDefinition(uuid = '') {
   exSetup.previewDefinition()
 }
 
-function saveDefinition() {
-  // Collect inputted information to save the definition
-
-  const definition = $('#definitionSaveButton').data('workingDefinition')
-  const initialDefinition = $('#definitionSaveButton').data('initialDefinition')
-  definition.app = 'word_cloud_input'
-  definition.name = $('#definitionNameInput').val()
-  definition.uuid = initialDefinition.uuid
-
-  exCommon.writeDefinition(definition)
-    .then((result) => {
-      if ('success' in result && result.success === true) {
-        // Update the UUID in case we have created a new definition
-        $('#definitionSaveButton').data('initialDefinition', structuredClone(definition))
-        exCommon.getAvailableDefinitions('word_cloud_input')
-          .then((response) => {
-            if ('success' in response && response.success === true) {
-              exSetup.populateAvailableDefinitions(response.definitions)
-              document.getElementById('availableDefinitionSelect').value = definition.uuid
-            }
-          })
-      }
-    })
-}
-
 // Set up the color pickers
-function setUpColorPickers() {
+function setUpColorPickers () {
   Coloris({
     el: '.coloris',
     theme: 'pill',
@@ -222,18 +197,18 @@ document.getElementById('collectionNameInput').addEventListener('change', (event
   exSetup.previewDefinition(true)
 })
 document.getElementById('enableKeyboardInput').addEventListener('change', (event) => {
-  exSetup.updateWorkingDefinition(['behavior', 'enable_keyboard_input'], event.target.checked);
+  exSetup.updateWorkingDefinition(['behavior', 'enable_keyboard_input'], event.target.checked)
   if (event.target.checked) {
-    document.getElementById("previewFrame").src = '../word_cloud_input.html?standalone=true';
+    document.getElementById('previewFrame').src = '../word_cloud_input.html?standalone=true'
   } else {
-    document.getElementById('previewFrame').src = '../word_cloud_input.html?standalone=true';
+    document.getElementById('previewFrame').src = '../word_cloud_input.html?standalone=true'
   }
   exSetup.previewDefinition(true)
-});
+})
 document.getElementById('maxCharacterCount').addEventListener('change', (event) => {
-  exSetup.updateWorkingDefinition(['behavior', 'max_character_count'], parseInt(event.target.value));
-  exSetup.previewDefinition(true);
-});
+  exSetup.updateWorkingDefinition(['behavior', 'max_character_count'], parseInt(event.target.value))
+  exSetup.previewDefinition(true)
+})
 // Content
 document.getElementById('promptInput').addEventListener('change', (event) => {
   exSetup.updateWorkingDefinition(['content', 'prompt'], event.target.value)
@@ -281,8 +256,7 @@ exSetup.configure({
   app: 'word_cloud_input',
   clearDefinition: clearDefinitionInput,
   initializeDefinition,
-  loadDefinition: editDefinition,
-  saveDefinition
+  loadDefinition: editDefinition
 })
 
 exCommon.askForDefaults(false)

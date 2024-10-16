@@ -453,31 +453,6 @@ function onFlagUploadChange (lang) {
   xhr.send(formData)
 }
 
-function saveDefinition () {
-  // Collect inputted information to save the definition
-
-  const definition = $('#definitionSaveButton').data('workingDefinition')
-  const initialDefinition = $('#definitionSaveButton').data('initialDefinition')
-  definition.app = 'timeline_explorer'
-  definition.name = $('#definitionNameInput').val()
-  definition.uuid = initialDefinition.uuid
-
-  exCommon.writeDefinition(definition)
-    .then((result) => {
-      if ('success' in result && result.success === true) {
-        console.log('Saved!')
-        // Update the UUID in case we have created a new definition
-        $('#definitionSaveButton').data('initialDefinition', structuredClone(definition))
-        exCommon.getAvailableDefinitions('timeline_explorer')
-          .then((response) => {
-            if ('success' in response && response.success === true) {
-              exSetup.populateAvailableDefinitions(response.definitions)
-            }
-          })
-      }
-    })
-}
-
 function onAttractorFileChange () {
   // Called when a new image or video is selected.
 
@@ -831,8 +806,7 @@ exSetup.configure({
   app: 'timeline_explorer',
   clearDefinition: clearDefinitionInput,
   initializeDefinition,
-  loadDefinition: editDefinition,
-  saveDefinition
+  loadDefinition: editDefinition
 })
 
 exCommon.askForDefaults(false)

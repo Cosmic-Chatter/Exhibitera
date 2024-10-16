@@ -149,31 +149,6 @@ function disableAttractorOptions (disable) {
   }
 }
 
-function saveDefinition () {
-  // Collect inputted information to save the definition
-
-  const definition = $('#definitionSaveButton').data('workingDefinition')
-  const initialDefinition = $('#definitionSaveButton').data('initialDefinition')
-  definition.app = 'timelapse_viewer'
-  definition.name = $('#definitionNameInput').val()
-  definition.uuid = initialDefinition.uuid
-
-  exCommon.writeDefinition(definition)
-    .then((result) => {
-      if ('success' in result && result.success === true) {
-        // Update the UUID in case we have created a new definition
-        $('#definitionSaveButton').data('initialDefinition', structuredClone(definition))
-        exCommon.getAvailableDefinitions('timelapse_viewer')
-          .then((response) => {
-            if ('success' in response && response.success === true) {
-              exSetup.populateAvailableDefinitions(response.definitions)
-              document.getElementById('availableDefinitionSelect').value = definition.uuid
-            }
-          })
-      }
-    })
-}
-
 function guessFilenamePattern () {
   // Use two given filenames to guess a wildcard (*) pattern to select the range
 
@@ -460,8 +435,7 @@ exSetup.configure({
   app: 'timelapse_viewer',
   clearDefinition: clearDefinitionInput,
   initializeDefinition,
-  loadDefinition: editDefinition,
-  saveDefinition
+  loadDefinition: editDefinition
 })
 
 exCommon.askForDefaults(false)

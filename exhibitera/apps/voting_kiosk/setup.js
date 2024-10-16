@@ -54,6 +54,264 @@ function initializeDefinition () {
   })
 }
 
+async function initializeWizard () {
+  // Setup the wizard
+
+  await initializeDefinition()
+
+  // Hide all but the welcome screen
+  Array.from(document.querySelectorAll('.wizard-pane')).forEach((el) => {
+    el.style.display = 'none'
+  })
+  document.getElementById('wizardPane_Welcome').style.display = 'block'
+
+  // Reset fields
+  document.getElementById('wizardDefinitionNameInput').value = ''
+  document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'none'
+  document.getElementById('wizardHeaderTextInput').value = ''
+  document.getElementById('wizardFooterTextInput').value = ''
+  document.getElementById('wizardAnswerTypeSelect').value = 'thumbs'
+  document.getElementById('wizardCustomAnswersRow').innerHTML = ''
+  document.getElementById('wizardCustomAnswersNoOptionsWarning').style.display = 'none'
+  document.getElementById('wizardCustomAnswersBlankOptionsWarning').style.display = 'none'
+}
+
+async function wizardForward (currentPage) {
+  // Check if the wizard is ready to advance and perform the move
+
+  if (currentPage === 'Welcome') {
+    const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
+    if (defName !== '') {
+      document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'none'
+      wizardGoTo('Question')
+    } else {
+      document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'block'
+    }
+  } else if (currentPage === 'Question') {
+    wizardGoTo('Answers')
+  } else if (currentPage === 'Answers') {
+    const answers = document.querySelectorAll('.wizard-answer-option')
+    const answersType = document.getElementById('wizardAnswerTypeSelect').value
+
+    if (answersType === 'custom') {
+      if (answers.length === 0) {
+        document.getElementById('wizardCustomAnswersNoOptionsWarning').style.display = 'block'
+        return
+      } else {
+        document.getElementById('wizardCustomAnswersNoOptionsWarning').style.display = 'none'
+      }
+      document.getElementById('wizardCustomAnswersBlankOptionsWarning').style.display = 'none'
+      let error = false
+      for (const answer of answers) {
+        if (answer.value.trim() === '') {
+          error = true
+        }
+      }
+      if (error) {
+        document.getElementById('wizardCustomAnswersBlankOptionsWarning').style.display = 'block'
+        return
+      }
+    }
+    wizardCreateDefinition()
+  }
+}
+
+function wizardBack (currentPage) {
+  // Move the wizard back one page
+
+  if (currentPage === 'Question') {
+    wizardGoTo('Welcome')
+  } else if (currentPage === 'Answers') {
+    wizardGoTo('Question')
+  }
+}
+
+function wizardGoTo (page) {
+  Array.from(document.querySelectorAll('.wizard-pane')).forEach((el) => {
+    el.style.display = 'none'
+  })
+  document.getElementById('wizardPane_' + page).style.display = 'block'
+}
+
+async function wizardCreateDefinition () {
+  // Use the provided details to build a definition file.
+
+  // Definition name
+  const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
+  exSetup.updateWorkingDefinition(['name'], defName)
+
+  // Header/footer
+  const header = document.getElementById('wizardHeaderTextInput').value.trim()
+  const footer = document.getElementById('wizardFooterTextInput').value.trim()
+  exSetup.updateWorkingDefinition(['text', 'header'], header)
+  exSetup.updateWorkingDefinition(['text', 'footer'], footer)
+
+  // Answers
+  const answersType = document.getElementById('wizardAnswerTypeSelect').value
+  if (answersType !== 'custom') {
+    // Clear out any custom options that may have been set first
+    exSetup.updateWorkingDefinition(['options'], {})
+    exSetup.updateWorkingDefinition(['option_order'], [])
+  }
+  if (answersType === 'thumbs') {
+    const optionOrder = [exCommon.uuid(), exCommon.uuid()]
+    exSetup.updateWorkingDefinition(['option_order'], optionOrder)
+    exSetup.updateWorkingDefinition(['options', optionOrder[0]], {
+      icon: 'thumbs-down_red',
+      icon_user_file: '',
+      label: '',
+      uuid: optionOrder[0],
+      value: 'Bad'
+    })
+    exSetup.updateWorkingDefinition(['options', optionOrder[1]], {
+      icon: 'thumbs-up_green',
+      icon_user_file: '',
+      label: '',
+      uuid: optionOrder[1],
+      value: 'Good'
+    })
+  } else if (answersType === 'threeStars') {
+    const optionOrder = [exCommon.uuid(), exCommon.uuid(), exCommon.uuid()]
+    exSetup.updateWorkingDefinition(['option_order'], optionOrder)
+    exSetup.updateWorkingDefinition(['options', optionOrder[0]], {
+      icon: '1-star_white',
+      icon_user_file: '',
+      label: '',
+      uuid: optionOrder[0],
+      value: '1_star'
+    })
+    exSetup.updateWorkingDefinition(['options', optionOrder[1]], {
+      icon: '2-star_white',
+      icon_user_file: '',
+      label: '',
+      uuid: optionOrder[1],
+      value: '2_star'
+    })
+    exSetup.updateWorkingDefinition(['options', optionOrder[2]], {
+      icon: '3-star_white',
+      icon_user_file: '',
+      label: '',
+      uuid: optionOrder[2],
+      value: '3_star'
+    })
+  } else if (answersType === 'fiveStars') {
+    const optionOrder = [exCommon.uuid(), exCommon.uuid(), exCommon.uuid(), exCommon.uuid(), exCommon.uuid()]
+    exSetup.updateWorkingDefinition(['option_order'], optionOrder)
+    exSetup.updateWorkingDefinition(['options', optionOrder[0]], {
+      icon: '1-star_white',
+      icon_user_file: '',
+      label: '',
+      uuid: optionOrder[0],
+      value: '1_star'
+    })
+    exSetup.updateWorkingDefinition(['options', optionOrder[1]], {
+      icon: '2-star_white',
+      icon_user_file: '',
+      label: '',
+      uuid: optionOrder[1],
+      value: '2_star'
+    })
+    exSetup.updateWorkingDefinition(['options', optionOrder[2]], {
+      icon: '3-star_white',
+      icon_user_file: '',
+      label: '',
+      uuid: optionOrder[2],
+      value: '3_star'
+    })
+    exSetup.updateWorkingDefinition(['options', optionOrder[3]], {
+      icon: '4-star_white',
+      icon_user_file: '',
+      label: '',
+      uuid: optionOrder[3],
+      value: '4_star'
+    })
+    exSetup.updateWorkingDefinition(['options', optionOrder[4]], {
+      icon: '5-star_white',
+      icon_user_file: '',
+      label: '',
+      uuid: optionOrder[4],
+      value: '5_star'
+    })
+  }
+  await exSetup.saveDefinition(defName)
+  await exCommon.getAvailableDefinitions(exCommon.config.app)
+  editDefinition($('#definitionSaveButton').data('workingDefinition').uuid)
+  $('#setupWizardModal').modal('hide')
+}
+
+function wizardCreateAnswerOption (userDetails) {
+  // Create the GUI representation of a new answer option in the wizard
+
+  const optionOrder = $('#definitionSaveButton').data('workingDefinition').option_order
+
+  const defaults = {
+    uuid: exCommon.uuid(),
+    label: '',
+    value: '',
+    icon: '',
+    icon_user_file: ''
+  }
+  // Merge in user details
+  const details = { ...defaults, ...userDetails }
+
+  if (optionOrder.includes(details.uuid) === false) {
+    optionOrder.push(details.uuid)
+    exSetup.updateWorkingDefinition(['option_order', optionOrder])
+    Object.keys(defaults).forEach((key) => {
+      exSetup.updateWorkingDefinition(['options', details.uuid, key], details[key])
+    })
+  }
+
+  const col = document.createElement('div')
+  col.classList = 'col-12'
+  document.getElementById('wizardCustomAnswersRow').appendChild(col)
+
+  const row = document.createElement('div')
+  row.classList = 'row'
+  col.appendChild(row)
+
+  const answerCol = document.createElement('div')
+  answerCol.classList = 'col-7 pe-1'
+  row.appendChild(answerCol)
+
+  const answerText = document.createElement('input')
+  answerText.setAttribute('type', 'text')
+  answerText.classList = 'form-control wizard-answer-option'
+  answerText.value = details.label
+  answerText.addEventListener('change', () => {
+    exSetup.updateWorkingDefinition(['options', details.uuid, 'label'], answerText.value)
+  })
+  answerCol.appendChild(answerText)
+
+  const buttonCol = document.createElement('div')
+  buttonCol.classList = 'col-5 ps-1'
+  row.appendChild(buttonCol)
+
+  const upButton = document.createElement('button')
+  upButton.classList = 'btn btn-info me-1'
+  upButton.innerHTML = '▲'
+  upButton.addEventListener('click', () => {
+    changeOptionOrder(details.uuid, -1, true)
+  })
+  buttonCol.appendChild(upButton)
+
+  const downButton = document.createElement('button')
+  downButton.classList = 'btn btn-info me-1'
+  downButton.innerHTML = '▼'
+  downButton.addEventListener('click', () => {
+    changeOptionOrder(details.uuid, 1, true)
+  })
+  buttonCol.appendChild(downButton)
+
+  const deleteButton = document.createElement('button')
+  deleteButton.classList = 'btn btn-danger'
+  deleteButton.innerHTML = '×'
+  deleteButton.addEventListener('click', () => {
+    deleteOption(details.uuid, true)
+  })
+  buttonCol.appendChild(deleteButton)
+}
+
 async function clearDefinitionInput (full = true) {
   // Clear all input related to a defnition
 
@@ -188,6 +446,7 @@ function editDefinition (uuid = '') {
 
   // Configure the preview frame
   document.getElementById('previewFrame').src = '../voting_kiosk.html?standalone=true&definition=' + def.uuid
+  exSetup.previewDefinition()
 }
 
 function formatOptionHeader (details) {
@@ -207,7 +466,7 @@ function createSurveyOption (userDetails, populateEditor = false) {
   const optionOrder = $('#definitionSaveButton').data('workingDefinition').option_order
 
   const defaults = {
-    uuid: String(Math.random() * 1e20),
+    uuid: exCommon.uuid(),
     label: '',
     value: '',
     icon: '',
@@ -289,7 +548,7 @@ function createSurveyOption (userDetails, populateEditor = false) {
   const leftArrowButton = document.createElement('button')
   leftArrowButton.classList = 'btn btn-sm rounded-0 text-light bg-primary w-100 h-100 justify-content-center d-flex'
   leftArrowButton.style.cursor = 'pointer'
-  leftArrowButton.innerHTML = '◀'
+  leftArrowButton.innerHTML = '▲'
   leftArrowButton.addEventListener('click', () => {
     changeOptionOrder(details.uuid, -1)
   })
@@ -302,7 +561,7 @@ function createSurveyOption (userDetails, populateEditor = false) {
   const rightArrowButton = document.createElement('button')
   rightArrowButton.classList = 'btn btn-sm rounded-0 text-light bg-primary w-100 h-100 justify-content-center d-flex'
   rightArrowButton.style.cursor = 'pointer'
-  rightArrowButton.innerHTML = '▶'
+  rightArrowButton.innerHTML = '▼'
   rightArrowButton.addEventListener('click', () => {
     changeOptionOrder(details.uuid, 1)
   })
@@ -321,7 +580,7 @@ function createSurveyOption (userDetails, populateEditor = false) {
   })
 }
 
-function deleteOption (uuid) {
+function deleteOption (uuid, wizard = false) {
   // Delete an option and rebuild the GUI
 
   const def = $('#definitionSaveButton').data('workingDefinition')
@@ -336,16 +595,24 @@ function deleteOption (uuid) {
     def.option_order.splice(index, 1)
   }
 
-  // Rebuild the optionList GUI
-  document.getElementById('optionRow').innerHTML = ''
-  def.option_order.forEach((optionUUID) => {
-    const option = def.options[optionUUID]
-    createSurveyOption(option)
-  })
-  exSetup.previewDefinition(true)
+  // Rebuild the options GUI
+  if (wizard) {
+    document.getElementById('wizardCustomAnswersRow').innerHTML = ''
+    def.option_order.forEach((optionUUID) => {
+      const option = def.options[optionUUID]
+      wizardCreateAnswerOption(option)
+    })
+  } else {
+    document.getElementById('optionRow').innerHTML = ''
+    def.option_order.forEach((optionUUID) => {
+      const option = def.options[optionUUID]
+      createSurveyOption(option)
+    })
+    exSetup.previewDefinition(true)
+  }
 }
 
-function changeOptionOrder (uuid, direction) {
+function changeOptionOrder (uuid, direction, wizard = false) {
   // Move the option given by uuid in the direction specified
   // direction should be -1 or 1
 
@@ -363,13 +630,21 @@ function changeOptionOrder (uuid, direction) {
   def.option_order[newIndex] = uuid
   def.option_order[currentIndex] = currentValueOfNewIndex
 
-  // Rebuild the optionList GUI
-  document.getElementById('optionRow').innerHTML = ''
-  def.option_order.forEach((optionUUID) => {
-    const option = def.options[optionUUID]
-    createSurveyOption(option)
-  })
-  exSetup.previewDefinition(true)
+  // Rebuild the options GUI
+  if (wizard) {
+    document.getElementById('wizardCustomAnswersRow').innerHTML = ''
+    def.option_order.forEach((optionUUID) => {
+      const option = def.options[optionUUID]
+      wizardCreateAnswerOption(option)
+    })
+  } else {
+    document.getElementById('optionRow').innerHTML = ''
+    def.option_order.forEach((optionUUID) => {
+      const option = def.options[optionUUID]
+      createSurveyOption(option)
+    })
+    exSetup.previewDefinition(true)
+  }
 }
 
 function populateOptionEditor (id) {
@@ -399,31 +674,6 @@ function setIconUserFile (file = '') {
   }
 }
 
-function saveDefinition () {
-  // Collect inputted information to save the definition
-
-  const definition = $('#definitionSaveButton').data('workingDefinition')
-  const initialDefinition = $('#definitionSaveButton').data('initialDefinition')
-  definition.app = 'voting_kiosk'
-  definition.name = $('#definitionNameInput').val()
-  definition.uuid = initialDefinition.uuid
-
-  exCommon.writeDefinition(definition)
-    .then((result) => {
-      if ('success' in result && result.success === true) {
-        // Update the UUID in case we have created a new definition
-        $('#definitionSaveButton').data('initialDefinition', structuredClone(definition))
-        exCommon.getAvailableDefinitions('voting_kiosk')
-          .then((response) => {
-            if ('success' in response && response.success === true) {
-              exSetup.populateAvailableDefinitions(response.definitions)
-              document.getElementById('availableDefinitionSelect').value = definition.uuid
-            }
-          })
-      }
-    })
-}
-
 // Set helper address for use with exCommon.makeHelperRequest
 exCommon.config.helperAddress = window.location.origin
 
@@ -449,6 +699,29 @@ setTimeout(setUpColorPickers, 100)
 
 // Add event listeners
 // -------------------------------------------------------------
+
+// Wizard
+
+// Connect the forward and back buttons
+Array.from(document.querySelectorAll('.wizard-forward')).forEach((el) => {
+  el.addEventListener('click', () => {
+    wizardForward(el.getAttribute('data-current-page'))
+  })
+})
+Array.from(document.querySelectorAll('.wizard-back')).forEach((el) => {
+  el.addEventListener('click', () => {
+    wizardBack(el.getAttribute('data-current-page'))
+  })
+})
+
+document.getElementById('wizardAnswerTypeSelect').addEventListener('change', (event) => {
+  if (event.target.value === 'custom') {
+    document.getElementById('wizardCustomAnswersGUI').style.display = 'flex'
+  } else {
+    document.getElementById('wizardCustomAnswersGUI').style.display = 'none'
+  }
+})
+document.getElementById('wizardAddAnswerOptionButton').addEventListener('click', wizardCreateAnswerOption)
 
 // Main buttons
 
@@ -540,7 +813,6 @@ Array.from(document.querySelectorAll('.height-slider')).forEach((el) => {
     exSetup.updateWorkingDefinition(['style', 'layout', 'top_height'], headerHeight)
     exSetup.updateWorkingDefinition(['style', 'layout', 'button_height'], buttonHeight)
     exSetup.updateWorkingDefinition(['style', 'layout', 'bottom_height'], footerHeight)
-    console.log(headerHeight, buttonHeight, footerHeight)
     exSetup.previewDefinition(true)
   })
 })
@@ -563,8 +835,8 @@ exSetup.configure({
   app: 'voting_kiosk',
   clearDefinition: clearDefinitionInput,
   initializeDefinition,
-  loadDefinition: editDefinition,
-  saveDefinition
+  initializeWizard,
+  loadDefinition: editDefinition
 })
 
 exCommon.askForDefaults(false)

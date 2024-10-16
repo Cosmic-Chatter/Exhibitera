@@ -65,31 +65,6 @@ function editDefinition (uuid = '') {
   exSetup.previewDefinition()
 }
 
-function saveDefinition () {
-  // Collect inputted information to save the definition
-
-  const definition = $('#definitionSaveButton').data('workingDefinition')
-  const initialDefinition = $('#definitionSaveButton').data('initialDefinition')
-  definition.app = 'other'
-  definition.name = $('#definitionNameInput').val()
-  definition.uuid = initialDefinition.uuid
-
-  exCommon.writeDefinition(definition)
-    .then((result) => {
-      if ('success' in result && result.success === true) {
-        // Update the UUID in case we have created a new definition
-        $('#definitionSaveButton').data('initialDefinition', structuredClone(definition))
-        exCommon.getAvailableDefinitions('other')
-          .then((response) => {
-            if ('success' in response && response.success === true) {
-              exSetup.populateAvailableDefinitions(response.definitions)
-              document.getElementById('availableDefinitionSelect').value = definition.uuid
-            }
-          })
-      }
-    })
-}
-
 function createKeyValueHTML (key = '', value = '') {
   // Create a new HTML represetnation of a key-value pair
 
@@ -175,8 +150,7 @@ exSetup.configure({
   app: 'other',
   clearDefinition: clearDefinitionInput,
   initializeDefinition,
-  loadDefinition: editDefinition,
-  saveDefinition
+  loadDefinition: editDefinition
 })
 
 exCommon.askForDefaults(false)

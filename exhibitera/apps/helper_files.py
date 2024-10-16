@@ -11,7 +11,7 @@ import pathlib
 import subprocess
 import sys
 import threading
-from typing import Any, Union
+from typing import Any
 import zipfile
 
 # Non-standard imports
