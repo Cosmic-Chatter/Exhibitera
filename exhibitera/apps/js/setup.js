@@ -1,4 +1,4 @@
-/* global bootstrap, showdown */
+/* global bootstrap, showdown, $ */
 
 import * as exCommon from './exhibitera_app_common.js'
 import * as exSetup from './exhibitera_setup_common.js'
@@ -107,7 +107,7 @@ function showUpdateInfoModal (details) {
 }
 
 function saveConfiguration () {
-  // Construct an object from the user seetings and send it to the helper for saving.
+  // Construct an object from the user settings and send it to the helper for saving.
 
   const defaults = {
     app: {},
@@ -416,7 +416,7 @@ function configureUser (user) {
 }
 
 exCommon.config.helperAddress = window.location.origin
-exCommon.config.updateParser = updateParser // Function to read app-specific updatess
+exCommon.config.updateParser = updateParser // Function to read app-specific updates
 exCommon.config.exhibiteraAppID = 'settings'
 
 // Activate tooltips

@@ -56,8 +56,8 @@ export async function configure (options) {
 
   const defaults = {
     app: null,
+    blankDefinition: {},
     clearDefinition: null,
-    initializeDefinition: null,
     initializeWizard: null,
     loadDefinition: null,
     onDefinitionSave: null
@@ -67,18 +67,18 @@ export async function configure (options) {
 
   // Make sure we have the options we need
   if (options.app == null) throw new Error("The options must include the 'app' field.")
-  if (options.initializeDefinition == null) throw new Error("The options must include the 'initializeDefinition' field referencing the appropriate function.")
+  if (options.blankDefinition == null) throw new Error("The options must include the 'blankDefinition' field containing a blank definition object.")
   if (options.initializeWizard == null) throw new Error("The options must include the 'initializeWizard' field referencing the appropriate function.")
   if (options.loadDefinition == null) throw new Error("The options must include the 'loadDefinition' field referencing the appropriate function.")
 
   config.app = options.app
   config.clearDefinition = options.clearDefinition
-  config.initializeDefinition = options.initializeDefinition
+  config.blankDefinition = options.blankDefinition
   config.initializeWizard = options.initializeWizard
   config.loadDefinition = options.loadDefinition
   if (options.onDefinitionSave != null) config.onDefinitionSave = options.onDefinitionSave
 
-  await config.initializeDefinition()
+  await initializeDefinition()
   const userFonts = await getUserFonts()
 
   createAdvancedColorPickers()
@@ -295,6 +295,27 @@ export function addWizardLanguage () {
   document.getElementById('wizardLanguages').append(col)
 }
 
+export function initializeDefinition () {
+  // Create a blank definition at save it to workingDefinition.
+
+  return new Promise(function (resolve, reject) {
+    // Get a new temporary uuid
+    exCommon.makeHelperRequest({
+      method: 'GET',
+      endpoint: '/uuid/new'
+    })
+      .then((response) => {
+        const temp = structuredClone(config.blankDefinition)
+        temp.uuid = response.uuid
+        console.log(response.uuid, temp, temp.uuid)
+        $('#definitionSaveButton').data('initialDefinition', temp)
+        $('#definitionSaveButton').data('workingDefinition', temp)
+        previewDefinition(false)
+        resolve()
+      })
+  })
+}
+
 function deleteDefinition () {
   // Delete the definition currently listed in the select.
 
@@ -361,6 +382,7 @@ export async function saveDefinition (name = '') {
   definition.app = config.app
   if (name === '') definition.name = $('#definitionNameInput').val()
   definition.uuid = initialDefinition.uuid
+  console.log(name, definition)
 
   return exCommon.writeDefinition(definition)
     .then((result) => {
@@ -576,7 +598,7 @@ export function previewDefinition (automatic = false) {
     return
   }
 
-  const def = $('#definitionSaveButton').data('workingDefinition')
+  const def = structuredClone($('#definitionSaveButton').data('workingDefinition'))
 
   // Set the uuid to a temp one
   def.uuid = '__preview_' + config.app
@@ -612,7 +634,7 @@ function _createAdvancedColorPicker (el, name, path) {
   const id = String(Math.round(Math.random() * 1e10))
   el.setAttribute('data-constACP-id', id)
 
-  const html = `
+  el.innerHTML = `
     <div class="border rounded px-2 py-2">
       <label class="form-label">${name}</label>
       <div class="row">
@@ -634,7 +656,7 @@ function _createAdvancedColorPicker (el, name, path) {
             </div>
             <div class="col-6">
               <label for="ACPAnglePicker_${id}" class="form-label">Angle</label>
-              <input id="ACPAnglePicker_${id}" class="form-control constACP-angle" type="number" min="0", max="359" value="0">
+              <input id="ACPAnglePicker_${id}" class="form-control constACP-angle" type="number" min="0" max="359" value="0">
             </div>
           </div>
         </div>
@@ -645,7 +667,6 @@ function _createAdvancedColorPicker (el, name, path) {
       </div>
     </div>
   `
-  el.innerHTML = html
 
   // Add event listeners
   document.getElementById(`ACPModeSelect_${id}`).addEventListener('change', (event) => {
@@ -759,12 +780,10 @@ export function createAdvancedFontPicker (details) {
   const id = exCommon.uuid()
   details.parent.setAttribute('data-constAFP-id', id)
 
-  const html = `
-  <label for="AFPSelect_${id}" class="form-label">${details.name}</label>
+  details.parent.innerHTML = `
+    <label for="AFPSelect_${id}" class="form-label">${details.name}</label>
     <select id="AFPSelect_${id}" class="form-select AFP-select" data-default="${details.default}"></select>
   `
-
-  details.parent.innerHTML = html
   const el = document.getElementById(`AFPSelect_${id}`)
   el.setAttribute('data-path', details.path)
   // Add event listeners
@@ -875,7 +894,7 @@ function _createAdvancedFontOption (parent, name, path) {
   const option = new Option(name, path)
 
   // Check if font already exists
-  if ((safeName in config.fontCache) === false) {
+  if (!(safeName in config.fontCache)) {
     const fontDef = new FontFace(safeName, 'url(' + encodeURI(path) + ')')
     document.fonts.add(fontDef)
     config.fontCache[safeName] = true

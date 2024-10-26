@@ -62,7 +62,7 @@ export function createFileSelectionModal (userOptions) {
             <div id="exFileSelectModalFilePreview" class="col-12 col-lg-4 mb-3">
               <div class="row justify-content-center">
                 <div class='col-6 col-lg-12'>
-                  <img id="exFileSelectModalFilePreviewImage" style="width: 100%; height: 200px; object-fit: contain;"></img>
+                  <img id="exFileSelectModalFilePreviewImage" style="width: 100%; height: 200px; object-fit: contain;">
                   <video id="exFileSelectModalFilePreviewVideo" loop autoplay muted disablePictureInPicture="true" webkit-playsinline="true" playsinline="true" style="width: 100%; height: 200px; object-fit: contain;"></video>
                   <div style="height: 200px; display: flex; justify-content: center; align-items: center;">
                     <audio id="exFileSelectModalFilePreviewAudio" controls style="width: 100%;"></audio>
@@ -755,7 +755,7 @@ function downloadMultipleFiles () {
       a.download = 'files.zip'
       document.body.appendChild(a) // append the element to the dom
       a.click()
-      a.remove() // afterwards, remove the element
+      a.remove() // afterward, remove the element
     })
 }
 

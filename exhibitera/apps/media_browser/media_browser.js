@@ -382,9 +382,9 @@ function displayMedia (id) {
 function updateParser (update) {
   // Read updates specific to the media browser
 
-  if ('definition' in update && update.definition !== currentDefintion) {
-    currentDefintion = update.definition
-    exCommon.loadDefinition(currentDefintion)
+  if ('definition' in update && update.definition !== currentDefinition) {
+    currentDefinition = update.definition
+    exCommon.loadDefinition(currentDefinition)
       .then((result) => {
         loadDefinition(result.definition)
       })
@@ -573,7 +573,7 @@ function loadDefinition (def) {
 }
 
 function localize (lang) {
-  // Use the spreadsheet and defintion to set the content to the given language
+  // Use the spreadsheet and definition to set the content to the given language
 
   const definition = $(document).data('browserDefinition')
 
@@ -711,7 +711,7 @@ function showMediaInLightbox (media, title = '', caption = '', credit = '') {
         try {
           textFit(titleDiv, { maxFontSize: titleFontSize })
         } catch {
-          // Ignore a failed resieze
+          // Ignore a failed resize
         }
       }
       if ('lightbox_credit_height' in def.style.layout && def.style.layout.lightbox_credit_height > 0) {
@@ -776,7 +776,7 @@ exCommon.configureApp({
   parseUpdate: updateParser
 })
 
-let currentDefintion = ''
+let currentDefinition = ''
 
 let inactivityTimer = null
 let inactivityTimeout = 30000

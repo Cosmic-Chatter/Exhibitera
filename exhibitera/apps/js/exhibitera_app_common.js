@@ -1,4 +1,4 @@
-/* global platform, html2canvas */
+/* global platform, html2canvas, $ */
 
 export const config = {
   permissions: {
@@ -39,7 +39,7 @@ export function configureApp (opt = {}) {
   config.helperAddress = window.location.origin
 
   if ('checkConnection' in opt) config.connectionChecker = opt.checkConnection
-  if ('debug' in opt) config.debug = opt.debut
+  if ('debug' in opt) config.debug = opt.debug
   if ('loadDefinition' in opt) {
     config.definitionLoader = opt.loadDefinition
   } else {
@@ -138,9 +138,7 @@ export function parseQueryString () {
   // Read the query string to determine what options to set
 
   const queryString = decodeURIComponent(window.location.search)
-  const searchParams = new URLSearchParams(queryString)
-
-  return searchParams
+  return new URLSearchParams(queryString)
 }
 
 export function sendPing () {
@@ -485,20 +483,15 @@ export function stringToBool (str) {
     return str
   }
 
-  if (['True', 'true', 'TRUE', '1', 'yes', 'Yes', 'YES'].includes(str)) {
-    return true
-  } else {
-    return false
-  }
+  return ['True', 'true', 'TRUE', '1', 'yes', 'Yes', 'YES'].includes(str)
 }
 
 export function sendAnalytics (data) {
-  // Take the provided dicitonary of data and send it to Hub
+  // Take the provided dictionary of data and send it to Hub
 
   // Append the date and time of this recording
   const tzoffset = (new Date()).getTimezoneOffset() * 60000 // Time zone offset in milliseconds
-  const dateString = (new Date(Date.now() - tzoffset)).toISOString().slice(0, -1)
-  data.datetime = dateString
+  data.datetime = (new Date(Date.now() - tzoffset)).toISOString().slice(0, -1)
 
   // Append the current exhibit
   data.exhibit = config.current_exhibit
@@ -515,39 +508,6 @@ export function sendAnalytics (data) {
       params: requestDict,
       timeout: 5000
     })
-}
-
-export function parseINIString (data) {
-  // Take an INI file and return an object with the settings
-  // From https://stackoverflow.com/questions/3870019/javascript-parser-for-a-string-which-contains-ini-data
-
-  const regex = {
-    section: /^\s*\[\s*([^\]]*)\s*\]\s*$/,
-    param: /^\s*([^=]+?)\s*=\s*(.*?)\s*$/,
-    comment: /^\s*;.*$/
-  }
-  const value = {}
-  const lines = data.split(/[\r\n]+/)
-  let section = null
-  lines.forEach(function (line) {
-    if (regex.comment.test(line)) {
-      // Skip comments
-    } else if (regex.param.test(line)) {
-      const match = line.match(regex.param)
-      if (section) {
-        value[section][match[1]] = match[2]
-      } else {
-        value[match[1]] = match[2]
-      }
-    } else if (regex.section.test(line)) {
-      const match = line.match(regex.section)
-      value[match[1]] = {}
-      section = match[1]
-    } else if (line.length === 0 && section) {
-      section = null
-    }
-  })
-  return value
 }
 
 export function csvToJSON (csv) {
@@ -713,10 +673,10 @@ export function setObjectProperty (obj, keys, val) {
     (obj[key] = obj[key] || {}),
   obj)
   lastObj[lastKey] = val
-};
+}
 
 export function guessMimetype (filename) {
-  // Use filename's extension to guess the mimetype
+  // Use filename extension to guess the mimetype
 
   const ext = filename.split('.').slice(-1)[0].toLowerCase()
 
@@ -748,7 +708,7 @@ export function loadDefinition (defName) {
 }
 
 export function saveScreenshotAsThumbnail (filename) {
-  // Use html2canvas to get an approximate screenshoot to use as a thumbnail.
+  // Use html2canvas to get an approximate screenshot to use as a thumbnail.
 
   html2canvas(document.body, {
     allowTaint: true
@@ -783,7 +743,7 @@ export function createLanguageSwitcher (def, localize) {
   }
 
   $('#langSwitchDropdown').show()
-  // Cycle the languagse and build an entry for each
+  // Cycle the languages and build an entry for each
   $('#langSwitchOptions').empty()
   langs.forEach((code) => {
     const name = def.languages[code].display_name
