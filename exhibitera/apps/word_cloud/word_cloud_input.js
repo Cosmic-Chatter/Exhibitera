@@ -125,7 +125,6 @@ function loadDefinition (definition) {
   let showKeyboard = true
   if ('max_character_count' in definition.behavior) {
     maxCharacterCount = definition.behavior.max_character_count
-    console.log(maxCharacterCount)
   }
   if ('enable_keyboard_input' in definition.behavior) {
     if (definition.behavior.enable_keyboard_input) {

@@ -56,6 +56,7 @@
         </div>
       </div>
 
+      <!-- Help modal -->
       <div id="appHelpModal" class="modal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered mw-100 w-75">
           <div class="modal-content">
@@ -71,6 +72,132 @@
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Welcome modal -->
+      <div id="appWelcomeModal" class="modal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Welcome to Word Cloud</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body"  style="max-height: 70vh; overflow-y: auto;">
+              <div class="row gy-2 row-cols-1 row-cols-md-2">
+                <div class="col">
+                  <div class="card h-100">
+                    <div class="card-body d-flex flex-column">
+                      <h5 class="card-title text-center">Guided Setup</h5>
+                      <p class="card-text">Get started with step-by-step instructions. You can always fine-tune things afterwards.</p>
+                      <button id="appWelcomeModalWizardButton" class="btn btn-primary w-100 mt-auto">Start Guided Setup</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="col">
+                  <div class="card h-100">
+                    <div class="card-body d-flex flex-column">
+                      <h5 class="card-title text-center">Custom Setup</h5>
+                      <p class="card-text">Fully control all attributes from the beginning. <span class='badge text-bg-secondary'>Advanced</span></p>
+                      <button class="btn btn-primary w-100 mt-auto" data-bs-dismiss="modal">Start Custom Setup</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Setup wizard modal -->
+      <div id="setupWizardModal" class="modal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Create a new definition</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div id="setupWizardModalBody" class="modal-body">
+
+              <!-- Welcome -->
+              <div id="wizardPane_Welcome" class="row wizard-pane">
+                <div class="col-8 offset-2 mt-3">
+                  <H4 class="text-center">Welcome to Word Cloud Input!</H4>
+                  <i>
+                    <p>
+                      Word Cloud Input prompts the user to give a short answer to a question you pose. Those answers will be collected by Word Cloud Viewer and turned into a beautiful word cloud.
+                    </p>
+                    <p>
+                      To create a Word Cloud Input, you will need:
+                      <ul>
+                        <li>The text of the question you want to ask;</li>
+                        <li>The name of the collection to which you are adding responses.</li>
+                      </ul>
+                    </p>
+                  </i>
+                  <div class="row">
+                    <div class="col-6 offset-3">
+                      <label class="form-label" for="wizardDefinitionNameInput">Definition name</label>
+                      <input class="form-control" id="wizardDefinitionNameInput" type="text">
+                    </div>
+                    <div id="wizardDefinitionNameBlankWarning" class="col-12 text-warning mt-2" style="display: none;">
+                      Definition name must not be blank.
+                    </div>
+                  </div>
+                  <div class="text-center mt-4">
+                    <button class="btn btn-primary wizard-forward" data-current-page="Welcome">Get started</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Question -->
+              <div id="wizardPane_Question" class="row wizard-pane">
+                <div class="col-8 offset-2 mt-3">
+                  <H4 class="text-center">What question will you ask?</H4>
+                  <i>
+                    <p>
+                      For best results, the question should prompt simple (ideally one word) answers. 
+                    </p>
+                  </i>
+                  <div class="row gy-2">
+                    <div class="col-12">
+                      <label class="form-label" for="wizardQuestion">Question</label>
+                      <input id="wizardQuestion" class="form-control" type="text" placeholder="Text of the question">
+                    </div>
+                  </div>
+                  <div class="text-center mt-4">
+                    <button class="btn btn-secondary me-4 wizard-back" data-current-page="Question">Back</button>
+                    <button class="btn btn-primary ms-4 wizard-forward" data-current-page="Question">Next</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Collection -->
+              <div id="wizardPane_Collection" class="row wizard-pane">
+                <div class="col-8 offset-2 mt-3">
+                  <H4 class="text-center">Which collection is this for?</H4>
+                  <i>
+                    <p>
+                      Responses from this input will go into a <b>collection</b>. To generate the word cloud, you will connect a Word Cloud Viewer to the same collection. Multiple inputs (i.e., kiosks) can all contribute to same collection and be combined into the same word cloud.
+                    </p>
+                  </i>
+                  <div class="row gy-2">
+                    <div class="col-12">
+                      <label class="form-label" for="wizardCollection">Collection</label>
+                      <input id="wizardCollection" class="form-control" type="text" placeholder="Collection name">
+                    </div>
+                  </div>
+                  <div id="wizardCollectionBlankWarning" class="col-12 text-warning mt-2" style="display: none;">
+                    Collection must not be blank.
+                  </div>
+                  <div class="text-center mt-4">
+                    <button class="btn btn-secondary me-4 wizard-back" data-current-page="Collection">Back</button>
+                    <button class="btn btn-primary ms-4 wizard-forward" data-current-page="Collection">Finish</button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -133,6 +260,9 @@
               <span class="d-none d-sm-inline d-lg-none">New</span>
             </button>
             <ul class="dropdown-menu">
+              <li><h6 class="dropdown-header">Basic</h6></li>
+              <li><a id="showWizardButton" class="dropdown-item" href="#">Guided setup</a></li>
+              <li><h6 class="dropdown-header">Advanced</h6></li>
               <li><a id="newDefinitionButton" class="dropdown-item" href="#">Create blank definition</a></li>
               <li><a id="cloneDefinitionButton" class="dropdown-item" href="#">Clone selected definition</a></li>
             </ul>
@@ -193,173 +323,196 @@
       </div>
       <div class="row align-items-start">
         <div id='editPane' class="col-6 col-lg-7">
-          <div class="row gy-2">
-            <div class="col-12 mt-2">
 
-              <h3>Settings</h3>
-              <div class="row gy-2">
-                <div class="col-12 col-md-6 col-lg-4">
-                  <label for="definitionNameInput" class="form-label">Definition name</label>
-                  <input type="text" class="form-control" id="definitionNameInput">
-                </div>
-                <div class="col-12 col-md-6 col-lg-4">
-                  <label for="collectionNameInput" class="form-label">
-                    Collection name
-                    <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="The collection name connects the word cloud inputs and output. Multiple inputs can use the same collection name to aggregate responses." style="font-size: 0.55em;">?</span>
-                  </label>
-                  <input type="text" class="form-control" id="collectionNameInput">
-                </div>
-                <div class="col-12 col-md-6 col-lg-4">
-                  <label for="collectionNameInput" class="form-label">
-                    Physical keyboard
-                    <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="Enabling input from a physical keyboard will hide the onscreen keyboard. You should use a kiosk application to ensure users can't alt-tab to escape." style="font-size: 0.55em;">?</span>
-                  </label>
-                  <div class="form-check form-check-inline">
-                    <input type="checkbox" class="form-check-input" id="enableKeyboardInput">
-                    <label class="form-check-label" for="enableKeyboardInput">Enable Keyboard</label>
-                  </div>
-                  
-                </div>
-                <div class="col-12 col-md-6 col-lg-4">
-                  <label for="collectionNameInput" class="form-label">
-                    Max character count
-                    <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="The maximum number of characters entered (including spaces). Set to -1 for infinite length." style="font-size: 0.55em;">?</span>
-                  </label>
-                  <input type="number" class="form-control" id="maxCharacterCount" value="-1">
-                </div>
-              </div>
-
-              <h3 class="mt-2">Content</h3>
-              <div class="row gy-2">
-                <div class="col-12 col-md-6 col-lg-4">
-                  <label for="promptInput" class="form-label">Prompt</label>
-                  <input type="text" class="form-control" id="promptInput">
-                </div>
-                <div class="col-12 col-md-6 col-lg-4">
-                  <label for="placeholderTextInput" class="form-label">Placeholder text</label>
-                  <input type="text" class="form-control localization-input" id="placeholderTextInput" placeholder="Type to enter response" data-property="placeholder">
-                </div>
-                <div class="col-12 col-md-6 col-lg-4">
-                  <label for="submitTextInput" class="form-label">Submit button text</label>
-                  <input type="text" class="form-control localization-input" id="submitTextInput" placeholder="Submit" data-property="submit">
-                </div>
-                <div class="col-12 col-md-6 col-lg-4">
-                  <label for="clearTextInput" class="form-label">Clear button text</label>
-                  <input type="text" class="form-control localization-input" id="clearTextInput" placeholder="Clear" data-property="clear">
-                </div>
-                <div class="col-12 col-md-6 col-lg-4">
-                  <label for="backspaceTextInput" class="form-label">Backspace button text</label>
-                  <input type="text" class="form-control localization-input" id="backspaceTextInput" placeholder="backspace" data-property="backspace">
-                </div>
-              </div>
-
-              <!-- <h3 class="mt-2">Attractor</h3>
-              <div class="row mt-2 gy-2">
-                <div class="col-12 col-md-6 col-lg-3">
-                  <label for="attractorInput_attractor_timeout" class="form-label">
-                    Timeout
-                    <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="The length of time in seconds before the attractor animation should start playing." style="font-size: 0.55em;">?</span>
-                  </label>
-                  <input type="number" min="5" value="30" class="form-control attractor-input" id="attractorInput_attractor_timeout" data-property="attractor_timeout">
-                </div>
-              </div> -->
-
-              <h3 class="mt-2">Appearance</h3>
-              <h4 class="mt-2">Text size</h4>
-              <div class="row gy-2">
-                <div class="col-12 col-md-6 col-lg-4">
-                  <label for="promptTextSizeSlider" class="form-label">Prompt</label>
-                  <input id="promptTextSizeSlider" type="range" class="form-range text-size-slider realtime-slider" data-property="prompt" min="-2", max="4" start="0" step="0.5">
-                </div>
-              </div>
-
-              <h4>Colors</h4>
-              <div class="row gy-2 mb-3">
-                <div class="col-12 col-lg-8 advanced-color-picker" data-constACP-name="Background" data-constACP-path="appearance>background"></div>
-                <div class="col-12 col-sm-6 col-lg-4">
-                  <label for="colorPicker_prompt" class="form-label">Prompt</label>
-                  <div>
-                    <input id="colorPicker_prompt" type="text" class="coloris form-control" value="#000" data-property="prompt" data-default="#000">
+          <div class="accordion mt-3" id="topLevelAccordion">
+            <!-- Basic details -->
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#basicDetails" aria-expanded="true" aria-controls="basicDetails">
+                  Basic details
+                  <div class="accordion-detail">Toggle the use of a physical keyboard, limit how many characters can be entered, and more.</div>
+                </button>
+              </h2>
+              <div id="basicDetails" class="accordion-collapse collapse show" data-bs-parent="#topLevelAccordion">
+                <div class="accordion-body">
+                  <div class="row gy-2">
+                    <div class="col-12 col-md-6 col-lg-4">
+                      <label for="definitionNameInput" class="form-label">Definition name</label>
+                      <input type="text" class="form-control" id="definitionNameInput">
+                    </div>
+                    <div class="col-12 col-md-6 col-lg-4">
+                      <label for="collectionNameInput" class="form-label">
+                        Collection name
+                        <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="The collection name connects the word cloud inputs and output. Multiple inputs can use the same collection name to aggregate responses." style="font-size: 0.55em;">?</span>
+                      </label>
+                      <input type="text" class="form-control" id="collectionNameInput">
+                    </div>
+                    <div class="col-12 col-md-6 col-lg-4">
+                      <label for="collectionNameInput" class="form-label">
+                        Physical keyboard
+                        <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="Enabling input from a physical keyboard will hide the onscreen keyboard. You should use a kiosk application to ensure users can't alt-tab to escape." style="font-size: 0.55em;">?</span>
+                      </label>
+                      <div class="form-check form-check-inline">
+                        <input type="checkbox" class="form-check-input" id="enableKeyboardInput">
+                        <label class="form-check-label" for="enableKeyboardInput">Enable Keyboard</label>
+                      </div>
+                      
+                    </div>
+                    <div class="col-12 col-md-6 col-lg-4">
+                      <label for="collectionNameInput" class="form-label">
+                        Max character count
+                        <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="The maximum number of characters entered (including spaces). Set to -1 for infinite length." style="font-size: 0.55em;">?</span>
+                      </label>
+                      <input type="number" class="form-control" id="maxCharacterCount" value="-1" min="-1">
+                    </div>
                   </div>
                 </div>
-                <div class="col-12 col-sm-6 col-lg-4">
-                  <label for="colorPicker_input" class="form-label">Input text</label>
-                  <div>
-                    <input id="colorPicker_input" type="text" class="coloris form-control" value="#000" data-property="input" data-default="#000">
-                  </div>
-                </div>
-                <div class="col-12 col-sm-6 col-lg-4">
-                  <label for="colorPicker_input-hint" class="form-label">Character count</label>
-                  <div>
-                    <input id="colorPicker_input-hint" type="text" class="coloris form-control" value="#776767" data-property="input-font-hint" data-default="#776767">
-                  </div>
-                </div>
-                <div class="col-12 col-sm-6 col-lg-4">
-                  <label for="colorPicker_input-background" class="form-label">Input background</label>
-                  <div>
-                    <input id="colorPicker_input-background" type="text" class="coloris form-control" value="#e9ecef" data-property="input-background" data-default="#e9ecef">
-                  </div>
-                </div>
-                <div class="col-12 col-sm-6 col-lg-4">
-                  <label for="colorPicker_submit" class="form-label">Submit button text</label>
-                  <div>
-                    <input id="colorPicker_submit" type="text" class="coloris form-control" value="#fff" data-property="submit" data-default="#fff">
-                  </div>
-                </div>
-                <div class="col-12 col-sm-6 col-lg-4">
-                  <label for="colorPicker_submit-background" class="form-label">Submit button background</label>
-                  <div>
-                    <input id="colorPicker_submit-background" type="text" class="coloris form-control" value="#6c757d" data-property="submit-background" data-default="#6c757d">
-                  </div>
-                </div>
-                <div class="col-12 col-sm-6 col-lg-4">
-                  <label for="colorPicker_clear" class="form-label">Clear button text</label>
-                  <div>
-                    <input id="colorPicker_clear" type="text" class="coloris form-control" value="#fff" data-property="clear" data-default="#fff">
-                  </div>
-                </div>
-                <div class="col-12 col-sm-6 col-lg-4">
-                  <label for="colorPicker_clear-background" class="form-label">Clear button background</label>
-                  <div>
-                    <input id="colorPicker_clear-background" type="text" class="coloris form-control" value="#6c757d" data-property="clear-background" data-default="#6c757d">
-                  </div>
-                </div>
-                <div class="col-12 col-sm-6 col-lg-4">
-                  <label for="colorPicker_keyboard-key" class="form-label">Keyboard key text</label>
-                  <div>
-                    <input id="colorPicker_keyboard-key" type="text" class="coloris form-control" value="#000" data-property="keyboard-key" data-default="#000">
-                  </div>
-                </div>
-                <div class="col-12 col-sm-6 col-lg-4">
-                  <label for="colorPicker_keyboard-key-background" class="form-label">Keyboard key background</label>
-                  <div>
-                    <input id="colorPicker_keyboard-key-background" type="text" class="coloris form-control" value="#fff" data-property="keyboard-key-background" data-default="#fff">
-                  </div>
-                </div>
-                <div class="col-12 col-sm-6 col-lg-4">
-                  <label for="colorPicker_keyboard-background" class="form-label">Keyboard background</label>
-                  <div>
-                    <input id="colorPicker_keyboard-background" type="text" class="coloris form-control" value="#ececec" data-property="keyboard-background" data-default="#ececec">
-                  </div>
-                </div>
-              </div>
-
-              <h4>Fonts</h4>
-              <div class="row gy-2">
-                <div class="col-12 col-md-6 col-lg-4 col-xl-3">
-                  <button id="manageFontsButton" class="btn btn-info w-100">Manage fonts</button>
-                </div>
-                <div class="col-0 col-lg-9"></div>
-
-                <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Prompt" data-constAFP-path="appearance>font>prompt" data-default="OpenSans-Bold.ttf"></div>
-
-                <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Input" data-constAFP-path="appearance>font>input" data-default="OpenSans-Regular.ttf"></div>
-
-                <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Submit" data-constAFP-path="appearance>font>submit" data-default="OpenSans-Regular.ttf"></div>
-
-                <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Clear" data-constAFP-path="appearance>font>clear" data-default="OpenSans-Regular.ttf"></div>     
               </div>
             </div>
+
+            <!-- Content -->
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#content" aria-expanded="false" aria-controls="content">
+                  Content
+                  <div class="accordion-detail">Set the prompt you want and other text options.</div>
+                </button>
+              </h2>
+              <div id="content" class="accordion-collapse collapse" data-bs-parent="#topLevelAccordion">
+                <div class="accordion-body">
+                  <div class="row gy-2">
+                    <div class="col-12 col-md-6 col-lg-4">
+                      <label for="promptInput" class="form-label">Prompt</label>
+                      <input type="text" class="form-control" id="promptInput">
+                    </div>
+                    <div class="col-12 col-md-6 col-lg-4">
+                      <label for="placeholderTextInput" class="form-label">Placeholder text</label>
+                      <input type="text" class="form-control localization-input" id="placeholderTextInput" placeholder="Type to enter response" data-property="placeholder">
+                    </div>
+                    <div class="col-12 col-md-6 col-lg-4">
+                      <label for="submitTextInput" class="form-label">Submit button text</label>
+                      <input type="text" class="form-control localization-input" id="submitTextInput" placeholder="Submit" data-property="submit">
+                    </div>
+                    <div class="col-12 col-md-6 col-lg-4">
+                      <label for="clearTextInput" class="form-label">Clear button text</label>
+                      <input type="text" class="form-control localization-input" id="clearTextInput" placeholder="Clear" data-property="clear">
+                    </div>
+                    <div class="col-12 col-md-6 col-lg-4">
+                      <label for="backspaceTextInput" class="form-label">Backspace button text</label>
+                      <input type="text" class="form-control localization-input" id="backspaceTextInput" placeholder="backspace" data-property="backspace">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Appearance -->
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#appearance" aria-expanded="false" aria-controls="appearance">
+                  Appearance
+                  <div class="accordion-detail">Adjust colors, fonts, and text sizes, as well as the size of the buttons.</div>
+                </button>
+              </h2>
+              <div id="appearance" class="accordion-collapse collapse" data-bs-parent="#topLevelAccordion">
+                <div class="accordion-body">
+                  <h4 class="mt-2">Text size</h4>
+                  <div class="row gy-2">
+                    <div class="col-12 col-md-6 col-lg-4">
+                      <label for="promptTextSizeSlider" class="form-label">Prompt</label>
+                      <input id="promptTextSizeSlider" type="range" class="form-range text-size-slider realtime-slider" data-property="prompt" min="-2", max="4" start="0" step="0.5">
+                    </div>
+                  </div>
+
+                  <h4>Colors</h4>
+                  <div class="row gy-2 mb-3">
+                    <div class="col-12 col-lg-8 advanced-color-picker" data-constACP-name="Background" data-constACP-path="appearance>background"></div>
+                    <div class="col-12 col-sm-6 col-lg-4">
+                      <label for="colorPicker_prompt" class="form-label">Prompt</label>
+                      <div>
+                        <input id="colorPicker_prompt" type="text" class="coloris form-control" value="#000" data-property="prompt" data-default="#000">
+                      </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-lg-4">
+                      <label for="colorPicker_input" class="form-label">Input text</label>
+                      <div>
+                        <input id="colorPicker_input" type="text" class="coloris form-control" value="#000" data-property="input" data-default="#000">
+                      </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-lg-4">
+                      <label for="colorPicker_input-hint" class="form-label">Character count</label>
+                      <div>
+                        <input id="colorPicker_input-hint" type="text" class="coloris form-control" value="#776767" data-property="input-font-hint" data-default="#776767">
+                      </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-lg-4">
+                      <label for="colorPicker_input-background" class="form-label">Input background</label>
+                      <div>
+                        <input id="colorPicker_input-background" type="text" class="coloris form-control" value="#e9ecef" data-property="input-background" data-default="#e9ecef">
+                      </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-lg-4">
+                      <label for="colorPicker_submit" class="form-label">Submit button text</label>
+                      <div>
+                        <input id="colorPicker_submit" type="text" class="coloris form-control" value="#fff" data-property="submit" data-default="#fff">
+                      </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-lg-4">
+                      <label for="colorPicker_submit-background" class="form-label">Submit button background</label>
+                      <div>
+                        <input id="colorPicker_submit-background" type="text" class="coloris form-control" value="#6c757d" data-property="submit-background" data-default="#6c757d">
+                      </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-lg-4">
+                      <label for="colorPicker_clear" class="form-label">Clear button text</label>
+                      <div>
+                        <input id="colorPicker_clear" type="text" class="coloris form-control" value="#fff" data-property="clear" data-default="#fff">
+                      </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-lg-4">
+                      <label for="colorPicker_clear-background" class="form-label">Clear button background</label>
+                      <div>
+                        <input id="colorPicker_clear-background" type="text" class="coloris form-control" value="#6c757d" data-property="clear-background" data-default="#6c757d">
+                      </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-lg-4">
+                      <label for="colorPicker_keyboard-key" class="form-label">Keyboard key text</label>
+                      <div>
+                        <input id="colorPicker_keyboard-key" type="text" class="coloris form-control" value="#000" data-property="keyboard-key" data-default="#000">
+                      </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-lg-4">
+                      <label for="colorPicker_keyboard-key-background" class="form-label">Keyboard key background</label>
+                      <div>
+                        <input id="colorPicker_keyboard-key-background" type="text" class="coloris form-control" value="#fff" data-property="keyboard-key-background" data-default="#fff">
+                      </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-lg-4">
+                      <label for="colorPicker_keyboard-background" class="form-label">Keyboard background</label>
+                      <div>
+                        <input id="colorPicker_keyboard-background" type="text" class="coloris form-control" value="#ececec" data-property="keyboard-background" data-default="#ececec">
+                      </div>
+                    </div>
+                  </div>
+
+                  <h4>Fonts</h4>
+                  <div class="row gy-2">
+                    <div class="col-12 col-md-6 col-lg-4 col-xl-3">
+                      <button id="manageFontsButton" class="btn btn-info w-100">Manage fonts</button>
+                    </div>
+                    <div class="col-0 col-lg-9"></div>
+
+                    <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Prompt" data-constAFP-path="appearance>font>prompt" data-default="OpenSans-Bold.ttf"></div>
+
+                    <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Input" data-constAFP-path="appearance>font>input" data-default="OpenSans-Regular.ttf"></div>
+
+                    <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Submit" data-constAFP-path="appearance>font>submit" data-default="OpenSans-Regular.ttf"></div>
+
+                    <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Clear" data-constAFP-path="appearance>font>clear" data-default="OpenSans-Regular.ttf"></div>     
+                  </div>
+              </div>
+            </div>
+          </div>
           </div>
         </div>
         <div id='previewPane' class="col-6 col-lg-5 sticky-top" style="z-index: 1;">

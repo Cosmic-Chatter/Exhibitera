@@ -307,7 +307,6 @@ export function initializeDefinition () {
       .then((response) => {
         const temp = structuredClone(config.blankDefinition)
         temp.uuid = response.uuid
-        console.log(response.uuid, temp, temp.uuid)
         $('#definitionSaveButton').data('initialDefinition', temp)
         $('#definitionSaveButton').data('workingDefinition', temp)
         previewDefinition(false)
