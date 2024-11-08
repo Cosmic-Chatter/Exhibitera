@@ -1,37 +1,27 @@
 import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exSetup from '../js/exhibitera_setup_common.js'
 
-function initializeDefinition () {
-  // Create a blank definition at save it to workingDefinition.
+async function initializeWizard () {
+  // Set up the wizard
 
-  return new Promise(function (resolve, reject) {
-    // Get a new temporary uuid
-    exCommon.makeHelperRequest({
-      method: 'GET',
-      endpoint: '/uuid/new'
-    })
-      .then((response) => {
-        $('#definitionSaveButton').data('initialDefinition', {
-          uuid: response.uuid,
-          path: '',
-          properties: {}
-        })
-        $('#definitionSaveButton').data('workingDefinition', {
-          uuid: response.uuid,
-          path: '',
-          properties: {}
-        })
-        exSetup.previewDefinition()
-        resolve()
-      })
+  await exSetup.initializeDefinition()
+
+  // Hide all but the welcome screen
+  Array.from(document.querySelectorAll('.wizard-pane')).forEach((el) => {
+    el.style.display = 'none'
   })
+  document.getElementById('wizardPane_Welcome').style.display = 'block'
+
+  // Reset fields
+  document.getElementById('wizardDefinitionNameInput').value = ''
+  document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'none'
 }
 
 async function clearDefinitionInput (full = true) {
   // Clear all input related to a defnition
 
   if (full === true) {
-    await initializeDefinition()
+    await exSetup.initializeDefinition()
   }
 
   // Definition details
@@ -149,8 +139,12 @@ clearDefinitionInput()
 exSetup.configure({
   app: 'other',
   clearDefinition: clearDefinitionInput,
-  initializeDefinition,
-  loadDefinition: editDefinition
+  initializeWizard,
+  loadDefinition: editDefinition,
+  blankDefinition: {
+    path: '',
+    properties: {}
+  }
 })
 
 exCommon.askForDefaults(false)

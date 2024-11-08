@@ -416,16 +416,16 @@ function createEventListeners () {
   // Bind various event listeners to their elements.
 
   // Wizard
-  document.getElementById('showWizardButton').addEventListener('click', showSetupWizard)
   try {
     document.getElementById('wizardAddLanguageButton').addEventListener('click', addWizardLanguage)
+    document.getElementById('showWizardButton').addEventListener('click', showSetupWizard)
+    document.getElementById('appWelcomeModalWizardButton').addEventListener('click', () => {
+      $('#appWelcomeModal').modal('hide')
+      showSetupWizard()
+    })
   } catch {
-    // Ignore if there is no wizard language button
+    // Ignore if there is no corresponding wizard element (wizard not yet implemented)
   }
-  document.getElementById('appWelcomeModalWizardButton').addEventListener('click', () => {
-    $('#appWelcomeModal').modal('hide')
-    showSetupWizard()
-  })
 
   // New definition buttons
   document.getElementById('newDefinitionButton').addEventListener('click', () => {

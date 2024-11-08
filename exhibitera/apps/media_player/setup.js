@@ -4,51 +4,27 @@ import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exFileSelect from '../js/exhibitera_file_select_modal.js'
 import * as exSetup from '../js/exhibitera_setup_common.js'
 
-function initializeDefinition () {
-  // Create a blank definition and save it to workingDefinition.
+async function initializeWizard () {
+  // Set up the wizard
 
-  return new Promise(function (resolve, reject) {
-    // Get a new temporary uuid
-    exCommon.makeHelperRequest({
-      method: 'GET',
-      endpoint: '/uuid/new'
-    })
-      .then((response) => {
-        $('#definitionSaveButton').data('initialDefinition', {
-          uuid: response.uuid,
-          content: {},
-          content_order: [],
-          style: {
-            background: {
-              mode: 'color',
-              color: '#000'
-            }
-          },
-          watermark: {}
-        })
-        $('#definitionSaveButton').data('workingDefinition', {
-          uuid: response.uuid,
-          content: {},
-          content_order: [],
-          style: {
-            background: {
-              mode: 'color',
-              color: '#000'
-            }
-          },
-          watermark: {}
-        })
-        exSetup.previewDefinition(false)
-        resolve()
-      })
+  await exSetup.initializeDefinition()
+
+  // Hide all but the welcome screen
+  Array.from(document.querySelectorAll('.wizard-pane')).forEach((el) => {
+    el.style.display = 'none'
   })
+  document.getElementById('wizardPane_Welcome').style.display = 'block'
+
+  // Reset fields
+  document.getElementById('wizardDefinitionNameInput').value = ''
+  document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'none'
 }
 
 async function clearDefinitionInput (full = true) {
   // Clear all input related to a defnition
 
   if (full === true) {
-    await initializeDefinition()
+    await exSetup.initializeDefinition()
   }
 
   // Definition details
@@ -1224,9 +1200,20 @@ clearDefinitionInput()
 exSetup.configure({
   app: 'media_player',
   clearDefinition: clearDefinitionInput,
-  initializeDefinition,
+  initializeWizard,
   loadDefinition: editDefinition,
-  onDefinitionSave: createThumbnail
+  onDefinitionSave: createThumbnail,
+  blankDefinition: {
+    content: {},
+    content_order: [],
+    style: {
+      background: {
+        mode: 'color',
+        color: '#000'
+      }
+    },
+    watermark: {}
+  }
 })
 
 exCommon.askForDefaults(false)

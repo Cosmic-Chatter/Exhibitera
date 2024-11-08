@@ -4,53 +4,27 @@ import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exFileSelect from '../js/exhibitera_file_select_modal.js'
 import * as exSetup from '../js/exhibitera_setup_common.js'
 
-function initializeDefinition () {
-  // Create a blank definition at save it to workingDefinition.
+async function initializeWizard () {
+  // Setup the wizard
 
-  return new Promise(function (resolve, reject) {
-    // Get a new temporary uuid
-    exCommon.makeHelperRequest({
-      method: 'GET',
-      endpoint: '/uuid/new'
-    })
-      .then((response) => {
-        $('#definitionSaveButton').data('initialDefinition', {
-          uuid: response.uuid,
-          languages: {},
-          style: {
-            background: {
-              color: '#719abf',
-              mode: 'color'
-            },
-            color: {},
-            font: {},
-            text_size: {}
-          }
-        })
-        $('#definitionSaveButton').data('workingDefinition', {
-          uuid: response.uuid,
-          languages: {},
-          style: {
-            background: {
-              color: '#719abf',
-              mode: 'color'
-            },
-            color: {},
-            font: {},
-            text_size: {}
-          }
-        })
-        exSetup.previewDefinition()
-        resolve()
-      })
+  await exSetup.initializeDefinition()
+
+  // Hide all but the welcome screen
+  Array.from(document.querySelectorAll('.wizard-pane')).forEach((el) => {
+    el.style.display = 'none'
   })
+  document.getElementById('wizardPane_Welcome').style.display = 'block'
+
+  // Reset fields
+  document.getElementById('wizardDefinitionNameInput').value = ''
+  document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'none'
 }
 
 async function clearDefinitionInput (full = true) {
   // Clear all input related to a defnition
 
   if (full === true) {
-    await initializeDefinition()
+    await exSetup.initializeDefinition()
   }
 
   // Language add
@@ -731,8 +705,20 @@ clearDefinitionInput()
 exSetup.configure({
   app: 'infostation',
   clearDefinition: clearDefinitionInput,
-  initializeDefinition,
-  loadDefinition: editDefinition
+  initializeWizard,
+  loadDefinition: editDefinition,
+  blankDefinition: {
+    languages: {},
+    style: {
+      background: {
+        color: '#719abf',
+        mode: 'color'
+      },
+      color: {},
+      font: {},
+      text_size: {}
+    }
+  }
 })
 
 exCommon.askForDefaults(false)
