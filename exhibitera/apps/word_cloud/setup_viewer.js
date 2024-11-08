@@ -1,62 +1,169 @@
-/* global Coloris */
+/* global Coloris WordCloud */
 
 import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exSetup from '../js/exhibitera_setup_common.js'
 import * as exFileSelect from '../js/exhibitera_file_select_modal.js'
 
-function initializeDefinition () {
-  // Create a blank definition at save it to workingDefinition.
+async function initializeWizard () {
+  // Setup the wizard
 
-  return new Promise(function (resolve, reject) {
-    // Get a new temporary uuid
-    exCommon.makeHelperRequest({
-      method: 'GET',
-      endpoint: '/uuid/new'
-    })
-      .then((response) => {
-        $('#definitionSaveButton').data('initialDefinition', {
-          uuid: response.uuid,
-          appearance: {
-            background: {
-              mode: 'color',
-              color: '#fff'
-            },
-            text_case: 'lowercase',
-            text_size: {}
-          },
-          attractor: {},
-          behavior: {},
-          content: {
-            localization: {}
-          }
-        })
-        $('#definitionSaveButton').data('workingDefinition', {
-          uuid: response.uuid,
-          appearance: {
-            background: {
-              mode: 'color',
-              color: '#fff'
-            },
-            text_case: 'lowercase',
-            text_size: {}
-          },
-          attractor: {},
-          behavior: {},
-          content: {
-            localization: {}
-          }
-        })
-        exSetup.previewDefinition(false)
-        resolve()
-      })
+  await exSetup.initializeDefinition()
+
+  // Hide all but the welcome screen
+  Array.from(document.querySelectorAll('.wizard-pane')).forEach((el) => {
+    el.style.display = 'none'
   })
+  document.getElementById('wizardPane_Welcome').style.display = 'block'
+
+  // Reset fields
+  document.getElementById('wizardDefinitionNameInput').value = ''
+  document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'none'
+}
+
+async function wizardForward (currentPage) {
+  // Check if the wizard is ready to advance and perform the move
+
+  if (currentPage === 'Welcome') {
+    const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
+    if (defName !== '') {
+      document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'none'
+      wizardGoTo('Collection')
+    } else {
+      document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'block'
+    }
+  } else if (currentPage === 'Collection') {
+    const collection = document.getElementById('wizardCollection').value.trim()
+    if (collection !== '') {
+      document.getElementById('wizardCollectionBlankWarning').style.display = 'none'
+      wizardGoTo('Question')
+    } else {
+      document.getElementById('wizardCollectionBlankWarning').style.display = 'block'
+    }
+  } else if (currentPage === 'Question') {
+    wizardGoTo('Style')
+    createWordCloud()
+  } else if (currentPage === 'Style') {
+    wizardCreateDefinition()
+  }
+}
+
+function wizardBack (currentPage) {
+  // Move the wizard back one page
+
+  if (currentPage === 'Collection') {
+    wizardGoTo('Welcome')
+  } else if (currentPage === 'Question') {
+    wizardGoTo('Collection')
+  } else if (currentPage === 'Style') {
+    wizardGoTo('Question')
+  }
+}
+
+function wizardGoTo (page) {
+  Array.from(document.querySelectorAll('.wizard-pane')).forEach((el) => {
+    el.style.display = 'none'
+  })
+  document.getElementById('wizardPane_' + page).style.display = 'block'
+}
+
+async function wizardCreateDefinition () {
+  // Use the provided details to build a definition file.
+
+  // Definition name
+  const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
+  exSetup.updateWorkingDefinition(['name'], defName)
+
+  // Prompt
+  const prompt = document.getElementById('wizardQuestion').value.trim()
+  exSetup.updateWorkingDefinition(['content', 'prompt'], prompt)
+
+  // Collection
+  const collection = document.getElementById('wizardCollection').value.trim()
+  exSetup.updateWorkingDefinition(['behavior', 'collection_name'], collection)
+
+  // Appearance options
+  exSetup.updateWorkingDefinition(['appearance', 'text_case'], document.getElementById('wizard_textCaseSelect').value)
+  exSetup.updateWorkingDefinition(['appearance', 'rotation'], document.getElementById('wizard_wordRotationSelect').value)
+  exSetup.updateWorkingDefinition(['appearance', 'cloud_shape'], document.getElementById('wizard_cloudShapeSelect').value)
+
+  await exSetup.saveDefinition(defName)
+  await exCommon.getAvailableDefinitions(exCommon.config.app)
+  editDefinition($('#definitionSaveButton').data('workingDefinition').uuid)
+  $('#setupWizardModal').modal('hide')
+}
+
+function createWordList (textDict) {
+  // Take a dictionary of the form {"word": num_occurances} and convert it
+  // into the nested list required by the wordcloud
+
+  let maxValue = 0
+  Object.keys(textDict).forEach((item) => {
+    if (textDict[item] > maxValue) {
+      maxValue = textDict[item]
+    }
+  })
+  // Then, format the list, scaling each value to the range [3, 9]
+  const wordList = []
+  Object.keys(textDict).forEach((item) => {
+    wordList.push([item, 6 * textDict[item] / maxValue + 3])
+  })
+  return (wordList)
+}
+
+function createWordCloud () {
+  // Create a test wordcloud with the given options
+
+  const divForWC = document.getElementById('wordCloudContainer')
+
+  const WordCloudOptions = {
+    color: 'random-dark',
+    gridSize: Math.round(16 * $(divForWC).width() / 1024),
+    weightFactor: function (size) {
+      return Math.pow(size, 2.3) * $(divForWC).width() / 1024
+    },
+    drawOutOfBound: false,
+    rotateRatio: 0.125,
+    shrinkToFit: true,
+    shuffle: true,
+    backgroundColor: 'white',
+    fontFamily: 'words-default'
+  }
+
+  let wordDict = {}
+  if (document.getElementById('wizard_textCaseSelect').value === 'uppercase') {
+    Object.keys(animalDict).forEach((key) => {
+      wordDict[key.toUpperCase()] = animalDict[key]
+    })
+  } else {
+    wordDict = structuredClone(animalDict)
+  }
+  const rotationOption = document.getElementById('wizard_wordRotationSelect').value
+
+  if (rotationOption === 'horizontal') {
+    WordCloudOptions.minRotation = 0
+    WordCloudOptions.maxRotation = 0
+  } else if (rotationOption === 'right_angles') {
+    WordCloudOptions.minRotation = 1.5708
+    WordCloudOptions.maxRotation = 1.5708
+    WordCloudOptions.rotationSteps = 2
+  } else {
+    WordCloudOptions.minRotation = -1.5708
+    WordCloudOptions.maxRotation = 1.5708 // 6.2821
+    WordCloudOptions.rotationSteps = 100
+    WordCloudOptions.rotateRatio = 0.5
+  }
+
+  WordCloudOptions.list = createWordList(wordDict)
+  WordCloudOptions.shape = document.getElementById('wizard_cloudShapeSelect').value
+
+  WordCloud(divForWC, WordCloudOptions)
 }
 
 async function clearDefinitionInput (full = true) {
   // Clear all input related to a defnition
 
   if (full === true) {
-    await initializeDefinition()
+    await exSetup.initializeDefinition()
   }
 
   // Definition details
@@ -135,6 +242,7 @@ function editDefinition (uuid = '') {
     document.getElementById('wordRotationSelect').value = 'horizontal'
   }
   if ('cloud_shape' in def.appearance) {
+    console.log('here')
     document.getElementById('cloudShapeSelect').value = def.appearance.cloud_shape
   } else {
     document.getElementById('cloudShapeSelect').value = 'circle'
@@ -234,6 +342,27 @@ setTimeout(setUpColorPickers, 100)
 // Add event listeners
 // -------------------------------------------------------------
 
+// Wizard
+
+// Connect the forward and back buttons
+Array.from(document.querySelectorAll('.wizard-forward')).forEach((el) => {
+  el.addEventListener('click', () => {
+    wizardForward(el.getAttribute('data-current-page'))
+  })
+})
+Array.from(document.querySelectorAll('.wizard-back')).forEach((el) => {
+  el.addEventListener('click', () => {
+    wizardBack(el.getAttribute('data-current-page'))
+  })
+})
+
+// Update the word cloud preview when changing wizard options
+Array.from(document.querySelectorAll('.wizard-style-option')).forEach((el) => {
+  el.addEventListener('change', () => {
+    createWordCloud()
+  })
+})
+
 // Settings
 document.getElementById('collectionNameInput').addEventListener('change', (event) => {
   exSetup.updateWorkingDefinition(['behavior', 'collection_name'], event.target.value)
@@ -320,8 +449,23 @@ if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').match
 exSetup.configure({
   app: 'word_cloud_viewer',
   clearDefinition: clearDefinitionInput,
-  initializeDefinition,
-  loadDefinition: editDefinition
+  initializeWizard,
+  loadDefinition: editDefinition,
+  blankDefinition: {
+    appearance: {
+      background: {
+        mode: 'color',
+        color: '#fff'
+      },
+      text_case: 'lowercase',
+      text_size: {}
+    },
+    attractor: {},
+    behavior: {},
+    content: {
+      localization: {}
+    }
+  }
 })
 
 exCommon.askForDefaults(false)
@@ -335,3 +479,39 @@ exCommon.askForDefaults(false)
       document.getElementById('helpNewAccountMessage').style.display = 'none'
     }
   })
+
+const animalDict = {
+  dog: 108,
+  cat: 94,
+  pony: 71,
+  horse: 63,
+  butterfly: 62,
+  moose: 61,
+  penguin: 51,
+  dolphin: 46,
+  fox: 40,
+  elk: 39,
+  lion: 37,
+  tiger: 35,
+  deer: 35,
+  leopard: 34,
+  turtle: 28,
+  snake: 25,
+  robin: 19,
+  seagull: 19,
+  parrot: 18,
+  jellyfish: 16,
+  kangaroo: 15,
+  coyote: 15,
+  rabbit: 11,
+  moth: 7,
+  snail: 6,
+  zebra: 5,
+  beetle: 5,
+  bear: 4,
+  hare: 4,
+  lizard: 3,
+  tuna: 2,
+  donkey: 1,
+  slug: 1
+}

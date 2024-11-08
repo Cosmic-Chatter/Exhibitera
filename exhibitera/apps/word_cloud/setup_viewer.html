@@ -14,6 +14,21 @@
     <link rel="stylesheet" href="../css/coloris.min.css">
     <link rel="stylesheet" href="../css/setup.css">
 
+    <style>
+      @font-face {
+        font-family: words-default;
+        src: url(../_fonts/OpenSans-Regular.ttf);
+      }
+
+      #wordCloudContainer {
+        width: 100%;
+        height: 100%;
+        margin-left: 2.5vw;
+        margin-right: 2.5vw;
+        overflow: visible;
+      }
+    </style>
+
     <title>Word Cloud Viewer Setup</title>
 
   </head>
@@ -102,6 +117,183 @@
         </div>
       </div>
 
+      <!-- Welcome modal -->
+      <div id="appWelcomeModal" class="modal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Welcome to Word Cloud</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body"  style="max-height: 70vh; overflow-y: auto;">
+              <div class="row gy-2 row-cols-1 row-cols-md-2">
+                <div class="col">
+                  <div class="card h-100">
+                    <div class="card-body d-flex flex-column">
+                      <h5 class="card-title text-center">Guided Setup</h5>
+                      <p class="card-text">Get started with step-by-step instructions. You can always fine-tune things afterwards.</p>
+                      <button id="appWelcomeModalWizardButton" class="btn btn-primary w-100 mt-auto">Start Guided Setup</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="col">
+                  <div class="card h-100">
+                    <div class="card-body d-flex flex-column">
+                      <h5 class="card-title text-center">Custom Setup</h5>
+                      <p class="card-text">Fully control all attributes from the beginning. <span class='badge text-bg-secondary'>Advanced</span></p>
+                      <button class="btn btn-primary w-100 mt-auto" data-bs-dismiss="modal">Start Custom Setup</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Setup wizard modal -->
+      <div id="setupWizardModal" class="modal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Create a new definition</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div id="setupWizardModalBody" class="modal-body">
+
+              <!-- Welcome -->
+              <div id="wizardPane_Welcome" class="row wizard-pane">
+                <div class="col-8 offset-2 mt-3">
+                  <H4 class="text-center">Welcome to Word Cloud Viewer!</H4>
+                  <i>
+                    <p>
+                      Word Cloud Viewer combines answers submitted by visitors through Word Cloud Input and creates a custom word cloud from the result.
+                    </p>
+                    <p>
+                      To create a Word Cloud Viewer, you will need:
+                      <ul>
+                        <li>The name of the collection you want to visualize.</li>
+                      </ul>
+                    </p>
+                  </i>
+                  <div class="row">
+                    <div class="col-6 offset-3">
+                      <label class="form-label" for="wizardDefinitionNameInput">Definition name</label>
+                      <input class="form-control" id="wizardDefinitionNameInput" type="text">
+                    </div>
+                    <div id="wizardDefinitionNameBlankWarning" class="col-12 text-warning mt-2" style="display: none;">
+                      Definition name must not be blank.
+                    </div>
+                  </div>
+                  <div class="text-center mt-4">
+                    <button class="btn btn-primary wizard-forward" data-current-page="Welcome">Get started</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Collection -->
+              <div id="wizardPane_Collection" class="row wizard-pane">
+                <div class="col-8 offset-2 mt-3">
+                  <H4 class="text-center">Which collection is this for?</H4>
+                  <i>
+                    <p>
+                      To use Word Cloud Viewer, you will first need to set up at least one Word Cloud Input. Responses from Input are aggregated into a <b>collection</b>, which you defined when setting Input up. To visualize the responses, you need to point WOrd Cloud Viewer at the same collection name you selected.
+                    </p>
+                  </i>
+                  <div class="row gy-2">
+                    <div class="col-12">
+                      <label class="form-label" for="wizardCollection">Collection</label>
+                      <input id="wizardCollection" class="form-control" type="text" placeholder="Collection name">
+                    </div>
+                  </div>
+                  <div id="wizardCollectionBlankWarning" class="col-12 text-warning mt-2" style="display: none;">
+                    Collection must not be blank.
+                  </div>
+                  <div class="text-center mt-4">
+                    <button class="btn btn-secondary me-4 wizard-back" data-current-page="Collection">Back</button>
+                    <button class="btn btn-primary ms-4 wizard-forward" data-current-page="Collection">Next</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Question -->
+              <div id="wizardPane_Question" class="row wizard-pane">
+                <div class="col-8 offset-2 mt-3">
+                  <H4 class="text-center">Do you want a header?</H4>
+                  <i>
+                    <p>
+                      You can place a line of text above the completed word cloud. It's common to restate the question asked on the Word Cloud Input screens, but you can also leave this blank.
+                    </p>
+                  </i>
+                  <div class="row gy-2">
+                    <div class="col-12">
+                      <label class="form-label" for="wizardQuestion">Question</label>
+                      <input id="wizardQuestion" class="form-control" type="text" placeholder="Text of the header">
+                    </div>
+                  </div>
+                  <div class="text-center mt-4">
+                    <button class="btn btn-secondary me-4 wizard-back" data-current-page="Question">Back</button>
+                    <button class="btn btn-primary ms-4 wizard-forward" data-current-page="Question">Next</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Style -->
+              <div id="wizardPane_Style" class="row wizard-pane">
+                <div class="col-8 offset-2 mt-3">
+                  <H4 class="text-center">How should the word cloud look?</H4>
+                  <i>
+                    <p>
+                      You will be able to adjust colors and fonts after completing Guided Setup.
+                    </p>
+                  </i>
+                  <div class="row gy-2">
+                    <div class="col-6">
+                      <label for="wizard_wordRotationSelect" class="form-label mt-2">
+                        Word rotation
+                        <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="How should words in the cloud be shown?" style="font-size: 0.55em;">?</span>
+                      </label>
+                      <select id="wizard_wordRotationSelect" class="form-select wizard-style-option">
+                        <option value="horizontal">Horizontal only</option>
+                        <option value="right_angles">Horizontal/vertical only</option>  
+                        <option value="full">Full rotation</option>
+                      </select>
+                      <label for="wizard_cloudShapeSelect" class="form-label mt-2">
+                        Cloud shape
+                        <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="The words will be roughly arranged in the selected shape." style="font-size: 0.55em;">?</span>
+                      </label>
+                      <select id="wizard_cloudShapeSelect" class="form-select wizard-style-option">
+                        <option value="circle">Circle</option>
+                        <option value="square">Square</option>  
+                        <option value="diamond">Diamond</option>
+                        <option value="triangle">Triangle (pointing up)</option>
+                        <option value="triangle-forward">Triangle (pointing right)</option>
+                        <option value="pentagon">Pentagon</option>
+                        <option value="star">Star</option>
+                      </select>
+                      <label for="wizard_textCaseSelect" class="form-label mt-2">
+                        Capitalization
+                      </label>
+                      <select id="wizard_textCaseSelect" class="form-select wizard-style-option">
+                        <option value="lowercase">Lowercase</option>  
+                        <option value="uppercase">Uppercase</option>
+                      </select>                      
+                    </div>
+                    <div class="col-6">
+                      <div id="wordCloudContainer"></div>
+                    </div>
+                  </div>
+                  <div class="text-center mt-4">
+                    <button class="btn btn-secondary me-4 wizard-back" data-current-page="Style">Back</button>
+                    <button class="btn btn-primary ms-4 wizard-forward" data-current-page="Style">Finish</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="row">
         <div class="col-10" id="setupHeader">
           <H2>Word Cloud Viewer Setup</H2>
@@ -159,6 +351,9 @@
               <span class="d-none d-sm-inline d-lg-none">New</span>
             </button>
             <ul class="dropdown-menu">
+              <li><h6 class="dropdown-header">Basic</h6></li>
+              <li><a id="showWizardButton" class="dropdown-item" href="#">Guided setup</a></li>
+              <li><h6 class="dropdown-header">Advanced</h6></li>
               <li><a id="newDefinitionButton" class="dropdown-item" href="#">Create blank definition</a></li>
               <li><a id="cloneDefinitionButton" class="dropdown-item" href="#">Clone selected definition</a></li>
             </ul>
@@ -355,6 +550,7 @@
       </div>
     </div>
 
+  <script src="../js/wordcloud2.js"></script>
   <script type="text/javascript" src="../js/jquery-3.7.1.min.js"></script>
   <script type="text/javascript" src="../js/bootstrap_5_3/bootstrap.bundle.min.js"></script>
   <script type="text/javascript" src="../js/showdown.min.js"></script>
