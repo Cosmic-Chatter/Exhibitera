@@ -242,6 +242,7 @@ def load_default_configuration() -> None:
     ex_legacy.convert_legacy_projector_configuration()
     ex_legacy.convert_legacy_static_configuration()
     ex_legacy.convert_legacy_WOL_configuration()
+    ex_legacy.convert_schedule_targets_to_json()
 
     ex_tools.start_debug_loop()
     ex_sched.retrieve_json_schedule()

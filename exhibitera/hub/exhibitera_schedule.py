@@ -13,8 +13,8 @@ import threading
 
 # Exhibitera imports
 import config
-import exhibitera_exhibit as c_exhibit
-import exhibitera_tools as c_tools
+import exhibitera_exhibit as ex_exhibit
+import exhibitera_tools as ex_tools
 
 
 def create_schedule(name: str, entries: dict[str, dict]) -> tuple[bool, dict]:
@@ -26,7 +26,7 @@ def create_schedule(name: str, entries: dict[str, dict]) -> tuple[bool, dict]:
     if success is False:
         # Write a blank schedule
         try:
-            with open(c_tools.with_extension(name, 'json'), 'w', encoding='UTF-8') as f:
+            with open(ex_tools.with_extension(name, 'json'), 'w', encoding='UTF-8') as f:
                 f.write('')
         except PermissionError:
             return False, {}
@@ -55,7 +55,7 @@ def retrieve_json_schedule():
         day_specific_filename = day.strftime("%A").lower() + ".json"  # e.g., monday.ini
 
         sources_to_try = [date_specific_filename, day_specific_filename]
-        source_dir = os.listdir(c_tools.get_path(["schedules"], user_file=True))
+        source_dir = os.listdir(ex_tools.get_path(["schedules"], user_file=True))
         schedule_to_read = None
 
         for source in sources_to_try:
@@ -81,7 +81,7 @@ def get_available_date_specific_schedules(all: bool = False) -> list[str]:
     By default, return only schedules for today's date or future. Set all=True to return past schedules.
     """
 
-    schedule_path = c_tools.get_path(["schedules"], user_file=True)
+    schedule_path = ex_tools.get_path(["schedules"], user_file=True)
     available_schedules = os.listdir(schedule_path)
     schedules_to_return = []
 
@@ -107,7 +107,7 @@ def get_available_date_specific_schedules(all: bool = False) -> list[str]:
 def load_json_schedule(schedule_name: str) -> tuple[bool, dict]:
     """Load and parse the appropriate schedule file and return it"""
 
-    schedule_path = c_tools.get_path(["schedules", schedule_name], user_file=True)
+    schedule_path = ex_tools.get_path(["schedules", schedule_name], user_file=True)
     with config.scheduleLock:
         try:
             with open(schedule_path, "r", encoding="UTF-8") as f:
@@ -127,7 +127,7 @@ def load_json_schedule(schedule_name: str) -> tuple[bool, dict]:
 def write_json_schedule(schedule_name: str, schedule: dict) -> bool:
     """Take a json schedule dictionary and write it to file"""
 
-    schedule_path = c_tools.get_path(["schedules", schedule_name], user_file=True)
+    schedule_path = ex_tools.get_path(["schedules", schedule_name], user_file=True)
     with config.scheduleLock:
         try:
             with open(schedule_path, "w", encoding="UTF-8") as f:
@@ -210,7 +210,7 @@ def queue_json_schedule(schedule: dict) -> None:
     if config.serverRebootTime is not None:
         seconds_until_reboot = (config.serverRebootTime - datetime.datetime.now()).total_seconds()
         if seconds_until_reboot >= 0:
-            timer = threading.Timer(seconds_until_reboot, c_tools.reboot_server)
+            timer = threading.Timer(seconds_until_reboot, ex_tools.reboot_server)
             timer.daemon = True
             timer.start()
             new_timers.append(timer)
@@ -286,19 +286,19 @@ def execute_scheduled_action(action: str, target: Union[list, str, None], value:
             target = target[5:]
         print(f"Changing definition for {target} to {value}")
         logging.info("Changing definition for %s to %s", target, value)
-        c_exhibit.update_exhibit_configuration({"definition": value}, component_id=target)
+        ex_exhibit.update_exhibit_configuration({"definition": value}, component_id=target)
     elif action == 'set_dmx_scene' and target is not None and value is not None:
         if isinstance(value, list):
             value = value[0]
         if target.startswith("__id_"):
             target = target[5:]
         logging.info('Setting DMX scene for %s to %s', target, value)
-        component = c_exhibit.get_exhibit_component(component_id=target)
+        component = ex_exhibit.get_exhibit_component(component_id=target)
         component.queue_command("set_dmx_scene__" + value)
     elif action == 'set_exhibit' and target is not None:
         print("Changing exhibit to:", target)
         logging.info("Changing exhibit to %s", target)
-        c_exhibit.read_exhibit_configuration(target)
+        ex_exhibit.read_exhibit_configuration(target)
 
         # Update the components that the configuration has changed
         for component in config.componentList:
@@ -308,7 +308,7 @@ def execute_scheduled_action(action: str, target: Union[list, str, None], value:
             target = [target]
         for target_i in target:
             if target_i == "__all":
-                c_exhibit.command_all_exhibit_components(action)
+                ex_exhibit.command_all_exhibit_components(action)
             elif target_i.startswith("__group"):
                 group = target_i[8:]
                 for component in config.componentList:
@@ -321,9 +321,9 @@ def execute_scheduled_action(action: str, target: Union[list, str, None], value:
                     if component.group == group:
                         component.queue_command(action)
             elif target_i.startswith("__id"):
-                c_exhibit.get_exhibit_component(component_id=target_i[5:]).queue_command(action)
+                ex_exhibit.get_exhibit_component(component_id=target_i[5:]).queue_command(action)
     else:
-        c_exhibit.command_all_exhibit_components(action)
+        ex_exhibit.command_all_exhibit_components(action)
 
 
 def seconds_from_midnight(input_time: str) -> float:
@@ -334,7 +334,7 @@ def seconds_from_midnight(input_time: str) -> float:
 
 
 # Set up log file
-log_path = c_tools.get_path(["hub.log"], user_file=True)
+log_path = ex_tools.get_path(["hub.log"], user_file=True)
 logging.basicConfig(datefmt='%Y-%m-%d %H:%M:%S',
                     filename=log_path,
                     format='%(levelname)s, %(asctime)s, %(message)s',
