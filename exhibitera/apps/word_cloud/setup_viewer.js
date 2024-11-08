@@ -18,6 +18,12 @@ async function initializeWizard () {
   // Reset fields
   document.getElementById('wizardDefinitionNameInput').value = ''
   document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'none'
+  document.getElementById('wizardCollection').value = ''
+  document.getElementById('wizardCollectionBlankWarning').style.display = 'none'
+  document.getElementById('wizardQuestion').value = ''
+  document.getElementById('wizard_wordRotationSelect').value = 'horizontal'
+  document.getElementById('wizard_cloudShapeSelect').value = 'circle'
+  document.getElementById('wizard_textCaseSelect').value = 'lowercase'
 }
 
 async function wizardForward (currentPage) {
