@@ -309,7 +309,7 @@ export function populateUsers () {
       usersRow.appendChild(col)
 
       const button = document.createElement('button')
-      button.classList = 'btn btn-secondary w-100'
+      button.classList = 'btn btn-secondary w-100 h-100'
       button.innerHTML = user.display_name
       button.addEventListener('click', () => {
         showEditUserModal(user)
