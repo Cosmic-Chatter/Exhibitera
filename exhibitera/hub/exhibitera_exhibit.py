@@ -874,7 +874,7 @@ def update_exhibit_configuration(update: dict[str, Any],
     config.exhibit_configuration = exhibit_config
 
     c_tools.write_json(exhibit_config, exhibit_path)
-    if component_uuid != "":
+    if component_uuid != "" and component_uuid is not None:
         this_component = get_exhibit_component(component_uuid=component_uuid)
     else:
         this_component = get_exhibit_component(component_id=component_id)
