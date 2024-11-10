@@ -18,7 +18,7 @@ missingContentWarningList: list[dict] = []  # Holds a list of warning about miss
 NEXT_EVENT: Union[tuple[datetime.time, list[str]], None] = None  # A tuple with the next event to occur and the time is happens
 schedule: list[tuple[datetime.time, str]] = []  # List of upcoming actions and their times
 thumbnail_archive: dict[str, Any] | None = None
-HELPER_SOFTWARE_VERSION: float = 5.1
+HELPER_SOFTWARE_VERSION: float = 5.2
 debug: bool = True
 
 # DMX resources

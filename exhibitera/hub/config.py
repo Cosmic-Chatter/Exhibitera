@@ -16,7 +16,7 @@ port: int = 8000
 ip_address: str = "localhost"
 last_update_time: float = 0  # Will hold time.time() of last change to the server
 
-software_version: float = 5.1
+software_version: float = 5.2
 software_update_available: bool = False
 software_update_available_version: str = ""
 software_update_timer: threading.Timer | None = None  # Timer reference to check for an update once daily

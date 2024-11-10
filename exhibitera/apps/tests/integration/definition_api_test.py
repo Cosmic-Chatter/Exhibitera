@@ -13,7 +13,7 @@ def test_definition_api_flow():
     # Create a dummy entry
     payload = json.dumps({
         "definition":  {"app": "other",
-        "exhibitera_version": 5.1,
+        "exhibitera_version": 5.2,
         "lastEditedDate": "2024-09-08T16:39:03.346Z",
         "name": "IntegrationTesting",
         "path": "",
