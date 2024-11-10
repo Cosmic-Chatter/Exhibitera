@@ -1860,11 +1860,17 @@ app.mount("/",
           name="root")
 
 if __name__ == "__main__":
+    print("Checking file structure...")
     ex_tools.check_file_structure()
+    print("Loading exhibits...")
     ex_exhibit.check_available_exhibits()
+    print("Loading configuration...")
     load_default_configuration()
+    print("Loading users...")
     ex_users.load_users()
+    print("Loading groups...")
     ex_group.load_groups()
+    print("Loading components...")
     ex_exhibit.load_components()
     ex_proj.poll_projectors()
     ex_exhibit.poll_wake_on_LAN_devices()
@@ -1874,7 +1880,7 @@ if __name__ == "__main__":
     if ex_config.debug:
         log_level = "debug"
 
-    print(f"Launching Exhibitera Hub for {ex_config.gallery_name}.")
+    print(f"\nLaunching Exhibitera Hub for {ex_config.gallery_name}.")
     print(f"To access the server, visit http://{ex_config.ip_address}:{ex_config.port}")
 
     # Must use only one worker, since we are relying on the config module being in global
