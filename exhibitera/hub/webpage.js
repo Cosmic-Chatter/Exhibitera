@@ -465,7 +465,6 @@ function parseUpdate (update) {
 
   // Schedule should be after components
   if ('schedule' in update) {
-    console.log(update.schedule)
     if (exConfig.scheduleUpdateTime !== update.schedule.updateTime) {
       exSchedule.populateSchedule(update.schedule)
     }
@@ -1078,8 +1077,13 @@ document.getElementById('scheduleFromFileModalSubmitButton').addEventListener('c
 
 $('#scheduleEditDeleteActionButton').click(exSchedule.scheduleDeleteActionFromModal)
 $('#scheduleEditSubmitButton').click(exSchedule.sendScheduleUpdateFromModal)
-$('#scheduleActionSelector').change(exSchedule.setScheduleActionTargetSelector)
-$('#scheduleTargetSelector').change(exSchedule.setScheduleActionValueSelector)
+$('#scheduleActionSelector').change(() => {
+  exSchedule.setScheduleActionTargetSelector()
+}
+)
+$('#scheduleTargetSelector').change(() => {
+  exSchedule.setScheduleActionValueSelector()
+})
 // This event detects when the delete button has been clicked inside a popover to delete a date-specific schedule.
 document.addEventListener('click', (event) => {
   if (event.target.classList.contains('schedule-delete') === false) return

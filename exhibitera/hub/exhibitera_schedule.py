@@ -197,6 +197,8 @@ def queue_json_schedule(schedule: dict) -> None:
             timer.start()
             new_timers.append(timer)
 
+    get_next_scheduled_action()  # Update the config.json_next_event field
+
     # Add a timer to reload the schedule
     midnight = datetime.datetime.combine(datetime.datetime.now() + datetime.timedelta(days=1), datetime.time.min)
     seconds_until_midnight = (midnight - datetime.datetime.now()).total_seconds()

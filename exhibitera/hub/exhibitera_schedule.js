@@ -454,7 +454,7 @@ function setScheduleActionTargetSelectorPopulateOptions (optionsToAdd) {
     })
   }
   if (optionsToAdd.includes('ExhibitComponents') || optionsToAdd.includes('Projectors')) {
-    const sep = new Option('IDs', null)
+    const sep = new Option('Components', null)
     sep.setAttribute('disabled', true)
     targetSelector.append(sep)
 
@@ -487,11 +487,12 @@ function setScheduleActionTargetSelectorPopulateOptions (optionsToAdd) {
   }
 }
 
-export function setScheduleActionTargetSelector () {
+export function setScheduleActionTargetSelector (action = null, target = null) {
   // Helper function to show/hide the select element for picking the target
   // of an action when appropriate
 
-  const action = $('#scheduleActionSelector').val()
+  if (action == null) action = document.getElementById('scheduleActionSelector').value
+
   const targetSelector = $('#scheduleTargetSelector')
 
   if (action === 'set_exhibit') {
@@ -509,7 +510,7 @@ export function setScheduleActionTargetSelector () {
     $('#scheduleTargetSelectorLabel').show()
     $('#scheduleNoteInput').hide()
   } else if (['power_on', 'power_off', 'refresh_page', 'restart', 'set_definition', 'set_dmx_scene'].includes(action)) {
-    // Fill the target selector with the list of groups and ids, plus an option for all.
+    // Fill the target selector with the list of groups and components, plus an option for all.
     targetSelector.empty()
 
     if (['power_on', 'power_off'].includes(action)) {
@@ -524,9 +525,10 @@ export function setScheduleActionTargetSelector () {
     }
     targetSelector.show()
     $('#scheduleTargetSelectorLabel').show()
+
     // For certain actions, we want to then populare the value selector
     if (['set_definition', 'set_dmx_scene'].includes(action)) {
-      setScheduleActionValueSelector()
+      setScheduleActionValueSelector(action, target)
     } else {
       $('#scheduleValueSelector').hide()
       $('#scheduleValueSelectorLabel').hide()
@@ -549,12 +551,13 @@ export function setScheduleActionTargetSelector () {
   }
 }
 
-export function setScheduleActionValueSelector () {
+export function setScheduleActionValueSelector (action = null, target = null) {
   // Helper function to show/hide the select element for picking the value
   // of an action when appropriate
 
-  const action = document.getElementById('scheduleActionSelector').value
-  const target = document.getElementById('scheduleTargetSelector').value
+  if (action == null) action = document.getElementById('scheduleActionSelector').value
+  if (target == null) target = JSON.parse(document.getElementById('scheduleTargetSelector').value)
+
   const valueSelector = $('#scheduleValueSelector')
   valueSelector.empty()
 
@@ -568,9 +571,20 @@ export function setScheduleActionValueSelector () {
         component = exExhibit.getExhibitComponent(target.id)
       }
     } catch {
+      console.log('error')
       return
     }
 
+    const errorAlert = document.getElementById('scheduleEditErrorAlert')
+    if (component.helperAddress === '') {
+      errorAlert.innerHTML = 'This component is not responding'
+      errorAlert.style.display = 'block'
+      valueSelector.hide()
+      $('#scheduleValueSelectorLabel').hide()
+      return
+    } else {
+      errorAlert.style.display = 'none'
+    }
     exTools.makeRequest({
       method: 'GET',
       url: component.helperAddress,
@@ -647,8 +661,8 @@ export function scheduleConfigureEditModal (scheduleName,
   currentAction = null,
   currentTarget = null,
   currentValue = null) {
-  // Function to set up and then show the modal that enables editing a
-  // scheduled event or adding a new one
+  // Set up and then show the modal that enables editing a scheduled event
+  // or adding a new one
 
   // If currentScheduleID == null, we are adding a new schedule item, so create a unique ID
   if (currentScheduleID == null) {
@@ -676,34 +690,40 @@ export function scheduleConfigureEditModal (scheduleName,
 
   // Set the modal title
   if (isAddition) {
-    $('#scheduleEditModalTitle').html('Add action')
+    document.getElementById('scheduleEditModalTitle').innerHTML = 'Add action'
   } else {
-    $('#scheduleEditModalTitle').html('Edit action')
+    document.getElementById('scheduleEditModalTitle').innerHTML = 'Edit action'
   }
 
   // Set the scope notice so that users know what their change will affect
-  switch (type) {
-    case 'date-specific':
-      $('#scheduleEditScopeAlert').html(`This change will only affect ${scheduleName}`)
-      break
-    case 'day-specific':
-      $('#scheduleEditScopeAlert').html(`This change will affect all ${scheduleName.charAt(0).toUpperCase() + scheduleName.slice(1)}s`)
-      break
-    default:
-      break
+  const dateOptions = {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  }
+  if (type === 'date-specific') {
+    // Parse the date into a string
+    const dateSplit = scheduleName.split('-')
+    const date = new Date(parseInt(dateSplit[0]), parseInt(dateSplit[1]) - 1, parseInt(dateSplit[2]))
+    const dateStr = date.toLocaleDateString(undefined, dateOptions)
+    document.getElementById('scheduleEditScopeAlert').innerHTML = `This change will only affect ${dateStr}`
+  } else {
+    document.getElementById('scheduleEditScopeAlert').innerHTML = `This change will affect all ${scheduleName.charAt(0).toUpperCase() + scheduleName.slice(1)}s`
   }
 
   // If we're editing an existing action, pre-fill the current options
   if (isAddition === false) {
-    $('#scheduleActionTimeInput').val(currentTime)
-    $('#scheduleActionSelector').val(currentAction)
+    document.getElementById('scheduleActionTimeInput').value = currentTime
+    document.getElementById('scheduleActionSelector').value = currentAction
 
     if (currentAction === 'note') {
-      $('#scheduleNoteInput').val(currentValue)
+      document.getElementById('scheduleNoteInput').value = currentValue
       $('#scheduleNoteInput').show()
     } else {
       if (currentTarget != null) {
-        setScheduleActionTargetSelector()
+        setScheduleActionTargetSelector(currentAction, currentTarget)
+
         if (Array.isArray(currentTarget)) {
           // We need to stringify each of the items in the list
           const tempArray = []
@@ -741,7 +761,6 @@ export function sendScheduleUpdateFromModal () {
   } else {
     target = JSON.parse(target)
   }
-  console.log(document.getElementById('scheduleTargetSelector').value)
   let value
 
   if (action === 'note') {
