@@ -865,9 +865,9 @@ def update_exhibit_configuration(update: dict[str, Any],
                 match_found = True
     if not match_found:
         new_entry = {}
-        if component_id != '':
+        if component_id != '' and component_id is not None:
             new_entry['id'] = component_id
-        if component_uuid != '':
+        if component_uuid != '' and component_uuid is not None:
             new_entry['uuid'] = component_uuid
         new_entry |= update
         exhibit_config.append(new_entry)
