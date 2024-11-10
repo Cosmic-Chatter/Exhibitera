@@ -212,7 +212,7 @@ export function populateSchedule (schedule) {
     $(dayContainer).append(events)
   })
 
-  $('#Schedule_next_event').html(populateScheduleDescriptionHelper(schedule.nextEvent, true))
+  document.getElementById('Schedule_next_event').innerHTML = populateScheduleDescriptionHelper(schedule.nextEvent, true)
 }
 
 function createScheduleEntryHTML (item, scheduleID, scheduleName, scheduleType, allowEdit = exTools.checkPermission('schedule', 'edit')) {

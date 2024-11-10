@@ -465,6 +465,7 @@ function parseUpdate (update) {
 
   // Schedule should be after components
   if ('schedule' in update) {
+    console.log(update.schedule)
     if (exConfig.scheduleUpdateTime !== update.schedule.updateTime) {
       exSchedule.populateSchedule(update.schedule)
     }

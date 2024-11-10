@@ -94,13 +94,6 @@ def update_system_configuration(update: dict[str, Any]) -> None:
     load_system_configuration(from_dict=new_config)
 
 
-def reboot_server(*args, **kwargs) -> None:
-    """Send the necessary messages to trigger a server restart"""
-
-    config.rebooting = True
-    _thread.interrupt_main()
-
-
 def start_debug_loop() -> None:
     """Begin printing debug information"""
 

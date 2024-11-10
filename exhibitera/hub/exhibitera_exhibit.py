@@ -882,42 +882,6 @@ def update_exhibit_configuration(update: dict[str, Any],
         this_component.update_configuration()
 
 
-def update_synchronization_list(this_id: str, other_ids: list[str]):
-    """Manage synchronization between components.
-
-    config.synchronizationList is a list of dictionaries, with one dictionary for every
-    set of synchronized components.
-    """
-
-    print(f"Received sync request from {this_id} to sync with {other_ids}")
-    print(f"Current synchronizationList: {config.synchronizationList}")
-    id_known = False
-    index = 0
-    match_index = -1
-    for item in config.synchronizationList:
-        if this_id in item["ids"]:
-            id_known = True
-            match_index = index
-        index += 1
-
-    if id_known is False:
-        # Create a new dictionary
-        temp = {"ids": [this_id] + other_ids}
-        temp["checked_in"] = [False for _ in temp["ids"]]
-        (temp["checked_in"])[0] = True  # Check in the current id
-        config.synchronizationList.append(temp)
-    else:
-        index = (config.synchronizationList[match_index])["ids"].index(this_id)
-        ((config.synchronizationList[match_index])["checked_in"])[index] = True
-        if all((config.synchronizationList[match_index])["checked_in"]):
-            print("All components have checked in. Dispatching sync command")
-            time_to_start = str(round(time.time() * 1000) + 10000)
-            for item in (config.synchronizationList[match_index])["ids"]:
-                get_exhibit_component(component_id=item).queue_command(f"beginSynchronization_{time_to_start}")
-            # Remove this sync from the list in case it happens again later.
-            config.synchronizationList.pop(match_index)
-
-
 def update_exhibit_component_status(data: dict[str, Any], ip: str):
     """Update an ExhibitComponent with the values in a dictionary."""
 

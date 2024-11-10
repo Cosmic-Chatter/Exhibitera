@@ -5,7 +5,7 @@
 ### Schedule
 - Schedule entry summaries are more descriptive [Morgan Rehnberg]
 
-## Exhibitera Apps
+##  Apps
 
 ### General
 - Files uploaded as `content` can be downloaded using the file picker [Morgan Rehnberg]

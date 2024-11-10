@@ -39,7 +39,7 @@ def retrieve_json_schedule():
     """Build a schedule for the next 21 days based on the available json schedule files and queue today's events"""
 
     with config.scheduleLock:
-        config.scheduleUpdateTime = (datetime.datetime.now() - datetime.datetime.utcfromtimestamp(0)).total_seconds()
+        config.scheduleUpdateTime = time.time()
         config.json_schedule_list = []
 
         today = datetime.datetime.today().date()
@@ -181,7 +181,6 @@ def queue_json_schedule(schedule: dict) -> None:
     """Take a schedule dict and create a timer to execute it"""
 
     new_timers = []
-    config.json_next_event = []
     for key in schedule:
         event = schedule[key]
         if event["action"] == "note":
@@ -191,26 +190,9 @@ def queue_json_schedule(schedule: dict) -> None:
         seconds_from_now = (event_time - datetime.datetime.now()).total_seconds()
         if seconds_from_now >= 0:
 
-            # Check if this is the next event
-            if len(config.json_next_event) == 0:
-                config.json_next_event.append(event)
-            elif event["time_in_seconds"] < (config.json_next_event[0])["time_in_seconds"]:
-                config.json_next_event = [event]
-            elif event["time_in_seconds"] == (config.json_next_event[0])["time_in_seconds"]:
-                config.json_next_event.append(event)
-
             timer = threading.Timer(seconds_from_now,
                                     execute_scheduled_action,
                                     args=(event["action"], event["target"], event["value"]))
-            timer.daemon = True
-            timer.start()
-            new_timers.append(timer)
-
-    # Add timer to reboot the server
-    if config.serverRebootTime is not None:
-        seconds_until_reboot = (config.serverRebootTime - datetime.datetime.now()).total_seconds()
-        if seconds_until_reboot >= 0:
-            timer = threading.Timer(seconds_until_reboot, ex_tools.reboot_server)
             timer.daemon = True
             timer.start()
             new_timers.append(timer)
@@ -273,6 +255,32 @@ def convert_schedule_to_csv(schedule_name: str) -> tuple[bool, str]:
         return False, ""
 
     return True, output.getvalue()
+
+
+def get_next_scheduled_action():
+    """Search today's schedule for the next scheduled action, update the config, and return it."""
+
+    schedule = (config.json_schedule_list[0])["schedule"]
+
+    config.json_next_event = []
+    for key in schedule:
+        event = schedule[key]
+        if event["action"] == "note":
+            # Don't queue notes
+            continue
+        event_time = dateutil.parser.parse(event["time"])
+        seconds_from_now = (event_time - datetime.datetime.now()).total_seconds()
+        if seconds_from_now >= 0:
+
+            # Check if this is the next event
+            if len(config.json_next_event) == 0:
+                config.json_next_event.append(event)
+            elif event["time_in_seconds"] < (config.json_next_event[0])["time_in_seconds"]:
+                config.json_next_event = [event]
+            elif event["time_in_seconds"] == (config.json_next_event[0])["time_in_seconds"]:
+                config.json_next_event.append(event)
+
+    return config.json_next_event
 
 
 def execute_scheduled_action(action: str,
@@ -363,6 +371,9 @@ def execute_scheduled_action(action: str,
                                                  component_uuid=target_uuid).queue_command(action)
     else:
         ex_exhibit.command_all_exhibit_components(action)
+
+    get_next_scheduled_action()
+    config.scheduleUpdateTime = time.time()
 
 
 def seconds_from_midnight(input_time: str) -> float:
