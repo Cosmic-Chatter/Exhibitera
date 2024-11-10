@@ -838,9 +838,9 @@ def read_exhibit_configuration(name: str):
 
 
 def update_exhibit_configuration(update: dict[str, Any],
-                                 component_id: str = "",
-                                 component_uuid: str = "",
-                                 exhibit_name: str = ""):
+                                 component_id: str | None = "",
+                                 component_uuid: str | None = "",
+                                 exhibit_name: str | None = ""):
     """Update an exhibit configuration with the given data for a given ID or UUID."""
 
     if exhibit_name == "" or exhibit_name is None:
@@ -852,12 +852,12 @@ def update_exhibit_configuration(update: dict[str, Any],
     match_found = False
     for index, component in enumerate(exhibit_config):
         # Prefer UUID to ID from Exhibitera 5
-        if component_uuid != '' and 'uuid' in component:
+        if component_uuid != '' and component_uuid is not None and 'uuid' in component:
             if component["uuid"] == component_uuid:
                 exhibit_config[index] |= update
                 exhibit_config[index]["uuid"] = component_uuid
                 match_found = True
-        elif component_id != '' and 'id' in component:
+        elif component_id != '' and component_id is not None and 'id' in component:
             if component["id"] == component_id:
                 exhibit_config[index] |= update
                 if component_uuid != '':
