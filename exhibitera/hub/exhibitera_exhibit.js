@@ -1876,6 +1876,15 @@ export function getExhibitComponent (id) {
   return result
 }
 
+export function getExhibitComponentByUUID (uuid) {
+  // Function to search the exhibitComponents list for a given uuid
+
+  const result = exConfig.exhibitComponents.find(obj => {
+    return obj.uuid === uuid
+  })
+  return result
+}
+
 export function checkForRemovedComponents (update) {
   // Check exConfig.exhibitComponents and remove any components not in `update`
 

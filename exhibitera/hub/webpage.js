@@ -428,12 +428,6 @@ function parseUpdate (update) {
     }
   }
 
-  if ('schedule' in update) {
-    if (exConfig.scheduleUpdateTime !== update.schedule.updateTime) {
-      exSchedule.populateSchedule(update.schedule)
-    }
-  }
-
   if ('components' in update) {
     let numComps = 0
     let numOnline = 0
@@ -466,6 +460,13 @@ function parseUpdate (update) {
     } else {
       $('#componentsTabSettingsShowStatic').parent().parent().show()
       document.getElementById('componentsTabSettingsShowStaticDivider').parentElement.style.display = 'block'
+    }
+  }
+
+  // Schedule should be after components
+  if ('schedule' in update) {
+    if (exConfig.scheduleUpdateTime !== update.schedule.updateTime) {
+      exSchedule.populateSchedule(update.schedule)
     }
   }
 }

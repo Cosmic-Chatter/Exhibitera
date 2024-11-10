@@ -119,15 +119,10 @@ def convert_schedule_targets_to_json():
             if "target" in event:
                 if isinstance(event["target"], list):
                     for item in event["target"]:
-                        try:
-                            json.loads(item)
-                        except json.decoder.JSONDecodeError:
+                        if not isinstance(item, dict):
                             convert_file = True
-                else:
-                    try:
-                        json.loads(event["target"])
-                    except json.decoder.JSONDecodeError:
-                        convert_file = True
+                elif not isinstance(event["target"], dict):
+                    convert_file = True
         if convert_file is True:
             shutil.copy(ex_tools.get_path(["schedules", file], user_file=True),
                         ex_tools.get_path(["schedules", file + ".backup"], user_file=True))
@@ -141,8 +136,8 @@ def convert_schedule_targets_to_json():
                             temp_list.append(_convert_schedule_targets_to_json(item))
                         event["target"] = temp_list
                     else:
-                        event["target"] = _convert_schedule_targets_to_json(event["target"] )
-            print(schedule)
+                        event["target"] = _convert_schedule_targets_to_json(event["target"])
+            ex_sched.write_json_schedule(file, schedule)
 
 
 def _convert_schedule_targets_to_json(target: str):

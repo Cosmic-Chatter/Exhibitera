@@ -2,6 +2,9 @@
 
 ## Hub
 
+### Schedule
+- Schedule entry summaries are more descriptive [Morgan Rehnberg]
+
 ## Exhibitera Apps
 
 ### General

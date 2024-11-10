@@ -743,21 +743,19 @@ def delete_exhibit(name: str):
 
 
 def get_exhibit_component(component_id: str = "", component_uuid: str = "") -> ExhibitComponent | None:
-    """Return a component with the given id, or None if no such component exists"""
+    """Return a component with the given UUID or id, or None if no such component exists"""
 
-    if component_uuid != "" and component_id != "":
-        raise ValueError("Must specify only one of 'component_id' or 'component_uuid'")
-    elif component_uuid == "" and component_id == "":
+    if component_uuid == "" and component_id == "":
         raise ValueError("Must specify one of 'component_id' or 'component_uuid'")
 
-    if component_id != "":
-        component = next((x for x in config.componentList if x.id == component_id), None)
-    else:
+    if component_uuid != "":
+        # Prefer UUID from Ex 5
         component = next((x for x in config.componentList if x.uuid == component_uuid), None)
+    else:
+        component = next((x for x in config.componentList if x.id == component_id), None)
 
     if component is None:
         # Try projector
-
         component = get_projector(projector_uuid=component_uuid, projector_id=component_id)
 
     if component is None:
@@ -770,30 +768,29 @@ def get_exhibit_component(component_id: str = "", component_uuid: str = "") -> E
 def get_projector(projector_id: str = "", projector_uuid: str = "") -> Projector | None:
     """Return a projector with the given id or uuid, or None if no such projector exists"""
 
-    if projector_uuid != "" and projector_id != "":
-        raise ValueError("Must specify only one of 'projector_id' or 'projector_uuid'")
-    elif projector_uuid == "" and projector_id == "":
+    if projector_uuid == "" and projector_id == "":
         raise ValueError("Must specify one of 'projector_id' or 'projector_uuid'")
 
+    if projector_uuid != "":
+        # Prefer UUID from Ex5
+        return next((x for x in config.projectorList if x.uuid == projector_uuid), None)
     if projector_id != "":
         return next((x for x in config.projectorList if x.id == projector_id), None)
-    if projector_uuid != "":
-        return next((x for x in config.projectorList if x.uuid == projector_uuid), None)
     return None
 
 
 def get_wake_on_LAN_component(component_id: str = "", component_uuid: str = "") -> WakeOnLANDevice | None:
     """Return a WakeOnLan device with the given id or uuid, or None if no such component exists"""
 
-    if component_uuid != "" and component_id != "":
-        raise ValueError("Must specify only one of 'component_id' or 'component_uuid'")
-    elif component_uuid == "" and component_id == "":
+    if component_uuid == "" and component_id == "":
         raise ValueError("Must specify one of 'component_id' or 'component_uuid'")
 
+    if component_uuid != "":
+        # Prefer UUID from Ex5
+        return next((x for x in config.wakeOnLANList if x.uuid == component_uuid), None)
     if component_id != "":
         return next((x for x in config.wakeOnLANList if x.id == component_id), None)
-    if component_uuid != "":
-        return next((x for x in config.wakeOnLANList if x.uuid == component_uuid), None)
+
     return None
 
 

@@ -275,53 +275,92 @@ def convert_schedule_to_csv(schedule_name: str) -> tuple[bool, str]:
     return True, output.getvalue()
 
 
-def execute_scheduled_action(action: str, target: Union[list, str, None], value: Union[list, str, None]):
+def execute_scheduled_action(action: str,
+                             target: list[dict[str, str]] | dict[str, str] | None,
+                             value: list | str | None):
     """Dispatch the appropriate action when called by a schedule timer"""
 
     config.last_update_time = time.time()
     if action == 'set_definition' and target is not None and value is not None:
         if isinstance(value, list):
             value = value[0]
-        if target.startswith("__id_"):
-            target = target[5:]
+        target_uuid = None
+        target_id = None
+        if "uuid" in target:
+            target_uuid = target["uuid"]
+        elif "id" in target:
+            # Depreciated in Ex5.2 - UUID should be the default
+            target_id = target["id"]
+        else:
+            if config.debug:
+                print("set_definition scheduled without a target uuid")
+            logging.error("set_definition scheduled without a target uuid")
+            return
         print(f"Changing definition for {target} to {value}")
+
         logging.info("Changing definition for %s to %s", target, value)
-        ex_exhibit.update_exhibit_configuration({"definition": value}, component_id=target)
+        ex_exhibit.update_exhibit_configuration({"definition": value},
+                                                component_id=target_id,
+                                                component_uuid=target_uuid)
     elif action == 'set_dmx_scene' and target is not None and value is not None:
         if isinstance(value, list):
             value = value[0]
-        if target.startswith("__id_"):
-            target = target[5:]
+        target_uuid = None
+        target_id = None
+        if "uuid" in target:
+            target_uuid = target["uuid"]
+        elif "id" in target:
+            # Depreciated in Ex5.2 - UUID should be the default
+            target_id = target["id"]
+        else:
+            if config.debug:
+                print("set_definition scheduled without a target uuid")
+                logging.error("set_definition scheduled without a target uuid")
+            return
+
         logging.info('Setting DMX scene for %s to %s', target, value)
-        component = ex_exhibit.get_exhibit_component(component_id=target)
+        component = ex_exhibit.get_exhibit_component(component_id=target_id, component_uuid=target_uuid)
         component.queue_command("set_dmx_scene__" + value)
     elif action == 'set_exhibit' and target is not None:
-        print("Changing exhibit to:", target)
-        logging.info("Changing exhibit to %s", target)
-        ex_exhibit.read_exhibit_configuration(target)
+        print("Changing exhibit to:", target["value"])
+        logging.info("Changing exhibit to %s", target["value"])
+        ex_exhibit.read_exhibit_configuration(target["value"])
 
         # Update the components that the configuration has changed
         for component in config.componentList:
             component.update_configuration()
     elif target is not None:
-        if isinstance(target, str):
+        if isinstance(target, dict):
             target = [target]
         for target_i in target:
-            if target_i == "__all":
+            if target_i["type"] == 'all':
                 ex_exhibit.command_all_exhibit_components(action)
-            elif target_i.startswith("__group"):
-                group = target_i[8:]
+            elif target_i["type"] == "group":
+                group = target_i["uuid"]
                 for component in config.componentList:
-                    if component.group == group:
+                    if group in component.groups:
                         component.queue_command(action)
                 for component in config.projectorList:
-                    if component.group == group:
+                    if group in component.groups:
                         component.queue_command(action)
                 for component in config.wakeOnLANList:
-                    if component.group == group:
+                    if group in component.groups:
                         component.queue_command(action)
-            elif target_i.startswith("__id"):
-                ex_exhibit.get_exhibit_component(component_id=target_i[5:]).queue_command(action)
+            elif target_i["type"] == "component":
+                target_uuid = None
+                target_id = None
+                if "uuid" in target_i:
+                    target_uuid = target_i["uuid"]
+                elif "id" in target_i:
+                    # Depreciated in Ex5.2 - UUID should be the default
+                    target_id = target_i["id"]
+                else:
+                    if config.debug:
+                        print("action scheduled without a target uuid")
+                        logging.error("set_definition scheduled without a target uuid")
+                    return
+                ex_exhibit.get_exhibit_component(component_id=target_id,
+                                                 component_uuid=target_uuid).queue_command(action)
     else:
         ex_exhibit.command_all_exhibit_components(action)
 

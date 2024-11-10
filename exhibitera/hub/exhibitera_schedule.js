@@ -227,7 +227,7 @@ function createScheduleEntryHTML (item, scheduleID, scheduleName, scheduleType, 
   if (['power_off', 'power_on', 'refresh_page', 'restart', 'set_definition', 'set_dmx_scene'].includes(action)) {
     description = populateScheduleDescriptionHelper([item], false)
   } else if (action === 'set_exhibit') {
-    description = `Set exhibit: ${target}`
+    description = `Set exhibit: ${target.value}`
   } else if (action === 'note') {
     description = item.value
   }
@@ -371,31 +371,54 @@ function scheduleActionToDescription (action) {
 }
 
 function scheduleTargetToDescription (targetList) {
-  // Convert targets such as "__id_TEST1" to English words like "TEST1"
+  // Convert target uuids to English words
 
   if (targetList == null) return 'none'
 
   let target
-  if (typeof targetList === 'string') {
-    target = targetList
-  } else {
-    if (targetList.length > 1) {
+  if (Array.isArray(targetList)) {
+    // We have a list of target options
+
+    // Check if they are all either components or groups
+    let allComponents = true
+    let allGroups = true
+    for (const target of targetList) {
+      if (target.type !== 'component') allComponents = false
+      if (target.type !== 'group') allGroups = false
+    }
+
+    if (targetList.length > 10) {
+      if (allComponents) return String(targetList.length) + ' components'
+      if (allGroups) return String(targetList.length) + ' groups'
+      return 'multiple components'
+    } else if (targetList.length > 1) {
+      const numberNames = { 2: 'two', 3: 'three', 4: 'four', 5: 'five', 6: 'six', 7: 'seven', 8: 'eight', 9: 'nine', 10: 'ten' }
+      if (allComponents) return numberNames[targetList.length] + ' components'
+      if (allGroups) return numberNames[targetList.length] + ' groups'
       return 'multiple components'
     } else if (targetList.length === 1) {
       target = targetList[0]
     } else {
       return 'none'
     }
+  } else {
+    // We have a single target object
+    target = targetList
   }
 
-  if (target === '__all') {
+  if (target.type === 'all') {
     return 'all components'
-  } else if (target.startsWith('__group_')) {
-    return 'all ' + target.slice(8)
-  } else if (target.startsWith('__id_')) {
-    return target.slice(5)
-  } else if (target.endsWith('.exhibit')) {
-    return target.slice(0, -8)
+  } else if (target.type === 'group') {
+    return 'all ' + exTools.getGroupName(target.uuid)
+  } else if (target.type === 'component') {
+    if ('uuid' in target) {
+      const component = exExhibit.getExhibitComponentByUUID(target.uuid)
+      if (component) return component.id
+    }
+    // Deprecated in Ex5.2
+    if ('id' in target) return target.id
+  } else if (target.type === 'value') {
+    return target.value
   } else return target
 }
 
@@ -405,7 +428,7 @@ function setScheduleActionTargetSelectorPopulateOptions (optionsToAdd) {
   const targetSelector = $('#scheduleTargetSelector')
 
   if (optionsToAdd.includes('All')) {
-    targetSelector.append(new Option('All', '__all'))
+    targetSelector.append(new Option('All', JSON.stringify({ type: 'all' })))
   }
   if (optionsToAdd.includes('Groups')) {
     const sep = new Option('Groups', null)
@@ -422,7 +445,12 @@ function setScheduleActionTargetSelectorPopulateOptions (optionsToAdd) {
       } catch {
         groupName = 'Unknown group'
       }
-      targetSelector.append(new Option(groupName, '__group_' + item.group))
+      targetSelector.append(new Option(groupName, JSON.stringify(
+        {
+          type: 'group',
+          uuid: item.group
+        }
+      )))
     })
   }
   if (optionsToAdd.includes('ExhibitComponents') || optionsToAdd.includes('Projectors')) {
@@ -435,14 +463,24 @@ function setScheduleActionTargetSelectorPopulateOptions (optionsToAdd) {
     if (optionsToAdd.includes('ExhibitComponents')) {
       sortedComponents.forEach((item) => {
         if (item.type === 'exhibit_component' && item.status !== exConfig.STATUS.STATIC) {
-          targetSelector.append(new Option(item.id, '__id_' + item.id))
+          targetSelector.append(new Option(item.id, JSON.stringify(
+            {
+              type: 'component',
+              uuid: item.uuid
+            }
+          )))
         }
       })
     }
     if (optionsToAdd.includes('Projectors')) {
       sortedComponents.forEach((item) => {
         if (item.type === 'projector') {
-          targetSelector.append(new Option(item.id, '__id_' + item.id))
+          targetSelector.append(new Option(item.id, JSON.stringify(
+            {
+              type: 'component',
+              uuid: item.uuid
+            }
+          )))
         }
       })
     }
@@ -462,7 +500,10 @@ export function setScheduleActionTargetSelector () {
     targetSelector.empty()
     const availableExhibits = $.makeArray($('#exhibitSelect option'))
     availableExhibits.forEach((item) => {
-      targetSelector.append(new Option(item.value, item.value))
+      targetSelector.append(new Option(item.value, JSON.stringify({
+        type: 'value',
+        value: item.value
+      })))
     })
     targetSelector.show()
     $('#scheduleTargetSelectorLabel').show()
@@ -483,7 +524,7 @@ export function setScheduleActionTargetSelector () {
     }
     targetSelector.show()
     $('#scheduleTargetSelectorLabel').show()
-    // For certain ations, we want to then populare the value selector
+    // For certain actions, we want to then populare the value selector
     if (['set_definition', 'set_dmx_scene'].includes(action)) {
       setScheduleActionValueSelector()
     } else {
@@ -512,15 +553,20 @@ export function setScheduleActionValueSelector () {
   // Helper function to show/hide the select element for picking the value
   // of an action when appropriate
 
-  const action = $('#scheduleActionSelector').val()
-  const target = $('#scheduleTargetSelector').val()
+  const action = document.getElementById('scheduleActionSelector').value
+  const target = document.getElementById('scheduleTargetSelector').value
   const valueSelector = $('#scheduleValueSelector')
   valueSelector.empty()
 
   if (['set_definition'].includes(action)) {
     let component
     try {
-      component = exExhibit.getExhibitComponent(target.slice(5))
+      if ('uuid' in target) {
+        component = exExhibit.getExhibitComponentByUUID(target.uuid)
+      } else {
+        // Deprecated in Ex5.2
+        component = exExhibit.getExhibitComponent(target.id)
+      }
     } catch {
       return
     }
@@ -554,7 +600,12 @@ export function setScheduleActionValueSelector () {
   } else if (action === 'set_dmx_scene') {
     let component
     try {
-      component = exExhibit.getExhibitComponent(target.slice(5))
+      if ('uuid' in target) {
+        component = exExhibit.getExhibitComponentByUUID(target.uuid)
+      } else {
+        // Deprecated in Ex5.2
+        component = exExhibit.getExhibitComponent(target.id)
+      }
     } catch {
       return
     }
@@ -653,7 +704,15 @@ export function scheduleConfigureEditModal (scheduleName,
     } else {
       if (currentTarget != null) {
         setScheduleActionTargetSelector()
-        $('#scheduleTargetSelector').val(currentTarget)
+        if (Array.isArray(currentTarget)) {
+          // We need to stringify each of the items in the list
+          const tempArray = []
+          for (const target of currentTarget) tempArray.push(JSON.stringify(target))
+          $('#scheduleTargetSelector').val(tempArray) // jQuery used to set multiple options
+        } else {
+          document.getElementById('scheduleTargetSelector').value = JSON.stringify(currentTarget)
+        }
+
         $('#scheduleTargetSelector').show()
         $('#scheduleTargetSelectorLabel').show()
       }
@@ -672,16 +731,25 @@ export function sendScheduleUpdateFromModal () {
   // message to Hub asking to add the given action
 
   const scheduleName = $('#scheduleEditModal').data('scheduleName')
-  const time = $('#scheduleActionTimeInput').val().trim()
-  const action = $('#scheduleActionSelector').val()
-  let target = $('#scheduleTargetSelector').val()
+  const time = document.getElementById('scheduleActionTimeInput').value.trim()
+  const action = document.getElementById('scheduleActionSelector').value
+  let target = $('#scheduleTargetSelector').val() // Gets all selected options
+  if (Array.isArray(target)) {
+    const tempArray = []
+    for (const targetI of target) tempArray.push(JSON.parse(targetI))
+    target = tempArray
+  } else {
+    target = JSON.parse(target)
+  }
+  console.log(document.getElementById('scheduleTargetSelector').value)
   let value
+
   if (action === 'note') {
-    value = $('#scheduleNoteInput').val()
-    target = ''
+    value = document.getElementById('scheduleNoteInput').value
+    target = null
     console.log(time, action, target)
   } else {
-    value = $('#scheduleValueSelector').val()
+    value = document.getElementById('scheduleValueSelector').value
   }
   const scheduleID = $('#scheduleEditModal').data('scheduleID')
 
