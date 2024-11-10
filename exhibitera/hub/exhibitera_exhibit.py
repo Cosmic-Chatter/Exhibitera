@@ -860,7 +860,7 @@ def update_exhibit_configuration(update: dict[str, Any],
         elif component_id != '' and component_id is not None and 'id' in component:
             if component["id"] == component_id:
                 exhibit_config[index] |= update
-                if component_uuid != '':
+                if component_uuid != '' and component_uuid is not None:
                     exhibit_config[index]["uuid"] = component_uuid
                 match_found = True
     if not match_found:
