@@ -65,5 +65,6 @@ class ComponentStatusManager:
             if self.timer_reference is not None and self.timer_reference.is_alive():
                 self.timer_reference.cancel()
             self.timer_reference = threading.Timer(timer_durations[mode], self.expire_timer, args=[mode])
+            self.timer_reference.daemon = True
             self.timer_reference.start()
 
