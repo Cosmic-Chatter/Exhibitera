@@ -316,7 +316,7 @@ def delete_file(file: str, absolute: bool = False):
         del config.thumbnail_archive[file]
 
         # Write updated archive to disk
-        archive_path = get_path(["thumbnails", "v2", "thumbnail_archive.json"])
+        archive_path = get_path(["thumbnails", "v2", "thumbnail_archive.json"], user_file=True)
         with config.thumbnail_lock:
             with open(archive_path, 'w', encoding='UTF-8') as f:
                 json.dump(config.thumbnail_archive, f, indent=2, sort_keys=True)
@@ -382,7 +382,7 @@ def rename_file(old_name: str, new_name: str, absolute: bool = False):
         del config.thumbnail_archive[old_name]
 
         # Write updated archive to disk
-        archive_path = get_path(["thumbnails", "v2", "thumbnail_archive.json"])
+        archive_path = get_path(["thumbnails", "v2", "thumbnail_archive.json"], user_file=True)
         with config.thumbnail_lock:
             with open(archive_path, 'w', encoding='UTF-8') as f:
                 json.dump(config.thumbnail_archive, f, indent=2, sort_keys=True)
@@ -414,7 +414,7 @@ def update_thumbnail_archive(filename: str, width: str | int, thumb_name: str, w
 
     # Write updated archive to disk
     if write is True:
-        archive_path = get_path(["thumbnails", "v2", "thumbnail_archive.json"])
+        archive_path = get_path(["thumbnails", "v2", "thumbnail_archive.json"], user_file=True)
         with config.thumbnail_lock:
             with open(archive_path, 'w', encoding='UTF-8') as f:
                 json.dump(config.thumbnail_archive, f, indent=2, sort_keys=True)
@@ -429,7 +429,7 @@ def load_thumbnail_archive() -> None:
     if config.thumbnail_archive is not None:
         return
 
-    archive_path = get_path(["thumbnails", "v2", "thumbnail_archive.json"])
+    archive_path = get_path(["thumbnails", "v2", "thumbnail_archive.json"], user_file=True)
     with config.thumbnail_lock:
         if os.path.exists(archive_path):
             with open(archive_path, 'r', encoding='UTF-8') as f:
@@ -781,6 +781,11 @@ def check_directory_structure():
             except PermissionError:
                 print("Error: unable to create directory. Do you have write permission?")
 
+    v2_thumbs = get_path(["thumbnails", "v2"], user_file=True)
+    try:
+        os.listdir(v2_thumbs)
+    except FileNotFoundError:
+        os.mkdir(v2_thumbs)
 
 # Set up log file
 log_path: str = get_path(["apps.log"], user_file=True)
