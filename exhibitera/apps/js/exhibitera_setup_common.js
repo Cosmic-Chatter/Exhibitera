@@ -418,15 +418,20 @@ function createEventListeners () {
   // Wizard
   try {
     document.getElementById('wizardAddLanguageButton').addEventListener('click', addWizardLanguage)
+  } catch {
+  }
+  try {
     document.getElementById('showWizardButton').addEventListener('click', showSetupWizard)
+  } catch {
+  }
+  try {
     document.getElementById('appWelcomeModalWizardButton').addEventListener('click', () => {
       $('#appWelcomeModal').modal('hide')
       showSetupWizard()
     })
   } catch {
-    // Ignore if there is no corresponding wizard element (wizard not yet implemented)
   }
-
+  
   // New definition buttons
   document.getElementById('newDefinitionButton').addEventListener('click', () => {
     config.clearDefinition()
