@@ -300,7 +300,7 @@ function createScheduleEntryHTML (item, scheduleID, scheduleName, scheduleType, 
     eventRow.appendChild(eventEditButtonCol)
 
     const eventEditButton = document.createElement('button')
-    eventEditButton.classList = 'btn-info w-100 h-100 rounded-end'
+    eventEditButton.classList = 'bg-info w-100 h-100 rounded-end text-dark'
     eventEditButton.setAttribute('type', 'button')
     eventEditButton.style.borderStyle = 'solid'
     eventEditButton.style.border = '0px'

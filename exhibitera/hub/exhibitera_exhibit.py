@@ -266,9 +266,21 @@ class ExhibitComponent(BaseComponent):
         if (command in ["power_on", "wakeDisplay"]) and (self.mac_address is not None):
             self.wake_with_LAN()
         elif command in ['shutdown', 'restart']:
+            if self.helperAddress == '' or self.helperAddress is None:
+                logging.error(f"{self.id}: error: {command} requested but helper address is blank.")
+                if config.debug:
+                    print(f"{self.id}: error: {command} requested but helper address is blank.")
+                return
             # Send these commands directly to the helper
-            print(f"{self.id}: command sent to helper: {command}")
-            requests.get('http://' + self.helperAddress + '/' + command)
+            if config.debug:
+                print(f"{self.id}: command sent to helper: {command}")
+            logging.info(f"{self.id}: command sent to helper: {command}")
+            if not self.helperAddress.startswith('http://'):
+                address = 'http://' + self.helperAddress + '/' + command
+            else:
+                address = self.helperAddress + '/' + command
+            print(address)
+            requests.get(address)
         else:
             # Queue all other commands for the next ping
             print(f"{self.id}: command queued: {command}")
