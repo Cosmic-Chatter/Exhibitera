@@ -279,7 +279,7 @@ class ExhibitComponent(BaseComponent):
                 address = 'http://' + self.helperAddress + '/' + command
             else:
                 address = self.helperAddress + '/' + command
-            print(address)
+
             requests.get(address)
         else:
             # Queue all other commands for the next ping
