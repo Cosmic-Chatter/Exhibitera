@@ -431,7 +431,7 @@ function createEventListeners () {
     })
   } catch {
   }
-  
+
   // New definition buttons
   document.getElementById('newDefinitionButton').addEventListener('click', () => {
     config.clearDefinition()
@@ -949,6 +949,9 @@ export function loginFromDropdown () {
 
   const username = document.getElementById('loginDropdownUsername').value.trim().toLowerCase()
   const password = document.getElementById('loginDropdownPassword').value
+
+  // Clear existing login token
+  document.cookie = 'authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC;'
 
   exCommon.makeServerRequest({
     method: 'POST',

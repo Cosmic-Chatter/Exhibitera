@@ -322,6 +322,9 @@ export function populateUsers () {
 export function loginFromDropdown () {
   // Collect the username and password and attempt to log in the user.
 
+  // Clear existing login token
+  document.cookie = 'authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC;'
+
   const username = document.getElementById('loginDropdownUsername').value.trim().toLowerCase()
   const password = document.getElementById('loginDropdownPassword').value
 
