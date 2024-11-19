@@ -1104,7 +1104,7 @@ def create_config():
                               url='http://localhost:' + str(
                                   available_port) + '/first_time_setup.html')
 
-        webview.start(func=bootstrap_app, args=available_port)
+        webview.start(func=bootstrap_app, args=available_port, private_mode=False)
 
 
 if __name__ == "__main__":
@@ -1212,4 +1212,4 @@ if __name__ == "__main__":
                 )
             ]
 
-        webview.start(func=start_app, menu=menu_items)
+        webview.start(func=start_app, menu=menu_items, private_mode=False)
