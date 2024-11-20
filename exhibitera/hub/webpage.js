@@ -817,9 +817,6 @@ function parseQueryString () {
 
   const searchParams = new URLSearchParams(queryString)
 
-  if (searchParams.has('hideSTATIC')) {
-    $('#componentsTabSettingsShowStatic').prop('checked', false)
-  }
   if (searchParams.has('showMaintStatus')) {
     document.getElementById('componentStatusModeMaintenanceCheckbox').checked = true
   }
@@ -963,19 +960,16 @@ document.getElementById('passwordChangeModalSubmitButton').addEventListener('cli
 
 // Components tab
 // =========================
-$('#componentsTabSettingsShowStatic').change(function () {
-  // Modify the search params to soft-save the change
-  const urlParams = new URLSearchParams(window.location.search)
-  if ($('#componentsTabSettingsShowStatic').prop('checked') === true) {
-    urlParams.delete('hideSTATIC')
-  } else {
-    urlParams.set('hideSTATIC', 'true')
-  }
-  window.history.replaceState('', '', '?' + urlParams)
-
-  // Rebuild the interface with the new option
-  exExhibit.rebuildComponentInterface()
+document.getElementById('componentsTabSettingsShowStatic').addEventListener('change', () => {
+  console.log('here')
+  // Update user prefernce
+  exUsers.updateUserPreferences({ show_static: document.getElementById('componentsTabSettingsShowStatic').checked })
+    .then(() => {
+      // Rebuild the interface with the new option
+      exExhibit.rebuildComponentInterface()
+    })
 })
+
 document.getElementById('componentStatusModeRealtimeCheckbox').addEventListener('change', exExhibit.rebuildComponentInterface)
 Array.from(document.getElementsByClassName('view-mode-radio')).forEach((el) => {
   el.addEventListener('change', () => {

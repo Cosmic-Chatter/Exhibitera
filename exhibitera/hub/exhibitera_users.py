@@ -28,6 +28,7 @@ class User:
                  display_name: str,
                  password_hash: str,
                  permissions_dict: dict | None = None,
+                 preferences_dict: dict | None = None,
                  uuid_str: str = ""):
         """Create a new User"""
 
@@ -45,10 +46,19 @@ class User:
                 "settings": "none",
                 "users": "none"
             }
+
+        if preferences_dict is None:
+            preferences_dict = {
+                "show_groups": {},
+                "status_mode": "realtime",
+                "show_static": True
+            }
+
         self.username = username
         self.display_name = display_name
         self.password_hash = password_hash
         self.permissions = permissions_dict
+        self.preferences = preferences_dict
         self.last_activity = datetime.datetime.now().isoformat()
 
         if uuid_str == "":
@@ -132,6 +142,7 @@ class User:
             "display_name": self.display_name,
             "last_activity": self.last_activity,
             "permissions": self.permissions,
+            "preferences": self.preferences,
             "uuid": self.uuid
         }
         if not omit_password:
@@ -241,6 +252,7 @@ def load_users():
                                      user["display_name"],
                                      user["password_hash"],
                                      permissions_dict=user["permissions"],
+                                     preferences_dict=user.get("preferences", None),
                                      uuid_str=user["uuid"])
                                 )
 

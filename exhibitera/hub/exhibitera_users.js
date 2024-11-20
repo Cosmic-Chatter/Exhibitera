@@ -49,6 +49,20 @@ export function checkUserPermission (action, neededLevel, group = null) {
   return false
 }
 
+export function checkUserPreference (pref) {
+  // Return a user preference value, substituting a default if necessary.
+
+  if (pref === 'show_static') {
+    if (('preferences' in exConfig.user) && 'show_static' in exConfig.user.preferences) {
+      return exConfig.user.preferences.show_static
+    } else {
+      return true
+    }
+  }
+
+  console.log('checkUserPreference: error: unknown preference:', pref)
+}
+
 export function showEditUserModal (user = null) {
   // Show the modal for creating a new user account.
 
@@ -173,6 +187,25 @@ function populateEditUserGroupsRow (permissions) {
       select.value = 'view'
     } else select.value = 'none'
   }
+}
+
+export function updateUserPreferences (preferences) {
+  // Ask Hub to update the given preferences for the current user
+
+  if (exConfig.user.uuid == null) {
+    console.log('updateUserPreference: error: a user is not logged in')
+  }
+
+  return exTools.makeServerRequest({
+    method: 'POST',
+    endpoint: '/user/' + exConfig.user.uuid + '/editPreferences',
+    params: {
+      preferences
+    }
+  })
+    .then((response) => {
+      exConfig.user.preferences = response.user.preferences
+    })
 }
 
 export function submitChangeFromEditUserModal () {
@@ -410,6 +443,8 @@ function configureUser (userDict, login = true) {
       initials += word.slice(0, 1)
     })
     document.getElementById('userMenuUserShortName').innerHTML = initials
+
+    configureUserPreferences()
   } else {
     document.getElementById('loginMenu').style.display = 'block'
     document.getElementById('userMenu').style.display = 'none'
@@ -486,6 +521,16 @@ function _showTab (tab) {
   setTimeout(() => {
     $('#nav-' + tab + '-tab').tab('show')
   }, 20)
+}
+
+function configureUserPreferences () {
+  // Take the user preferences and adjust the GUI to match
+
+  if (exConfig.user.preferences.show_static === true) {
+    document.getElementById('componentsTabSettingsShowStatic').checked = true
+  } else {
+    document.getElementById('componentsTabSettingsShowStatic').checked = false
+  }
 }
 
 export function logoutUser () {

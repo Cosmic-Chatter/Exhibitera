@@ -434,9 +434,9 @@ def create_user(request: Request,
 def edit_user(request: Request,
               uuid_str: str,
               username: str | None = Body(description="The username", default=None),
-              password: str | None = Body(description="The password for the account to create.", default=None),
+              password: str | None = Body(description="A new password.", default=None),
               display_name: str | None = Body(description="The name of the account holder.", default=None),
-              permissions: dict | None = Body(description="A dictionary of permissions for the new account.",
+              permissions: dict | None = Body(description="A dictionary of permissions for the account.",
                                               default=None)):
     """Edit the given user."""
 
@@ -464,6 +464,30 @@ def edit_user(request: Request,
     ex_users.save_users()
 
     return {"success": success, "user": user.get_dict()}
+
+
+@app.post("/user/{uuid_str}/editPreferences")
+def edit_user_preferences(request: Request,
+                          uuid_str: str,
+                          preferences: dict[str, Any] = Body(description="A dictionary of preferences update.", embed=True)):
+    """Update the preferences for the given user."""
+
+    token = request.cookies.get("authToken", "")
+    success, authorizing_user, reason = ex_users.check_user_permission("users", "none", token=token)
+    if success is False:
+        # Should fail only if the user does not exist
+        return {"success": False, "reason": reason}
+    if uuid_str != authorizing_user:
+        # Only the user can change their preferences
+        return {"success": False, "reason": "invalid_credentials"}
+
+    user = ex_users.get_user(uuid_str=uuid_str)
+    if user is None:
+        return {"success": False, "reason": "user_does_not_exist"}
+    ex_tools.deep_merge(preferences, user.preferences)
+    ex_users.save_users()
+
+    return {"success": True, "user": user.get_dict()}
 
 
 @app.post("/user/{uuid_str}/delete")
@@ -1657,7 +1681,8 @@ async def update_schedule(
         name: str = Body(),
         time_to_set: str = Body(description="The time of the action to set, expressed in any normal way."),
         action_to_set: str = Body(description="The action to set."),
-        target_to_set: list[dict] | dict = Body(description="The details of the component(s) that should be acted upon."),
+        target_to_set: list[dict] | dict = Body(
+            description="The details of the component(s) that should be acted upon."),
         value_to_set: str = Body(default="", description="A value corresponding to the action."),
         schedule_id: str = Body(description="A unique identifier corresponding to the schedule entry.")):
     """Write a schedule update to disk.

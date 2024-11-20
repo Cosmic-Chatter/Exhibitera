@@ -33,6 +33,21 @@ def clear_terminal() -> None:
     os.system('cls' if os.name == 'nt' else 'clear')
 
 
+def deep_merge(source: dict, destination: dict):
+    """ Merge  a series of nested dictionaries. Merge source INTO destination
+
+    From https://stackoverflow.com/questions/20656135/python-deep-merge-dictionary-data/20666342#20666342
+    """
+
+    for key, value in source.items():
+        if isinstance(value, dict):
+            # get node or create one
+            node = destination.setdefault(key, {})
+            deep_merge(value, node)
+        else:
+            destination[key] = value
+
+
 def load_json(path: str):
     """Load the requested JSON file from disk and return it as a dictionary."""
 

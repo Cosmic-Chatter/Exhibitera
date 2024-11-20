@@ -43,8 +43,8 @@ class BaseComponent {
       permission = 'edit_content'
     }
 
-    // If the element is static and the 'Show STATIC' checkbox is not ticked, bail out
-    if (this.status === exConfig.STATUS.STATIC && $('#componentsTabSettingsShowStatic').prop('checked') === false) {
+    // If the element is static and we're not showing static elements, bail out
+    if (this.status === exConfig.STATUS.STATIC && exUsers.checkUserPreference('show_static') === false) {
       return
     }
     const displayName = this.id
@@ -536,7 +536,7 @@ class ExhibitComponentGroup {
     const displayRefresh = 'block'
 
     // Cycle through the components and count how many we will actually be displaying
-    const showStatic = $('#componentsTabSettingsShowStatic').prop('checked')
+    const showStatic = exUsers.checkUserPreference('show_static')
     let numToDisplay = 0
     this.components.forEach((component) => {
       if (showStatic || component.status !== exConfig.STATUS.STATIC) {
