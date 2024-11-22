@@ -65,6 +65,35 @@
         </div>
       </div>
 
+      <!-- User preferences modal -->
+      <div class="modal" tabindex="-1" role="dialog" id="userPreferencesModal">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Preferences</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div class="row gy-2">
+                <div class="col-6">
+                  <label class="form-label" for="userPreferencesModalAppearanceSelect">Appearance</label>
+                  <select id="userPreferencesModalAppearanceSelect" class="form-select">
+                    <option value="auto">Auto (match system)</option>
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button id="userPreferencesModalSaveButton" type="button" class="btn btn-primary">Save</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+          </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Password change modal -->
       <div class="modal" tabindex="-1" role="dialog" id="passwordChangeModal">
         <div class="modal-dialog modal-dialog-centered" role="document">
@@ -1086,6 +1115,7 @@
               <span id="userMenuUserShortName" class="d-sm-none">MR</span>
               </button>
             <div class="dropdown-menu">
+              <button class="dropdown-item" id="viewUserPreferencesModalButton">Preferences</button>
               <button class="dropdown-item" id="changePasswordButton">Change password</button>
               <div class="dropdown-divider"></div>
               <button class="dropdown-item" id="logoutButton">Log out</button>

@@ -2,6 +2,9 @@
 
 ## Hub
 
+### General
+- Toggle between light and dark mode from the new user preferences window [Morgan Rehnberg]
+
 ### Components
 - Show or hide individual groups to declutter your interface [Morgan Rehnberg]
 

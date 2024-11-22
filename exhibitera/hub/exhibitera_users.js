@@ -52,7 +52,13 @@ export function checkUserPermission (action, neededLevel, group = null) {
 export function checkUserPreference (pref) {
   // Return a user preference value, substituting a default if necessary.
 
-  if (pref === 'show_groups') {
+  if (pref === 'appearance') {
+    if (('preferences' in exConfig.user) && 'appearance' in exConfig.user.preferences) {
+      return exConfig.user.preferences.appearance
+    } else {
+      return 'auto'
+    }
+  } else if (pref === 'show_groups') {
     if (('preferences' in exConfig.user) && 'show_groups' in exConfig.user.preferences) {
       return exConfig.user.preferences.show_groups
     } else {
@@ -73,6 +79,25 @@ export function checkUserPreference (pref) {
   }
 
   console.log('checkUserPreference: error: unknown preference:', pref)
+}
+
+export function showUserPreferenceModal () {
+  // Configure and display the modal for editing user preferences
+
+  document.getElementById('userPreferencesModalAppearanceSelect').value = checkUserPreference('appearance')
+
+  $('#userPreferencesModal').modal('show')
+}
+
+export function submitUserPreferencesFromModal () {
+  // Collect details from the modal to update the user preferences
+
+  const prefs = {
+    appearance: document.getElementById('userPreferencesModalAppearanceSelect').value
+  }
+  updateUserPreferences(prefs)
+    .then(configureUserPreferences)
+  $('#userPreferencesModal').modal('hide')
 }
 
 export function showEditUserModal (user = null) {
@@ -550,6 +575,17 @@ function configureUserPreferences () {
     document.getElementById('componentStatusModeRealtimeCheckbox').checked = true
   } else {
     document.getElementById('componentStatusModeMaintenanceCheckbox').checked = true
+  }
+
+  // appearance
+  if ((exConfig.user.preferences.appearance === 'auto') || (exConfig.user.preferences.appearance == null)) {
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      document.querySelector('html').setAttribute('data-bs-theme', 'dark')
+    } else {
+      document.querySelector('html').setAttribute('data-bs-theme', 'light')
+    }
+  } else {
+    document.querySelector('html').setAttribute('data-bs-theme', exConfig.user.preferences.appearance)
   }
 }
 
