@@ -1031,6 +1031,29 @@
         </div>
       </div>
 
+      <!-- Show/hide groups modal -->
+      <div class="modal" tabindex="-1" role="dialog" id="showHideGroupsModal">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Show or hide groups</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <p class="fst-italic">Uncheck groups to hide them from your components view.</p>
+
+              <div id="showHideGroupsList" class="row row-cols-3 gy-2">
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button id="showHideGroupsModalSaveButton" type="button" class="btn btn-primary">Save</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+          </div>
+        </div>
+      </div>
+
       <div class="row mb-2">
         <div class="col-10">
           <div id="galleryNameField"></div>
@@ -1228,7 +1251,7 @@
                   </li>
                   <li>
                     <div class="px-3 mt-1">
-                      <button class="btn btn-primary btn-sm w-100">Show/hide groups</button>
+                      <button id="showHideGroupsModalShowButton" class="btn btn-primary btn-sm w-100">Show/hide groups</button>
                     </div>
                   </li>
                   <li><hr id="componentsTabSettingsShowStaticDivider" class='dropdown-divider'></li>

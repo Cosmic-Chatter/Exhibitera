@@ -1,3 +1,10 @@
+# **Exhibitera 5.3**
+
+## Hub
+
+### Components
+- Show or hide individual groups to declutter your interface [Morgan Rehnberg]
+
 # **Exhibitera 5.2**
 
 ## Hub

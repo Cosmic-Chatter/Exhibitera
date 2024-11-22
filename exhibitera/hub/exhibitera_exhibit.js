@@ -102,10 +102,12 @@ class BaseComponent {
   getStatus () {
     // Return the current status, based on the selected status mode
 
-    if (document.getElementById('componentStatusModeRealtimeCheckbox').checked === true) {
-      return this.status
-    } else if (this.maintenanceStatus != null) {
-      return this.maintenanceStatus
+    if (('preferences' in exConfig.user) && ('status_mode' in exConfig.user.preferences)) {
+      if (exConfig.user.preferences.status_mode === 'realtime' && (this.status != null)) {
+        return this.status
+      } else if (exConfig.user.preferences.status_mode === 'maintenance' && (this.maintenanceStatus != null)) {
+        return this.maintenanceStatus
+      }
     }
     return exConfig.MAINTANANCE_STATUS['Off floor, not working']
   }
@@ -263,8 +265,7 @@ class BaseComponent {
       if (statusFieldEl == null) return // This is a hidden static component
 
       let btnClass
-      if (document.getElementById('componentStatusModeRealtimeCheckbox').checked === true) {
-      // Real-time status mode
+      if (exUsers.checkUserPreference('status_mode') === 'realtime') {
         statusFieldEl.innerHTML = this.status.name
         btnClass = this.status.colorClass
       } else {
@@ -516,6 +517,10 @@ class ExhibitComponentGroup {
     // First, make sure we have permission to view this group.
     if (exUsers.checkUserPermission('components', 'view', this.group) === false) return
 
+    // Then, make sure the user wants to display this group
+    const groupPrefs = exUsers.checkUserPreference('show_groups')
+    if ((this.group in groupPrefs) && groupPrefs[this.group] === false) return
+
     let permission = 'view'
     if (exUsers.checkUserPermission('components', 'edit', this.group) === true) {
       permission = 'edit'
@@ -684,6 +689,78 @@ export function updateComponentFromServer (update) {
   } else {
     createComponentFromUpdate(update)
   }
+}
+
+export function configureVisibleGroups () {
+  // Set up the show/hide groups modal and show it.
+
+  const groupListEl = document.getElementById('showHideGroupsList')
+  const groupPrefs = exUsers.checkUserPreference('show_groups')
+
+  groupListEl.innerHTML = ''
+
+  // Sort groups by name field
+  const keys = Object.keys(exConfig.groups).sort((a, b) => {
+    const aName = exConfig.groups[a].name.toLowerCase()
+    const bName = exConfig.groups[b].name.toLowerCase()
+    if (aName > bName) {
+      return 1
+    } else if (bName > aName) {
+      return -1
+    }
+    return 0
+  })
+
+  for (const key of keys) {
+    const group = exConfig.groups[key]
+    // Make sure user is allowed to see group
+    if (exUsers.checkUserPermission('components', 'view', group.uuid) === false) continue
+
+    const col = document.createElement('div')
+    col.classList = 'col'
+    groupListEl.appendChild(col)
+
+    const formCheck = document.createElement('div')
+    formCheck.classList = 'form-check'
+    col.appendChild(formCheck)
+
+    const check = document.createElement('input')
+    check.classList = 'form-check-input showHideGroupCheckbox'
+    check.setAttribute('type', 'checkbox')
+    check.setAttribute('id', 'showHideGroup_' + group.uuid)
+    check.setAttribute('data-uuid', group.uuid)
+    if (group.uuid in groupPrefs) {
+      if (groupPrefs[group.uuid] === true) {
+        check.checked = true
+      } else check.checked = false
+    } else check.checked = true
+    formCheck.appendChild(check)
+
+    const checkLabel = document.createElement('label')
+    checkLabel.classList = 'form-check-label'
+    checkLabel.setAttribute('for', 'showHideGroup_' + group.uuid)
+    checkLabel.innerHTML = group.name
+    formCheck.appendChild(checkLabel)
+  }
+
+  $('#showHideGroupsModal').modal('show')
+}
+
+export function updateVisibleGroupsPreference () {
+  // Collect the checked/unchecked groups and update the user preference
+
+  const prefDict = {}
+
+  for (const el of Array.from(document.querySelectorAll('.showHideGroupCheckbox'))) {
+    prefDict[el.getAttribute('data-uuid')] = el.checked
+  }
+
+  exUsers.updateUserPreferences({
+    show_groups: prefDict
+  })
+    .then(rebuildComponentInterface)
+
+  $('#showHideGroupsModal').modal('hide')
 }
 
 export function sendGroupCommand (group, cmd) {

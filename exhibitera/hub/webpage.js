@@ -816,10 +816,6 @@ function parseQueryString () {
   const queryString = decodeURIComponent(window.location.search)
 
   const searchParams = new URLSearchParams(queryString)
-
-  if (searchParams.has('showMaintStatus')) {
-    document.getElementById('componentStatusModeMaintenanceCheckbox').checked = true
-  }
 }
 
 function createExhibit (name, cloneFrom) {
@@ -961,7 +957,6 @@ document.getElementById('passwordChangeModalSubmitButton').addEventListener('cli
 // Components tab
 // =========================
 document.getElementById('componentsTabSettingsShowStatic').addEventListener('change', () => {
-  console.log('here')
   // Update user prefernce
   exUsers.updateUserPreferences({ show_static: document.getElementById('componentsTabSettingsShowStatic').checked })
     .then(() => {
@@ -970,25 +965,23 @@ document.getElementById('componentsTabSettingsShowStatic').addEventListener('cha
     })
 })
 
-document.getElementById('componentStatusModeRealtimeCheckbox').addEventListener('change', exExhibit.rebuildComponentInterface)
 Array.from(document.getElementsByClassName('view-mode-radio')).forEach((el) => {
   el.addEventListener('change', () => {
-    // Modify the search params to soft-save the change
-    const urlParams = new URLSearchParams(window.location.search)
-
+    let mode
     if (document.getElementById('componentStatusModeRealtimeCheckbox').checked === true) {
       // Set real-time mode (default)
-      urlParams.delete('showMaintStatus')
+      mode = 'realtime'
     } else {
       // Set maintenance status mode
-      urlParams.set('showMaintStatus', 'true')
+      mode = 'maintenance'
     }
-    window.history.replaceState('', '', '?' + urlParams)
-
-    // Rebuild the interface with the new option
-    exExhibit.rebuildComponentInterface()
+    exUsers.updateUserPreferences({ status_mode: mode })
+      .then(exExhibit.rebuildComponentInterface)
   })
 })
+
+document.getElementById('showHideGroupsModalShowButton').addEventListener('click', exExhibit.configureVisibleGroups)
+document.getElementById('showHideGroupsModalSaveButton').addEventListener('click', exExhibit.updateVisibleGroupsPreference)
 
 document.getElementById('showAddStaticComponentModalButton').addEventListener('click', exExhibit.showAddStaticComponentsModal)
 document.getElementById('addStaticComponentModalAddButton').addEventListener('click', exExhibit.submitStaticComponentAdditionFromModal)

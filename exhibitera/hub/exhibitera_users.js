@@ -52,11 +52,23 @@ export function checkUserPermission (action, neededLevel, group = null) {
 export function checkUserPreference (pref) {
   // Return a user preference value, substituting a default if necessary.
 
-  if (pref === 'show_static') {
+  if (pref === 'show_groups') {
+    if (('preferences' in exConfig.user) && 'show_groups' in exConfig.user.preferences) {
+      return exConfig.user.preferences.show_groups
+    } else {
+      return {}
+    }
+  } else if (pref === 'show_static') {
     if (('preferences' in exConfig.user) && 'show_static' in exConfig.user.preferences) {
       return exConfig.user.preferences.show_static
     } else {
       return true
+    }
+  } else if (pref === 'status_mode') {
+    if (('preferences' in exConfig.user) && 'status_mode' in exConfig.user.preferences) {
+      return exConfig.user.preferences.status_mode
+    } else {
+      return 'realtime'
     }
   }
 
@@ -526,10 +538,18 @@ function _showTab (tab) {
 function configureUserPreferences () {
   // Take the user preferences and adjust the GUI to match
 
+  // show_static
   if (exConfig.user.preferences.show_static === true) {
     document.getElementById('componentsTabSettingsShowStatic').checked = true
   } else {
     document.getElementById('componentsTabSettingsShowStatic').checked = false
+  }
+
+  // status_mode
+  if (exConfig.user.preferences.status_mode === 'realtime') {
+    document.getElementById('componentStatusModeRealtimeCheckbox').checked = true
+  } else {
+    document.getElementById('componentStatusModeMaintenanceCheckbox').checked = true
   }
 }
 
