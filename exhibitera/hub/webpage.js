@@ -951,13 +951,15 @@ function loadVersion () {
 // Login
 document.getElementById('loginSubmitButton').addEventListener('click', exUsers.loginFromDropdown)
 document.getElementById('logoutButton').addEventListener('click', exUsers.logoutUser)
+document.getElementById('viewUserPreferencesModalButton').addEventListener('click', exUsers.showUserPreferenceModal)
+document.getElementById('userPreferencesModalSaveButton').addEventListener('click', exUsers.submitUserPreferencesFromModal)
 document.getElementById('changePasswordButton').addEventListener('click', exUsers.showPasswordChangeModal)
 document.getElementById('passwordChangeModalSubmitButton').addEventListener('click', exUsers.submitUserPasswordChange)
 
 // Components tab
 // =========================
 document.getElementById('componentsTabSettingsShowStatic').addEventListener('change', () => {
-  // Update user prefernce
+  // Update user preference
   exUsers.updateUserPreferences({ show_static: document.getElementById('componentsTabSettingsShowStatic').checked })
     .then(() => {
       // Rebuild the interface with the new option

@@ -75,6 +75,23 @@ export function checkUserPreference (pref) {
   console.log('checkUserPreference: error: unknown preference:', pref)
 }
 
+export function showUserPreferenceModal () {
+  // Configure and display the modal for editing user preferences
+
+  $('#userPreferencesModal').modal('show')
+}
+
+export function submitUserPreferencesFromModal () {
+  // Collect details from the modal to update the user preferences
+
+  const prefs = {
+    appearance: document.getElementById('userPreferencesModalAppearanceSelect').value
+  }
+  updateUserPreferences(prefs)
+    .then(configureUserPreferences)
+  $('#userPreferencesModal').modal('hide')
+}
+
 export function showEditUserModal (user = null) {
   // Show the modal for creating a new user account.
 
@@ -550,6 +567,17 @@ function configureUserPreferences () {
     document.getElementById('componentStatusModeRealtimeCheckbox').checked = true
   } else {
     document.getElementById('componentStatusModeMaintenanceCheckbox').checked = true
+  }
+
+  // appearance
+  if ((exConfig.user.preferences.appearance === 'auto') || (exConfig.user.preferences.appearance == null)) {
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      document.querySelector('html').setAttribute('data-bs-theme', 'dark')
+    } else {
+      document.querySelector('html').setAttribute('data-bs-theme', 'light')
+    }
+  } else {
+    document.querySelector('html').setAttribute('data-bs-theme', exConfig.user.preferences.appearance)
   }
 }
 
