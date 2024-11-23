@@ -349,7 +349,7 @@ def str_to_bool(val: str) -> bool:
     """Take a string value like "false" and convert it to a bool"""
 
     if isinstance(val, bool):
-        val_to_return = val
+        return val
     else:
         val = str(val).strip()
         if val in ["false", "False", 'FALSE']:

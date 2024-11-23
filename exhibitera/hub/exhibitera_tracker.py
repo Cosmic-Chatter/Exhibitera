@@ -146,6 +146,8 @@ def JSON_list_to_CSV(dict_list: list, filename: str = "") -> str:
         print("JSON_list_to_CSV: Error: Nothing to write")
         result = ""
 
+    result = result.strip()
+
     if filename != "":
         with open(filename, 'w', encoding="UTF-8", newline="") as f:
             f.write(result)
