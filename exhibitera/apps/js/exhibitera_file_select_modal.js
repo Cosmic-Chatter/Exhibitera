@@ -672,7 +672,7 @@ function uploadFile (options) {
     }
 
     const xhr = new XMLHttpRequest()
-    xhr.open('POST', exCommon.config.helperAddress + '/uploadContent', true)
+    xhr.open('POST', exCommon.config.helperAddress + '/upload', true)
 
     xhr.onreadystatechange = function () {
       if (this.readyState !== 4) return

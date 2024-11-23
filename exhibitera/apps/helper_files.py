@@ -40,6 +40,26 @@ def get_path(path_list: list[str], user_file: bool = False) -> str:
     return _path
 
 
+def path_safe(path: list[str]) -> bool:
+    """Ensure the given path doesn't escape the Exhibitera Apps directory.
+
+    `path` should be a list of directories, which should not include any path separators.
+    """
+
+    for item in path:
+        if not isinstance(item, str):
+            return False
+        for char in ['/', '\\', '<', '>', ':', '"', '|', '?', '*']:
+            if char in item:
+                return False
+        if item == '.' or item == '..':
+            return False
+    if path[0] not in ['content', 'data', 'definitions', 'thumbnails']:
+        return False
+
+    return True
+
+
 def filename_safe(filename: str) -> bool:
     """Ensure the filename doesn't escape to another directory or is malformed.
 
@@ -190,7 +210,7 @@ def create_csv(file_path: str | os.PathLike, filename: str = "") -> str:
 
 
 def json_list_to_csv(dict_list: list, filename: str = "") -> str:
-    """Convert a list JSON dicts to a comma-separated string"""
+    """Convert a list of JSON dicts to a comma-separated string"""
 
     # First, identify any keys that have lists as their value
     all_keys = {}
@@ -230,6 +250,8 @@ def json_list_to_csv(dict_list: list, filename: str = "") -> str:
     except IndexError:
         print("JSON_list_to_CSV: Error: Nothing to write")
         result = ""
+
+    result = result.strip()
 
     if filename != "":
         with open(filename, 'w', encoding="UTF-8", newline="") as f:
@@ -521,10 +543,17 @@ def create_thumbnail(filename: str,
 
 
 def is_url(filename: str) -> bool:
-    """Identify if the given filename is an url."""
+    """Identify if the given filename is a URL."""
 
     filename = filename.lower()
-    if filename.startswith("http://") or filename.startswith("https://"):
+    if (
+            filename.startswith("http://")
+            or filename.startswith("https://")
+            or filename.startswith("file://")
+            or filename.startswith("ftp://")
+            or filename.startswith("imap://")
+            or filename.startswith("nntp://")
+    ):
         return True
     return False
 
@@ -654,7 +683,6 @@ def get_mimetype(filename: str) -> str:
     """Return the kind of media file given by filename."""
 
     extension = os.path.splitext(filename)[1].lower()[1:]  # form of "jpg"
-    mimetype = ""
 
     # First, try the mimetypes module
     mimetype_guess, _ = mimetypes.guess_type(filename)
@@ -663,12 +691,12 @@ def get_mimetype(filename: str) -> str:
     except AttributeError:
         mimetype = ""
 
-    if mimetype is not None and mimetype != "":
-        return mimetype
-
     # Check for 3D models
     if extension in ["fbx", "glb", "obj", "stl", "usdz"]:
         return "model"
+
+    if mimetype is not None and mimetype != "":
+        return mimetype
 
     return ""
 
@@ -786,6 +814,7 @@ def check_directory_structure():
         os.listdir(v2_thumbs)
     except FileNotFoundError:
         os.mkdir(v2_thumbs)
+
 
 # Set up log file
 log_path: str = get_path(["apps.log"], user_file=True)

@@ -4,7 +4,7 @@ import uuid
 
 # Third-party modules
 from fastapi import APIRouter
-from fastapi import  Body
+from fastapi import Body
 
 # Exhibitera modules
 import helper_files

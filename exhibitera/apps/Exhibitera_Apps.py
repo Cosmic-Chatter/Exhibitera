@@ -7,11 +7,11 @@ import os
 import shutil
 import sys
 import threading
-from typing import Any
+from typing import Annotated, Any
 import uuid
 
 # Third-party modules
-from fastapi import FastAPI, Body, Depends, File, UploadFile
+from fastapi import FastAPI, Body, Depends, File, Form, UploadFile
 from fastapi.responses import FileResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
@@ -30,6 +30,7 @@ import helper_utilities
 # Api Modules
 from api.system import system
 from api.definitions import definitions
+
 # If we're not on Linux, prepare to use the webview
 if sys.platform != 'linux':
     import webview
@@ -126,6 +127,8 @@ app.mount("/thumbnails",
 
 app.include_router(system.router)
 app.include_router(definitions.router)
+
+
 @lru_cache()
 def get_config():
     return const_config
@@ -284,7 +287,8 @@ def upload_thumbnail(files: list[UploadFile] = File(),
 
 @app.post('/files/createZip')
 def create_zip(background_tasks: BackgroundTasks,
-               files: list[str] = Body(description="A list of the files to be zipped. Files must be in the content directory."),
+               files: list[str] = Body(
+                   description="A list of the files to be zipped. Files must be in the content directory."),
                zip_filename: str = Body(description="The filename of the zip file to be created.")):
     """Create a ZIP file containing the given files."""
 
@@ -330,8 +334,6 @@ async def get_screenshot():
                         "Pragma": "no-cache",
                         "Expires": "0"
                     })
-
-
 
 
 @app.get("/getDefaults")
@@ -483,57 +485,30 @@ async def get_available_data():
     return {"success": True, "files": helper_files.get_available_data()}
 
 
-@app.post("/gotoClip")
-async def goto_clip(data: dict[str, Any], config: const_config = Depends(get_config)):
-    """Command the client to display the given clip number"""
+@app.post("/upload")
+def upload_files(files: list[UploadFile] = File(),
+                 path: list[str] = Form(default=['content']),
+                 create_thumbnail: bool = True,
+                 config: const_config = Depends(get_config)):
+    """Receive uploaded files and save them to disk.
 
-    if "clipNumber" in data:
-        config.commandList.append("gotoClip_" + str(data["clipNumber"]))
+    `path` should be a relative path from the Exhibitera Apps directory.
+    """
 
-
-@app.post("/setAutoplay")
-async def set_autoplay(data: dict[str, Any], config: const_config = Depends(get_config)):
-    """Command the client to change the state of autoplay"""
-
-    if "state" in data:
-        if data["state"] == "on":
-            config.commandList.append("enableAutoplay")
-        elif data["state"] == "off":
-            config.commandList.append("disableAutoplay")
-        elif data["state"] == "toggle":
-            config.commandList.append("toggleAutoplay")
-
-
-@app.post("/updateActiveClip")
-async def update_active_clip(data: dict[str, Any], config: const_config = Depends(get_config)):
-    """Store the active media clip index"""
-
-    if "index" in data:
-        config.clipList["activeClip"] = data["index"]
-
-
-@app.post("/updateClipList")
-async def update_clip_list(data: dict[str, Any], config: const_config = Depends(get_config)):
-    """Store the current list of active media clips"""
-
-    if "clipList" in data:
-        config.clipList["clipList"] = data["clipList"]
-
-
-@app.post("/uploadContent")
-def upload_content(files: list[UploadFile] = File(),
-                   config: const_config = Depends(get_config)):
-    """Receive uploaded files and save them to disk"""
+    if not helper_files.path_safe(path):
+        print('upload_files: error: bad path', path)
 
     for file in files:
         filename = file.filename
 
         if not helper_files.filename_safe(filename):
-            print("upload_content: error: invalid filename: ", filename)
+            print("upload_files: error: invalid filename: ", filename)
             continue
 
-        file_path = helper_files.get_path(
-            ["content", filename], user_file=True)
+        path_with_filename = path.copy()
+        path_with_filename.append(filename)
+
+        file_path = helper_files.get_path(path_with_filename, user_file=True)
         print(f"Saving uploaded file to {file_path}")
         with config.content_file_lock:
             try:
@@ -542,11 +517,12 @@ def upload_content(files: list[UploadFile] = File(),
             finally:
                 file.file.close()
 
-        mimetype = mimetypes.guess_type(file_path, strict=False)[0]
-        if mimetype is not None:
-            th = threading.Thread(target=helper_files.create_thumbnail, args=(filename, mimetype.split("/")[0]),
-                                  daemon=True)
-            th.start()
+        if create_thumbnail:
+            mimetype = mimetypes.guess_type(file_path, strict=False)[0]
+            if mimetype is not None:
+                th = threading.Thread(target=helper_files.create_thumbnail, args=(filename, mimetype.split("/")[0]),
+                                      daemon=True)
+                th.start()
     return {"success": True}
 
 
