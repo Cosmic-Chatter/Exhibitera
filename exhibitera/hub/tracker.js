@@ -139,7 +139,7 @@ function buildLayout (definition) {
 
   for (let i = 0; i < keys.length; i++) {
     const item = definition[keys[i]]
-    const itemID = keys[i].replace(/\s/g, '') // Replace spacess, but leave commas
+    const itemID = keys[i].replace(/[^\p{L}\p{N}]/giu, '_') // Replace non-alphanumeric characters
     const itemName = keys[i].replace(/,/g, '') // Replace commas, but leave spaces
     if (!('type' in item)) {
       console.log(`buildLayout: Error: item ${keys[i]} does not have a type!`)

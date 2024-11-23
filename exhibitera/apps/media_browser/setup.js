@@ -896,7 +896,7 @@ function onFlagUploadChange (lang) {
   formData.append('files', fileInput.files[0], newName)
 
   const xhr = new XMLHttpRequest()
-  xhr.open('POST', '/uploadContent', true)
+  xhr.open('POST', '/upload', true)
 
   xhr.onreadystatechange = function () {
     if (this.readyState !== 4) return
