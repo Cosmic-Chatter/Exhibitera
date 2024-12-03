@@ -765,7 +765,7 @@ def get_thumbnail(filename: str,
 def create_missing_thumbnails() -> None:
     """Check the content directory for files without thumbnails and create them."""
 
-    content = get_all_directory_contents("content")
+    content, content_details = get_all_directory_contents("content")
 
     for file in content:
         file_path, mimetype = get_thumbnail(file)
@@ -773,12 +773,31 @@ def create_missing_thumbnails() -> None:
             create_thumbnail(file, mimetype)
 
 
-def get_all_directory_contents(directory: str = "content") -> list:
+def get_all_directory_contents(directory: str = "content") -> tuple[list, list[dict[str, Any]]]:
     """Recursively search for files in the content directory and its subdirectories"""
+
     content_path = get_path([directory], user_file=True)
     result = [os.path.relpath(os.path.join(dp, f), content_path) for dp, dn, fn in os.walk(content_path) for f in fn]
+    content = [x for x in result if x.find(".DS_Store") == -1]
+    content_details = []
 
-    return [x for x in result if x.find(".DS_Store") == -1]
+    for file in content:
+        file_details = {
+            'name': file
+        }
+        path = get_path(["content", file], user_file=True)
+        file_details['size'] = os.path.getsize(path)  # in bytes
+        if file_details['size'] > 1e9:
+            file_details['size_text'] = str(round(file_details['size'] / 1e9 * 10) / 10) + ' GB'
+        elif file_details['size'] > 1e6:
+            file_details['size_text'] = str(round(file_details['size'] / 1e6 * 10) / 10) + ' MB'
+        elif file_details['size'] > 1e3:
+            file_details['size_text'] = str(round(file_details['size'] / 1e3)) + ' kB'
+        else:
+            file_details['size_text'] = str(file_details['size']) + ' bytes'
+        content_details.append(file_details)
+
+    return content, content_details
 
 
 def get_directory_contents(directory: str, absolute: bool = False) -> list:

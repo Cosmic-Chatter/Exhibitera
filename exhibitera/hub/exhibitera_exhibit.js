@@ -1635,9 +1635,14 @@ function populateComponentDefinitionList (definitions, thumbnails, permission) {
 
     const dropdownMenu = document.createElement('div')
     dropdownMenu.classList = 'dropdown-menu'
-    let html = `
-    <a class="dropdown-item" href="${component.getHelperURL() + '/' + definition.app + '.html?standalone=true&definition=' + uuid}" target="_blank">Preview</a>
-    `
+
+    const previewOption = document.createElement('a')
+    previewOption.classList = 'dropdown-item'
+    previewOption.setAttribute('href', component.getHelperURL() + '/' + definition.app + '.html?standalone=true&definition=' + uuid)
+    previewOption.setAttribute('target', '_blank')
+    previewOption.innerHTML = 'Preview'
+    dropdownMenu.appendChild(previewOption)
+
     if (permission === 'edit' || permission === 'edit_content') {
       let app = definition.app
       let page = 'setup.html'
@@ -1651,11 +1656,23 @@ function populateComponentDefinitionList (definitions, thumbnails, permission) {
         page = 'setup_viewer.html'
       }
 
-      html += `
-      <a class="dropdown-item" href="${component.getHelperURL() + '/' + app + '/' + page + '?definition=' + uuid}" target="_blank">Edit</a>
-      `
+      const editOption = document.createElement('a')
+      editOption.classList = 'dropdown-item'
+      editOption.setAttribute('href', component.getHelperURL() + '/' + app + '/' + page + '?definition=' + uuid)
+      editOption.setAttribute('target', '_blank')
+      editOption.innerHTML = 'Edit'
+      dropdownMenu.appendChild(editOption)
+
+      if (['media_player', 'voting_kiosk', 'word_cloud_input', 'word_cloud_viewer'].includes(definition.app)) {
+        const copyOption = document.createElement('a')
+        copyOption.classList = 'dropdown-item'
+        copyOption.innerHTML = 'Copy to...'
+        copyOption.addEventListener('click', () => {
+          showCopyDefinitionModal(component.uuid, definition.uuid)
+        })
+        dropdownMenu.appendChild(copyOption)
+      }
     }
-    dropdownMenu.innerHTML = html
     btnGroup.appendChild(dropdownMenu)
 
     if (thumbnails.includes(uuid + '.mp4')) {
@@ -1712,6 +1729,26 @@ function populateComponentDefinitionList (definitions, thumbnails, permission) {
     row.appendChild(app)
 
     $('#componentInfoModalDefinitionList').append(col)
+  })
+}
+
+function showCopyDefinitionModal (componentUUID, definitionUUID) {
+  // Set up and show the model for copying a definition from one component to another
+
+  const component = getExhibitComponentByUUID(componentUUID)
+
+  const url = component.getHelperURL()
+  if (url == null) {
+    // We don't have enough information to contact the helper
+    console.log('Error: No helper address')
+  }
+
+  exTools.makeRequest({
+    method: 'GET',
+    url,
+    endpoint: '/definitions/' + definitionUUID + '/getContentList'
+  }).then((result) => {
+    console.log(result)
   })
 }
 

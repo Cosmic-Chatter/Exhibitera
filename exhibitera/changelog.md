@@ -8,6 +8,11 @@
 ### Components
 - Show or hide individual groups to declutter your interface [Morgan Rehnberg]
 
+## Apps
+
+### General
+- See file sizes when browsing files [Morgan Rehnberg]
+
 # **Exhibitera 5.2**
 
 ## Hub

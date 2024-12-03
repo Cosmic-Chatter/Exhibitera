@@ -18,6 +18,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.background import BackgroundTasks
 import platform
+import requests
 import uvicorn
 
 # Exhibitera modules
@@ -163,7 +164,9 @@ async def serve_readme():
 async def get_available_content(config: const_config = Depends(get_config)):
     """Return a list of all files in the content directory, plus some useful system info."""
 
-    response = {"all_exhibits": helper_files.get_all_directory_contents(),
+    content, content_details = helper_files.get_all_directory_contents()
+    response = {"all_exhibits": content,
+                "content_details": content_details,
                 "definitions": helper_files.get_available_definitions(),
                 "thumbnails": helper_files.get_directory_contents("thumbnails"),
                 "system_stats": helper_utilities.get_system_stats()}
@@ -298,6 +301,28 @@ def create_zip(background_tasks: BackgroundTasks,
     return FileResponse(zip_path, filename=zip_filename)
 
 
+@app.post('/files/retrieve')
+async def retrieve_file(file_url: Annotated[str, Body(description="The URL of the file to retrieve")],
+                        path: Annotated[list[str], Body(description="A series of directories ending with the filename.")],
+                        config: const_config = Depends(get_config)):
+    """Download the given file and save it to disk."""
+
+    if not helper_files.path_safe(path):
+        return {"success": False, "reason": "invalid_path"}
+    if not helper_files.is_url(file_url):
+        return {"success": False, "reason": "invalid_url"}
+
+    r = requests.get(file_url)
+    if r.status_code != 200:
+        return {"success": False, "reason": r.reason}
+
+    path = helper_files.get_path(path, user_file=True)
+    with config.content_file_lock:
+        with open(path, 'wb') as f:
+            f.write(r.content)
+    return {"success": True}
+
+
 @app.get('/system/getPlatformDetails')
 async def get_platform_details():
     """Return details on the current operating system."""
@@ -344,7 +369,7 @@ async def send_defaults(config: const_config = Depends(get_config)):
     config_to_send["software_update"] = config.software_update
 
     config_to_send["availableContent"] = \
-        {"all_exhibits": helper_files.get_all_directory_contents()}
+        {"all_exhibits": helper_files.get_all_directory_contents()[0]}
 
     return config_to_send
 

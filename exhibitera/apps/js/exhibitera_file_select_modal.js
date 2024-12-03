@@ -73,7 +73,8 @@ export function createFileSelectionModal (userOptions) {
                   </div>
                 </div>
                 <div class='col-6 col-lg-12 mt-2 text-center h6' style="word-wrap: break-word">
-                  <span id="exFileSelectModalFilePreviewFilename" ></span>
+                  <div id="exFileSelectModalFilePreviewFilename" ></div>
+                  <div id="exFileSelectModalFilePreviewFilesize" class="text-secondary mt-1 small"></div>
                   <div id="exFileSelectModalFilePreviewEditContainer" class='row align-items-center'>
                     <div class='col-12'>
                       <input id="exFileSelectModalFilePreviewEditField" type='text' class='form-control'>
@@ -308,7 +309,7 @@ function populateComponentContent (options) {
   })
     .then((result) => {
       _populateComponentContent(result, options)
-      previewFile('', [])
+      previewFile({})
     })
 }
 
@@ -318,13 +319,14 @@ function _populateComponentContent (fileDict, options) {
 
   const fileRow = document.getElementById('exFileSelectModalFileList')
   // Alphabetize the list
-  const fileList = fileDict.all_exhibits.sort(function (a, b) { return a.localeCompare(b) })
+  const fileList = fileDict.content_details.sort(function (a, b) { return a.name.localeCompare(b.name) })
 
   // Clear any existing files
   fileRow.innerHTML = ''
   const showThumbs = document.getElementById('exFileSelectModalThumbnailCheckbox').checked
 
-  fileList.forEach((file) => {
+  fileList.forEach((fileDetails) => {
+    const file = fileDetails.name
     const extension = file.split('.').slice(-1)[0].toLowerCase()
     const mimetype = exCommon.guessMimetype(file)
 
@@ -367,7 +369,7 @@ function _populateComponentContent (fileDict, options) {
       })
       event.target.classList.add('bg-secondary', 'text-dark')
       const file = event.target.getAttribute('data-filename')
-      previewFile(file)
+      previewFile(fileDetails)
     })
 
     // Checkbox
@@ -452,15 +454,21 @@ function shortenFilename (filename) {
   return filename
 }
 
-function previewFile (file) {
+function previewFile (fileDetails) {
   // Take the given filename and fill the preview with its details
 
+  if (fileDetails.name == null) {
+    fileDetails.name = ''
+    fileDetails.size_text = ''
+  }
+  const file = fileDetails.name
   const img = document.getElementById('exFileSelectModalFilePreviewImage')
   const vid = document.getElementById('exFileSelectModalFilePreviewVideo')
   const aud = document.getElementById('exFileSelectModalFilePreviewAudio')
   const font = document.getElementById('exFileSelectModalFilePreviewFont')
 
   document.getElementById('exFileSelectModalFilePreviewFilename').innerHTML = file
+  document.getElementById('exFileSelectModalFilePreviewFilesize').innerHTML = fileDetails.size_text
   document.getElementById('exFileSelectModalFilePreview').setAttribute('data-filename', file)
 
   // Configure downlaod button
@@ -716,7 +724,7 @@ function deleteFiles (files) {
       if ('success' in result && result.success === true) {
         files.forEach((file) => {
           const entry = document.getElementById('exFileSelectModal').querySelector(`.const-file-entry[data-filename="${file}"]`)
-          previewFile('', [])
+          previewFile({})
           document.getElementById('exFileSelectModalFilePreview').setAttribute('data-filename', '')
           entry.parentElement.removeChild(entry)
         })
