@@ -25,6 +25,46 @@ export function rebuildIssueList () {
   })
 }
 
+export function upateIssueList () {
+  // Iterate over the issues, only updating those that have changed
+  // Also adds newly-created issues.
+
+  const issueRow = document.getElementById('issuesRow')
+  const issueCols = Array.from(issueRow.querySelectorAll('.issue-col'))
+
+  // Create a mapping of issue UUIDs to issue cols
+  const issueColMap = {}
+  for (const issueCol of issueCols) {
+    const details = JSON.parse(issueCol.getAttribute('data-details'))
+    issueColMap[details.id] = {
+      element: issueCol,
+      uuid: details.id,
+      lastUpdateDate: details.lastUpdateDate
+    }
+  }
+
+  exConfig.issueList.forEach((issue, i) => {
+    if (issue.id in issueColMap) {
+      const details = issueColMap[issue.id]
+      if (issue.lastUpdateDate > details.lastUpdateDate) {
+        // Create an updated element and replace the old one
+        issueRow.replaceChild(createIssueHTML(issue, !details.element.classList.contains('issue-collapsed')), details.element)
+      }
+      // Delete the item from the map
+      delete issueColMap[issue.id]
+    } else {
+      // This is a new issue
+      issueRow.appendChild(createIssueHTML(issue))
+    }
+  })
+
+  // Anything left in the map at the end is a col that should be deleted.
+  for (const uuid of Object.keys(issueColMap)) {
+    console.log(uuid, issueColMap[uuid])
+    issueColMap[uuid].element.remove()
+  }
+}
+
 export async function rebuildIssueFilters () {
   // Rebuild the 'Assigned to' issue filter
 
@@ -61,7 +101,9 @@ export function createIssueHTML (issue, full = true, archived = false) {
   const allowEdit = exTools.checkPermission('maintenance', 'edit')
 
   const col = document.createElement('div')
-  col.setAttribute('class', 'col mt-2')
+  col.classList = 'col mt-2 issue-col'
+  col.setAttribute('data-details', JSON.stringify(issue))
+  col.setAttribute('data-uuid', issue.id)
 
   const card = document.createElement('div')
   // Color the border based on the priority
@@ -285,10 +327,12 @@ export function createIssueHTML (issue, full = true, archived = false) {
         setTimeout(() => {
           content.style.overflow = ''
         }, 1000)
+        col.classList.remove('issue-collapsed')
       } else {
         content.style.height = '0px'
         content.style.overflow = 'hidden'
         footer.innerHTML = 'More'
+        col.classList.add('issue-collapsed')
       }
     }, 1)
   })
@@ -382,7 +426,7 @@ function getIssue (id) {
   return result
 }
 
-export function showIssueEditModal (issueType, target) {
+export async function showIssueEditModal (issueType, target) {
   // Show the modal and configure for either "new" or "edit"
 
   // Make sure we have all the current components listed as objections for
@@ -419,7 +463,7 @@ export function showIssueEditModal (issueType, target) {
   // Make sure we have all the assignable staff listed as options for
   // issueAssignedToSelector
   document.getElementById('issueAssignedToSelector').innerHTML = ''
-  exTools.makeServerRequest({
+  await exTools.makeServerRequest({
     method: 'POST',
     endpoint: '/users/list',
     params: {
