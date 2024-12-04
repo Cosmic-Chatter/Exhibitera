@@ -140,9 +140,11 @@ def convert_schedule_targets_to_json():
             ex_sched.write_json_schedule(file, schedule)
 
 
-def _convert_schedule_targets_to_json(target: str):
+def _convert_schedule_targets_to_json(target: str | None):
     """Helper function to do the conversion"""
 
+    if target is None:
+        return {"type": None}
     if target.startswith("__id_"):
         return {"type": "component", "id": target[5:]}
     if target.startswith("__group_"):

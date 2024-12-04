@@ -1657,7 +1657,7 @@ async def update_schedule(
         name: str = Body(),
         time_to_set: str = Body(description="The time of the action to set, expressed in any normal way."),
         action_to_set: str = Body(description="The action to set."),
-        target_to_set: list[dict] | dict = Body(description="The details of the component(s) that should be acted upon."),
+        target_to_set: list[dict] | dict | None = Body(default=None, description="The details of the component(s) that should be acted upon."),
         value_to_set: str = Body(default="", description="A value corresponding to the action."),
         schedule_id: str = Body(description="A unique identifier corresponding to the schedule entry.")):
     """Write a schedule update to disk.
