@@ -423,7 +423,8 @@ function parseUpdate (update) {
 
     if (updatedDate > currentLastDate) {
       exConfig.issueList = update.issues.issueList
-      exIssues.rebuildIssueList()
+      // exIssues.rebuildIssueList()
+      exIssues.upateIssueList()
       exIssues.rebuildIssueFilters()
     }
   }
