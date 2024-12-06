@@ -117,7 +117,9 @@ def convert_schedule_targets_to_json():
         for event_uuid in schedule:
             event = schedule[event_uuid]
             if "target" in event:
-                if isinstance(event["target"], list):
+                if event["target"] is None:
+                    continue
+                elif isinstance(event["target"], list):
                     for item in event["target"]:
                         if not isinstance(item, dict):
                             convert_file = True
