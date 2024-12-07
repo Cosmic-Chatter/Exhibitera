@@ -959,6 +959,22 @@ document.getElementById('passwordChangeModalSubmitButton').addEventListener('cli
 
 // Components tab
 // =========================
+document.getElementById('componentsTabSettingsLayoutSelect').addEventListener('change', () => {
+  // Update user preference
+  exUsers.updateUserPreferences({ components_layout: document.getElementById('componentsTabSettingsLayoutSelect').value })
+    .then(() => {
+      // Rebuild the interface with the new option
+      exExhibit.rebuildComponentInterface()
+    })
+})
+document.getElementById('componentsTabSettingsSizeSelect').addEventListener('change', () => {
+  // Update user preference
+  exUsers.updateUserPreferences({ components_size: document.getElementById('componentsTabSettingsSizeSelect').value })
+    .then(() => {
+      // Rebuild the interface with the new option
+      exExhibit.rebuildComponentInterface()
+    })
+})
 document.getElementById('componentsTabSettingsShowStatic').addEventListener('change', () => {
   // Update user preference
   exUsers.updateUserPreferences({ show_static: document.getElementById('componentsTabSettingsShowStatic').checked })

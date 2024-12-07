@@ -58,6 +58,18 @@ export function checkUserPreference (pref) {
     } else {
       return 'auto'
     }
+  } else if (pref === 'components_layout') {
+    if (('preferences' in exConfig.user) && 'components_layout' in exConfig.user.preferences) {
+      return exConfig.user.preferences.components_layout
+    } else {
+      return 'grid'
+    }
+  } else if (pref === 'components_size') {
+    if (('preferences' in exConfig.user) && 'components_size' in exConfig.user.preferences) {
+      return exConfig.user.preferences.components_size
+    } else {
+      return 'regular'
+    }
   } else if (pref === 'show_groups') {
     if (('preferences' in exConfig.user) && 'show_groups' in exConfig.user.preferences) {
       return exConfig.user.preferences.show_groups
@@ -564,11 +576,7 @@ function configureUserPreferences () {
   // Take the user preferences and adjust the GUI to match
 
   // show_static
-  if (exConfig.user.preferences.show_static === true) {
-    document.getElementById('componentsTabSettingsShowStatic').checked = true
-  } else {
-    document.getElementById('componentsTabSettingsShowStatic').checked = false
-  }
+  document.getElementById('componentsTabSettingsShowStatic').checked = checkUserPreference('show_static')
 
   // status_mode
   if (exConfig.user.preferences.status_mode === 'realtime') {
@@ -587,6 +595,12 @@ function configureUserPreferences () {
   } else {
     document.querySelector('html').setAttribute('data-bs-theme', exConfig.user.preferences.appearance)
   }
+
+  // components_layout
+  document.getElementById('componentsTabSettingsLayoutSelect').value = checkUserPreference('components_layout')
+
+  // components_size
+  document.getElementById('componentsTabSettingsSizeSelect').value = checkUserPreference('components_size')
 }
 
 export function logoutUser () {

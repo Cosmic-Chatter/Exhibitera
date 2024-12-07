@@ -1272,9 +1272,29 @@
                 </button>
                 <ul class="dropdown-menu w-100">
                   <li>
-                    <div class="form-check ms-3">
+                    <div class="px-3">
+                      <label class="form-label" for="componentsTabSettingsLayoutSelect">Layout</label>
+                      <select id="componentsTabSettingsLayoutSelect" class="form-select">
+                        <option value="grid">Grid</option>
+                        <option value="list">List</option>
+                      </select>
+                    </div>                
+                  </li>
+                  <li>
+                    <div class="px-3">
+                      <label class="form-label mt-1" for="componentsTabSettingsSizeSelect">Component size</label>
+                      <select id="componentsTabSettingsSizeSelect" class="form-select">
+                        <option value="small">Small</option>
+                        <option value="regular">Regular</option>
+                        <option value="large">Large</option>
+                      </select>
+                    </div>                
+                  </li>
+                  <li><hr id="componentsTabSettingsShowStaticDivider" class='dropdown-divider'></li>
+                  <li>
+                    <div class="form-check ms-3 mt-1 d-flex align-items-center">
                       <input class="form-check-input" type="checkbox" checked id="componentsTabSettingsShowStatic">
-                      <label class="form-check-label" for="componentsTabSettingsShowStatic">
+                      <label class="form-check-label ms-2" for="componentsTabSettingsShowStatic">
                         Show static components
                       </label>
                     </div>
@@ -1286,17 +1306,17 @@
                   </li>
                   <li><hr id="componentsTabSettingsShowStaticDivider" class='dropdown-divider'></li>
                   <li>
-                    <div class="form-check ms-3">
+                    <div class="form-check ms-3 d-flex align-items-center">
                       <input class="form-check-input view-mode-radio" type="radio" name="componentStatusMode" checked id="componentStatusModeRealtimeCheckbox">
-                      <label class="form-check-label" for="componentStatusModeRealtimeCheckbox">
+                      <label class="form-check-label ms-2" for="componentStatusModeRealtimeCheckbox">
                         Real-time status
                       </label>
                     </div>
                   </li>
                   <li>
-                    <div class="form-check ms-3">
+                    <div class="form-check ms-3 d-flex align-items-center">
                       <input class="form-check-input view-mode-radio" type="radio" name="componentStatusMode" id="componentStatusModeMaintenanceCheckbox">
-                      <label class="form-check-label" for="componentStatusModeMaintenanceCheckbox">
+                      <label class="form-check-label ms-2" for="componentStatusModeMaintenanceCheckbox">
                         Maintenance status
                       </label>
                     </div>

@@ -6,6 +6,8 @@
 - Toggle between light and dark mode from the new user preferences window [Morgan Rehnberg]
 
 ### Components
+- The components view can now be arranged as a grid or a list [Morgan Rehnberg]
+- Change the size of the items in the component view [Morgan Rehnberg]
 - Show or hide individual groups to declutter your interface [Morgan Rehnberg]
 
 ## Apps

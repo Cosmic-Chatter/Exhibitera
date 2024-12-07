@@ -47,9 +47,9 @@ class BaseComponent {
     if (this.status === exConfig.STATUS.STATIC && exUsers.checkUserPreference('show_static') === false) {
       return
     }
+
     const displayName = this.id
-    const thisId = this.id
-    const cleanId = this.cleanID()
+    const thisUUID = this.uuid
 
     const col = document.createElement('div')
     col.classList = 'col mt-1'
@@ -60,30 +60,84 @@ class BaseComponent {
 
     const mainButton = document.createElement('button')
     mainButton.classList = 'btn w-100 componentStatusButton ' + this.getStatus().colorClass
+    if (exUsers.checkUserPreference('components_size') === 'small') {
+      mainButton.classList.add('btn-sm')
+    } else if (exUsers.checkUserPreference('components_size') === 'large') {
+      mainButton.classList.add('btn-lg')
+    }
+
+    if (exUsers.checkUserPreference('components_layout') === 'list') {
+      if (exUsers.checkUserPreference('components_size') === 'small') {
+        mainButton.classList.add('py-0')
+      } else if (exUsers.checkUserPreference('components_size') === 'regular') {
+        mainButton.classList.add('py-1')
+      } else if (exUsers.checkUserPreference('components_size') === 'regular') {
+        mainButton.classList.add('py-2')
+      }
+    }
+
     mainButton.setAttribute('type', 'button')
-    mainButton.setAttribute('id', cleanId + '_' + group + '_MainButton')
+    mainButton.setAttribute('id', this.uuid + '_' + group + '_MainButton')
     mainButton.addEventListener('click', function () {
-      showExhibitComponentInfo(thisId, group)
+      showExhibitComponentInfo(thisUUID, group)
     }, false)
     btnGroup.appendChild(mainButton)
 
+    const row = document.createElement('div')
+    row.classList = 'row'
+    mainButton.appendChild(row)
+
+    const displayNameCol = document.createElement('div')
+    if (exUsers.checkUserPreference('components_layout') === 'grid') {
+      displayNameCol.classList = 'col-12 d-flex justify-content-center align-items-center'
+    } else {
+      displayNameCol.classList = 'col-8 d-flex justify-content-start align-items-center'
+    }
+    row.appendChild(displayNameCol)
+
     const displayNameEl = document.createElement('div')
-    displayNameEl.classList = 'fs-5 fw-medium'
+    displayNameEl.classList = 'fw-medium'
+    if (exUsers.checkUserPreference('components_size') === 'regular') {
+      displayNameEl.classList.add('fs-6')
+    } else if (exUsers.checkUserPreference('components_size') === 'large') {
+      displayNameEl.classList.add('fs-5')
+    }
     displayNameEl.innerHTML = displayName
-    mainButton.appendChild(displayNameEl)
+    displayNameCol.appendChild(displayNameEl)
+
+    const statusFieldCol = document.createElement('div')
+    if (exUsers.checkUserPreference('components_layout') === 'grid') {
+      statusFieldCol.classList = 'col-12 d-flex justify-content-center  align-items-center'
+    } else {
+      statusFieldCol.classList = 'col-4 d-flex justify-content-end  align-items-center'
+    }
+    row.appendChild(statusFieldCol)
 
     const statusFieldEl = document.createElement('div')
-    statusFieldEl.setAttribute('id', cleanId + '_' + group + '_StatusField')
+    statusFieldEl.setAttribute('id', this.uuid + '_' + group + '_StatusField')
     statusFieldEl.innerHTML = this.getStatus().name
-    mainButton.appendChild(statusFieldEl)
+    if (exUsers.checkUserPreference('components_size') === 'small') {
+      statusFieldEl.classList.add('small')
+    } else if (exUsers.checkUserPreference('components_size') === 'large') {
+      statusFieldEl.classList.add('fs-6')
+    }
+    statusFieldCol.appendChild(statusFieldEl)
 
     const dropdownButton = document.createElement('button')
     dropdownButton.classList = 'btn dropdown-toggle dropdown-toggle-split ' + this.getStatus().colorClass
-    dropdownButton.setAttribute('id', cleanId + '_' + group + '_DropdownButton')
+    dropdownButton.setAttribute('id', this.uuid + '_' + group + '_DropdownButton')
     dropdownButton.setAttribute('type', 'button')
     dropdownButton.setAttribute('data-bs-toggle', 'dropdown')
     dropdownButton.setAttribute('aria-haspopup', 'true')
     dropdownButton.setAttribute('aria-expanded', 'false')
+    if (exUsers.checkUserPreference('components_layout') === 'list') {
+      if (exUsers.checkUserPreference('components_size') === 'small') {
+        dropdownButton.classList.add('py-0')
+      } else if (exUsers.checkUserPreference('components_size') === 'regular') {
+        dropdownButton.classList.add('py-0')
+      }
+    }
+
     btnGroup.appendChild(dropdownButton)
 
     const dropdownLabel = document.createElement('span')
@@ -93,7 +147,7 @@ class BaseComponent {
 
     const dropdownMenu = document.createElement('div')
     dropdownMenu.classList = 'dropdown-menu'
-    dropdownMenu.setAttribute('id', cleanId + '_' + group + '_DropdownMenu')
+    dropdownMenu.setAttribute('id', this.uuid + '_' + group + '_DropdownMenu')
     this.populateActionMenu(dropdownMenu, group, permission)
     btnGroup.appendChild(dropdownMenu)
     return col
@@ -117,6 +171,7 @@ class BaseComponent {
 
     $(dropdownMenu).empty()
     const thisId = this.id
+    const thisUUID = this.uuid
     let numOptions = 0
 
     if (permission === 'edit') {
@@ -194,7 +249,7 @@ class BaseComponent {
     detailsAction.classList = 'dropdown-item handCursor'
     detailsAction.innerHTML = 'View details'
     detailsAction.addEventListener('click', function () {
-      showExhibitComponentInfo(thisId, groupUUID)
+      showExhibitComponentInfo(thisUUID, groupUUID)
     }, false)
     dropdownMenu.appendChild(detailsAction)
   }
@@ -251,8 +306,6 @@ class BaseComponent {
   setStatus (status, maintenanceStatus) {
     // Set the component's status and change the GUI to reflect the change.
 
-    const cleanId = this.cleanID()
-
     this.status = exConfig.STATUS[status]
     this.maintenanceStatus = exConfig.MAINTANANCE_STATUS[maintenanceStatus]
 
@@ -261,7 +314,7 @@ class BaseComponent {
       if (exUsers.checkUserPermission('components', 'view', group) === false) return
 
       // Update the GUI based on which view mode we're in
-      const statusFieldEl = document.getElementById(cleanId + '_' + group + '_StatusField')
+      const statusFieldEl = document.getElementById(this.uuid + '_' + group + '_StatusField')
       if (statusFieldEl == null) return // This is a hidden static component
 
       let btnClass
@@ -275,8 +328,8 @@ class BaseComponent {
       }
 
       // Strip all existing classes, then add the new one
-      $('#' + cleanId + '_' + group + '_MainButton').removeClass('btn-primary btn-warning btn-danger btn-success btn-info').addClass(btnClass)
-      $('#' + cleanId + '_' + group + '_DropdownButton').removeClass('btn-primary btn-warning btn-danger btn-success btn-info').addClass(btnClass)
+      $('#' + this.uuid + '_' + group + '_MainButton').removeClass('btn-primary btn-warning btn-danger btn-success btn-info').addClass(btnClass)
+      $('#' + this.uuid + '_' + group + '_DropdownButton').removeClass('btn-primary btn-warning btn-danger btn-success btn-info').addClass(btnClass)
     }
   }
 
@@ -554,13 +607,15 @@ class ExhibitComponentGroup {
       return
     }
 
-    // Allow groups with lots of components to display with double width
+    // Allow groups with lots of components to display with double width in grid view
     let classString
-    if (numToDisplay > 7) {
-      classString = 'col-12 col-lg-8 col-xl-6 mt-4'
-    } else {
-      classString = 'col-12 col-md-6 col-lg-4 col-xl-3 mt-4'
-    }
+    if (exUsers.checkUserPreference('components_layout') === 'grid') {
+      if (numToDisplay > 7) {
+        classString = 'col-12 col-lg-8 col-xl-6 mt-4'
+      } else {
+        classString = 'col-12 col-md-6 col-lg-4 col-xl-3 mt-4'
+      }
+    } else classString = 'col-12 col-md-6 col-lg-4 col-xl-4 mt-4'
 
     const col = document.createElement('div')
     col.classList = classString
@@ -570,7 +625,10 @@ class ExhibitComponentGroup {
     col.appendChild(btnGroup)
 
     const mainButton = document.createElement('button')
-    mainButton.classList = 'btn btn-secondary w-100 btn-lg'
+    mainButton.classList = 'btn btn-secondary w-100'
+    if (exUsers.checkUserPreference('components_size') === 'large') {
+      mainButton.classList.add('btn-lg')
+    }
     mainButton.setAttribute('type', 'button')
     mainButton.innerHTML = exTools.getGroupName(this.group)
     btnGroup.appendChild(mainButton)
@@ -622,10 +680,14 @@ class ExhibitComponentGroup {
     const componentList = document.createElement('div')
     componentList.classList = 'row'
     componentList.setAttribute('id', this.cleanID() + 'ComponentList')
-    if (numToDisplay > 7) {
-      componentList.classList.add('row-cols-2', 'row-cols-sm-3', 'row-cols-md-4')
+    if (exUsers.checkUserPreference('components_layout') === 'grid') {
+      if (numToDisplay > 7) {
+        componentList.classList.add('row-cols-2', 'row-cols-sm-3', 'row-cols-md-4')
+      } else {
+        componentList.classList.add('row-cols-2', 'row-cols-sm-3', 'row-cols-md-2')
+      }
     } else {
-      componentList.classList.add('row-cols-2', 'row-cols-sm-3', 'row-cols-md-2')
+      componentList.classList.add('row-cols-1')
     }
 
     col.appendChild(componentList)
@@ -819,7 +881,7 @@ function componentGoodConnection (screenshot = true) {
   if (screenshot) document.getElementById('componentInfoModalViewScreenshot').style.display = 'block'
 }
 
-function showExhibitComponentInfo (id, groupUUID) {
+function showExhibitComponentInfo (uuid, groupUUID) {
   // This sets up the componentInfoModal with the info from the selected
   // component and shows it on the screen.
 
@@ -857,12 +919,13 @@ function showExhibitComponentInfo (id, groupUUID) {
     document.getElementById('componentInfoModalMaintenanceTabButton').style.display = 'none'
   }
 
-  const obj = getExhibitComponent(id)
+  const obj = getExhibitComponentByUUID(uuid)
 
-  $('#componentInfoModal').data('id', id)
+  $('#componentInfoModal').data('id', obj.id)
+  $('#componentInfoModal').data('uuid', uuid)
   document.getElementById('componentInfoModal').setAttribute('data-uuid', obj.uuid)
 
-  document.getElementById('componentInfoModalTitle').innerHTML = id
+  document.getElementById('componentInfoModalTitle').innerHTML = obj.id
 
   // Set up the upper-right dropdown menu with helpful details
   document.getElementById('exhibiteraComponentIdButton').innerHTML = convertAppIDtoDisplayName(obj.exhibiteraAppId)
@@ -942,7 +1005,7 @@ function showExhibitComponentInfo (id, groupUUID) {
   document.getElementById('componentInfoModalProjectorSettings').style.display = 'none'
 
   // Populate maintenance details
-  constMaint.setComponentInfoModalMaintenanceStatus(id)
+  constMaint.setComponentInfoModalMaintenanceStatus(obj.id)
 
   // Definition tab
   document.getElementById('definitionTabAppFilterSelect').value = 'all'
