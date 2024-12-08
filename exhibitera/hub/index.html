@@ -1591,12 +1591,24 @@
                         </div>
                       </div>
                       <div class="col-6 col-sm-3 d-flex align-items-end">
-                        <button class="btn btn-success w-100">
+                        <button id="manageExhibitsModalSaveButton" class="btn btn-success w-100">
                           Save exhibit
                         </button>
                       </div>
                       </div>
                       <hr>
+                    </div>
+                    <div class="col-12">
+                      <div class="row">
+                        <div class="col-6 col-sm-4 col-md-3 offset-6 offset-sm-8 offset-md-9">
+                          <div class="dropdown w-100">
+                            <button id="manageExhibitAddComponentButton" class="btn btn-primary dropdown w-100" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                              Add component
+                            </button>
+                            <ul id="manageExhibitAddComponentList" class="dropdown-menu w-100"></ul>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                     <!-- Exhibit list -->
                     <div class="col-4 border-end">
@@ -1619,15 +1631,15 @@
             <div class="col-12 fst-italic">
               Exhibits match each component in your gallery with one of its definitions. Switching exhibits makes it easy to switch the content on many components at once.
             </div>
-            <div class="col-6 col-md-4 col-lg-3 col-xl-2">
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2">
               <div class="form-group">
                 <label for="exhibitSelect">Set current exhibit</label>
                 <select class="form-select" id="exhibitSelect"></select>
               </div>
             </div>
-            <!-- <div class="col-3 d-flex align-items-end">
-              <button id="manageExhibitsButton" class="btn btn-primary">Manage exhibits</button>
-            </div> -->
+            <div class="col-12 col-xs-6 col-sm-4 col-md-3 col-xl-2 d-flex align-items-end">
+              <button id="manageExhibitsButton" class="btn btn-primary w-100">Manage exhibits</button>
+            </div>
             <div class="col-12 col-md-8">
               <div class="form-group">
                 <label for="createExhibitNameInput">Create new exhibit</label>
@@ -1646,12 +1658,6 @@
                       </ul>
                     </div>
                   </div>
-                  <!-- <div class='col-6 col-md-3 col-lg-3 mt-1'>
-                    <button id="createExhibitButton" class='btn btn-primary w-100'>Create Empty</button>
-                  </div>
-                  <div class='col-6 col-md-4 col-lg-3 mt-1'>
-                    <button id="cloneExhibitButton" class='btn btn-primary w-100'>Clone Current</button>
-                  </div> -->
                 </div>
               </div>
             </div>

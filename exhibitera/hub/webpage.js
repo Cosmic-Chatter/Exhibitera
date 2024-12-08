@@ -20,6 +20,8 @@ function showManageExhibitsModal () {
     endpoint: '/exhibit/getAvailable'
   })
     .then((result) => {
+      // Clear any existing exhibit
+      document.getElementById('manageExhibitsModalExhibitContentList').innerHTML = ''
       populateManageExhibitsExhibitList(result.available_exhibits)
       $('#manageExhibitsModal').modal('show')
     })
@@ -65,7 +67,8 @@ function populateManageExhibitsExhibitContent (exhibit) {
     .then((result) => {
       result.exhibit.forEach((component) => {
         const col = document.createElement('div')
-        col.classList = 'col-6 mt-2'
+        col.classList = 'col-6 mt-2 manageExhibit-component-col'
+        col.setAttribute('data-component-uuid', component.uuid)
         contentList.appendChild(col)
 
         const row = document.createElement('div')
@@ -73,9 +76,21 @@ function populateManageExhibitsExhibitContent (exhibit) {
         col.appendChild(row)
 
         const header = document.createElement('div')
-        header.classList = 'col-12 bg-primary rounded-top text-light py-1'
-        header.innerHTML = component.id
+        header.classList = 'col-12 d-flex justify-content-between align-items-center bg-primary rounded-top text-light py-1'
         row.appendChild(header)
+
+        const nameDiv = document.createElement('div')
+        nameDiv.classList = 'fs-5'
+        nameDiv.innerHTML = component.id
+        header.appendChild(nameDiv)
+
+        const deleteButton = document.createElement('button')
+        deleteButton.classList = 'btn btn-danger btn-sm py-0'
+        deleteButton.innerHTML = '✕'
+        deleteButton.addEventListener('click', () => {
+          deleteButton.closest('.manageExhibit-component-col').remove()
+        })
+        header.appendChild(deleteButton)
 
         const body = document.createElement('div')
         body.classList = 'col-12 bg-secondary rounded-bottom py-2'
@@ -86,12 +101,12 @@ function populateManageExhibitsExhibitContent (exhibit) {
         body.appendChild(bodyRow)
 
         const componentObj = exExhibit.getExhibitComponent(component.id)
-
         if (componentObj != null) {
-          // This component is active
+          // This component exists in the system
 
           const definitionPreviewCol = document.createElement('div')
           definitionPreviewCol.classList = 'col-12 exhibit-thumbnail'
+          if (document.getElementById('manageExhibitModalExhibitThumbnailCheckbox').checked === false) definitionPreviewCol.style.display = 'none'
           bodyRow.appendChild(definitionPreviewCol)
 
           const definitionPreviewImage = document.createElement('img')
@@ -117,7 +132,10 @@ function populateManageExhibitsExhibitContent (exhibit) {
           bodyRow.appendChild(definitionSelectCol)
 
           const definitionSelect = document.createElement('select')
-          definitionSelect.classList = 'form-select'
+          definitionSelect.classList = 'form-select manageExhibit-definition-select'
+          definitionSelect.setAttribute('data-component-uuid', component.uuid)
+          definitionSelect.setAttribute('data-component-id', component.id)
+          definitionSelect.setAttribute('data-initial-definition', component.definition)
           definitionSelectCol.appendChild(definitionSelect)
 
           exTools.makeRequest({
@@ -159,13 +177,31 @@ function populateManageExhibitsExhibitContent (exhibit) {
               definitionSelect.value = component.definition
               changeThumb()
             })
-        } else {
-          // This component is inactive
+            .catch((result) => {
+              // This component is offline
+              const badComponentCol = document.createElement('div')
+              badComponentCol.classList = 'col-12'
+              bodyRow.appendChild(badComponentCol)
 
+              const badComponentAlert = document.createElement('div')
+              badComponentAlert.classList = 'alert alert-danger fst-italic text-center py-2 mb-0'
+              badComponentAlert.innerHTML = 'Component offline'
+              badComponentCol.appendChild(badComponentAlert)
+
+              // Hide the thumbnail and select
+              definitionPreviewCol.style.display = 'none'
+              definitionSelectCol.style.display = 'none'
+            })
+        } else {
+          // This component doesn't exist
           const badComponentCol = document.createElement('div')
-          badComponentCol.classList = 'col-12 text-warning fst-italic text-center'
-          badComponentCol.innerHTML = 'Component unavailable'
+          badComponentCol.classList = 'col-12'
           bodyRow.appendChild(badComponentCol)
+
+          const badComponentAlert = document.createElement('div')
+          badComponentAlert.classList = 'alert alert-danger fst-italic text-center py-2 mb-0'
+          badComponentAlert.innerHTML = 'Component does not exist'
+          badComponentCol.appendChild(badComponentAlert)
         }
       })
     })
@@ -183,6 +219,60 @@ function onManageExhibitModalThumbnailCheckboxChange () {
       el.style.display = 'none'
     }
   })
+}
+
+function manageExhibitModalAddComponentPopulateList () {
+  // Called when a user clicks the 'Add component' button to populate
+  // the list of available, un-added components.
+
+  const componentList = document.getElementById('manageExhibitAddComponentList')
+  componentList.innerHTML = ''
+
+  const existingComponents = []
+  for (const component of Array.from(document.querySelectorAll('.manageExhibit-component-col'))) {
+    existingComponents.push(component.getAttribute('data-component-uuid'))
+  }
+
+  exConfig.exhibitComponents.forEach((component) => {
+    // Filter out components that shouldn't be added (projectors, static, offline, existing)
+    if (component.type !== 'exhibit_component') return
+    if ((component.status !== exConfig.STATUS.ONLINE) && (component.status !== exConfig.STATUS.ACTIVE) && (component.status !== exConfig.STATUS.WAITING)) return
+    if (existingComponents.includes(component.uuid)) return
+
+    const li = document.createElement('li')
+    const button = document.createElement('button')
+    button.classList = 'dropdown-item text-wrap'
+    button.innerHTML = component.id
+    li.appendChild(button)
+    componentList.appendChild(li)
+  })
+
+  if (componentList.children.length === 0) {
+    const li = document.createElement('li')
+    const button = document.createElement('button')
+    button.classList = 'dropdown-item fst-italic disabled text-wrap text-center'
+    button.innerHTML = 'Nothing to add'
+    li.appendChild(button)
+    componentList.appendChild(li)
+  }
+}
+
+function manageExhibitModalSubmitUpdate () {
+  // Build an exhibit from the selected options and submit it to Hub for saving.
+
+  const selects = Array.from(document.querySelectorAll('.manageExhibit-definition-select'))
+  const definition = []
+  for (const select of selects) {
+    const entry = {
+      uuid: select.getAttribute('data-component-uuid'),
+      id: select.getAttribute('data-component-id')
+    }
+    if ((select.value !== '') && (select.value != null)) {
+      entry.definition = select.value
+    } else entry.definition = select.getAttribute('data-initial-definition')
+    definition.push(entry)
+  }
+  console.log(definition)
 }
 
 function setCurrentExhibitName (name) {
@@ -1104,7 +1194,9 @@ document.addEventListener('click', (event) => {
 
 // Exhibits tab
 // =========================
-// document.getElementById('manageExhibitsButton').addEventListener('click', showManageExhibitsModal)
+document.getElementById('manageExhibitsButton').addEventListener('click', showManageExhibitsModal)
+document.getElementById('manageExhibitsModalSaveButton').addEventListener('click', manageExhibitModalSubmitUpdate)
+document.getElementById('manageExhibitAddComponentButton').addEventListener('click', manageExhibitModalAddComponentPopulateList)
 $('#exhibitSelect').change(function () {
   changeExhibit(false)
 })
