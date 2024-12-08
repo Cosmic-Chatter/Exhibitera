@@ -1193,9 +1193,9 @@ async def upload_issue_media(request: Request, files: list[UploadFile] = File())
 
 
 # Maintenance actions
-@app.post("/maintenance/deleteRecord")
-async def delete_maintenance_record(request: Request, data: dict[str, Any]):
-    """Delete the specified maintenance record."""
+@app.post("/maintenance/{uuid_str}/delete")
+async def delete_maintenance_record(request: Request, uuid_str: str):
+    """Clear the maintenance log for the given component."""
 
     # Check permission
     token = request.cookies.get("authToken", "")
@@ -1203,14 +1203,21 @@ async def delete_maintenance_record(request: Request, data: dict[str, Any]):
     if success is False:
         return {"success": False, "reason": reason}
 
-    if "id" not in data:
-        return {"success": False, "reason": "Request missing 'id' field."}
+    component = ex_exhibit.get_exhibit_component(component_uuid=uuid_str)
+    if component is None:
+        return {"success": False, "reason": "invalid_uuid"}
 
-    file_path = ex_tools.get_path(["maintenance-logs", data["id"] + ".txt"], user_file=True)
-    with ex_config.maintenanceLock:
-        response = ex_tools.delete_file(file_path)
+    component.maintenance_log = {
+                "current": {
+                    "date": str(datetime.datetime.now()),
+                    "status": "On floor, not working",
+                    "notes": ""
+                },
+                "history": []
+            }
+    component.save()
     ex_config.last_update_time = time.time()
-    return response
+    return {"success": True}
 
 
 @app.get("/maintenance/getAllStatuses")
@@ -1224,20 +1231,43 @@ async def get_all_maintenance_statuses(request: Request):
         return {"success": False, "reason": reason}
 
     record_list = []
-    maintenance_path = ex_tools.get_path(["maintenance-logs"], user_file=True)
-    for file in os.listdir(maintenance_path):
-        if file.lower().endswith(".txt"):
-            with ex_config.maintenanceLock:
-                file_path = os.path.join(maintenance_path, file)
-                record_list.append(ex_maint.get_maintenance_report(file_path))
-    response_dict = {"success": True,
-                     "records": record_list}
-    return response_dict
+    for component in ex_config.componentList:
+        record_list.append(component.get_maintenance_report())
+    for projector in ex_config.projectorList:
+        record_list.append(projector.get_maintenance_report())
+    for wol in ex_config.wakeOnLANList:
+        record_list.append(wol.get_maintenance_report())
+    # maintenance_path = ex_tools.get_path(["maintenance-logs"], user_file=True)
+    # for file in os.listdir(maintenance_path):
+    #     if file.lower().endswith(".txt"):
+    #         with ex_config.maintenanceLock:
+    #             file_path = os.path.join(maintenance_path, file)
+    #             record_list.append(ex_maint.get_maintenance_report(file_path))
+    return {"success": True, "records": record_list}
 
 
-@app.post("/maintenance/getStatus")
-async def get_maintenance_status(request: Request, data: dict[str, Any]):
-    """Return the specified maintenance status"""
+# @app.post("/maintenance/getStatus")
+# async def get_maintenance_status(request: Request, data: dict[str, Any]):
+#     """Return the specified maintenance status"""
+#
+#     # Check permission
+#     token = request.cookies.get("authToken", "")
+#     success, authorizing_user, reason = ex_users.check_user_permission("maintenance", "view", token=token)
+#     if success is False:
+#         return {"success": False, "reason": reason}
+#
+#     if "id" not in data:
+#         response = {"success": False,
+#                     "reason": "Request missing 'id' field."}
+#         return response
+#     file_path = ex_tools.get_path(["maintenance-logs", data["id"] + ".txt"], user_file=True)
+#     with ex_config.maintenanceLock:
+#         response_dict = ex_maint.get_maintenance_report(file_path)
+#     return response_dict
+
+@app.get("/maintenance/{uuid_str}/status")
+async def get_maintenance_status(request: Request, uuid_str: str):
+    """Return the maintenance status for the given component."""
 
     # Check permission
     token = request.cookies.get("authToken", "")
@@ -1245,22 +1275,18 @@ async def get_maintenance_status(request: Request, data: dict[str, Any]):
     if success is False:
         return {"success": False, "reason": reason}
 
-    if "id" not in data:
-        response = {"success": False,
-                    "reason": "Request missing 'id' field."}
-        return response
-    file_path = ex_tools.get_path(["maintenance-logs", data["id"] + ".txt"], user_file=True)
-    with ex_config.maintenanceLock:
-        response_dict = ex_maint.get_maintenance_report(file_path)
-    return response_dict
+    component = ex_exhibit.get_exhibit_component(component_uuid=uuid_str)
+    if component is None:
+        return {"success": False, "reason": "invalid_uuid"}
+    return {"success": True, "status": component.get_maintenance_report()}
 
 
-@app.post("/maintenance/updateStatus")
+@app.post("/maintenance/{uuid_str}/updateStatus")
 async def update_maintenance_status(request: Request,
-                                    component_id: str = Body(description='The ID of the component to update.'),
+                                    uuid_str: str,
                                     notes: str = Body(description="Text notes about this component."),
                                     status: str = Body(description="The status of the component.")):
-    """Update the given maintenance status."""
+    """Update the maintenance status for the given component."""
 
     # Check permission
     token = request.cookies.get("authToken", "")
@@ -1268,29 +1294,20 @@ async def update_maintenance_status(request: Request,
     if success is False:
         return {"success": False, "reason": reason}
 
-    file_path = ex_tools.get_path(["maintenance-logs", component_id + ".txt"], user_file=True)
-    record = {"id": component_id,
+    component = ex_exhibit.get_exhibit_component(component_uuid=uuid_str)
+    if component is None:
+        return {"success": False, "reason": "invalid_uuid"}
+
+    record = {"id": component.id,
               "date": datetime.datetime.now().isoformat(),
               "status": status,
               "notes": notes}
-    with ex_config.maintenanceLock:
-        try:
-            with open(file_path, 'a', encoding='UTF-8') as f:
-                f.write(json.dumps(record) + "\n")
-            success = True
-            reason = ""
-            ex_config.last_update_time = time.time()
-        except FileNotFoundError:
-            success = False
-            reason = f"File path {file_path} does not exist"
-        except PermissionError:
-            success = False
-            reason = f"You do not have write permission for the file {file_path}"
+    component.maintenance_log["current"] = record
+    component.maintenance_log["history"].append(record)
+    component.config["maintenance_status"] = status
+    component.save()
 
-    if success is True:
-        ex_exhibit.get_exhibit_component(component_id=component_id).config["maintenance_status"] = status
-
-    return {"success": success, "reason": reason}
+    return {"success": True}
 
 
 @app.post("/projector/create")

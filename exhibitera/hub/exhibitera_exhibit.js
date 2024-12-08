@@ -1005,7 +1005,7 @@ function showExhibitComponentInfo (uuid, groupUUID) {
   document.getElementById('componentInfoModalProjectorSettings').style.display = 'none'
 
   // Populate maintenance details
-  constMaint.setComponentInfoModalMaintenanceStatus(obj.id)
+  constMaint.setComponentInfoModalMaintenanceStatus(uuid, obj.id)
 
   // Definition tab
   document.getElementById('definitionTabAppFilterSelect').value = 'all'

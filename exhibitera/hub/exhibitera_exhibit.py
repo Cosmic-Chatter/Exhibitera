@@ -17,7 +17,7 @@ import wakeonlan
 # Exhibitera imports
 import component_helpers
 import config
-import exhibitera_maintenance as c_maint
+import exhibitera_maintenance as ex_maint
 import exhibitera_tools as c_tools
 import projector_control
 
@@ -137,6 +137,20 @@ class BaseComponent:
         self.latency_timer.name = f"{self.id} latency timer"
         self.latency_timer.daemon = True
         self.latency_timer.start()
+
+    def get_maintenance_report(self) -> dict[str, Any]:
+        """Return a summary of this component's maintenance status."""
+
+        segments = ex_maint.segment_entries(self.maintenance_log["history"])
+        summary = ex_maint.summarize_segments(segments)
+
+        return {"date": self.maintenance_log["current"]["date"],
+                "status": self.maintenance_log["current"]["status"],
+                "notes": self.maintenance_log["current"]["notes"],
+                "working_pct": summary["working"],
+                "not_working_pct": summary["not_working"],
+                "on_floor_pct": summary["on_floor"],
+                "off_floor_pct": summary["off_floor"]}
 
     def get_dict(self) -> dict[str, Any]:
         """Return a dictionary representation of this component.
@@ -592,23 +606,23 @@ def add_exhibit_component(this_id: str,
     Set from_disk=True when loading a previously-created component to skip some steps.
     """
 
-    if not from_disk:
-        # Check if component has a legacy maintenance status.
-        maintenance_log = c_maint.convert_legacy_maintenance_log(this_id)
-        if maintenance_log is not None:
-            maint_path = c_tools.get_path(["maintenance-logs", this_id + '.txt'], user_file=True)
-            maint_path_new = c_tools.get_path(["maintenance-logs", this_id + '.txt'], user_file=True)
-            try:
-                os.rename(maint_path, maint_path_new)
-            except FileNotFoundError:
-                pass
+    # Check if component has a legacy maintenance status.
+    old_maintenance_log = ex_maint.convert_legacy_maintenance_log(this_id)
+    if old_maintenance_log is not None:
+        maintenance_log = old_maintenance_log
+        maint_path = c_tools.get_path(["maintenance-logs", this_id + '.txt'], user_file=True)
+        maint_path_new = c_tools.get_path(["maintenance-logs", this_id + '.txt.old'], user_file=True)
+        try:
+            os.rename(maint_path, maint_path_new)
+        except FileNotFoundError:
+            pass
 
     component = ExhibitComponent(this_id, groups, category,
                                  description=description,
                                  last_contact_datetime=last_contact_datetime,
                                  maintenance_log=maintenance_log,
                                  uuid_str=uuid_str)
-    if not from_disk:
+    if not from_disk or old_maintenance_log is not None:
         component.save()
 
     config.componentList.append(component)

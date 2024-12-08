@@ -87,7 +87,8 @@ def segment_entries(entries: list[dict]) -> list[dict]:
     i = 0
     while i < num_entries:
         # Use non-standard loop so we can skip entries as we combine
-        entry = entries[i]
+        entry = entries[i].copy()
+        entry["datetime"] = dateutil.parser.isoparse(entry["date"])
         segment = {}
 
         status_line = entry["status"].split(", ")
@@ -100,7 +101,8 @@ def segment_entries(entries: list[dict]) -> list[dict]:
         j = 1
         while True:
             if i + j < num_entries:
-                next_entry = entries[i + j]
+                next_entry = entries[i + j].copy()
+                next_entry["datetime"] = dateutil.parser.isoparse(next_entry["date"])
                 next_status_line = next_entry["status"].split(", ")
                 if segment["location"] == next_status_line[0].lower() and \
                         segment["condition"] == next_status_line[1]:
