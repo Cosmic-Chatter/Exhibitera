@@ -165,7 +165,6 @@ def check_file_structure() -> None:
                  "flexible-tracker/templates": get_path(["flexible-tracker", "templates"], user_file=True),
                  "issues": get_path(["issues"], user_file=True),
                  "issues/media": get_path(["issues", "media"], user_file=True),
-                 "maintenance-logs": get_path(["maintenance-logs"], user_file=True),
                  "static": get_path(["static"], user_file=True)}
 
     try:

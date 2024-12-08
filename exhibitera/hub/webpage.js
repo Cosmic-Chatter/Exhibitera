@@ -401,6 +401,19 @@ function parseUpdate (update) {
     }
   }
 
+  if ('groups' in update) {
+    // Check if the list of groups has changed.
+
+    const updateDate = new Date(update.groups.last_update_date)
+    const currentGroupsDate = new Date(exConfig.groupLastUpdateDate)
+
+    if (updateDate > currentGroupsDate) {
+      exConfig.groupLastUpdateDate = update.groups.last_update_date
+      exConfig.groups = update.groups.group_list
+      exGroup.populateGroupsRow()
+    }
+  }
+
   if ('components' in update) {
     let numComps = 0
     let numOnline = 0
@@ -433,19 +446,6 @@ function parseUpdate (update) {
     } else {
       $('#componentsTabSettingsShowStatic').parent().parent().show()
       document.getElementById('componentsTabSettingsShowStaticDivider').parentElement.style.display = 'block'
-    }
-  }
-
-  if ('groups' in update) {
-    // Check if the list of groups has changed.
-
-    const updateDate = new Date(update.groups.last_update_date)
-    const currentGroupsDate = new Date(exConfig.groupLastUpdateDate)
-
-    if (updateDate > currentGroupsDate) {
-      exConfig.groupLastUpdateDate = update.groups.last_update_date
-      exConfig.groups = update.groups.group_list
-      exGroup.populateGroupsRow()
     }
   }
 
