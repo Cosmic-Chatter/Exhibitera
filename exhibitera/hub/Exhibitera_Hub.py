@@ -1091,8 +1091,8 @@ async def edit_issue(request: Request,
     return response_dict
 
 
-@app.get("/issue/list/{match_id}")
-async def get_issue_list(request: Request, match_id: str):
+@app.get("/issue/list/{match_uuid}")
+async def get_issue_list(request: Request, match_uuid: str):
     """Return a list of open issues."""
 
     # Check permission
@@ -1101,10 +1101,10 @@ async def get_issue_list(request: Request, match_id: str):
     if success is False:
         return {"success": False, "reason": reason}
 
-    if match_id != "__all":
+    if match_uuid != "__all":
         matched_issues = []
         for issue in ex_config.issueList:
-            if match_id in issue.details["relatedComponentIDs"]:
+            if match_uuid in issue.details["relatedComponentUUIDs"]:
                 matched_issues.append(issue.details)
     else:
         matched_issues = [x.details for x in ex_config.issueList]
@@ -1116,8 +1116,8 @@ async def get_issue_list(request: Request, match_id: str):
     return response
 
 
-@app.get("/issue/archive/list/{match_id}")
-async def get_archived_issues(request: Request, match_id: str):
+@app.get("/issue/archive/list/{match_uuid}")
+async def get_archived_issues(request: Request, match_uuid: str):
     """Return a list of open issues."""
 
     # Check permission
@@ -1135,10 +1135,10 @@ async def get_archived_issues(request: Request, match_id: str):
         except (FileNotFoundError, json.JSONDecodeError):
             archive_list = []
 
-    if match_id != "__all":
+    if match_uuid != "__all":
         matched_issues = []
         for issue in archive_list:
-            if match_id in issue["relatedComponentIDs"]:
+            if match_uuid in issue["relatedComponentUUIDs"]:
                 matched_issues.append(issue)
     else:
         matched_issues = archive_list
@@ -1237,33 +1237,8 @@ async def get_all_maintenance_statuses(request: Request):
         record_list.append(projector.get_maintenance_report())
     for wol in ex_config.wakeOnLANList:
         record_list.append(wol.get_maintenance_report())
-    # maintenance_path = ex_tools.get_path(["maintenance-logs"], user_file=True)
-    # for file in os.listdir(maintenance_path):
-    #     if file.lower().endswith(".txt"):
-    #         with ex_config.maintenanceLock:
-    #             file_path = os.path.join(maintenance_path, file)
-    #             record_list.append(ex_maint.get_maintenance_report(file_path))
     return {"success": True, "records": record_list}
 
-
-# @app.post("/maintenance/getStatus")
-# async def get_maintenance_status(request: Request, data: dict[str, Any]):
-#     """Return the specified maintenance status"""
-#
-#     # Check permission
-#     token = request.cookies.get("authToken", "")
-#     success, authorizing_user, reason = ex_users.check_user_permission("maintenance", "view", token=token)
-#     if success is False:
-#         return {"success": False, "reason": reason}
-#
-#     if "id" not in data:
-#         response = {"success": False,
-#                     "reason": "Request missing 'id' field."}
-#         return response
-#     file_path = ex_tools.get_path(["maintenance-logs", data["id"] + ".txt"], user_file=True)
-#     with ex_config.maintenanceLock:
-#         response_dict = ex_maint.get_maintenance_report(file_path)
-#     return response_dict
 
 @app.get("/maintenance/{uuid_str}/status")
 async def get_maintenance_status(request: Request, uuid_str: str):

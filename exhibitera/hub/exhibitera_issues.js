@@ -131,10 +131,14 @@ export function createIssueHTML (issue, full = true, archived = false) {
   content.style.transition = 'all 1s'
   body.appendChild(content)
 
-  issue.relatedComponentIDs.forEach((id, i) => {
+  issue.relatedComponentUUIDs.forEach((uuid, i) => {
+    const component = exConfig.exhibitComponents.find(obj => {
+      return obj.uuid === uuid
+    })
+    if (component == null) return
     const tag = document.createElement('span')
     tag.setAttribute('class', 'badge bg-secondary me-1')
-    tag.innerHTML = id
+    tag.innerHTML = component.id
     content.appendChild(tag)
   })
 
@@ -448,14 +452,14 @@ export async function showIssueEditModal (issueType, target) {
       return 0
     })
     sortedGroup.forEach((component) => {
-      const option = new Option(component.id, component.id)
+      const option = new Option(component.id, component.uuid)
       issueRelatedComponentsSelector.appendChild(option)
     })
   })
 
   for (let i = 0; i < exConfig.exhibitComponents.length; i++) {
     // Check if component already exists as an option. If not, add it
-    if ($(`#issueRelatedComponentsSelector option[value='${exConfig.exhibitComponents[i].id}']`).length === 0) {
+    if ($(`#issueRelatedComponentsSelector option[value='${exConfig.exhibitComponents[i].uuid}']`).length === 0) {
       $('#issueRelatedComponentsSelector').append()
     }
   }
@@ -511,7 +515,7 @@ export async function showIssueEditModal (issueType, target) {
     $('#issueTitleInput').val(targetIssue.issueName)
     $('#issueDescriptionInput').val(targetIssue.issueDescription)
     $('#issueAssignedToSelector').val(targetIssue.assignedTo)
-    $('#issueRelatedComponentsSelector').val(targetIssue.relatedComponentIDs)
+    $('#issueRelatedComponentsSelector').val(targetIssue.relatedComponentUUIDs)
     if (targetIssue.media.length > 0) {
       rebuildIssueMediaUploadedList(target)
     } else {
@@ -705,7 +709,7 @@ export function submitIssueFromModal () {
   const issueDict = {}
   issueDict.issueName = $('#issueTitleInput').val()
   issueDict.issueDescription = $('#issueDescriptionInput').val()
-  issueDict.relatedComponentIDs = $('#issueRelatedComponentsSelector').val()
+  issueDict.relatedComponentUUIDs = $('#issueRelatedComponentsSelector').val()
   issueDict.assignedTo = $('#issueAssignedToSelector').val()
   issueDict.priority = $('#issuePrioritySelector').val()
   if ($('#issueMediaViewFromModal').data('filenames').length > 0) {

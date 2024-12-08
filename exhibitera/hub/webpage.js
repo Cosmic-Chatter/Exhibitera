@@ -401,34 +401,6 @@ function parseUpdate (update) {
     }
   }
 
-  if ('groups' in update) {
-    // Check if the list of groups has changed.
-
-    const updateDate = new Date(update.groups.last_update_date)
-    const currentGroupsDate = new Date(exConfig.groupLastUpdateDate)
-
-    if (updateDate > currentGroupsDate) {
-      exConfig.groupLastUpdateDate = update.groups.last_update_date
-      exConfig.groups = update.groups.group_list
-      exGroup.populateGroupsRow()
-    }
-  }
-
-  if ('issues' in update) {
-    // Check for the time of the most recent update. If it is more
-    // recent than our existing date, rebuild the issue list
-
-    const currentLastDate = Math.max.apply(Math, exConfig.issueList.map(function (o) { return new Date(o.lastUpdateDate) }))
-    const updatedDate = new Date(update.issues.lastUpdateDate)
-
-    if (updatedDate > currentLastDate) {
-      exConfig.issueList = update.issues.issueList
-      // exIssues.rebuildIssueList()
-      exIssues.upateIssueList()
-      exIssues.rebuildIssueFilters()
-    }
-  }
-
   if ('components' in update) {
     let numComps = 0
     let numOnline = 0
@@ -461,6 +433,34 @@ function parseUpdate (update) {
     } else {
       $('#componentsTabSettingsShowStatic').parent().parent().show()
       document.getElementById('componentsTabSettingsShowStaticDivider').parentElement.style.display = 'block'
+    }
+  }
+
+  if ('groups' in update) {
+    // Check if the list of groups has changed.
+
+    const updateDate = new Date(update.groups.last_update_date)
+    const currentGroupsDate = new Date(exConfig.groupLastUpdateDate)
+
+    if (updateDate > currentGroupsDate) {
+      exConfig.groupLastUpdateDate = update.groups.last_update_date
+      exConfig.groups = update.groups.group_list
+      exGroup.populateGroupsRow()
+    }
+  }
+
+  if ('issues' in update) {
+    // Check for the time of the most recent update. If it is more
+    // recent than our existing date, rebuild the issue list
+
+    const currentLastDate = Math.max.apply(Math, exConfig.issueList.map(function (o) { return new Date(o.lastUpdateDate) }))
+    const updatedDate = new Date(update.issues.lastUpdateDate)
+
+    if (updatedDate > currentLastDate) {
+      exConfig.issueList = update.issues.issueList
+      // exIssues.rebuildIssueList()
+      exIssues.upateIssueList()
+      exIssues.rebuildIssueFilters()
     }
   }
 

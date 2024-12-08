@@ -27,8 +27,9 @@ class Issue:
                         "priority": details.get("priority", "medium"),
                         "issueName": details.get("issueName", "New Issue"),
                         "issueDescription": details.get("issueDescription", ""),
-                        "relatedComponentIDs": details.get("relatedComponentIDs", []),
-                        "assignedTo": details.get("assignedTo", []), "media": details.get("media", [])}
+                        "relatedComponentUUIDs": details.get("relatedComponentUUIDs", []),
+                        "assignedTo": details.get("assignedTo", []),
+                        "media": details.get("media", [])}
         if isinstance(self.details["media"], str):
             # Fix in Constellation 4 when transitioning from one media file to multiple
             self.details["media"] = [self.details["media"]]
