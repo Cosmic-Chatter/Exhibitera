@@ -11,53 +11,12 @@ import * as exTools from './exhibitera_tools.js'
 import * as exTracker from './exhibitera_tracker.js'
 import * as exUsers from './exhibitera_users.js'
 
-function showManageExhibitsModal () {
-  // Configure the manageExhibitsModal and show it.
-
-  document.getElementById('manageExhibitModalExhibitThumbnailCheckbox').checked = true
-  exTools.makeServerRequest({
-    method: 'GET',
-    endpoint: '/exhibit/getAvailable'
-  })
-    .then((result) => {
-      // Clear any existing exhibit
-      document.getElementById('manageExhibitsModalExhibitContentList').innerHTML = ''
-      populateManageExhibitsExhibitList(result.available_exhibits)
-      $('#manageExhibitsModal').modal('show')
-    })
-}
-
-function populateManageExhibitsExhibitList (exhibits) {
-  // Take a list of exhibits and create a GUI representation for each
-
-  const exhibitRow = document.getElementById('manageExhibitsModalExhibitList')
-  exhibitRow.innerHTML = ''
-
-  exhibits.forEach((exhibit) => {
-    const col = document.createElement('div')
-    col.classList = 'col-12 mt-2'
-    exhibitRow.appendChild(col)
-
-    const button = document.createElement('button')
-    button.classList = 'btn btn-info w-100 manageExhibitListButton'
-    button.innerHTML = exhibit
-    button.addEventListener('click', (event) => {
-      Array.from(exhibitRow.querySelectorAll('.manageExhibitListButton')).forEach((el) => {
-        el.classList.replace('btn-success', 'btn-info')
-      })
-      event.target.classList.replace('btn-info', 'btn-success')
-      populateManageExhibitsExhibitContent(exhibit)
-    })
-    col.appendChild(button)
-  })
-}
-
-function populateManageExhibitsExhibitContent (exhibit) {
+function editExhibitPopulateExhibitContent (exhibit = null) {
   // Create a GUI representation of the given exhibit that shows the defintion for each component.
 
-  const contentList = document.getElementById('manageExhibitsModalExhibitContentList')
+  const contentList = document.getElementById('editExhibitExhibitContentList')
   contentList.innerHTML = ''
-  document.getElementById('manageExhibitModalExhibitNameInput').value = exhibit
+  document.getElementById('editExhibitName').value = exhibit
 
   exTools.makeServerRequest({
     method: 'POST',
@@ -67,7 +26,7 @@ function populateManageExhibitsExhibitContent (exhibit) {
     .then((result) => {
       result.exhibit.forEach((component) => {
         const col = document.createElement('div')
-        col.classList = 'col-6 mt-2 manageExhibit-component-col'
+        col.classList = 'col mt-2 manageExhibit-component-col'
         col.setAttribute('data-component-uuid', component.uuid)
         contentList.appendChild(col)
 
@@ -106,7 +65,7 @@ function populateManageExhibitsExhibitContent (exhibit) {
 
           const definitionPreviewCol = document.createElement('div')
           definitionPreviewCol.classList = 'col-12 exhibit-thumbnail'
-          if (document.getElementById('manageExhibitModalExhibitThumbnailCheckbox').checked === false) definitionPreviewCol.style.display = 'none'
+          if (document.getElementById('editExhibitThumbnailCheckbox').checked === false) definitionPreviewCol.style.display = 'none'
           bodyRow.appendChild(definitionPreviewCol)
 
           const definitionPreviewImage = document.createElement('img')
@@ -211,7 +170,7 @@ function onManageExhibitModalThumbnailCheckboxChange () {
   // Get the value of the checkbox and show/hide the definition
   // tbumbnails as appropriate.
 
-  const checked = document.getElementById('manageExhibitModalExhibitThumbnailCheckbox').checked
+  const checked = document.getElementById('editExhibitThumbnailCheckbox').checked
   document.querySelectorAll('.exhibit-thumbnail').forEach((el) => {
     if (checked) {
       el.style.display = 'block'
@@ -221,11 +180,11 @@ function onManageExhibitModalThumbnailCheckboxChange () {
   })
 }
 
-function manageExhibitModalAddComponentPopulateList () {
+function EditExhibitAddComponentPopulateList () {
   // Called when a user clicks the 'Add component' button to populate
   // the list of available, un-added components.
 
-  const componentList = document.getElementById('manageExhibitAddComponentList')
+  const componentList = document.getElementById('editExhibitAddComponentList')
   componentList.innerHTML = ''
 
   const existingComponents = []
@@ -275,23 +234,10 @@ function manageExhibitModalSubmitUpdate () {
   console.log(definition)
 }
 
-function setCurrentExhibitName (name) {
-  exConfig.currentExhibit = name
-  document.getElementById('exhibitNameField').innerHTML = name
-
-  // Don't change the value of the exhibit selector if we're currently
-  // looking at the change confirmation modal, as this will result in
-  // submitting the incorrect value
-  if ($('#changeExhibitModal').hasClass('show') === false) {
-    $('#exhibitSelect').val(name)
-  }
-}
-
 function updateAvailableExhibits (exhibitList) {
   // Rebuild the list of available exhibits on the settings tab
 
   const exhibitSelect = document.getElementById('exhibitSelect')
-  const exhibitDeleteSelect = document.getElementById('exhibitDeleteSelector')
 
   const sortedExhibitList = exhibitList.sort((a, b) => {
     const aVal = a.toLowerCase()
@@ -306,15 +252,13 @@ function updateAvailableExhibits (exhibitList) {
 
   exConfig.availableExhibits = sortedExhibitList
   exhibitSelect.innerHTML = ''
-  exhibitDeleteSelect.innerHTML = ''
 
   sortedExhibitList.forEach((exhibit) => {
     exhibitSelect.appendChild(new Option(exhibit, exhibit))
-    exhibitDeleteSelect.appendChild(new Option(exhibit, exhibit))
   })
 
   exhibitSelect.value = exConfig.currentExhibit
-  checkDeleteSelection()
+  updateExhibitButtons()
 }
 
 function changeExhibit (warningShown) {
@@ -327,7 +271,7 @@ function changeExhibit (warningShown) {
 
     const requestDict = {
       exhibit: {
-        name: $('#exhibitSelect').val()
+        name: document.getElementById('exhibitSelect').value
       }
     }
 
@@ -336,7 +280,6 @@ function changeExhibit (warningShown) {
       endpoint: '/exhibit/set',
       params: requestDict
     })
-    // .then(askForUpdate)
   }
 }
 
@@ -468,7 +411,7 @@ function parseUpdate (update) {
   // Take a dictionary of updates from Hub and act on them.
 
   if ('gallery' in update) {
-    setCurrentExhibitName(update.gallery.current_exhibit)
+    exConfig.currentExhibit = update.gallery.current_exhibit
     updateAvailableExhibits(update.gallery.availableExhibits)
 
     if ('galleryName' in update.gallery) {
@@ -941,15 +884,19 @@ function deleteExhibit (name) {
   })
 }
 
-function checkDeleteSelection () {
-  // Make sure the selected option is not hte current one.
+function updateExhibitButtons () {
+  // Adjust the exhibit buttons based on the value currently selected.
 
-  if ($('#exhibitSelect').val() === $('#exhibitDeleteSelector').val()) {
-    $('#exhibitDeleteSelectorButton').prop('disabled', true)
-    $('#exhibitDeleteSelectorWarning').show()
+  const exhibitSelect = document.getElementById('exhibitSelect')
+  const deleteButton = document.getElementById('exhibitDeleteSelectorButton')
+  const setExhibitButton = document.getElementById('setExhibitButton')
+
+  if (exhibitSelect.value === exConfig.currentExhibit) {
+    deleteButton.setAttribute('disabled', true)
+    setExhibitButton.innerHTML = 'Reload'
   } else {
-    $('#exhibitDeleteSelectorButton').prop('disabled', false)
-    $('#exhibitDeleteSelectorWarning').hide()
+    deleteButton.removeAttribute('disabled')
+    setExhibitButton.innerHTML = 'Set'
   }
 }
 
@@ -1194,13 +1141,17 @@ document.addEventListener('click', (event) => {
 
 // Exhibits tab
 // =========================
-document.getElementById('manageExhibitsButton').addEventListener('click', showManageExhibitsModal)
-document.getElementById('manageExhibitsModalSaveButton').addEventListener('click', manageExhibitModalSubmitUpdate)
-document.getElementById('manageExhibitAddComponentButton').addEventListener('click', manageExhibitModalAddComponentPopulateList)
-$('#exhibitSelect').change(function () {
+// document.getElementById('manageExhibitsModalSaveButton').addEventListener('click', manageExhibitModalSubmitUpdate)
+document.getElementById('exhibitSelect').addEventListener('change', () => {
+  updateExhibitButtons()
+})
+document.getElementById('setExhibitButton').addEventListener('click', () => {
   changeExhibit(false)
 })
-$('#exhibitDeleteSelector').change(checkDeleteSelection)
+document.getElementById('editExhibitButton').addEventListener('click', () => {
+  editExhibitPopulateExhibitContent(document.getElementById('exhibitSelect').value)
+})
+document.getElementById('editExhibitAddComponentButton').addEventListener('click', EditExhibitAddComponentPopulateList)
 $('#createExhibitButton').click(function () {
   createExhibit($('#createExhibitNameInput').val(), null)
   $('#createExhibitNameInput').val('')
@@ -1214,7 +1165,7 @@ $('#exhibitChangeConfirmationButton').click(function () {
 })
 $('#deleteExhibitButton').click(deleteExhibitFromModal)
 $('#exhibitDeleteSelectorButton').click(showExhibitDeleteModal)
-document.getElementById('manageExhibitModalExhibitThumbnailCheckbox').addEventListener('change', onManageExhibitModalThumbnailCheckboxChange)
+document.getElementById('editExhibitThumbnailCheckbox').addEventListener('change', onManageExhibitModalThumbnailCheckboxChange)
 
 // Maintenance tab
 // =========================

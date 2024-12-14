@@ -1548,136 +1548,76 @@
             </div>
           </div>
 
-          <!-- Modal for managing exhibits -->
-          <div class="modal" tabindex="-1" role="dialog" id="manageExhibitsModal">
-            <div class="modal-dialog modal-dialog-centered exhibitera-dialog" role="document">
-              <div class="modal-content">
-                <div class="modal-header">
-                  <h5 class="modal-title">Manage exhibits</h5>
-                </div>
-                <div class="modal-body">
-                  <div class="row">
-                    <!-- Tool row -->
-                    <div class="col-12">
-                      <div class="row gy-2">
-                        <div class="col-6 col-sm-3 col-md-4 d-flex align-items-end">
-                          <div class="dropdown w-100">
-                            <button class="btn btn-primary dropdown w-100 mt-3" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                              Create new
-                            </button>
-                            <ul class="dropdown-menu w-100">
-                              <li><a id="manageExhibitsCreateEmptyButton" class="dropdown-item" href="#">
-                                <span class="d-none d-sm-block">Create empty exhibit</span>
-                                <span class="d-block d-sm-none">Create empty</span>
-                              </a></li>
-                              <li><a id="manageExhibitsCloneCurrentButton" class="dropdown-item" href="#">
-                                <span class="d-none d-sm-block">Clone current exhibit</span>
-                                <span class="d-block d-sm-none">Clone current</span>
-                              </a></li>
-                            </ul>
-                          </div>
-                        </div>
-
-                        <div class="col-6 col-sm-3">
-                          <label for="manageExhibitModalExhibitNameInput">Name</label>
-                          <input type="text" class="form-control" id="manageExhibitModalExhibitNameInput" placeholder="Name">
-                      </div>
-                      <div class="col-6 col-sm-3 col-md-2 d-flex align-items-end">
-                        <div class="form-check">
-                          <input class="form-check-input" type="checkbox" value="" id="manageExhibitModalExhibitThumbnailCheckbox" checked>
-                          <label class="form-check-label" for="manageExhibitModalExhibitThumbnailCheckbox">
-                            Thumbnails
-                          </label>
-                        </div>
-                      </div>
-                      <div class="col-6 col-sm-3 d-flex align-items-end">
-                        <button id="manageExhibitsModalSaveButton" class="btn btn-success w-100">
-                          Save exhibit
-                        </button>
-                      </div>
-                      </div>
-                      <hr>
-                    </div>
-                    <div class="col-12">
-                      <div class="row">
-                        <div class="col-6 col-sm-4 col-md-3 offset-6 offset-sm-8 offset-md-9">
-                          <div class="dropdown w-100">
-                            <button id="manageExhibitAddComponentButton" class="btn btn-primary dropdown w-100" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                              Add component
-                            </button>
-                            <ul id="manageExhibitAddComponentList" class="dropdown-menu w-100"></ul>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <!-- Exhibit list -->
-                    <div class="col-4 border-end">
-                      <div id="manageExhibitsModalExhibitList" class="row"></div>
-                    </div>
-                    <!-- Exhibit content -->
-                    <div class="col-8">
-                      <div id="manageExhibitsModalExhibitContentList" class="row"></div>
-                    </div>
-                  </div>
-                </div>
-                <div class="modal-footer">
-                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                </div>
-              </div>
-            </div>
-          </div>
-
+          <!-- Manage exhibit buttons -->
           <div class="row mt-0 gy-2">
             <div class="col-12 fst-italic">
               Exhibits match each component in your gallery with one of its definitions. Switching exhibits makes it easy to switch the content on many components at once.
             </div>
-            <div class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2">
-              <div class="form-group">
-                <label for="exhibitSelect">Set current exhibit</label>
-                <select class="form-select" id="exhibitSelect"></select>
+            <div class="col-6 col-sm-4 col-md-4 col-lg-3 col-xl-2">
+              <select class="form-select" id="exhibitSelect"></select>
+            </div>
+            <div class="col-3 col-sm-2 col-md-2">
+              <button id="setExhibitButton" class="btn btn-primary w-100">Set</button>
+            </div>
+            <div class="col-3 col-sm-2 col-md-2">
+              <button id="editExhibitButton" class="btn btn-primary w-100">Edit</button>
+            </div>
+            <div class='col-4 col-sm-3 col-md-2'>
+              <div class="dropdown w-100">
+                <button class="btn btn-primary dropdown-toggle w-100" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  Create
+                </button>
+                <ul class="dropdown-menu w-100">
+                  <li><button id="createExhibitButton" class='dropdown-item'>Create empty</button></li>
+                  <li><button id="cloneExhibitButton" class='dropdown-item'>Clone selected</button></li>
+                </ul>
               </div>
             </div>
-            <div class="col-12 col-xs-6 col-sm-4 col-md-3 col-xl-2 d-flex align-items-end">
-              <button id="manageExhibitsButton" class="btn btn-primary w-100">Manage exhibits</button>
+            <div class="col-4 col-sm-3 col-md-2">
+              <button class='btn btn-danger w-100' id="exhibitDeleteSelectorButton">Delete</button>
             </div>
-            <div class="col-12 col-md-8">
-              <div class="form-group">
-                <label for="createExhibitNameInput">Create new exhibit</label>
-                <div class='row'>
-                  <div class='col-8 col-md-6 col-lg-4 col-xl-3 pe-1 mt-1'>
-                    <input type="text" id='createExhibitNameInput' class='form-control' placeholder="Enter exhibit name"></input>
+          </div>
+          <!-- Edit exhibit fields -->
+           <div class="row gy-2 mt-2">
+
+            <div class="col-12">
+              <hr>
+              <div class="row gy-2">
+                <div class="col-4">
+                  <div class="input-group">
+                    <span class="input-group-text">Exhibit name</span>
+                    <input id="editExhibitName" type="text" aria-label="Exhibit name" class="form-control">
                   </div>
-                  <div class='col-4 col-md-4 col-lg-3 col-xl-2 mt-1'>
-                    <div class="dropdown">
-                      <button class="btn btn-primary dropdown-toggle w-100" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        Create
-                      </button>
-                      <ul class="dropdown-menu">
-                        <li><button id="createExhibitButton" class='dropdown-item'>Create empty</button></li>
-                        <li><button id="cloneExhibitButton" class='dropdown-item'>Clone current</button></li>
-                      </ul>
+                </div>
+                <div class="col-3">
+                  <div class="dropdown">
+                    <button id="editExhibitAddComponentButton" class="btn btn-primary w-100" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                      Add component
+                    </button>
+                    <ul id="editExhibitAddComponentList" class="dropdown-menu w-100">
+                    </ul>
+                  </div>
+                </div>
+                <div class="col-3">
+                  <div class="input-group mb-3">
+                    <div class="input-group-text">
+                      <input id="editExhibitThumbnailCheckbox" class="form-check-input mt-0" type="checkbox" value="" aria-label="Thumbnails" checked>
+                    </div>
+                    <div class="input-group-text">
+                      Thumbnails
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
-            <div class="col-12 col-sm-6 col-md-6 col-lg-4">
-              <div class="form-group">
-                  <label for="exhibitDeleteSelector">Delete exhibit</label>
-                <div class="row">
-                  <div class='col-7'>
-                    <select class="form-select w-100" id="exhibitDeleteSelector"></select>
-                  </div>
-                  <div class='col-5'>
-                    <button class='btn btn-danger w-100' id="exhibitDeleteSelectorButton">Delete</button>
-                  </div>
-                  <div class='col-12 mt-1'>
-                    <span class='text-danger' id="exhibitDeleteSelectorWarning">Cannot delete current exhibit</span>
-                  </div>
+                <div class="col-2">
+                  <button class="btn btn-success w-100">Save</button>
                 </div>
               </div>
+              <hr>
             </div>
-          </div>
+            <div class="col-12">
+              <div id="editExhibitExhibitContentList" class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 row-cols-xl-6"></div>
+            </div>
+           </div>
         </div>
 
         <div class="tab-pane fade" id="nav-issues" role="tabpanel" aria-labelledby="nav-issues-tab">
