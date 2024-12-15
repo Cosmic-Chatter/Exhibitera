@@ -257,12 +257,11 @@ class BaseComponent {
   remove () {
     // Remove the component from its ComponentGroup
     for (const group of this.groups) {
-      exTools.getExhibitComponentGroup(group).removeComponent(this.id)
+      exTools.getExhibitComponentGroup(group).removeComponent(this.uuid)
     }
-
     // Remove the component from the exhibitComponents list
     const thisInstance = this
-    exConfig.exhibitComponents = $.grep(exConfig.exhibitComponents, function (el, idx) { return el.id === thisInstance.id }, true)
+    exConfig.exhibitComponents = $.grep(exConfig.exhibitComponents, function (el, idx) { return el.uuid === thisInstance.uuid }, true)
 
     // Cancel the pollingFunction
     clearInterval(this.pollingFunction)
@@ -278,7 +277,7 @@ class BaseComponent {
 
     // First, remove the component from any groups it is no longer in
     for (const group of this.groups) {
-      if (groups.includes(group) === false) exTools.getExhibitComponentGroup(group).removeComponent(this.id)
+      if (groups.includes(group) === false) exTools.getExhibitComponentGroup(group).removeComponent(this.uuid)
     }
 
     // Then, add component to any groups it was not in before
@@ -391,39 +390,6 @@ class ExhibitComponent extends BaseComponent {
     // Return the url for the helper of this component.
 
     return this.helperAddress
-  }
-
-  remove (deleteConfigurtion = true) {
-    if (this.status === exConfig.STATUS.STATIC) {
-      // Remove the component from the static system configuration
-
-      if (deleteConfigurtion === true) {
-        // First, get the current static configuration
-        exTools.makeServerRequest({
-          method: 'GET',
-          endpoint: '/system/static/getConfiguration'
-        })
-          .then((result) => {
-            let staticConfig = result.configuration
-            // Next, remove this element
-            const thisID = this.id
-            staticConfig = staticConfig.filter(function (obj) {
-              return obj.id !== thisID
-            })
-
-            // Finally, send the configuration back for writing
-            exTools.makeServerRequest({
-              method: 'POST',
-              endpoint: '/system/static/updateConfiguration',
-              params: {
-                configuration: staticConfig
-              }
-            })
-          })
-      }
-
-      super.remove()
-    }
   }
 
   updateFromServer (update) {
@@ -551,16 +517,10 @@ class ExhibitComponentGroup {
     )
   }
 
-  removeComponent (id) {
+  removeComponent (uuid) {
     // Remove a component based on its id
 
-    this.components = $.grep(this.components, function (el, idx) { return el.id === id }, true)
-
-    // If the group now has seven components, make sure we're using the small
-    // size rendering now by rebuilding the interface
-    if (this.components.length === 7) {
-      rebuildComponentInterface()
-    }
+    this.components = $.grep(this.components, function (el, idx) { return el.uuid === uuid }, true)
   }
 
   buildHTML () {
@@ -1603,20 +1563,15 @@ export function removeExhibitComponentFromModal () {
   // Called when the Remove button is clicked in the componentInfoModal.
   // Send a message to the server to remove the component.
 
-  const id = $('#componentInfoModalTitle').html()
-
+  const uuid = document.getElementById('componentInfoModal').getAttribute('data-uuid')
+  console.log(uuid)
   exTools.makeServerRequest({
-    method: 'POST',
-    endpoint: '/exhibit/removeComponent',
-    params: {
-      component: {
-        id
-      }
-    }
+    method: 'DELETE',
+    endpoint: '/component/' + uuid + '/delete'
   })
     .then((response) => {
       if ('success' in response && response.success === true) {
-        getExhibitComponent(id).remove()
+        getExhibitComponentByUUID(uuid).remove()
         $('#componentInfoModal').modal('hide')
       }
     })
@@ -2081,8 +2036,7 @@ export function rebuildComponentInterface () {
   // Clear the componentGroupsRow and rebuild it
 
   document.getElementById('componentGroupsRow').innerHTML = ''
-  let i
-  for (i = 0; i < exConfig.componentGroups.length; i++) {
+  for (let i = 0; i < exConfig.componentGroups.length; i++) {
     exConfig.componentGroups[i].sortComponentList()
     exConfig.componentGroups[i].buildHTML()
   }

@@ -58,7 +58,7 @@ scheduleUpdateTime: float = 0
 
 # Exhibit stuff
 current_exhibit: str | None = "Default.json"  # The JSON file defining the current exhibit "name.json"
-exhibit_configuration: list[dict[str, Any]] | None = None
+exhibit_configuration: dict[str, Any] | None = None
 exhibit_list: list[str] = []
 
 # User stuff

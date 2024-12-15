@@ -11,27 +11,30 @@ import * as exTools from './exhibitera_tools.js'
 import * as exTracker from './exhibitera_tracker.js'
 import * as exUsers from './exhibitera_users.js'
 
-function editExhibitPopulateExhibitContent (exhibit = null) {
+function editExhibitPopulateExhibitContent (exhibit) {
   // Create a GUI representation of the given exhibit that shows the defintion for each component.
 
   const contentList = document.getElementById('editExhibitExhibitContentList')
+  const exhibitNameField = document.getElementById('editExhibitName')
+
   contentList.innerHTML = ''
-  document.getElementById('editExhibitName').value = exhibit
+  exhibitNameField.setAttribute('data-uuid', exhibit)
 
   exTools.makeServerRequest({
-    method: 'POST',
-    endpoint: '/exhibit/getDetails',
-    params: { name: exhibit }
+    method: 'GET',
+    endpoint: '/exhibit/' + exhibit + '/details'
   })
     .then((result) => {
-      result.exhibit.forEach((component) => {
+      exhibitNameField.value = result.exhibit.name
+
+      result.exhibit.components.forEach((component) => {
         const col = document.createElement('div')
-        col.classList = 'col mt-2 manageExhibit-component-col'
+        col.classList = 'col manageExhibit-component-col'
         col.setAttribute('data-component-uuid', component.uuid)
         contentList.appendChild(col)
 
         const row = document.createElement('div')
-        row.classList = 'row px-1'
+        row.classList = 'row mx-0'
         col.appendChild(row)
 
         const header = document.createElement('div')
@@ -216,11 +219,13 @@ function EditExhibitAddComponentPopulateList () {
   }
 }
 
-function manageExhibitModalSubmitUpdate () {
+function editExhibitSubmitUpdate () {
   // Build an exhibit from the selected options and submit it to Hub for saving.
 
   const selects = Array.from(document.querySelectorAll('.manageExhibit-definition-select'))
-  const definition = []
+  const exhibitNameField = document.getElementById('editExhibitName')
+
+  const definitions = []
   for (const select of selects) {
     const entry = {
       uuid: select.getAttribute('data-component-uuid'),
@@ -229,24 +234,33 @@ function manageExhibitModalSubmitUpdate () {
     if ((select.value !== '') && (select.value != null)) {
       entry.definition = select.value
     } else entry.definition = select.getAttribute('data-initial-definition')
-    definition.push(entry)
+    definitions.push(entry)
   }
-  console.log(definition)
+  const exhibit = {
+    components: definitions,
+    name: exhibitNameField.value,
+    uuid: exhibitNameField.getAttribute('data-uuid'),
+    lighting: {
+      dmx: []
+    }
+  }
+  console.log(exhibit)
 }
 
 function updateAvailableExhibits (exhibitList) {
-  // Rebuild the list of available exhibits on the settings tab
+  // Rebuild the list of available exhibits
 
   const exhibitSelect = document.getElementById('exhibitSelect')
 
   const sortedExhibitList = exhibitList.sort((a, b) => {
-    const aVal = a.toLowerCase()
-    const bVal = b.toLowerCase()
+    const aVal = a.name.toLowerCase()
+    const bVal = b.name.toLowerCase()
     if (aVal > bVal) return 1
     if (aVal < bVal) return -1
     return 0
   })
-  if (exTools.arraysEqual(sortedExhibitList, exConfig.availableExhibits) === true) {
+
+  if (exTools.arraysEqual(sortedExhibitList, exConfig.availableExhibits, ['uuid', 'name']) === true) {
     return
   }
 
@@ -254,7 +268,7 @@ function updateAvailableExhibits (exhibitList) {
   exhibitSelect.innerHTML = ''
 
   sortedExhibitList.forEach((exhibit) => {
-    exhibitSelect.appendChild(new Option(exhibit, exhibit))
+    exhibitSelect.appendChild(new Option(exhibit.name, exhibit.uuid))
   })
 
   exhibitSelect.value = exConfig.currentExhibit
@@ -411,8 +425,10 @@ function parseUpdate (update) {
   // Take a dictionary of updates from Hub and act on them.
 
   if ('gallery' in update) {
+    console.log(update.gallery)
     exConfig.currentExhibit = update.gallery.current_exhibit
     updateAvailableExhibits(update.gallery.availableExhibits)
+    document.getElementById('exhibitNameField').innerHTML = exTools.getExhibit(update.gallery.current_exhibit).name
 
     if ('galleryName' in update.gallery) {
       document.getElementById('galleryNameField').innerHTML = update.gallery.galleryName
@@ -857,11 +873,7 @@ function createExhibit (name, cloneFrom) {
   // set cloneFrom = null if we are making a new exhibit from scratch.
   // set cloneFrom to the name of an existing exhibit to copy that exhibit
 
-  const requestDict = {
-    exhibit: {
-      name
-    }
-  }
+  const requestDict = { name }
 
   if (cloneFrom != null && cloneFrom !== '') {
     requestDict.clone_from = cloneFrom
@@ -872,15 +884,19 @@ function createExhibit (name, cloneFrom) {
     endpoint: '/exhibit/create',
     params: requestDict
   })
+    .then((result) => {
+      if ('success' in result && result.success === true) {
+        editExhibitPopulateExhibitContent(result.uuid)
+      }
+    })
 }
 
-function deleteExhibit (name) {
+function deleteExhibit (uuid) {
   // Ask Hub to delete the exhibit with the given name.
 
   exTools.makeServerRequest({
-    method: 'POST',
-    endpoint: '/exhibit/delete',
-    params: { exhibit: { name } }
+    method: 'DELETE',
+    endpoint: '/exhibit/' + uuid + '/delete'
   })
 }
 
@@ -907,7 +923,7 @@ function showExhibitDeleteModal () {
 function deleteExhibitFromModal () {
   // Take the info from the selector and delete the correct exhibit
 
-  deleteExhibit($('#exhibitDeleteSelector').val())
+  deleteExhibit(document.getElementById('exhibitSelect').value)
   $('#deleteExhibitModal').modal('hide')
 }
 
@@ -1152,20 +1168,19 @@ document.getElementById('editExhibitButton').addEventListener('click', () => {
   editExhibitPopulateExhibitContent(document.getElementById('exhibitSelect').value)
 })
 document.getElementById('editExhibitAddComponentButton').addEventListener('click', EditExhibitAddComponentPopulateList)
-$('#createExhibitButton').click(function () {
-  createExhibit($('#createExhibitNameInput').val(), null)
-  $('#createExhibitNameInput').val('')
+document.getElementById('createExhibitButton').addEventListener('click', () => {
+  createExhibit('New exhibit', null)
 })
-$('#cloneExhibitButton').click(function () {
-  createExhibit($('#createExhibitNameInput').val(), $('#exhibitSelect').val())
-  $('#createExhibitNameInput').val('')
+document.getElementById('cloneExhibitButton').addEventListener('click', () => {
+  createExhibit('New exhibit', document.getElementById('exhibitSelect').value)
 })
-$('#exhibitChangeConfirmationButton').click(function () {
+document.getElementById('exhibitChangeConfirmationButton').addEventListener('click', () => {
   changeExhibit(true)
 })
-$('#deleteExhibitButton').click(deleteExhibitFromModal)
-$('#exhibitDeleteSelectorButton').click(showExhibitDeleteModal)
+document.getElementById('deleteExhibitButton').addEventListener('click', deleteExhibitFromModal)
+document.getElementById('exhibitDeleteSelectorButton').addEventListener('click', showExhibitDeleteModal)
 document.getElementById('editExhibitThumbnailCheckbox').addEventListener('change', onManageExhibitModalThumbnailCheckboxChange)
+document.getElementById('editExhibitSaveButton').addEventListener('click', editExhibitSubmitUpdate)
 
 // Maintenance tab
 // =========================

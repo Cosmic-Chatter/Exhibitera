@@ -254,7 +254,7 @@ class ExhibitComponent(BaseComponent):
 
         update_made = False
         try:
-            component_config = ([x for x in config.exhibit_configuration if x["id"] == self.id])[0]
+            component_config = ([x for x in config.exhibit_configuration["components"] if x["id"] == self.id])[0]
 
             if "definition" in component_config and self.config["definition"] != component_config["definition"]:
                 self.config["definition"] = component_config["definition"]
@@ -697,10 +697,16 @@ def check_available_exhibits():
     config.exhibit_list = []
     exhibits_path = c_tools.get_path(["exhibits"], user_file=True)
 
-    with config.exhibitsLock:
-        for file in os.listdir(exhibits_path):
-            if file.lower().endswith(".json"):
-                config.exhibit_list.append(os.path.splitext(file)[0])
+    for file in os.listdir(exhibits_path):
+        if file.lower().endswith(".json"):
+            config.exhibit_list.append(c_tools.load_json(c_tools.get_path(["exhibits", file], user_file=True)))
+
+    # Make sure we have something usable loaded
+    if len(config.exhibit_list) == 0:
+        create_new_exhibit("Default", None)
+
+    if config.current_exhibit not in config.exhibit_list:
+        config.current_exhibit = config.exhibit_list[0]["uuid"]
 
 
 def command_all_exhibit_components(cmd: str):
@@ -720,17 +726,18 @@ def command_all_exhibit_components(cmd: str):
         device.queue_command(cmd)
 
 
-def create_new_exhibit(name: str, clone: Union[str, None]):
+def create_new_exhibit(name: str, clone: str | None) -> str:
     """Create a new exhibit file
 
     Set clone=None to create a new file, or set it equal to the name of an
     existing exhibit to clone that exhibit."""
 
-    # Make sure we have the proper extension
-    if not name.lower().endswith(".json"):
-        name += ".json"
+    if name == 'Default':
+        uuid_str = 'Default'
+    else:
+        uuid_str = str(uuid.uuid4())
 
-    new_file = c_tools.get_path(["exhibits", name], user_file=True)
+    new_file = c_tools.get_path(["exhibits", c_tools.with_extension(uuid_str, '.json')], user_file=True)
 
     if clone is not None:
         # Copy an existing file
@@ -739,14 +746,23 @@ def create_new_exhibit(name: str, clone: Union[str, None]):
         if not clone.lower().endswith(".json"):
             clone += ".json"
         existing_file = c_tools.get_path(["exhibits", clone], user_file=True)
-        shutil.copyfile(existing_file, new_file)
+        cloned = c_tools.load_json(existing_file)
+        if cloned is not None:
+            cloned["name"] = name
+            cloned["uuid"] = uuid_str
+            c_tools.write_json(cloned, new_file)
+        else:
+            # Make a new file
+            c_tools.write_json({"name": name, "uuid": uuid_str, "components": [], "lighting": {"dmx": []}}, new_file)
 
     else:
         # Make a new file
-        c_tools.write_json([], new_file)
+        c_tools.write_json({"name": name, "uuid": uuid_str, "components": [], "lighting": {"dmx": []}}, new_file)
 
     config.last_update_time = time.time()
     check_available_exhibits()
+
+    return uuid_str
 
 
 def delete_exhibit(name: str):
@@ -874,20 +890,24 @@ def update_exhibit_configuration(update: dict[str, Any],
 
     exhibit_path = c_tools.get_path(["exhibits", exhibit_name + ".json"], user_file=True)
     exhibit_config = c_tools.load_json(exhibit_path)
+    if exhibit_config is None:
+        if config.debug is True:
+            print('update_exhibit_configuration: error: invalid exhibit: ', exhibit_name)
+        return
 
     match_found = False
-    for index, component in enumerate(exhibit_config):
+    for index, component in enumerate(exhibit_config.get("components", [])):
         # Prefer UUID to ID from Exhibitera 5
         if component_uuid != '' and component_uuid is not None and 'uuid' in component:
             if component["uuid"] == component_uuid:
-                exhibit_config[index] |= update
-                exhibit_config[index]["uuid"] = component_uuid
+                exhibit_config["components"][index] |= update
+                exhibit_config["components"][index]["uuid"] = component_uuid
                 match_found = True
         elif component_id != '' and component_id is not None and 'id' in component:
             if component["id"] == component_id:
-                exhibit_config[index] |= update
+                exhibit_config["components"][index] |= update
                 if component_uuid != '' and component_uuid is not None:
-                    exhibit_config[index]["uuid"] = component_uuid
+                    exhibit_config["components"][index]["uuid"] = component_uuid
                 match_found = True
     if not match_found:
         new_entry = {}
@@ -896,7 +916,7 @@ def update_exhibit_configuration(update: dict[str, Any],
         if component_uuid != '' and component_uuid is not None:
             new_entry['uuid'] = component_uuid
         new_entry |= update
-        exhibit_config.append(new_entry)
+        exhibit_config["components"].append(new_entry)
     config.exhibit_configuration = exhibit_config
 
     c_tools.write_json(exhibit_config, exhibit_path)

@@ -87,7 +87,7 @@ def load_system_configuration(from_dict: Union[dict[str, Any], None] = None) -> 
     else:
         system = from_dict
 
-    config.current_exhibit = system.get("current_exhibit", "default.exhibit")
+    config.current_exhibit = system.get("current_exhibit", "Default.json")
     config.port = system.get("port", 8082)
     config.ip_address = system.get("ip_address", "localhost")
     config.gallery_name = system.get("gallery_name", "")
@@ -195,8 +195,7 @@ def check_file_structure() -> None:
         print("Missing exhibits directory. Creating now...")
         try:
             os.mkdir(exhibits_dir)
-            with open(os.path.join(exhibits_dir, "Default.json"), 'w', encoding="UTF-8") as f:
-                f.write("[]")
+            write_json({"name": "Default", "uuid": "Default", "components": [], "lighting": {"dmx": []}}, get_path(["exhibits", "Default.json"], user_file=True))
         except PermissionError:
             print("Error: unable to create 'exhibits' directory. Do you have write permission?")
 

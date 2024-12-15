@@ -8,6 +8,7 @@ to aid in deprecating them.
 import json
 import os
 import shutil
+import uuid
 
 # Exhibitera imports
 import config
@@ -154,3 +155,64 @@ def _convert_schedule_targets_to_json(target: str | None):
     if target.startswith("__all"):
         return {"type": "all"}
     return {"type": "value", "value": target}
+
+
+# Added in Ex5.3 to convert from list-based exhibit files to dict-based.
+def convert_exhibit_files():
+    """Convert from list-based exhibits to dict-based."""
+
+    for file in os.listdir(ex_tools.get_path(["exhibits"], user_file=True)):
+        if file.startswith('.'):
+            continue
+        if not file.endswith('.json'):
+            continue
+
+        current_path = ex_tools.get_path(["exhibits", file], user_file=True)
+        exhibit = ex_tools.load_json(current_path)
+        if exhibit is None or isinstance(exhibit, dict):
+            continue
+
+        uuid_str = str(uuid.uuid4())
+        name = os.path.splitext(file)[0]
+        new_exhibit = {
+            "components": exhibit,
+            "name": name,
+            "uuid": uuid_str,
+        }
+
+        # Fix any references in the schedule
+        _convert_schedule_set_exhibit(name, uuid_str)
+
+        # Make a backup
+        backup_path = ex_tools.get_path(["exhibits", file + '.backup'], user_file=True)
+        shutil.move(current_path, backup_path)
+
+        # Write the new file
+        new_path = ex_tools.get_path(["exhibits", uuid_str + '.json'], user_file=True)
+        ex_tools.write_json(new_exhibit, new_path)
+
+
+# Helper function for convert_exhibit_files()
+def _convert_schedule_set_exhibit(name, uuid_str):
+    """Iterate the schedules and replace instances of name with uuid_str for set_exhibit events,"""
+
+    schedule_dir = ex_tools.get_path(["schedules"], user_file=True)
+    for file in os.listdir(schedule_dir):
+        if file.startswith('.'):
+            continue
+        if not file.endswith('.json'):
+            continue
+
+        _, schedule = ex_sched.load_json_schedule(file)
+        convert = False
+        for event_uuid in schedule:
+            event = schedule[event_uuid]
+            if event["action"] == "set_exhibit" and event.get("target", {}).get("value", "") == name:
+                event["target"] = {"value": uuid_str, "type": "value"}
+                convert = True
+        if convert is True:
+            shutil.copy(ex_tools.get_path(["schedules", file], user_file=True),
+                        ex_tools.get_path(["schedules", file + ".backup"], user_file=True))
+            ex_sched.write_json_schedule(file, schedule)
+
+    ex_exhibit.check_available_exhibits()

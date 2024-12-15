@@ -297,13 +297,24 @@ export function stringToBool (str) {
   }
 }
 
-export function arraysEqual (a, b) {
+export function arraysEqual (a, b, property = null) {
+  // Deternine if the provided arrays are equal.
+  // If property != null, the given property(s) is used for each dict in the array.
+
   if (a === b) return true
   if (a == null || b == null) return false
   if (a.length !== b.length) return false
 
   for (let i = 0; i < a.length; ++i) {
-    if (a[i] !== b[i]) return false
+    if (property !== null) {
+      if (Array.isArray(property)) {
+        for (const prop of property) {
+          if (a[i][prop] !== b[i][prop]) return false
+        }
+      } else if (a[i][property] !== b[i][property]) return false
+    } else {
+      if (a[i] !== b[i]) return false
+    }
   }
   return true
 }
@@ -460,9 +471,18 @@ export function getExhibitComponentGroup (group) {
 }
 
 export function getGroup (uuid) {
-  // Function to search the groups list for a given uuid
+  // Search the groups list for a given uuid and return the corresponding group.
 
   const result = exConfig.groups.find(obj => {
+    return obj.uuid === uuid
+  })
+  return result
+}
+
+export function getExhibit (uuid) {
+  // Search the exhibit list for a given uuid and return the corresponding exhibit.
+
+  const result = exConfig.availableExhibits.find(obj => {
     return obj.uuid === uuid
   })
   return result

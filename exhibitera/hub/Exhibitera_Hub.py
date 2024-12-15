@@ -216,7 +216,7 @@ def command_line_setup() -> None:
     settings_dict["current_exhibit"] = "Default"
     # Create this exhibit file if it doesn't exist
     if not os.path.exists(ex_tools.get_path(["exhibits", "Default.json"], user_file=True)):
-        ex_exhibit.create_new_exhibit("default", None)
+        ex_exhibit.create_new_exhibit("Default", None)
 
     # Write new system config to file
     config_path = ex_tools.get_path(["configuration", "system.json"], user_file=True)
@@ -243,13 +243,11 @@ def load_default_configuration() -> None:
     ex_legacy.convert_legacy_static_configuration()
     ex_legacy.convert_legacy_WOL_configuration()
     ex_legacy.convert_schedule_targets_to_json()
+    ex_legacy.convert_exhibit_files()
 
     ex_tools.start_debug_loop()
     ex_sched.retrieve_json_schedule()
     ex_exhibit.read_descriptions_configuration()
-    # ex_proj.read_projector_configuration()
-    # ex_exhibit.read_wake_on_LAN_configuration()
-    # ex_exhibit.read_static_components_configuration()
     ex_exhibit.read_exhibit_configuration(ex_config.current_exhibit)
 
     # Update the components that their configuration may have changed
@@ -469,7 +467,8 @@ def edit_user(request: Request,
 @app.post("/user/{uuid_str}/editPreferences")
 def edit_user_preferences(request: Request,
                           uuid_str: str,
-                          preferences: dict[str, Any] = Body(description="A dictionary of preferences update.", embed=True)):
+                          preferences: dict[str, Any] = Body(description="A dictionary of preferences update.",
+                                                             embed=True)):
     """Update the preferences for the given user."""
 
     token = request.cookies.get("authToken", "")
@@ -556,13 +555,6 @@ def change_user_password(user_uuid: str,
 
 
 # Exhibit component actions
-
-class Exhibit(BaseModel):
-    name: str = Field(
-        description="The name of the exhibit"
-    )
-
-
 class ExhibitComponent(BaseModel):
     id: str = Field(
         description="A unique identifier for this component",
@@ -691,9 +683,8 @@ async def delete_group(request: Request, uuid_str: str):
 
 @app.post("/exhibit/create")
 async def create_exhibit(request: Request,
-                         exhibit: Exhibit,
-                         clone_from: Union[str, None] = Body(default=None,
-                                                             description="The name of the exhibit to clone.")):
+                         name: str = Body(description="The name of the exhibit."),
+                         clone_from: str | None = Body(default=None, description="The name of the exhibit to clone.")):
     """Create a new exhibit JSON file."""
 
     # Check permission
@@ -702,12 +693,28 @@ async def create_exhibit(request: Request,
     if success is False:
         return {"success": False, "reason": reason}
 
-    ex_exhibit.create_new_exhibit(exhibit.name, clone_from)
+    uuid_str = ex_exhibit.create_new_exhibit(name, clone_from)
+    return {"success": True, "reason": "", "uuid": uuid_str}
+
+
+@app.post("/exhibit/{uuid_str}/edit")
+async def edit_exhibit(request: Request,
+                       uuid_str: str,
+                       details: dict[str, Any] = Body(
+                           description="A dictionary specifying the details of the exhibit.")):
+    """Update the given exhibit with the specified details."""
+
+    # Check permission
+    token = request.cookies.get("authToken", "")
+    success, authorizing_user, reason = ex_users.check_user_permission("exhibits", "edit", token=token)
+    if success is False:
+        return {"success": False, "reason": reason}
+
     return {"success": True, "reason": ""}
 
 
-@app.post("/exhibit/delete")
-async def delete_exhibit(request: Request, exhibit: Exhibit = Body(embed=True)):
+@app.delete("/exhibit/{uuid_str}/delete")
+async def delete_exhibit(request: Request, uuid_str: str):
     """Delete the specified exhibit."""
 
     # Check permission
@@ -716,7 +723,7 @@ async def delete_exhibit(request: Request, exhibit: Exhibit = Body(embed=True)):
     if success is False:
         return {"success": False, "reason": reason}
 
-    ex_exhibit.delete_exhibit(exhibit.name)
+    ex_exhibit.delete_exhibit(uuid_str)
     return {"success": True, "reason": ""}
 
 
@@ -738,23 +745,12 @@ async def queue_WOL_command(component: ExhibitComponent,
     return {"success": True, "reason": ""}
 
 
-@app.post("/exhibit/removeComponent")
-async def remove_component(component: ExhibitComponent = Body(embed=True)):
-    """Queue the specified command for the exhibit component to retrieve."""
-
-    to_remove = ex_exhibit.get_exhibit_component(component_id=component.id)
-    print("Removing component:", component.id)
-    to_remove.remove()
-    return {"success": True, "reason": ""}
-
-
-@app.post("/exhibit/set")
-async def set_exhibit(exhibit: Exhibit = Body(embed=True)):
+@app.post("/exhibit/{uuid_str}/set")
+async def set_exhibit(uuid_str: str):
     """Set the specified exhibit as the current one."""
 
-    print("Changing exhibit to:", exhibit.name)
-    ex_tools.update_system_configuration({"current_exhibit": exhibit.name})
-    ex_exhibit.read_exhibit_configuration(exhibit.name)
+    ex_tools.update_system_configuration({"current_exhibit": uuid_str})
+    ex_exhibit.read_exhibit_configuration(uuid_str)
 
     # Update the components that the configuration has changed
     for component in ex_config.componentList:
@@ -769,13 +765,13 @@ async def get_available_exhibits():
     return {"success": True, "available_exhibits": ex_config.exhibit_list}
 
 
-@app.post("/exhibit/getDetails")
-async def get_exhibit_details(name: str = Body(description='The name of the exhibit to fetch.', embed=True)):
+@app.get("/exhibit/{uuid_str}/details")
+async def get_exhibit_details(uuid_str: str):
     """Return the JSON for a particular exhibit."""
 
-    if not name.endswith('.json'):
-        name += '.json'
-    exhibit_path = ex_tools.get_path(["exhibits", name], user_file=True)
+    if not uuid_str.endswith('.json'):
+        uuid_str += '.json'
+    exhibit_path = ex_tools.get_path(["exhibits", uuid_str], user_file=True)
     result = ex_tools.load_json(exhibit_path)
     if result is None:
         return {"success": False, "reason": "Exhibit does not exist."}
@@ -1208,13 +1204,13 @@ async def delete_maintenance_record(request: Request, uuid_str: str):
         return {"success": False, "reason": "invalid_uuid"}
 
     component.maintenance_log = {
-                "current": {
-                    "date": str(datetime.datetime.now()),
-                    "status": "On floor, not working",
-                    "notes": ""
-                },
-                "history": []
-            }
+        "current": {
+            "date": str(datetime.datetime.now()),
+            "status": "On floor, not working",
+            "notes": ""
+        },
+        "history": []
+    }
     component.save()
     ex_config.last_update_time = time.time()
     return {"success": True}
@@ -1350,6 +1346,15 @@ async def queue_projector_command(component: ExhibitComponent,
     """Send a command to the specified projector."""
 
     ex_exhibit.get_exhibit_component(component_id=component.id).queue_command(command)
+    return {"success": True, "reason": ""}
+
+
+@app.delete("/component/{uuid_str}/delete")
+async def remove_component(uuid_str: str):
+    """Remove the specified exhibit component"""
+
+    to_remove = ex_exhibit.get_exhibit_component(component_uuid=uuid_str)
+    to_remove.remove()
     return {"success": True, "reason": ""}
 
 
@@ -1673,7 +1678,8 @@ async def update_schedule(
         name: str = Body(),
         time_to_set: str = Body(description="The time of the action to set, expressed in any normal way."),
         action_to_set: str = Body(description="The action to set."),
-        target_to_set: list[dict] | dict | None = Body(default=None, description="The details of the component(s) that should be acted upon."),
+        target_to_set: list[dict] | dict | None = Body(default=None,
+                                                       description="The details of the component(s) that should be acted upon."),
         value_to_set: str = Body(default="", description="A value corresponding to the action."),
         schedule_id: str = Body(description="A unique identifier corresponding to the schedule entry.")):
     """Write a schedule update to disk.
