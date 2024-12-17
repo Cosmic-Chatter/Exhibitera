@@ -549,7 +549,7 @@ function populateAnnotateFromJSONModal (file, type = 'file') {
   parent.innerHTML = ''
 
   if (type === 'file') {
-    exCommon.makeServerRequest({
+    exCommon.makeHelperRequest({
       method: 'GET',
       endpoint: '/content/' + file,
       noCache: true
@@ -1192,8 +1192,6 @@ Array.from(document.querySelectorAll('.watermark-slider')).forEach((el) => {
   })
 })
 
-// Set helper address for use with exCommon.makeHelperRequest
-exCommon.config.helperAddress = window.location.origin
 
 clearDefinitionInput()
 
