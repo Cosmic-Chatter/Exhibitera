@@ -227,7 +227,7 @@ function createScheduleEntryHTML (item, scheduleID, scheduleName, scheduleType, 
   if (['power_off', 'power_on', 'refresh_page', 'restart', 'set_definition', 'set_dmx_scene'].includes(action)) {
     description = populateScheduleDescriptionHelper([item], false)
   } else if (action === 'set_exhibit') {
-    description = `Set exhibit: ${target.value}`
+    description = `Set exhibit: ${exTools.getExhibitName(target.value)}`
   } else if (action === 'note') {
     description = item.value
   }
@@ -374,7 +374,7 @@ function scheduleTargetToDescription (targetList) {
   // Convert target uuids to English words
 
   if (targetList == null) return 'none'
-
+  console.log(targetList)
   let target
   if (Array.isArray(targetList)) {
     // We have a list of target options
@@ -501,7 +501,7 @@ export function setScheduleActionTargetSelector (action = null, target = null) {
     targetSelector.empty()
     const availableExhibits = $.makeArray($('#exhibitSelect option'))
     availableExhibits.forEach((item) => {
-      targetSelector.append(new Option(item.value, JSON.stringify({
+      targetSelector.append(new Option(exTools.getExhibitName(item.value), JSON.stringify({
         type: 'value',
         value: item.value
       })))

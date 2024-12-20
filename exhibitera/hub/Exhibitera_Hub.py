@@ -701,7 +701,7 @@ async def create_exhibit(request: Request,
 async def edit_exhibit(request: Request,
                        uuid_str: str,
                        details: dict[str, Any] = Body(
-                           description="A dictionary specifying the details of the exhibit.")):
+                           description="A dictionary specifying the details of the exhibit.", embed=True)):
     """Update the given exhibit with the specified details."""
 
     # Check permission
@@ -709,6 +709,11 @@ async def edit_exhibit(request: Request,
     success, authorizing_user, reason = ex_users.check_user_permission("exhibits", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}
+
+    path = ex_tools.get_path(["exhibits", ex_tools.with_extension(uuid_str, '.json')], user_file=True)
+    ex_tools.write_json(details, path)
+    ex_exhibit.check_available_exhibits()
+    ex_config.last_update_time = time.time()
 
     return {"success": True, "reason": ""}
 

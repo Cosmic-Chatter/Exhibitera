@@ -488,6 +488,13 @@ export function getExhibit (uuid) {
   return result
 }
 
+export function getExhibitName (uuid) {
+  // Return the name of the specified exhibit, if it exists.
+  const exhibit = getExhibit(uuid)
+  if (exhibit == null) return 'Invalid exhibit'
+  return exhibit.name
+}
+
 export function uuid () {
   // Generate a new UUID v4 without using the crypto library (we may not be in HTTPS).
   // Format: 8-4-4-4-12

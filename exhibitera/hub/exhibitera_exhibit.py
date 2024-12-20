@@ -753,11 +753,11 @@ def create_new_exhibit(name: str, clone: str | None) -> str:
             c_tools.write_json(cloned, new_file)
         else:
             # Make a new file
-            c_tools.write_json({"name": name, "uuid": uuid_str, "components": [], "lighting": {"dmx": []}}, new_file)
+            c_tools.write_json({"name": name, "uuid": uuid_str, "components": [], "commands": []}, new_file)
 
     else:
         # Make a new file
-        c_tools.write_json({"name": name, "uuid": uuid_str, "components": [], "lighting": {"dmx": []}}, new_file)
+        c_tools.write_json({"name": name, "uuid": uuid_str, "components": [], "commands": []}, new_file)
 
     config.last_update_time = time.time()
     check_available_exhibits()

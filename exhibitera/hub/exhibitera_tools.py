@@ -195,7 +195,7 @@ def check_file_structure() -> None:
         print("Missing exhibits directory. Creating now...")
         try:
             os.mkdir(exhibits_dir)
-            write_json({"name": "Default", "uuid": "Default", "components": [], "lighting": {"dmx": []}}, get_path(["exhibits", "Default.json"], user_file=True))
+            write_json({"name": "Default", "uuid": "Default", "components": [], "commands": []}, get_path(["exhibits", "Default.json"], user_file=True))
         except PermissionError:
             print("Error: unable to create 'exhibits' directory. Do you have write permission?")
 

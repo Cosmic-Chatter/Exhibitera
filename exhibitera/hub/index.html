@@ -1435,7 +1435,7 @@
             </div>
           </div>
 
-          <!-- Add action modal -->
+          <!-- Add schedule action modal -->
           <div class="modal" tabindex="-1" role="dialog" id="scheduleEditModal">
             <div class="modal-dialog modal-dialog-centered exhibitera-dialog" role="document">
               <div class="modal-content">
@@ -1548,6 +1548,49 @@
             </div>
           </div>
 
+          <!-- Add exhibit action modal -->
+          <div class="modal" tabindex="-1" role="dialog" id="editExhibitActionModal">
+            <div class="modal-dialog modal-dialog-centered exhibitera-dialog" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 id="editExhibitActionModalTitle" class="modal-title">Edit action</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <div class="form-group">
+                    <div class="row gy-2">
+                      <div class="col-6 col-md-4">
+                        <label for="editExhibitActionSelector">Action</label>
+                        <select class="form-select" id="editExhibitActionSelector">
+                          <option value="power_on">Power on</option>
+                          <option value="power_off">Power off</option>
+                          <option value="restart">Restart components</option>
+                          <option value="set_dmx_scene">Set DMX lighting scene</option>
+                        </select>
+                      </div>
+                      <div class="col-6 col-md-4">
+                        <label id="editExhibitActionTargetSelectorLabel" for="editExhibitActionTargetSelector">Target</label>
+                        <select class="form-select" id="editExhibitActionTargetSelector">
+                        </select>
+                      </div>
+                      <div class="col-6">
+                        <label id="editExhibitActionValueSelectorLabel" for="editExhibitActionValueSelector">Value</label>
+                        <select class="form-select" id="editExhibitActionValueSelector">
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                  <div id="editExhibitActionEditErrorAlert" class="text-danger w-100" style="display: none;"></div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-danger" me-auto id="editExhibitActionEditDeleteActionButton">Delete action</button>
+                  <button type="button" class="btn btn-primary ms-auto" id="editExhibitActionEditSubmitButton">Save changes</button>
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Manage exhibit buttons -->
           <div class="row mt-0 gy-2">
             <div class="col-12 fst-italic">
@@ -1578,44 +1621,65 @@
             </div>
           </div>
           <!-- Edit exhibit fields -->
-           <div class="row gy-2 mt-2">
+           <div id="editExhibitPane" class="row gy-2 mt-2" style="display: none;">
 
             <div class="col-12">
               <hr class="mt-0">
               <div class="row gy-2">
-                <div class="col-4">
+                <div class="col-12 col-md-4">
                   <div class="input-group">
                     <span class="input-group-text">Exhibit name</span>
                     <input id="editExhibitName" type="text" aria-label="Exhibit name" class="form-control">
                   </div>
                 </div>
-                <div class="col-3">
+                <div class="col-4 col-sm-3 col-md-2 col-xl-1">
                   <div class="dropdown">
-                    <button id="editExhibitAddComponentButton" class="btn btn-primary w-100" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                      Add component
+                    <button class="btn btn-primary w-100 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
+                      Add
                     </button>
-                    <ul id="editExhibitAddComponentList" class="dropdown-menu w-100">
+                    <ul class="dropdown-menu w-100">
+                      <li id="editExhibitShowActionModalButton" class="dropdown-item">Action</li>
+                      <li>
+                        <div class="btn-group w-100">
+                          <button id="editExhibitAddComponentButton" class="dropdown-item dropdown-toggle" data-bs-toggle="dropdown"
+                             aria-expanded="false">
+                              Component
+                          </button>
+                          <ul id="editExhibitAddComponentList" class="dropdown-menu w-100 ">
+                          </ul>
+                      </div>
+                      </li>
                     </ul>
                   </div>
                 </div>
-                <div class="col-3">
+                <div class="col-5 col-sm-4 col-md-3 col-xl-2">
                   <div class="input-group mb-3">
                     <div class="input-group-text">
                       <input id="editExhibitThumbnailCheckbox" class="form-check-input mt-0" type="checkbox" value="" aria-label="Thumbnails" checked>
                     </div>
                     <div class="input-group-text">
-                      Thumbnails
+                      <label class="form-check-label" for="editExhibitThumbnailCheckbox">
+                        <span class="d-none d-sm-block">Thumbnails</span>
+                        <span class="d-block d-sm-none"><small>Thumbs</small></span>  
+                      </label>
                     </div>
                   </div>
+                    
                 </div>
-                <div class="col-2">
+                <div class="col-3 col-md-2 col-xl-1">
                   <button id="editExhibitSaveButton" class="btn btn-success w-100">Save</button>
                 </div>
               </div>
-              <!-- <hr> -->
             </div>
-            <div class="col-12">
-              <div id="editExhibitExhibitContentList" class="row gy-2 row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 row-cols-xl-6"></div>
+            <div class="col-12 col-md-9">
+              <H4>Components</H4>
+              <div id="editExhibitExhibitContentList" class="row gy-2 row-cols-2 row-cols-sm-3 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 border-end"></div>
+            </div>
+            <div class="col-12 col-md-3">
+              <H4>
+                Actions
+                <div class="badge bg-info ml-1 align-middle " data-bs-toggle="tooltip" data-bs-placement="top" title="Actions will be run when the exhibit is loaded." style="font-size: 0.4em;">?</div>
+              </H4>
             </div>
            </div>
         </div>

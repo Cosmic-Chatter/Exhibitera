@@ -166,6 +166,7 @@ function editExhibitPopulateExhibitContent (exhibit) {
           badComponentCol.appendChild(badComponentAlert)
         }
       })
+      showEditExhibitGUI()
     })
 }
 
@@ -183,7 +184,7 @@ function onManageExhibitModalThumbnailCheckboxChange () {
   })
 }
 
-function EditExhibitAddComponentPopulateList () {
+function editExhibitAddComponentPopulateList () {
   // Called when a user clicks the 'Add component' button to populate
   // the list of available, un-added components.
 
@@ -224,6 +225,7 @@ function editExhibitSubmitUpdate () {
 
   const selects = Array.from(document.querySelectorAll('.manageExhibit-definition-select'))
   const exhibitNameField = document.getElementById('editExhibitName')
+  const uuid = exhibitNameField.getAttribute('data-uuid')
 
   const definitions = []
   for (const select of selects) {
@@ -240,11 +242,30 @@ function editExhibitSubmitUpdate () {
     components: definitions,
     name: exhibitNameField.value,
     uuid: exhibitNameField.getAttribute('data-uuid'),
-    lighting: {
-      dmx: []
-    }
+    commands: []
   }
-  console.log(exhibit)
+  exTools.makeServerRequest({
+    method: 'POST',
+    endpoint: '/exhibit/' + uuid + '/edit',
+    params: { details: exhibit }
+  })
+    .then((result) => {
+      if (result.success === true) hideEditExhibitGUI()
+    })
+}
+
+function showEditExhibitActionModal (actionUUID = null) {
+  // Configure the modal for editing an action and show it.
+
+  $('#editExhibitActionModal').modal('show')
+}
+
+function showEditExhibitGUI () {
+  document.getElementById('editExhibitPane').style.display = 'flex'
+}
+
+function hideEditExhibitGUI () {
+  document.getElementById('editExhibitPane').style.display = 'none'
 }
 
 function updateAvailableExhibits (exhibitList) {
@@ -425,7 +446,6 @@ function parseUpdate (update) {
   // Take a dictionary of updates from Hub and act on them.
 
   if ('gallery' in update) {
-    console.log(update.gallery)
     exConfig.currentExhibit = update.gallery.current_exhibit
     updateAvailableExhibits(update.gallery.availableExhibits)
     document.getElementById('exhibitNameField').innerHTML = exTools.getExhibit(update.gallery.current_exhibit).name
@@ -1167,7 +1187,7 @@ document.getElementById('setExhibitButton').addEventListener('click', () => {
 document.getElementById('editExhibitButton').addEventListener('click', () => {
   editExhibitPopulateExhibitContent(document.getElementById('exhibitSelect').value)
 })
-document.getElementById('editExhibitAddComponentButton').addEventListener('click', EditExhibitAddComponentPopulateList)
+document.getElementById('editExhibitAddComponentButton').addEventListener('click', editExhibitAddComponentPopulateList)
 document.getElementById('createExhibitButton').addEventListener('click', () => {
   createExhibit('New exhibit', null)
 })
@@ -1181,6 +1201,9 @@ document.getElementById('deleteExhibitButton').addEventListener('click', deleteE
 document.getElementById('exhibitDeleteSelectorButton').addEventListener('click', showExhibitDeleteModal)
 document.getElementById('editExhibitThumbnailCheckbox').addEventListener('change', onManageExhibitModalThumbnailCheckboxChange)
 document.getElementById('editExhibitSaveButton').addEventListener('click', editExhibitSubmitUpdate)
+document.getElementById('editExhibitShowActionModalButton').addEventListener('click', () => {
+  showEditExhibitActionModal()
+})
 
 // Maintenance tab
 // =========================
