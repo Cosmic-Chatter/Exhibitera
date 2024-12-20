@@ -316,7 +316,7 @@ function createScheduleEntryHTML (item, scheduleID, scheduleName, scheduleType, 
   return eventRow
 }
 
-function populateScheduleDescriptionHelper (eventList, includeTime) {
+export function populateScheduleDescriptionHelper (eventList, includeTime) {
   // Helper function to create text strings that describe the upcoming action(s)
 
   let description = ''
@@ -326,7 +326,7 @@ function populateScheduleDescriptionHelper (eventList, includeTime) {
   } else if (eventList.length === 1) {
     const event = eventList[0]
     description += scheduleActionToDescription(event.action) + ' '
-    description += scheduleTargetToDescription(event.target)
+    description += scheduleTargetToDescription(event.target, event.action)
   } else {
     const action = eventList[0].action
     let allSame = true
@@ -370,11 +370,11 @@ function scheduleActionToDescription (action) {
   }
 }
 
-function scheduleTargetToDescription (targetList) {
+function scheduleTargetToDescription (targetList, action = '') {
   // Convert target uuids to English words
 
   if (targetList == null) return 'none'
-  console.log(targetList)
+
   let target
   if (Array.isArray(targetList)) {
     // We have a list of target options
@@ -418,6 +418,7 @@ function scheduleTargetToDescription (targetList) {
     // Deprecated in Ex5.2
     if ('id' in target) return target.id
   } else if (target.type === 'value') {
+    if (action === 'set_exhibit') return exTools.getExhibitName(target.value)
     return target.value
   } else return target
 }

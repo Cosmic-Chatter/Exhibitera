@@ -166,8 +166,71 @@ function editExhibitPopulateExhibitContent (exhibit) {
           badComponentCol.appendChild(badComponentAlert)
         }
       })
+
+      const actionsList = document.getElementById('editExhibitActionsList')
+      actionsList.innerHTML = ''
+
+      result.exhibit.commands.forEach((command) => {
+        actionsList.append(createExhibitActionEntryHTML(command))
+      })
       showEditExhibitGUI()
     })
+}
+
+export function createExhibitActionEntryHTML (item, allowEdit = exTools.checkPermission('exhibits', 'edit')) {
+  // Take a dictionary of properties and build an HTML representation of the schedule entry.
+
+  const description = exSchedule.populateScheduleDescriptionHelper([item], false)
+
+  if (description == null) return
+
+  const eventRow = document.createElement('div')
+  eventRow.classList = 'row mt-2 actionListing'
+  eventRow.setAttribute('id', 'actionListing_' + item.uuid)
+  eventRow.setAttribute('data-action', JSON.stringify(item))
+  eventRow.setAttribute('data-uuid', item.uuid)
+
+  const eventDescriptionCol = document.createElement('div')
+  if (allowEdit) {
+    eventDescriptionCol.classList = 'me-0 pe-0 col-9'
+  } else {
+    eventDescriptionCol.classList = 'col-12'
+  }
+  eventRow.appendChild(eventDescriptionCol)
+
+  const eventDescriptionOuterContainer = document.createElement('div')
+  eventDescriptionOuterContainer.classList = 'text-white bg-secondary w-100 h-100 justify-content-center d-flex py-1 pe-1 rounded-start'
+  eventDescriptionCol.appendChild(eventDescriptionOuterContainer)
+
+  const eventDescriptionInnerContainer = document.createElement('div')
+  eventDescriptionInnerContainer.classList = 'align-self-center justify-content-center text-wrap'
+  eventDescriptionOuterContainer.appendChild(eventDescriptionInnerContainer)
+
+  const eventDescription = document.createElement('center')
+  eventDescription.innerHTML = description
+  eventDescriptionOuterContainer.appendChild(eventDescription)
+
+  if (allowEdit) {
+    console.log('here')
+    const eventEditButtonCol = document.createElement('div')
+    eventEditButtonCol.classList = 'col-3 ms-0 ps-0'
+    eventRow.appendChild(eventEditButtonCol)
+
+    const eventEditButton = document.createElement('button')
+    eventEditButton.classList = 'bg-info w-100 h-100 rounded-end text-dark'
+    eventEditButton.setAttribute('type', 'button')
+    eventEditButton.style.borderStyle = 'solid'
+    eventEditButton.style.border = '0px'
+    eventEditButton.innerHTML = 'Edit'
+    eventEditButton.addEventListener('click', function () {
+      showEditExhibitActionModal(item)
+    })
+    eventEditButtonCol.appendChild(eventEditButton)
+  } else {
+    eventDescriptionOuterContainer.classList.add('rounded-end')
+  }
+
+  return eventRow
 }
 
 function onManageExhibitModalThumbnailCheckboxChange () {
@@ -238,11 +301,18 @@ function editExhibitSubmitUpdate () {
     } else entry.definition = select.getAttribute('data-initial-definition')
     definitions.push(entry)
   }
+
+  const commands = []
+  for (const el of Array.from(document.querySelectorAll('.actionListing'))) {
+    const command = JSON.parse(el.getAttribute('data-action'))
+    commands.push(command)
+  }
+
   const exhibit = {
     components: definitions,
     name: exhibitNameField.value,
     uuid: exhibitNameField.getAttribute('data-uuid'),
-    commands: []
+    commands
   }
   exTools.makeServerRequest({
     method: 'POST',
@@ -254,8 +324,24 @@ function editExhibitSubmitUpdate () {
     })
 }
 
-function showEditExhibitActionModal (actionUUID = null) {
+function showEditExhibitActionModal (actionDict = null) {
   // Configure the modal for editing an action and show it.
+
+  const actionSelector = document.getElementById('editExhibitActionSelector')
+  actionSelector.value = null
+  const targetSelector = document.getElementById('editExhibitActionTargetSelector')
+  targetSelector.value = null
+  const valueSelector = document.getElementById('editExhibitActionValueSelector')
+  valueSelector.value = null
+  const modal = document.getElementById('editExhibitActionModal')
+  modal.setAttribute('data-uuid', exTools.uuid())
+
+  if (actionDict != null) {
+    modal.setAttribute('data-uuid', actionDict.uuid)
+    actionSelector.value = actionDict.action
+    targetSelector.value = actionDict.target
+    valueSelector.value = actionDict.value
+  }
 
   $('#editExhibitActionModal').modal('show')
 }
