@@ -423,10 +423,8 @@ function scheduleTargetToDescription (targetList, action = '') {
   } else return target
 }
 
-function setScheduleActionTargetSelectorPopulateOptions (optionsToAdd) {
+export function actionTargetSelectorPopulateOptions (targetSelector, optionsToAdd) {
   // Helper function for setScheduleActionTargetSelector that populates the target selector with the right options.
-
-  const targetSelector = $('#scheduleTargetSelector')
 
   if (optionsToAdd.includes('All')) {
     targetSelector.append(new Option('All', JSON.stringify({ type: 'all' })))
@@ -516,13 +514,13 @@ export function setScheduleActionTargetSelector (action = null, target = null) {
 
     if (['power_on', 'power_off'].includes(action)) {
       targetSelector.attr('multiple', true)
-      setScheduleActionTargetSelectorPopulateOptions(['All', 'Groups', 'ExhibitComponents', 'Projectors'])
+      actionTargetSelectorPopulateOptions(targetSelector, ['All', 'Groups', 'ExhibitComponents', 'Projectors'])
     } else if (['refresh_page', 'restart'].includes(action)) {
       targetSelector.attr('multiple', true)
-      setScheduleActionTargetSelectorPopulateOptions(['All', 'Groups', 'ExhibitComponents'])
+      actionTargetSelectorPopulateOptions(targetSelector, ['All', 'Groups', 'ExhibitComponents'])
     } else if (['set_definition', 'set_dmx_scene'].includes(action)) {
       targetSelector.attr('multiple', false)
-      setScheduleActionTargetSelectorPopulateOptions(['ExhibitComponents'])
+      actionTargetSelectorPopulateOptions(targetSelector, ['ExhibitComponents'])
     }
     targetSelector.show()
     $('#scheduleTargetSelectorLabel').show()

@@ -211,7 +211,6 @@ export function createExhibitActionEntryHTML (item, allowEdit = exTools.checkPer
   eventDescriptionOuterContainer.appendChild(eventDescription)
 
   if (allowEdit) {
-    console.log('here')
     const eventEditButtonCol = document.createElement('div')
     eventEditButtonCol.classList = 'col-3 ms-0 ps-0'
     eventRow.appendChild(eventEditButtonCol)
@@ -331,19 +330,110 @@ function showEditExhibitActionModal (actionDict = null) {
   actionSelector.value = null
   const targetSelector = document.getElementById('editExhibitActionTargetSelector')
   targetSelector.value = null
+  targetSelector.style.display = 'none'
+  document.getElementById('editExhibitActionTargetSelectorLabel').style.display = 'none'
   const valueSelector = document.getElementById('editExhibitActionValueSelector')
   valueSelector.value = null
+  valueSelector.style.display = 'none'
+  document.getElementById('editExhibitActionValueSelectorLabel').style.display = 'none'
   const modal = document.getElementById('editExhibitActionModal')
   modal.setAttribute('data-uuid', exTools.uuid())
 
   if (actionDict != null) {
     modal.setAttribute('data-uuid', actionDict.uuid)
     actionSelector.value = actionDict.action
-    targetSelector.value = actionDict.target
+    editExhibitActionConfigureTargetSelector(actionDict.action)
+    targetSelector.value = JSON.stringify(actionDict.target)
+    editExhibitActionConfigureValueSelector(actionDict.action, actionDict.target)
     valueSelector.value = actionDict.value
   }
 
   $('#editExhibitActionModal').modal('show')
+}
+
+function editExhibitActionConfigureTargetSelector (action = null, target = null) {
+  // Show/hide the select element for picking the target of an action when appropriate
+
+  if (action == null) action = document.getElementById('editExhibitActionSelector').value
+
+  const targetSelector = document.getElementById('editExhibitActionTargetSelector')
+  const targetSelectorLabel = document.getElementById('editExhibitActionTargetSelectorLabel')
+  targetSelector.innerHTML = ''
+
+  if (['power_on', 'power_off'].includes(action)) {
+    targetSelector.setAttribute('multiple', true)
+    exSchedule.actionTargetSelectorPopulateOptions(targetSelector, ['All', 'Groups', 'ExhibitComponents', 'Projectors'])
+  } else if (['restart'].includes(action)) {
+    targetSelector.setAttribute('multiple', true)
+    exSchedule.actionTargetSelectorPopulateOptions(targetSelector, ['All', 'Groups', 'ExhibitComponents'])
+  } else if (['set_dmx_scene'].includes(action)) {
+    targetSelector.removeAttribute('multiple')
+    exSchedule.actionTargetSelectorPopulateOptions(targetSelector, ['ExhibitComponents'])
+  }
+  targetSelector.style.display = 'block'
+  targetSelectorLabel.style.display = 'block'
+
+  // For certain actions, we want to then populare the value selector
+  if (['set_dmx_scene'].includes(action)) {
+    editExhibitActionConfigureValueSelector(action, target)
+  } else {
+    document.getElementById('editExhibitActionValueSelector').style.display = 'none'
+    document.getElementById('editExhibitActionValueSelectorLabel').style.display = 'none'
+  }
+}
+
+function editExhibitActionConfigureValueSelector (action = null, target = null) {
+  // Show/hide the select element for picking the value of an action when appropriate
+
+  if (action == null) action = document.getElementById('editExhibitActionSelector').value
+  if (target == null) action = JSON.parse(document.getElementById('editExhibitActionTargetSelector').value)
+
+  const valueSelector = document.getElementById('editExhibitActionValueSelector')
+  const valueSelectorLabel = document.getElementById('editExhibitActionValueSelectorLabel')
+  valueSelector.innerHTML = ''
+
+  if (action === 'set_dmx_scene') {
+    let component
+    try {
+      component = exExhibit.getExhibitComponentByUUID(target.uuid)
+    } catch {
+      return
+    }
+
+    exTools.makeRequest({
+      method: 'GET',
+      url: component.helperAddress,
+      endpoint: '/DMX/getScenes'
+    })
+      .then((response) => {
+        if ('success' in response && response.success === true) {
+          response.groups.forEach((group) => {
+            const groupName = new Option(group.name, null)
+            groupName.setAttribute('disabled', true)
+            valueSelector.appendChild(groupName)
+
+            group.scenes.forEach((scene) => {
+              valueSelector.appendChild(new Option(scene.name, scene.uuid))
+            })
+          })
+        }
+
+        // In the case of editing an action, preselect any existing values
+        valueSelector.val($('#scheduleEditModal').data('currentValue'))
+        valueSelector.style.display = 'block'
+        valueSelectorLabel.style.display = 'block'
+      })
+  } else {
+    valueSelector.style.display = 'none'
+    valueSelectorLabel.style.display = 'none'
+  }
+}
+
+function editExhibitActionDeleteAction (uuid) {
+  // Remove the entry for the given action
+
+  document.getElementById('actionListing_' + uuid).remove()
+  $('#editExhibitActionModal').modal('hide')
 }
 
 function showEditExhibitGUI () {
@@ -1289,6 +1379,12 @@ document.getElementById('editExhibitThumbnailCheckbox').addEventListener('change
 document.getElementById('editExhibitSaveButton').addEventListener('click', editExhibitSubmitUpdate)
 document.getElementById('editExhibitShowActionModalButton').addEventListener('click', () => {
   showEditExhibitActionModal()
+})
+document.getElementById('editExhibitActionSelector').addEventListener('change', () => { editExhibitActionConfigureTargetSelector() })
+document.getElementById('editExhibitActionTargetSelector').addEventListener('change', () => { editExhibitActionConfigureValueSelector() })
+document.getElementById('editExhibitActionEditDeleteActionButton').addEventListener('click', () => {
+  const uuid = document.getElementById('editExhibitActionModal').getAttribute('data-uuid')
+  editExhibitActionDeleteAction(uuid)
 })
 
 // Maintenance tab
