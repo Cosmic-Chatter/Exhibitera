@@ -1,4 +1,4 @@
-/* global platform, html2canvas, $ */
+/* global platform, html2canvas */
 
 export const config = {
   permissions: {
@@ -21,16 +21,22 @@ export const config = {
   group: 'Default',
   helperAddress: 'http://localhost:8000',
   id: 'TEMP ' + String(new Date().getTime()),
-  platformDetails: {
-    operating_system: String(platform.os),
-    browser: platform.name + ' ' + platform.version
-  },
   remoteDisplay: false, // false == we are using the webview app, true == browser
   serverAddress: '',
   softwareVersion: 5.2,
   standalone: false, // false == we are using Hub
   updateParser: null, // Function used by readUpdate() to parse app-specific updates
   uuid: ''
+}
+
+// platform.js might not be included in 3rd-party apps
+try {
+  config.platformDetails = {
+    operating_system: String(platform.os),
+    browser: platform.name + ' ' + platform.version
+  }
+} catch {
+  console.log('script platform.js not found. Include this script to send additional details to Hub.')
 }
 
 export function configureApp (opt = {}) {
@@ -420,8 +426,12 @@ export function askForDefaults (changeApp = true) {
   // Set changeApp === false to supress changing the app based on the current definition
 
   const checkAgain = function () {
-    $('#helperConnectionWarningAddress').text(config.helperAddress)
-    $('#helperConnectionWarning').show()
+    try {
+      document.getElementById('helperConnectionWarningAddress').innerHTML = config.helperAddress
+      document.getElementById('helperConnectionWarning').style.display = 'block'
+    } catch {
+      // Will fail if these elements don't exist
+    }
     console.log('Could not get defaults... checking again')
     setTimeout(askForDefaults, 500)
   }
@@ -735,16 +745,18 @@ export function createLanguageSwitcher (def, localize) {
   // based on the provided language code.
 
   const langs = Object.keys(def.languages)
+  const langSwitchDropdown = document.getElementById('langSwitchDropdown')
+  const langSwitchOptions = document.getElementById('langSwitchOptions')
 
   if (langs.length === 1) {
     // No switcher necessary
-    $('#langSwitchDropdown').hide()
+    langSwitchDropdown.style.display = 'none'
     return
   }
 
-  $('#langSwitchDropdown').show()
+  langSwitchDropdown.style.display = 'block'
   // Cycle the languages and build an entry for each
-  $('#langSwitchOptions').empty()
+  langSwitchOptions.innerHTML = ''
   langs.forEach((code) => {
     const name = def.languages[code].display_name
 
@@ -776,16 +788,22 @@ export function createLanguageSwitcher (def, localize) {
     span.innerHTML = name
     button.appendChild(span)
 
-    $('#langSwitchOptions').append(li)
+    langSwitchOptions.appendChild(li)
   })
 }
 
 export function getColorAsRGBA (el, prop) {
   // Look up the given CSS property on the given element and return an object with the RGBA values.
 
-  if ((typeof el === 'string') && (el[0] !== '#')) el = '#' + el
+  // Get the element (assumes el is a DOM element or a selector string)
+  const element = typeof el === 'string' ? document.querySelector(el) : el
+  if (!element) {
+    throw new Error(`Element ${el} not found.`)
+  }
 
-  const color = $(el).css(prop) // Should be string of form RGBA(R,G,B,A) or RGB(R,G,B)
+  // Get the computed style for the given property
+  const color = window.getComputedStyle(element).getPropertyValue(prop)
+
   const colorSplit = color.split(', ')
   const result = {
     r: parseInt(colorSplit[0].split('(')[1]),

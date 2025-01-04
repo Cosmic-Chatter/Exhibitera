@@ -155,6 +155,8 @@ export function getLanguageDisplayName (langCode, en = false) {
 export function showAppHelpModal (app) {
   // Ask the helper to send the relavent README.md file and display it in the modal
 
+  const helpTextDiv = document.getElementById('helpTextDiv')
+
   const endpointStems = {
     dmx_control: '/dmx_control/',
     infostation: '/InfoStation/',
@@ -177,16 +179,18 @@ export function showAppHelpModal (app) {
     .then((result) => {
       const formattedText = markdownConverter.makeHtml(result)
       // Add the formatted text
-      $('#helpTextDiv').html(formattedText)
-      // Then, search the children for images and fix the links with the right endpoints
-      $('#helpTextDiv').find('img').each((i, img) => {
-        // Strip off the http://localhost:8000/ porition
-        const src = img.src.split('/').slice(3).join('/')
-        // Rebuild the correct path
-        img.src = exCommon.config.helperAddress + endpointStems[app] + '/' + src
+      helpTextDiv.innerHTML = formattedText
+
+      // Set the max-width of all images inside the #helpTextDiv element
+      document.querySelectorAll('#helpTextDiv img').forEach((img) => {
         img.style.maxWidth = '100%'
       })
-      $('#helpTextDiv').parent().parent().scrollTop(0)
+
+      // Scroll the grandparent element of #helpTextDiv to the top
+      const grandParent = helpTextDiv.parentElement?.parentElement
+      if (grandParent) {
+        grandParent.scrollTop = 0
+      }
     })
 
   $('#appHelpModal').modal('show')
