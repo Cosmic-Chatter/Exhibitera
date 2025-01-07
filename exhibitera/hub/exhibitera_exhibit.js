@@ -169,7 +169,7 @@ class BaseComponent {
   populateActionMenu (dropdownMenu, groupUUID, permission = 'view') {
     // Build out the dropdown menu options based on the this.permissions.
 
-    $(dropdownMenu).empty()
+    dropdownMenu.innerHTML = ''
     const thisId = this.id
     const thisUUID = this.uuid
     let numOptions = 0
@@ -328,8 +328,13 @@ class BaseComponent {
       }
 
       // Strip all existing classes, then add the new one
-      $('#' + this.uuid + '_' + group + '_MainButton').removeClass('btn-primary btn-warning btn-danger btn-success btn-info').addClass(btnClass)
-      $('#' + this.uuid + '_' + group + '_DropdownButton').removeClass('btn-primary btn-warning btn-danger btn-success btn-info').addClass(btnClass)
+      const mainButton = document.getElementById(this.uuid + '_' + group + '_MainButton')
+      mainButton.classList.remove('btn-primary', 'btn-warning', 'btn-danger', 'btn-success', 'btn-info')
+      mainButton.classList.add(btnClass)
+
+      const dropdownButton = document.getElementById(this.uuid + '_' + group + '_DropdownButton')
+      dropdownButton.classList.remove('btn-primary', 'btn-warning', 'btn-danger', 'btn-success', 'btn-info')
+      dropdownButton.classList.add(btnClass)
     }
   }
 
@@ -920,10 +925,9 @@ function showExhibitComponentInfo (uuid, groupUUID) {
   }
 
   const obj = getExhibitComponentByUUID(uuid)
-
-  $('#componentInfoModal').data('id', obj.id)
-  $('#componentInfoModal').data('uuid', uuid)
-  document.getElementById('componentInfoModal').setAttribute('data-uuid', obj.uuid)
+  const componentInfoModal = document.getElementById('componentInfoModal')
+  componentInfoModal.setAttribute('data-id', obj.id)
+  componentInfoModal.setAttribute('data-uuid', uuid)
 
   document.getElementById('componentInfoModalTitle').innerHTML = obj.id
 
@@ -991,8 +995,6 @@ function showExhibitComponentInfo (uuid, groupUUID) {
   updateComponentInfoDescription(obj.description)
 
   // Show/hide warnings and checkboxes as appropriate
-  $('#componentInfoModalThumbnailCheckbox').prop('checked', true)
-  $('#componentSaveConfirmationButton').hide()
   clearComponentInfoStatusMessage()
 
   document.getElementById('componentInfoModalViewScreenshot').style.display = 'none'
@@ -1001,7 +1003,8 @@ function showExhibitComponentInfo (uuid, groupUUID) {
   document.getElementById('componentInfoModalWakeOnLANSettings').style.display = 'none'
 
   $('#componentInfoModaProejctorTabButton').hide()
-  $('#componentInfoModalModelGroup').hide()
+  document.getElementById('componentInfoModalModelGroup').style.display = 'none'
+
   document.getElementById('componentInfoModalProjectorSettings').style.display = 'none'
 
   // Populate maintenance details
@@ -1022,7 +1025,7 @@ function showExhibitComponentInfo (uuid, groupUUID) {
   document.getElementById('componentInfoModalDefinitionsTabButton').style.display = 'none'
 
   $('#componentInfoModalDMXTabButton').hide()
-  $('#contentUploadSystemStatsView').hide()
+  document.getElementById('contentUploadSystemStatsView').style.display = 'none'
 
   // Based on the component type, configure the various tabs and panes
   if (obj.type === 'exhibit_component') {
@@ -1072,13 +1075,12 @@ function configureComponentInfoModalForExhibitComponent (obj, permission) {
     groupSelect.appendChild(option)
   }
 
-  $('#componentInfoModalSettingsAppName').val(obj.exhibiteraAppId)
   $('#componentInfoModalFullSettingsButton').prop('href', obj.helperAddress + '?showSettings=true')
-  $('#componentInfoModalSettingsAutoplayAudio').val(String(obj.permissions.audio))
-  $('#componentInfoModalSettingsAllowRefresh').val(String(obj.permissions.refresh))
-  $('#componentInfoModalSettingsAllowRestart').val(String(obj.permissions.restart))
-  $('#componentInfoModalSettingsAllowShutdown').val(String(obj.permissions.shutdown))
-  $('#componentInfoModalSettingsAllowSleep').val(String(obj.permissions.sleep))
+  document.getElementById('componentInfoModalSettingsAutoplayAudio').value = String(obj.permissions.audio)
+  document.getElementById('componentInfoModalSettingsAllowRefresh').value = String(obj.permissions.refresh)
+  document.getElementById('componentInfoModalSettingsAllowRestart').value = String(obj.permissions.restart)
+  document.getElementById('componentInfoModalSettingsAllowShutdown').value = String(obj.permissions.shutdown)
+  document.getElementById('componentInfoModalSettingsAllowSleep').value = String(obj.permissions.sleep)
 
   document.getElementById('componentInfoModalSettingsPermissionsPane').style.display = 'flex'
   document.getElementById('componentInfoModalFullSettingsButton').style.display = 'inline-block'
@@ -1144,25 +1146,18 @@ function configureComponentInfoModalForProjector (obj) {
     if (('other' in obj.state.error_status) && (obj.state.error_status.other !== 'ok')) {
       createProjectorWarningEntry('Other', obj.state.error_status.other, "An unspecified error. Consult the projector's menu for more information")
     }
-  } else {
-    $('#projectorInfoLampState').html('-')
-    $('#projectorInfoFanState').html('-')
-    $('#projectorInfoFilterState').html('-')
-    $('#projectorInfoCoverState').html('-')
-    $('#projectorInfoOtherState').html('-')
-    $('#projectorInfoTempState').html('-')
   }
   if ('model' in obj.state) {
-    $('#componentInfoModalModel').html(obj.state.model)
-    $('#componentInfoModalModelGroup').show()
+    document.getElementById('componentInfoModalModel').innerHTML = obj.state.model
+    document.getElementById('componentInfoModalModelGroup').style.display = 'block'
   } else {
-    $('#componentInfoModalModelGroup').hide()
+    document.getElementById('componentInfoModalModelGroup').style.display = 'none'
   }
 
   if ('lamp_status' in obj.state && obj.state.lamp_status !== '') {
     const lampList = obj.state.lamp_status
 
-    $('#componentInfoModalProjectorLampList').empty()
+    document.getElementById('componentInfoModalProjectorLampList').innerHTML = ''
     for (let i = 0; i < lampList.length; i++) {
       createProjectorLampStatusEntry(lampList[i], i)
     }
@@ -1485,7 +1480,7 @@ function createProjectorLampStatusEntry (entry, number) {
   const containerCol = document.createElement('div')
   containerCol.classList = 'col-6 col-sm-4 mb-3'
   $(containerCol).data('config', entry)
-  $('#componentInfoModalProjectorLampList').append(containerCol)
+  document.getElementById('componentInfoModalProjectorLampList').appendChild(containerCol)
 
   const containerRow = document.createElement('div')
   containerRow.classList = 'row px-1'
@@ -1603,7 +1598,7 @@ export function removeExhibitComponentFromModal () {
   // Called when the Remove button is clicked in the componentInfoModal.
   // Send a message to the server to remove the component.
 
-  const id = $('#componentInfoModalTitle').html()
+  const id = document.getElementById('componentInfoModalTitle').innerHTML
 
   exTools.makeServerRequest({
     method: 'POST',
@@ -1625,9 +1620,11 @@ export function removeExhibitComponentFromModal () {
 function populateComponentDefinitionList (definitions, thumbnails, permission) {
   // Take a dictionary of definitions and convert it to GUI elements.
 
-  const component = getExhibitComponent($('#componentInfoModal').data('id'))
+  const id = document.getElementById('componentInfoModal').getAttribute('data-id')
+  const component = getExhibitComponent(id)
 
-  $('#componentInfoModalDefinitionList').empty()
+  const componentInfoModalDefinitionList = document.getElementById('componentInfoModalDefinitionList')
+  componentInfoModalDefinitionList.innerHTML = ''
 
   const sortedByName = Object.keys(definitions).sort((a, b) => {
     try {
@@ -1791,7 +1788,7 @@ function populateComponentDefinitionList (definitions, thumbnails, permission) {
 
     row.appendChild(app)
 
-    $('#componentInfoModalDefinitionList').append(col)
+    componentInfoModalDefinitionList.appendChild(col)
   })
 }
 
@@ -1818,14 +1815,42 @@ function showCopyDefinitionModal (componentUUID, definitionUUID) {
 function handleDefinitionItemSelection (uuid) {
   // Called when a user clicks on the definition in the componentInfoModal.
 
-  $('.definition-entry').removeClass('definition-selected')
-  $('.definition-name').removeClass('btn-success')
-  $('.definition-name').addClass('btn-primary')
-  $('.definition-dropdown').removeClass('btn-success')
-  $('.definition-dropdown').addClass('btn-primary')
-  $('#definitionButton_' + uuid).addClass('definition-selected')
-  $('#definitionButtonName_' + uuid).addClass('btn-success')
-  $('#definitionButtonDropdown_' + uuid).addClass('btn-success')
+  // Remove classes from all elements with the 'definition-entry' class
+  document.querySelectorAll('.definition-entry').forEach((el) => {
+    el.classList.remove('definition-selected')
+  })
+
+  // Remove and add classes to all elements with the 'definition-name' class
+  document.querySelectorAll('.definition-name').forEach((el) => {
+    el.classList.remove('btn-success')
+    el.classList.add('btn-primary')
+  })
+
+  // Remove and add classes to all elements with the 'definition-dropdown' class
+  document.querySelectorAll('.definition-dropdown').forEach((el) => {
+    el.classList.remove('btn-success')
+    el.classList.add('btn-primary')
+  })
+
+  // Add the 'definition-selected' class to the specific button
+  const definitionButton = document.getElementById('definitionButton_' + uuid)
+  if (definitionButton) {
+    definitionButton.classList.add('definition-selected')
+  }
+
+  // Add the 'btn-success' class to the specific button name
+  const definitionButtonName = document.getElementById('definitionButtonName_' + uuid)
+  if (definitionButtonName) {
+    definitionButtonName.classList.add('btn-success')
+  }
+
+  // Add the 'btn-success' class to the specific button dropdown
+  const definitionButtonDropdown = document.getElementById('definitionButtonDropdown_' + uuid)
+  if (definitionButtonDropdown) {
+    definitionButtonDropdown.classList.add('btn-success')
+  }
+
+  // Show the save button
   document.getElementById('componentInfoModalDefinitionSaveButton').style.display = 'block'
 }
 
@@ -1833,7 +1858,7 @@ export function submitDefinitionSelectionFromModal () {
   // Called when the "Save changes" button is pressed on the definitions pane of the componentInfoModal.
 
   const definition = $('.definition-selected').data('definition')
-  const id = $('#componentInfoModal').data('id')
+  const id = document.getElementById('componentInfoModal').getAttribute('data-id')
   const componentUUID = document.getElementById('componentInfoModal').getAttribute('data-uuid')
 
   // Exhibitera 5 starts the transition from ID to UUID
@@ -1882,52 +1907,70 @@ function updateComponentInfoModalFromHelper (id, permission) {
       // If it is provided, show the system stats
       if ('system_stats' in availableContent) {
         const stats = availableContent.system_stats
-
+        console.log(stats)
         // Disk
-        $('#contentUploadDiskSpaceUsedBar').attr('ariaValueNow', 100 - stats.disk_pct_free)
-        $('#contentUploadDiskSpaceUsedBar').width(String(100 - stats.disk_pct_free) + '%')
-        $('#contentUploadDiskSpaceFreeBar').attr('ariaValueNow', stats.disk_pct_free)
-        $('#contentUploadDiskSpaceFreeBar').width(String(stats.disk_pct_free) + '%')
-        $('#contentUploadDiskSpaceFree').html(`Disk: ${String(Math.round(stats.disK_free_GB))} GB`)
+        const spaceUsedBar = document.getElementById('contentUploadDiskSpaceUsedBar')
+        const spaceFreeBar = document.getElementById('contentUploadDiskSpaceFreeBar')
+        spaceUsedBar.setAttribute('ariaValueNow', 100 - stats.disk_pct_free)
+        spaceUsedBar.style.width = String(100 - stats.disk_pct_free) + '%'
+        spaceFreeBar.setAttribute('ariaValueNow', stats.disk_pct_free)
+        spaceFreeBar.style.width = String(stats.disk_pct_free) + '%'
+        document.getElementById('contentUploadDiskSpaceFree').innerHTML = `Disk: ${String(Math.round(stats.disK_free_GB))} GB`
+
         if (stats.disk_pct_free > 20) {
-          $('#contentUploadDiskSpaceUsedBar').removeClass('bg-warning bg-danger').addClass('bg-success')
+          spaceUsedBar.classList.remove('bg-warning', 'bg-danger')
+          spaceUsedBar.classList.add('bg-success')
         } else if (stats.disk_pct_free > 10) {
-          $('#contentUploadDiskSpaceUsedBar').removeClass('bg-success bg-danger').addClass('bg-warning')
+          spaceUsedBar.classList.remove('bg-success', 'bg-danger')
+          spaceUsedBar.classList.add('bg-warning')
         } else {
-          $('#contentUploadDiskSpaceUsedBar').removeClass('bg-success bg-warning').addClass('bg-danger')
+          spaceUsedBar.classList.remove('bg-success', 'bg-warning')
+          spaceUsedBar.classList.add('bg-danger')
         }
 
         // CPU
-        $('#contentUploadCPUUsedBar').attr('ariaValueNow', stats.cpu_load_pct)
-        $('#contentUploadCPUUsedBar').width(String(stats.cpu_load_pct) + '%')
-        $('#contentUploadCPUFreeBar').attr('ariaValueNow', 100 - stats.cpu_load_pct)
-        $('#contentUploadCPUFreeBar').width(String(100 - stats.cpu_load_pct) + '%')
-        $('#contentUploadCPUUsed').html(`CPU: ${String(Math.round(stats.cpu_load_pct))}%`)
+        const CPUUsedBar = document.getElementById('contentUploadCPUUsedBar')
+        const CPUFreeBar = document.getElementById('contentUploadCPUFreeBar')
+        CPUUsedBar.setAttribute('ariaValueNow', stats.cpu_load_pct)
+        CPUUsedBar.style.width = String(stats.cpu_load_pct) + '%'
+        document.getElementById('contentUploadCPUUsed').innerHTML = `CPU: ${String(Math.round(stats.cpu_load_pct))}%`
+        CPUFreeBar.setAttribute('ariaValueNow', 100 - stats.cpu_load_pct)
+        CPUFreeBar.style.width = String(100 - stats.cpu_load_pct) + '%'
+
         if (stats.cpu_load_pct < 80) {
-          $('#contentUploadCPUUsedBar').removeClass('bg-warning bg-danger').addClass('bg-success')
+          CPUUsedBar.classList.remove('bg-warning', 'bg-danger')
+          CPUUsedBar.classList.add('bg-success')
         } else if (stats.cpu_load_pct < 90) {
-          $('#contentUploadCPUUsedBar').removeClass('bg-success bg-danger').addClass('bg-warning')
+          CPUUsedBar.classList.remove('bg-success', 'bg-danger')
+          CPUUsedBar.classList.add('bg-warning')
         } else {
-          $('#contentUploadCPUUsedBar').removeClass('bg-success bg-warning').addClass('bg-danger')
+          CPUUsedBar.classList.remove('bg-success', 'bg-warning')
+          CPUUsedBar.classList.add('bg-danger')
         }
 
         // RAM
-        $('#contentUploadRAMUsedBar').attr('ariaValueNow', stats.ram_used_pct)
-        $('#contentUploadRAMUsedBar').width(String(stats.ram_used_pct) + '%')
-        $('#contentUploadRAMFreeBar').attr('ariaValueNow', 100 - stats.ram_used_pct)
-        $('#contentUploadRAMFreeBar').width(String(100 - stats.ram_used_pct) + '%')
-        $('#contentUploadRAMUsed').html(`RAM: ${String(Math.round(stats.ram_used_pct))}%`)
+        const RAMUsedBar = document.getElementById('contentUploadRAMUsedBar')
+        const RAMFreeBar = document.getElementById('contentUploadRAMFreeBar')
+        RAMUsedBar.setAttribute('ariaValueNow', stats.ram_used_pct)
+        RAMUsedBar.style.width = String(stats.ram_used_pct) + '%'
+        document.getElementById('contentUploadRAMUsed').innerHTML = `RAM: ${String(Math.round(stats.ram_used_pct))}%`
+        RAMFreeBar.setAttribute('ariaValueNow', 100 - stats.ram_used_pct)
+        RAMFreeBar.style.width = String(100 - stats.ram_used_pct) + '%'
+
         if (stats.ram_used_pct < 80) {
-          $('#contentUploadRAMUsedBar').removeClass('bg-warning bg-danger').addClass('bg-success')
+          RAMUsedBar.classList.remove('bg-warning', 'bg-danger')
+          RAMUsedBar.classList.add('bg-success')
         } else if (stats.ram_used_pct < 90) {
-          $('#contentUploadRAMUsedBar').removeClass('bg-success bg-danger').addClass('bg-warning')
+          RAMUsedBar.classList.remove('bg-success', 'bg-danger')
+          RAMUsedBar.classList.add('bg-warning')
         } else {
-          $('#contentUploadCPUUsedBar').removeClass('bg-success bg-warning').addClass('bg-danger')
+          RAMUsedBar.classList.remove('bg-success', 'bg-warning')
+          RAMUsedBar.classList.add('bg-danger')
         }
 
-        $('#contentUploadSystemStatsView').show()
+        document.getElementById('contentUploadSystemStatsView').style.display = 'flex'
       } else {
-        $('#contentUploadSystemStatsView').hide()
+        document.getElementById('contentUploadSystemStatsView').style.display = 'none'
       }
     })
     .catch(() => {
@@ -2014,18 +2057,18 @@ export function submitComponentBasicSettingsChange () {
 export function submitComponentSettingsChange () {
   // Collect the current settings and send them to the component's helper for saving.
 
-  const obj = getExhibitComponent($('#componentInfoModalTitle').html())
+  const obj = getExhibitComponent(document.getElementById('componentInfoModalTitle').innerHTML)
 
   // Update component settings, if allowed
   const settingsAvailable = document.getElementById('componentInfoModalSettingsPermissionsPane').style.display === 'flex'
   if (settingsAvailable === true) {
     const settings = {
       permissions: {
-        audio: exTools.stringToBool($('#componentInfoModalSettingsAutoplayAudio').val()),
-        refresh: exTools.stringToBool($('#componentInfoModalSettingsAllowRefresh').val()),
-        restart: exTools.stringToBool($('#componentInfoModalSettingsAllowRestart').val()),
-        shutdown: exTools.stringToBool($('#componentInfoModalSettingsAllowShutdown').val()),
-        sleep: exTools.stringToBool($('#componentInfoModalSettingsAllowSleep').val())
+        audio: exTools.stringToBool(document.getElementById('componentInfoModalSettingsAutoplayAudio').value),
+        refresh: exTools.stringToBool(document.getElementById('componentInfoModalSettingsAllowRefresh').value),
+        restart: exTools.stringToBool(document.getElementById('componentInfoModalSettingsAllowRestart').value),
+        shutdown: exTools.stringToBool(document.getElementById('componentInfoModalSettingsAllowRestart').value),
+        sleep: exTools.stringToBool(document.getElementById('componentInfoModalSettingsAllowRestart').value)
       }
     }
     exTools.makeRequest({

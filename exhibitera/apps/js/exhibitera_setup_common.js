@@ -3,17 +3,17 @@
 import * as exCommon from './exhibitera_app_common.js'
 import * as exFileSelect from './exhibitera_file_select_modal.js'
 
-$.fn.visibleHeight = function () {
-  // JQuery function to calculate the visible height of an element
-  // From https://stackoverflow.com/a/29944927
+HTMLElement.prototype.visibleHeight = function () {
+  // Calculate the visible height of an element
 
-  const scrollTop = $(window).scrollTop()
-  const scrollBot = scrollTop + $(window).height()
-  const elTop = this.offset().top
-  const elBottom = elTop + this.outerHeight()
-  const visibleTop = elTop < scrollTop ? scrollTop : elTop
-  const visibleBottom = elBottom > scrollBot ? scrollBot : elBottom
-  return Math.max(visibleBottom - visibleTop, 0)
+  const scrollTop = window.scrollY // Top of the visible area
+  const scrollBot = scrollTop + window.innerHeight // Bottom of the visible area
+  const elTop = this.getBoundingClientRect().top + scrollTop // Top of the element (absolute position)
+  const elBottom = elTop + this.offsetHeight // Bottom of the element (absolute position)
+  const visibleTop = Math.max(elTop, scrollTop) // The visible top of the element
+  const visibleBottom = Math.min(elBottom, scrollBot) // The visible bottom of the element
+
+  return Math.max(visibleBottom - visibleTop, 0) // The visible height of the element
 }
 
 export const config = {
@@ -199,7 +199,8 @@ export function showAppHelpModal (app) {
 export function populateAvailableDefinitions (definitions) {
   // Take a list of definitions and add them to the select.
 
-  document.getElementById('availableDefinitionSelect').innerHTML = ''
+  const availableDefinitionSelect = document.getElementById('availableDefinitionSelect')
+  availableDefinitionSelect.innerHTML = ''
   config.availableDefinitions = definitions
   const keys = Object.keys(definitions).sort((a, b) => {
     const aName = definitions[a].name.toLowerCase()
@@ -216,7 +217,7 @@ export function populateAvailableDefinitions (definitions) {
     option.value = uuid
     option.innerHTML = definition.name
 
-    $('#availableDefinitionSelect').append(option)
+    availableDefinitionSelect.appendChild(option)
   })
 }
 
@@ -322,7 +323,7 @@ export function initializeDefinition () {
 function deleteDefinition () {
   // Delete the definition currently listed in the select.
 
-  const definition = $('#availableDefinitionSelect').val()
+  const definition = document.getElementById('availableDefinitionSelect').value
 
   exCommon.makeHelperRequest({
     method: 'GET',
@@ -383,7 +384,7 @@ export async function saveDefinition (name = '') {
   const definition = $('#definitionSaveButton').data('workingDefinition')
   const initialDefinition = $('#definitionSaveButton').data('initialDefinition')
   definition.app = config.app
-  if (name === '') definition.name = $('#definitionNameInput').val()
+  if (name === '') definition.name = document.getElementById('definitionNameInput').value
   definition.uuid = initialDefinition.uuid
   console.log(name, definition)
 
@@ -458,37 +459,33 @@ function createEventListeners () {
   })
 
   // configure preview options
+  const refreshOnChangeCheckbox = document.getElementById('refreshOnChangeCheckbox')
+
   document.getElementById('previewAspect16x9').addEventListener('click', () => {
-    const autoRefresh = $('#refreshOnChangeCheckbox').prop('checked')
-    configurePreview('16x9', autoRefresh)
+    configurePreview('16x9', refreshOnChangeCheckbox.checked)
   })
   document.getElementById('previewAspect9x16').addEventListener('click', () => {
-    const autoRefresh = $('#refreshOnChangeCheckbox').prop('checked')
-    configurePreview('9x16', autoRefresh)
+    configurePreview('9x16', refreshOnChangeCheckbox.checked)
   })
   document.getElementById('previewAspect16x10').addEventListener('click', () => {
-    const autoRefresh = $('#refreshOnChangeCheckbox').prop('checked')
-    configurePreview('16x10', autoRefresh)
+    configurePreview('16x10', refreshOnChangeCheckbox.checked)
   })
   document.getElementById('previewAspect10x16').addEventListener('click', () => {
-    const autoRefresh = $('#refreshOnChangeCheckbox').prop('checked')
-    configurePreview('10x16', autoRefresh)
+    configurePreview('10x16', refreshOnChangeCheckbox.checked)
   })
   document.getElementById('previewAspect4x3').addEventListener('click', () => {
-    const autoRefresh = $('#refreshOnChangeCheckbox').prop('checked')
-    configurePreview('4x3', autoRefresh)
+    configurePreview('4x3', refreshOnChangeCheckbox.checked)
   })
   document.getElementById('previewAspect3x4').addEventListener('click', () => {
-    const autoRefresh = $('#refreshOnChangeCheckbox').prop('checked')
-    configurePreview('3x4', autoRefresh)
+    configurePreview('3x4', refreshOnChangeCheckbox.checked)
   })
 
   document.getElementById('refreshOnChangeCheckbox').addEventListener('change', () => {
     const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
-    const autoRefresh = $('#refreshOnChangeCheckbox').prop('checked')
     let previewRatio = '16x9'
+    const autoRefresh = refreshOnChangeCheckbox.checked
     if ('setup' in workingDefinition) previewRatio = workingDefinition.setup.preview_ratio
-    configurePreview(previewRatio, autoRefresh)
+    if (autoRefresh === true) configurePreview(previewRatio, autoRefresh)
   })
 
   // Help button
@@ -517,9 +514,12 @@ function createDefinitionDeletePopup () {
   deleteDefinitionButton.setAttribute('data-bs-content', '<a id="DefinitionDeletePopover" class="btn btn-danger w-100">Confirm</a>')
   deleteDefinitionButton.setAttribute('data-bs-trigger', 'focus')
   deleteDefinitionButton.setAttribute('data-bs-html', 'true')
-  $(document).on('click', '#DefinitionDeletePopover', function () {
-    deleteDefinition()
+  document.addEventListener('click', function (event) {
+    if (event.target && event.target.id === 'DefinitionDeletePopover') {
+      deleteDefinition()
+    }
   })
+
   deleteDefinitionButton.addEventListener('click', function () { deleteDefinitionButton.focus() })
   const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
   popoverTriggerList.map(function (popoverTriggerEl) {
@@ -568,21 +568,23 @@ export function configurePreviewFromDefinition (def) {
 function resizePreview () {
   // Resize the preview so that it always fits the view.
 
+  const previewPane = document.getElementById('previewPane')
+  const previewFrame = document.getElementById('previewFrame')
   // Size of things above view area
-  const headerHeight = $('#setupHeader').visibleHeight()
-  const toolsHeight = $('#setupTools').visibleHeight()
+  const headerHeight = document.getElementById('setupHeader').visibleHeight()
+  const toolsHeight = document.getElementById('setupTools').visibleHeight()
   const viewportHeight = window.innerHeight
 
   // First, set the height of the area available for the preview
-  $('#previewPane').css('height', viewportHeight - headerHeight - toolsHeight)
+  previewPane.style.height = String(viewportHeight - headerHeight - toolsHeight) + 'px'
 
   // Size of available area
-  const paneWidth = $('#previewPane').width()
-  const paneHeight = $('#previewPane').height()
+  const paneWidth = previewPane.offsetWidth
+  const paneHeight = previewPane.offsetHeight
 
   // Size of frame (this will be 1920 on the long axis)
-  const frameWidth = $('#previewFrame').width()
-  const frameHeight = $('#previewFrame').height()
+  const frameWidth = previewFrame.offsetWidth
+  const frameHeight = previewFrame.offsetHeight
   const frameAspect = frameWidth / frameHeight
 
   let transformRatio
@@ -594,7 +596,7 @@ function resizePreview () {
     transformRatio = 1.0 * paneWidth / frameWidth
   }
 
-  $('#previewFrame').css('transform', 'scale(' + transformRatio + ')')
+  previewFrame.style.transform = 'scale(' + transformRatio + ')'
 }
 
 export function previewDefinition (automatic = false) {
@@ -602,7 +604,7 @@ export function previewDefinition (automatic = false) {
   // If automatic == true, we've called this function beceause a definition field
   // has been updated. Only preview if the 'Refresh on change' checkbox is checked
 
-  if ((automatic === true) && $('#refreshOnChangeCheckbox').prop('checked') === false) {
+  if ((automatic === true) && document.getElementById('refreshOnChangeCheckbox').checked === false) {
     return
   }
 

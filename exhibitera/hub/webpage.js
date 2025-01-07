@@ -1036,11 +1036,11 @@ document.getElementById('definitionTabThumbnailsCheckbox').addEventListener('cha
 document.getElementById('componentInfoModalDefinitionSaveButton').addEventListener('click', exExhibit.submitDefinitionSelectionFromModal)
 
 document.getElementById('componentInfoModalViewScreenshot').addEventListener('click', () => {
-  const component = exExhibit.getExhibitComponent($('#componentInfoModal').data('id'))
+  const component = exExhibit.getExhibitComponent(document.getElementById('componentInfoModal').getAttribute('data-id'))
   exTools.openMediaInNewTab([component.getHelperURL() + '/system/getScreenshot'], ['image'])
 })
 document.getElementById('componentInfoModalEditDMXButton').addEventListener('click', (event) => {
-  const component = exExhibit.getExhibitComponent($('#componentInfoModal').data('id'))
+  const component = exExhibit.getExhibitComponent(document.getElementById('componentInfoModal').getAttribute('data-id'))
   window.open(component.getHelperURL() + '/dmx_control.html?standalone=true', '_blank').focus()
 })
 Array.from(document.querySelectorAll('.componentInfoProjectorSetting')).forEach((el) => {

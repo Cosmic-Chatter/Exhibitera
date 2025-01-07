@@ -257,11 +257,9 @@ async function clearDefinitionInput (full = true) {
   const spreadsheetSelect = document.getElementById('spreadsheetSelect')
   spreadsheetSelect.innerHTML = 'Select file'
   spreadsheetSelect.setAttribute('data-filename', '')
-  $(spreadsheetSelect).data('availableKeys', [])
-
+  spreadsheetSelect.setAttribute('data-availableKeys', '[]')
   // Language add
-  $('#languageAddEmptyFieldsWarning').hide()
-  $('#languageAddExistsWarning').hide()
+  document.getElementById('languageAddExistsWarning').style.display = 'none'
 
   // Attractor
   document.getElementById('inactivityTimeoutField').value = 30
@@ -273,9 +271,8 @@ async function clearDefinitionInput (full = true) {
   document.getElementById('loopResultsCheckbox').checked = true
 
   // Definition details
-  $('#definitionNameInput').val('')
-  $('#languageNav').empty()
-  $('#languageNavContent').empty()
+  document.getElementById('definitionNameInput').value = ''
+  document.getElementById('languageNav').innerHTML = ''
   document.getElementById('missingContentWarningField').innerHTML = ''
 
   // Reset layout options
@@ -290,8 +287,8 @@ async function clearDefinitionInput (full = true) {
   // Reset style options
   const colorInputs = ['titleColor', 'filterBackgroundColor', 'filterLabelColor', 'filterTextColor']
   colorInputs.forEach((input) => {
-    const el = $('#colorPicker_' + input)
-    el.val(el.data('default'))
+    const el = document.getElementById('colorPicker_' + input)
+    el.value = el.getAttribute('data-default')
     document.querySelector('#colorPicker_' + input).dispatchEvent(new Event('input', { bubbles: true }))
   })
 
@@ -324,17 +321,19 @@ function editDefinition (uuid = '') {
   // Configure preview behavior
   exSetup.configurePreviewFromDefinition(def)
 
-  $('#definitionNameInput').val(def.name)
+  document.getElementById('definitionNameInput').value = def.name
 
   // Spreadsheet
-  $('#spreadsheetSelect').html(def.spreadsheet)
-  document.getElementById('spreadsheetSelect').setAttribute('data-filename', def.spreadsheet)
+  const spreadsheetSelect = document.getElementById('spreadsheetSelect')
+  spreadsheetSelect.innerHTML = def.spreadsheet
+  spreadsheetSelect.setAttribute('data-filename', def.spreadsheet)
 
   // Attractor
+  const attractorSelect = document.getElementById('attractorSelect')
   if ('attractor' in def && def.attractor.trim() !== '') {
-    $('#attractorSelect').html(def.attractor)
+    attractorSelect.innerHTML = def.attractor
   } else {
-    $('#attractorSelect').html('Select file')
+    attractorSelect.innerHTML = 'Select file'
   }
   document.getElementById('attractorSelect').setAttribute('data-filename', def.attractor)
   if ('inactivity_timeout' in def) {
@@ -399,8 +398,9 @@ function editDefinition (uuid = '') {
 
   // Set the appropriate values for the color pickers
   Object.keys(def.style.color).forEach((key) => {
-    $('#colorPicker_' + key).val(def.style.color[key])
-    document.querySelector('#colorPicker_' + key).dispatchEvent(new Event('input', { bubbles: true }))
+    const el = document.getElementById('colorPicker_' + key)
+    el.value = def.style.color[key]
+    el.dispatchEvent(new Event('input', { bubbles: true }))
   })
 
   // Set the appropriate values for the advanced font pickers
@@ -427,12 +427,12 @@ function editDefinition (uuid = '') {
     } else {
       createLanguageTab(lang, displayNameEn)
     }
-    $('#languagePane_' + lang).removeClass('active').removeClass('show')
-
-    $('#headerText' + '_' + lang).val(langDef.header_text)
+    document.getElementById('languagePane_' + lang).classList.remove('active', 'show')
+    const headerText = document.getElementById('headerText_' + lang)
+    if (headerText) headerText.value = langDef.header_text
   })
-  $('#languageTab_' + first).click()
-  $('#languagePane_' + first).addClass('active')
+  document.getElementById('languageTab_' + first)?.click()
+  document.getElementById('languagePane_' + first).classList.add('active')
 
   // Load the spreadsheet to populate the existing keys
   onSpreadsheetFileChange()
@@ -462,12 +462,14 @@ function addLanguage () {
 
   // Check if name or code already exist
   let error = false
+  const existsWarning = document.getElementById('languageAddExistsWarning')
   Object.keys(workingDefinition.languages).forEach((key) => {
     if (key === code) {
-      $('#languageAddExistsWarning').show()
+      existsWarning.style.display = 'block'
       error = true
     } else {
       $('#languageAddExistsWarning').hide()
+      existsWarning.style.display = 'none'
     }
   })
   if (error) return
@@ -484,8 +486,8 @@ function addLanguage () {
   createLanguageTab(code, displayNameEn)
 
   $('#definitionSaveButton').data('workingDefinition', structuredClone(workingDefinition))
-  $('#languageNameInput').val('')
-  $('#languageCodeInput').val('')
+  document.getElementById('languageNameInput').value = ''
+  document.getElementById('languageCodeInput').value = ''
 }
 
 function createLanguageTab (code, displayName) {
@@ -502,7 +504,7 @@ function createLanguageTab (code, displayName) {
   tabButton.setAttribute('type', 'button')
   tabButton.setAttribute('role', 'tab')
   tabButton.innerHTML = displayName
-  $('#languageNav').append(tabButton)
+  document.getElementById('languageNav').appendChild(tabButton)
 
   // Create corresponding pane
   const tabPane = document.createElement('div')
@@ -510,7 +512,7 @@ function createLanguageTab (code, displayName) {
   tabPane.setAttribute('id', 'languagePane_' + code)
   tabPane.setAttribute('role', 'tabpanel')
   tabPane.setAttribute('aria-labelledby', 'languageTab_' + code)
-  $('#languageNavContent').append(tabPane)
+  document.getElementById('languageNavContent').appendChild(tabPane)
 
   const row = document.createElement('div')
   row.classList = 'row gy-2 mt-2 mb-3'
@@ -656,7 +658,7 @@ function createLanguageTab (code, displayName) {
     }
     input.setAttribute('id', langKey)
     input.addEventListener('change', function () {
-      let value = $(this).val()
+      let value = this.value
       if (typeof value === 'string') value = value.trim()
       exSetup.updateWorkingDefinition(['languages', code, inputFields[key].property], value)
       exSetup.previewDefinition(true)
@@ -665,9 +667,9 @@ function createLanguageTab (code, displayName) {
   })
 
   // If we have already loaded a spreadhseet, populate the key options
-  const keyList = $('#spreadsheetSelect').data('availableKeys')
+  const keyList = document.getElementById('spreadsheetSelect').getAttribute('data-availableKeys')
   if (keyList != null) {
-    populateKeySelects(keyList)
+    populateKeySelects(JSON.parse(keyList))
   }
 
   // Create the filter options
@@ -711,7 +713,7 @@ function createLanguageTab (code, displayName) {
   })
 
   // Switch to this new tab
-  $(tabButton).click()
+  tabButton.click()
 }
 
 function addFilter (lang, details = {}, addition = true) {
@@ -781,9 +783,9 @@ function addFilter (lang, details = {}, addition = true) {
   })
 
   // If we have already loaded a spreadhseet, populate the key options
-  const keyList = $('#spreadsheetSelect').data('availableKeys')
+  const keyList = document.getElementById('spreadsheetSelect').getAttribute('data-availableKeys')
   if (keyList != null) {
-    populateFilterSelects(keyList)
+    populateFilterSelects(JSON.parse(keyList))
   }
 
   exSetup.previewDefinition(true)
@@ -847,9 +849,9 @@ function deleteLanguageTab (lang) {
   // Delete the given language tab.
 
   delete $('#definitionSaveButton').data('workingDefinition').languages[lang]
-  $('#languageTab_' + lang).remove()
-  $('#languagePane_' + lang).remove()
-  $('.language-tab').click()
+  document.getElementById('languageTab_' + lang).remove()
+  document.getElementById('languagePane_' + lang).remove()
+  document.querySelector('.language-tab').click()
 }
 
 function deleteLanguageFlag (lang) {
@@ -866,7 +868,7 @@ function deleteLanguageFlag (lang) {
   delete $('#definitionSaveButton').data('workingDefinition').languages[lang].custom_flag
 
   // Remove the icon
-  $('#flagImg_' + lang).attr('src', '../_static/flags/' + lang + '.svg')
+  document.getElementById('flagImg_' + lang).src = '../_static/flags/' + lang + '.svg'
 
   // Delete from server
   exCommon.makeHelperRequest({
@@ -886,7 +888,7 @@ function onFlagUploadChange (lang) {
   const file = fileInput.files[0]
   if (file == null) return
 
-  $('#uploadFlagFilename_' + lang).html('Uploading')
+  document.getElementById('uploadFlagFilename_' + lang).innerHTML = 'Uploading'
 
   const ext = file.name.split('.').pop()
   const newName = $('#definitionSaveButton').data('workingDefinition').uuid + '_flag_' + lang + '.' + ext
@@ -904,8 +906,8 @@ function onFlagUploadChange (lang) {
       const response = JSON.parse(this.responseText)
 
       if ('success' in response) {
-        $('#uploadFlagFilename_' + lang).html('Upload')
-        $('#flagImg_' + lang).attr('src', '../content/' + newName)
+        document.getElementById('uploadFlagFilename_' + lang).innerHTML = 'Upload'
+        document.getElementById('flagImg_' + lang).src = '../content/' + newName
         exSetup.updateWorkingDefinition(['languages', lang, 'custom_flag'], newName)
       }
     } else if (this.status === 422) {
@@ -956,7 +958,7 @@ function onSpreadsheetFileChange () {
       }
       const spreadsheet = csvAsJSON.json
       const keys = Object.keys(spreadsheet[0])
-      $('#spreadsheetSelect').data('availableKeys', keys)
+      document.getElementById('spreadsheetSelect').setAttribute('data-availableKeys', JSON.stringify(keys))
       populateKeySelects(keys)
       populateFilterSelects(keys)
       exSetup.previewDefinition(true)
@@ -1122,21 +1124,22 @@ function populateKeySelects (keyList) {
     const langDict = workingDefinition.languages[lang]
     Object.keys(inputFields).forEach((input) => {
       const inputDict = inputFields[input]
+      const inputEl = document.getElementById(input + '_' + lang)
       if (inputDict.kind === 'select') {
-        $('#' + input + '_' + lang).empty()
+        inputEl.innerHTML = ''
 
         keyList.forEach((key) => {
           const option = document.createElement('option')
           option.value = key
           option.innerHTML = key
-          $('#' + input + '_' + lang).append(option)
+          inputEl.appendChild(option)
         })
 
         // If we already have a value for this select, set it
         if (inputDict.property in langDict) {
-          $('#' + input + '_' + lang).val(langDict[inputDict.property])
+          inputEl.value = langDict[inputDict.property]
         } else {
-          $('#' + input + '_' + lang).val(null)
+          inputEl.valule = null
         }
       }
     })
@@ -1264,7 +1267,7 @@ document.getElementById('wizardUploadMediaButton').addEventListener('click', () 
 })
 
 // Main buttons
-$('#languageAddButton').click(addLanguage)
+document.getElementById('languageAddButton').addEventListener('click', addLanguage)
 document.getElementById('manageContentButton').addEventListener('click', (event) => {
   exFileSelect.createFileSelectionModal({ manage: true })
 })
@@ -1360,10 +1363,13 @@ Array.from(document.querySelectorAll('.height-slider')).forEach((el) => {
 })
 
 // Style fields
-$('.coloris').change(function () {
-  const value = $(this).val().trim()
-  exSetup.updateWorkingDefinition(['style', 'color', $(this).data('property')], value)
-  exSetup.previewDefinition(true)
+document.querySelectorAll('.coloris').forEach((element) => {
+  element.addEventListener('change', function () {
+    const value = this.value.trim()
+    const property = this.getAttribute('data-property')
+    exSetup.updateWorkingDefinition(['style', 'color', property], value)
+    exSetup.previewDefinition(true)
+  })
 })
 document.getElementById('manageFontsButton').addEventListener('click', (event) => {
   exFileSelect.createFileSelectionModal({ filetypes: ['otf', 'ttf', 'woff', 'woff2'], manage: true })

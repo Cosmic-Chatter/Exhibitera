@@ -36,7 +36,7 @@ function changePage (val) {
 
 function clear () {
   currentPage = 0
-  // $('#searchInput').val('')
+  // document.getElementById('searchInput').value = ''
   // keyboard.input.default = ''
   // keyboard.input.searchInput = ''
   Array.from(document.getElementsByClassName('filter-entry')).forEach((el) => {
@@ -51,7 +51,7 @@ function clear () {
 function createCard (obj) {
   // Take a JSON object and turn it into a card in the resultsRow
 
-  const def = $(document).data('browserDefinition')
+  const def = exCommon.config.definition
   let thumb
 
   if (thumbnailKey != null && thumbnailKey !== '' && String(obj[thumbnailKey]).trim() !== '') {
@@ -154,7 +154,7 @@ function createCard (obj) {
     titleCol.appendChild(titleSpan)
   }
 
-  $('#resultsRow').append(col)
+  document.getElementById('resultsRow').appendChild(col)
 }
 
 function hideMediaLightBox () {
@@ -163,10 +163,10 @@ function hideMediaLightBox () {
   const video = document.getElementById('mediaLightboxVideo')
   video.pause()
   videoPlaying = false
-  resetActivityTimer()
 
-  const temp = function () { $('#mediaLightbox').css('display', 'none') }
-  $('#mediaLightbox').animate({ opacity: 0, queue: false }, { complete: temp, duration: 100 })
+  const mediaLightbox = document.getElementById('mediaLightbox')
+  mediaLightbox.style.opacity = 0
+  setTimeout(() => { mediaLightbox.style.display = 'none' }, 500)
 }
 
 function onFilterOptionChange () {
@@ -256,7 +256,7 @@ function _populateResultsRow (currentKey) {
 
   document.getElementById('resultsRow').innerHTML = ''
 
-  // const input = $('#searchInput').val()
+  // const input = document.getElementById('searchInput').value
   // // Filter on search terms
   // const searchTerms = (input).split(' ')
   // const searchedData = []
@@ -335,24 +335,26 @@ function _populateResultsRow (currentKey) {
 
   // Adjust card title font size to avoid overflows
   // Don't allow text to get larger than wha the user has set.
+  const resultsRow = document.getElementById('resultsRow')
   const titles = document.getElementsByClassName('cardTitle')
   if (titles.length > 0) {
     const fontSize = parseFloat(window.getComputedStyle(titles[0], null).getPropertyValue('font-size'))
-    $('#resultsRow').show()
+    resultsRow.style.opacity = 1
     textFit(titles, { maxFontSize: fontSize })
     // Sometimes need to run twice on first load
     setTimeout(() => {
       textFit(titles, { maxFontSize: fontSize })
     }, 10)
   } else {
-    $('#resultsRow').fadeIn(200)
+    resultsRow.style.opacity = 1
   }
 }
 
 function populateResultsRow (currentKey = '') {
   // Stub function to do the fade, then call the helper function
 
-  $('#resultsRow').fadeOut(200, function () { _populateResultsRow(currentKey) })
+  document.getElementById('resultsRow').style.opacity = 0
+  setTimeout(() => { _populateResultsRow(currentKey) }, 300)
 }
 
 function displayMedia (id) {
@@ -362,19 +364,10 @@ function displayMedia (id) {
     return item.uniqueMediaBrowserID === id
   })[0]
 
-  let title = ''
-  if (titleKey !== undefined && titleKey !== '') {
-    title = obj[titleKey]
-  }
+  const title = obj[titleKey] ?? ''
+  const caption = obj[captionKey] ?? ''
+  const credit = obj[creditKey] ?? ''
 
-  let caption = ''
-  if (captionKey != null && captionKey !== '') {
-    caption = obj[captionKey]
-  }
-  let credit = ''
-  if (creditKey != null && creditKey !== '') {
-    credit = obj[creditKey]
-  }
   const media = String(obj[mediaKey])
   showMediaInLightbox(media, title, caption, credit)
 }
@@ -398,8 +391,7 @@ function updateParser (update) {
 function loadDefinition (def) {
   // Take an object parsed from an INI string and use it to load a new set of contet
 
-  // Tag the document with the defintion for later reference
-  $(document).data('browserDefinition', def)
+  exCommon.config.definition = def
 
   const root = document.querySelector(':root')
 
@@ -575,7 +567,7 @@ function loadDefinition (def) {
 function localize (lang) {
   // Use the spreadsheet and definition to set the content to the given language
 
-  const definition = $(document).data('browserDefinition')
+  const definition = exCommon.config.definition
 
   if ('media_key' in definition.languages[lang]) {
     mediaKey = definition.languages[lang].media_key
@@ -626,17 +618,21 @@ function showAttractor () {
     return
   }
 
+  const attractorOverlay = document.getElementById('attractorOverlay')
+
   exCommon.config.currentInteraction = false
   if (attractorAvailable) {
     if (attractorType === 'video') {
       document.getElementById('attractorVideo').play()
-        .then(result => {
-          $('#attractorOverlay').fadeIn()
+        .then(() => {
+          attractorOverlay.style.display = 'flex'
+          setTimeout(() => { attractorOverlay.style.opacity = 1 }, 0)
           hideMediaLightBox()
           clear()
         })
     } else {
-      $('#attractorOverlay').fadeIn()
+      attractorOverlay.style.display = 'flex'
+      setTimeout(() => { attractorOverlay.style.opacity = 1 }, 0)
       hideMediaLightBox()
       clear()
     }
@@ -649,13 +645,14 @@ function showAttractor () {
 function hideAttractor () {
   // Make the attractor layer invisible
 
-  $('#attractorOverlay').fadeOut(result => {
+  document.getElementById('attractorOverlay').style.opacity = 0
+  setTimeout(() => {
     if (attractorType === 'video') {
       document.getElementById('attractorVideo').pause()
     }
     exCommon.config.currentInteraction = true
     resetActivityTimer()
-  })
+  }, 400)
 }
 
 function resetActivityTimer () {
@@ -666,22 +663,29 @@ function resetActivityTimer () {
 }
 
 function showMediaInLightbox (media, title = '', caption = '', credit = '') {
-  // Set the img or video source to the provided media, set the caption, and reveal
-  // the light box.
-
-  const def = $(document).data('browserDefinition')
+  // Set the img or video source to the provided media, set the caption, and reveal the light box.
 
   // Hide elements until image is loaded
-  $('#mediaLightboxImage, #mediaLightboxVideo, #mediaLightboxTitle, #mediaLightboxCaption, #mediaLightboxCredit').hide()
+  document.querySelectorAll('.lightboxMedia').forEach((el) => {
+    el.style.display = 'none'
+  })
 
+  document.querySelectorAll('.lightbox-text').forEach((el) => {
+    el.style.opacity = 0
+  })
+
+  const lightbox = document.getElementById('mediaLightbox')
+  const imageEl = document.getElementById('mediaLightboxImage')
+  const videoEl = document.getElementById('mediaLightboxVideo')
   const titleDiv = document.getElementById('mediaLightboxTitle')
+  const captionDiv = document.getElementById('mediaLightboxCaption')
   const creditDiv = document.getElementById('mediaLightboxCredit')
   titleDiv.innerHTML = title
 
-  document.getElementById('mediaLightboxCaption').innerHTML = caption
+  captionDiv.innerHTML = caption
 
   if (credit !== '' && credit != null) {
-    document.getElementById('mediaLightboxCredit').innerHTML = 'Credit: ' + credit
+    creditDiv.innerHTML = 'Credit: ' + credit
   } else {
     creditDiv.innerHTML = ''
   }
@@ -689,40 +693,53 @@ function showMediaInLightbox (media, title = '', caption = '', credit = '') {
   // Load the media with a callback to fade it in when it is loaded
   const mimetype = exCommon.guessMimetype(media)
   if (mimetype === 'image') {
-    $('#mediaLightboxImage').one('load', function () {
-      $('#mediaLightboxImage, #mediaLightboxTitle, #mediaLightboxCredit, #mediaLightboxCaption').fadeIn()
-    }).attr('src', 'content/' + media)
+    imageEl.src = 'content/' + media
   } else if (mimetype === 'video') {
     videoPlaying = true
-    const video = document.getElementById('mediaLightboxVideo')
-    video.src = 'content/' + media
-    video.load()
-    video.play()
-    $('#mediaLightboxVideo, #mediaLightboxTitle, #mediaLightboxCredit, #mediaLightboxCaption').fadeIn()
+    videoEl.src = 'content/' + media
+    videoEl.load()
+    videoEl.play()
+    document.querySelectorAll('.lightbox-text').forEach((el) => {
+      el.style.opacity = 1
+    })
+    videoEl.style.display = 'block'
   }
+
+  lightbox.style.display = 'flex'
+  setTimeout(() => {
+    // Make sure the display mode is already set
+    lightbox.style.opacity = 1
+    fixLightboxTextSize(titleDiv, creditDiv)
+  }, 0)
+}
+
+function fixLightboxTextSize (titleDiv, creditDiv) {
+  // Fit the lightbox title and credit text
+  // (caption is allowed to overflow for scroll)
+
+  const def = exCommon.config.definition
+
   const titleFontSize = parseFloat(window.getComputedStyle(titleDiv, null).getPropertyValue('font-size'))
   const creditFontSize = parseFloat(window.getComputedStyle(creditDiv, null).getPropertyValue('font-size'))
   titleDiv.style.whiteSpace = 'normal'
   creditDiv.style.whiteSpace = 'normal'
-  $('#mediaLightbox').css('display', 'flex').animate({ opacity: 1, queue: false }, 100, () => {
-    // Fit the various text elements
-    if ('layout' in def.style) {
-      if ('lightbox_title_height' in def.style.layout && def.style.layout.lightbox_title_height > 0) {
-        try {
-          textFit(titleDiv, { maxFontSize: titleFontSize })
-        } catch {
-          // Ignore a failed resize
-        }
-      }
-      if ('lightbox_credit_height' in def.style.layout && def.style.layout.lightbox_credit_height > 0) {
-        try {
-          textFit(creditDiv, { maxFontSize: creditFontSize })
-        } catch {
-          // Ignore a failed resieze
-        }
+
+  if ('layout' in def.style) {
+    if ('lightbox_title_height' in def.style.layout && def.style.layout.lightbox_title_height > 0) {
+      try {
+        textFit(titleDiv, { maxFontSize: titleFontSize })
+      } catch {
+        // Ignore a failed resize
       }
     }
-  })
+    if ('lightbox_credit_height' in def.style.layout && def.style.layout.lightbox_credit_height > 0) {
+      try {
+        textFit(creditDiv, { maxFontSize: creditFontSize })
+      } catch {
+        // Ignore a failed resieze
+      }
+    }
+  }
 }
 
 // const Keyboard = window.SimpleKeyboard.default
@@ -785,16 +802,29 @@ let attractorType = 'image'
 let videoPlaying = false
 
 // Attach event listeners
-$('#previousPageButton').click(function () {
+document.getElementById('previousPageButton').addEventListener('click', () => {
   changePage(-1)
 })
-$('#nextPageButton').click(function () {
+document.getElementById('nextPageButton').addEventListener('click', () => {
   changePage(1)
 })
-$('body').click(resetActivityTimer)
-$('#attractorOverlay').click(hideAttractor)
-$('.hideLightboxTrigger').click(hideMediaLightBox)
+document.body.addEventListener('click', resetActivityTimer)
+document.getElementById('attractorOverlay').addEventListener('click', hideAttractor)
+document.querySelectorAll('.hideLightboxTrigger').forEach((el) => {
+  el.addEventListener('click', hideMediaLightBox)
+})
 document.getElementById('mediaLightboxVideo').addEventListener('ended', (event) => {
   resetActivityTimer()
   videoPlaying = false
+})
+document.getElementById('attractorOverlay').addEventListener('transitionend', (ev) => {
+  if (parseInt(ev.target.style.opacity) === 0) {
+    ev.target.style.display = 'none'
+  }
+})
+document.getElementById('mediaLightboxImage').addEventListener('load', (ev) => {
+  document.querySelectorAll('.lightbox-text').forEach((el) => {
+    el.style.opacity = '1'
+  })
+  ev.target.style.display = 'block'
 })
