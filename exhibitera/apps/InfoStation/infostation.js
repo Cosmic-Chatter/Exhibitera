@@ -7,7 +7,8 @@ function loadDefinition (definition) {
 
   const root = document.querySelector(':root')
 
-  $(document).data('definition', definition)
+  exCommon.config.definition = definition
+
   // Clear the existing content
   fontSizeReset()
   document.getElementById('nav-tabContent').innerHTML = ''
@@ -33,12 +34,13 @@ function loadDefinition (definition) {
 
   // Modify the style
   // Layout
-  // First, reset to defaults (in case a style option doesn't exist in the definition)
-  root.style.setProperty('--button-size', 30)
+  root.style.setProperty('--button-size', definition?.style?.layout?.button_size || 30)
+  root.style.setProperty('--header-height', definition?.style?.layout?.header_height || 10)
 
-  // Then, apply the definition settings
-  if ('style' in definition && 'layout' in definition.style && 'button_size' in definition.style.layout) {
-    root.style.setProperty('--button-size', definition.style.layout.button_size)
+  if (parseInt(definition?.style?.layout?.header_height || 10) === 0) {
+    document.getElementById('mastheadDiv').style.display = 'none'
+  } else {
+    document.getElementById('mastheadDiv').style.display = 'block'
   }
 
   // Color
@@ -103,7 +105,7 @@ function loadDefinition (definition) {
 function localize (lang) {
   // Use the given language code to build the GUI
 
-  const fullDefinition = $(document).data('definition')
+  const fullDefinition = exCommon.config.definition
   const definition = fullDefinition.languages[lang]
 
   document.getElementById('buttonRow').innerHTML = ''
@@ -111,7 +113,7 @@ function localize (lang) {
 
   if (definition.header != null) {
     document.getElementById('masthead').innerHTML = definition.header
-    textFit(document.getElementById('masthead'))
+    // textFit(document.getElementById('masthead'))
   } else {
     document.getElementById('masthead').innerHTML = ''
   }
@@ -119,7 +121,7 @@ function localize (lang) {
   // Create the tabs
   definition.tab_order.forEach((uuid, i) => {
     const tabDef = definition.tabs[uuid]
-    const tabId = createTextTab(tabDef)
+    const tabId = createTextTab(tabDef, i === 0)
     if (i === 0) {
       firstTab = tabId
     }
@@ -130,23 +132,26 @@ function localize (lang) {
 function createButton (title, id) {
   // Create a button in the bottom bar that shows the pane with the given id
 
+  const buttonRow = document.getElementById('buttonRow')
+
   // Create a new button
   const col = document.createElement('div')
   col.setAttribute('class', 'col tabButtonCol')
   col.setAttribute('id', id + 'ButtonCol')
-  $('#buttonRow').append(col)
+  buttonRow.appendChild(col)
 
   const button = document.createElement('button')
   button.setAttribute('class', 'btn btn-secondary tabButton w-100 h-100')
-  $(button).click(function () {
+  button.addEventListener('click', () => {
     gotoTab(id)
   })
+
   button.setAttribute('id', id + 'Button')
-  $(button).html(title)
+  button.innerHTML = title
   col.append(button)
 
   // Adjust the number of columns based on the number of buttons that have been added
-  const nButtons = $('#buttonRow').children().length
+  const nButtons = buttonRow.childElementCount
   let rowClass
 
   if (nButtons === 1) {
@@ -157,23 +162,24 @@ function createButton (title, id) {
     rowClass = '4'
   }
 
-  document.getElementById('buttonRow').classList = 'row pt-3 pb-1 mx-1 gx-2 row-cols-' + rowClass
+  buttonRow.classList = 'row pt-3 pb-1 mx-1 gx-2 row-cols-' + rowClass
 }
 
-function createTextTab (definition) {
+function createTextTab (definition, first = false) {
   // Create a pane that displays Markdown-formatted text and images
 
   // First, create the pane
   const tabId = 'textTab_' + String(definition.uuid)
   const pane = document.createElement('div')
   pane.setAttribute('id', tabId)
-  pane.setAttribute('class', 'tab-pane fade show active')
-  $(pane).data('user-definition', definition)
-  $('#nav-tabContent').append(pane)
+  let classString = 'tab-pane fade show'
+  if (first) classString += ' active'
+  pane.setAttribute('class', classString)
+  document.getElementById('nav-tabContent').appendChild(pane)
 
   const row = document.createElement('div')
   row.setAttribute('class', 'row mx-1 align-items-center')
-  $('#' + tabId).append(row)
+  pane.appendChild(row)
 
   const col = document.createElement('div')
   col.setAttribute('class', 'col-12 textCol mt-3')
@@ -198,24 +204,23 @@ function _createTextTabContent (tabId, content) {
   const converter = new showdown.Converter({ parseImgDimensions: true })
   const html = converter.makeHtml(content)
   // Parse the HTML
-  const el = $('<div></div>')
-  el.html(html)
+  const el = document.createElement('div')
+  el.innerHTML = html
 
   // Find img tags and format them appropriately
-  el.children().each(function (i, tag) {
+  Array.from(el.children).forEach(function (tag, i) {
     if (tag.tagName === 'P') {
-      $(tag).children().each(function (j, child) {
+      Array.from(tag.children).forEach(function (child, j) {
         if (child.tagName === 'IMG') {
           child.classList += 'image'
-          const parent = $(child).parent()
           const div = document.createElement('div')
           div.append(child)
           const caption = document.createElement('div')
           caption.classList = 'caption'
           caption.append(child.title)
           div.append(caption)
-          parent.empty()
-          parent.append(div)
+          tag.innerHTML = ''
+          tag.appendChild(div)
 
           // Parse the alt text for a user-indicated formatting preference.
           const format = child.alt.toLowerCase()
@@ -236,7 +241,7 @@ function _createTextTabContent (tabId, content) {
   // Group the elements by H1 elements. We will enclose each set in a box
   const boxes = []
   let curBox = []
-  el.children().each(function (i, tag) {
+  Array.from(el.children).forEach(function (tag, i) {
     if (tag.tagName === 'H1') {
       if (curBox.length > 0) {
         boxes.push(curBox)
@@ -287,27 +292,34 @@ function gotoTab (id) {
   if (id === '') return
 
   // Make sure the tab is scrolled to the top
-  $('#nav-tabContent').scrollTop(0)
-  $('.tab-pane.active').removeClass('active')
-  $('#' + id).addClass('active')
+  document.getElementById('nav-tabContent').scrollTop = 0
+  document.querySelector('.tab-pane.active').classList.remove('active')
+  document.getElementById(id).classList.add('active')
 
   // Chance button color
-  $('.tabButton').removeClass('btn-primary').addClass('btn-secondary')
-  $('#' + id + 'Button').removeClass('btn-secondary').addClass('btn-primary')
+  document.querySelectorAll('.tabButton').forEach(el => {
+    el.classList.remove('btn-primary')
+    el.classList.add('btn-secondary')
+  })
+  const activeBUtton = document.getElementById(id + 'Button')
+  activeBUtton.classList.remove('btn-secondary')
+  activeBUtton.classList.add('btn-primary')
 }
 
 function hideAttractor () {
   // Make the attractor layer invisible
 
   exCommon.config.currentInteraction = true
-
-  $('#attractorOverlay').fadeOut(100, result => {
+  const attractorOverlay = document.getElementById('attractorOverlay')
+  attractorOverlay.style.opacity = 0
+  setTimeout(() => {
     if (document.getElementById('attractorVideo').style.display === 'block') {
       // The attractor is a video, so pause it
       document.getElementById('attractorVideo').pause()
     }
+    attractorOverlay.style.display = 'none'
     resetActivityTimer()
-  })
+  }, 500)
 }
 
 function updateFunc (update) {
@@ -349,33 +361,35 @@ function setAttractor (filename, fileType) {
 function showAttractor () {
   // Make the attractor layer visible
 
-  const definition = $(document).data('definition')
   exCommon.config.currentInteraction = false
 
+  const attractorOverlay = document.getElementById('attractorOverlay')
+  const navTabContent = document.getElementById('nav-tabContent')
+
   if (attractorAvailable) {
-    if (document.getElementById('attractorVideo').style.display === 'block') {
-      // The attractor is a video, so play the video
-      document.getElementById('attractorVideo').play()
-        .then(result => {
-          $('#attractorOverlay').fadeIn(100)
-        }).then(result => {
-          fontSizeReset()
-          localize(defaultLang)
-          gotoTab(firstTab)
-          $('#nav-tabContent').scrollTop(0)
-        })
-    } else {
-      $('#attractorOverlay').fadeIn(100)
+    attractorOverlay.style.display = 'block'
+    // Wait 1 ms to make sure an animation frame passes
+    setTimeout(() => {
+      if (document.getElementById('attractorVideo').style.display === 'block') {
+        // The attractor is a video, so play the video
+        document.getElementById('attractorVideo').play()
+          .then(result => {
+            attractorOverlay.style.opacity = 1
+          })
+      } else {
+        attractorOverlay.style.opacity = 1
+      }
+    }, 1)
+    setTimeout(() => {
       fontSizeReset()
       localize(defaultLang)
       gotoTab(firstTab)
-      $('#nav-tabContent').scrollTop(0)
-    }
+      navTabContent.scrollTop = 0
+    }, 500)
   } else {
-    $('#attractorOverlay').fadeOut(100)
     fontSizeReset()
     localize(defaultLang)
-    $('#nav-tabContent').scrollTop(0)
+    navTabContent.scrollTop = 0
   }
 }
 
@@ -387,11 +401,11 @@ let textTabs = [] // Holds ids of textTabs.
 let firstTab = ''
 let currentDefintion = ''
 
-$(document).bind('touchstart', resetActivityTimer)
-$(document).bind('click', resetActivityTimer)
-$('#fontSizeDecreaseButton').click(fontSizeDecrease)
-$('#fontSizeIncreaseButton').click(fontSizeIncrease)
-$('#attractorOverlay').click(hideAttractor)
+document.addEventListener('touchstart', resetActivityTimer)
+document.addEventListener('click', resetActivityTimer)
+document.getElementById('fontSizeDecreaseButton').addEventListener('click', fontSizeDecrease)
+document.getElementById('fontSizeIncreaseButton').addEventListener('click', fontSizeIncrease)
+document.getElementById('attractorOverlay').addEventListener('click', hideAttractor)
 
 // Exhibitera stuff
 exCommon.configureApp({

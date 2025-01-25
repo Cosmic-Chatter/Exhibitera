@@ -27,6 +27,7 @@
   /* Misc */
   --button-rows: 1;
   --button-size: 30;
+  --header-height: 10;
 }
 
 /* Font definitions */
@@ -188,6 +189,7 @@ li {
   cursor: pointer;
   justify-content: center;
   align-items: center;
+  transition: opacity 500ms;
 }
 #attractorVideo {
   position: fixed;
@@ -202,8 +204,8 @@ li {
 
 #masthead {
   font-size: calc(6vmax + var(--header-font-size-adjust)*1vmax);
-  height: 10vh;
-  line-height: 10vh;
+  height: calc(1vh * var(--header-height));
+  /* line-height: calc(1vh * var(--header-height)); */
   color: var(--text-color);
   background-color: var(--header-color);
   z-index: 1;
@@ -237,7 +239,7 @@ li {
     position: relative;
   }
   #nav-tabContent {
-    height: 78vh;
+    height: calc(100vh - 7vh - 5vh - 1vh * var(--header-height));
     width: 100vw;
     overflow-x: hidden;
     overflow-y: auto;
@@ -264,7 +266,7 @@ li {
   }
   #buttonRow {
     width: 30vw;
-    height: calc(100vh - 10vh - 5vmax);
+    height: calc(100vh - 1vh * var(--header-height) - 5vmax);
     overflow-y: auto;
     --bs-gutter-y: 0.5rem;
   }

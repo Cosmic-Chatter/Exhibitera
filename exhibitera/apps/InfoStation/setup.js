@@ -46,6 +46,10 @@ async function clearDefinitionInput (full = true) {
     el.dispatchEvent(new Event('input', { bubbles: true }))
   })
 
+  Array.from(document.querySelectorAll('.layout-slider')).forEach((el) => {
+    el.value = el.getAttribute('start')
+  })
+
   exSetup.updateAdvancedColorPicker('style>background', {
     mode: 'color',
     color: '#719abf',
@@ -81,6 +85,13 @@ function editDefinition (uuid = '') {
   if ('inactivity_timeout' in def) {
     document.getElementById('inactivityTimeoutField').value = def.inactivity_timeout
   }
+
+  // Layout fields
+  const buttonSizeSlider = document.getElementById('buttonSizeSlider')
+  buttonSizeSlider.value = def?.style?.layout?.button_size || buttonSizeSlider.getAttribute('start')
+
+  const headerSizeSlider = document.getElementById('headerSizeSlider')
+  headerSizeSlider.value = def?.style?.layout?.header_height || headerSizeSlider.getAttribute('start')
 
   if ('background' in def.style === false) {
     def.style.background = {
@@ -648,6 +659,11 @@ document.getElementById('inactivityTimeoutField').addEventListener('change', (ev
 // Style fields
 document.getElementById('buttonSizeSlider').addEventListener('change', (event) => {
   exSetup.updateWorkingDefinition(['style', 'layout', 'button_size'], event.target.value)
+  exSetup.previewDefinition(true)
+})
+
+document.getElementById('headerSizeSlider').addEventListener('change', (event) => {
+  exSetup.updateWorkingDefinition(['style', 'layout', 'header_height'], event.target.value)
   exSetup.previewDefinition(true)
 })
 

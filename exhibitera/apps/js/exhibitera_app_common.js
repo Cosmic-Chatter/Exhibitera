@@ -745,6 +745,7 @@ export function createLanguageSwitcher (def, localize) {
   // based on the provided language code.
 
   const langs = Object.keys(def.languages)
+
   const langSwitchDropdown = document.getElementById('langSwitchDropdown')
   const langSwitchOptions = document.getElementById('langSwitchOptions')
 
@@ -754,7 +755,7 @@ export function createLanguageSwitcher (def, localize) {
     return
   }
 
-  langSwitchDropdown.style.display = 'block'
+  langSwitchDropdown.style.display = 'flex'
   // Cycle the languages and build an entry for each
   langSwitchOptions.innerHTML = ''
   langs.forEach((code) => {

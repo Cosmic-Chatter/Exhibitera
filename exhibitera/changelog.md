@@ -15,6 +15,9 @@
 ### General
 - See file sizes when browsing files [Morgan Rehnberg]
 
+### InfoStation
+- Adjust the height of the header area or hide it entirely [Morgan Rehnberg]
+
 # **Exhibitera 5.2**
 
 ## Hub

@@ -271,7 +271,14 @@
                     Tab button size
                     <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Set the width (portrait view) or height (landscape view) of the tab buttons. The user can swipe to see additional buttons." style="font-size: 0.55em;">?</span>
                   </label>
-                  <input id="buttonSizeSlider" type="range" class="form-range" data-property="header" min="10", max="100" start="30" step="5">
+                  <input id="buttonSizeSlider" type="range" class="form-range layout-slider" min="10", max="100" start="30" step="5">
+                </div>
+                <div class="col-12 col-md-6 col-lg-4">
+                  <label for="headerSizeSlider" class="form-label">
+                    Header height
+                    <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="The amount of vertical space allocated to the header." style="font-size: 0.55em;">?</span>
+                  </label>
+                  <input id="headerSizeSlider" type="range" class="form-range layout-slider" min="0", max="30" start="10" step="2.5">
                 </div>
               </div>
               <h4>Colors</h4>
@@ -351,7 +358,7 @@
               <div class="row gy-2">
                 <div class="col-12 col-md-6 col-lg-4">
                   <label for="headerTextSizeSlider" class="form-label">Header</label>
-                  <input id="headerTextSizeSlider" type="range" class="form-range text-size-slider" data-property="header" min="-3", max="2" start="0" step="0.5">
+                  <input id="headerTextSizeSlider" type="range" class="form-range text-size-slider" data-property="header" min="-4", max="2" start="0" step="0.5">
                 </div>
                 <div class="col-12 col-md-6 col-lg-4">
                   <label for="section-headerTextSizeSlider" class="form-label">Section header</label>
