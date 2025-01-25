@@ -611,6 +611,7 @@ export function gotoApp (app, other = '') {
   console.log(app)
   const appLocations = {
     dmx_control: '/dmx_control.html',
+    image_compare: '/image_compare.html',
     infostation: '/infostation.html',
     media_browser: '/media_browser.html',
     media_player: '/media_player.html',
@@ -634,6 +635,7 @@ export function gotoApp (app, other = '') {
 export function appNameToDisplayName (appName) {
   const displayNames = {
     dmx_control: 'DMX Control',
+    image_compare: 'Image Compare',
     infostation: 'InfoStation',
     media_browser: 'Media Browser',
     media_player: 'Media Player',

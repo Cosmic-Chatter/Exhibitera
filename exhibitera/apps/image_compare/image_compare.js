@@ -3,6 +3,7 @@ import * as exCommon from '../js/exhibitera_app_common.js'
 const overlay = document.getElementById('overlayDiv')
 const base = document.getElementById('baseDiv')
 
+let currentDefintion = ''
 let clicked = 0
 let currentLang = 'en'
 let timer = 0 // Reference to setTimeout for reseting the view
@@ -140,7 +141,6 @@ function loadImages (item) {
 
 function loadDefinition (definition) {
   // A function to configure content based on the provided configuration.
-
   populateItemList(definition)
 }
 
@@ -215,6 +215,13 @@ function resetView () {
 function parseUpdate (update) {
   // A function to respond to commands from Control Server.
 
+  if ('definition' in update && update.definition !== currentDefintion) {
+    currentDefintion = update.definition
+    exCommon.loadDefinition(currentDefintion)
+      .then((result) => {
+        loadDefinition(result.definition)
+      })
+  }
 }
 
 exCommon.configureApp({

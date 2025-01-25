@@ -1451,6 +1451,7 @@ export function convertAppIDtoDisplayName (appName) {
     const exhibiteraAppIdDisplayNames = {
       dmx_control: 'DMX Control',
       heartbeat: 'Heartbeat',
+      image_compare: 'Image Compare',
       infostation: 'InfoStation',
       media_browser: 'Media Browser',
       media_player: 'Media Player',

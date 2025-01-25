@@ -5,7 +5,7 @@ import * as exFileSelect from '../js/exhibitera_file_select_modal.js'
 import * as exSetup from '../js/exhibitera_setup_common.js'
 
 async function initializeWizard () {
-  // Setup the wizard
+  // Set up the wizard
 
   await exSetup.initializeDefinition()
 

@@ -4,6 +4,22 @@ import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exFileSelect from '../js/exhibitera_file_select_modal.js'
 import * as exSetup from '../js/exhibitera_setup_common.js'
 
+async function initializeWizard () {
+  // Set up the wizard
+
+  await exSetup.initializeDefinition()
+
+  // Hide all but the welcome screen
+  Array.from(document.querySelectorAll('.wizard-pane')).forEach((el) => {
+    el.style.display = 'none'
+  })
+  document.getElementById('wizardPane_Welcome').style.display = 'block'
+
+  // Reset fields
+  document.getElementById('wizardDefinitionNameInput').value = ''
+  document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'none'
+}
+
 function initializeDefinition () {
   // Create a blank definition at save it to workingDefinition.
 
@@ -979,9 +995,20 @@ clearDefinitionInput()
 exSetup.configure({
   app: 'image_compare',
   clearDefinition: clearDefinitionInput,
-  initializeDefinition,
+  initializeWizard,
   loadDefinition: editDefinition,
-  saveDefinition
+  blankDefinition: {
+    languages: {},
+    style: {
+      background: {
+        color: '#719abf',
+        mode: 'color'
+      },
+      color: {},
+      font: {},
+      text_size: {}
+    }
+  }
 })
 
 exCommon.askForDefaults(false)

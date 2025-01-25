@@ -15,6 +15,8 @@
 ### General
 - See file sizes when browsing files [Morgan Rehnberg]
 
+### Image Compare
+_Image Compare is a new app that creates a before/after slider between a pair of images._
 ### InfoStation
 - Adjust the height of the header area or hide it entirely [Morgan Rehnberg]
 
