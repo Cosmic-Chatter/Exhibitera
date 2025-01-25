@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en" data-bs-theme="dark">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="description" content="">
+    <meta name="author" content="Morgan Rehnberg">
+
+    <title>Image Compare</title>
+
+    <link rel="stylesheet" href="css/bootstrap_5_3/bootstrap.min.css">
+    <link rel="stylesheet" href="image_compare/image_compare.css">
+    <link rel="stylesheet" href="css/exhibitera-common.css">
+
+  </head>
+
+  <script src="js/jquery-3.6.1.min.js"></script>
+  <script src="js/platform.js"></script>
+  <script src="js/bootstrap_5_3/bootstrap.bundle.min.js"></script>
+  <script type="module" src="image_compare/image_compare.js"></script>
+
+  <body  oncontextmenu="return false" class="no-select">
+
+    <!-- About image 1 -->
+    <div id="image1Modal" class="modal" tabindex="-1">
+      <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content" style="height: 80vh;">
+          <div class="modal-header">
+            <div id="image1ModalTitle" class="modal-title w-100 py-2"></div>
+            <button type="button" class="btn-close me-4" data-bs-dismiss="modal" aria-label="Close" style="font-size: 25px;"></button>
+          </div>
+          <div class="modal-body">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- About image 2 -->
+    <div id="image2Modal" class="modal" tabindex="-1">
+      <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content" style="height: 80vh;">
+          <div class="modal-header">
+            <div id="image2ModalTitle" class="modal-title w-100 py-2"></div>
+            <button type="button" class="btn-close me-4" data-bs-dismiss="modal" aria-label="Close" style="font-size: 25px;"></button>
+          </div>
+          <div class="modal-body">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="baseDiv" class="img-comp-container">
+      <div class="img-comp-img">
+        <img id="baseImg" class="comp-image" src="">
+      </div>
+      <div id="slider" class="img-comp-slider">
+        <div id="slider-icon">↔</div>
+      </div>
+      <div id="overlayDiv" class="img-comp-img img-comp-overlay">
+        <img id="overlayImg" class="comp-image" src="">
+      </div>
+    </div>
+
+    <!-- Bottom row of buttons -->
+    <button id="homeButton" class="overlay-button">Home</button>
+    <button id="image2Button" class="overlay-button" type="button" data-bs-toggle="modal" data-bs-target="#image2Modal">
+      About top
+    </button>
+    <button id="image1Button" data-bs-toggle="modal" data-bs-target="#image1Modal" class="overlay-button">
+      About bottom
+    </button>
+
+    <!-- Swiping hand indicator -->
+    <div id="slidingHandContainer">
+      <img id="slidingHand" src="_static/icons/hand.svg"></img>
+    </div>
+
+    <!-- Telescope labels -->
+    <div id="image2Label" class="name-label">
+      Top
+    </div>
+    <div id="image1Label" class="name-label">
+      Bottom
+    </div>
+
+    <!-- Main menu -->
+    <div id="mainMenu" class="">
+      <div class="col-12">
+        <div id="title"></div>
+      </div>
+      <div id="subtitle" class="col-8 offset-2"></div>
+      <div class="col-8 offset-2">
+        <div id="itemList" class="row row-cols-3 gy-4 gx-5">
+          <!-- pulsing hand indicator -->
+          <div id="pulsingHandContainer">
+            <img id="pulsingHand" src="_static/icons/hand.svg"></img>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

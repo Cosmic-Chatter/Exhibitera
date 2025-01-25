@@ -1,0 +1,200 @@
+/* Pulsing hand keyframes */
+@-webkit-keyframes pulsing {0%{width:40%;} 50%{width:50%;} 100%{width:40%;}}
+
+@keyframes pulsing {0%{width:40%;} 50%{width:50%;} 100%{width:40%;}}
+
+/* Slding hand keyframes */
+@-webkit-keyframes backandforth {0%{left:-57%;} 50%{left:100%;} 100%{left:-57%;}}
+
+@keyframes backandforth {0%{left:-57%;} 50%{left:100%;} 100%{left:-57%;}}
+
+* {
+    box-sizing: border-box;
+    touch-action: none;
+    }
+
+html, body {
+    background-color: black;
+    touch-action: none;
+    overflow: hidden;
+    -webkit-user-select: none; 
+    user-select: none; 
+}
+.body-text {
+    color: #f3e9f3;
+    font-size: 1.7vmax;
+    -webkit-user-select: none; 
+    user-select: none; 
+}
+.button-label {
+    color: #f3e9f3;
+    font-size: 1.8vmax;
+    text-align: center;
+    width: 100%;
+    margin-top: 1vh;
+}
+
+.comp-image {
+    height: 100%;
+    width: 100%;
+    object-fit: cover;
+}
+.comp-image-contain {
+    object-fit: contain!important;
+}
+.icon-container{
+    width: 100%;
+    aspect-ratio: 16/9;
+    border-radius: 0.9vmax;
+    position: relative;
+    overflow: hidden;
+}
+.icon-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.icon-image-top {
+    clip-path: polygon(0% 0%,
+                       100% 0%,
+                       0% 100%);
+}
+.icon-image-bottom {
+    clip-path: polygon(0% 100%,
+                   100% 100%,
+                   100% 0%);
+}
+.img-comp-container {
+    position: relative;
+    height: 100vh;
+    width: 100vw;
+}
+
+.img-comp-img {
+    position: absolute;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.img-comp-img img {
+    display: block;
+}
+
+.img-comp-slider {
+    position: absolute;
+    z-index: 9;
+    cursor: ew-resize;
+    /*set the appearance of the slider:*/
+    width: 2.5vmax;
+    height: 2.5vmax;
+    background-color: #2196F3;
+    opacity: 0.7;
+    border-radius: 50%;
+    font-size: 1.8vmax;
+    color: black;
+    display: flex;
+    justify-content: center;
+    align-items: center; 
+}
+.modal-title {
+    color: #f3e9f3;
+    font-size: 3.4vmax;
+    text-align: center;
+}
+.name-label {
+    position: absolute;
+    color: #f3e9f3;
+    font-size: 2.3vmax;
+    top: 50%;
+    transform: translate(0%, -50%);
+    background-color: rgba(0,0,0,0.5);
+    padding-left: 1vw;
+    padding-right: 1vw;
+    padding-top: 1vh;
+    padding-bottom: 0.3vh;
+    border-radius: 0.5vmax;
+}
+.overlay-button {
+    position: absolute;
+    color: #f3e9f3;
+    font-size: 1.8vmax;
+    background-color: rgba(66, 66, 66, 0.75);
+    padding-left: 1vw;
+    padding-right: 1vw;
+    padding-top: 1vh;
+    padding-bottom: 0.3vh;
+    border-radius: 0.5vmax;
+}
+#pulsingHand {
+    position: relative;
+    transform: rotate(-20deg);
+    -webkit-animation: pulsing 3s ease 0s;
+    -webkit-animation-iteration-count:infinite;
+    animation: pulsing 3s ease 0s;
+    animation-iteration-count:infinite;
+}
+#pulsingHandContainer {
+    position: absolute;
+    left: 49vw;
+    top: 45vh;
+    width: 10vw;
+}
+#slidingHand {
+    position: relative;
+    width: 6vw;
+    -webkit-animation: backandforth 3s ease 0s;
+    -webkit-animation-iteration-count:infinite;
+    animation: backandforth 3s ease 0s;
+    animation-iteration-count:infinite;
+}
+#slidingHandContainer {
+    position: absolute;
+    left: 45vw;
+    top: 50vh;
+    width: 10vw;
+}
+#homeButton {
+    bottom: 1.85vh;
+    left:  1vw;
+    background-color: #754588;
+}
+#image1Button {
+    bottom: 1.85vh;
+    left: 53vw;
+    width: 18vw;
+}
+#image1Label {
+    right: 1vw;
+}
+#mainMenu {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 10;
+    width: 100vw;
+    height: 100vh;
+    background-color: black;
+}
+#subtitle {
+    color: #f3e9f3;
+    font-size: 1.5vmax;
+    padding-bottom: 3.2vh;
+}
+#title {
+    color: #f3e9f3;
+    text-align: center;
+    font-size: 3.9vmax;
+    padding-top: 9.3vh;
+}
+#image2Button {
+    bottom: 1.85vh;
+    right: 53vw;
+    width: 18vw;
+}
+#image2Label {
+    left: 1vw;
+}
+#slider-icon{
+    font-size: 2vmax;
+}
