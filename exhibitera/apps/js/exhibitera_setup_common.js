@@ -300,6 +300,153 @@ export function addWizardLanguage () {
   document.getElementById('wizardLanguages').append(col)
 }
 
+export function createLanguagePicker (id, callback = null) {
+  // Populate language picker into the named div
+
+  // callback should be a function that accepts three arguments:
+  // callback(code, displayName, englishName)
+  //    code: the ISO 639-1 code for the given language
+  //    displayName: the name of the language in its own language
+  //    englishName: the name of the language in English
+
+  const parent = document.getElementById(id)
+
+  const row = document.createElement('div')
+  row.classList = 'row gy-2 align-items-end'
+  parent.appendChild(row)
+
+  const languageSelectCol = document.createElement('div')
+  languageSelectCol.classList = 'col-12 col-md-6'
+  row.appendChild(languageSelectCol)
+
+  const languageSelect = document.createElement('select')
+  languageSelect.classList = 'form-select'
+
+  // Populate all available languages, plus an other option
+  for (const lang of config.languages) {
+    const option = new Option(lang.name_en, lang.code)
+    languageSelect.appendChild(option)
+  }
+  const option = new Option('Other', 'other')
+  languageSelect.appendChild(option)
+  languageSelect.value = 'en-gb'
+
+  languageSelectCol.appendChild(languageSelect)
+
+  // Language code input
+  const languageCodeInputCol = document.createElement('div')
+  languageCodeInputCol.classList = 'col-12 col-md-6 custom-lang-col_' + id
+  languageCodeInputCol.style.display = 'none'
+  languageCodeInputCol.innerHTML = `
+    <label for="languageCodeInput_${id}" class="form-label">
+      Language code
+      <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="The unique ISO 639-1 code for the language. E.g., de for German." style="font-size: 0.55em;">?</span>
+    </label>
+    `
+  row.appendChild(languageCodeInputCol)
+
+  const languageCodeInput = document.createElement('input')
+  languageCodeInput.classList = 'form-control '
+  languageCodeInput.setAttribute('type', 'text')
+  languageCodeInput.setAttribute('id', 'languageCodeInput_' + id)
+  languageCodeInputCol.appendChild(languageCodeInput)
+
+  // Display name input
+  const languageDisplayNameInputCol = document.createElement('div')
+  languageDisplayNameInputCol.classList = 'col-12 col-md-6 custom-lang-col_' + id
+  languageDisplayNameInputCol.style.display = 'none'
+  languageDisplayNameInputCol.innerHTML = `
+    <label for="languageDisplayNameInput_${id}" class="form-label">
+      Display name
+      <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="The name of the language in that language. E.g., Deutsch for German." style="font-size: 0.55em;">?</span>
+    </label>
+    `
+  row.appendChild(languageDisplayNameInputCol)
+
+  const languageDisplayNameInput = document.createElement('input')
+  languageDisplayNameInput.classList = 'form-control '
+  languageDisplayNameInput.setAttribute('type', 'text')
+  languageDisplayNameInput.setAttribute('id', 'languageDisplayNameInput_' + id)
+  languageDisplayNameInputCol.appendChild(languageDisplayNameInput)
+
+  // English name input
+  const languageEnglishNameInputCol = document.createElement('div')
+  languageEnglishNameInputCol.classList = 'col-12 col-md-6 custom-lang-col_' + id
+  languageEnglishNameInputCol.style.display = 'none'
+  languageEnglishNameInputCol.innerHTML = `
+    <label for="languageDisplayNameInput_${id}" class="form-label">
+      English name
+      <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="The English name of the language." style="font-size: 0.55em;">?</span>
+    </label>
+    `
+  row.appendChild(languageEnglishNameInputCol)
+
+  const languageEnglishNameInput = document.createElement('input')
+  languageEnglishNameInput.classList = 'form-control '
+  languageEnglishNameInput.setAttribute('type', 'text')
+  languageEnglishNameInput.setAttribute('id', 'languageEnglishNameInput_' + id)
+  languageEnglishNameInputCol.appendChild(languageEnglishNameInput)
+
+  const addButtonCol = document.createElement('div')
+  addButtonCol.classList = 'col-12 col-md-6 col-lg-4'
+  row.appendChild(addButtonCol)
+
+  const addButton = document.createElement('button')
+  addButton.classList = 'btn btn-primary w-100'
+  addButton.innerHTML = 'Add'
+  addButtonCol.appendChild(addButton)
+
+  const warningCol = document.createElement('div')
+  warningCol.classList = 'col-12 mt-1'
+  warningCol.style.display = 'none'
+  warningCol.innerHTML = `
+  <span class="text-danger">You must enter all fields to add a custom language.</span>
+  `
+  row.appendChild(warningCol)
+
+  // Bind event listeners
+  languageSelect.addEventListener('change', (ev) => {
+    if (ev.target.value === 'other') {
+      document.querySelectorAll('.custom-lang-col_' + id).forEach((el) => {
+        el.style.display = 'block'
+      })
+    } else {
+      document.querySelectorAll('.custom-lang-col_' + id).forEach((el) => {
+        el.style.display = 'none'
+        el.querySelector('input').value = ''
+      })
+      warningCol.style.display = 'none'
+    }
+  })
+
+  addButton.addEventListener('click', (ev) => {
+    let code = languageSelect.value
+    let displayName, displayNameEn
+    if (code === 'other') {
+      code = languageCodeInput.value.trim()
+      displayName = languageDisplayNameInput.value.trim()
+      displayNameEn = languageEnglishNameInput.value.trim()
+
+      if ((code === '') || (displayName === '') || (displayNameEn === '')) {
+        warningCol.style.display = 'block'
+        return
+      }
+    } else {
+      displayNameEn = getLanguageDisplayName(code, true)
+      displayName = getLanguageDisplayName(code)
+    }
+    callback(code, displayName, displayNameEn)
+    languageSelect.value = 'en-gb'
+    languageCodeInput.value = ''
+    languageCodeInputCol.style.display = 'none'
+    languageDisplayNameInput.value = ''
+    languageDisplayNameInputCol.style.display = 'none'
+    languageEnglishNameInput.value = ''
+    languageEnglishNameInputCol.style.display = 'none'
+    warningCol.style.display = 'none'
+  })
+}
+
 export function initializeDefinition () {
   // Create a blank definition at save it to workingDefinition.
 

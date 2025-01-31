@@ -579,7 +579,7 @@
               <div id="content" class="accordion-collapse collapse" data-bs-parent="#topLevelAccordion">
                 <div class="accordion-body">
                   <div class="row gy-2">
-                    <div class="row gy-2 align-items-center">
+                    <div class="row gy-2 align-items-end">
                       <div class="col-12 col-md-6 col-lg-4">
                         <button id="manageContentButton" class="btn btn-primary w-100">Manage content</button>
                       </div>
@@ -591,15 +591,11 @@
                       </div>
                       <H5 class="mt-2">Add a langauge</H5>
                       <i>For each language you suppot, you need to match columns in your spreadsheet to properties of the browser.</i>
-                      <div class="col-12 col-md-6">
-                        <select id="languageSelect" class="form-select"></select>
-                      </div>
-                      <div class="col-12 col-md-6 col-lg-4">
-                        <button id="languageAddButton" class="btn btn-primary w-100">Add</button>
-                      </div>
+                      <div id="language-picker"></div>
                       <div class="col-12 mt-1">
                         <span id="languageAddExistsWarning" class="text-danger">You have already included this language.</span>
                       </div>
+
                     </div>
                     <H5>Current langauges</H5>
                     <nav>

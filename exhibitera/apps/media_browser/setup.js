@@ -441,23 +441,9 @@ function editDefinition (uuid = '') {
   document.getElementById('previewFrame').src = '../media_browser.html?standalone=true&definition=' + def.uuid
 }
 
-function populateLanguagePicker () {
-  // Build the language picker based on available languages
+function addLanguage (code, displayName, displayNameEn) {
+  // Add the specified language to the definition and create a tab for it
 
-  const select = document.getElementById('languageSelect')
-  for (const lang of exSetup.config.languages) {
-    const option = new Option(lang.name_en, lang.code)
-    select.appendChild(option)
-  }
-  select.value = 'en-gb'
-}
-
-function addLanguage () {
-  // Add a new supported language to the definition.
-
-  const code = document.getElementById('languageSelect').value
-  const displayNameEn = exSetup.getLanguageDisplayName(code, true)
-  const displayName = exSetup.getLanguageDisplayName(code)
   const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
 
   // Check if name or code already exist
@@ -486,8 +472,7 @@ function addLanguage () {
   createLanguageTab(code, displayNameEn)
 
   $('#definitionSaveButton').data('workingDefinition', structuredClone(workingDefinition))
-  document.getElementById('languageNameInput').value = ''
-  document.getElementById('languageCodeInput').value = ''
+  exSetup.previewDefinition(true)
 }
 
 function createLanguageTab (code, displayName) {
@@ -1267,7 +1252,6 @@ document.getElementById('wizardUploadMediaButton').addEventListener('click', () 
 })
 
 // Main buttons
-document.getElementById('languageAddButton').addEventListener('click', addLanguage)
 document.getElementById('manageContentButton').addEventListener('click', (event) => {
   exFileSelect.createFileSelectionModal({ manage: true })
 })
@@ -1393,7 +1377,7 @@ if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').match
 }
 
 // Populate available languages
-populateLanguagePicker()
+exSetup.createLanguagePicker('language-picker', addLanguage)
 
 // Set helper address for use with exCommon.makeHelperRequest
 exCommon.config.helperAddress = window.location.origin
