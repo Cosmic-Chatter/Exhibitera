@@ -42,6 +42,9 @@ html, body {
 .comp-image-contain {
     object-fit: contain!important;
 }
+.hidden {
+    opacity: 0;
+}
 .icon-container{
     width: 100%;
     aspect-ratio: 16/9;
@@ -180,6 +183,7 @@ html, body {
     color: #f3e9f3;
     font-size: 1.5vmax;
     padding-bottom: 3.2vh;
+    text-align: center;
 }
 #title {
     color: #f3e9f3;

@@ -5,7 +5,7 @@ const base = document.getElementById('baseDiv')
 
 let currentDefintion = ''
 let clicked = 0
-let currentLang = 'en'
+let currentLang = null
 let timer = 0 // Reference to setTimeout for reseting the view
 resetTimer()
 
@@ -119,7 +119,7 @@ function loadImages (item) {
 
   const overlayImg = document.getElementById('overlayImg')
   const baseImg = document.getElementById('baseImg')
-  console.log(item)
+
   overlayImg.src = exCommon.config.helperAddress + '/content/' + item.image2
   baseImg.src = exCommon.config.helperAddress + '/content/' + item.image1
 
@@ -135,12 +135,31 @@ function loadImages (item) {
   // Reset the slider to the middle
   slide(w / 2)
 
+  // Configure the text areas
+  const image1Label = document.getElementById('image1Label')
+  const image2Label = document.getElementById('image2Label')
+  if (item?.localization?.[currentLang]?.image1_name) {
+    image1Label.innerHTML = item?.localization?.[currentLang]?.image1_name || ''
+    image1Label.classList.remove('hidden')
+  } else {
+    image1Label.classList.add('hidden')
+  }
+  if (item?.localization?.[currentLang]?.image2_name) {
+    image2Label.innerHTML = item?.localization?.[currentLang]?.image2_name || ''
+    image2Label.classList.remove('hidden')
+  } else {
+    image2Label.classList.add('hidden')
+  }
+
   // Hide the menu
   document.getElementById('mainMenu').style.display = 'none'
 }
 
 function loadDefinition (definition) {
   // A function to configure content based on the provided configuration.
+
+  currentLang = definition?.language_order[0] || null
+
   populateItemList(definition)
 }
 
@@ -180,7 +199,7 @@ function populateItemList (def) {
 
     const label = document.createElement('div')
     label.classList = 'button-label'
-    label.innerHTML = item.name
+    label.innerHTML = item?.localization?.[currentLang]?.name
     col.appendChild(label)
   }
 }
@@ -188,11 +207,11 @@ function populateItemList (def) {
 function localize (lang) {
   // Use the localization to switch to the given language
 
-  const local = localization[lang]
+  // const local = localization[lang]
 
-  Object.keys(local).forEach((key) => {
-    document.getElementById(key).innerHTML = local[key]
-  })
+  // Object.keys(local).forEach((key) => {
+  //   document.getElementById(key).innerHTML = local[key]
+  // })
 }
 
 function resetTimer () {

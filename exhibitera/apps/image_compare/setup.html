@@ -204,11 +204,33 @@
             <div class="col-12 mt-2">
               <h3>Content</h3>
               <div class="row mt-2 gy-2 align-items-top">
-                <div class="col-12">Add and arrange the content for your definition:</div>
+                <H4>Languages</H4>
+                <div id="language-select"></div>
+                <div id="languageList" class="row gy-2"></div>
+
+                <H4>Home screen text</H4>
+                <div class="col-6">
+                  <label class="form-label" for="homeTitle">Title</label>
+                  <input id="homeTitle" class="form-control" type="text">
+                </div>
+                <div class="col-6">
+                  <label class="form-label" for="homeSubtitle">Subtitle</label>
+                  <input id="homeSubtitle" class="form-control" type="text">
+                </div>
+
+                <H4 class="mt-2">Image pairs</H4>
+                <div class="mt-2 fst-italic">Your app can contain up to six pairs of images for guests to explore. Image 1 will be placed below image 2.</div>
                 <div class="col-12 col-md-6 col-lg-4 col-xxl-3">
                   <button id="addItemButton" class="btn btn-primary w-100">Add image pair</button>
                 </div>
-                <div id="itemList" class="col-12 row gy-2 align-items-start"></div>
+                <div class="col-12">
+                  <nav>
+                    <div id="contentNav" class="nav nav-tabs" role="tablist"></div>
+                  </nav>
+                  <div class="tab-content mx-2" id="contentNavContent"></div>
+                </div>
+                                
+                
               </div>
               <h3 class="mt-3">Appearance</h3>
               <h4>Colors</h4>

@@ -20,51 +20,11 @@ async function initializeWizard () {
   document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'none'
 }
 
-function initializeDefinition () {
-  // Create a blank definition at save it to workingDefinition.
-
-  return new Promise(function (resolve, reject) {
-    // Get a new temporary uuid
-    exCommon.makeHelperRequest({
-      method: 'GET',
-      endpoint: '/uuid/new'
-    })
-      .then((response) => {
-        $('#definitionSaveButton').data('initialDefinition', {
-          uuid: response.uuid,
-          content: {},
-          content_order: [],
-          style: {
-            background: {
-              mode: 'color',
-              color: '#000'
-            }
-          },
-          watermark: {}
-        })
-        $('#definitionSaveButton').data('workingDefinition', {
-          uuid: response.uuid,
-          content: {},
-          content_order: [],
-          style: {
-            background: {
-              mode: 'color',
-              color: '#000'
-            }
-          },
-          watermark: {}
-        })
-        exSetup.previewDefinition(false)
-        resolve()
-      })
-  })
-}
-
 async function clearDefinitionInput (full = true) {
   // Clear all input related to a defnition
 
   if (full === true) {
-    await initializeDefinition()
+    await exSetup.initializeDefinition()
   }
 
   // Definition details
@@ -76,8 +36,6 @@ async function clearDefinitionInput (full = true) {
     gradient_color_1: '#000',
     gradient_color_2: '#000'
   })
-
-  document.getElementById('itemList').innerHTML = ''
 }
 
 function editDefinition (uuid = '') {
@@ -91,6 +49,7 @@ function editDefinition (uuid = '') {
 
   $('#definitionNameInput').val(def.name)
   rebuildItemList()
+  rebuildLanguageList()
 
   if ('style' in def === false) {
     def.style = {
@@ -128,34 +87,6 @@ function editDefinition (uuid = '') {
   document.getElementById('previewFrame').src = '../image_compare.html?standalone=true&definition=' + def.uuid
 }
 
-function saveDefinition () {
-  // Collect inputted information to save the definition
-
-  const definition = $('#definitionSaveButton').data('workingDefinition')
-  const initialDefinition = $('#definitionSaveButton').data('initialDefinition')
-  definition.app = 'image_compare'
-  definition.name = $('#definitionNameInput').val()
-  definition.uuid = initialDefinition.uuid
-
-  exCommon.writeDefinition(definition)
-    .then((result) => {
-      if ('success' in result && result.success === true) {
-        console.log('Saved!')
-        // Create a thumbnail
-        createThumbnail()
-
-        // Update the UUID in case we have created a new definition
-        $('#definitionSaveButton').data('initialDefinition', structuredClone(definition))
-        exCommon.getAvailableDefinitions('image_compare')
-          .then((response) => {
-            if ('success' in response && response.success === true) {
-              exSetup.populateAvailableDefinitions(response.definitions)
-            }
-          })
-      }
-    })
-}
-
 function addItem () {
   // Add an item to the working defintiion
 
@@ -169,36 +100,41 @@ function addItem () {
   workingDefinition.content[item.uuid] = item
   workingDefinition.content_order.push(item.uuid)
 
-  createItemHTML(item, workingDefinition.content_order.length)
+  createItemHTML(item, workingDefinition.content_order.length, true)
   console.log($('#definitionSaveButton').data('workingDefinition'))
 }
 
-function createItemHTML (item, num) {
-  // Add a blank item to the itemList
-  const itemCol = document.createElement('div')
-  itemCol.classList = 'col-12 content-item'
-  itemCol.setAttribute('id', 'Item_' + item.uuid)
+function createItemHTML (item, num, show = false) {
+  // Create an item tab and pane
 
-  const card = document.createElement('div')
-  card.classList = 'card'
-  itemCol.appendChild(card)
+  console.log(item)
 
-  const cardBody = document.createElement('div')
-  cardBody.classList = 'card-body row gy-2'
-  card.appendChild(cardBody)
+  // Create the tab button
+  const tabButton = document.createElement('button')
+  tabButton.classList = 'nav-link item-tab'
+  tabButton.setAttribute('id', 'itemTab_' + item.uuid)
+  tabButton.setAttribute('data-bs-toggle', 'tab')
+  tabButton.setAttribute('data-bs-target', '#itemPane_' + item.uuid)
+  tabButton.setAttribute('type', 'button')
+  tabButton.setAttribute('role', 'tab')
+  tabButton.innerHTML = String(num)
+  document.getElementById('contentNav').appendChild(tabButton)
 
-  const numberCol = document.createElement('div')
-  numberCol.classList = 'col-12'
-  cardBody.appendChild(numberCol)
+  // Create corresponding pane
+  const tabPane = document.createElement('div')
+  tabPane.classList = 'tab-pane fade'
+  tabPane.setAttribute('id', 'itemPane_' + item.uuid)
+  tabPane.setAttribute('role', 'tabpanel')
+  tabPane.setAttribute('aria-labelledby', 'itemTab_' + item.uuid)
+  document.getElementById('contentNavContent').appendChild(tabPane)
 
-  const number = document.createElement('div')
-  number.classList = 'w-100 fw-bold h4 mb-3 text-center'
-  number.innerHTML = num
-  numberCol.appendChild(number)
+  const row = document.createElement('div')
+  row.classList = 'row gy-2 mt-2'
+  tabPane.appendChild(row)
 
   const image1Pane = document.createElement('div')
-  image1Pane.classList = 'col-12 col-md-6 d-flex flex-column justify-content-end'
-  cardBody.appendChild(image1Pane)
+  image1Pane.classList = 'col-12 col-md-6 d-flex flex-column justify-content-start'
+  row.appendChild(image1Pane)
 
   const image1Row = document.createElement('div')
   image1Row.classList = 'row gy-2'
@@ -246,8 +182,8 @@ function createItemHTML (item, num) {
   })
 
   const image2Pane = document.createElement('div')
-  image2Pane.classList = 'col-12 col-md-6 d-flex flex-column justify-content-end'
-  cardBody.appendChild(image2Pane)
+  image2Pane.classList = 'col-12 col-md-6 d-flex flex-column justify-content-start'
+  row.appendChild(image2Pane)
 
   const image2Row = document.createElement('div')
   image2Row.classList = 'row gy-2'
@@ -295,7 +231,7 @@ function createItemHTML (item, num) {
 
   const modifyPane = document.createElement('div')
   modifyPane.classList = 'col-12'
-  cardBody.appendChild(modifyPane)
+  row.appendChild(modifyPane)
 
   const modifyRow = document.createElement('div')
   modifyRow.classList = 'row gy-2'
@@ -373,528 +309,132 @@ function createItemHTML (item, num) {
   })
   deleteCol.appendChild(deleteButton)
 
-  // if (item.filename !== '') setItemContent(item.uuid, itemCol, item.filename, item.type)
+  const localizeHeader = document.createElement('H5')
+  localizeHeader.innerHTML = 'Item content'
+  row.appendChild(localizeHeader)
 
-  document.getElementById('itemList').appendChild(itemCol)
+  const localizePane = document.createElement('div')
+  localizePane.classList = 'col-12'
+  row.appendChild(localizePane)
 
-  // Annotations
-  if ('annotations' in item) {
-    for (const key of Object.keys(item.annotations)) {
-      createAnnoationHTML(item.uuid, item.annotations[key])
-    }
-  }
+  createItemLocalizationHTML(item, localizePane)
 
   // Activate tooltips
   const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
   tooltipTriggerList.map(function (tooltipTriggerEl) {
     return new bootstrap.Tooltip(tooltipTriggerEl)
   })
+
+  if (show === true) tabButton.click()
 }
 
-function showAnnotateFromJSONModal (itemUUID, annotationUUID = null) {
-  // Prepare and show the modal for creating an annotation from JSON.
+function createItemLocalizationHTML (item, pane) {
+  // Create the GUI for editing the localization of an item.
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+  const def = $('#definitionSaveButton').data('workingDefinition')
 
-  const urlInput = document.getElementById('annotateFromJSONModalURLInput')
-  const path = document.getElementById('annotateFromJSONModalPath')
-  const title = document.getElementById('annotateFromJSONModalTitle')
-  const button = document.getElementById('annotateFromJSONModalSubmitButton')
-  document.getElementById('annotateFromJSONModalTreeView').innerHTML = ''
-  path.setAttribute('data-itemUUID', itemUUID)
+  // Create the basic elements
+  const nav = document.createElement('nav')
+  pane.appendChild(nav)
 
-  if (annotationUUID != null) {
-    // We are editing rather than creating new
+  const tabList = document.createElement('div')
+  tabList.classList = 'nav nav-tabs'
+  tabList.setAttribute('role', 'tablist')
+  nav.appendChild(tabList)
 
-    const details = workingDefinition.content[itemUUID].annotations[annotationUUID]
-    title.innerHTML = 'Update a JSON annotation'
-    button.innerHTML = 'Update'
-    path.value = details.path.join(' > ')
-    if (details.type === 'url') {
-      urlInput.value = details.file
-    }
+  const navContent = document.createElement('div')
+  navContent.classList = 'tab-content mx-2'
+  pane.appendChild(navContent)
 
-    path.setAttribute('data-annotationUUID', annotationUUID)
-    populateAnnotateFromJSONModal(details.file, details.type)
-  } else {
-    // We are creating a new annotation
-    title.innerHTML = 'Create an annotation from JSON'
-    button.innerHTML = 'Create'
-    urlInput.value = ''
-    path.value = ''
-    path.setAttribute('data-annotationUUID', '')
-  }
+  let i = 0
+  for (const code of def.language_order) {
+    const lang = def.languages[code]
 
-  $('#annotateFromJSONModal').modal('show')
-}
+    // Create the tab button
+    const tabButton = document.createElement('button')
+    tabButton.classList = 'nav-link item-tab'
+    tabButton.setAttribute('id', 'itemLocalizationTab_' + item.uuid + '_' + code)
+    tabButton.setAttribute('data-bs-toggle', 'tab')
+    tabButton.setAttribute('data-bs-target', '#itemLocalizationPane_' + item.uuid + '_' + code)
+    tabButton.setAttribute('type', 'button')
+    tabButton.setAttribute('role', 'tab')
+    tabButton.innerHTML = String(lang.englishName)
+    tabList.appendChild(tabButton)
 
-function populateAnnotateFromJSONModal (file, type = 'file') {
-  // Retrieve the given JSON file and parse it into a tree.
-  // 'type' should be one of [file | url]
+    // Create corresponding pane
+    const tabPane = document.createElement('div')
+    tabPane.classList = 'tab-pane fade'
+    tabPane.setAttribute('id', 'itemLocalizationPane_' + item.uuid + '_' + code)
+    tabPane.setAttribute('role', 'tabpanel')
+    tabPane.setAttribute('aria-labelledby', 'itemLocalizationTab_' + item.uuid + '_' + code)
+    navContent.appendChild(tabPane)
 
-  // Store the file for later use.
-  const el = document.getElementById('annotateFromJSONModalPath')
-  el.setAttribute('data-file', file)
-  el.setAttribute('data-type', type)
+    const tabRow = document.createElement('div')
+    tabRow.classList = 'row gy-2 mt-2'
+    tabPane.appendChild(tabRow)
 
-  const parent = document.getElementById('annotateFromJSONModalTreeView')
-  parent.innerHTML = ''
+    const nameCol = document.createElement('div')
+    nameCol.classList = 'col-12 col-md-6 col-xl-4'
+    tabRow.appendChild(nameCol)
 
-  if (type === 'file') {
-    exCommon.makeServerRequest({
-      method: 'GET',
-      endpoint: '/content/' + file,
-      noCache: true
+    const nameLabel = document.createElement('label')
+    nameLabel.classList = 'form-label'
+    nameLabel.innerHTML = 'Item name'
+    nameCol.appendChild(nameLabel)
+
+    const nameInput = document.createElement('input')
+    nameInput.classList = 'form-control'
+    nameInput.value = item?.localization?.[code]?.name || ''
+    nameInput.addEventListener('change', () => {
+      exSetup.updateWorkingDefinition(['content', item.uuid, 'localization', code, 'name'], nameInput.value.trim())
+      exSetup.previewDefinition(true)
     })
-      .then((text) => {
-        createTreeSubEntries(parent, text)
-      })
-  } else if (type === 'url') {
-    $.getJSON(file, function (text) {
-      createTreeSubEntries(parent, text)
+    nameCol.appendChild(nameInput)
+
+    const image1NameCol = document.createElement('div')
+    image1NameCol.classList = 'col-12 col-md-6 col-xl-4'
+    tabRow.appendChild(image1NameCol)
+
+    const image1NameLabel = document.createElement('label')
+    image1NameLabel.classList = 'form-label'
+    image1NameLabel.innerHTML = `
+    Image 1 name
+    <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="A very short name that indentifies the image, such as a date." style="font-size: 0.55em;">?</span>
+    `
+    image1NameCol.appendChild(image1NameLabel)
+
+    const image1NameInput = document.createElement('input')
+    image1NameInput.classList = 'form-control'
+    image1NameInput.value = item?.localization?.[code]?.image1_name || ''
+    image1NameInput.addEventListener('change', () => {
+      exSetup.updateWorkingDefinition(['content', item.uuid, 'localization', code, 'image1_name'], image1NameInput.value.trim())
+      exSetup.previewDefinition(true)
     })
-      .fail((error) => {
-        console.log(error)
-        if (error.statusText === 'Not Found') {
-          parent.innerHTML = 'The entered URL is unreachable.'
-        } else if (error.statusText === 'parsererror') {
-          parent.innerHTML = 'The entered URL does not return valid JSON.'
-        } else {
-          parent.innerHTML = 'An unknown error has occurred. This often occurs because a CORS request has been blocked. Make sure the server you are accessing allows cross-origin requests.'
-        }
-      })
-  }
-}
+    image1NameCol.appendChild(image1NameInput)
 
-function createTreeSubEntries (parent, dict, path = []) {
-  // Take the keys of the given dict and turn them into <li> elements,
-  // creating sub-trees with recursive calls.
-  // 'path' gives the hierarchy of keys to reach 'dict'
+    const image2NameCol = document.createElement('div')
+    image2NameCol.classList = 'col-12 col-md-6 col-xl-4'
+    tabRow.appendChild(image2NameCol)
 
-  for (const key of Object.keys(dict)) {
-    const li = document.createElement('li')
-    if (typeof dict[key] === 'object') {
-      // A nested dict
-      const name = document.createElement('span')
-      name.classList = 'caret'
-      name.innerHTML = key
-      li.appendChild(name)
-      const ul = document.createElement('ul')
-      ul.classList = 'nested'
-      name.addEventListener('click', function () {
-        ul.classList.toggle('active')
-        this.classList.toggle('caret-down')
-      })
-      li.appendChild(ul)
-      createTreeSubEntries(ul, dict[key], [...path, key])
-    } else {
-      const span = document.createElement('span')
-      span.innerHTML = `<u>${key}</u>: ${dict[key]}`
-      span.style.cursor = 'pointer'
-      span.addEventListener('click', () => {
-        selectAnnotationJSONPath([...path, key])
-      })
-      li.appendChild(span)
-    }
-    parent.appendChild(li)
-  }
-}
+    const image2NameLabel = document.createElement('label')
+    image2NameLabel.classList = 'form-label'
+    image2NameLabel.innerHTML = `
+    Image 2 name
+    <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="A very short name that indentifies the image, such as a date." style="font-size: 0.55em;">?</span>
+    `
+    image2NameCol.appendChild(image2NameLabel)
 
-function selectAnnotationJSONPath (path) {
-  // Called when a field is clicked in the JSON tree view
+    const image2NameInput = document.createElement('input')
+    image2NameInput.classList = 'form-control'
+    image2NameInput.value = item?.localization?.[code]?.image2_name || ''
+    image2NameInput.addEventListener('change', () => {
+      exSetup.updateWorkingDefinition(['content', item.uuid, 'localization', code, 'image2_name'], image2NameInput.value.trim())
+      exSetup.previewDefinition(true)
+    })
+    image2NameCol.appendChild(image2NameInput)
 
-  const el = document.getElementById('annotateFromJSONModalPath')
-  el.value = path.join(' > ')
-  el.setAttribute('data-path', JSON.stringify(path))
-}
-
-function addAnnotationFromModal () {
-  // Collect the needed information and add the annotation.
-
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
-
-  const el = document.getElementById('annotateFromJSONModalPath')
-  const itemUUID = el.getAttribute('data-itemUUID')
-  const path = JSON.parse(el.getAttribute('data-path'))
-  const file = el.getAttribute('data-file')
-  const type = el.getAttribute('data-type')
-  let annotationUUID = el.getAttribute('data-annotationUUID')
-  let annotation
-
-  if ((annotationUUID == null) || (annotationUUID === '')) {
-    // We are creating a new annotation.
-    annotationUUID = exCommon.uuid()
-    annotation = {
-      uuid: annotationUUID,
-      path,
-      file,
-      type
-    }
-    createAnnoationHTML(itemUUID, annotation)
-  } else {
-    // We are editing an existing annotation.
-    annotation = workingDefinition.content[itemUUID].annotations[annotationUUID]
-    annotation.path = path
-    annotation.file = file
-    annotation.type = type
-    document.getElementById('Annotation' + annotation.uuid + 'Title').innerHTML = '<b>Annotation: </b>' + path.slice(-1)
-  }
-
-  let annotations
-  if ('annotations' in workingDefinition.content[itemUUID]) {
-    annotations = workingDefinition.content[itemUUID].annotations
-    annotations[annotationUUID] = annotation
-  } else {
-    annotations = {}
-    annotations[annotationUUID] = annotation
-  }
-  exSetup.updateWorkingDefinition(['content', itemUUID, 'annotations'], annotations)
-  exSetup.previewDefinition(true)
-  document.getElementById('annotateFromJSONModalTreeView').innerHTML = ''
-  $('#annotateFromJSONModal').modal('hide')
-}
-
-function createAnnoationHTML (itemUUID, details) {
-  // Create the HTML represetnation of an annotation and add it to the item.
-
-  const col = document.createElement('div')
-  col.classList = 'col-12 border rounded py-2'
-  col.setAttribute('id', 'Annotation' + details.uuid)
-
-  const row = document.createElement('div')
-  row.classList = 'row gy-2'
-  col.appendChild(row)
-
-  const title = document.createElement('div')
-  title.classList = 'col-12 text-center'
-  title.setAttribute('id', 'Annotation' + details.uuid + 'Title')
-  title.innerHTML = '<b>Annotation: </b>' + details.path.slice(-1)
-  row.appendChild(title)
-
-  const xPosCol = document.createElement('div')
-  xPosCol.classList = 'col-12 col-md-6 col-lg-3 d-flex align-items-end'
-  row.appendChild(xPosCol)
-
-  const xPosDiv = document.createElement('div')
-  xPosDiv.classList = 'w-100'
-  xPosCol.appendChild(xPosDiv)
-
-  const xPosLabel = document.createElement('label')
-  xPosLabel.classList = 'form-label'
-  xPosLabel.innerHTML = 'Horizontal position'
-  xPosLabel.setAttribute('for', 'xPosInput' + details.uuid)
-  xPosDiv.appendChild(xPosLabel)
-
-  const xPosInput = document.createElement('input')
-  xPosInput.classList = 'form-control'
-  xPosInput.setAttribute('type', 'number')
-  xPosInput.setAttribute('id', 'xPosInput' + details.uuid)
-  xPosInput.setAttribute('min', '0')
-  xPosInput.setAttribute('max', '100')
-  xPosInput.setAttribute('step', '1')
-  if ('x_position' in details) {
-    xPosInput.value = details.x_position
-  } else {
-    xPosInput.value = 50
-  }
-  xPosInput.addEventListener('change', (event) => {
-    exSetup.updateWorkingDefinition(['content', itemUUID, 'annotations', details.uuid, 'x_position'], event.target.value)
-    exSetup.previewDefinition(true)
-  })
-  xPosDiv.appendChild(xPosInput)
-
-  const yPosCol = document.createElement('div')
-  yPosCol.classList = 'col-12 col-md-6 col-lg-3 d-flex align-items-end'
-  row.appendChild(yPosCol)
-
-  const yPosDiv = document.createElement('div')
-  yPosDiv.classList = 'w-100'
-  yPosCol.appendChild(yPosDiv)
-
-  const yPosLabel = document.createElement('label')
-  yPosLabel.classList = 'form-label'
-  yPosLabel.innerHTML = 'Vertical position'
-  yPosLabel.setAttribute('for', 'yPosInput' + details.uuid)
-  yPosDiv.appendChild(yPosLabel)
-
-  const yPosInput = document.createElement('input')
-  yPosInput.classList = 'form-control'
-  yPosInput.setAttribute('type', 'number')
-  yPosInput.setAttribute('id', 'yPosInput' + details.uuid)
-  yPosInput.setAttribute('min', '0')
-  yPosInput.setAttribute('max', '100')
-  yPosInput.setAttribute('step', '1')
-  if ('y_position' in details) {
-    yPosInput.value = details.y_position
-  } else {
-    yPosInput.value = 50
-  }
-  yPosInput.addEventListener('change', (event) => {
-    exSetup.updateWorkingDefinition(['content', itemUUID, 'annotations', details.uuid, 'y_position'], event.target.value)
-    exSetup.previewDefinition(true)
-  })
-  yPosDiv.appendChild(yPosInput)
-
-  const alignCol = document.createElement('div')
-  alignCol.classList = 'col-12 col-md-6 col-lg-3 d-flex align-items-end'
-  row.appendChild(alignCol)
-
-  const alignDiv = document.createElement('div')
-  alignDiv.classList = 'w-100'
-  alignCol.appendChild(alignDiv)
-
-  const alignLabel = document.createElement('label')
-  alignLabel.classList = 'form-label'
-  alignLabel.innerHTML = 'Text alignment'
-  alignLabel.setAttribute('for', 'alignSelect' + details.uuid)
-  alignDiv.appendChild(alignLabel)
-
-  const alignSelect = document.createElement('select')
-  alignSelect.classList = 'form-select'
-  alignSelect.appendChild(new Option('Left', 'left'))
-  alignSelect.appendChild(new Option('Center', 'center'))
-  alignSelect.appendChild(new Option('Right', 'right'))
-  if ('align' in details) {
-    alignSelect.value = details.align
-  }
-  alignSelect.addEventListener('change', (event) => {
-    exSetup.updateWorkingDefinition(['content', itemUUID, 'annotations', details.uuid, 'align'], event.target.value)
-    exSetup.previewDefinition(true)
-  })
-  alignDiv.appendChild(alignSelect)
-
-  const fontSizeCol = document.createElement('div')
-  fontSizeCol.classList = 'col-12 col-md-6 col-lg-3 d-flex align-items-end'
-  row.appendChild(fontSizeCol)
-
-  const fontSizeDiv = document.createElement('div')
-  fontSizeCol.appendChild(fontSizeDiv)
-
-  const fontSizeLabel = document.createElement('label')
-  fontSizeLabel.classList = 'form-label'
-  fontSizeLabel.innerHTML = 'Text size'
-  fontSizeLabel.setAttribute('for', 'fontSizeInput' + details.uuid)
-  fontSizeDiv.appendChild(fontSizeLabel)
-
-  const fontSizeInput = document.createElement('input')
-  fontSizeInput.classList = 'form-control'
-  fontSizeInput.setAttribute('type', 'number')
-  fontSizeInput.setAttribute('id', 'fontSizeInput' + details.uuid)
-  fontSizeInput.setAttribute('min', '1')
-  fontSizeInput.setAttribute('step', '1')
-  if ('font_size' in details) {
-    fontSizeInput.value = details.font_size
-  } else {
-    fontSizeInput.value = 20
-  }
-  fontSizeInput.addEventListener('change', (event) => {
-    exSetup.updateWorkingDefinition(['content', itemUUID, 'annotations', details.uuid, 'font_size'], event.target.value)
-    exSetup.previewDefinition(true)
-  })
-  fontSizeDiv.appendChild(fontSizeInput)
-
-  const fontColorCol = document.createElement('div')
-  fontColorCol.classList = 'col-12 col-md-6 col-lg-3 d-flex align-items-end'
-  row.appendChild(fontColorCol)
-
-  const fontColorDiv = document.createElement('div')
-  fontColorCol.appendChild(fontColorDiv)
-
-  const fontColorLabel = document.createElement('label')
-  fontColorLabel.classList = 'form-label'
-  fontColorLabel.innerHTML = 'Text color'
-  fontColorLabel.setAttribute('for', 'fontColorInput' + details.uuid)
-  fontColorDiv.appendChild(fontColorLabel)
-
-  const fontColorInput = document.createElement('input')
-  fontColorInput.classList = 'coloris'
-  fontColorInput.style.height = '35px'
-  fontColorInput.setAttribute('id', 'fontColorInput' + details.uuid)
-  if ('color' in details) {
-    fontColorInput.value = details.color
-  } else {
-    fontColorInput.value = 'black'
-  }
-  fontColorInput.addEventListener('change', (event) => {
-    exSetup.updateWorkingDefinition(['content', itemUUID, 'annotations', details.uuid, 'color'], event.target.value)
-    exSetup.previewDefinition(true)
-  })
-  fontColorDiv.appendChild(fontColorInput)
-  setTimeout(setUpColorPickers, 100)
-
-  const fontFaceCol = document.createElement('div')
-  fontFaceCol.classList = 'col-12 col-md-6'
-  row.appendChild(fontFaceCol)
-
-  const actionCol = document.createElement('div')
-  actionCol.classList = 'col-12 col-md-6 col-lg-3 d-flex align-items-end'
-  row.appendChild(actionCol)
-
-  const actionDropdown = document.createElement('div')
-  actionDropdown.classList = 'dropdown w-100'
-  actionCol.appendChild(actionDropdown)
-
-  const actionButton = document.createElement('button')
-  actionButton.classList = 'btn btn-primary dropdown-toggle w-100'
-  actionButton.setAttribute('type', 'button')
-  actionButton.setAttribute('data-bs-toggle', 'dropdown')
-  actionButton.setAttribute('aria-expanded', false)
-  actionButton.innerHTML = 'Action'
-  actionDropdown.appendChild(actionButton)
-
-  const actionMenu = document.createElement('ul')
-  actionMenu.classList = 'dropdown-menu'
-  actionDropdown.appendChild(actionMenu)
-
-  const li1 = document.createElement('li')
-  const li2 = document.createElement('li')
-  actionMenu.appendChild(li1)
-  actionMenu.appendChild(li2)
-
-  const editAction = document.createElement('a')
-  editAction.classList = 'dropdown-item text-info'
-  editAction.innerHTML = 'Edit JSON field'
-  editAction.style.cursor = 'pointer'
-  editAction.addEventListener('click', () => {
-    showAnnotateFromJSONModal(itemUUID, details.uuid)
-  })
-  li1.appendChild(editAction)
-
-  const deleteAction = document.createElement('a')
-  deleteAction.classList = 'dropdown-item text-danger'
-  deleteAction.innerHTML = 'Delete'
-  deleteAction.style.cursor = 'pointer'
-  deleteAction.addEventListener('click', () => {
-    document.getElementById('deleteAnnotationModal').setAttribute('data-annotationUUID', details.uuid)
-    document.getElementById('deleteAnnotationModal').setAttribute('data-itemUUID', itemUUID)
-    $('#deleteAnnotationModal').modal('show')
-  })
-  li1.appendChild(deleteAction)
-
-  document.getElementById('annotationRow_' + itemUUID).appendChild(col)
-
-  // Must be after we had the main element to the DOM
-
-  exSetup.createAdvancedFontPicker({
-    parent: fontFaceCol,
-    name: 'Font',
-    path: `content>${itemUUID}>annotations>${details.uuid}>font`,
-    default: 'OpenSans-Regular.ttf'
-  })
-  exSetup.refreshAdvancedFontPickers()
-}
-
-function showChooseURLModal (uuid) {
-  // Prepare and show the modal for choosing content from a URL.
-
-  document.getElementById('chooseURLModal').setAttribute('data-uuid', uuid)
-  document.getElementById('chooseURLModalInput').value = ''
-  document.getElementById('chooseURLModalPreviewVideo').style.display = 'none'
-  document.getElementById('chooseURLModalPreviewImage').style.display = 'none'
-  document.getElementById('chooseURLModalPreviewAudio').style.display = 'none'
-  document.getElementById('chooseURLModalError').style.display = 'none'
-
-  $('#chooseURLModal').modal('show')
-}
-
-async function fetchContentFromURL () {
-  // From the chooseContentModal, fetch the given link and show a preview.
-
-  const url = document.getElementById('chooseURLModalInput').value.trim()
-  const video = document.getElementById('chooseURLModalPreviewVideo')
-  const image = document.getElementById('chooseURLModalPreviewImage')
-  const audio = document.getElementById('chooseURLModalPreviewAudio')
-  const modal = document.getElementById('chooseURLModal')
-  const error = document.getElementById('chooseURLModalError')
-
-  const mimetype = exCommon.guessMimetype(url)
-  modal.setAttribute('data-mimetype', mimetype)
-  console.log(mimetype)
-  if (mimetype === 'video') {
-    video.src = url
-    error.style.display = 'none'
-    video.style.display = 'block'
-    image.style.display = 'none'
-    audio.style.display = 'none'
-    audio.pause()
-  } else if (mimetype === 'image') {
-    image.src = url
-    error.style.display = 'none'
-    video.style.display = 'none'
-    image.style.display = 'block'
-    audio.style.display = 'none'
-    audio.pause()
-    video.pause()
-  } else if (mimetype === 'audio') {
-    audio.src = url
-    error.style.display = 'none'
-    video.style.display = 'none'
-    image.style.display = 'none'
-    audio.style.display = 'block'
-    video.pause()
-  } else {
-    modal.setAttribute('data-mimetype', '')
-    error.style.display = 'block'
-    video.style.display = 'none'
-    image.style.display = 'none'
-    audio.style.display = 'none'
-    audio.pause()
-    video.pause()
-  }
-}
-
-function setContentFromURLModal () {
-  // Set the currently selected file as the item's content.
-
-  const url = document.getElementById('chooseURLModalInput').value.trim()
-  const uuid = document.getElementById('chooseURLModal').getAttribute('data-uuid')
-  const itemEl = document.getElementById('Item_' + uuid)
-  setItemContent(uuid, itemEl, url, 'url')
-
-  $('#chooseURLModal').modal('hide')
-}
-
-function setItemContent (uuid, itemEl, file, type = 'file') {
-  // Populate the given element, item, with content.
-
-  exSetup.updateWorkingDefinition(['content', uuid, 'filename'], file)
-  exSetup.updateWorkingDefinition(['content', uuid, 'type'], type)
-  exSetup.previewDefinition(true)
-
-  const image = itemEl.querySelector('.image-preview')
-  const video = itemEl.querySelector('.video-preview')
-  const fileField = itemEl.querySelector('.file-field')
-
-  itemEl.setAttribute('data-filename', file)
-  itemEl.setAttribute('data-type', type)
-  const mimetype = exCommon.guessMimetype(file)
-  fileField.innerHTML = file
-  if (mimetype === 'audio') {
-    image.src = exFileSelect.getDefaultAudioIcon()
-    image.style.display = 'block'
-    video.style.display = 'none'
-    // Hide the duration input
-    itemEl.querySelector('.duration-col').style.display = 'none'
-  } else if (mimetype === 'image') {
-    if (type === 'file') {
-      image.src = '/thumbnails/' + exCommon.withExtension(file, 'jpg')
-    } else if (type === 'url') {
-      image.src = file
-    }
-    image.style.display = 'block'
-    video.style.display = 'none'
-    // Show the duration input
-    itemEl.querySelector('.duration-col').style.display = 'block'
-  } else if (mimetype === 'video') {
-    if (type === 'file') {
-      video.src = '/thumbnails/' + exCommon.withExtension(file, 'mp4')
-    } else if (type === 'url') {
-      video.src = file
-    }
-    video.style.display = 'block'
-    image.style.display = 'none'
-    // Hide the duration input
-    itemEl.querySelector('.duration-col').style.display = 'none'
+    if (i === 0) tabButton.click()
+    i++
   }
 }
 
@@ -925,20 +465,106 @@ function changeItemOrder (uuid, dir) {
   rebuildItemList()
 }
 
+function rebuildLanguageList () {
+  // Use the definition to rebuild the GUI representation for each language
+
+  const def = $('#definitionSaveButton').data('workingDefinition')
+
+  def.language_order.forEach((code) => {
+    const lang = def.languages[code]
+    createLanguageHTML(code, lang.displayName, lang.englishName)
+  })
+}
+
 function rebuildItemList () {
   // Use the definition to rebuild the GUI representations of each item
 
   const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
 
   // Clear any existing items
-  document.getElementById('itemList').innerHTML = ''
+  document.getElementById('contentNav').innerHTML = ''
+  document.getElementById('contentNavContent').innerHTML = ''
 
   let num = 1
   workingDefinition.content_order.forEach((uuid) => {
     const item = workingDefinition.content[uuid]
-    createItemHTML(item, num)
+    createItemHTML(item, num, num === 1)
     num += 1
   })
+}
+
+function addLanguage (code, displayName, englishName) {
+  // Add a new language to the definition
+
+  const definition = $('#definitionSaveButton').data('workingDefinition')
+
+  exSetup.updateWorkingDefinition(['languages', code], {
+    code, displayName, englishName
+  })
+  definition.language_order.push(code)
+
+  createLanguageHTML(code, displayName, englishName)
+}
+
+function createLanguageHTML (code, displayName, englishName) {
+  // Create the HTML representation of a language.
+
+  const col = document.createElement('div')
+  col.classList = 'col-12'
+
+  const card = document.createElement('div')
+  card.classList = 'card'
+  col.appendChild(card)
+
+  const cardBody = document.createElement('div')
+  cardBody.classList = 'card-body row gy-2 d-flex align-items-center p-2'
+  card.appendChild(cardBody)
+
+  const englishNameCol = document.createElement('div')
+  englishNameCol.classList = 'col-12 col-lg-6'
+  cardBody.appendChild(englishNameCol)
+
+  const englishNameDiv = document.createElement('div')
+  englishNameDiv.innerHTML = englishName
+  englishNameCol.appendChild(englishNameDiv)
+
+  const orderButtonLeftCol = document.createElement('div')
+  orderButtonLeftCol.classList = 'col-4 col-lg-2'
+  cardBody.appendChild(orderButtonLeftCol)
+
+  const orderButtonLeft = document.createElement('button')
+  orderButtonLeft.classList = 'btn btn-info btn-sm w-100'
+  orderButtonLeft.innerHTML = '▲'
+  orderButtonLeft.addEventListener('click', (event) => {
+    // changeItemOrder(item.uuid, -1)
+  })
+  orderButtonLeftCol.appendChild(orderButtonLeft)
+
+  const orderButtonRightCol = document.createElement('div')
+  orderButtonRightCol.classList = 'col-4 col-lg-2'
+  cardBody.appendChild(orderButtonRightCol)
+
+  const orderButtonRight = document.createElement('button')
+  orderButtonRight.classList = 'btn btn-info btn-sm w-100'
+  orderButtonRight.innerHTML = '▼'
+  orderButtonRight.addEventListener('click', (event) => {
+    // changeItemOrder(item.uuid, 1)
+  })
+  orderButtonRightCol.appendChild(orderButtonRight)
+
+  const deleteCol = document.createElement('div')
+  deleteCol.classList = 'col-4 col-lg-2'
+  cardBody.appendChild(deleteCol)
+
+  const deleteButton = document.createElement('button')
+  deleteButton.classList = 'btn btn-danger btn-sm w-100'
+  deleteButton.innerHTML = '×'
+  deleteButton.addEventListener('click', (event) => {
+    // deleteitem(item.uuid)
+  })
+  deleteCol.appendChild(deleteButton)
+
+  document.getElementById('languageList').appendChild(col)
 }
 
 // Set color mode
@@ -976,6 +602,7 @@ function setUpColorPickers () {
 }
 // Call with a slight delay to make sure the elements are loaded
 setTimeout(setUpColorPickers, 100)
+exSetup.createLanguagePicker('language-select', addLanguage)
 
 // Add event listeners
 // -------------------------------------------------------------
@@ -998,7 +625,10 @@ exSetup.configure({
   initializeWizard,
   loadDefinition: editDefinition,
   blankDefinition: {
+    content: {},
+    content_order: [],
     languages: {},
+    language_order: [],
     style: {
       background: {
         color: '#719abf',
