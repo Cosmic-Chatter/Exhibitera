@@ -24,6 +24,14 @@
 
   <body  oncontextmenu="return false" class="no-select">
 
+    <div id="langSwitchDropdown" class="btn-group dropup text-center">
+      <button type="button" class="btn btn-link w-100 h-100 px-0 py-0" data-bs-toggle="dropdown" aria-expanded="false">
+        <img id="langSwitchDropdownIcon" src="_static/icons/translation-icon_white.svg">
+      </button>
+      <ul id="langSwitchOptions" class="dropdown-menu">
+      </ul>
+    </div>
+
     <!-- About image 1 -->
     <div id="image1Modal" class="modal" tabindex="-1">
       <div class="modal-dialog modal-xl modal-dialog-centered">
@@ -92,8 +100,8 @@
         <div id="title">Comparison Sliders</div>
       </div>
       <div id="subtitle" class="col-8 offset-2">Some sliders comparing images</div>
-      <div class="col-8 offset-2">
-        <div id="itemList" class="row row-cols-3 gy-4 gx-5">
+      <div id="itemListContainer" class="col d-flex">
+        <div id="itemList" class="row gy-4 gx-5">
           <!-- pulsing hand indicator -->
           <div id="pulsingHandContainer">
             <img id="pulsingHand" src="_static/icons/hand.svg"></img>

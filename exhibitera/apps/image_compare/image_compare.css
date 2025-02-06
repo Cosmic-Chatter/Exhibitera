@@ -1,3 +1,10 @@
+:root {
+    --col-count-landscape: 4;
+    --col-count-portrait: 2;
+    --itemList-width-landscape: 10; /* Measured out of 12 */
+    --itemList-width-portrait: 10; /* Measured out of 12 */
+}
+
 /* Pulsing hand keyframes */
 @-webkit-keyframes pulsing {0%{width:40%;} 50%{width:50%;} 100%{width:40%;}}
 
@@ -100,6 +107,9 @@ html, body {
     justify-content: center;
     align-items: center; 
 }
+.langSwitch-entry {
+    font-size: 3vmin;
+}
 .modal-title {
     color: #f3e9f3;
     font-size: 3.4vmax;
@@ -128,6 +138,21 @@ html, body {
     padding-top: 1vh;
     padding-bottom: 0.3vh;
     border-radius: 0.5vmax;
+}
+#itemList {
+    margin-top: auto;
+    margin-bottom: auto;
+}
+#itemListContainer {}
+#langSwitchDropdown{
+    position: absolute;
+    width: 5vmax;
+    height: 5vmax;
+    bottom: 0px;
+    right: 0vw;
+    margin-right: 1vmax;
+    margin-bottom: 1vmax;
+    z-index: 12;
 }
 #pulsingHand {
     position: relative;
@@ -201,4 +226,32 @@ html, body {
 }
 #slider-icon{
     font-size: 2vmax;
+}
+
+@media (orientation: landscape) {
+    #itemList {
+        width: calc(var(--itemList-width-landscape)/12 * 100%);
+        margin-left: calc((12 - var(--itemList-width-landscape)) /24 * 100%);
+    }
+    #itemList > * {
+        flex: 0 0 auto;
+        width: calc(100% / var(--col-count-landscape));
+    }
+    #itemListContainer {
+        height: 60vh;
+    }
+}
+
+@media (orientation: portrait) {
+    #itemList {
+        width: calc(var(--itemList-width-portrait)/12 * 100%);
+        margin-left: calc((12 - var(--itemList-width-portrait)) /24 * 100%);
+    }
+    #itemList > * {
+        flex: 0 0 auto;
+        width: calc(100% / var(--col-count-portrait));
+    }
+    #itemListContainer {
+        height: 75vh;
+    }
 }

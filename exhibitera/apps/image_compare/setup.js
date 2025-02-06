@@ -107,7 +107,7 @@ function addItem () {
 function createItemHTML (item, num, show = false) {
   // Create an item tab and pane
 
-  console.log(item)
+  const def = $('#definitionSaveButton').data('workingDefinition')
 
   // Create the tab button
   const tabButton = document.createElement('button')
@@ -117,7 +117,7 @@ function createItemHTML (item, num, show = false) {
   tabButton.setAttribute('data-bs-target', '#itemPane_' + item.uuid)
   tabButton.setAttribute('type', 'button')
   tabButton.setAttribute('role', 'tab')
-  tabButton.innerHTML = String(num)
+  tabButton.innerHTML = item?.localization?.[def?.language_order?.[0] || null]?.name || String(num)
   document.getElementById('contentNav').appendChild(tabButton)
 
   // Create corresponding pane
@@ -317,7 +317,7 @@ function createItemHTML (item, num, show = false) {
   localizePane.classList = 'col-12'
   row.appendChild(localizePane)
 
-  createItemLocalizationHTML(item, localizePane)
+  createItemLocalizationHTML(item, localizePane, num)
 
   // Activate tooltips
   const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
@@ -328,7 +328,7 @@ function createItemHTML (item, num, show = false) {
   if (show === true) tabButton.click()
 }
 
-function createItemLocalizationHTML (item, pane) {
+function createItemLocalizationHTML (item, pane, itemNum) {
   // Create the GUI for editing the localization of an item.
 
   const def = $('#definitionSaveButton').data('workingDefinition')
@@ -358,7 +358,7 @@ function createItemLocalizationHTML (item, pane) {
     tabButton.setAttribute('data-bs-target', '#itemLocalizationPane_' + item.uuid + '_' + code)
     tabButton.setAttribute('type', 'button')
     tabButton.setAttribute('role', 'tab')
-    tabButton.innerHTML = String(lang.englishName)
+    tabButton.innerHTML = String(lang.english_name)
     tabList.appendChild(tabButton)
 
     // Create corresponding pane
@@ -385,8 +385,21 @@ function createItemLocalizationHTML (item, pane) {
     const nameInput = document.createElement('input')
     nameInput.classList = 'form-control'
     nameInput.value = item?.localization?.[code]?.name || ''
+    const thisLangI = i
     nameInput.addEventListener('change', () => {
-      exSetup.updateWorkingDefinition(['content', item.uuid, 'localization', code, 'name'], nameInput.value.trim())
+      const name = nameInput.value.trim()
+      const itemTab = document.getElementById('itemTab_' + item.uuid)
+
+      exSetup.updateWorkingDefinition(['content', item.uuid, 'localization', code, 'name'], name)
+
+      // If this is the primary language, update the name on the tab
+      if (thisLangI === 0) {
+        if (name !== '') {
+          itemTab.innerHTML = name
+        } else {
+          itemTab.innerHTML = String(itemNum)
+        }
+      }
       exSetup.previewDefinition(true)
     })
     nameCol.appendChild(nameInput)
@@ -446,7 +459,7 @@ function deleteitem (uuid) {
   delete workingDefinition.content[uuid]
   workingDefinition.content_order = workingDefinition.content_order.filter(item => item !== uuid)
   rebuildItemList()
-  console.log(workingDefinition)
+  exSetup.previewDefinition(true)
 }
 
 function changeItemOrder (uuid, dir) {
@@ -472,7 +485,7 @@ function rebuildLanguageList () {
 
   def.language_order.forEach((code) => {
     const lang = def.languages[code]
-    createLanguageHTML(code, lang.displayName, lang.englishName)
+    createLanguageHTML(code, lang.display_name, lang.english_name)
   })
 }
 
@@ -499,7 +512,9 @@ function addLanguage (code, displayName, englishName) {
   const definition = $('#definitionSaveButton').data('workingDefinition')
 
   exSetup.updateWorkingDefinition(['languages', code], {
-    code, displayName, englishName
+    code,
+    display_name: displayName,
+    english_name: englishName
   })
   definition.language_order.push(code)
 

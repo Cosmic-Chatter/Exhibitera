@@ -158,7 +158,37 @@ function loadImages (item) {
 function loadDefinition (definition) {
   // A function to configure content based on the provided configuration.
 
+  const root = document.querySelector(':root')
+
+  console.log(definition)
+  exCommon.createLanguageSwitcher(definition, localize)
   currentLang = definition?.language_order[0] || null
+
+  // Configure the number of columns
+  const numItems = definition.content_order.length
+
+  root.style.setProperty('--itemList-width-landscape', 10)
+  root.style.setProperty('--itemList-width-portrait', 10)
+
+  if (numItems < 3) {
+    root.style.setProperty('--col-count-landscape', 2)
+    root.style.setProperty('--col-count-portrait', 1)
+  } else if (numItems === 3) {
+    root.style.setProperty('--col-count-landscape', 3)
+    root.style.setProperty('--col-count-portrait', 1)
+    root.style.setProperty('--itemList-width-portrait', 8)
+  } else if (numItems === 4) {
+    root.style.setProperty('--col-count-landscape', 2)
+    root.style.setProperty('--col-count-portrait', 1)
+    root.style.setProperty('--itemList-width-landscape', 7)
+    root.style.setProperty('--itemList-width-portrait', 6)
+  } else if (numItems < 7) {
+    root.style.setProperty('--col-count-landscape', 3)
+    root.style.setProperty('--col-count-portrait', 2)
+  } else {
+    root.style.setProperty('--col-count-landscape', 4)
+    root.style.setProperty('--col-count-portrait', 2)
+  }
 
   populateItemList(definition)
 }
@@ -168,7 +198,6 @@ function populateItemList (def) {
 
   const itemRow = document.getElementById('itemList')
   itemRow.innerHTML = ''
-  console.log(def)
 
   for (const uuid of def.content_order) {
     const item = def.content[uuid]
@@ -207,11 +236,9 @@ function populateItemList (def) {
 function localize (lang) {
   // Use the localization to switch to the given language
 
-  // const local = localization[lang]
-
-  // Object.keys(local).forEach((key) => {
-  //   document.getElementById(key).innerHTML = local[key]
-  // })
+  currentLang = lang
+  populateItemList(exCommon.config.definition)
+  document.getElementById('mainMenu').style.display = 'block'
 }
 
 function resetTimer () {
@@ -222,8 +249,7 @@ function resetTimer () {
 }
 
 function resetView () {
-  currentLang = 'en'
-  localize('en')
+  localize(currentDefintion?.language_order[0] || 'en-uk')
   document.getElementById('mainMenu').style.display = 'block'
   $('#image1Modal').modal('hide')
   $('#image2Modal').modal('hide')
