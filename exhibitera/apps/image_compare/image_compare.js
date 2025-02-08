@@ -190,7 +190,7 @@ function loadDefinition (definition) {
     root.style.setProperty('--col-count-portrait', 2)
   }
 
-  populateItemList(definition)
+  localize(currentLang)
 }
 
 function populateItemList (def) {
@@ -228,7 +228,7 @@ function populateItemList (def) {
 
     const label = document.createElement('div')
     label.classList = 'button-label'
-    label.innerHTML = item?.localization?.[currentLang]?.name
+    label.innerHTML = item?.localization?.[currentLang]?.name || ''
     col.appendChild(label)
   }
 }
@@ -239,6 +239,10 @@ function localize (lang) {
   currentLang = lang
   populateItemList(exCommon.config.definition)
   document.getElementById('mainMenu').style.display = 'block'
+
+  // Home screen text
+  document.getElementById('title').innerHTML = exCommon.config.definition?.misc_text?.title?.localization?.[currentLang] || ''
+  document.getElementById('subtitle').innerHTML = exCommon.config.definition?.misc_text?.subtitle?.localization?.[currentLang] || ''
 }
 
 function resetTimer () {
@@ -249,7 +253,7 @@ function resetTimer () {
 }
 
 function resetView () {
-  localize(currentDefintion?.language_order[0] || 'en-uk')
+  localize(exCommon.config.definition?.language_order[0] || 'en-uk')
   document.getElementById('mainMenu').style.display = 'block'
   $('#image1Modal').modal('hide')
   $('#image2Modal').modal('hide')

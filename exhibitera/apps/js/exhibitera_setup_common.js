@@ -316,7 +316,7 @@ export function createLanguagePicker (id, callback = null) {
   parent.appendChild(row)
 
   const languageSelectCol = document.createElement('div')
-  languageSelectCol.classList = 'col-12 col-md-6'
+  languageSelectCol.classList = 'col-12 col-md-8 col-lg-6'
   row.appendChild(languageSelectCol)
 
   const languageSelect = document.createElement('select')
@@ -388,7 +388,7 @@ export function createLanguagePicker (id, callback = null) {
   languageEnglishNameInputCol.appendChild(languageEnglishNameInput)
 
   const addButtonCol = document.createElement('div')
-  addButtonCol.classList = 'col-12 col-md-6 col-lg-4'
+  addButtonCol.classList = 'col-12 col-md-4 col-lg-2'
   row.appendChild(addButtonCol)
 
   const addButton = document.createElement('button')

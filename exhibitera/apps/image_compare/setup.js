@@ -92,6 +92,12 @@ function addItem () {
 
   const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
 
+  if (workingDefinition.content_order.length > 7) {
+    // We've reached the max number of items
+    document.getElementById('imagePairMaxNumberWarning').style.display = 'block'
+    return
+  }
+
   const item = {
     uuid: exCommon.uuid(),
     image1: '',
@@ -305,7 +311,7 @@ function createItemHTML (item, num, show = false) {
   deleteButton.classList = 'btn btn-danger btn-sm w-100'
   deleteButton.innerHTML = 'Delete'
   deleteButton.addEventListener('click', (event) => {
-    deleteitem(item.uuid)
+    deleteItem(item.uuid)
   })
   deleteCol.appendChild(deleteButton)
 
@@ -332,6 +338,15 @@ function createItemLocalizationHTML (item, pane, itemNum) {
   // Create the GUI for editing the localization of an item.
 
   const def = $('#definitionSaveButton').data('workingDefinition')
+
+  // Make sure we have at least one language
+  if (def.language_order.length === 0) {
+    const span = document.createElement('span')
+    span.classList = 'fst-italic text-warning'
+    span.innerHTML = "Add at least one language to set the item's text content"
+    pane.appendChild(span)
+    return
+  }
 
   // Create the basic elements
   const nav = document.createElement('nav')
@@ -451,7 +466,88 @@ function createItemLocalizationHTML (item, pane, itemNum) {
   }
 }
 
-function deleteitem (uuid) {
+function createHomeTextLocalizationHTML () {
+  // Create the GUI for editing the localization of the home screen text.
+
+  const def = $('#definitionSaveButton').data('workingDefinition')
+
+  // Get the basic elements
+  const tabList = document.getElementById('homeTextNav')
+  const navContent = document.getElementById('homeTextContent')
+
+  tabList.innerHTML = ''
+  navContent.innerHTML = ''
+
+  let i = 0
+  for (const code of def.language_order) {
+    const lang = def.languages[code]
+
+    // Create the tab button
+    const tabButton = document.createElement('button')
+    tabButton.classList = 'nav-link item-tab'
+    tabButton.setAttribute('id', 'homeTextLocalizationTab_' + code)
+    tabButton.setAttribute('data-bs-toggle', 'tab')
+    tabButton.setAttribute('data-bs-target', '#homeTextLocalizationPane_' + code)
+    tabButton.setAttribute('type', 'button')
+    tabButton.setAttribute('role', 'tab')
+    tabButton.innerHTML = String(lang.english_name)
+    tabList.appendChild(tabButton)
+
+    // Create corresponding pane
+    const tabPane = document.createElement('div')
+    tabPane.classList = 'tab-pane fade'
+    tabPane.setAttribute('id', 'homeTextLocalizationPane_' + code)
+    tabPane.setAttribute('role', 'tabpanel')
+    tabPane.setAttribute('aria-labelledby', 'homeTextLocalizationTab_' + code)
+    navContent.appendChild(tabPane)
+
+    const tabRow = document.createElement('div')
+    tabRow.classList = 'row gy-2 mt-2'
+    tabPane.appendChild(tabRow)
+
+    const titleCol = document.createElement('div')
+    titleCol.classList = 'col-12 col-md-6 col-xl-4'
+    tabRow.appendChild(titleCol)
+
+    const titleLabel = document.createElement('label')
+    titleLabel.classList = 'form-label'
+    titleLabel.innerHTML = 'Title'
+    titleCol.appendChild(titleLabel)
+
+    const titleInput = document.createElement('input')
+    titleInput.classList = 'form-control'
+    titleInput.value = def?.misc_text?.title?.localization?.[code] || ''
+    titleInput.addEventListener('change', () => {
+      const title = titleInput.value.trim()
+      exSetup.updateWorkingDefinition(['misc_text', 'title', 'localization', code], title)
+      exSetup.previewDefinition(true)
+    })
+    titleCol.appendChild(titleInput)
+
+    const subtitleCol = document.createElement('div')
+    subtitleCol.classList = 'col-12 col-md-6 col-xl-4'
+    tabRow.appendChild(subtitleCol)
+
+    const subtitleLabel = document.createElement('label')
+    subtitleLabel.classList = 'form-label'
+    subtitleLabel.innerHTML = 'Subtitle'
+    subtitleCol.appendChild(subtitleLabel)
+
+    const subtitleInput = document.createElement('input')
+    subtitleInput.classList = 'form-control'
+    subtitleInput.value = def?.misc_text?.subtitle?.localization?.[code] || ''
+    subtitleInput.addEventListener('change', () => {
+      exSetup.updateWorkingDefinition(['misc_text', 'subtitle', 'localization', code], subtitleInput.value.trim())
+      exSetup.previewDefinition(true)
+    })
+    subtitleCol.appendChild(subtitleInput)
+
+    if (i === 0) tabButton.click()
+    i++
+  }
+}
+
+function deleteItem (uuid) {
   // Remove this item from the working defintion and destroy its GUI representation.
 
   const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
@@ -482,11 +578,16 @@ function rebuildLanguageList () {
   // Use the definition to rebuild the GUI representation for each language
 
   const def = $('#definitionSaveButton').data('workingDefinition')
+  document.getElementById('languageList').innerHTML = ''
 
+  let i = 0
   def.language_order.forEach((code) => {
     const lang = def.languages[code]
-    createLanguageHTML(code, lang.display_name, lang.english_name)
+    createLanguageHTML(code, lang.display_name, lang.english_name, i === 0)
+    i++
   })
+
+  createHomeTextLocalizationHTML()
 }
 
 function rebuildItemList () {
@@ -519,9 +620,52 @@ function addLanguage (code, displayName, englishName) {
   definition.language_order.push(code)
 
   createLanguageHTML(code, displayName, englishName)
+  rebuildItemList()
+  rebuildLanguageList()
+  exSetup.previewDefinition(true)
 }
 
-function createLanguageHTML (code, displayName, englishName) {
+function deleteLanguage (code) {
+  // Remove this language from the working defintion and destroy its GUI representation.
+
+  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+
+  delete workingDefinition.languages[code]
+  workingDefinition.language_order = workingDefinition.language_order.filter(lang => lang !== code)
+
+  rebuildLanguageList()
+  rebuildItemList()
+  exSetup.previewDefinition(true)
+}
+
+function changeLanguageOrder (code, dir) {
+  // Move the language specified by code by dir places
+  // dir = 1 means move down the list by one place; dir = -1 is moves up the list.
+
+  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+  const arr = workingDefinition?.language_order || []
+
+  const index = arr.indexOf(code)
+
+  if (index === -1) return // code doesn't exist
+  if (dir === 0) return // No motion
+
+  if (dir < 1) {
+    if (index === 0) return // Can't move higher
+  } else {
+    if (index >= arr.length - 1) return // Can't move lower
+  }
+
+  // Swap the element with the next one
+  [arr[index], arr[index + dir]] = [arr[index + dir], arr[index]]
+
+  workingDefinition.language_order = arr
+  rebuildLanguageList()
+  rebuildItemList()
+  exSetup.previewDefinition(true)
+}
+
+function createLanguageHTML (code, displayName, englishName, isDefault = false) {
   // Create the HTML representation of a language.
 
   const col = document.createElement('div')
@@ -543,6 +687,13 @@ function createLanguageHTML (code, displayName, englishName) {
   englishNameDiv.innerHTML = englishName
   englishNameCol.appendChild(englishNameDiv)
 
+  if (isDefault === true) {
+    const badge = document.createElement('span')
+    badge.classList = 'badge text-bg-secondary ms-2'
+    badge.innerHTML = 'Default'
+    englishNameDiv.appendChild(badge)
+  }
+
   const orderButtonLeftCol = document.createElement('div')
   orderButtonLeftCol.classList = 'col-4 col-lg-2'
   cardBody.appendChild(orderButtonLeftCol)
@@ -551,7 +702,7 @@ function createLanguageHTML (code, displayName, englishName) {
   orderButtonLeft.classList = 'btn btn-info btn-sm w-100'
   orderButtonLeft.innerHTML = '▲'
   orderButtonLeft.addEventListener('click', (event) => {
-    // changeItemOrder(item.uuid, -1)
+    changeLanguageOrder(code, -1)
   })
   orderButtonLeftCol.appendChild(orderButtonLeft)
 
@@ -563,7 +714,7 @@ function createLanguageHTML (code, displayName, englishName) {
   orderButtonRight.classList = 'btn btn-info btn-sm w-100'
   orderButtonRight.innerHTML = '▼'
   orderButtonRight.addEventListener('click', (event) => {
-    // changeItemOrder(item.uuid, 1)
+    changeLanguageOrder(code, 1)
   })
   orderButtonRightCol.appendChild(orderButtonRight)
 
@@ -575,7 +726,7 @@ function createLanguageHTML (code, displayName, englishName) {
   deleteButton.classList = 'btn btn-danger btn-sm w-100'
   deleteButton.innerHTML = '×'
   deleteButton.addEventListener('click', (event) => {
-    // deleteitem(item.uuid)
+    deleteLanguage(code)
   })
   deleteCol.appendChild(deleteButton)
 
@@ -627,6 +778,10 @@ exSetup.createLanguagePicker('language-select', addLanguage)
 // Content
 document.getElementById('addItemButton').addEventListener('click', (event) => {
   addItem()
+})
+document.getElementById('imagePairMaxNumberWarningDismissButton').addEventListener('click', (ev) => {
+  console.log(ev.target)
+  ev.target.parentElement.style.display = 'none'
 })
 
 // Set helper address for use with exCommon.makeHelperRequest

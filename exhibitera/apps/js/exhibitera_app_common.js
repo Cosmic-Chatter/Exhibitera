@@ -758,9 +758,12 @@ export function createLanguageSwitcher (def, localize) {
   }
 
   langSwitchDropdown.style.display = 'flex'
+
   // Cycle the languages and build an entry for each
+  const langOrder = def?.language_order || langs
   langSwitchOptions.innerHTML = ''
-  langs.forEach((code) => {
+
+  langOrder.forEach((code) => {
     const name = def.languages[code].display_name
 
     const li = document.createElement('li')
