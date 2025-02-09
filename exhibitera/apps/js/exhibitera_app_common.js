@@ -751,7 +751,7 @@ export function createLanguageSwitcher (def, localize) {
   const langSwitchDropdown = document.getElementById('langSwitchDropdown')
   const langSwitchOptions = document.getElementById('langSwitchOptions')
 
-  if (langs.length === 1) {
+  if (langs.length < 2) {
     // No switcher necessary
     langSwitchDropdown.style.display = 'none'
     return
@@ -809,7 +809,6 @@ export function getColorAsRGBA (el, prop) {
 
   // Get the computed style for the given property
   const color = window.getComputedStyle(element).getPropertyValue(prop)
-
   const colorSplit = color.split(', ')
   const result = {
     r: parseInt(colorSplit[0].split('(')[1]),
@@ -817,18 +816,22 @@ export function getColorAsRGBA (el, prop) {
     b: parseInt(colorSplit[2].split(')')[0].trim())
   }
 
-  if (color.slice(0, 4) === 'RGBA') {
-    result.a = parseFloat(colorSplit.split(',')[3].split(')')[0].trim())
+  if (color.slice(0, 4).toLowerCase() === 'rgba') {
+    try {
+      result.a = parseFloat(colorSplit[3].split(')')[0].trim())
+    } catch {
+      console.log('getColorAsRGBA: error getting opacity')
+    }
   }
   return result
 }
 
 export function classifyColor (color) {
-  // Take an object of the form {r: 134, g: 234, b: 324} and return 'light' or 'dark'
+  // Take an object of the form {r: 134, g: 234, b: 224} and return 'light' or 'dark'
   // Depending on the luminance
   // From https://stackoverflow.com/questions/3942878/how-to-decide-font-color-in-white-or-black-depending-on-background-color
 
-  if ((color.r * 0.299 + color.g * 0.587 + color.b * 0.114) > 186) {
+  if ((color.r * 0.299 + color.g * 0.587 + color.b * 0.114) > 125) {
     return 'light'
   }
   return 'dark'

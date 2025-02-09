@@ -218,6 +218,52 @@ function loadDefinition (definition) {
     root.style.setProperty('--col-count-portrait', 2)
   }
 
+  // Color
+  // First, reset to defaults (in case a style option doesn't exist in the definition)
+  root.style.setProperty('--background-color', 'black')
+  root.style.setProperty('--titleColor', 'white')
+  root.style.setProperty('--subtitleColor', 'white')
+  root.style.setProperty('--itemNameColor', 'white')
+  root.style.setProperty('--buttonBackgroundColor', '#393a5acc')
+  root.style.setProperty('--buttonTextColor', 'white')
+  root.style.setProperty('--buttonOutlineColor', 'white')
+  root.style.setProperty('--sliderBackgroundColor', '#719bbfb3')
+  root.style.setProperty('--sliderIconColor', 'black')
+  root.style.setProperty('--labelBackgroundColor', '#00000080')
+  root.style.setProperty('--labelTextColor', 'white')
+  root.style.setProperty('--infoTitleColor', 'white')
+  root.style.setProperty('--infoBodyColor', 'white')
+
+  // Then, apply the definition settings
+  Object.keys(definition.style.color).forEach((key) => {
+    document.documentElement.style.setProperty('--' + key, definition.style.color[key])
+  })
+
+  // Backgorund settings
+  if ('background' in definition.style) {
+    exCommon.setBackground(definition.style.background, root, '#fff', true)
+  }
+
+  setTimeout(() => {
+    // Set language switch icon color based on its background color.
+    // Make sure a render frame has happened so the colors are right.
+    let backgroundClassification = 'dark'
+    const langSwitchDropdownIcon = document.getElementById('langSwitchDropdownIcon')
+    try {
+      const el = document.getElementById('langSwitchDropdownButton')
+      const backgroundColor = exCommon.getColorAsRGBA(el, 'background')
+      backgroundClassification = exCommon.classifyColor(backgroundColor)
+    } catch (e) {
+
+    }
+
+    if (backgroundClassification === 'light') {
+      langSwitchDropdownIcon.src = '_static/icons/translation-icon_black.svg'
+    } else {
+      langSwitchDropdownIcon.src = '_static/icons/translation-icon_white.svg'
+    }
+  }, 100)
+
   localize(currentLang)
 }
 
@@ -316,7 +362,6 @@ function resetView () {
 function parseUpdate (update) {
   // A function to respond to commands from Control Server.
 
-  console.log(currentDefintion, update.definition)
   if ('definition' in update && update.definition !== currentDefintion) {
     currentDefintion = update.definition
     exCommon.loadDefinition(currentDefintion)

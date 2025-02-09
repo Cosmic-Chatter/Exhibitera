@@ -1,8 +1,24 @@
 :root {
+    /* Column layout */
     --col-count-landscape: 4;
     --col-count-portrait: 2;
     --itemList-width-landscape: 10; /* Measured out of 12 */
     --itemList-width-portrait: 10; /* Measured out of 12 */
+
+    /* Colors */
+    --background-color: black;
+    --titleColor: white;
+    --subtitleColor: white;
+    --itemNameColor: white;
+    --buttonBackgroundColor: #393a5acc;
+    --buttonTextColor: white;
+    --buttonOutlineColor: white;
+    --sliderBackgroundColor: #719bbfb3;
+    --sliderIconColor: black;
+    --labelBackgroundColor: #00000080;
+    --labelTextColor: white;
+    --infoTitleColor: white;
+    --infoBodyColor: white;
 }
 
 /* Pulsing hand keyframes */
@@ -21,26 +37,21 @@
     }
 
 html, body {
-    background-color: black;
+    background: var(--background-color);
+    background-size: cover;
+    background-position: center;
     touch-action: none;
     overflow: hidden;
     -webkit-user-select: none; 
     user-select: none; 
 }
-.body-text {
-    color: #f3e9f3;
-    font-size: 1.7vmax;
-    -webkit-user-select: none; 
-    user-select: none; 
-}
 .button-label {
-    color: #f3e9f3;
+    color: var(--itemNameColor);
     font-size: 1.8vmax;
     text-align: center;
     width: 100%;
-    margin-top: 1vh;
+    margin-top: 1vmin;
 }
-
 .comp-image {
     height: 100%;
     width: 100%;
@@ -95,14 +106,13 @@ html, body {
     position: absolute;
     z-index: 9;
     cursor: ew-resize;
-    /*set the appearance of the slider:*/
     width: 2.5vmax;
     height: 2.5vmax;
-    background-color: #719abf;
-    opacity: 0.7;
+    background-color: var(--sliderBackgroundColor);
+    opacity: 1;
     border-radius: 50%;
     font-size: 1.8vmax;
-    color: black;
+    color: var(--sliderIconColor);
     display: flex;
     justify-content: center;
     align-items: center; 
@@ -111,17 +121,17 @@ html, body {
     font-size: 3vmin;
 }
 .modal-title {
-    color: #f3e9f3;
+    color: var(--infoTitleColor);
     font-size: 3.4vmax;
     text-align: center;
 }
 .name-label {
     position: absolute;
-    color: #f3e9f3;
+    color: var(--labelTextColor);
     font-size: 2.3vmax;
     top: 50%;
     transform: translate(0%, -50%);
-    background-color: rgba(0,0,0,0.5);
+    background-color: var(--labelBackgroundColor);
     padding-left: 1vw;
     padding-right: 1vw;
     padding-top: 1vh;
@@ -133,10 +143,11 @@ html, body {
     bottom: 1vmax;
     width: 5vmax;
     height: 4vmax;
-    color: white;
+    color: var(--buttonTextColor);
     font-size: 1.8vmax;
     font-weight: 600;
-    background-color: RGBA(57, 58, 90, 0.8);
+    background-color: var(--buttonBackgroundColor);
+    border-color: var(--buttonOutlineColor);
     border-radius: 0.5vmax;
     display: flex;
     align-items: center;
@@ -144,6 +155,7 @@ html, body {
 }
 #aboutModalBody {
     font-size: 2vmax;
+    color: var(--infoBodyColor);
 }
 #itemList {
     margin-top: auto;
@@ -160,10 +172,10 @@ html, body {
     flex-direction: column;
     justify-content: flex-end;
 }
-#langSwitchDropdown > button {
+#langSwitchDropdownButton {
     bottom: 0;
     border-radius: 0.5vmax;
-    border-color: white;
+    border-color: var(--buttonOutlineColor);
 }
 #pulsingHand {
     position: relative;
@@ -213,16 +225,16 @@ html, body {
     z-index: 10;
     width: 100vw;
     height: 100vh;
-    background-color: black;
+    background-color: var(--background-color);
 }
 #subtitle {
-    color: white;
+    color: var(--subtitleColor);
     font-size: 1.5vmax;
     padding-bottom: 3.2vh;
     text-align: center;
 }
 #title {
-    color: white;
+    color: var(--titleColor);
     text-align: center;
     font-size: 3.9vmax;
     padding-top: 9.3vh;

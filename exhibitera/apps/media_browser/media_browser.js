@@ -469,7 +469,6 @@ function loadDefinition (def) {
   // Modify the style
 
   // Color
-
   // First, reset to defaults (in case a style option doesn't exist in the definition)
   root.style.setProperty('--background-color', 'white')
   root.style.setProperty('--titleColor', 'black')

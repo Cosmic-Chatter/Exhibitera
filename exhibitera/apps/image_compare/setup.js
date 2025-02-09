@@ -30,6 +30,12 @@ async function clearDefinitionInput (full = true) {
   // Definition details
   $('#definitionNameInput').val('')
 
+  // Reset style options
+  document.querySelectorAll('.coloris').forEach(el => {
+    el.value = el.getAttribute('data-default')
+    el.dispatchEvent(new Event('input', { bubbles: true }))
+  })
+
   exSetup.updateAdvancedColorPicker('style>background', {
     mode: 'color',
     color: '#000',
@@ -61,6 +67,13 @@ function editDefinition (uuid = '') {
     exSetup.updateWorkingDefinition(['style', 'background', 'mode'], 'color')
     exSetup.updateWorkingDefinition(['style', 'background', 'color'], '#000')
   }
+
+  // Set the appropriate values for the color pickers
+  Object.keys(def.style.color).forEach((key) => {
+    const el = document.getElementById('colorPicker_' + key)
+    el.value = def.style.color[key]
+    el.dispatchEvent(new Event('input', { bubbles: true }))
+  })
 
   // Set the appropriate values for any advanced color pickers
   if ('background' in def.style) {
@@ -831,6 +844,16 @@ document.getElementById('imagePairMaxNumberWarningDismissButton').addEventListen
   ev.target.parentElement.style.display = 'none'
 })
 
+// Style fields
+document.querySelectorAll('.coloris').forEach((element) => {
+  element.addEventListener('change', function () {
+    const value = this.value.trim()
+    const property = this.getAttribute('data-property')
+    exSetup.updateWorkingDefinition(['style', 'color', property], value)
+    exSetup.previewDefinition(true)
+  })
+})
+
 // Set helper address for use with exCommon.makeHelperRequest
 exCommon.config.helperAddress = window.location.origin
 
@@ -848,7 +871,7 @@ exSetup.configure({
     language_order: [],
     style: {
       background: {
-        color: '#719abf',
+        color: '#000',
         mode: 'color'
       },
       color: {},
