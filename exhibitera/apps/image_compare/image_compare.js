@@ -4,6 +4,7 @@ import * as exCommon from '../js/exhibitera_app_common.js'
 const overlay = document.getElementById('overlayDiv')
 const base = document.getElementById('baseDiv')
 
+let homeScreenDisabled = false
 let currentDefintion = ''
 let clicked = 0
 let currentLang = null
@@ -116,7 +117,10 @@ function slide (x) {
 function loadImages (item) {
   // Load the images corresponding to the given object
 
-  // document.getElementById('pulsingHandContainer').style.display = 'none'
+  console.log(item)
+  if (homeScreenDisabled === false) {
+    document.getElementById('pulsingHandContainer').style.display = 'none'
+  }
 
   const overlayImg = document.getElementById('overlayImg')
   const baseImg = document.getElementById('baseImg')
@@ -182,6 +186,7 @@ function loadDefinition (definition) {
   console.log(definition)
   exCommon.createLanguageSwitcher(definition, localize)
   currentLang = definition?.language_order[0] || null
+  document.getElementById('homeButton').style.display = 'block'
 
   // Configure the number of columns
   const numItems = definition.content_order.length
@@ -189,7 +194,11 @@ function loadDefinition (definition) {
   root.style.setProperty('--itemList-width-landscape', 10)
   root.style.setProperty('--itemList-width-portrait', 10)
 
-  if (numItems < 3) {
+  if (numItems === 1) {
+    // With only one image pair, don't use the home screen
+    homeScreenDisabled = true
+    document.getElementById('homeButton').style.display = 'none'
+  } else if (numItems < 3) {
     root.style.setProperty('--col-count-landscape', 2)
     root.style.setProperty('--col-count-portrait', 1)
   } else if (numItems === 3) {
@@ -218,6 +227,7 @@ function populateItemList (def) {
   const itemRow = document.getElementById('itemList')
   itemRow.innerHTML = ''
 
+  let first = true
   for (const uuid of def.content_order) {
     const item = def.content[uuid]
 
@@ -249,6 +259,21 @@ function populateItemList (def) {
     label.classList = 'button-label'
     label.innerHTML = item?.localization?.[currentLang]?.name || ''
     col.appendChild(label)
+
+    if (first) {
+      // Add the pulsing hand graphic
+
+      const div = document.createElement('div')
+      div.setAttribute('id', 'pulsingHandContainer')
+      iconContainer.appendChild(div)
+
+      const hand = document.createElement('img')
+      hand.setAttribute('id', 'pulsingHand')
+      hand.src = '_static/icons/hand.svg'
+      div.appendChild(hand)
+
+      first = false
+    }
   }
 }
 
@@ -257,12 +282,17 @@ function localize (lang) {
 
   currentLang = lang
   console.log(exCommon.config)
-  populateItemList(exCommon.config.definition)
-  document.getElementById('mainMenu').style.display = 'block'
+  if (homeScreenDisabled) {
+    loadImages(exCommon.config.definition.content[exCommon.config.definition.content_order[0]])
+    document.getElementById('mainMenu').style.display = 'none'
+  } else {
+    populateItemList(exCommon.config.definition)
+    document.getElementById('mainMenu').style.display = 'block'
 
-  // Home screen text
-  document.getElementById('title').innerHTML = exCommon.config.definition?.misc_text?.title?.localization?.[currentLang] || ''
-  document.getElementById('subtitle').innerHTML = exCommon.config.definition?.misc_text?.subtitle?.localization?.[currentLang] || ''
+    // Home screen text
+    document.getElementById('title').innerHTML = exCommon.config.definition?.misc_text?.title?.localization?.[currentLang] || ''
+    document.getElementById('subtitle').innerHTML = exCommon.config.definition?.misc_text?.subtitle?.localization?.[currentLang] || ''
+  }
 }
 
 function resetTimer () {
@@ -274,11 +304,13 @@ function resetTimer () {
 
 function resetView () {
   localize(exCommon.config.definition?.language_order[0] || 'en-uk')
-  document.getElementById('mainMenu').style.display = 'block'
-  $('#image1Modal').modal('hide')
-  $('#image2Modal').modal('hide')
+  $('#aboutModal').modal('hide')
   document.getElementById('slidingHandContainer').style.display = 'block'
-  document.getElementById('pulsingHandContainer').style.display = 'block'
+
+  if (homeScreenDisabled === false) {
+    document.getElementById('mainMenu').style.display = 'block'
+    document.getElementById('pulsingHandContainer').style.display = 'block'
+  }
 }
 
 function parseUpdate (update) {

@@ -175,9 +175,13 @@ html, body {
 }
 #pulsingHandContainer {
     position: absolute;
-    left: 49vw;
-    top: 45vh;
-    width: 10vw;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 10vmax;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 #slidingHand {
     position: relative;
