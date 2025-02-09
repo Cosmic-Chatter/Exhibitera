@@ -203,6 +203,7 @@ function _createTextTabContent (tabId, content) {
 
   const converter = new showdown.Converter({ parseImgDimensions: true })
   const html = converter.makeHtml(content)
+
   // Parse the HTML
   const el = document.createElement('div')
   el.innerHTML = html

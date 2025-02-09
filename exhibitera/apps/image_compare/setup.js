@@ -394,7 +394,10 @@ function createItemLocalizationHTML (item, pane, itemNum) {
 
     const nameLabel = document.createElement('label')
     nameLabel.classList = 'form-label'
-    nameLabel.innerHTML = 'Item name'
+    nameLabel.innerHTML = `
+    Item name
+    <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="The name is displayed under the icon for this item on the home screen." style="font-size: 0.55em;">?</span>
+    `
     nameCol.appendChild(nameLabel)
 
     const nameInput = document.createElement('input')
@@ -460,6 +463,50 @@ function createItemLocalizationHTML (item, pane, itemNum) {
       exSetup.previewDefinition(true)
     })
     image2NameCol.appendChild(image2NameInput)
+
+    const infoTitleCol = document.createElement('div')
+    infoTitleCol.classList = 'col-12 col-md-6 col-xl-4'
+    tabRow.appendChild(infoTitleCol)
+
+    const infoTitleLabel = document.createElement('label')
+    infoTitleLabel.classList = 'form-label'
+    infoTitleLabel.innerHTML = `
+    Info pane title
+    <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="The header for an info pane that gives a description of the image pair." style="font-size: 0.55em;">?</span>
+    `
+    infoTitleCol.appendChild(infoTitleLabel)
+
+    const infoTitleInput = document.createElement('input')
+    infoTitleInput.classList = 'form-control'
+    infoTitleInput.value = item?.localization?.[code]?.info_title || ''
+    infoTitleInput.addEventListener('change', () => {
+      exSetup.updateWorkingDefinition(['content', item.uuid, 'localization', code, 'info_title'], infoTitleInput.value.trim())
+      exSetup.previewDefinition(true)
+    })
+    infoTitleCol.appendChild(infoTitleInput)
+
+    //
+
+    const infoBodyCol = document.createElement('div')
+    infoBodyCol.classList = 'col-12'
+    tabRow.appendChild(infoBodyCol)
+
+    const infoBodyLabel = document.createElement('label')
+    infoBodyLabel.classList = 'form-label'
+    infoBodyLabel.innerHTML = `
+    Info pane text
+    <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="Up to a few sentenaces describing the image pair. Formatting with Markdown is supported." style="font-size: 0.55em;">?</span>
+    `
+    infoBodyCol.appendChild(infoBodyLabel)
+
+    const infoBodyInput = document.createElement('textarea')
+    infoBodyInput.classList = 'form-control'
+    infoBodyInput.value = item?.localization?.[code]?.info_text || ''
+    infoBodyInput.addEventListener('change', () => {
+      exSetup.updateWorkingDefinition(['content', item.uuid, 'localization', code, 'info_text'], infoBodyInput.value.trim())
+      exSetup.previewDefinition(true)
+    })
+    infoBodyCol.appendChild(infoBodyInput)
 
     if (i === 0) tabButton.click()
     i++

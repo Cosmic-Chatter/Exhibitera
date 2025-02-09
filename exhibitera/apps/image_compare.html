@@ -19,13 +19,14 @@
   <script src="js/jquery-3.7.1.min.js"></script>
   <script src="js/platform.js"></script>
   <script src="js/bootstrap_5_3/bootstrap.bundle.min.js"></script>
+  <script type="text/javascript" src="js/showdown.min.js"></script>
   <script type="text/javascript" src="js/html2canvas.min.js"></script>
   <script type="module" src="image_compare/image_compare.js"></script>
 
   <body  oncontextmenu="return false" class="no-select">
 
-    <div id="langSwitchDropdown" class="btn-group dropup text-center">
-      <button type="button" class="btn btn-link w-100 h-100 px-0 py-0" data-bs-toggle="dropdown" aria-expanded="false">
+    <div id="langSwitchDropdown" class="dropup text-center">
+      <button type="button" class="btn btn-link overlay-button" data-bs-toggle="dropdown" aria-expanded="false">
         <img id="langSwitchDropdownIcon" src="_static/icons/translation-icon_white.svg">
       </button>
       <ul id="langSwitchOptions" class="dropdown-menu">
@@ -33,28 +34,14 @@
     </div>
 
     <!-- About image 1 -->
-    <div id="image1Modal" class="modal" tabindex="-1">
+    <div id="aboutModal" class="modal" tabindex="-1">
       <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content" style="height: 80vh;">
           <div class="modal-header">
-            <div id="image1ModalTitle" class="modal-title w-100 py-2"></div>
+            <div id="aboutModalTitle" class="modal-title w-100 py-2"></div>
             <button type="button" class="btn-close me-4" data-bs-dismiss="modal" aria-label="Close" style="font-size: 25px;"></button>
           </div>
-          <div class="modal-body">
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- About image 2 -->
-    <div id="image2Modal" class="modal" tabindex="-1">
-      <div class="modal-dialog modal-xl modal-dialog-centered">
-        <div class="modal-content" style="height: 80vh;">
-          <div class="modal-header">
-            <div id="image2ModalTitle" class="modal-title w-100 py-2"></div>
-            <button type="button" class="btn-close me-4" data-bs-dismiss="modal" aria-label="Close" style="font-size: 25px;"></button>
-          </div>
-          <div class="modal-body">
+          <div id="aboutModalBody" class="modal-body">
           </div>
         </div>
       </div>
@@ -73,13 +60,8 @@
     </div>
 
     <!-- Bottom row of buttons -->
-    <button id="homeButton" class="overlay-button">Home</button>
-    <button id="image2Button" class="overlay-button" type="button" data-bs-toggle="modal" data-bs-target="#image2Modal">
-      About top
-    </button>
-    <button id="image1Button" data-bs-toggle="modal" data-bs-target="#image1Modal" class="overlay-button">
-      About bottom
-    </button>
+    <button id="homeButton" class="overlay-button">〱</button>
+    <button id="aboutButton" data-bs-toggle="modal" data-bs-target="#aboutModal" class="overlay-button">?</button>
 
     <!-- Swiping hand indicator -->
     <div id="slidingHandContainer">

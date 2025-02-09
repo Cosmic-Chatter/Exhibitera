@@ -1,3 +1,4 @@
+/* global showdown */
 import * as exCommon from '../js/exhibitera_app_common.js'
 
 const overlay = document.getElementById('overlayDiv')
@@ -138,6 +139,7 @@ function loadImages (item) {
   // Configure the text areas
   const image1Label = document.getElementById('image1Label')
   const image2Label = document.getElementById('image2Label')
+  const aboutButton = document.getElementById('aboutButton')
   if (item?.localization?.[currentLang]?.image1_name) {
     image1Label.innerHTML = item?.localization?.[currentLang]?.image1_name || ''
     image1Label.classList.remove('hidden')
@@ -151,12 +153,29 @@ function loadImages (item) {
     image2Label.classList.add('hidden')
   }
 
+  if (item?.localization?.[currentLang]?.info_text) {
+    const infoTitle = document.getElementById('aboutModalTitle')
+    const infoBody = document.getElementById('aboutModalBody')
+
+    const converter = new showdown.Converter({ parseImgDimensions: true })
+    const html = converter.makeHtml(item?.localization?.[currentLang]?.info_text || '')
+
+    infoTitle.innerHTML = item?.localization?.[currentLang]?.info_title || ''
+    infoBody.innerHTML = html
+
+    aboutButton.style.display = 'flex'
+  } else {
+    aboutButton.style.display = 'none'
+  }
+
   // Hide the menu
   document.getElementById('mainMenu').style.display = 'none'
 }
 
 function loadDefinition (definition) {
   // A function to configure content based on the provided configuration.
+
+  exCommon.config.definition = definition
 
   const root = document.querySelector(':root')
 
@@ -237,6 +256,7 @@ function localize (lang) {
   // Use the localization to switch to the given language
 
   currentLang = lang
+  console.log(exCommon.config)
   populateItemList(exCommon.config.definition)
   document.getElementById('mainMenu').style.display = 'block'
 
@@ -264,6 +284,7 @@ function resetView () {
 function parseUpdate (update) {
   // A function to respond to commands from Control Server.
 
+  console.log(currentDefintion, update.definition)
   if ('definition' in update && update.definition !== currentDefintion) {
     currentDefintion = update.definition
     exCommon.loadDefinition(currentDefintion)
