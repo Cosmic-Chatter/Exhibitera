@@ -42,6 +42,14 @@ async function clearDefinitionInput (full = true) {
     gradient_color_1: '#000',
     gradient_color_2: '#000'
   })
+
+  // Reset font face options
+  exSetup.resetAdvancedFontPickers()
+
+  // Reset text size options
+  document.querySelectorAll('.text-size-slider').forEach(el => {
+    el.value = 0
+  })
 }
 
 function editDefinition (uuid = '') {
@@ -80,21 +88,18 @@ function editDefinition (uuid = '') {
     exSetup.updateAdvancedColorPicker('style>background', def.style.background)
   }
 
-  // Set the appropriate values for the watermark
-  if ('watermark' in def && 'file' in def.watermark && def.watermark.file !== '') {
-    const watermarkSelect = document.getElementById('watermarkSelect')
-    watermarkSelect.innerHTML = def.watermark.file
-    watermarkSelect.setAttribute('data-filename', def.watermark.file)
+  // Set the appropriate values for the advanced font pickers
+  if ('font' in def.style) {
+    Object.keys(def.style.font).forEach((key) => {
+      const picker = document.querySelector(`.AFP-select[data-path="style>font>${key}"`)
+      exSetup.setAdvancedFontPicker(picker, def.style.font[key])
+    })
   }
-  if ('watermark' in def && 'x_position' in def.watermark) {
-    document.getElementById('watermarkXPos').value = def.watermark.x_position
-  }
-  if ('watermark' in def && 'y_position' in def.watermark) {
-    document.getElementById('watermarkYPos').value = def.watermark.y_position
-  }
-  if ('watermark' in def && 'size' in def.watermark) {
-    document.getElementById('watermarkSize').value = def.watermark.size
-  }
+
+  // Set the appropriate values for the text size selects
+  Object.keys(def.style.text_size).forEach((key) => {
+    document.getElementById(key + 'TextSizeSlider').value = def.style.text_size?.[key] || 0
+  })
 
   // Configure the preview frame
   document.getElementById('previewFrame').src = '../image_compare.html?standalone=true&definition=' + def.uuid
@@ -850,6 +855,21 @@ document.querySelectorAll('.coloris').forEach((element) => {
     const value = this.value.trim()
     const property = this.getAttribute('data-property')
     exSetup.updateWorkingDefinition(['style', 'color', property], value)
+    exSetup.previewDefinition(true)
+  })
+})
+
+// Font fields
+document.getElementById('manageFontsButton').addEventListener('click', (event) => {
+  exFileSelect.createFileSelectionModal({ filetypes: ['otf', 'ttf', 'woff', 'woff2'], manage: true })
+    .then(exSetup.refreshAdvancedFontPickers)
+})
+
+// Text size fields
+Array.from(document.querySelectorAll('.text-size-slider')).forEach((el) => {
+  el.addEventListener('input', (event) => {
+    const property = event.target.getAttribute('data-property')
+    exSetup.updateWorkingDefinition(['style', 'text_size', property], parseFloat(event.target.value))
     exSetup.previewDefinition(true)
   })
 })

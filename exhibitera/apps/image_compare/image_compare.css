@@ -19,6 +19,53 @@
     --labelTextColor: white;
     --infoTitleColor: white;
     --infoBodyColor: white;
+
+    /* Font faces */
+    --title-font: 'Title-default';
+    --subtitle-font: "Subtitle-default";
+    --item_name-font: "Item_name-default";
+    --label-font: "Label-default";
+    --info_pane_title-font: "Info_pane_title-default";
+    --info_pane_body-font: "Info_pane_body-default";
+
+    /* Font modifiers */
+    --fontModifier: 1;
+    --title-font-adjust: 0;
+    --subtitle-font-adjust: 0;
+    --item_name-font-adjust: 0;
+    --label-font-adjust: 0;
+    --info_pane_title-font-adjust: 0;
+    --info_pane_body--font-adjust: 0;
+}
+
+/* Font definitions */
+@font-face {
+    font-family: "Title-default";
+    src: url("../_fonts/OpenSans-Bold.ttf");
+}
+@font-face {
+    font-family: "Subtitle-default";
+    src: url("../_fonts/OpenSans-Regular.ttf");
+}
+@font-face {
+    font-family: "Item_name-default";
+    src: url("../_fonts/OpenSans-Regular.ttf");
+}
+@font-face {
+    font-family: "Label-default";
+    src: url("../_fonts/OpenSans-Regular.ttf");
+}
+@font-face {
+    font-family: "Info_pane_title-default";
+    src: url("../_fonts/OpenSans-Bold.ttf");
+}
+@font-face {
+    font-family: "Info_pane_body-default";
+    src: url("../_fonts/OpenSans-Regular.ttf");
+}
+@font-face {
+    font-family: "Button_font";
+    src: url("../_fonts/OpenSans-Bold.ttf");
 }
 
 /* Pulsing hand keyframes */
@@ -47,7 +94,8 @@ html, body {
 }
 .button-label {
     color: var(--itemNameColor);
-    font-size: 1.8vmax;
+    font-size: calc(1.8vmax + var(--item_name-font-adjust) * 1vmax);
+    font-family: var(--item_name-font);
     text-align: center;
     width: 100%;
     margin-top: 1vmin;
@@ -122,13 +170,15 @@ html, body {
 }
 .modal-title {
     color: var(--infoTitleColor);
-    font-size: 3.4vmax;
+    font-family: var(--info_pane_title-font);
+    font-size: calc(3.4vmax + var(--info_pane_title-font-adjust) * 1vmax);
     text-align: center;
 }
 .name-label {
     position: absolute;
     color: var(--labelTextColor);
-    font-size: 2.3vmax;
+    font-size: calc(2.3vmax + var(--label-font-adjust) * 1vmax);
+    font-family: var(--label-font);
     top: 50%;
     transform: translate(0%, -50%);
     background-color: var(--labelBackgroundColor);
@@ -144,6 +194,7 @@ html, body {
     width: 5vmax;
     height: 4vmax;
     color: var(--buttonTextColor);
+    font-family: "Button_font";
     font-size: 1.8vmax;
     font-weight: 600;
     background-color: var(--buttonBackgroundColor);
@@ -154,7 +205,8 @@ html, body {
     justify-content: center;
 }
 #aboutModalBody {
-    font-size: 2vmax;
+    font-size: calc(2vmax + var(--info_pane_body-font-adjust) * 1vmax);
+    font-family: var(--info_pane_body-font);
     color: var(--infoBodyColor);
 }
 #itemList {
@@ -189,7 +241,7 @@ html, body {
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translate(-35%, -4%);
     width: 10vmax;
     display: flex;
     align-items: center;
@@ -229,14 +281,16 @@ html, body {
 }
 #subtitle {
     color: var(--subtitleColor);
-    font-size: 1.5vmax;
+    font-size: calc(1.5vmax + var(--subtitle-font-adjust) * 1vmax);
+    font-family: var(--subtitle-font);
     padding-bottom: 3.2vh;
     text-align: center;
 }
 #title {
     color: var(--titleColor);
     text-align: center;
-    font-size: 3.9vmax;
+    font-size: calc(3.9vmax + var(--title-font-adjust) * 1vmax);
+    font-family: var(--title-font);
     padding-top: 9.3vh;
 }
 #image2Label {

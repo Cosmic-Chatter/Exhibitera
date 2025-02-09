@@ -315,6 +315,54 @@
                   </div>
                 </div>
               </div>
+
+              <h4>Fonts</h4>
+              <div class="row gy-2">
+                <div class="col-12 col-md-6 col-lg-4 col-xl-3">
+                  <button id="manageFontsButton" class="btn btn-info w-100">Manage fonts</button>
+                </div>
+                <div class="col-0 col-lg-9"></div>
+
+                <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Title" data-constAFP-path="style>font>title" data-default="OpenSans-Bold.ttf"></div>
+
+                <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Subtitle" data-constAFP-path="style>font>subtitle" data-default="OpenSans-Regular.ttf"></div>
+
+                <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Item name" data-constAFP-path="style>font>item_name" data-default="OpenSans-Regular.ttf"></div>
+
+                <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Label" data-constAFP-path="style>font>label" data-default="OpenSans-Regular.ttf"></div>
+
+                <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Info pane title" data-constAFP-path="style>font>info_pane_title" data-default="OpenSans-Bold.ttf"></div>
+
+                <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Info pane text" data-constAFP-path="style>font>info_pane_body" data-default="OpenSans-Regular.ttf"></div>
+              </div>
+
+              <h4 class="mt-2">Text size</h4>
+              <div class="row gy-2">
+                <div class="col-12 col-md-6 col-lg-4">
+                  <label for="titleTextSizeSlider" class="form-label">Title</label>
+                  <input id="titleTextSizeSlider" type="range" class="form-range text-size-slider" data-property="title" min="-2", max="3" start="0" step="0.25">
+                </div>
+                <div class="col-12 col-md-6 col-lg-4">
+                  <label for="subtitleTextSizeSlider" class="form-label">Subtitle</label>
+                  <input id="subtitleTextSizeSlider" type="range" class="form-range text-size-slider" data-property="subtitle" min="-0.5", max="2" start="0" step="0.25">
+                </div>
+                <div class="col-12 col-md-6 col-lg-4">
+                  <label for="item_nameTextSizeSlider" class="form-label">Item name</label>
+                  <input id="item_nameTextSizeSlider" type="range" class="form-range text-size-slider" data-property="item_name" min="-0.75", max="2" start="0" step="0.25">
+                </div>
+                <div class="col-12 col-md-6 col-lg-4">
+                  <label for="labelTextSizeSlider" class="form-label">Label</label>
+                  <input id="labelTextSizeSlider" type="range" class="form-range text-size-slider" data-property="label" min="-1", max="1.5" start="0" step="0.25">
+                </div>
+                <div class="col-12 col-md-6 col-lg-4">
+                  <label for="info_pane_titleTextSizeSlider" class="form-label">Info pane title</label>
+                  <input id="info_pane_titleTextSizeSlider" type="range" class="form-range text-size-slider" data-property="info_pane_title" min="-1.5", max="1" start="0" step="0.25">
+                </div>
+                <div class="col-12 col-md-6 col-lg-4">
+                  <label for="info_pane_bodyTextSizeSlider" class="form-label">Info pane text</label>
+                  <input id="info_pane_bodyTextSizeSlider" type="range" class="form-range text-size-slider" data-property="info_pane_body" min="-0.5", max="1" start="0" step="0.25">
+                </div>
+              </div>
             </div>
           </div>
         </div>

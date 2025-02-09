@@ -264,6 +264,37 @@ function loadDefinition (definition) {
     }
   }, 100)
 
+  // Font
+  // First, reset to defaults (in case a style option doesn't exist in the definition)
+  root.style.setProperty('--title-font', 'Title-default')
+  root.style.setProperty('--subtitle-font', 'Subtitle-default')
+  root.style.setProperty('--item_name-font', 'Item_name-default')
+  root.style.setProperty('--label-font', 'Label-default')
+  root.style.setProperty('--info_pane_title-font', 'Info_pane_title-default')
+  root.style.setProperty('--info_pane_body-font', 'Info_pane_body-default')
+
+  // Then, apply the definition settings
+  Object.keys(definition.style.font).forEach((key) => {
+    const font = new FontFace(key, 'url(' + encodeURI(definition.style.font[key]) + ')')
+    document.fonts.add(font)
+    root.style.setProperty('--' + key + '-font', key)
+  })
+
+  // Text size settings
+  // First, reset to defaults (in case a style option doesn't exist in the definition)
+  root.style.setProperty('--title-font-adjust', 0)
+  root.style.setProperty('--subtitle-font-adjust', 0)
+  root.style.setProperty('--item_name-font-adjust', 0)
+  root.style.setProperty('--label-font-adjust', 0)
+  root.style.setProperty('--info_pane_title-font-adjust', 0)
+  root.style.setProperty('--info_pane_body-font-adjust', 0)
+
+  // Then, apply the definition settings
+  Object.keys(definition.style.text_size).forEach((key) => {
+    const value = definition.style.text_size[key]
+    root.style.setProperty('--' + key + '-font-adjust', value)
+  })
+
   localize(currentLang)
 }
 
