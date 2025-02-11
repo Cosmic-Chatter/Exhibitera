@@ -8,8 +8,11 @@ let homeScreenDisabled = false
 let currentDefintion = ''
 let clicked = 0
 let currentLang = null
-let timer = 0 // Reference to setTimeout for reseting the view
-resetTimer()
+let inactivityTimer = 0 // Reference to setTimeout for reseting the view
+let inactivityTimeout = 30000
+let attractorAvailable = false
+let attractorType = 'image'
+resetActivityTimer()
 
 /* Get the width and height of the img element */
 const w = overlay.offsetWidth
@@ -22,7 +25,7 @@ slider.style.top = (h / 2) - (slider.offsetHeight / 2) + 'px'
 slider.style.left = (w / 2) - (slider.offsetWidth / 2) + 'px'
 
 // Reset the timer
-document.body.addEventListener('click', resetTimer)
+document.body.addEventListener('click', resetActivityTimer)
 
 // Listen for click/tap and start the sliding
 slider.addEventListener('mousedown', slideReady)
@@ -55,7 +58,7 @@ function slideReady (e) {
   slide(getCursorPos(e))
   /* The slider is now clicked and ready to move: */
   clicked = 1
-  resetTimer()
+  resetActivityTimer()
   document.getElementById('slidingHandContainer').style.display = 'none'
 }
 
@@ -74,7 +77,7 @@ function slideMove (e) {
   if (pos > w) pos = w
   /* Execute a function that will resize the overlay image according to the cursor: */
   slide(pos)
-  resetTimer()
+  resetActivityTimer()
 }
 
 function getCursorPos (e) {
@@ -184,6 +187,37 @@ function loadDefinition (definition) {
   const root = document.querySelector(':root')
 
   console.log(definition)
+
+  // Configure the attractor
+  inactivityTimeout = definition?.inactivity_timeout * 1000 || 30000
+
+  if ((definition?.attractor || '') !== '') {
+    if (exCommon.guessMimetype(definition.attractor) === 'video') {
+      attractorType = 'video'
+
+      document.getElementById('attractorVideo').src = 'content/' + definition.attractor
+      document.getElementById('attractorVideo').style.display = 'block'
+      document.getElementById('attractorImage').style.display = 'none'
+      document.getElementById('attractorVideo').play()
+    } else {
+      attractorType = 'image'
+      try {
+        document.getElementById('attractorVideo').stop()
+      } catch {
+        // Ignore the error that arises if we're pausing a video that doesn't exist.
+      }
+
+      document.getElementById('attractorImage').src = 'content/' + definition.attractor
+      document.getElementById('attractorImage').style.display = 'block'
+      document.getElementById('attractorVideo').style.display = 'none'
+    }
+
+    attractorAvailable = true
+  } else {
+    hideAttractor()
+    attractorAvailable = false
+  }
+
   exCommon.createLanguageSwitcher(definition, localize)
   currentLang = definition?.language_order[0] || null
   document.getElementById('homeButton').style.display = 'block'
@@ -372,11 +406,11 @@ function localize (lang) {
   }
 }
 
-function resetTimer () {
+function resetActivityTimer () {
   // Reset the timer for resetting the view
 
-  clearTimeout(timer)
-  timer = setTimeout(resetView, 30 * 1000) // 30 sec
+  clearTimeout(inactivityTimer)
+  inactivityTimer = setTimeout(showAttractor, inactivityTimeout)
 }
 
 function resetView () {
@@ -390,6 +424,47 @@ function resetView () {
   }
 }
 
+function showAttractor () {
+  // Make the attractor layer visible
+
+  const attractorOverlay = document.getElementById('attractorOverlay')
+
+  exCommon.config.currentInteraction = false
+  if (attractorAvailable) {
+    if (attractorType === 'video') {
+      document.getElementById('attractorVideo').play()
+        .then(() => {
+          attractorOverlay.style.display = 'flex'
+          setTimeout(() => { attractorOverlay.style.opacity = 1 }, 0)
+          resetView()
+        })
+    } else {
+      attractorOverlay.style.display = 'flex'
+      setTimeout(() => {
+        attractorOverlay.style.opacity = 1
+        resetView()
+      }, 0)
+    }
+  } else {
+    resetView()
+  }
+}
+
+function hideAttractor () {
+  // Make the attractor layer invisible
+
+  const attractorOverlay = document.getElementById('attractorOverlay')
+  attractorOverlay.style.opacity = 0
+  setTimeout(() => {
+    if (attractorType === 'video') {
+      document.getElementById('attractorVideo').pause()
+    }
+    exCommon.config.currentInteraction = true
+    resetActivityTimer()
+    attractorOverlay.style.display = 'none'
+  }, 400)
+}
+
 function parseUpdate (update) {
   // A function to respond to commands from Control Server.
 
@@ -401,6 +476,9 @@ function parseUpdate (update) {
       })
   }
 }
+
+// Bind event handlers
+document.getElementById('attractorOverlay').addEventListener('click', hideAttractor)
 
 exCommon.configureApp({
   name: 'image_compare',

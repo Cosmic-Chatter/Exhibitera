@@ -30,6 +30,12 @@ async function clearDefinitionInput (full = true) {
   // Definition details
   $('#definitionNameInput').val('')
 
+  // Attractor
+  document.getElementById('inactivityTimeoutField').value = 30
+  const attractorSelect = document.getElementById('attractorSelect')
+  attractorSelect.innerHTML = 'Select file'
+  attractorSelect.setAttribute('data-filename', '')
+
   // Reset style options
   document.querySelectorAll('.coloris').forEach(el => {
     el.value = el.getAttribute('data-default')
@@ -62,6 +68,17 @@ function editDefinition (uuid = '') {
   $('#definitionSaveButton').data('workingDefinition', structuredClone(def))
 
   $('#definitionNameInput').val(def.name)
+
+  // Attractor
+  const attractorSelect = document.getElementById('attractorSelect')
+  if ('attractor' in def && def.attractor.trim() !== '') {
+    attractorSelect.innerHTML = def.attractor
+  } else {
+    attractorSelect.innerHTML = 'Select file'
+  }
+  attractorSelect.setAttribute('data-filename', def.attractor)
+  document.getElementById('inactivityTimeoutField').value = def?.inactivity_timeout || 30
+
   rebuildItemList()
   rebuildLanguageList()
 
@@ -798,6 +815,18 @@ function createLanguageHTML (code, displayName, englishName, isDefault = false) 
   document.getElementById('languageList').appendChild(col)
 }
 
+function onAttractorFileChange () {
+  // Called when a new image or video is selected.
+
+  const file = document.getElementById('attractorSelect').getAttribute('data-filename')
+  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+
+  workingDefinition.attractor = file
+  $('#definitionSaveButton').data('workingDefinition', structuredClone(workingDefinition))
+
+  exSetup.previewDefinition(true)
+}
+
 // Set color mode
 if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
   document.querySelector('html').setAttribute('data-bs-theme', 'dark')
@@ -839,6 +868,26 @@ exSetup.createLanguagePicker('language-select', addLanguage)
 // -------------------------------------------------------------
 
 // Main buttons
+document.getElementById('attractorSelect').addEventListener('click', (event) => {
+  exFileSelect.createFileSelectionModal({ filetypes: ['image', 'video'], multiple: false })
+    .then((files) => {
+      if (files.length === 1) {
+        event.target.innerHTML = files[0]
+        event.target.setAttribute('data-filename', files[0])
+        onAttractorFileChange()
+      }
+    })
+})
+document.getElementById('attractorSelectClear').addEventListener('click', (event) => {
+  const attractorSelect = document.getElementById('attractorSelect')
+  attractorSelect.innerHTML = 'Select file'
+  attractorSelect.setAttribute('data-filename', '')
+  onAttractorFileChange()
+})
+document.getElementById('inactivityTimeoutField').addEventListener('change', (event) => {
+  exSetup.updateWorkingDefinition(['inactivity_timeout'], event.target.value)
+  exSetup.previewDefinition(true)
+})
 
 // Content
 document.getElementById('addItemButton').addEventListener('click', (event) => {

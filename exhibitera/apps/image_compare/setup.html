@@ -200,6 +200,27 @@
               <label for="definitionNameInput" class="form-label">Definition name</label>
               <input type="text" class="form-control" id="definitionNameInput">
             </div>
+            <div class="col-12 col-md-6">
+              <div class="row">
+                <label for="attractorSelect" class="form-label">
+                  Attractor
+                  <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="An attractor is a fullscreen image or video that takes over when the app is idle." style="font-size: 0.55em;">?</span>
+                </label>
+                <div class="col-8 col-sm-9 col-md-8 col-lg-9 col-xxl-10 pe-0">
+                  <button id="attractorSelect" class="btn btn-outline-primary w-100">Select file</button>
+                </div>
+                <div class="col-4 col-sm-3 col-md-4 col-lg-3 col-xxl-2">
+                  <button id="attractorSelectClear" class="btn btn-danger align-self-center w-100">✕</button>
+                </div>
+              </div>
+            </div>
+            <div class="col-12 col-md-6 col-lg-4 col-xxl-3">
+              <label for="inactivityTimeoutField" class="form-label">
+                Inactivity timeout
+                <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Seconds of inactivity before the attractor is shown." style="font-size: 0.55em;">?</span>
+              </label>
+              <input type="number" class="form-control" min="10" value="30" id="inactivityTimeoutField">
+            </div>
 
             <div class="col-12 mt-2">
               <h3>Content</h3>

@@ -335,12 +335,8 @@ function editDefinition (uuid = '') {
   } else {
     attractorSelect.innerHTML = 'Select file'
   }
-  document.getElementById('attractorSelect').setAttribute('data-filename', def.attractor)
-  if ('inactivity_timeout' in def) {
-    document.getElementById('inactivityTimeoutField').value = def.inactivity_timeout
-  } else {
-    document.getElementById('inactivityTimeoutField').value = 30
-  }
+  attractorSelect.setAttribute('data-filename', def.attractor)
+  document.getElementById('inactivityTimeoutField').value = def?.inactivity_timeout || 30
 
   // Page looping
   if (('behavior' in def) && 'loop_results' in def.behavior) {
