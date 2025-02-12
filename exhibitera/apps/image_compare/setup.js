@@ -18,6 +18,206 @@ async function initializeWizard () {
   // Reset fields
   document.getElementById('wizardDefinitionNameInput').value = ''
   document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'none'
+  document.getElementById('wizardLanguages').innerHTML = ''
+  document.getElementById('wizardLanguagesBlankWarning').style.display = 'none'
+}
+
+async function wizardForward (currentPage) {
+  // Check if the wizard is ready to advance and perform the move
+
+  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+
+  if (currentPage === 'Welcome') {
+    const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
+    if (defName !== '') {
+      document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'none'
+      wizardGoTo('Languages')
+    } else {
+      document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'block'
+    }
+  } else if (currentPage === 'Languages') {
+    if (document.getElementById('wizardLanguages').children.length > 0) {
+      document.getElementById('wizardLanguagesBlankWarning').style.display = 'none'
+
+      // Add languages to workingDefinition
+      const langOrder = []
+      for (const langEl of document.getElementById('wizardLanguages').children) {
+        const code = langEl.querySelector('select').value
+        const langDef = {
+          code,
+          display_name: exSetup.getLanguageDisplayName(code),
+          english_name: exSetup.getLanguageDisplayName(code, true)
+        }
+        langOrder.push(code)
+
+        exSetup.updateWorkingDefinition(['languages', code], langDef)
+      }
+      exSetup.updateWorkingDefinition(['language_order'], langOrder)
+      wizardGoTo('SelectImages')
+    } else {
+      document.getElementById('wizardLanguagesBlankWarning').style.display = 'block'
+    }
+  } else if (currentPage === 'SelectImages') {
+    const numItems = document.getElementById('wizardImagesNav').childElementCount
+    if (numItems === 0) {
+      document.getElementById('wizardNoImagePairsWarning').style.display = 'block'
+      return
+    } else document.getElementById('wizardNoImagePairsWarning').style.display = 'none'
+    let error = false
+    for (const itemUUID of workingDefinition?.content_order || []) {
+      const item = workingDefinition?.content?.[itemUUID]
+      if (item == null) continue
+      if (((item?.image1 || '') === '') || ((item?.image2 || '') === '')) {
+        error = true
+      }
+    }
+    if (error) {
+      document.getElementById('wizardEmptyImagePairsWarning').style.display = 'block'
+      return
+    } else {
+      document.getElementById('wizardEmptyImagePairsWarning').style.display = 'none'
+    }
+
+    wizardBuildPairDetailsPage()
+    wizardGoTo('PairDetails')
+  } else if (currentPage === 'PairDetails') {
+    const nav = document.getElementById('wizardHomeDetailsNav')
+    nav.innerHTML = ''
+    const content = document.getElementById('wizardHomeDetailsNavContent')
+    content.innerHTML = ''
+    createHomeTextLocalizationHTML(nav, content)
+    wizardGoTo('HomeDetails')
+  } else if (currentPage === 'HomeDetails') {
+    wizardCreateDefinition()
+  }
+}
+
+function wizardBack (currentPage) {
+  // Move the wizard back one page
+
+  if (currentPage === 'Languages') {
+    wizardGoTo('Welcome')
+  } else if (currentPage === 'SelectImages') {
+    wizardGoTo('Languages')
+  } else if (currentPage === 'PairDetails') {
+    wizardGoTo('SelectImages')
+  } else if (currentPage === 'HomeDetails') {
+    wizardGoTo('PairDetails')
+  }
+}
+
+function wizardGoTo (page) {
+  Array.from(document.querySelectorAll('.wizard-pane')).forEach((el) => {
+    el.style.display = 'none'
+  })
+  document.getElementById('wizardPane_' + page).style.display = 'block'
+  console.log('wizardPane_' + page)
+}
+
+async function wizardCreateDefinition () {
+  // Use the provided details to build a definition file.
+
+  // Definition name
+  const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
+  exSetup.updateWorkingDefinition(['name'], defName)
+
+  $('#setupWizardModal').modal('hide')
+
+  await exSetup.saveDefinition(defName)
+  await exCommon.getAvailableDefinitions(exCommon.config.app)
+  editDefinition($('#definitionSaveButton').data('workingDefinition').uuid)
+
+  console.log($('#definitionSaveButton').data('workingDefinition'))
+}
+
+function wizardBuildPairDetailsPage () {
+  // Take the working definition and build a nested set of tabs for the user
+  // to add details for each language.
+
+  const workingDef = $('#definitionSaveButton').data('workingDefinition')
+
+  const nav = document.getElementById('wizardPairDetailsNav')
+  nav.innerHTML = ''
+  const content = document.getElementById('wizardPairDetailsNavContent')
+  content.innerHTML = ''
+
+  let num = 1
+  for (const itemUUID of workingDef?.content_order || []) {
+    const item = workingDef.content[itemUUID]
+
+    // Create the tab button
+    const tabButton = document.createElement('button')
+    tabButton.classList = 'nav-link item-tab'
+    tabButton.setAttribute('id', 'wizardPairDetailsTab_' + item.uuid)
+    tabButton.setAttribute('data-bs-toggle', 'tab')
+    tabButton.setAttribute('data-bs-target', '#wizardPairDetailsPane_' + item.uuid)
+    tabButton.setAttribute('type', 'button')
+    tabButton.setAttribute('role', 'tab')
+    tabButton.innerHTML = String(num)
+    nav.appendChild(tabButton)
+
+    // Create corresponding pane
+    const tabPane = document.createElement('div')
+    tabPane.classList = 'tab-pane fade'
+    tabPane.setAttribute('id', 'wizardPairDetailsPane_' + item.uuid)
+    tabPane.setAttribute('role', 'tabpanel')
+    tabPane.setAttribute('aria-labelledby', 'wizardPairDetailsTab_' + item.uuid)
+    content.appendChild(tabPane)
+
+    const row = document.createElement('div')
+    row.classList = 'row gy-2'
+    tabPane.appendChild(row)
+
+    const imageCol = document.createElement('div')
+    imageCol.classList = 'col-4'
+    row.appendChild(imageCol)
+
+    const imageRow = document.createElement('div')
+    imageRow.classList = 'row gy-2'
+    imageCol.appendChild(imageRow)
+
+    const image1Col = document.createElement('div')
+    image1Col.classList = 'col-12'
+    imageRow.appendChild(image1Col)
+
+    const image1 = document.createElement('img')
+    image1.classList = 'w-100'
+    image1.src = exCommon.config.helperAddress + '/files/' + item.image1 + '/thumbnail'
+    image1Col.appendChild(image1)
+
+    const image1Label = document.createElement('label')
+    image1Label.classList = 'form-label w-100 text-center'
+    image1Label.innerHTML = 'Image 1'
+    image1Col.appendChild(image1Label)
+
+    const image2Col = document.createElement('div')
+    image2Col.classList = 'col-12'
+    imageRow.appendChild(image2Col)
+
+    const image2 = document.createElement('img')
+    image2.classList = 'w-100'
+    image2.src = exCommon.config.helperAddress + '/files/' + item.image2 + '/thumbnail'
+    image2Col.appendChild(image2)
+
+    const image2Label = document.createElement('label')
+    image2Label.classList = 'form-label w-100 text-center'
+    image2Label.innerHTML = 'Image 2'
+    image2Col.appendChild(image2Label)
+
+    const detailsCol = document.createElement('div')
+    detailsCol.classList = 'col-8'
+    row.appendChild(detailsCol)
+    createItemLocalizationHTML(item, detailsCol, num)
+
+    if (num === 1) tabButton.click()
+    num++
+  }
+
+  // Activate tooltips
+  const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+  tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl)
+  })
 }
 
 async function clearDefinitionInput (full = true) {
@@ -122,14 +322,18 @@ function editDefinition (uuid = '') {
   document.getElementById('previewFrame').src = '../image_compare.html?standalone=true&definition=' + def.uuid
 }
 
-function addItem () {
+function addItem (wizard = false) {
   // Add an item to the working defintiion
 
   const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
 
   if (workingDefinition.content_order.length > 7) {
     // We've reached the max number of items
-    document.getElementById('imagePairMaxNumberWarning').style.display = 'block'
+    if (wizard) {
+
+    } else {
+      document.getElementById('imagePairMaxNumberWarning').style.display = 'block'
+    }
     return
   }
 
@@ -141,11 +345,10 @@ function addItem () {
   workingDefinition.content[item.uuid] = item
   workingDefinition.content_order.push(item.uuid)
 
-  createItemHTML(item, workingDefinition.content_order.length, true)
-  console.log($('#definitionSaveButton').data('workingDefinition'))
+  createItemHTML(item, workingDefinition.content_order.length, true, wizard)
 }
 
-function createItemHTML (item, num, show = false) {
+function createItemHTML (item, num, show = false, wizard = false) {
   // Create an item tab and pane
 
   const def = $('#definitionSaveButton').data('workingDefinition')
@@ -159,7 +362,11 @@ function createItemHTML (item, num, show = false) {
   tabButton.setAttribute('type', 'button')
   tabButton.setAttribute('role', 'tab')
   tabButton.innerHTML = item?.localization?.[def?.language_order?.[0] || null]?.name || String(num)
-  document.getElementById('contentNav').appendChild(tabButton)
+  if (wizard === false) {
+    document.getElementById('contentNav').appendChild(tabButton)
+  } else {
+    document.getElementById('wizardImagesNav').appendChild(tabButton)
+  }
 
   // Create corresponding pane
   const tabPane = document.createElement('div')
@@ -167,14 +374,18 @@ function createItemHTML (item, num, show = false) {
   tabPane.setAttribute('id', 'itemPane_' + item.uuid)
   tabPane.setAttribute('role', 'tabpanel')
   tabPane.setAttribute('aria-labelledby', 'itemTab_' + item.uuid)
-  document.getElementById('contentNavContent').appendChild(tabPane)
+  if (wizard === false) {
+    document.getElementById('contentNavContent').appendChild(tabPane)
+  } else {
+    document.getElementById('wizardImagesNavContent').appendChild(tabPane)
+  }
 
   const row = document.createElement('div')
   row.classList = 'row gy-2 mt-2'
   tabPane.appendChild(row)
 
   const image1Pane = document.createElement('div')
-  image1Pane.classList = 'col-12 col-md-6 d-flex flex-column justify-content-start'
+  image1Pane.classList = 'col-12 col-md-6 d-flex flex-column justify-content-end'
   row.appendChild(image1Pane)
 
   const image1Row = document.createElement('div')
@@ -191,7 +402,7 @@ function createItemHTML (item, num, show = false) {
   image1.style.width = '100%'
   image1.style.objectFit = 'contain'
   if ((item.image1 !== '') && (item.image1 != null)) {
-    image1.src = exCommon.config.helperAddress + '/thumbnails/' + item.image1
+    image1.src = exCommon.config.helperAddress + '/files/' + item.image1 + '/thumbnail'
   } else {
     image1.style.display = 'none'
   }
@@ -202,7 +413,7 @@ function createItemHTML (item, num, show = false) {
   image1Row.appendChild(selectImage1Col)
 
   const selectImage1Button = document.createElement('button')
-  selectImage1Button.classList = 'btn btn-outline-primary w-100'
+  selectImage1Button.classList = 'btn btn-outline-primary w-100 filename-button'
   if ((item.image1 !== '') && (item.image1 != null)) {
     selectImage1Button.innerHTML = item.image1
   } else {
@@ -214,8 +425,9 @@ function createItemHTML (item, num, show = false) {
     exFileSelect.createFileSelectionModal({ filetypes: ['image'], multiple: false })
       .then((result) => {
         const file = result[0]
+        if (file == null) return
         selectImage1Button.innerHTML = file
-        image1.src = exCommon.config.helperAddress + '/thumbnails/' + file
+        image1.src = exCommon.config.helperAddress + '/files/' + file + '/thumbnail'
         exSetup.updateWorkingDefinition(['content', item.uuid, 'image1'], file)
         image1.style.display = 'block'
         exSetup.previewDefinition(true)
@@ -223,7 +435,7 @@ function createItemHTML (item, num, show = false) {
   })
 
   const image2Pane = document.createElement('div')
-  image2Pane.classList = 'col-12 col-md-6 d-flex flex-column justify-content-start'
+  image2Pane.classList = 'col-12 col-md-6 d-flex flex-column justify-content-end'
   row.appendChild(image2Pane)
 
   const image2Row = document.createElement('div')
@@ -240,7 +452,7 @@ function createItemHTML (item, num, show = false) {
   image2.style.width = '100%'
   image2.style.objectFit = 'contain'
   if ((item.image2 !== '') && (item.image2 != null)) {
-    image2.src = exCommon.config.helperAddress + '/thumbnails/' + item.image2
+    image2.src = exCommon.config.helperAddress + '/files/' + item.image2 + '/thumbnail'
   } else {
     image2.style.display = 'none'
   }
@@ -251,7 +463,7 @@ function createItemHTML (item, num, show = false) {
   image2Row.appendChild(selectImage2Col)
 
   const selectImage2Button = document.createElement('button')
-  selectImage2Button.classList = 'btn btn-outline-primary w-100'
+  selectImage2Button.classList = 'btn btn-outline-primary w-100 filename-button'
   if ((item.image2 !== '') && (item.image2 != null)) {
     selectImage2Button.innerHTML = item.image2
   } else {
@@ -261,8 +473,9 @@ function createItemHTML (item, num, show = false) {
     exFileSelect.createFileSelectionModal({ filetypes: ['image'], multiple: false })
       .then((result) => {
         const file = result[0]
+        if (file == null) return
         selectImage2Button.innerHTML = file
-        image2.src = exCommon.config.helperAddress + '/thumbnails/' + file
+        image2.src = exCommon.config.helperAddress + '/files/' + file + '/thumbnail'
         exSetup.updateWorkingDefinition(['content', item.uuid, 'image2'], file)
         image2.style.display = 'block'
         exSetup.previewDefinition(true)
@@ -278,65 +491,67 @@ function createItemHTML (item, num, show = false) {
   modifyRow.classList = 'row gy-2'
   modifyPane.appendChild(modifyRow)
 
-  const optionsCol = document.createElement('div')
-  optionsCol.classList = 'col-12'
-  modifyRow.appendChild(optionsCol)
+  if (wizard === false) {
+    const optionsCol = document.createElement('div')
+    optionsCol.classList = 'col-12'
+    modifyRow.appendChild(optionsCol)
 
-  const fullscreenImageCheckboxContainer = document.createElement('div')
-  fullscreenImageCheckboxContainer.classList = 'form-check'
-  optionsCol.appendChild(fullscreenImageCheckboxContainer)
+    const fullscreenImageCheckboxContainer = document.createElement('div')
+    fullscreenImageCheckboxContainer.classList = 'form-check'
+    optionsCol.appendChild(fullscreenImageCheckboxContainer)
 
-  const fullscreenImageCheckbox = document.createElement('input')
-  fullscreenImageCheckbox.classList = 'form-check-input'
-  fullscreenImageCheckbox.setAttribute('type', 'checkbox')
-  fullscreenImageCheckbox.setAttribute('id', 'fullscreenImageCheckbox_' + String(num))
-  fullscreenImageCheckbox.checked = true
-  fullscreenImageCheckbox.addEventListener('change', (event) => {
-    exSetup.updateWorkingDefinition(['content', item.uuid, 'show_fullscreen'], event.target.checked)
-    exSetup.previewDefinition(true)
-  })
-  fullscreenImageCheckboxContainer.appendChild(fullscreenImageCheckbox)
+    const fullscreenImageCheckbox = document.createElement('input')
+    fullscreenImageCheckbox.classList = 'form-check-input'
+    fullscreenImageCheckbox.setAttribute('type', 'checkbox')
+    fullscreenImageCheckbox.setAttribute('id', 'fullscreenImageCheckbox_' + String(num))
+    fullscreenImageCheckbox.checked = true
+    fullscreenImageCheckbox.addEventListener('change', (event) => {
+      exSetup.updateWorkingDefinition(['content', item.uuid, 'show_fullscreen'], event.target.checked)
+      exSetup.previewDefinition(true)
+    })
+    fullscreenImageCheckboxContainer.appendChild(fullscreenImageCheckbox)
 
-  const fullscreenImageCheckboxLabel = document.createElement('label')
-  fullscreenImageCheckboxLabel.classList = 'form-check-label'
-  fullscreenImageCheckboxLabel.setAttribute('for', 'fullscreenImageCheckbox_' + String(num))
-  fullscreenImageCheckboxLabel.innerHTML = `
-  Show images fullscreen
-  <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="Images that don't match the display's aspect ratio will be enlarged to fill the screen. Some content may be cut off, but the image will not be distorted." style="font-size: 0.55em;">?</span>
-  `
-  fullscreenImageCheckboxContainer.appendChild(fullscreenImageCheckboxLabel)
+    const fullscreenImageCheckboxLabel = document.createElement('label')
+    fullscreenImageCheckboxLabel.classList = 'form-check-label'
+    fullscreenImageCheckboxLabel.setAttribute('for', 'fullscreenImageCheckbox_' + String(num))
+    fullscreenImageCheckboxLabel.innerHTML = `
+    Show images fullscreen
+    <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="Images that don't match the display's aspect ratio will be enlarged to fill the screen. Some content may be cut off, but the image will not be distorted." style="font-size: 0.55em;">?</span>
+    `
+    fullscreenImageCheckboxContainer.appendChild(fullscreenImageCheckboxLabel)
 
-  const orderButtonsCol = document.createElement('div')
-  orderButtonsCol.classList = 'col-6 mt-2'
-  modifyRow.appendChild(orderButtonsCol)
+    const orderButtonsCol = document.createElement('div')
+    orderButtonsCol.classList = 'col-6 mt-2'
+    modifyRow.appendChild(orderButtonsCol)
 
-  const orderButtonsRow = document.createElement('div')
-  orderButtonsRow.classList = 'row'
-  orderButtonsCol.appendChild(orderButtonsRow)
+    const orderButtonsRow = document.createElement('div')
+    orderButtonsRow.classList = 'row'
+    orderButtonsCol.appendChild(orderButtonsRow)
 
-  const orderButtonLeftCol = document.createElement('div')
-  orderButtonLeftCol.classList = 'col-6'
-  orderButtonsRow.appendChild(orderButtonLeftCol)
+    const orderButtonLeftCol = document.createElement('div')
+    orderButtonLeftCol.classList = 'col-6'
+    orderButtonsRow.appendChild(orderButtonLeftCol)
 
-  const orderButtonLeft = document.createElement('button')
-  orderButtonLeft.classList = 'btn btn-info btn-sm w-100'
-  orderButtonLeft.innerHTML = '◀'
-  orderButtonLeft.addEventListener('click', (event) => {
-    changeItemOrder(item.uuid, -1)
-  })
-  orderButtonLeftCol.appendChild(orderButtonLeft)
+    const orderButtonLeft = document.createElement('button')
+    orderButtonLeft.classList = 'btn btn-info btn-sm w-100'
+    orderButtonLeft.innerHTML = '◀'
+    orderButtonLeft.addEventListener('click', (event) => {
+      changeItemOrder(item.uuid, -1)
+    })
+    orderButtonLeftCol.appendChild(orderButtonLeft)
 
-  const orderButtonRightCol = document.createElement('div')
-  orderButtonRightCol.classList = 'col-6'
-  orderButtonsRow.appendChild(orderButtonRightCol)
+    const orderButtonRightCol = document.createElement('div')
+    orderButtonRightCol.classList = 'col-6'
+    orderButtonsRow.appendChild(orderButtonRightCol)
 
-  const orderButtonRight = document.createElement('button')
-  orderButtonRight.classList = 'btn btn-info btn-sm w-100'
-  orderButtonRight.innerHTML = '▶'
-  orderButtonRight.addEventListener('click', (event) => {
-    changeItemOrder(item.uuid, 1)
-  })
-  orderButtonRightCol.appendChild(orderButtonRight)
+    const orderButtonRight = document.createElement('button')
+    orderButtonRight.classList = 'btn btn-info btn-sm w-100'
+    orderButtonRight.innerHTML = '▶'
+    orderButtonRight.addEventListener('click', (event) => {
+      changeItemOrder(item.uuid, 1)
+    })
+    orderButtonRightCol.appendChild(orderButtonRight)
+  }
 
   const deleteCol = document.createElement('div')
   deleteCol.classList = 'col-6'
@@ -346,19 +561,34 @@ function createItemHTML (item, num, show = false) {
   deleteButton.classList = 'btn btn-danger btn-sm w-100'
   deleteButton.innerHTML = 'Delete'
   deleteButton.addEventListener('click', (event) => {
-    deleteItem(item.uuid)
+    deleteItem(item.uuid, wizard)
+    tabButton.remove()
+    tabPane.remove()
+    if (wizard) {
+      document.getElementById('wizardMaxImagePairsWarning').style.display = 'none'
+      const wizardImagesNav = document.getElementById('wizardImagesNav')
+      // Renumber the remaining tabs
+      let i = 1
+      Array.from(wizardImagesNav.children).forEach((el) => {
+        if (i === 1) el.click()
+        el.innerHTML = String(i)
+        i++
+      })
+    }
   })
   deleteCol.appendChild(deleteButton)
 
-  const localizeHeader = document.createElement('H5')
-  localizeHeader.innerHTML = 'Item content'
-  row.appendChild(localizeHeader)
+  if (wizard === false) {
+    const localizeHeader = document.createElement('H5')
+    localizeHeader.innerHTML = 'Item content'
+    row.appendChild(localizeHeader)
 
-  const localizePane = document.createElement('div')
-  localizePane.classList = 'col-12'
-  row.appendChild(localizePane)
+    const localizePane = document.createElement('div')
+    localizePane.classList = 'col-12'
+    row.appendChild(localizePane)
 
-  createItemLocalizationHTML(item, localizePane, num)
+    createItemLocalizationHTML(item, localizePane, num)
+  }
 
   // Activate tooltips
   const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
@@ -548,14 +778,14 @@ function createItemLocalizationHTML (item, pane, itemNum) {
   }
 }
 
-function createHomeTextLocalizationHTML () {
+function createHomeTextLocalizationHTML (tabList = null, navContent = null) {
   // Create the GUI for editing the localization of the home screen text.
 
   const def = $('#definitionSaveButton').data('workingDefinition')
 
   // Get the basic elements
-  const tabList = document.getElementById('homeTextNav')
-  const navContent = document.getElementById('homeTextContent')
+  if (tabList == null) tabList = document.getElementById('homeTextNav')
+  if (navContent == null) navContent = document.getElementById('homeTextContent')
 
   tabList.innerHTML = ''
   navContent.innerHTML = ''
@@ -629,15 +859,17 @@ function createHomeTextLocalizationHTML () {
   }
 }
 
-function deleteItem (uuid) {
+function deleteItem (uuid, wizard = false) {
   // Remove this item from the working defintion and destroy its GUI representation.
 
   const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
 
   delete workingDefinition.content[uuid]
   workingDefinition.content_order = workingDefinition.content_order.filter(item => item !== uuid)
-  rebuildItemList()
-  exSetup.previewDefinition(true)
+  if (wizard === false) {
+    rebuildItemList()
+    exSetup.previewDefinition(true)
+  }
 }
 
 function changeItemOrder (uuid, dir) {
@@ -866,6 +1098,31 @@ exSetup.createLanguagePicker('language-select', addLanguage)
 
 // Add event listeners
 // -------------------------------------------------------------
+
+// Wizard
+
+// Connect the forward and back buttons
+Array.from(document.querySelectorAll('.wizard-forward')).forEach((el) => {
+  el.addEventListener('click', () => {
+    wizardForward(el.getAttribute('data-current-page'))
+  })
+})
+Array.from(document.querySelectorAll('.wizard-back')).forEach((el) => {
+  el.addEventListener('click', () => {
+    wizardBack(el.getAttribute('data-current-page'))
+  })
+})
+
+document.getElementById('wizardAddImagePairButton').addEventListener('click', () => {
+  const warning = document.getElementById('wizardMaxImagePairsWarning')
+  const nav = document.getElementById('wizardImagesNav')
+  if (nav.childElementCount > 7) {
+    warning.style.display = 'block'
+  } else {
+    warning.style.display = 'none'
+    addItem(true)
+  }
+})
 
 // Main buttons
 document.getElementById('attractorSelect').addEventListener('click', (event) => {

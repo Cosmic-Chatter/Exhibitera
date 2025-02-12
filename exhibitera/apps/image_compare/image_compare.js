@@ -338,6 +338,29 @@ function populateItemList (def) {
   const itemRow = document.getElementById('itemList')
   itemRow.innerHTML = ''
 
+  // Calculate the rough width of the thumbnails
+  const numFiles = def.content_order.length
+  let thumbWidth
+  if (window.innerWidth >= window.innerHeight) {
+    // We're in landscape
+    if (numFiles < 4) {
+      thumbWidth = window.innerWidth / numFiles
+    } else if (numFiles === 4) {
+      thumbWidth = window.innerWidth / 2
+    } else if (numFiles < 7) {
+      thumbWidth = window.innerWidth / 3
+    } else thumbWidth = window.innerWidth / 4
+  } else {
+    // We're in portrait
+
+    if (numFiles < 5) {
+      thumbWidth = window.innerWidth
+    } else {
+      thumbWidth = window.innerWidth / 2
+    }
+  }
+  thumbWidth = String(Math.round(thumbWidth))
+
   let first = true
   for (const uuid of def.content_order) {
     const item = def.content[uuid]
@@ -355,12 +378,12 @@ function populateItemList (def) {
 
     const img1 = document.createElement('img')
     img1.classList = 'w-100 icon-image icon-image-top'
-    img1.src = exCommon.config.helperAddress + '/thumbnails/' + item.image1
+    img1.src = exCommon.config.helperAddress + '/files/' + item.image1 + '/thumbnail/' + thumbWidth
     iconContainer.appendChild(img1)
 
     const img2 = document.createElement('img')
     img2.classList = 'w-100 icon-image icon-image-bottom'
-    img2.src = exCommon.config.helperAddress + '/thumbnails/' + item.image2
+    img2.src = exCommon.config.helperAddress + '/files/' + item.image2 + '/thumbnail/' + thumbWidth
     img2.style.position = 'absolute'
     img2.style.top = 0
     img2.style.left = 0
