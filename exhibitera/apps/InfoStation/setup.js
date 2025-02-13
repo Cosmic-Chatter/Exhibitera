@@ -1,8 +1,9 @@
-/* global Coloris */
+/* global Coloris, TinyMDE */
 
 import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exFileSelect from '../js/exhibitera_file_select_modal.js'
 import * as exSetup from '../js/exhibitera_setup_common.js'
+import * as exMarkdown from '../js/exhibitera_setup_markdown.js'
 
 async function initializeWizard () {
   // Set up the wizard
@@ -505,17 +506,19 @@ function createInfoStationTab (lang, uuid = '') {
   textLabel.setAttribute('for', 'infostationTabTextInput_' + uuid)
   textCol.appendChild(textLabel)
 
-  const textInput = document.createElement('textarea')
-  textInput.classList = 'form-control'
-  textInput.setAttribute('rows', '5')
-  textInput.setAttribute('id', 'infostationTabTextInput_' + uuid)
-  textInput.setAttribute('placeholder', '# Header\nThis is a sentence with a **bold** word and an _italics_ word.\n\n## Subheader\nThis is a sentance under the subheader.')
-  textInput.addEventListener('change', (event) => {
-    exSetup.updateWorkingDefinition(['languages', lang, 'tabs', uuid, 'text'], event.target.value)
-    exSetup.previewDefinition(true)
-  })
-  textInput.value = workingDefinition.languages[lang].tabs[uuid].text
+  const textInputCMD = document.createElement('div')
+  textCol.appendChild(textInputCMD)
+  const textInput = document.createElement('div')
   textCol.appendChild(textInput)
+  exMarkdown.createMarkdownEditor({
+    content: workingDefinition.languages[lang].tabs[uuid].text,
+    editorDiv: textInput,
+    commandDiv: textInputCMD,
+    callback: (content) => {
+      exSetup.updateWorkingDefinition(['languages', lang, 'tabs', uuid, 'text'], content.content)
+      exSetup.previewDefinition(true)
+    }
+  })
 
   // Create the delete button
   const deleteCol = document.createElement('div')
