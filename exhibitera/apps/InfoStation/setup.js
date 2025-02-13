@@ -491,10 +491,10 @@ function createInfoStationTab (lang, uuid = '') {
   buttonTextInput.value = workingDefinition.languages[lang].tabs[uuid].button_text
   buttonTextCol.appendChild(buttonTextInput)
 
-  const textTabTipCol = document.createElement('div')
-  textTabTipCol.classList = 'col-12 mt-3 fst-italic alert alert-info'
-  textTabTipCol.innerHTML = 'Text and images in text tabs are formatted using Markdown. See the help page to learn more about Markdown.'
-  row.appendChild(textTabTipCol)
+  // const textTabTipCol = document.createElement('div')
+  // textTabTipCol.classList = 'col-12 mt-3 fst-italic alert alert-info'
+  // textTabTipCol.innerHTML = 'Text and images in text tabs are formatted using Markdown. See the help page to learn more about Markdown.'
+  // row.appendChild(textTabTipCol)
 
   const textCol = document.createElement('div')
   textCol.classList = 'col-12'
@@ -502,7 +502,10 @@ function createInfoStationTab (lang, uuid = '') {
 
   const textLabel = document.createElement('label')
   textLabel.classList = 'form-label'
-  textLabel.innerHTML = 'Text'
+  textLabel.innerHTML = `
+  Text
+  <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Text and images are formatted using Markdown. See the help page to learn more about Markdown." style="font-size: 0.55em;">?</span>
+  `
   textCol.appendChild(textLabel)
 
   const textInputCMD = document.createElement('div')
@@ -540,6 +543,12 @@ function createInfoStationTab (lang, uuid = '') {
 
   $(tabButton).click()
   exSetup.previewDefinition(true)
+
+  // Activate tooltips
+  const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+  tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl)
+  })
 }
 
 function deleteInfoStationTab (lang, uuid) {

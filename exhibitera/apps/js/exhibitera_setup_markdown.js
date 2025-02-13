@@ -1,8 +1,9 @@
 /* global TinyMDE */
 // Create rich markdown editors for setup pages.
 
-// Track the last time a change event was fired so that we don't call callbacks on every keystroke unless needed.
+import * as exFileSelect from './exhibitera_file_select_modal.js'
 
+// Track the last time a change event was fired so that we don't call callbacks on every keystroke unless needed.
 const threshold = 2000 // ms to wait before calling the callback
 let timer = 0 // holds reference to setTimeout instance
 
@@ -27,7 +28,25 @@ export function createMarkdownEditor (options) {
     }
   })
 
-  const commands = options?.commands || ['bold', 'italic', '|', 'h1', 'h2', '|', 'ul', 'ol', '|', 'blockquote', 'hr', '|', 'insertImage']
+  const insertImage = function (editor) {
+    const focus = editor.getSelection()
+    const anchor = editor.getSelection(true)
+
+    exFileSelect.createFileSelectionModal(
+      {
+        filetypes: ['image'],
+        manage: false,
+        multiple: false
+      }
+    )
+      .then((files) => {
+        if (files.length !== 0) {
+          console.log('here', files[0])
+          editor.paste(`![left](content/${files[0]} "Caption")`, anchor, focus)
+        }
+      })
+  }
+  const commands = options?.commands || ['bold', 'italic', '|', 'h1', 'h2', '|', 'ul', 'ol', 'blockquote', '|', { name: 'insertImage', action: insertImage }]
 
   const commandBar = new TinyMDE.CommandBar({
     element: options.commandDiv,
