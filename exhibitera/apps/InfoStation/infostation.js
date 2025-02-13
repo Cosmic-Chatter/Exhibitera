@@ -46,7 +46,7 @@ function loadDefinition (definition) {
   // Color
 
   // First, reset to defaults (in case a style option doesn't exist in the definition)
-  { root.style.setProperty('--background-color', '#719abf') }
+  root.style.setProperty('--background-color', '#719abf')
   root.style.setProperty('--header-color', '#706F8E')
   root.style.setProperty('--footer-color', '#706F8E')
   root.style.setProperty('--section-header-color', 'white')
@@ -127,6 +127,14 @@ function localize (lang) {
     }
   })
   gotoTab(firstTab)
+
+  // Hide tab row if we only have one tab
+  const root = document.querySelector(':root')
+  if (definition.tab_order.length === 1) {
+    root.style.setProperty('--button-rows', 0)
+  } else {
+    root.style.setProperty('--button-rows', 1)
+  }
 }
 
 function createButton (title, id) {

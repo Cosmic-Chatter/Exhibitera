@@ -2,7 +2,8 @@
     background-color: var(--bs-body-bg);
     color: var(--bs-body-color);
     font-size:16px;
-    height:100%;
+    max-height: 50vh;
+    overflow-y: auto;
     line-height:24px;
     padding:5px;
     border: var(--bs-border-width) solid var(--bs-border-color);

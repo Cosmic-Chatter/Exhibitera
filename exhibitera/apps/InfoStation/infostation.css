@@ -230,7 +230,6 @@ p {
   transition: font-size 0.1s;
 }
 #nav-tabContent {
-  height: calc(85vmax - 6vmax * var(--button-rows));
   width: 100vw;
   overflow-x: hidden;
   overflow-y: auto;
@@ -250,13 +249,13 @@ p {
     width: calc(1%*var(--button-size))
   }
   #buttonRow {
-    height: 7vmax;
+    height: calc(7vmax*var(--button-rows));
     overflow-y: auto;
     flex-wrap: nowrap;
     position: relative;
   }
   #nav-tabContent {
-    height: calc(100vh - 7vh - 5vh - 1vh * var(--header-height));
+    height: calc(100vh - 7vh*var(--button-rows) - 5vh - 1vh * var(--header-height));
     width: 100vw;
     overflow-x: hidden;
     overflow-y: auto;

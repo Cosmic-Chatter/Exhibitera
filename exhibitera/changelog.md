@@ -22,6 +22,7 @@ _Image Compare is a new app that creates a before/after slider between a pair of
 ### InfoStation
 - Adjust the height of the header area or hide it entirely
 - Insert block quotes and style them separately from regular text
+- Hide the button row in portrait orientation if there is only one tab
 
 # **Exhibitera 5.2**
 
