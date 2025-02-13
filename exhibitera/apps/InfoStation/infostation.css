@@ -6,6 +6,7 @@
   --tab-button-color: #6c757d;
   --tab-button-active-color: #22222E;
   --text-color: white;
+  --quote-color: white;
   --section-header-color: white;
   --section-background-color: #393A5A;
   --section-border-color: #E9E9E9;
@@ -14,6 +15,7 @@
   /* Font faces */
   --header-font: 'header-default';
   --body-font: 'body-default';
+  --body-font: 'quote-default';
   --section-header-font: 'section-header-default';
   --button-font: 'button-default';
 
@@ -22,6 +24,7 @@
   --header-font-size-adjust: 0;
   --section-header-font-size-adjust: 0;
   --body-font-size-adjust: 0;
+  --quote-font-size-adjust: 0;
   --tab-button-font-size-adjust: 0;
 
   /* Misc */
@@ -34,6 +37,11 @@
 @font-face {
   font-family: "header-default";
   src: url("../../_fonts/OpenSans-Bold.ttf");
+}
+
+@font-face {
+  font-family: "body-default";
+  src: url("../../_fonts/OpenSans-Regular.ttf");
 }
 
 @font-face {
@@ -60,7 +68,15 @@ body, html {
   overscroll-behavior-x: none;
   user-select: none;
   overflow: hidden;
-  font-family: var(--body-font);
+}
+blockquote>p {
+  color: var(--quote-color);
+  font-size: max(min(calc((1.6vmax + var(--quote-font-size-adjust)*1vmax) * var(--font-size-adjust)), 3.5vmax), calc(1.6vmax + var(--quote-font-size-adjust)*1vmax));
+  transition: font-size 0.1s;
+  padding-left: 5vw;
+  padding-right: 5vw;
+  font-family: var(--quote-font);
+
 }
 H1 {
   color: var(--section-header-color);
@@ -99,15 +115,16 @@ H6 {
   font-family: var(--section-header-font);
   transition: font-size 0.1s;
 }
-p {
-  color: var(--text-color);
-  font-size: max(min(calc((1.6vmax + var(--body-font-size-adjust)*1vmax) * var(--font-size-adjust)), 3.5vmax), calc(1.6vmax + var(--body-font-size-adjust)*1vmax));
-  transition: font-size 0.1s;
-}
 li {
   color: var(--text-color);
   font-size: max(min(calc((1.6vmax + var(--body-font-size-adjust)*1vmax) * var(--font-size-adjust)), 3.5vmax), calc(1.6vmax + var(--body-font-size-adjust)*1vmax));
   transition: font-size 0.1s;
+}
+p {
+  color: var(--text-color);
+  font-size: max(min(calc((1.6vmax + var(--body-font-size-adjust)*1vmax) * var(--font-size-adjust)), 3.5vmax), calc(1.6vmax + var(--body-font-size-adjust)*1vmax));
+  transition: font-size 0.1s;
+  font-family: var(--body-font);
 }
 ::-webkit-scrollbar {
   width: 0;

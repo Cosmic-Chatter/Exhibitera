@@ -292,6 +292,12 @@
                   </div>
                 </div>
                 <div class="col-12 col-sm-6 col-lg-4">
+                  <label for="colorPicker_quote" class="form-label">Quote text</label>
+                  <div>
+                    <input id="colorPicker_quote" type="text" class="coloris form-control" value="#fff" data-property="quote" data-default="#fff">
+                  </div>
+                </div>
+                <div class="col-12 col-sm-6 col-lg-4">
                   <label for="colorPicker_header" class="form-label">Header</label>
                   <div>
                     <input id="colorPicker_header" type="text" class="coloris form-control" value="#22222E" data-property="header" data-default="#22222E">
@@ -349,11 +355,13 @@
 
                 <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Header" data-constAFP-path="style>font>header" data-default="OpenSans-Bold.ttf"></div>
 
-                <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Body" data-constAFP-path="style>font>body" data-default="OpenSans-Regular.ttf"></div>
+                <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Body text" data-constAFP-path="style>font>body" data-default="OpenSans-Regular.ttf"></div>
+                
+                <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Quote text" data-constAFP-path="style>font>quote" data-default="OpenSans-Regular.ttf"></div>
 
                 <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Section header" data-constAFP-path="style>font>section-header" data-default="OpenSans-Bold.ttf"></div>
 
-                <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Button" data-constAFP-path="style>font>button" data-default="OpenSans-Regular.ttf"></div>
+                <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Tab button" data-constAFP-path="style>font>button" data-default="OpenSans-Regular.ttf"></div>
               </div>
               <h4 class="mt-3">Text size</h4>
               <div class="row gy-2">
@@ -368,6 +376,10 @@
                 <div class="col-12 col-md-6 col-lg-4">
                   <label for="bodyTextSizeSlider" class="form-label">Body text</label>
                   <input id="bodyTextSizeSlider" type="range" class="form-range text-size-slider" data-property="body" min="-1", max="1" start="0" step="0.1">
+                </div>
+                <div class="col-12 col-md-6 col-lg-4">
+                  <label for="quoteTextSizeSlider" class="form-label">Quote text</label>
+                  <input id="quoteTextSizeSlider" type="range" class="form-range text-size-slider" data-property="quote" min="-1", max="1" start="0" step="0.1">
                 </div>
                 <div class="col-12 col-md-6 col-lg-4">
                   <label for="tab-buttonTextSizeSlider" class="form-label">Tab button</label>

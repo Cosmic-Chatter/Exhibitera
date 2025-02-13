@@ -3,22 +3,25 @@
 ## Hub
 
 ### General
-- Toggle between light and dark mode from the new user preferences window [Morgan Rehnberg]
+- Toggle between light and dark mode from the new user preferences window
 
 ### Components
-- The components view can now be arranged as a grid or a list [Morgan Rehnberg]
-- Change the size of the items in the component view [Morgan Rehnberg]
-- Show or hide individual groups to declutter your interface [Morgan Rehnberg]
+- The components view can now be arranged as a grid or a list
+- Change the size of the items in the component view
+- Show or hide individual groups to declutter your interface
 
 ## Apps
 
 ### General
-- See file sizes when browsing files [Morgan Rehnberg]
+- Rich text editor for easier text styling with Markdown
+- See file sizes when browsing files
 
 ### Image Compare
 _Image Compare is a new app that creates a before/after slider between a pair of images._
+
 ### InfoStation
-- Adjust the height of the header area or hide it entirely [Morgan Rehnberg]
+- Adjust the height of the header area or hide it entirely
+- Insert block quotes and style them separately from regular text
 
 # **Exhibitera 5.2**
 

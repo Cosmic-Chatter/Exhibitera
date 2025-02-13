@@ -27,8 +27,11 @@ export function createMarkdownEditor (options) {
     }
   })
 
+  const commands = options?.commands || ['bold', 'italic', '|', 'h1', 'h2', '|', 'ul', 'ol', '|', 'blockquote', 'hr', '|', 'insertImage']
+
   const commandBar = new TinyMDE.CommandBar({
     element: options.commandDiv,
-    editor: tinyMDE
+    editor: tinyMDE,
+    commands
   })
 }

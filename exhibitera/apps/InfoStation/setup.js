@@ -503,7 +503,6 @@ function createInfoStationTab (lang, uuid = '') {
   const textLabel = document.createElement('label')
   textLabel.classList = 'form-label'
   textLabel.innerHTML = 'Text'
-  textLabel.setAttribute('for', 'infostationTabTextInput_' + uuid)
   textCol.appendChild(textLabel)
 
   const textInputCMD = document.createElement('div')
