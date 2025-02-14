@@ -48,4 +48,4 @@ Here's an example:
 
 You can control the placement of an image by choosing one of `left`, `middle`, `right`. Text will flow around images placed with `left` and `right`, while `middle` will create a full-width interruption in the text.
 
-You can select one of four sizes when inserting an image: 25%, 33%, 50%, or 100%. Images whose width is smaller than the specified size will not be enlarged to fill the space, so make sure your images are large enough.
+You can select one of six sizes when inserting an image: 25%, 33%, 50%, 67%, 75%, or 100%. Images whose width is smaller than the specified size will not be enlarged to fill the space, so make sure your images are large enough.

@@ -54,6 +54,10 @@ export function formatMarkdownImages (el) {
             div.classList.add('markdown-image-33')
           } else if (format[1] === '50%') {
             div.classList.add('markdown-image-50')
+          } else if (format[1] === '67%') {
+            div.classList.add('markdown-image-67')
+          } else if (format[1] === '75%') {
+            div.classList.add('markdown-image-75')
           } else if (format[1] === '100%') {
             div.classList.add('markdown-image-100')
           } else {

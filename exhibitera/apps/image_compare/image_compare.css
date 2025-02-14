@@ -211,6 +211,7 @@ html, body {
     font-size: calc(2vmax + var(--info_pane_body-font-adjust) * 1vmax);
     font-family: var(--info_pane_body-font);
     color: var(--infoBodyColor);
+    overflow-y: auto;
 }
 #attractorImage {
     position: fixed;

@@ -170,6 +170,7 @@ function loadImages (item) {
 
     infoTitle.innerHTML = exMarkdown.formatText(item?.localization?.[currentLang]?.info_title || '', { removeParagraph: true, string: true })
 
+    infoBody.innerHTML = ''
     infoBody.appendChild(formattedHTML)
 
     aboutButton.style.display = 'flex'
