@@ -512,12 +512,13 @@ function createInfoStationTab (lang, uuid = '') {
   textCol.appendChild(textInputCMD)
   const textInput = document.createElement('div')
   textCol.appendChild(textInput)
-  exMarkdown.createMarkdownEditor({
+
+  const textEditor = new exMarkdown.ExhibiteraMarkdownEditor({
     content: workingDefinition.languages[lang].tabs[uuid].text,
     editorDiv: textInput,
     commandDiv: textInputCMD,
     callback: (content) => {
-      exSetup.updateWorkingDefinition(['languages', lang, 'tabs', uuid, 'text'], content.content)
+      exSetup.updateWorkingDefinition(['languages', lang, 'tabs', uuid, 'text'], content)
       exSetup.previewDefinition(true)
     }
   })

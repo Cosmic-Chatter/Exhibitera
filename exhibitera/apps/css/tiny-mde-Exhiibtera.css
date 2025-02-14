@@ -137,7 +137,7 @@
 .TMCommandBar::-webkit-scrollbar{
     display:none
 }
-.TMCommandButton{
+.TMCommandButton {
     fill: var(--bs-body-color);
     box-sizing:border-box;
     color:#404040;
@@ -170,10 +170,11 @@
 }
 .TMCommandButton_Inactive{
     background-color:var(--bs-body-bg);
+    color: var(--bs-body-color)
 }
 .TMCommandButton_Disabled{
-    fill:#a0a0a0;
-    color:#a0a0a0
+    fill:gray;
+    color:gray
 }
 @media (hover:hover){
     .TMCommandButton_Active:hover,.TMCommandButton_Disabled:hover,.TMCommandButton_Inactive:hover{
