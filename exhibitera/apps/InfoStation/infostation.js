@@ -212,40 +212,7 @@ function _createTextTabContent (tabId, content) {
   const converter = new showdown.Converter({ parseImgDimensions: true })
   const html = converter.makeHtml(content)
 
-  // Parse the HTML
-  const el = document.createElement('div')
-  el.innerHTML = html
-
-  // Find img tags and format them appropriately
-  Array.from(el.children).forEach(function (tag, i) {
-    if (tag.tagName === 'P') {
-      Array.from(tag.children).forEach(function (child, j) {
-        if (child.tagName === 'IMG') {
-          child.classList += 'image'
-          const div = document.createElement('div')
-          div.append(child)
-          const caption = document.createElement('div')
-          caption.classList = 'caption'
-          caption.append(child.title)
-          div.append(caption)
-          tag.innerHTML = ''
-          tag.appendChild(div)
-
-          // Parse the alt text for a user-indicated formatting preference.
-          const format = child.alt.toLowerCase()
-          if (format === 'left') {
-            div.classList = 'float-left'
-          } else if (format === 'right') {
-            div.classList = 'float-right'
-          } else if (format === 'full') {
-            div.classList = 'full'
-          } else {
-            div.classList = 'full'
-          }
-        }
-      })
-    }
-  })
+  const el = exCommon.formatMarkdownImages(html)
 
   // Group the elements by H1 elements. We will enclose each set in a box
   const boxes = []

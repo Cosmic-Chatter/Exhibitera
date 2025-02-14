@@ -3,6 +3,7 @@
 import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exFileSelect from '../js/exhibitera_file_select_modal.js'
 import * as exSetup from '../js/exhibitera_setup_common.js'
+import * as exMarkdown from '../js/exhibitera_setup_markdown.js'
 
 async function initializeWizard () {
   // Set up the wizard
@@ -764,14 +765,20 @@ function createItemLocalizationHTML (item, pane, itemNum) {
     `
     infoBodyCol.appendChild(infoBodyLabel)
 
-    const infoBodyInput = document.createElement('textarea')
-    infoBodyInput.classList = 'form-control'
-    infoBodyInput.value = item?.localization?.[code]?.info_text || ''
-    infoBodyInput.addEventListener('change', () => {
-      exSetup.updateWorkingDefinition(['content', item.uuid, 'localization', code, 'info_text'], infoBodyInput.value.trim())
-      exSetup.previewDefinition(true)
-    })
+    const infoBodyCommandBar = document.createElement('div')
+    infoBodyCol.appendChild(infoBodyCommandBar)
+    const infoBodyInput = document.createElement('div')
     infoBodyCol.appendChild(infoBodyInput)
+
+    const textEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+      content: item?.localization?.[code]?.info_text || '',
+      editorDiv: infoBodyInput,
+      commandDiv: infoBodyCommandBar,
+      callback: (content) => {
+        exSetup.updateWorkingDefinition(['content', item.uuid, 'localization', code, 'info_text'], content)
+        exSetup.previewDefinition(true)
+      }
+    })
 
     if (i === 0) tabButton.click()
     i++

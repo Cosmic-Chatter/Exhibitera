@@ -133,6 +133,9 @@ html, body {
                    100% 100%,
                    100% 0%);
 }
+.image {
+    max-width: 100%;
+  }
 .img-comp-container {
     position: relative;
     height: 100vh;

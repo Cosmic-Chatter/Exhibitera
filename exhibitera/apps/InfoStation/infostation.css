@@ -159,7 +159,7 @@ p {
 .card-title {
   font-size: 2.3vmax;
 }
-.float-left {
+/* .float-left {
   float: left;
   padding-right: 2%;
   padding-bottom: 2%;
@@ -181,7 +181,7 @@ p {
 }
 .image {
   max-width: 100%;
-}
+} */
 .langSwitch-entry {
   font-size: 3vmin;
 }
@@ -242,9 +242,9 @@ p {
 
 /* Handle portrait and landscape orientations */
 @media (orientation: portrait) {
-  .float-right, .float-left {
+  /* .float-right, .float-left {
     max-width: 50%;
-  }
+  } */
   .tabButtonCol {
     width: calc(1%*var(--button-size))
   }
@@ -263,9 +263,9 @@ p {
 }
 
 @media (orientation: landscape) {
-  .float-right, .float-left {
+  /* .float-right, .float-left {
     max-width: 35%;
-  }
+  } */
   .tabButtonCol {
     width: 100%;
     height: calc(1%*var(--button-size))

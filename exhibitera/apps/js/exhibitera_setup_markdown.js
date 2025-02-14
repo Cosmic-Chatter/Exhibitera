@@ -1,7 +1,8 @@
-/* global TinyMDE */
+/* global bootstrap, TinyMDE */
 // Create rich markdown editors for setup pages.
 
 import * as exFileSelect from './exhibitera_file_select_modal.js'
+import * as exCommon from './exhibitera_app_common.js'
 
 const timerThreshold = 2000 // ms to wait before calling the callback
 const undoCacheLimit = 1000
@@ -45,19 +46,19 @@ export class ExhibiteraMarkdownEditor {
     // Set up the command bar. Use default commands if none are provided.
     const defaultCommands = [
       { name: 'bold', innerHTML: 'B' },
-      'italic',
+      { name: 'italic', innerHTML: '<i>I</i>' },
       '|',
-      'h1',
-      'h2',
+      { name: 'h1', innerHTML: 'H' },
+      { name: 'h2', innerHTML: 'h' },
       '|',
       'ul',
       'ol',
       'blockquote',
       '|',
-      { name: 'insertImage', action: this.insertImage.bind(this) },
+      { name: 'insertImage', action: this.showInsertImageModal.bind(this) },
       '|',
-      { name: 'undo', action: this.undo.bind(this), innerHTML: '↺' },
-      { name: 'redo', action: this.redo.bind(this), innerHTML: '↻' }
+      { name: 'undo', action: this.undo.bind(this), innerHTML: '↺', hotkey: 'Mod-z', title: 'Undo' },
+      { name: 'redo', action: this.redo.bind(this), innerHTML: '↻', hotkey: 'Mod-Shift-z', title: 'Redo' }
     ]
     const commands = options.commands || defaultCommands
 
@@ -98,25 +99,121 @@ export class ExhibiteraMarkdownEditor {
     }
   }
 
-  /**
-   * Prompts the user to select an image and then inserts a Markdown-formatted image.
-   */
-  insertImage () {
+  showInsertImageModal () {
+    // Create a modal that allows the user to select an image, style it, and add a caption.
+
+    // Record the current state of the cursor
     const focus = this.tinyMDE.getSelection()
     const anchor = this.tinyMDE.getSelection(true)
 
-    exFileSelect
-      .createFileSelectionModal({
-        filetypes: ['image'],
-        manage: false,
-        multiple: false
-      })
-      .then((files) => {
-        if (files.length !== 0) {
-          console.log('here', files[0])
-          this.tinyMDE.paste(`![left](content/${files[0]} "Caption")`, anchor, focus)
-        }
-      })
+    const modalHTML = `
+      <div class="modal" id="dynamicModal" tabindex="-1" aria-labelledby="dynamicModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="dynamicModalLabel">Insert an image</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div class="row gy-2 d-flex align-items-end">
+                <div class="col-4">
+                  <img class="w-100" id="exMarkdownSelectImage">
+                  <button id="exMarkdownSelectImageButton" class="btn btn-outline-primary w-100 mt-3">Select image</button>
+                </div>
+                <div class="col-4">
+                  <label for="exMarkdownSelectImageAlignmentSelect" class="form-label">Alignment</label>
+                  <select id="exMarkdownSelectImageAlignmentSelect" class="form-select">
+                    <option value="left">Left</option>
+                    <option value="middle">Middle</option>
+                    <option value="right">Right</option>
+                  </select>
+                </div>
+                <div class="col-4">
+                  <label for="exMarkdownSelectImageSizeSelect" class="form-label">Width</label>
+                  <select id="exMarkdownSelectImageSizeSelect" class="form-select">
+                    <option value="25%">25%</option>
+                    <option value="33%">33%</option>
+                    <option value="50%">50%</option>
+                    <option value="100%">100%</option>
+                  </select>
+                </div>
+                <div class="col-12">
+                  <label class="form-label" for="exMarkdownSelectImageCaption">Caption</label>
+                  <input type="text" class="form-control" id="exMarkdownSelectImageCaption">
+                </div>
+              </div>
+              <div class="col-12 mt-2">
+                <span id="exMarkdownSelectImageNoImageWarning" class="text-warning" style="display: none;">
+                  Select the image you want to insert.
+                </span>
+              </div>
+              
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              <button id="exMarkdownInsertImageFromModalButton" type="button" class="btn btn-primary">Insert</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `
+
+    // Create a temporary container to hold the HTML.
+    const tempDiv = document.createElement('div')
+    tempDiv.innerHTML = modalHTML
+
+    // Get the actual modal element.
+    const modalElement = tempDiv.firstElementChild
+
+    // Append the modal to the document body.
+    document.body.appendChild(modalElement)
+
+    // Initialize a new Bootstrap modal instance.
+    const modalInstance = new bootstrap.Modal(modalElement)
+
+    // Bind event listeners
+    document.getElementById('exMarkdownSelectImageButton').addEventListener('click', () => {
+      exFileSelect
+        .createFileSelectionModal({
+          filetypes: ['image'],
+          manage: false,
+          multiple: false
+        })
+        .then((files) => {
+          if (files.length !== 0) {
+            const exMarkdownSelectImage = document.getElementById('exMarkdownSelectImage')
+            exMarkdownSelectImage.src = exCommon.config.helperAddress + '/files/' + files[0] + '/thumbnail'
+            exMarkdownSelectImage.setAttribute('data-filename', files[0])
+          }
+        })
+    })
+
+    document.getElementById('exMarkdownInsertImageFromModalButton').addEventListener('click', () => {
+      // Collect the details and format the Markdown image string
+      const filename = document.getElementById('exMarkdownSelectImage').getAttribute('data-filename')
+
+      if ((filename == null) || filename === '') {
+        document.getElementById('exMarkdownSelectImageNoImageWarning').style.display = 'block'
+        return
+      }
+
+      const caption = document.getElementById('exMarkdownSelectImageCaption').value
+      const alignment = document.getElementById('exMarkdownSelectImageAlignmentSelect').value
+      const size = document.getElementById('exMarkdownSelectImageSizeSelect').value
+
+      this.tinyMDE.paste(`![${alignment} ${size}](content/${filename} "${caption}")`, anchor, focus)
+      modalInstance.hide()
+      modalElement.remove()
+    })
+
+    // Add an event listener that will remove the modal from the DOM when it’s fully hidden.
+    modalElement.addEventListener('hidden.bs.modal', () => {
+      this.tinyMDE.setSelection(focus)
+      modalElement.remove()
+    })
+
+    // Show the modal.
+    modalInstance.show()
   }
 
   /**
