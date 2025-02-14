@@ -430,6 +430,7 @@ function loadDefinition (def) {
     hideAttractor()
     attractorAvailable = false
   }
+  console.log(def)
   if ('num_columns' in def.style.layout) {
     document.getElementById('resultsRow').classList = 'h-100 row row-cols-' + String(def.style.layout.num_columns)
     numCols = def.style.layout.num_columns
@@ -542,9 +543,14 @@ function loadDefinition (def) {
   })
 
   // Find the default language
-  Object.keys(def.languages).forEach((lang) => {
-    if (def.languages[lang].default === true) defaultLang = lang
-  })
+  if ('language_order' in def) {
+    defaultLang = def.language_order[0]
+  } else {
+    // Deprecated in Ex5.3
+    Object.keys(def.languages).forEach((lang) => {
+      if (def.languages[lang].default === true) defaultLang = lang
+    })
+  }
 
   // Load the CSV file containing the items ad build the results row
   exCommon.makeHelperRequest({

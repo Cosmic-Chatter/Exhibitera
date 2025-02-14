@@ -21,34 +21,7 @@ export const config = {
   clearDefinition: null,
   loadDefinition: null,
   onDefinitionSave: null,
-  fontCache: {}, // Keys with any value indicate that font has already been made
-  languages: [
-    { code: 'ar-dz', name: 'عربي', name_en: 'Arabic (Algeria)' },
-    { code: 'ar-eg', name: 'عربي', name_en: 'Arabic (Egypt)' },
-    { code: 'ar-iq', name: 'عربي', name_en: 'Arabic (Iraq)' },
-    { code: 'ar-sa', name: 'عربي', name_en: 'Arabic (Saudi Arabia)' },
-    { code: 'ar-ae', name: 'عربي', name_en: 'Arabic (U.A.E.)' },
-    { code: 'bn', name: 'বাংলা', name_en: 'Bengali' },
-    { code: 'zh', name: '中国人', name_en: 'Chinese (China)' },
-    { code: 'zh-tw', name: '中国人', name_en: 'Chinese (Taiwan)' },
-    { code: 'en-au', name: 'English', name_en: 'English (Australia)' },
-    { code: 'en-nz', name: 'English', name_en: 'English (New Zealand)' },
-    { code: 'en-gb', name: 'English', name_en: 'English (U.K.)' },
-    { code: 'en-us', name: 'English', name_en: 'English (U.S.)' },
-    { code: 'fr', name: 'Français', name_en: 'French' },
-    { code: 'de', name: 'Deutsch', name_en: 'German' },
-    { code: 'hi', name: 'हिंदी', name_en: 'Hindi' },
-    { code: 'id', name: 'bahasa Indonesia', name_en: 'Indonesian' },
-    { code: 'it', name: 'Italiano', name_en: 'Italian' },
-    { code: 'jp', name: '日本語', name_en: 'Japanese' },
-    { code: 'kr', name: '한국인', name_en: 'Korean' },
-    { code: 'pt', name: 'Português', name_en: 'Portuguese (Portugal)' },
-    { code: 'pt-br', name: 'Português', name_en: 'Portuguese (Brazil)' },
-    { code: 'ru', name: 'Русский', name_en: 'Russian' },
-    { code: 'es-mx', name: 'Español', name_en: 'Spanish (Mexico)' },
-    { code: 'es', name: 'Español', name_en: 'Spanish (Spain)' },
-    { code: 'ur', name: 'اردو', name_en: 'Urdu' }
-  ]
+  fontCache: {} // Keys with any value indicate that font has already been made
 }
 
 export async function configure (options) {
@@ -139,17 +112,6 @@ function configureGUIForUser (user) {
         }
       }
     })
-}
-
-export function getLanguageDisplayName (langCode, en = false) {
-  // Return the display name for the given language code.
-  // By default, the name will be returned in that language.
-
-  const lang = config.languages.find(({ code }) => code === langCode)
-
-  if (lang == null) return langCode
-  if (en === true) return lang.name_en
-  return lang.name
 }
 
 export function showAppHelpModal (app) {
@@ -262,7 +224,8 @@ async function showSetupWizard () {
 }
 
 export function addWizardLanguage () {
-  // Create HTML for a new wizard language selector
+  // Create HTML for a new wizard language selector. This is a simplified version
+  // of the main language picker
 
   const col = document.createElement('div')
   col.classList = 'col'
@@ -298,153 +261,6 @@ export function addWizardLanguage () {
   })
 
   document.getElementById('wizardLanguages').append(col)
-}
-
-export function createLanguagePicker (id, callback = null) {
-  // Populate language picker into the named div
-
-  // callback should be a function that accepts three arguments:
-  // callback(code, displayName, englishName)
-  //    code: the ISO 639-1 code for the given language
-  //    displayName: the name of the language in its own language
-  //    englishName: the name of the language in English
-
-  const parent = document.getElementById(id)
-
-  const row = document.createElement('div')
-  row.classList = 'row gy-2 align-items-end'
-  parent.appendChild(row)
-
-  const languageSelectCol = document.createElement('div')
-  languageSelectCol.classList = 'col-12 col-md-8 col-lg-6'
-  row.appendChild(languageSelectCol)
-
-  const languageSelect = document.createElement('select')
-  languageSelect.classList = 'form-select'
-
-  // Populate all available languages, plus an other option
-  for (const lang of config.languages) {
-    const option = new Option(lang.name_en, lang.code)
-    languageSelect.appendChild(option)
-  }
-  const option = new Option('Other', 'other')
-  languageSelect.appendChild(option)
-  languageSelect.value = 'en-gb'
-
-  languageSelectCol.appendChild(languageSelect)
-
-  // Language code input
-  const languageCodeInputCol = document.createElement('div')
-  languageCodeInputCol.classList = 'col-12 col-md-6 custom-lang-col_' + id
-  languageCodeInputCol.style.display = 'none'
-  languageCodeInputCol.innerHTML = `
-    <label for="languageCodeInput_${id}" class="form-label">
-      Language code
-      <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="The unique ISO 639-1 code for the language. E.g., de for German." style="font-size: 0.55em;">?</span>
-    </label>
-    `
-  row.appendChild(languageCodeInputCol)
-
-  const languageCodeInput = document.createElement('input')
-  languageCodeInput.classList = 'form-control '
-  languageCodeInput.setAttribute('type', 'text')
-  languageCodeInput.setAttribute('id', 'languageCodeInput_' + id)
-  languageCodeInputCol.appendChild(languageCodeInput)
-
-  // Display name input
-  const languageDisplayNameInputCol = document.createElement('div')
-  languageDisplayNameInputCol.classList = 'col-12 col-md-6 custom-lang-col_' + id
-  languageDisplayNameInputCol.style.display = 'none'
-  languageDisplayNameInputCol.innerHTML = `
-    <label for="languageDisplayNameInput_${id}" class="form-label">
-      Display name
-      <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="The name of the language in that language. E.g., Deutsch for German." style="font-size: 0.55em;">?</span>
-    </label>
-    `
-  row.appendChild(languageDisplayNameInputCol)
-
-  const languageDisplayNameInput = document.createElement('input')
-  languageDisplayNameInput.classList = 'form-control '
-  languageDisplayNameInput.setAttribute('type', 'text')
-  languageDisplayNameInput.setAttribute('id', 'languageDisplayNameInput_' + id)
-  languageDisplayNameInputCol.appendChild(languageDisplayNameInput)
-
-  // English name input
-  const languageEnglishNameInputCol = document.createElement('div')
-  languageEnglishNameInputCol.classList = 'col-12 col-md-6 custom-lang-col_' + id
-  languageEnglishNameInputCol.style.display = 'none'
-  languageEnglishNameInputCol.innerHTML = `
-    <label for="languageDisplayNameInput_${id}" class="form-label">
-      English name
-      <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="The English name of the language." style="font-size: 0.55em;">?</span>
-    </label>
-    `
-  row.appendChild(languageEnglishNameInputCol)
-
-  const languageEnglishNameInput = document.createElement('input')
-  languageEnglishNameInput.classList = 'form-control '
-  languageEnglishNameInput.setAttribute('type', 'text')
-  languageEnglishNameInput.setAttribute('id', 'languageEnglishNameInput_' + id)
-  languageEnglishNameInputCol.appendChild(languageEnglishNameInput)
-
-  const addButtonCol = document.createElement('div')
-  addButtonCol.classList = 'col-12 col-md-4 col-lg-2'
-  row.appendChild(addButtonCol)
-
-  const addButton = document.createElement('button')
-  addButton.classList = 'btn btn-primary w-100'
-  addButton.innerHTML = 'Add'
-  addButtonCol.appendChild(addButton)
-
-  const warningCol = document.createElement('div')
-  warningCol.classList = 'col-12 mt-1'
-  warningCol.style.display = 'none'
-  warningCol.innerHTML = `
-  <span class="text-danger">You must enter all fields to add a custom language.</span>
-  `
-  row.appendChild(warningCol)
-
-  // Bind event listeners
-  languageSelect.addEventListener('change', (ev) => {
-    if (ev.target.value === 'other') {
-      document.querySelectorAll('.custom-lang-col_' + id).forEach((el) => {
-        el.style.display = 'block'
-      })
-    } else {
-      document.querySelectorAll('.custom-lang-col_' + id).forEach((el) => {
-        el.style.display = 'none'
-        el.querySelector('input').value = ''
-      })
-      warningCol.style.display = 'none'
-    }
-  })
-
-  addButton.addEventListener('click', (ev) => {
-    let code = languageSelect.value
-    let displayName, displayNameEn
-    if (code === 'other') {
-      code = languageCodeInput.value.trim()
-      displayName = languageDisplayNameInput.value.trim()
-      displayNameEn = languageEnglishNameInput.value.trim()
-
-      if ((code === '') || (displayName === '') || (displayNameEn === '')) {
-        warningCol.style.display = 'block'
-        return
-      }
-    } else {
-      displayNameEn = getLanguageDisplayName(code, true)
-      displayName = getLanguageDisplayName(code)
-    }
-    callback(code, displayName, displayNameEn)
-    languageSelect.value = 'en-gb'
-    languageCodeInput.value = ''
-    languageCodeInputCol.style.display = 'none'
-    languageDisplayNameInput.value = ''
-    languageDisplayNameInputCol.style.display = 'none'
-    languageEnglishNameInput.value = ''
-    languageEnglishNameInputCol.style.display = 'none'
-    warningCol.style.display = 'none'
-  })
 }
 
 export function initializeDefinition () {

@@ -4,6 +4,7 @@ import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exFileSelect from '../js/exhibitera_file_select_modal.js'
 import * as exSetup from '../js/exhibitera_setup_common.js'
 import * as exMarkdown from '../js/exhibitera_setup_markdown.js'
+import * as exLang from '../js/exhibitera_setup_languages.js'
 
 const markdownConverter = new showdown.Converter({ parseImgDimensions: true })
 
@@ -283,7 +284,12 @@ function editDefinition (uuid = '') {
   document.getElementById('inactivityTimeoutField').value = def?.inactivity_timeout || 30
 
   rebuildItemList()
-  rebuildLanguageList()
+  const langSelect = document.getElementById('language-select')
+  exLang.createLanguagePicker(langSelect,
+    {
+      onLanguageRebuild: rebuildLanguageElements
+    }
+  )
 
   if ('style' in def === false) {
     def.style = {
@@ -323,6 +329,13 @@ function editDefinition (uuid = '') {
 
   // Configure the preview frame
   document.getElementById('previewFrame').src = '../image_compare.html?standalone=true&definition=' + def.uuid
+}
+
+function rebuildLanguageElements () {
+  // Called when something changes with the languages. Rebuild all relevant elements.
+
+  rebuildItemList()
+  createHomeTextLocalizationHTML()
 }
 
 function addItem (wizard = false) {
@@ -943,22 +956,6 @@ function changeItemOrder (uuid, dir) {
   rebuildItemList()
 }
 
-function rebuildLanguageList () {
-  // Use the definition to rebuild the GUI representation for each language
-
-  const def = $('#definitionSaveButton').data('workingDefinition')
-  document.getElementById('languageList').innerHTML = ''
-
-  let i = 0
-  def.language_order.forEach((code) => {
-    const lang = def.languages[code]
-    createLanguageHTML(code, lang.display_name, lang.english_name, i === 0)
-    i++
-  })
-
-  createHomeTextLocalizationHTML()
-}
-
 function rebuildItemList () {
   // Use the definition to rebuild the GUI representations of each item
 
@@ -974,132 +971,6 @@ function rebuildItemList () {
     createItemHTML(item, num, num === 1)
     num += 1
   })
-}
-
-function addLanguage (code, displayName, englishName) {
-  // Add a new language to the definition
-
-  const definition = $('#definitionSaveButton').data('workingDefinition')
-
-  exSetup.updateWorkingDefinition(['languages', code], {
-    code,
-    display_name: displayName,
-    english_name: englishName
-  })
-  definition.language_order.push(code)
-
-  createLanguageHTML(code, displayName, englishName)
-  rebuildItemList()
-  rebuildLanguageList()
-  exSetup.previewDefinition(true)
-}
-
-function deleteLanguage (code) {
-  // Remove this language from the working defintion and destroy its GUI representation.
-
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
-
-  delete workingDefinition.languages[code]
-  workingDefinition.language_order = workingDefinition.language_order.filter(lang => lang !== code)
-
-  rebuildLanguageList()
-  rebuildItemList()
-  exSetup.previewDefinition(true)
-}
-
-function changeLanguageOrder (code, dir) {
-  // Move the language specified by code by dir places
-  // dir = 1 means move down the list by one place; dir = -1 is moves up the list.
-
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
-  const arr = workingDefinition?.language_order || []
-
-  const index = arr.indexOf(code)
-
-  if (index === -1) return // code doesn't exist
-  if (dir === 0) return // No motion
-
-  if (dir < 1) {
-    if (index === 0) return // Can't move higher
-  } else {
-    if (index >= arr.length - 1) return // Can't move lower
-  }
-
-  // Swap the element with the next one
-  [arr[index], arr[index + dir]] = [arr[index + dir], arr[index]]
-
-  workingDefinition.language_order = arr
-  rebuildLanguageList()
-  rebuildItemList()
-  exSetup.previewDefinition(true)
-}
-
-function createLanguageHTML (code, displayName, englishName, isDefault = false) {
-  // Create the HTML representation of a language.
-
-  const col = document.createElement('div')
-  col.classList = 'col-12'
-
-  const card = document.createElement('div')
-  card.classList = 'card'
-  col.appendChild(card)
-
-  const cardBody = document.createElement('div')
-  cardBody.classList = 'card-body row gy-2 d-flex align-items-center p-2'
-  card.appendChild(cardBody)
-
-  const englishNameCol = document.createElement('div')
-  englishNameCol.classList = 'col-12 col-lg-6'
-  cardBody.appendChild(englishNameCol)
-
-  const englishNameDiv = document.createElement('div')
-  englishNameDiv.innerHTML = englishName
-  englishNameCol.appendChild(englishNameDiv)
-
-  if (isDefault === true) {
-    const badge = document.createElement('span')
-    badge.classList = 'badge text-bg-secondary ms-2'
-    badge.innerHTML = 'Default'
-    englishNameDiv.appendChild(badge)
-  }
-
-  const orderButtonLeftCol = document.createElement('div')
-  orderButtonLeftCol.classList = 'col-4 col-lg-2'
-  cardBody.appendChild(orderButtonLeftCol)
-
-  const orderButtonLeft = document.createElement('button')
-  orderButtonLeft.classList = 'btn btn-info btn-sm w-100'
-  orderButtonLeft.innerHTML = '▲'
-  orderButtonLeft.addEventListener('click', (event) => {
-    changeLanguageOrder(code, -1)
-  })
-  orderButtonLeftCol.appendChild(orderButtonLeft)
-
-  const orderButtonRightCol = document.createElement('div')
-  orderButtonRightCol.classList = 'col-4 col-lg-2'
-  cardBody.appendChild(orderButtonRightCol)
-
-  const orderButtonRight = document.createElement('button')
-  orderButtonRight.classList = 'btn btn-info btn-sm w-100'
-  orderButtonRight.innerHTML = '▼'
-  orderButtonRight.addEventListener('click', (event) => {
-    changeLanguageOrder(code, 1)
-  })
-  orderButtonRightCol.appendChild(orderButtonRight)
-
-  const deleteCol = document.createElement('div')
-  deleteCol.classList = 'col-4 col-lg-2'
-  cardBody.appendChild(deleteCol)
-
-  const deleteButton = document.createElement('button')
-  deleteButton.classList = 'btn btn-danger btn-sm w-100'
-  deleteButton.innerHTML = '×'
-  deleteButton.addEventListener('click', (event) => {
-    deleteLanguage(code)
-  })
-  deleteCol.appendChild(deleteButton)
-
-  document.getElementById('languageList').appendChild(col)
 }
 
 function onAttractorFileChange () {
@@ -1149,7 +1020,8 @@ function setUpColorPickers () {
 }
 // Call with a slight delay to make sure the elements are loaded
 setTimeout(setUpColorPickers, 100)
-exSetup.createLanguagePicker('language-select', addLanguage)
+
+exLang.createLanguagePicker(document.getElementById('language-select'), rebuildItemList)
 
 // Add event listeners
 // -------------------------------------------------------------
