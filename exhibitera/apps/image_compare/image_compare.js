@@ -1,5 +1,6 @@
 /* global showdown */
 import * as exCommon from '../js/exhibitera_app_common.js'
+import * as exMarkdown from '../js/exhibitera_app_markdown.js'
 
 const overlay = document.getElementById('overlayDiv')
 const base = document.getElementById('baseDiv')
@@ -148,13 +149,13 @@ function loadImages (item) {
   const image2Label = document.getElementById('image2Label')
   const aboutButton = document.getElementById('aboutButton')
   if (item?.localization?.[currentLang]?.image1_name) {
-    image1Label.innerHTML = item?.localization?.[currentLang]?.image1_name || ''
+    image1Label.innerHTML = exMarkdown.formatText(item?.localization?.[currentLang]?.image1_name || '', { removeParagraph: true, string: true })
     image1Label.classList.remove('hidden')
   } else {
     image1Label.classList.add('hidden')
   }
   if (item?.localization?.[currentLang]?.image2_name) {
-    image2Label.innerHTML = item?.localization?.[currentLang]?.image2_name || ''
+    image2Label.innerHTML = exMarkdown.formatText(item?.localization?.[currentLang]?.image2_name || '', { removeParagraph: true, string: true })
     image2Label.classList.remove('hidden')
   } else {
     image2Label.classList.add('hidden')
@@ -164,11 +165,12 @@ function loadImages (item) {
     const infoTitle = document.getElementById('aboutModalTitle')
     const infoBody = document.getElementById('aboutModalBody')
 
-    const converter = new showdown.Converter({ parseImgDimensions: true })
-    const html = converter.makeHtml(item?.localization?.[currentLang]?.info_text || '')
+    const html = exMarkdown.formatText(item?.localization?.[currentLang]?.info_text || '')
+    const formattedHTML = exMarkdown.formatMarkdownImages(html)
 
-    infoTitle.innerHTML = item?.localization?.[currentLang]?.info_title || ''
-    infoBody.innerHTML = html
+    infoTitle.innerHTML = exMarkdown.formatText(item?.localization?.[currentLang]?.info_title || '', { removeParagraph: true, string: true })
+
+    infoBody.appendChild(formattedHTML)
 
     aboutButton.style.display = 'flex'
   } else {
@@ -391,7 +393,8 @@ function populateItemList (def) {
 
     const label = document.createElement('div')
     label.classList = 'button-label'
-    label.innerHTML = item?.localization?.[currentLang]?.name || ''
+    label.innerHTML = exMarkdown.formatText(item?.localization?.[currentLang]?.name || '', { removeParagraph: true, string: true })
+
     col.appendChild(label)
 
     if (first) {
@@ -424,8 +427,10 @@ function localize (lang) {
     document.getElementById('mainMenu').style.display = 'block'
 
     // Home screen text
-    document.getElementById('title').innerHTML = exCommon.config.definition?.misc_text?.title?.localization?.[currentLang] || ''
-    document.getElementById('subtitle').innerHTML = exCommon.config.definition?.misc_text?.subtitle?.localization?.[currentLang] || ''
+    document.getElementById('title').innerHTML = exMarkdown.formatText(exCommon.config.definition?.misc_text?.title?.localization?.[currentLang] || '', { removeParagraph: true, string: true }
+    )
+
+    document.getElementById('subtitle').innerHTML = exMarkdown.formatText(exCommon.config.definition?.misc_text?.subtitle?.localization?.[currentLang] || '', { string: true })
   }
 }
 

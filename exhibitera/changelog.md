@@ -14,6 +14,7 @@
 
 ### General
 - Rich text editor for easier text styling with Markdown
+- New size and placement options when inserting images into Markdown
 - See file sizes when browsing files
 
 ### Image Compare

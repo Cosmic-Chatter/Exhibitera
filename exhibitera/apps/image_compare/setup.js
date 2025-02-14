@@ -1,9 +1,11 @@
-/* global bootstrap, Coloris */
+/* global bootstrap, Coloris, showdown */
 
 import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exFileSelect from '../js/exhibitera_file_select_modal.js'
 import * as exSetup from '../js/exhibitera_setup_common.js'
 import * as exMarkdown from '../js/exhibitera_setup_markdown.js'
+
+const markdownConverter = new showdown.Converter({ parseImgDimensions: true })
 
 async function initializeWizard () {
   // Set up the wizard
@@ -362,7 +364,11 @@ function createItemHTML (item, num, show = false, wizard = false) {
   tabButton.setAttribute('data-bs-target', '#itemPane_' + item.uuid)
   tabButton.setAttribute('type', 'button')
   tabButton.setAttribute('role', 'tab')
-  tabButton.innerHTML = item?.localization?.[def?.language_order?.[0] || null]?.name || String(num)
+  // Convert possible Markdown-formatted name
+  const temp = document.createElement('div')
+  temp.innerHTML = markdownConverter.makeHtml(item?.localization?.[def?.language_order?.[0] || null]?.name || String(num))
+  tabButton.innerHTML = temp.firstElementChild.innerHTML
+
   if (wizard === false) {
     document.getElementById('contentNav').appendChild(tabButton)
   } else {
@@ -666,27 +672,36 @@ function createItemLocalizationHTML (item, pane, itemNum) {
     `
     nameCol.appendChild(nameLabel)
 
-    const nameInput = document.createElement('input')
-    nameInput.classList = 'form-control'
-    nameInput.value = item?.localization?.[code]?.name || ''
+    const nameInputCommandBar = document.createElement('div')
+    nameCol.appendChild(nameInputCommandBar)
+
     const thisLangI = i
-    nameInput.addEventListener('change', () => {
-      const name = nameInput.value.trim()
-      const itemTab = document.getElementById('itemTab_' + item.uuid)
-
-      exSetup.updateWorkingDefinition(['content', item.uuid, 'localization', code, 'name'], name)
-
-      // If this is the primary language, update the name on the tab
-      if (thisLangI === 0) {
-        if (name !== '') {
-          itemTab.innerHTML = name
-        } else {
-          itemTab.innerHTML = String(itemNum)
-        }
-      }
-      exSetup.previewDefinition(true)
-    })
+    const nameInput = document.createElement('div')
     nameCol.appendChild(nameInput)
+    const nameEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+      content: item?.localization?.[code]?.name || '',
+      editorDiv: nameInput,
+      commandDiv: nameInputCommandBar,
+      commands: ['basic'],
+      callback: (content) => {
+        const name = content.trim()
+        const itemTab = document.getElementById('itemTab_' + item.uuid)
+
+        exSetup.updateWorkingDefinition(['content', item.uuid, 'localization', code, 'name'], name)
+
+        // If this is the primary language, update the name on the tab
+        if (thisLangI === 0) {
+          if (name !== '') {
+            const temp = document.createElement('div')
+            temp.innerHTML = markdownConverter.makeHtml(name)
+            itemTab.innerHTML = temp.firstElementChild.innerHTML
+          } else {
+            itemTab.innerHTML = String(itemNum)
+          }
+        }
+        exSetup.previewDefinition(true)
+      }
+    })
 
     const image1NameCol = document.createElement('div')
     image1NameCol.classList = 'col-12 col-md-6 col-xl-4'
@@ -700,14 +715,21 @@ function createItemLocalizationHTML (item, pane, itemNum) {
     `
     image1NameCol.appendChild(image1NameLabel)
 
-    const image1NameInput = document.createElement('input')
-    image1NameInput.classList = 'form-control'
-    image1NameInput.value = item?.localization?.[code]?.image1_name || ''
-    image1NameInput.addEventListener('change', () => {
-      exSetup.updateWorkingDefinition(['content', item.uuid, 'localization', code, 'image1_name'], image1NameInput.value.trim())
-      exSetup.previewDefinition(true)
-    })
+    const image1CommandBar = document.createElement('div')
+    image1NameCol.appendChild(image1CommandBar)
+
+    const image1NameInput = document.createElement('div')
     image1NameCol.appendChild(image1NameInput)
+
+    const image1NameEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+      content: item?.localization?.[code]?.image1_name || '',
+      editorDiv: image1NameInput,
+      commandDiv: image1CommandBar,
+      callback: (content) => {
+        exSetup.updateWorkingDefinition(['content', item.uuid, 'localization', code, 'image1_name'], content.trim())
+        exSetup.previewDefinition(true)
+      }
+    })
 
     const image2NameCol = document.createElement('div')
     image2NameCol.classList = 'col-12 col-md-6 col-xl-4'
@@ -721,14 +743,21 @@ function createItemLocalizationHTML (item, pane, itemNum) {
     `
     image2NameCol.appendChild(image2NameLabel)
 
-    const image2NameInput = document.createElement('input')
-    image2NameInput.classList = 'form-control'
-    image2NameInput.value = item?.localization?.[code]?.image2_name || ''
-    image2NameInput.addEventListener('change', () => {
-      exSetup.updateWorkingDefinition(['content', item.uuid, 'localization', code, 'image2_name'], image2NameInput.value.trim())
-      exSetup.previewDefinition(true)
-    })
+    const image2CommandBar = document.createElement('div')
+    image2NameCol.appendChild(image2CommandBar)
+
+    const image2NameInput = document.createElement('div')
     image2NameCol.appendChild(image2NameInput)
+
+    const image2NameEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+      content: item?.localization?.[code]?.image1_name || '',
+      editorDiv: image2NameInput,
+      commandDiv: image2CommandBar,
+      callback: (content) => {
+        exSetup.updateWorkingDefinition(['content', item.uuid, 'localization', code, 'image2_name'], content.trim())
+        exSetup.previewDefinition(true)
+      }
+    })
 
     const infoTitleCol = document.createElement('div')
     infoTitleCol.classList = 'col-12 col-md-6 col-xl-4'
@@ -742,16 +771,22 @@ function createItemLocalizationHTML (item, pane, itemNum) {
     `
     infoTitleCol.appendChild(infoTitleLabel)
 
-    const infoTitleInput = document.createElement('input')
-    infoTitleInput.classList = 'form-control'
-    infoTitleInput.value = item?.localization?.[code]?.info_title || ''
-    infoTitleInput.addEventListener('change', () => {
-      exSetup.updateWorkingDefinition(['content', item.uuid, 'localization', code, 'info_title'], infoTitleInput.value.trim())
-      exSetup.previewDefinition(true)
-    })
+    const infoTitleCommandBar = document.createElement('div')
+    infoTitleCol.appendChild(infoTitleCommandBar)
+
+    const infoTitleInput = document.createElement('div')
     infoTitleCol.appendChild(infoTitleInput)
 
-    //
+    const titleEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+      content: item?.localization?.[code]?.info_title || '',
+      editorDiv: infoTitleInput,
+      commandDiv: infoTitleCommandBar,
+      commands: ['basic'],
+      callback: (content) => {
+        exSetup.updateWorkingDefinition(['content', item.uuid, 'localization', code, 'info_title'], content.trim())
+        exSetup.previewDefinition(true)
+      }
+    })
 
     const infoBodyCol = document.createElement('div')
     infoBodyCol.classList = 'col-12'
@@ -761,7 +796,7 @@ function createItemLocalizationHTML (item, pane, itemNum) {
     infoBodyLabel.classList = 'form-label'
     infoBodyLabel.innerHTML = `
     Info pane text
-    <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="Up to a few sentenaces describing the image pair. Formatting with Markdown is supported." style="font-size: 0.55em;">?</span>
+    <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="Up to a few sentenaces describing the image pair." style="font-size: 0.55em;">?</span>
     `
     infoBodyCol.appendChild(infoBodyLabel)
 
@@ -825,7 +860,7 @@ function createHomeTextLocalizationHTML (tabList = null, navContent = null) {
     tabPane.appendChild(tabRow)
 
     const titleCol = document.createElement('div')
-    titleCol.classList = 'col-12 col-md-6 col-xl-4'
+    titleCol.classList = 'col-12 col-md-6'
     tabRow.appendChild(titleCol)
 
     const titleLabel = document.createElement('label')
@@ -833,18 +868,24 @@ function createHomeTextLocalizationHTML (tabList = null, navContent = null) {
     titleLabel.innerHTML = 'Title'
     titleCol.appendChild(titleLabel)
 
-    const titleInput = document.createElement('input')
-    titleInput.classList = 'form-control'
-    titleInput.value = def?.misc_text?.title?.localization?.[code] || ''
-    titleInput.addEventListener('change', () => {
-      const title = titleInput.value.trim()
-      exSetup.updateWorkingDefinition(['misc_text', 'title', 'localization', code], title)
-      exSetup.previewDefinition(true)
-    })
+    const titleCommandBar = document.createElement('div')
+    titleCol.appendChild(titleCommandBar)
+
+    const titleInput = document.createElement('div')
     titleCol.appendChild(titleInput)
+    const titleEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+      content: def?.misc_text?.title?.localization?.[code] || '',
+      editorDiv: titleInput,
+      commandDiv: titleCommandBar,
+      commands: ['basic'],
+      callback: (content) => {
+        exSetup.updateWorkingDefinition(['misc_text', 'title', 'localization', code], content.trim())
+        exSetup.previewDefinition(true)
+      }
+    })
 
     const subtitleCol = document.createElement('div')
-    subtitleCol.classList = 'col-12 col-md-6 col-xl-4'
+    subtitleCol.classList = 'col-12 col-lg-6'
     tabRow.appendChild(subtitleCol)
 
     const subtitleLabel = document.createElement('label')
@@ -852,14 +893,21 @@ function createHomeTextLocalizationHTML (tabList = null, navContent = null) {
     subtitleLabel.innerHTML = 'Subtitle'
     subtitleCol.appendChild(subtitleLabel)
 
-    const subtitleInput = document.createElement('input')
-    subtitleInput.classList = 'form-control'
-    subtitleInput.value = def?.misc_text?.subtitle?.localization?.[code] || ''
-    subtitleInput.addEventListener('change', () => {
-      exSetup.updateWorkingDefinition(['misc_text', 'subtitle', 'localization', code], subtitleInput.value.trim())
-      exSetup.previewDefinition(true)
-    })
+    const subtitleCommandBar = document.createElement('div')
+    subtitleCol.appendChild(subtitleCommandBar)
+
+    const subtitleInput = document.createElement('div')
     subtitleCol.appendChild(subtitleInput)
+    const subtitleEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+      content: def?.misc_text?.subtitle?.localization?.[code] || '',
+      editorDiv: subtitleInput,
+      commandDiv: subtitleCommandBar,
+      commands: ['basic'],
+      callback: (content) => {
+        exSetup.updateWorkingDefinition(['misc_text', 'subtitle', 'localization', code], content.trim())
+        exSetup.previewDefinition(true)
+      }
+    })
 
     if (i === 0) tabButton.click()
     i++

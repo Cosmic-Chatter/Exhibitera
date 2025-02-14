@@ -44,23 +44,28 @@ export class ExhibiteraMarkdownEditor {
     })
 
     // Set up the command bar. Use default commands if none are provided.
-    const defaultCommands = [
-      { name: 'bold', innerHTML: 'B' },
-      { name: 'italic', innerHTML: '<i>I</i>' },
-      '|',
-      { name: 'h1', innerHTML: 'H' },
-      { name: 'h2', innerHTML: 'h' },
-      '|',
-      'ul',
-      'ol',
-      'blockquote',
-      '|',
-      { name: 'insertImage', action: this.showInsertImageModal.bind(this) },
-      '|',
-      { name: 'undo', action: this.undo.bind(this), innerHTML: '↺', hotkey: 'Mod-z', title: 'Undo' },
-      { name: 'redo', action: this.redo.bind(this), innerHTML: '↻', hotkey: 'Mod-Shift-z', title: 'Redo' }
-    ]
-    const commands = options.commands || defaultCommands
+    const commands = []
+    for (const category of (options.commands || ['basic', 'headers', 'formatting', 'image'])) {
+      if (category === 'basic') {
+        commands.push({ name: 'bold', innerHTML: 'B' })
+        commands.push({ name: 'italic', innerHTML: '<i>I</i>' })
+        commands.push('|')
+      } else if (category === 'headers') {
+        commands.push({ name: 'h1', innerHTML: 'H' })
+        commands.push({ name: 'h2', innerHTML: 'h' })
+        commands.push('|')
+      } else if (category === 'formatting') {
+        commands.push('ul')
+        commands.push('ol')
+        commands.push('blockquote')
+        commands.push('|')
+      } else if (category === 'image') {
+        commands.push({ name: 'insertImage', action: this.showInsertImageModal.bind(this) })
+        commands.push('|')
+      }
+    }
+    commands.push({ name: 'undo', action: this.undo.bind(this), innerHTML: '↺', hotkey: 'Mod-z', title: 'Undo' })
+    commands.push({ name: 'redo', action: this.redo.bind(this), innerHTML: '↻', hotkey: 'Mod-Shift-z', title: 'Redo' })
 
     this.commandBar = new TinyMDE.CommandBar({
       element: options.commandDiv,
@@ -223,7 +228,6 @@ export class ExhibiteraMarkdownEditor {
    * @param {boolean} [fromRedo] - If true, add the entry twice to maintain order.
    */
   appendToUndo (content, focus, fromRedo) {
-    console.log('appendToUndo', this.undoCache.length)
     this.lastUndoCacheUpdate = new Date()
     const entry = { content, position: focus }
     this.undoCache.push(entry)
@@ -238,7 +242,6 @@ export class ExhibiteraMarkdownEditor {
    * @param {*} focus - The current selection/focus.
    */
   appendToRedo (content, focus) {
-    console.log('appendToRedo', this.redoCache.length)
     const entry = { content, position: focus }
     this.redoCache.push(entry)
     if (this.redoCache.length > undoCacheLimit) {

@@ -1,6 +1,7 @@
-/* global showdown textFit */
+/* global textFit */
 
 import * as exCommon from '../js/exhibitera_app_common.js'
+import * as exMarkdown from '../js/exhibitera_app_markdown.js'
 
 function loadDefinition (definition) {
   // Parse the current definition and build the interface correspondingly.
@@ -209,10 +210,9 @@ function _createTextTabContent (tabId, content) {
 
   const col = document.getElementById(tabId + 'Content')
 
-  const converter = new showdown.Converter({ parseImgDimensions: true })
-  const html = converter.makeHtml(content)
+  const text = exMarkdown.formatText(content)
 
-  const el = exCommon.formatMarkdownImages(html)
+  const el = exMarkdown.formatMarkdownImages(text)
 
   // Group the elements by H1 elements. We will enclose each set in a box
   const boxes = []
