@@ -428,8 +428,9 @@ function editDefinition (uuid = '') {
         def.language_order.unshift(code)
       } else def.language_order.push(code)
     }
+    exSetup.updateWorkingDefinition(['language_order'], def.language_order)
   }
-  exSetup.updateWorkingDefinition(['language_order'], def.language_order)
+
   const langSelect = document.getElementById('language-picker')
   exLang.createLanguagePicker(langSelect,
     {

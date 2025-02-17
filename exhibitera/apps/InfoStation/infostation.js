@@ -94,9 +94,14 @@ function loadDefinition (definition) {
   })
 
   // Find the default language
-  Object.keys(definition.languages).forEach((lang) => {
-    if (definition.languages[lang].default === true) defaultLang = lang
-  })
+  if ('language_order' in definition) {
+    defaultLang = definition.language_order[0]
+  } else {
+    // Deprecated in Ex5.3
+    Object.keys(definition.languages).forEach((lang) => {
+      if (definition.languages[lang].default === true) defaultLang = lang
+    })
+  }
   if (defaultLang !== '') localize(defaultLang)
 
   // Send a thumbnail to the helper
@@ -113,14 +118,13 @@ function localize (lang) {
   document.getElementById('nav-tabContent').innerHTML = ''
 
   if (definition.header != null) {
-    document.getElementById('masthead').innerHTML = definition.header
-    // textFit(document.getElementById('masthead'))
+    document.getElementById('masthead').innerHTML = exMarkdown.formatText(definition.header, { string: true, removeParagraph: true })
   } else {
     document.getElementById('masthead').innerHTML = ''
   }
 
   // Create the tabs
-  definition.tab_order.forEach((uuid, i) => {
+  (definition?.tab_order || []).forEach((uuid, i) => {
     const tabDef = definition.tabs[uuid]
     const tabId = createTextTab(tabDef, i === 0)
     if (i === 0) {
@@ -156,7 +160,7 @@ function createButton (title, id) {
   })
 
   button.setAttribute('id', id + 'Button')
-  button.innerHTML = title
+  button.innerHTML = exMarkdown.formatText(title, { removeParagraph: true, string: true })
   col.append(button)
 
   // Adjust the number of columns based on the number of buttons that have been added

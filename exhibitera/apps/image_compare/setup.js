@@ -240,6 +240,12 @@ async function clearDefinitionInput (full = true) {
   attractorSelect.innerHTML = 'Select file'
   attractorSelect.setAttribute('data-filename', '')
 
+  // Language
+  exLang.clearLanguagePicker(document.getElementById('language-select'))
+  exLang.createLanguagePicker(document.getElementById('language-select'), { onLanguageRebuild: rebuildLanguageElements })
+
+  rebuildLanguageElements([])
+
   // Reset style options
   document.querySelectorAll('.coloris').forEach(el => {
     el.value = el.getAttribute('data-default')

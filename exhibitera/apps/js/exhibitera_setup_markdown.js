@@ -1,8 +1,10 @@
-/* global bootstrap, TinyMDE */
+/* global bootstrap, showdown, TinyMDE */
 // Create rich markdown editors for setup pages.
 
 import * as exFileSelect from './exhibitera_file_select_modal.js'
 import * as exCommon from './exhibitera_app_common.js'
+
+const markdownConverter = new showdown.Converter({ parseImgDimensions: true })
 
 const timerThreshold = 2000 // ms to wait before calling the callback
 const undoCacheLimit = 1000
@@ -291,4 +293,19 @@ export class ExhibiteraMarkdownEditor {
       }
     }
   }
+}
+
+export function formatText (inputStr, options = {}) {
+  // Take a string of Markdown-formatted text and return a dom object containing
+  // the formatted text.
+  // Set options.removeParagraph to remove the enclosing <p> element from short texts
+
+  const outputStr = markdownConverter.makeHtml(inputStr)
+  let el = document.createElement('div')
+  el.innerHTML = outputStr
+  if ((options?.removeParagraph || false) === true) {
+    el = el?.firstElementChild || el
+  }
+  if ((options?.string || false) === true) return el.innerHTML
+  return el
 }

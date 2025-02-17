@@ -3,6 +3,7 @@
 import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exFileSelect from '../js/exhibitera_file_select_modal.js'
 import * as exSetup from '../js/exhibitera_setup_common.js'
+import * as exLang from '../js/exhibitera_setup_languages.js'
 import * as exMarkdown from '../js/exhibitera_setup_markdown.js'
 
 async function initializeWizard () {
@@ -28,9 +29,11 @@ async function clearDefinitionInput (full = true) {
     await exSetup.initializeDefinition()
   }
 
-  // Language add
-  $('#languageAddEmptyFieldsWarning').hide()
-  $('#languageAddExistsWarning').hide()
+  // Language
+  exLang.clearLanguagePicker(document.getElementById('languagePicker'))
+  exLang.createLanguagePicker(document.getElementById('languagePicker'), { onLanguageRebuild: rebuildLanguageElements })
+
+  rebuildLanguageElements([])
 
   // Definition details
   document.getElementById('definitionNameInput').value = ''
@@ -139,28 +142,37 @@ function editDefinition (uuid = '') {
         def.language_order.unshift(code)
       } else def.language_order.push(code)
     }
+    exSetup.updateWorkingDefinition(['language_order'], def.language_order)
   }
-  exSetup.updateWorkingDefinition(['language_order'], def.language_order)
-
-  let first = null
-  for (const lang of def.language_order) {
-    if (first == null) first = lang
-    const langDef = def.languages[lang]
-    createLanguageTab(lang, langDef.display_name)
-
-    $('#languagePane_' + lang).removeClass('active').removeClass('show')
-    $('#headerText' + '_' + lang).val(langDef.header_text)
-
-    // Then build out any InfoStation tabs
-    def.languages[lang].tab_order.forEach((uuid) => {
-      createInfoStationTab(lang, uuid)
-    })
-  }
-  $('#languageTab_' + first).click()
-  $('#languagePane_' + first).addClass('active')
+  exLang.createLanguagePicker(document.getElementById('languagePicker'),
+    {
+      onLanguageRebuild: rebuildLanguageElements
+    }
+  )
 
   // Configure the preview frame
   document.getElementById('previewFrame').src = '../infostation.html?standalone=true&definition=' + def.uuid
+}
+
+function rebuildLanguageElements (langOrder) {
+  // Called whenever we modify the languages to rebuild the GUI representation.
+
+  document.getElementById('languageNav').innerHTML = ''
+  document.getElementById('languageNavContent').innerHTML = ''
+
+  let first = null
+  for (const lang of langOrder) {
+    if (first == null) first = lang
+    createLanguageTab(lang)
+
+    // document.getElementById('languagePane_' + lang).classList.remove('active', 'show')
+    // $('#headerText' + '_' + lang).val(langDef.header_text)
+  }
+
+  if (first != null) {
+    document.getElementById('languageTab_' + first).click()
+    document.getElementById('languagePane_' + first).classList.add('active')
+  }
 }
 
 function addLanguage (code, displayName, englishName) {
@@ -194,13 +206,13 @@ function addLanguage (code, displayName, englishName) {
     tab_order: []
   }
 
-  createLanguageTab(code, englishName)
+  createLanguageTab(code)
 
   $('#definitionSaveButton').data('workingDefinition', structuredClone(workingDefinition))
   exSetup.previewDefinition(true)
 }
 
-function createLanguageTab (code, englishName) {
+function createLanguageTab (code) {
   // Create a new language tab for the given details.
 
   const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
@@ -213,7 +225,7 @@ function createLanguageTab (code, englishName) {
   tabButton.setAttribute('data-bs-target', '#languagePane_' + code)
   tabButton.setAttribute('type', 'button')
   tabButton.setAttribute('role', 'tab')
-  tabButton.innerHTML = englishName
+  tabButton.innerHTML = exLang.getLanguageDisplayName(code, true)
   $('#languageNav').append(tabButton)
 
   // Create corresponding pane
@@ -233,25 +245,6 @@ function createLanguageTab (code, englishName) {
   leftCol.classList = 'col-4 col-md-3 col-lg-2'
   row.appendChild(leftCol)
 
-  // Create the delete button
-  const deleteCol = document.createElement('div')
-  deleteCol.classList = 'col col-12 col-lg-6 col-xl-4 d-flex'
-  row.appendChild(deleteCol)
-
-  const deleteButton = document.createElement('button')
-  deleteButton.classList = 'btn btn-danger w-100 align-self-center'
-  deleteButton.setAttribute('data-bs-toggle', 'popover')
-  deleteButton.setAttribute('title', 'Are you sure?')
-  deleteButton.setAttribute('data-bs-content', `<a id='deleteLang_${code}' class='btn btn-danger w-100 lang-delete'>Confirm</a>`)
-  deleteButton.setAttribute('data-bs-trigger', 'focus')
-  deleteButton.setAttribute('data-bs-html', 'true')
-  // Note: The event listener to detect is the delete button is clicked is defined at the page level
-  deleteButton.addEventListener('click', function () { deleteButton.focus() })
-  deleteButton.innerHTML = 'Delete language'
-
-  deleteCol.appendChild(deleteButton)
-  $(deleteButton).popover()
-
   // Create the header input
   const headerCol = document.createElement('div')
   headerCol.classList = 'col-12'
@@ -263,20 +256,26 @@ function createLanguageTab (code, englishName) {
   headerInputLabel.setAttribute('for', 'languageTabHeader_' + code)
   headerCol.appendChild(headerInputLabel)
 
-  const headerInput = document.createElement('input')
-  headerInput.classList = 'form-control'
-  headerInput.setAttribute('type', 'text')
-  headerInput.setAttribute('id', 'languageTabHeader_' + code)
-  headerInput.addEventListener('change', (event) => {
-    exSetup.updateWorkingDefinition(['languages', code, 'header'], event.target.value)
-    exSetup.previewDefinition(true)
-  })
-  headerInput.value = workingDefinition.languages[code].header ?? ''
+  const headerCommandBar = document.createElement('div')
+  headerCol.appendChild(headerCommandBar)
+
+  const headerInput = document.createElement('div')
   headerCol.appendChild(headerInput)
+
+  const titleEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+    content: workingDefinition.languages[code].header ?? '',
+    editorDiv: headerInput,
+    commandDiv: headerCommandBar,
+    commands: ['basic'],
+    callback: (content) => {
+      exSetup.updateWorkingDefinition(['languages', code, 'header'], content)
+      exSetup.previewDefinition(true)
+    }
+  })
 
   // Create the new sub-tab button
   const newInfoTabCol = document.createElement('div')
-  newInfoTabCol.classList = 'col col-12 col-lg-6 col-xl-4 d-flex mt-2'
+  newInfoTabCol.classList = 'col col-12 col-md-6 col-lg-4 col-xl-3 d-flex mt-2'
   row.appendChild(newInfoTabCol)
 
   const newInfoTabButton = document.createElement('button')
@@ -301,6 +300,11 @@ function createLanguageTab (code, englishName) {
   subTabPane.classList = 'tab-content'
   subTabPane.setAttribute('id', 'subTabPane_' + code)
   tabPane.appendChild(subTabPane)
+
+  // Then build out any InfoStation tabs
+  for (const uuid of workingDefinition.languages[code]?.tab_order || []) {
+    createInfoStationTab(code, uuid)
+  }
 
   // Switch to this new tab
   $(tabButton).click()
@@ -346,8 +350,14 @@ function createInfoStationTab (lang, uuid = '') {
 
   const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
 
+  if (('tabs' in workingDefinition.languages[lang]) === false) {
+    workingDefinition.languages[lang].tabs = {}
+  }
+  if (('tab_order' in workingDefinition.languages[lang]) === false) {
+    workingDefinition.languages[lang].tab_order = []
+  }
   if (uuid === '') {
-    uuid = new Date() * 1e6 * Math.random()
+    uuid = exCommon.uuid()
     workingDefinition.languages[lang].tabs[uuid] = {
       button_text: '',
       type: 'text',
@@ -388,6 +398,25 @@ function createInfoStationTab (lang, uuid = '') {
   row.classList = 'row gy-2 mt-2 mb-3'
   tabPane.appendChild(row)
 
+  // Create the delete button
+  const deleteCol = document.createElement('div')
+  deleteCol.classList = 'col-12'
+  row.appendChild(deleteCol)
+
+  const deleteButton = document.createElement('button')
+  deleteButton.classList = 'btn btn-danger align-self-center'
+  deleteButton.setAttribute('data-bs-toggle', 'popover')
+  deleteButton.setAttribute('title', 'Are you sure?')
+  deleteButton.setAttribute('data-bs-content', `<a id='deleteTab_${lang}_${uuid}' class='btn btn-danger w-100 tab-delete'>Confirm</a>`)
+  deleteButton.setAttribute('data-bs-trigger', 'focus')
+  deleteButton.setAttribute('data-bs-html', 'true')
+  // Note: The event listener to detect is the delete button is clicked is defined elsewhere
+  deleteButton.addEventListener('click', function () { deleteButton.focus() })
+  deleteButton.innerHTML = 'Delete tab'
+
+  deleteCol.appendChild(deleteButton)
+  $(deleteButton).popover()
+
   const buttonTextCol = document.createElement('div')
   buttonTextCol.classList = 'col-12 col-md-6'
   row.appendChild(buttonTextCol)
@@ -398,17 +427,23 @@ function createInfoStationTab (lang, uuid = '') {
   buttonTextLabel.setAttribute('for', 'infostationTabButtonTextInput_' + uuid)
   buttonTextCol.appendChild(buttonTextLabel)
 
-  const buttonTextInput = document.createElement('input')
-  buttonTextInput.classList = 'form-control'
-  buttonTextInput.setAttribute('type', 'text')
-  buttonTextInput.setAttribute('id', 'infostationTabButtonTextInput_' + uuid)
-  buttonTextInput.addEventListener('change', (event) => {
-    exSetup.updateWorkingDefinition(['languages', lang, 'tabs', uuid, 'button_text'], event.target.value)
-    document.getElementById('infostationTab_' + lang + '_' + uuid).innerHTML = event.target.value
-    exSetup.previewDefinition(true)
-  })
-  buttonTextInput.value = workingDefinition.languages[lang].tabs[uuid].button_text
+  const buttonTextCommandBar = document.createElement('div')
+  buttonTextCol.appendChild(buttonTextCommandBar)
+
+  const buttonTextInput = document.createElement('div')
   buttonTextCol.appendChild(buttonTextInput)
+
+  const titleEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+    content: workingDefinition.languages[lang].tabs[uuid].button_text ?? '',
+    editorDiv: buttonTextInput,
+    commandDiv: buttonTextCommandBar,
+    commands: ['basic'],
+    callback: (content) => {
+      exSetup.updateWorkingDefinition(['languages', lang, 'tabs', uuid, 'button_text'], content)
+      document.getElementById('infostationTab_' + lang + '_' + uuid).innerHTML = exMarkdown.formatText(content, { string: true, removeParagraph: true })
+      exSetup.previewDefinition(true)
+    }
+  })
 
   // const textTabTipCol = document.createElement('div')
   // textTabTipCol.classList = 'col-12 mt-3 fst-italic alert alert-info'
@@ -441,25 +476,6 @@ function createInfoStationTab (lang, uuid = '') {
       exSetup.previewDefinition(true)
     }
   })
-
-  // Create the delete button
-  const deleteCol = document.createElement('div')
-  deleteCol.classList = 'col-12'
-  row.appendChild(deleteCol)
-
-  const deleteButton = document.createElement('button')
-  deleteButton.classList = 'btn btn-danger w-100 align-self-center'
-  deleteButton.setAttribute('data-bs-toggle', 'popover')
-  deleteButton.setAttribute('title', 'Are you sure?')
-  deleteButton.setAttribute('data-bs-content', `<a id='deleteTab_${lang}_${uuid}' class='btn btn-danger w-100 tab-delete'>Confirm</a>`)
-  deleteButton.setAttribute('data-bs-trigger', 'focus')
-  deleteButton.setAttribute('data-bs-html', 'true')
-  // Note: The event listener to detect is the delete button is clicked is defined in webpage.js
-  deleteButton.addEventListener('click', function () { deleteButton.focus() })
-  deleteButton.innerHTML = 'Delete tab'
-
-  deleteCol.appendChild(deleteButton)
-  $(deleteButton).popover()
 
   $(tabButton).click()
   exSetup.previewDefinition(true)
@@ -559,7 +575,6 @@ setTimeout(setUpColorPickers, 100)
 // -------------------------------------------------------------
 
 // Main buttons
-$('#languageAddButton').click(addLanguage)
 document.getElementById('manageContentButton').addEventListener('click', (event) => {
   exFileSelect.createFileSelectionModal({ manage: true })
 })
@@ -648,7 +663,6 @@ if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').match
 exCommon.config.helperAddress = window.location.origin
 
 clearDefinitionInput()
-exSetup.createLanguagePicker('languagePicker', addLanguage)
 
 exSetup.configure({
   app: 'infostation',

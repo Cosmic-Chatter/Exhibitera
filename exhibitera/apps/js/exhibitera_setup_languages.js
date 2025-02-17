@@ -1,3 +1,5 @@
+/* global bootstrap */
+
 // Manage the addition of languages for definitions
 
 import * as exCommon from './exhibitera_app_common.js'
@@ -287,8 +289,25 @@ function createLanguageHTML (languageList, code, displayName, englishName, isDef
   const deleteButton = document.createElement('button')
   deleteButton.classList = 'btn btn-danger btn-sm w-100'
   deleteButton.innerHTML = '×'
-  deleteButton.addEventListener('click', (event) => {
-    deleteLanguage(languageList, code, callbacks)
+  deleteButton.setAttribute('data-bs-toggle', 'popover')
+  deleteButton.setAttribute('data-bs-content', `<a id="fileDeletePopover_${code}" class="btn btn-danger w-100 test">Confirm</a>`)
+  deleteButton.setAttribute('data-bs-trigger', 'focus')
+  deleteButton.setAttribute('data-bs-html', 'true')
+  deleteButton.setAttribute('title', 'Are you sure?')
+  console.log('fileDeletePopover_' + code)
+
+  // Listen for when the popover is shown to attach the event to the confirmation link
+  const popover = new bootstrap.Popover(deleteButton)
+  deleteButton.addEventListener('shown.bs.popover', () => {
+    const confirmLink = document.getElementById('fileDeletePopover_' + code)
+    if (confirmLink) {
+    // Remove any previously attached listener if necessary
+      confirmLink.addEventListener('click', () => {
+        deleteLanguage(languageList, code, callbacks)
+        // Optionally, hide the popover after confirming
+        popover.hide()
+      }, { once: true }) // { once: true } ensures it only runs once
+    }
   })
   deleteCol.appendChild(deleteButton)
 
