@@ -16,6 +16,7 @@
 - Rich text editor for easier text styling with Markdown
 - New size and placement options when inserting images into Markdown
 - See file sizes when browsing files
+- Improved multilingual support, including flags for 38 additional languages
 
 ### Image Compare
 _Image Compare is a new app that creates a before/after slider between a pair of images._
