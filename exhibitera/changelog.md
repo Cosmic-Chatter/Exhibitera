@@ -26,6 +26,10 @@ _Image Compare is a new app that creates a before/after slider between a pair of
 - Insert block quotes and style them separately from regular text
 - Hide the button row in portrait orientation if there is only one tab
 
+### Media Player
+- Add subtitles to videos to improve accessibility or support a second language
+- Customize the appearance of your subtitles
+
 # **Exhibitera 5.2**
 
 ## Hub
