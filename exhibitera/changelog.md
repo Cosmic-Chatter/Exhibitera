@@ -30,6 +30,9 @@ _Image Compare is a new app that creates a before/after slider between a pair of
 - Add subtitles to videos to improve accessibility or support a second language
 - Customize the appearance of your subtitles
 
+### Timeline Explorer
+- FIne-grained control over text size
+
 # **Exhibitera 5.2**
 
 ## Hub

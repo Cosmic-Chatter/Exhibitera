@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="../css/bootstrap_5_3/bootstrap.min.css">
     <link rel="stylesheet" href="../css/coloris.min.css">
     <link rel="stylesheet" href="../css/setup.css">
+    <link rel="stylesheet" href="./setup.css">
 
     <title>Timeline Explorer Setup</title>
 
@@ -117,7 +118,7 @@
                 <div class="col-12">
                   This tool optimizes the resolution of your content to maximize performance. It accounts for the resolution of your screen, as well as the number of items per page. If you change these elements, you should re-optimize your content. The original files remain unaltered.
                 </div>
-                <div class="col-6">
+                <div class="col-6 mt-2">
                   <label for="resolutionSelect" class="form-label">Display resolution</label>
                   <select id="resolutionSelect" class="form-select">
                     <option value="3840_2160">4K landscape (3840x2160)</option>
@@ -309,28 +310,14 @@
 
                 <H5 class="mt-2">Add a langauge</H5>
                 <i>For each language you suppot, you need to match columns in your spreadsheet to properties of the timeline.</i>
-                <div class="col-12 col-md-6 col-lg-4">
-                  <label for="languageNameInput" class="form-label">Display name</label>
-                  <input type="text" placeholder="English" class="form-control" id="languageNameInput">
-                </div>
-                <div class="col-12 col-md-6 col-lg-4">
-                  <label for="languageCodeInput" class="form-label">Language code</label>
-                  <input type="text" placeholder="en" class="form-control" id="languageCodeInput">
-                </div>
-                <div class="col-12 col-md-6 col-lg-4 mt-3">
-                  <button id="languageAddButton" class="btn btn-primary w-100 mt-3">Add</button>
-                </div>
-                <div class="col-12 mt-1">
-                  <span id="languageAddEmptyFieldsWarning" class="text-danger">You must specify both a display name and a language code.</span>
-                  <span id="languageAddExistsWarning" class="text-danger">A language with that display name or language code already exists.</span>
-                </div>
+                <div id="language-picker"></div>
               </div>
               <H5>Current langauges</H5>
               <nav>
                 <div id="languageNav" class="nav nav-tabs" role="tablist">
                 </div>
               </nav>
-              <div class="tab-content" id="languageNavContent">
+              <div class="tab-content border-bottom" id="languageNavContent">
               </div>
               <h3>Appearance</h3>
               <h4>Colors</h4>
@@ -382,6 +369,22 @@
                 <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Title" data-constAFP-path="style>font>Title" data-default="OpenSans-Bold.ttf"></div>
 
                 <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Body" data-constAFP-path="style>font>Body" data-default="OpenSans-Regular.ttf"></div>
+              </div>
+
+              <h4 class="mt-2">Text size</h4>
+              <div class="row gy-2">
+                <div class="col-12 col-md-6 col-lg-4">
+                  <label for="timeTextSizeSlider" class="form-label">Time</label>
+                  <input id="timeTextSizeSlider" type="range" class="form-range text-size-slider" data-property="time" min="-0.5", max="1" start="0" step="0.25">
+                </div>
+                <div class="col-12 col-md-6 col-lg-4">
+                  <label for="titleTextSizeSlider" class="form-label">Title</label>
+                  <input id="titleTextSizeSlider" type="range" class="form-range text-size-slider" data-property="title" min="-0.5", max="1" start="0" step="0.1">
+                </div>
+                <div class="col-12 col-md-6 col-lg-4">
+                  <label for="bodyTextSizeSlider" class="form-label">Body</label>
+                  <input id="bodyTextSizeSlider" type="range" class="form-range text-size-slider" data-property="body" min="-0.1", max="1" start="0" step="0.1">
+                </div>
               </div>
             </div>
           </div>

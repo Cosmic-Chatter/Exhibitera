@@ -332,7 +332,6 @@ function createLanguageHTML (languageList, code, displayName, englishName, isDef
   deleteButton.setAttribute('data-bs-trigger', 'focus')
   deleteButton.setAttribute('data-bs-html', 'true')
   deleteButton.setAttribute('title', 'Are you sure?')
-  console.log('fileDeletePopover_' + code)
 
   // Listen for when the popover is shown to attach the event to the confirmation link
   const popover = new bootstrap.Popover(deleteButton)

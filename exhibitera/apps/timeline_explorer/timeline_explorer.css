@@ -24,6 +24,9 @@
 
   /* Font modifiers */
   --fontModifier: '1.0';
+  --time-font-adjust: 0;
+  --title-font-adjust: 0;
+  --body-font-adjust: 0;
 }
 
 /* Font definitions */
@@ -62,6 +65,10 @@ body {
 button:active {
   outline: none;
   border: none;
+}
+
+h1 {
+  font-size: min(calc(4.5vmax * var(--fontModifier)), 5vmax);;
 }
 
 /* ATTRACTOR
@@ -157,10 +164,15 @@ __________________________________________________*/
   border-color: transparent transparent transparent var(--itemColor);
 }
 
+.timeline-body {
+  font-size: calc((calc(var(--body-font-adjust) + 1) * 0.85vmax) * var(--fontModifier));
+}
+
 time {
   display: block;
   font-weight: bold;
   font-family: var(--Time-font);
+  font-size: calc((1vmax + var(--time-font-adjust)*1vmax) * var(--fontModifier));
 }
 
 .timeline-item-header {
@@ -210,6 +222,21 @@ time {
   font-size: 4vmax;
   height: 90%;
 }
+.size1 {
+  font-size: calc((calc(var(--title-font-adjust) + 1) * 2vmax) * var(--fontModifier));
+  font-weight: bold;
+}
+.size2 {
+  font-size: calc((calc(var(--title-font-adjust) + 1) * 1.7vmax) * var(--fontModifier));
+  font-weight: bold;
+}
+.size3 {
+  font-size: calc((calc(var(--title-font-adjust) + 1) * 1.6vmax) * var(--fontModifier)); bold;
+}
+.size4 {
+  font-size: calc((calc(var(--title-font-adjust) + 1) * 1.3vmax) * var(--fontModifier));
+  font-weight: bold;
+}
 #tools-pane {
     background-color: var(--footerColor);
 }
@@ -219,27 +246,8 @@ time {
 –––––––––––––––––––––––––––––––––––––––––––––––––– */
 
 @media (orientation: landscape) {
-    h1 {
-        font-size: min(calc(8vh * var(--fontModifier)), 12vh);
-    }
     time {
-      font-size: calc(1.8vh * var(--fontModifier));
       margin-bottom: 0.5vh;
-    }
-    .size1 {
-        font-size: calc(3.1vh * var(--fontModifier));
-    }
-    .size2 {
-        font-size: calc(2.9vh * var(--fontModifier));
-    }
-    .size3 {
-        font-size: calc(2.7vh * var(--fontModifier));
-    }
-    .size4 {
-        font-size: calc(2.5vh * var(--fontModifier));
-    }
-    .timeline-body {
-      font-size: calc(1.5vh * var(--fontModifier));
     }
     .timeline ul li { 
       width: 0.5vw;
@@ -283,33 +291,11 @@ time {
 }
   
 @media (orientation: portrait) {
-    h1 {
-        /* font-size: 4.5vh; */
-        font-size: min(calc(4.5vh * var(--fontModifier)), 5vh);;
-    }
+
     time {
-      font-size: calc(1vh * var(--fontModifier));
       margin-bottom: 0.3vh;
     }
-    .size1 {
-        font-size: calc(2vh * var(--fontModifier));
-        font-weight: bold;
-    }
-    .size2 {
-        font-size: calc(1.7vh * var(--fontModifier));
-        font-weight: bold;
-    }
-    .size3 {
-        font-size: calc(1.5vh * var(--fontModifier));
-        font-weight: bold;
-    }
-    .size4 {
-        font-size: calc(1.3vh * var(--fontModifier));
-        font-weight: bold;
-    }
-    .timeline-body {
-      font-size: calc(0.85vh * var(--fontModifier));
-    }
+    
     .timeline ul li { 
       width: 1vw;
     }
@@ -340,34 +326,6 @@ time {
         height: 5vh;
     }
 }
-
-/* @media screen and (max-width: 900px) {
-  .timeline ul li div.timeline-element {
-    width: 250px;
-  }
-  .timeline ul li:nth-child(even) div.timeline-element {
-    left: -289px;
-    (250+45-6)
-  }
-}
-
-@media screen and (max-width: 600px) {
-  .timeline ul li {
-    margin-left: 20px;
-  }
-  .timeline ul li div {
-    width: calc(100vw - 91px);
-  }
-  .timeline ul li:nth-child(even) div.timeline-element {
-    left: 45px;
-  }
-  .timeline ul li:nth-child(even) div.timeline-element::before {
-    left: -15px;
-    border-width: 8px 16px 8px 0;
-    border-color: transparent #393A5A transparent transparent;
-  }
-} */
-
 
 /* EXTRA/CLIP PATH STYLES
 –––––––––––––––––––––––––––––––––––––––––––––––––– */

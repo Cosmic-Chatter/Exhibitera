@@ -159,7 +159,7 @@ function addItem () {
   const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
 
   const item = {
-    uuid: String(Math.random() * 1e20),
+    uuid: exCommon.uuid(),
     filename: '',
     duration: 30
   }

@@ -3,6 +3,7 @@
 import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exFileSelect from '../js/exhibitera_file_select_modal.js'
 import * as exSetup from '../js/exhibitera_setup_common.js'
+import * as exLang from '../js/exhibitera_setup_languages.js'
 
 async function initializeWizard () {
   // Set up the wizard
@@ -33,14 +34,14 @@ async function clearDefinitionInput (full = true) {
   spreadsheetSelect.setAttribute('data-filename', '')
   $(spreadsheetSelect).data('availableKeys', [])
 
-  // Language add
-  $('#languageAddEmptyFieldsWarning').hide()
-  $('#languageAddExistsWarning').hide()
+  // Language
+  exLang.clearLanguagePicker(document.getElementById('language-picker'))
+  exLang.createLanguagePicker(document.getElementById('language-picker'), { onLanguageRebuild: rebuildLanguageElements })
+
+  rebuildLanguageElements([])
 
   // Definition details
-  $('#definitionNameInput').val('')
-  $('#languageNav').empty()
-  $('#languageNavContent').empty()
+  document.getElementById('definitionNameInput').value = ''
   document.getElementById('missingContentWarningField').innerHTML = ''
 
   // Reset style options
@@ -60,14 +61,20 @@ async function clearDefinitionInput (full = true) {
 
   // Reset font face options
   exSetup.resetAdvancedFontPickers()
+
+  // Reset text size options
+  document.getElementById('timeTextSizeSlider').value = 0
+  document.getElementById('titleTextSizeSlider').value = 0
+  document.getElementById('bodyTextSizeSlider').value = 0
 }
 
 function editDefinition (uuid = '') {
   // Populate the given definition for editing.
 
   clearDefinitionInput(false)
+
   const def = exSetup.getDefinitionByUUID(uuid)
-  console.log(def)
+
   $('#definitionSaveButton').data('initialDefinition', structuredClone(def))
   $('#definitionSaveButton').data('workingDefinition', structuredClone(def))
 
@@ -105,22 +112,48 @@ function editDefinition (uuid = '') {
     })
   }
 
-  // Build out the key input interface
-  let first = null
-  Object.keys(def.languages).forEach((lang) => {
-    const langDef = def.languages[lang]
-    if (first == null) {
-      createLanguageTab(lang, langDef.display_name)
-      first = lang
-    } else {
-      createLanguageTab(lang, langDef.display_name)
-    }
-    $('#languagePane_' + lang).removeClass('active').removeClass('show')
-
-    $('#headerText' + '_' + lang).val(langDef.header_text)
+  // Set the appropriate values for the text size selects
+  Object.keys(def.style?.text_size ?? {}).forEach((key) => {
+    document.getElementById(key + 'TextSizeSlider').value = def.style.text_size[key]
   })
-  $('#languageTab_' + first).click()
-  $('#languagePane_' + first).addClass('active')
+
+  // Set up any existing languages and tabs
+  // In Ex5.3, we added the language_order field. If it doesn't exist
+  // set it up now
+  if ((def?.language_order || []).length === 0) {
+    def.language_order = []
+    for (const code of Object.keys(def.languages)) {
+      const lang = def.languages[code]
+      if (lang.default === true) {
+        def.language_order.unshift(code)
+      } else def.language_order.push(code)
+    }
+    exSetup.updateWorkingDefinition(['language_order'], def.language_order)
+  }
+
+  const langSelect = document.getElementById('language-picker')
+  exLang.createLanguagePicker(langSelect,
+    {
+      onLanguageRebuild: rebuildLanguageElements
+    }
+  )
+
+  // Build out the key input interface
+  // let first = null
+  // Object.keys(def.languages).forEach((lang) => {
+  //   const langDef = def.languages[lang]
+  //   if (first == null) {
+  //     createLanguageTab(lang, langDef.display_name)
+  //     first = lang
+  //   } else {
+  //     createLanguageTab(lang, langDef.display_name)
+  //   }
+  //   $('#languagePane_' + lang).removeClass('active').removeClass('show')
+
+  //   $('#headerText' + '_' + lang).val(langDef.header_text)
+  // })
+  // $('#languageTab_' + first).click()
+  // $('#languagePane_' + first).addClass('active')
 
   // Load the spreadsheet to populate the existing keys
   onSpreadsheetFileChange()
@@ -129,50 +162,23 @@ function editDefinition (uuid = '') {
   document.getElementById('previewFrame').src = '../timeline_explorer.html?standalone=true&definition=' + def.uuid
 }
 
-function addLanguage () {
-  // Collect details from the language fields and add a new supported language to the definition.
+function rebuildLanguageElements (langOrder) {
+  // Clear and rebuild GUI elements when the languages have been modified
 
-  const displayName = $('#languageNameInput').val().trim()
-  const code = $('#languageCodeInput').val().trim()
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+  document.getElementById('languageNav').innerHTML = ''
+  document.getElementById('languageNavContent').innerHTML = ''
 
-  // Check if fields are full
-  if (displayName === '' || code === '') {
-    $('#languageAddEmptyFieldsWarning').show()
-    return
-  } else {
-    $('#languageAddEmptyFieldsWarning').hide()
-  }
-
-  // Check if name or code already exist
-  let error = false
-  Object.keys(workingDefinition.languages).forEach((key) => {
-    if (key === code || workingDefinition.languages[key].display_name === displayName) {
-      $('#languageAddExistsWarning').show()
-      error = true
-    } else {
-      $('#languageAddExistsWarning').hide()
+  let first = null
+  for (const lang of langOrder) {
+    const tabButton = createLanguageTab(lang)
+    if (first == null) {
+      first = tabButton
     }
-  })
-  if (error) return
-
-  // If this is the first language added, make it the default
-  let defaultLang = false
-  if (Object.keys(workingDefinition.languages).length === 0) defaultLang = true
-
-  workingDefinition.languages[code] = {
-    display_name: displayName,
-    code,
-    default: defaultLang
   }
-  createLanguageTab(code, displayName)
-
-  $('#definitionSaveButton').data('workingDefinition', structuredClone(workingDefinition))
-  $('#languageNameInput').val('')
-  $('#languageCodeInput').val('')
+  if (first) first.click()
 }
 
-function createLanguageTab (code, displayName) {
+function createLanguageTab (code) {
   // Create a new language tab for the given details.
   // Set first=true when creating the first tab
 
@@ -186,7 +192,7 @@ function createLanguageTab (code, displayName) {
   tabButton.setAttribute('data-bs-target', '#languagePane_' + code)
   tabButton.setAttribute('type', 'button')
   tabButton.setAttribute('role', 'tab')
-  tabButton.innerHTML = displayName
+  tabButton.innerHTML = exLang.getLanguageDisplayName(code, true)
   $('#languageNav').append(tabButton)
 
   // Create corresponding pane
@@ -200,109 +206,6 @@ function createLanguageTab (code, displayName) {
   const row = document.createElement('div')
   row.classList = 'row gy-2 mt-2 mb-3'
   tabPane.appendChild(row)
-
-  // Create default language checkbox
-  const defaultCol = document.createElement('div')
-  defaultCol.classList = 'col-12'
-  row.appendChild(defaultCol)
-
-  const checkContainer = document.createElement('div')
-  checkContainer.classList = 'form-check'
-  defaultCol.appendChild(checkContainer)
-
-  const defaultCheckbox = document.createElement('input')
-  defaultCheckbox.classList = 'form-check-input default-lang-checkbox'
-  defaultCheckbox.setAttribute('id', 'defaultCheckbox_' + code)
-  defaultCheckbox.setAttribute('data-lang', code)
-  defaultCheckbox.setAttribute('type', 'radio')
-  defaultCheckbox.checked = workingDefinition.languages[code].default
-  defaultCheckbox.addEventListener('change', (event) => {
-    // If the checkbox is checked, uncheck all the others and save to the working definition.
-    Array.from(document.querySelectorAll('.default-lang-checkbox')).forEach((el) => {
-      el.checked = false
-      exSetup.updateWorkingDefinition(['languages', el.getAttribute('data-lang'), 'default'], false)
-    })
-    event.target.checked = true
-    exSetup.updateWorkingDefinition(['languages', code, 'default'], true)
-    exSetup.previewDefinition(true)
-  })
-  checkContainer.appendChild(defaultCheckbox)
-
-  const defaultCheckboxLabel = document.createElement('label')
-  defaultCheckboxLabel.classList = 'form-check-label'
-  defaultCheckboxLabel.setAttribute('for', 'defaultCheckbox_' + code)
-  defaultCheckboxLabel.innerHTML = 'Default language'
-  checkContainer.appendChild(defaultCheckboxLabel)
-
-  // Create the flag input
-  const flagImgCol = document.createElement('div')
-  flagImgCol.classList = 'col-3 col-lg-2 d-flex'
-  row.append(flagImgCol)
-
-  const flagImg = document.createElement('img')
-  flagImg.setAttribute('id', 'flagImg_' + code)
-  const customFlag = $('#definitionSaveButton').data('workingDefinition').languages[code].custom_flag
-  if (customFlag != null) {
-    flagImg.src = '../content/' + customFlag
-  } else {
-    flagImg.src = '../_static/flags/' + code + '.svg'
-  }
-  flagImg.classList = 'align-self-center'
-  flagImg.style.width = '100%'
-  flagImg.addEventListener('error', function () {
-    this.src = '../_static/icons/translation-icon_black.svg'
-  })
-  flagImgCol.appendChild(flagImg)
-
-  const clearFlagCol = document.createElement('div')
-  clearFlagCol.classList = 'col-2 col-lg-1 d-flex mx-0 px-0 text-center4'
-  row.appendChild(clearFlagCol)
-
-  const clearFlagButton = document.createElement('button')
-  clearFlagButton.classList = 'btn btn-danger align-self-center'
-  clearFlagButton.innerHTML = '✕'
-  clearFlagButton.addEventListener('click', function () {
-    deleteLanguageFlag(code)
-  })
-  clearFlagCol.append(clearFlagButton)
-
-  const uploadFlagCol = document.createElement('div')
-  uploadFlagCol.classList = 'col-7 col-lg-3 d-flex'
-  row.append(uploadFlagCol)
-
-  const uploadFlagBox = document.createElement('label')
-  uploadFlagBox.classList = 'btn btn-outline-primary w-100 align-self-center d-flex'
-  uploadFlagCol.appendChild(uploadFlagBox)
-
-  const uploadFlagFileName = document.createElement('span')
-  uploadFlagFileName.setAttribute('id', 'uploadFlagFilename_' + code)
-  uploadFlagFileName.classList = 'w-100 align-self-center'
-  uploadFlagFileName.innerHTML = 'Upload flag'
-  uploadFlagBox.appendChild(uploadFlagFileName)
-
-  const uploadFlagInput = document.createElement('input')
-  uploadFlagInput.setAttribute('id', 'uploadFlagInput_' + code)
-  uploadFlagInput.classList = 'form-control-file w-100 align-self-center'
-  uploadFlagInput.setAttribute('type', 'file')
-  uploadFlagInput.setAttribute('hidden', true)
-  uploadFlagInput.setAttribute('accept', 'image/*')
-  uploadFlagInput.addEventListener('change', function () {
-    onFlagUploadChange(code)
-  })
-  uploadFlagBox.appendChild(uploadFlagInput)
-
-  // Create the delete button
-  const deleteCol = document.createElement('div')
-  deleteCol.classList = 'col col-12 col-lg-6 col-xl-4 d-flex'
-  row.appendChild(deleteCol)
-
-  const deleteButton = document.createElement('button')
-  deleteButton.classList = 'btn btn-danger w-100 align-self-center'
-  deleteButton.innerHTML = 'Delete language'
-  deleteButton.addEventListener('click', () => {
-    deleteLanguageTab(code)
-  })
-  deleteCol.appendChild(deleteButton)
 
   // Create the various inputs
   Object.keys(inputFields).forEach((key) => {
@@ -340,6 +243,8 @@ function createLanguageTab (code, displayName) {
     })
     col.appendChild(input)
   })
+
+  document.getElementById('headerText_' + code).value = workingDefinition?.languages?.[code].header_text ?? ''
 
   // If we have already loaded a spreadhseet, populate the key options
   const keyList = $('#spreadsheetSelect').data('availableKeys')
@@ -711,7 +616,6 @@ setTimeout(setUpColorPickers, 100)
 // -------------------------------------------------------------
 
 // Main buttons
-$('#languageAddButton').click(addLanguage)
 document.getElementById('manageContentButton').addEventListener('click', (event) => {
   exFileSelect.createFileSelectionModal({ manage: true })
 })
@@ -768,6 +672,15 @@ document.getElementById('manageFontsButton').addEventListener('click', (event) =
     .then(exSetup.refreshAdvancedFontPickers)
 })
 
+// Text size fields
+Array.from(document.querySelectorAll('.text-size-slider')).forEach((el) => {
+  el.addEventListener('input', (event) => {
+    const property = event.target.getAttribute('data-property')
+    exSetup.updateWorkingDefinition(['style', 'text_size', property], parseFloat(event.target.value))
+    exSetup.previewDefinition(true)
+  })
+})
+
 // Set color mode
 if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
   document.querySelector('html').setAttribute('data-bs-theme', 'dark')
@@ -778,6 +691,9 @@ if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').match
 // Set helper address for use with exCommon.makeHelperRequest
 exCommon.config.helperAddress = window.location.origin
 
+// Populate available languages
+exLang.createLanguagePicker(document.getElementById('language-picker'), { onLanguageRebuild: rebuildLanguageElements })
+
 exSetup.configure({
   app: 'timeline_explorer',
   clearDefinition: clearDefinitionInput,
@@ -785,13 +701,15 @@ exSetup.configure({
   loadDefinition: editDefinition,
   blankDefinition: {
     languages: {},
+    language_order: [],
     style: {
       background: {
         mode: 'color',
         color: '#719abf'
       },
       color: {},
-      font: {}
+      font: {},
+      text_size: {}
     }
   }
 })

@@ -420,7 +420,7 @@ function editDefinition (uuid = '') {
   // Set up any existing languages and tabs
   // In Ex5.3, we added the language_order field. If it doesn't exist
   // set it up now
-  if ((def?.language_order || []).length === 0) {
+  if ((def?.language_order ?? []).length === 0) {
     def.language_order = []
     for (const code of Object.keys(def.languages)) {
       const lang = def.languages[code]
@@ -437,24 +437,6 @@ function editDefinition (uuid = '') {
       onLanguageRebuild: rebuildLanguageElements
     }
   )
-
-  // // Build out the key input interface
-  // let first = null
-  // Object.keys(def.languages).forEach((lang) => {
-  //   const langDef = def.languages[lang]
-  //   const displayNameEn = exLang.getLanguageDisplayName(langDef.code, true)
-  //   if (first == null) {
-  //     createLanguageTab(lang, displayNameEn)
-  //     first = lang
-  //   } else {
-  //     createLanguageTab(lang, displayNameEn)
-  //   }
-  //   document.getElementById('languagePane_' + lang).classList.remove('active', 'show')
-  //   const headerText = document.getElementById('headerText_' + lang)
-  //   if (headerText) headerText.value = langDef.header_text
-  // })
-  // document.getElementById('languageTab_' + first)?.click()
-  // document.getElementById('languagePane_' + first).classList.add('active')
 
   // Load the spreadsheet to populate the existing keys
   onSpreadsheetFileChange()
@@ -478,40 +460,6 @@ function rebuildLanguageElements (langOrder) {
   }
   if (first) first.click()
 }
-
-// function addLanguage (code, displayName, displayNameEn) {
-//   // Add the specified language to the definition and create a tab for it
-
-//   const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
-
-//   // Check if name or code already exist
-//   let error = false
-//   const existsWarning = document.getElementById('languageAddExistsWarning')
-//   Object.keys(workingDefinition.languages).forEach((key) => {
-//     if (key === code) {
-//       existsWarning.style.display = 'block'
-//       error = true
-//     } else {
-//       $('#languageAddExistsWarning').hide()
-//       existsWarning.style.display = 'none'
-//     }
-//   })
-//   if (error) return
-
-//   // If this is the first language added, make it the default
-//   let defaultLang = false
-//   if (Object.keys(workingDefinition.languages).length === 0) defaultLang = true
-
-//   workingDefinition.languages[code] = {
-//     display_name: displayName,
-//     code,
-//     default: defaultLang
-//   }
-//   createLanguageTab(code, displayNameEn)
-
-//   $('#definitionSaveButton').data('workingDefinition', structuredClone(workingDefinition))
-//   exSetup.previewDefinition(true)
-// }
 
 function createLanguageTab (code) {
   // Create a new language tab for the given details.

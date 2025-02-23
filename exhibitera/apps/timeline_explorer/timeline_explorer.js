@@ -63,12 +63,25 @@ function loadDefinition (def) {
   root.style.setProperty('--Title-font', 'Title-default')
   root.style.setProperty('--Time-font', 'Time-default')
   root.style.setProperty('--Body-font', 'Body-default')
-
   // Then, apply the definition settings
   Object.keys(def.style.font).forEach((key) => {
     const font = new FontFace(key, 'url(' + encodeURI(def.style.font[key]) + ')')
     document.fonts.add(font)
     root.style.setProperty('--' + key + '-font', key)
+  })
+
+  // Text size settings
+
+  // First, reset to defaults (in case a style option doesn't exist in the definition)
+  root.style.setProperty('--title-font-adjust', 0)
+  root.style.setProperty('--time-font-adjust', 0)
+  root.style.setProperty('--body-font-adjust', 0)
+
+  // Then, apply the definition settings
+  Object.keys(def.style?.text_size ?? {}).forEach((key) => {
+    const value = def.style.text_size[key]
+    console.log(key, value)
+    root.style.setProperty('--' + key + '-font-adjust', value)
   })
 
   const langs = Object.keys(def.languages)
