@@ -4,9 +4,12 @@ import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exFileSelect from '../js/exhibitera_file_select_modal.js'
 import * as exSetup from '../js/exhibitera_setup_common.js'
 import * as exLang from '../js/exhibitera_setup_languages.js'
+import * as exMarkdown from '../js/exhibitera_setup_markdown.js'
+
+const wizardHeaders = {} // Holds the markdown-formatted header text in each language
 
 async function initializeWizard () {
-  // Set up the wizard
+  // Setup the wizard
 
   await exSetup.initializeDefinition()
 
@@ -19,6 +22,221 @@ async function initializeWizard () {
   // Reset fields
   document.getElementById('wizardDefinitionNameInput').value = ''
   document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'none'
+  document.getElementById('wizardLanguages').innerHTML = ''
+  document.getElementById('wizardLanguagesBlankWarning').style.display = 'none'
+  document.getElementById('wizardUploadTemplateButton').setAttribute('data-spreadsheet', '')
+  document.getElementById('wizardUploadTemplateBlankWarning').style.display = 'none'
+  document.getElementById('wizardUploadMediaMissingWarning').style.display = 'none'
+  document.getElementById('wizardUploadMediaMissingRow').innerHTML = ''
+  document.getElementById('wizardUploadMediaBadKeyWarning').style.display = 'none'
+  document.getElementById('wizardOrientationSelect').value = 'vertical'
+}
+
+async function wizardForward (currentPage) {
+  // Check if the wizard is ready to advance and perform the move
+
+  if (currentPage === 'Welcome') {
+    const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
+    if (defName !== '') {
+      document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'none'
+      wizardGoTo('Languages')
+    } else {
+      document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'block'
+    }
+  } else if (currentPage === 'Languages') {
+    if (document.getElementById('wizardLanguages').children.length > 0) {
+      document.getElementById('wizardLanguagesBlankWarning').style.display = 'none'
+
+      // Populate with a header input for each language
+      const headerDiv = document.getElementById('wizardHeaderInputDiv')
+      headerDiv.innerHTML = ''
+      for (const langEl of document.getElementById('wizardLanguages').children) {
+        const lang = langEl.querySelector('select').value
+
+        const label = document.createElement('label')
+        label.classList = 'form-label mt-2'
+        label.setAttribute('for', 'wizardHeaderInput_' + lang)
+        label.innerHTML = exLang.getLanguageDisplayName(lang, true)
+        headerDiv.appendChild(label)
+
+        const headerCommandBar = document.createElement('div')
+        headerDiv.appendChild(headerCommandBar)
+
+        const headerInput = document.createElement('div')
+        headerInput.setAttribute('id', 'wizardHeaderInput_' + lang)
+        headerDiv.appendChild(headerInput)
+
+        const headerEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+          content: '',
+          editorDiv: headerInput,
+          commandDiv: headerCommandBar,
+          commands: ['basic'],
+          callback: (content) => {
+            wizardHeaders[lang] = content
+          }
+        })
+      }
+      wizardGoTo('Header')
+    } else {
+      document.getElementById('wizardLanguagesBlankWarning').style.display = 'block'
+    }
+  } else if (currentPage === 'Header') {
+    wizardGoTo('Spreadsheet')
+  } else if (currentPage === 'Spreadsheet') {
+    const selectedFile = document.getElementById('wizardUploadTemplateButton').getAttribute('data-spreadsheet')
+    if (selectedFile !== '') {
+      document.getElementById('wizardUploadTemplateBlankWarning').style.display = 'none'
+      document.getElementById('wizardUploadMediaMissingWarning').style.display = 'none'
+      document.getElementById('wizardUploadMediaMissingRow').style.display = 'none'
+      wizardGoTo('MediaUpload')
+    } else {
+      document.getElementById('wizardUploadTemplateBlankWarning').style.display = 'block'
+    }
+  } else if (currentPage === 'MediaUpload') {
+    // Check that each file listed in the spreadsheet has an uploaded copy.
+    const spreadsheet = document.getElementById('wizardUploadTemplateButton').getAttribute('data-spreadsheet')
+    let missing = []
+    try {
+      missing = await _checkContentExists(spreadsheet, ['Image'])
+      document.getElementById('wizardUploadMediaBadKeyWarning').style.display = 'none'
+    } catch (e) {
+      if (String(e).slice(0, 14) === 'Error: bad_key') {
+        document.getElementById('wizardUploadMediaBadKeyWarning').style.display = 'block'
+        return
+      }
+    }
+
+    if (missing.length === 0) {
+      document.getElementById('wizardUploadMediaMissingWarning').style.display = 'none'
+      document.getElementById('wizardUploadMediaMissingRow').style.display = 'none'
+      wizardGoTo('Layout')
+    } else {
+      const missingRow = document.getElementById('wizardUploadMediaMissingRow')
+      missingRow.innerHTML = ''
+      missingRow.style.display = 'flex'
+      document.getElementById('wizardUploadMediaMissingWarning').style.display = 'block'
+
+      for (const item of missing) {
+        const col = document.createElement('div')
+        col.classList = 'col-12 col-md-4'
+        col.innerHTML = item
+        missingRow.appendChild(col)
+      }
+    }
+  } else if (currentPage === 'Layout') {
+    wizardCreateDefinition()
+  }
+}
+
+function wizardBack (currentPage) {
+  // Move the wizard back one page
+
+  if (currentPage === 'Languages') {
+    wizardGoTo('Welcome')
+  } else if (currentPage === 'Header') {
+    wizardGoTo('Languages')
+  } else if (currentPage === 'Spreadsheet') {
+    wizardGoTo('Header')
+  } else if (currentPage === 'MediaUpload') {
+    wizardGoTo('Spreadsheet')
+  } else if (currentPage === 'Layout') {
+    wizardGoTo('MediaUpload')
+  }
+}
+
+function wizardGoTo (page) {
+  Array.from(document.querySelectorAll('.wizard-pane')).forEach((el) => {
+    el.style.display = 'none'
+  })
+  document.getElementById('wizardPane_' + page).style.display = 'block'
+  console.log('wizardPane_' + page)
+}
+
+async function wizardCreateDefinition () {
+  // Use the provided details to build a definition file.
+
+  // Definition name
+  const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
+  exSetup.updateWorkingDefinition(['name'], defName)
+
+  // Langauges
+  const langOrder = []
+  for (const langEl of document.getElementById('wizardLanguages').children) {
+    const lang = langEl.querySelector('select').value
+    langOrder.push(lang)
+    const langDef = {
+      code: lang,
+      display_name: exLang.getLanguageDisplayName(lang),
+      image_key: 'Image',
+      level_key: 'Level',
+      title_key: 'Title (' + lang + ')',
+      time_key: 'Time (' + lang + ')',
+      short_text_key: 'Description (' + lang + ')',
+      header_text: wizardHeaders?.[lang] ?? ''
+    }
+    exSetup.updateWorkingDefinition(['languages', lang], langDef)
+  }
+  exSetup.updateWorkingDefinition(['language_order'], langOrder)
+
+  // Basics
+  exSetup.updateWorkingDefinition(['name'], document.getElementById('wizardDefinitionNameInput').value.trim())
+  exSetup.updateWorkingDefinition(['spreadsheet'], document.getElementById('wizardUploadTemplateButton').getAttribute('data-spreadsheet'))
+
+  // Layout
+  const orientation = document.getElementById('wizardOrientationSelect').value
+
+  // if (orientation === 'horizontal') {
+  //   exSetup.updateWorkingDefinition(['setup'], { auto_refresh: true, preview_ratio: '16x9' })
+  // } else {
+  //   exSetup.updateWorkingDefinition(['setup'], { auto_refresh: true, preview_ratio: '9x16' })
+  // }
+
+  $('#setupWizardModal').modal('hide')
+
+  if (orientation === 'horizontal') {
+    exSetup.configurePreview('16x9', true)
+  } else exSetup.configurePreview('9x16', true)
+
+  await exSetup.saveDefinition(defName)
+  await exCommon.getAvailableDefinitions(exCommon.config.app)
+  editDefinition($('#definitionSaveButton').data('workingDefinition').uuid)
+
+  console.log($('#definitionSaveButton').data('workingDefinition'))
+}
+
+function generateSpreadsheetTemplate () {
+  // Based on selections made in the wizard, generate a template spreadsheet and download it to the user's system.
+
+  const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
+
+  const languages = []
+  for (const child of document.getElementById('wizardLanguages').children) {
+    const lang = child.querySelector('select').value
+    if (languages.includes(lang) === false) languages.push(lang)
+  }
+
+  const details = ['Time', 'Title', 'Description']
+
+  // Loop through the various combinations to make the header line for the CSV file
+  let csv = 'Level, Image'
+  for (const lang of languages) {
+    for (const detail of details) {
+      csv += ', ' + detail + ' (' + lang + ')'
+    }
+  }
+
+  // Add a second line so it looks like a spreadsheet
+  csv += '\n'
+  for (let i = 0; i < languages.length * details.length; i++) csv += ', '
+
+  // Initiate file download
+  const element = document.createElement('a')
+  element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(csv))
+  element.setAttribute('download', defName + ' - event list.csv')
+  element.style.display = 'none'
+  document.body.appendChild(element)
+  element.click()
+  document.body.removeChild(element)
 }
 
 async function clearDefinitionInput (full = true) {
@@ -207,7 +425,36 @@ function createLanguageTab (code) {
   row.classList = 'row gy-2 mt-2 mb-3'
   tabPane.appendChild(row)
 
-  // Create the various inputs
+  // Create the header input
+  const headerCol = document.createElement('div')
+  headerCol.classList = 'col-12 col-md-6'
+  row.appendChild(headerCol)
+
+  const label = document.createElement('label')
+  label.classList = 'form-label mt-2'
+  label.setAttribute('for', 'headerInput_' + code)
+  label.innerHTML = 'Header'
+  headerCol.appendChild(label)
+
+  const headerCommandBar = document.createElement('div')
+  headerCol.appendChild(headerCommandBar)
+
+  const headerInput = document.createElement('div')
+  headerInput.setAttribute('id', 'headerInput_' + code)
+  headerCol.appendChild(headerInput)
+
+  const headerEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+    content: workingDefinition?.languages?.[code]?.header_text ?? '',
+    editorDiv: headerInput,
+    commandDiv: headerCommandBar,
+    commands: ['basic'],
+    callback: (content) => {
+      exSetup.updateWorkingDefinition(['languages', code, 'header_text'], content)
+      exSetup.previewDefinition(true)
+    }
+  })
+
+  // Create the key selectors
   Object.keys(inputFields).forEach((key) => {
     const langKey = key + '_' + code
     const col = document.createElement('div')
@@ -244,8 +491,6 @@ function createLanguageTab (code) {
     col.appendChild(input)
   })
 
-  document.getElementById('headerText_' + code).value = workingDefinition?.languages?.[code].header_text ?? ''
-
   // If we have already loaded a spreadhseet, populate the key options
   const keyList = $('#spreadsheetSelect').data('availableKeys')
   if (keyList != null) {
@@ -260,78 +505,7 @@ function createLanguageTab (code) {
 
   // Switch to this new tab
   $(tabButton).click()
-}
-
-function deleteLanguageTab (lang) {
-  // Delete the given language tab.
-
-  delete $('#definitionSaveButton').data('workingDefinition').languages[lang]
-  $('#languageTab_' + lang).remove()
-  $('#languagePane_' + lang).remove()
-  $('.language-tab').click()
-}
-
-function deleteLanguageFlag (lang) {
-  // Ask the server to delete the language flag and remove it from the working definition.
-
-  const flag = $('#definitionSaveButton').data('workingDefinition').languages[lang].custom_flag
-
-  if (flag == null) {
-    // No custom flag
-    return
-  }
-
-  // Delete filename from working definition
-  delete $('#definitionSaveButton').data('workingDefinition').languages[lang].custom_flag
-
-  // Remove the icon
-  $('#flagImg_' + lang).attr('src', '../_static/flags/' + lang + '.svg')
-
-  // Delete from server
-  exCommon.makeHelperRequest({
-    method: 'POST',
-    endpoint: '/file/delete',
-    params: {
-      file: flag
-    }
-  })
-}
-
-function onFlagUploadChange (lang) {
-  // Called when the user selects a flag image file to upload
-
-  const fileInput = $('#uploadFlagInput_' + lang)[0]
-
-  const file = fileInput.files[0]
-  if (file == null) return
-
-  $('#uploadFlagFilename_' + lang).html('Uploading')
-
-  const ext = file.name.split('.').pop()
-  const newName = $('#definitionSaveButton').data('workingDefinition').uuid + '_flag_' + lang + '.' + ext
-
-  const formData = new FormData()
-
-  formData.append('files', fileInput.files[0], newName)
-
-  const xhr = new XMLHttpRequest()
-  xhr.open('POST', '/upload', true)
-
-  xhr.onreadystatechange = function () {
-    if (this.readyState !== 4) return
-    if (this.status === 200) {
-      const response = JSON.parse(this.responseText)
-
-      if ('success' in response) {
-        $('#uploadFlagFilename_' + lang).html('Upload')
-        $('#flagImg_' + lang).attr('src', '../content/' + newName)
-        exSetup.updateWorkingDefinition(['languages', lang, 'custom_flag'], newName)
-      }
-    } else if (this.status === 422) {
-      console.log(JSON.parse(this.responseText))
-    }
-  }
-  xhr.send(formData)
+  return tabButton
 }
 
 function onAttractorFileChange () {
@@ -381,62 +555,80 @@ function onSpreadsheetFileChange () {
     })
 }
 
-function checkContentExists () {
+async function checkContentExists () {
   // Cross-check content from the spreadsheet with files in the content directory.
 
   const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
   const imageKeys = []
-  document.getElementById('missingContentWarningField').innerHTML = ''
+  const missingContentField = document.getElementById('missingContentWarningField')
 
-  // Loop through the defintion and collect any unique image keys
+  missingContentField.innerHTML = ''
+
+  // Loop through the defintion and collect any unique media keys
   Object.keys(workingDefinition.languages).forEach((lang) => {
     if (imageKeys.includes(workingDefinition.languages[lang].image_key) === false) {
       imageKeys.push(workingDefinition.languages[lang].image_key)
     }
   })
 
-  // Get a list of available content
-  let availableContent
-  const missingContent = []
-  exCommon.makeHelperRequest({
-    method: 'GET',
-    endpoint: '/getAvailableContent'
-  })
-    .then((result) => {
-      console.log(result)
-      availableContent = result.all_exhibits
-      // Retrieve the spreadsheet and check the content for each image key against the available content
-      exCommon.makeHelperRequest({
-        method: 'GET',
-        endpoint: '/content/' + workingDefinition.spreadsheet,
-        rawResponse: true,
-        noCache: true
-      })
-        .then((raw) => {
-          const spreadsheet = exCommon.csvToJSON(raw).json
-          spreadsheet.forEach((row) => {
-            imageKeys.forEach((key) => {
-              if (row[key].trim() === '') return
-              if (availableContent.includes(row[key]) === false) missingContent.push(row[key])
-            })
-          })
-          const missingContentField = document.getElementById('missingContentWarningField')
-          if (missingContent.length === 0) {
-            missingContentField.classList.add('text-success')
-            missingContentField.classList.remove('text-danger')
-            missingContentField.innerHTML = 'No missing content!'
-          } else {
-            missingContentField.classList.add('text-danger')
-            missingContentField.classList.remove('text-success')
-            let html = '<b>Missing content found:</b><ul>'
-            missingContent.forEach((file) => {
-              html += '<li>' + file + '</li>'
-            })
-            html += '</ul>'
-            missingContentField.innerHTML = html
-          }
-        })
+  const missingContent = await _checkContentExists(workingDefinition.spreadsheet, imageKeys)
+
+  if (missingContent.length === 0) {
+    missingContentField.classList.add('text-success')
+    missingContentField.classList.remove('text-danger')
+    missingContentField.innerHTML = 'No missing content!'
+  } else {
+    missingContentField.classList.add('text-danger')
+    missingContentField.classList.remove('text-success')
+    let html = '<b>Missing content found:</b><ul>'
+    missingContent.forEach((file) => {
+      html += '<li>' + file + '</li>'
     })
+    html += '</ul>'
+    missingContentField.innerHTML = html
+  }
+}
+
+function _checkContentExists (spreadsheet, keys) {
+  // Take the given spreadsheet filename and image keys and cross check with
+  // the files available in the content directory. Return the names of any
+  // files that do not exist.
+
+  return new Promise(function (resolve, reject) {
+    // Get a list of available content
+
+    let availableContent
+    const missingContent = []
+
+    exCommon.makeHelperRequest({
+      method: 'GET',
+      endpoint: '/getAvailableContent'
+    })
+      .then((result) => {
+        availableContent = result.all_exhibits
+        // Retrieve the spreadsheet and check the content for each image key against the available content
+        exCommon.makeHelperRequest({
+          method: 'GET',
+          endpoint: '/content/' + spreadsheet,
+          rawResponse: true,
+          noCache: true
+        })
+          .then((raw) => {
+            const spreadsheet = exCommon.csvToJSON(raw).json
+            spreadsheet.forEach((row) => {
+              keys.forEach((key) => {
+                if ((key in row) === false) {
+                  reject(new Error('bad_key: ' + key))
+                  return
+                }
+                if (row[key].trim() === '') return
+                if (availableContent.includes(row[key]) === false) missingContent.push(row[key])
+              })
+            })
+            resolve(missingContent)
+          })
+      })
+  })
 }
 
 function populateKeySelects (keyList) {
@@ -553,12 +745,6 @@ exCommon.config.helperAddress = window.location.origin
 
 // The input fields to specifiy content for each langauge
 const inputFields = {
-  headerText: {
-    name: 'Header',
-    kind: 'input',
-    type: 'text',
-    property: 'header_text'
-  },
   keyTimeSelect: {
     name: 'Time column',
     kind: 'select',
@@ -614,6 +800,39 @@ setTimeout(setUpColorPickers, 100)
 
 // Add event listeners
 // -------------------------------------------------------------
+
+// Wizard
+
+// Connect the forward and back buttons
+Array.from(document.querySelectorAll('.wizard-forward')).forEach((el) => {
+  el.addEventListener('click', () => {
+    wizardForward(el.getAttribute('data-current-page'))
+  })
+})
+Array.from(document.querySelectorAll('.wizard-back')).forEach((el) => {
+  el.addEventListener('click', () => {
+    wizardBack(el.getAttribute('data-current-page'))
+  })
+})
+
+document.getElementById('wizardDownloadTemplateButton').addEventListener('click', generateSpreadsheetTemplate)
+document.getElementById('wizardUploadTemplateButton').addEventListener('click', () => {
+  exFileSelect.createFileSelectionModal({
+    filetypes: ['csv'],
+    multiple: false
+  })
+    .then((selectedFiles) => {
+      document.getElementById('wizardUploadTemplateButton').setAttribute('data-spreadsheet', selectedFiles[0])
+    })
+})
+
+document.getElementById('wizardUploadMediaButton').addEventListener('click', () => {
+  exFileSelect.createFileSelectionModal({
+    filetypes: ['image', 'video'],
+    manage: true,
+    multiple: true
+  })
+})
 
 // Main buttons
 document.getElementById('manageContentButton').addEventListener('click', (event) => {

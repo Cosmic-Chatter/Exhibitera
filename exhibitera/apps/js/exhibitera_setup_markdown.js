@@ -17,8 +17,7 @@ export class ExhibiteraMarkdownEditor {
       !options ||
       options.content == null ||
       options.editorDiv == null ||
-      options.commandDiv == null ||
-      options.callback == null
+      options.commandDiv == null
     ) {
       throw new Error('Missing required parameter')
     }
@@ -99,7 +98,7 @@ export class ExhibiteraMarkdownEditor {
     if (this.options.limitCallbacks !== false) {
       clearTimeout(this.timer)
       this.timer = setTimeout(() => {
-        this.options.callback(event.content)
+        if (this.options.callback) this.options.callback(event.content)
       }, timerThreshold)
     } else {
       this.options.callback(event.content)

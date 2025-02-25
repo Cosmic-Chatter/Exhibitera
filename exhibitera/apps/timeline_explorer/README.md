@@ -22,5 +22,8 @@ Each line in the spreadsheet will represent one item in the timeline. The media 
 
 The `Level` column allows you to differentiate between events of different importance in the timeline by specifying a number from 1 to 4. Level 1 events are the most important and Level 4 are the least important.
 
+### Formatting timeline text
+You can format text by using [Markdown](https://www.markdownguide.org/basic-syntax/) when entering text into your spreadsheet. You can also set overall font, size, and color during setup. 
+
 ### Optimizing media
 Timeline Explorer is designed to handle hundreds of timeline entries in an efficient way. To balance performance and quality, you should use the `Optimize content` tool. This will smartly resize the thumbnail images for maximum perceived quality while retaining the best performance. This process does not alter the original content file.

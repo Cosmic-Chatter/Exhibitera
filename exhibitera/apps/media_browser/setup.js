@@ -129,14 +129,14 @@ async function wizardCreateDefinition () {
   exSetup.updateWorkingDefinition(['name'], defName)
 
   // Langauges
-  let first = true
+  const langOrder = []
   for (const langEl of document.getElementById('wizardLanguages').children) {
     const lang = langEl.querySelector('select').value
+    langOrder.push(lang)
     const langDef = {
       caption_key: null,
       code: lang,
       credit_key: null,
-      default: first,
       display_name: exLang.getLanguageDisplayName(lang),
       filter_order: [],
       filters: {},
@@ -152,9 +152,9 @@ async function wizardCreateDefinition () {
     if (document.getElementById('wizardCheckboxCredit').checked === true) {
       langDef.credit_key = 'Credit (' + lang + ')'
     }
-    first = false
     exSetup.updateWorkingDefinition(['languages', lang], langDef)
   }
+  exSetup.updateWorkingDefinition(['language_older'], langOrder)
 
   // Basics
   exSetup.updateWorkingDefinition(['name'], document.getElementById('wizardDefinitionNameInput').value.trim())

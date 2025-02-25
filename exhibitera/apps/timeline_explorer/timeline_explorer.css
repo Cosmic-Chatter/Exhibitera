@@ -27,6 +27,9 @@
   --time-font-adjust: 0;
   --title-font-adjust: 0;
   --body-font-adjust: 0;
+
+  /* Misc */
+  --header-height: 0vh; /* Set to 7.5vh in javascript when a header is given */
 }
 
 /* Font definitions */
@@ -278,15 +281,15 @@ time {
         gap: 1vh;
     }
     #header-pane {
-        height: 15vh;
+        height: calc(1.78 * var(--header-height));
     }
     #timeline-pane {
-        height: 75vh;
+        height: calc(91.1vh - 1.78 * var(--header-height));
         overflow-y: auto;
         overflow-x: hidden;
     }
     #tools-pane {
-        height: 10vh;
+        height: 8.9vh;
     }
 }
   
@@ -315,10 +318,10 @@ time {
         gap: 1vw;
     }
     #header-pane {
-        height: 7.5vh;
+        height: var(--header-height);
     }
     #timeline-pane {
-        height: 87.5vh;
+        height: calc(95vh - var(--header-height));
         overflow-y: auto;
         overflow-x: hidden;
     }

@@ -1,6 +1,7 @@
 /* global showdown textFit */
 
 import * as exCommon from '../js/exhibitera_app_common.js'
+import * as exMarkdown from '../js/exhibitera_app_markdown.js'
 
 function updateFunc (update) {
   // Read updates for media player-specific actions and act on them
@@ -80,7 +81,6 @@ function loadDefinition (def) {
   // Then, apply the definition settings
   Object.keys(def.style?.text_size ?? {}).forEach((key) => {
     const value = def.style.text_size[key]
-    console.log(key, value)
     root.style.setProperty('--' + key + '-font-adjust', value)
   })
 
@@ -90,9 +90,7 @@ function loadDefinition (def) {
   exCommon.createLanguageSwitcher(def, localize)
 
   // Find the default language
-  Object.keys(def.languages).forEach((lang) => {
-    if (def.languages[lang].default === true) defaultLang = lang
-  })
+  defaultLang = def.language_order[0]
 
   // Load the CSV file containing the timeline data and use it to build the timeline entries.
   exCommon.makeHelperRequest({
@@ -119,6 +117,7 @@ function loadDefinition (def) {
     setAttractor('', '')
   }
 
+  localize(defaultLang)
   // Send a thumbnail to the helper
   setTimeout(() => exCommon.saveScreenshotAsThumbnail(def.uuid + '.png'), 100)
 }
@@ -145,13 +144,25 @@ function localize (lang) {
 
   const spreadsheet = $(document).data('spreadsheet')
   const definition = $(document).data('timelineDefinition')
+  const header = document.getElementById('headerText')
+  const root = document.querySelector(':root')
 
-  $('#timelineContainer').empty()
-  spreadsheet.forEach((entry) => {
-    createTimelineEntry(entry, lang)
-  })
-  $('#headerText').html(definition.languages[lang].header_text || '')
-  textFit($('#headerText'))
+  document.getElementById('timelineContainer').innerHTML = ''
+  if (spreadsheet != null) {
+    spreadsheet.forEach((entry) => {
+      createTimelineEntry(entry, lang)
+    })
+  }
+
+  const headerText = exMarkdown.formatText(definition?.languages?.[lang]?.header_text ?? '', { string: true, removeParagraph: true })
+
+  header.innerHTML = headerText
+  if (headerText !== '') {
+    root.style.setProperty('--header-height', '7.5vh')
+    textFit(header)
+  } else {
+    root.style.setProperty('--header-height', '0vh')
+  }
 }
 
 function createTimelineEntry (entry, langCode) {
@@ -175,7 +186,8 @@ function createTimelineEntry (entry, langCode) {
   container.appendChild(flex1)
 
   const timeEl = document.createElement('time')
-  timeEl.innerHTML = converter.makeHtml(entry[langDef.time_key])
+  // timeEl.innerHTML = converter.makeHtml(entry[langDef.time_key])
+  timeEl.innerHTML = exMarkdown.formatText(entry[langDef.time_key], { string: true, removeParagraph: true })
   flex1.appendChild(timeEl)
 
   const title = document.createElement('div')
@@ -184,15 +196,17 @@ function createTimelineEntry (entry, langCode) {
   } else if (parseInt(entry.Level) > 4) {
     title.classList = 'size4'
   } else {
-    title.classList = 'size' + parseInt(entry[langDef.level_key])
+    title.classList = 'size' + parseInt(entry[langDef.level_key] ?? 4)
   }
   title.classList.add('timeline-item-header')
-  title.innerHTML = converter.makeHtml(entry[langDef.title_key])
+  // title.innerHTML = converter.makeHtml(entry[langDef.title_key])
+  title.innerHTML = exMarkdown.formatText(entry[langDef.title_key], { string: true, removeParagraph: true })
   flex1.appendChild(title)
 
   const bodyEl = document.createElement('p')
   bodyEl.classList = 'timeline-body'
-  bodyEl.innerHTML = converter.makeHtml(entry[langDef.short_text_key])
+  // bodyEl.innerHTML = converter.makeHtml(entry[langDef.short_text_key])
+  bodyEl.innerHTML = exMarkdown.formatText(entry[langDef.short_text_key], { string: true, removeParagraph: true })
   flex1.appendChild(bodyEl)
 
   // Image
