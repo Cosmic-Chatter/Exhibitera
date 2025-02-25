@@ -1,6 +1,7 @@
 /* global bootstrap textFit */
 
 import * as exCommon from '../js/exhibitera_app_common.js'
+import * as exMarkdown from '../js/exhibitera_app_markdown.js'
 
 function changePage (val) {
   switch (val) {
@@ -55,19 +56,20 @@ function createCard (obj) {
   let thumb
 
   if (thumbnailKey != null && thumbnailKey !== '' && String(obj[thumbnailKey]).trim() !== '') {
-    console.log('here')
-    thumb = 'thumbnails/' + String(obj[thumbnailKey])
+    // Use a user-supplied thumbnail
+    thumb = exCommon.config.helperAddress + '/thumbnails/' + String(obj[thumbnailKey])
   } else {
-    // Change the file extension to .jpg, since that is the default for Exhibitera
-    let thumbName = String(obj[mediaKey])
-    const dotIndex = thumbName.lastIndexOf('.')
-    thumbName = thumbName.substring(0, dotIndex < 0 ? thumbName.length : dotIndex) + '.jpg'
-    thumb = 'thumbnails/' + thumbName
+    // Pull the default thumbnail
+
+    const numCols = def?.layout?.num_columns ?? 3
+    const iconWidth = String(Math.round(window.innerWidth / numCols))
+    const thumbName = String(obj[mediaKey])
+    thumb = exCommon.config.helperAddress + '/files/' + thumbName + '/thumbnail/' + iconWidth
   }
 
   let title = ''
   if (titleKey != null && titleKey !== '') {
-    title = obj[titleKey]
+    title = exMarkdown.formatText(obj[titleKey] ?? '', { string: true, removeParagraph: true })
   }
 
   const id = String(Math.round(Date.now() * Math.random()))
@@ -364,9 +366,9 @@ function displayMedia (id) {
     return item.uniqueMediaBrowserID === id
   })[0]
 
-  const title = obj[titleKey] ?? ''
-  const caption = obj[captionKey] ?? ''
-  const credit = obj[creditKey] ?? ''
+  const title = exMarkdown.formatText(obj[titleKey] ?? '', { string: true, removeParagraph: true })
+  const caption = exMarkdown.formatText(obj[captionKey] ?? '', { string: true, removeParagraph: true })
+  const credit = exMarkdown.formatText(obj[creditKey] ?? '', { string: true, removeParagraph: true })
 
   const media = String(obj[mediaKey])
   showMediaInLightbox(media, title, caption, credit)

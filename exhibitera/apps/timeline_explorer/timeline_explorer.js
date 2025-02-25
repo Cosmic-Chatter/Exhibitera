@@ -170,9 +170,6 @@ function createTimelineEntry (entry, langCode) {
 
   const langDef = $(document).data('timelineDefinition').languages[langCode]
 
-  // Initialize the Markdown converter
-  const converter = new showdown.Converter({ parseImgDimensions: true })
-
   const li = document.createElement('li')
 
   const container = document.createElement('div')
@@ -186,7 +183,6 @@ function createTimelineEntry (entry, langCode) {
   container.appendChild(flex1)
 
   const timeEl = document.createElement('time')
-  // timeEl.innerHTML = converter.makeHtml(entry[langDef.time_key])
   timeEl.innerHTML = exMarkdown.formatText(entry[langDef.time_key], { string: true, removeParagraph: true })
   flex1.appendChild(timeEl)
 
@@ -199,13 +195,11 @@ function createTimelineEntry (entry, langCode) {
     title.classList = 'size' + parseInt(entry[langDef.level_key] ?? 4)
   }
   title.classList.add('timeline-item-header')
-  // title.innerHTML = converter.makeHtml(entry[langDef.title_key])
   title.innerHTML = exMarkdown.formatText(entry[langDef.title_key], { string: true, removeParagraph: true })
   flex1.appendChild(title)
 
   const bodyEl = document.createElement('p')
   bodyEl.classList = 'timeline-body'
-  // bodyEl.innerHTML = converter.makeHtml(entry[langDef.short_text_key])
   bodyEl.innerHTML = exMarkdown.formatText(entry[langDef.short_text_key], { string: true, removeParagraph: true })
   flex1.appendChild(bodyEl)
 
@@ -223,11 +217,22 @@ function createTimelineEntry (entry, langCode) {
 
     const image = document.createElement('img')
     image.style.width = '100%'
-    image.src = 'thumbnails/' + imageName
+    // image.src = 'thumbnails/' + imageName
+    // Calculate size of image
+    const width = window.innerWidth
+    const height = window.innerHeight
+    let thumbRes
+    if (width > height) {
+      thumbRes = Math.round(width * 0.25)
+    } else {
+      thumbRes = Math.round(width * 0.5)
+    }
+    console.log(exCommon.config.helperAddress + '/files/' + imageName + '/thumbnail/' + String(thumbRes))
+    image.src = exCommon.config.helperAddress + '/files/' + imageName + '/thumbnail/' + String(thumbRes)
     flex2.appendChild(image)
   }
 
-  $('#timelineContainer').append(li)
+  document.getElementById('timelineContainer').appendChild(li)
   configureVisibleElements()
 }
 

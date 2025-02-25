@@ -26,6 +26,3 @@ Each line in the spreadsheet will represent one item in the browser. The media f
 
 ### Thumbnails
 By default, **_Exhibitera_** will generate a thumbnail for each of your media files. For images, the thumbnail will look the same as the image. For videos, the thumbnail will be the middle frame of the video. If you'd like to provide separate thumbnails (for example, to have all square thumbnails), you can upload these to the content directory and include a thumbnail column in your spreadsheet.
-
-### Optimizing media
-Media Browser is designed to handle hundreds or even thousands of media files in an efficient way. To balance performance and quality, you should use the `Optimize content` tool. This will smartly resize the thumbnail images for maximum perceived quality while retaining the best performance. This process does not alter the original content file, which will always be displayed at full quality.

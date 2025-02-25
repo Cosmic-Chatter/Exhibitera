@@ -662,83 +662,83 @@ function populateKeySelects (keyList) {
   })
 }
 
-function showOptimizeContentModal () {
-  // Show the modal for optimizing the content and thumbnails.
+// function showOptimizeContentModal () {
+//   // Show the modal for optimizing the content and thumbnails.
 
-  document.getElementById('optimizeContentProgressBarDiv').style.display = 'none'
-  $('#optimizeContentModal').modal('show')
-}
+//   document.getElementById('optimizeContentProgressBarDiv').style.display = 'none'
+//   $('#optimizeContentModal').modal('show')
+// }
 
-function optimizeMediaFromModal () {
-  // Collect the necessary information and then optimize the media.
+// function optimizeMediaFromModal () {
+//   // Collect the necessary information and then optimize the media.
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+//   const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
 
-  const resolution = document.getElementById('resolutionSelect').value
-  const width = parseInt(resolution.split('_')[0])
-  const height = parseInt(resolution.split('_')[1])
-  let thumbRes
-  if (width > height) {
-    thumbRes = Math.round(width * 0.25)
-  } else {
-    thumbRes = Math.round(width * 0.5)
-  }
+//   const resolution = document.getElementById('resolutionSelect').value
+//   const width = parseInt(resolution.split('_')[0])
+//   const height = parseInt(resolution.split('_')[1])
+//   let thumbRes
+//   if (width > height) {
+//     thumbRes = Math.round(width * 0.25)
+//   } else {
+//     thumbRes = Math.round(width * 0.5)
+//   }
 
-  // Loop through the defintion and collect any unique image keys
-  const imageKeys = []
+//   // Loop through the defintion and collect any unique image keys
+//   const imageKeys = []
 
-  Object.keys(workingDefinition.languages).forEach((lang) => {
-    if (imageKeys.includes(workingDefinition.languages[lang].image_key) === false) {
-      imageKeys.push(workingDefinition.languages[lang].image_key)
-    }
-  })
+//   Object.keys(workingDefinition.languages).forEach((lang) => {
+//     if (imageKeys.includes(workingDefinition.languages[lang].image_key) === false) {
+//       imageKeys.push(workingDefinition.languages[lang].image_key)
+//     }
+//   })
 
-  // Retrieve the spreadsheet and collect all images
-  const toOptimize = []
+//   // Retrieve the spreadsheet and collect all images
+//   const toOptimize = []
 
-  exCommon.makeHelperRequest({
-    method: 'GET',
-    endpoint: '/content/' + workingDefinition.spreadsheet,
-    rawResponse: true,
-    noCache: true
-  })
-    .then((raw) => {
-      const spreadsheet = exCommon.csvToJSON(raw).json
-      spreadsheet.forEach((row) => {
-        imageKeys.forEach((key) => {
-          if (row[key].trim() === '') return
-          toOptimize.push(row[key])
-        })
-      })
-      const total = toOptimize.length
-      let numComplete = 0
+//   exCommon.makeHelperRequest({
+//     method: 'GET',
+//     endpoint: '/content/' + workingDefinition.spreadsheet,
+//     rawResponse: true,
+//     noCache: true
+//   })
+//     .then((raw) => {
+//       const spreadsheet = exCommon.csvToJSON(raw).json
+//       spreadsheet.forEach((row) => {
+//         imageKeys.forEach((key) => {
+//           if (row[key].trim() === '') return
+//           toOptimize.push(row[key])
+//         })
+//       })
+//       const total = toOptimize.length
+//       let numComplete = 0
 
-      // Show the progress bar
-      document.getElementById('optimizeContentProgressBarDiv').style.display = 'flex'
-      document.getElementById('optimizeContentProgressBar').style.width = '0%'
-      document.getElementById('optimizeContentProgressBarDiv').setAttribute('aria-valuenow', 0)
+//       // Show the progress bar
+//       document.getElementById('optimizeContentProgressBarDiv').style.display = 'flex'
+//       document.getElementById('optimizeContentProgressBar').style.width = '0%'
+//       document.getElementById('optimizeContentProgressBarDiv').setAttribute('aria-valuenow', 0)
 
-      toOptimize.forEach((file) => {
-        exCommon.makeHelperRequest({
-          method: 'POST',
-          endpoint: '/files/generateThumbnail',
-          params: {
-            source: file,
-            mimetype: 'image',
-            width: thumbRes
-          }
-        })
-          .then((result) => {
-            if (result.success === true) {
-              numComplete += 1
-              const percent = Math.round(100 * numComplete / total)
-              document.getElementById('optimizeContentProgressBar').style.width = String(percent) + '%'
-              document.getElementById('optimizeContentProgressBarDiv').setAttribute('aria-valuenow', percent)
-            }
-          })
-      })
-    })
-}
+//       toOptimize.forEach((file) => {
+//         exCommon.makeHelperRequest({
+//           method: 'POST',
+//           endpoint: '/files/generateThumbnail',
+//           params: {
+//             source: file,
+//             mimetype: 'image',
+//             width: thumbRes
+//           }
+//         })
+//           .then((result) => {
+//             if (result.success === true) {
+//               numComplete += 1
+//               const percent = Math.round(100 * numComplete / total)
+//               document.getElementById('optimizeContentProgressBar').style.width = String(percent) + '%'
+//               document.getElementById('optimizeContentProgressBarDiv').setAttribute('aria-valuenow', percent)
+//             }
+//           })
+//       })
+//     })
+// }
 
 // Set helper address for use with exCommon.makeHelperRequest
 exCommon.config.helperAddress = window.location.origin
@@ -843,8 +843,8 @@ document.getElementById('showCheckContentButton').addEventListener('click', () =
   $('#checkContentModal').modal('show')
 })
 document.getElementById('checkContentButton').addEventListener('click', checkContentExists)
-document.getElementById('optimizeContentButton').addEventListener('click', showOptimizeContentModal)
-document.getElementById('optimizeContentBeginButton').addEventListener('click', optimizeMediaFromModal)
+// document.getElementById('optimizeContentButton').addEventListener('click', showOptimizeContentModal)
+// document.getElementById('optimizeContentBeginButton').addEventListener('click', optimizeMediaFromModal)
 
 // Definition fields
 document.getElementById('spreadsheetSelect').addEventListener('click', (event) => {

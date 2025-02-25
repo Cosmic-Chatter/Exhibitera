@@ -816,78 +816,6 @@ function changeFilterOrder (lang, uuid, direction) {
   exSetup.previewDefinition(true)
 }
 
-function deleteLanguageTab (lang) {
-  // Delete the given language tab.
-
-  delete $('#definitionSaveButton').data('workingDefinition').languages[lang]
-  document.getElementById('languageTab_' + lang).remove()
-  document.getElementById('languagePane_' + lang).remove()
-  document.querySelector('.language-tab').click()
-}
-
-function deleteLanguageFlag (lang) {
-  // Ask the server to delete the language flag and remove it from the working definition.
-
-  const flag = $('#definitionSaveButton').data('workingDefinition').languages[lang].custom_flag
-
-  if (flag == null) {
-    // No custom flag
-    return
-  }
-
-  // Delete filename from working definition
-  delete $('#definitionSaveButton').data('workingDefinition').languages[lang].custom_flag
-
-  // Remove the icon
-  document.getElementById('flagImg_' + lang).src = '../_static/flags/' + lang + '.svg'
-
-  // Delete from server
-  exCommon.makeHelperRequest({
-    method: 'POST',
-    endpoint: '/file/delete',
-    params: {
-      file: flag
-    }
-  })
-}
-
-function onFlagUploadChange (lang) {
-  // Called when the user selects a flag image file to upload
-
-  const fileInput = $('#uploadFlagInput_' + lang)[0]
-
-  const file = fileInput.files[0]
-  if (file == null) return
-
-  document.getElementById('uploadFlagFilename_' + lang).innerHTML = 'Uploading'
-
-  const ext = file.name.split('.').pop()
-  const newName = $('#definitionSaveButton').data('workingDefinition').uuid + '_flag_' + lang + '.' + ext
-
-  const formData = new FormData()
-
-  formData.append('files', fileInput.files[0], newName)
-
-  const xhr = new XMLHttpRequest()
-  xhr.open('POST', '/upload', true)
-
-  xhr.onreadystatechange = function () {
-    if (this.readyState !== 4) return
-    if (this.status === 200) {
-      const response = JSON.parse(this.responseText)
-
-      if ('success' in response) {
-        document.getElementById('uploadFlagFilename_' + lang).innerHTML = 'Upload'
-        document.getElementById('flagImg_' + lang).src = '../content/' + newName
-        exSetup.updateWorkingDefinition(['languages', lang, 'custom_flag'], newName)
-      }
-    } else if (this.status === 422) {
-      console.log(JSON.parse(this.responseText))
-    }
-  }
-  xhr.send(formData)
-}
-
 function onAttractorFileChange () {
   // Called when a new image or video is selected.
 
@@ -1012,78 +940,78 @@ function _checkContentExists (spreadsheet, keys) {
   })
 }
 
-function showOptimizeContentModal () {
-  // Show the modal for optimizing the content and thumbnails.
+// function showOptimizeContentModal () {
+//   // Show the modal for optimizing the content and thumbnails.
 
-  document.getElementById('optimizeContentProgressBarDiv').style.display = 'none'
-  $('#optimizeContentModal').modal('show')
-}
+//   document.getElementById('optimizeContentProgressBarDiv').style.display = 'none'
+//   $('#optimizeContentModal').modal('show')
+// }
 
-function optimizeMediaFromModal () {
-  // Collect the necessary information and then optimize the media.
+// function optimizeMediaFromModal () {
+//   // Collect the necessary information and then optimize the media.
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+//   const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
 
-  const resolution = document.getElementById('resolutionSelect').value
-  const width = parseInt(resolution.split('_')[0])
-  const nCols = parseInt(document.getElementById('numColsSelect').value)
-  const thumbRes = width / nCols
+//   const resolution = document.getElementById('resolutionSelect').value
+//   const width = parseInt(resolution.split('_')[0])
+//   const nCols = parseInt(document.getElementById('numColsSelect').value)
+//   const thumbRes = width / nCols
 
-  // Loop through the defintion and collect any unique image keys
-  const imageKeys = []
+//   // Loop through the defintion and collect any unique image keys
+//   const imageKeys = []
 
-  Object.keys(workingDefinition.languages).forEach((lang) => {
-    if (imageKeys.includes(workingDefinition.languages[lang].media_key) === false) {
-      imageKeys.push(workingDefinition.languages[lang].media_key)
-    }
-  })
+//   Object.keys(workingDefinition.languages).forEach((lang) => {
+//     if (imageKeys.includes(workingDefinition.languages[lang].media_key) === false) {
+//       imageKeys.push(workingDefinition.languages[lang].media_key)
+//     }
+//   })
 
-  // Retrieve the spreadsheet and collect all images
-  const toOptimize = []
+//   // Retrieve the spreadsheet and collect all images
+//   const toOptimize = []
 
-  exCommon.makeHelperRequest({
-    method: 'GET',
-    endpoint: '/content/' + workingDefinition.spreadsheet,
-    rawResponse: true,
-    noCache: true
-  })
-    .then((raw) => {
-      const spreadsheet = exCommon.csvToJSON(raw).json
-      spreadsheet.forEach((row) => {
-        imageKeys.forEach((key) => {
-          if (row[key].trim() === '') return
-          toOptimize.push(row[key])
-        })
-      })
-      const total = toOptimize.length
-      let numComplete = 0
+//   exCommon.makeHelperRequest({
+//     method: 'GET',
+//     endpoint: '/content/' + workingDefinition.spreadsheet,
+//     rawResponse: true,
+//     noCache: true
+//   })
+//     .then((raw) => {
+//       const spreadsheet = exCommon.csvToJSON(raw).json
+//       spreadsheet.forEach((row) => {
+//         imageKeys.forEach((key) => {
+//           if (row[key].trim() === '') return
+//           toOptimize.push(row[key])
+//         })
+//       })
+//       const total = toOptimize.length
+//       let numComplete = 0
 
-      // Show the progress bar
-      document.getElementById('optimizeContentProgressBarDiv').style.display = 'flex'
-      document.getElementById('optimizeContentProgressBar').style.width = '0%'
-      document.getElementById('optimizeContentProgressBarDiv').setAttribute('aria-valuenow', 0)
+//       // Show the progress bar
+//       document.getElementById('optimizeContentProgressBarDiv').style.display = 'flex'
+//       document.getElementById('optimizeContentProgressBar').style.width = '0%'
+//       document.getElementById('optimizeContentProgressBarDiv').setAttribute('aria-valuenow', 0)
 
-      toOptimize.forEach((file) => {
-        exCommon.makeHelperRequest({
-          method: 'POST',
-          endpoint: '/files/generateThumbnail',
-          params: {
-            source: file,
-            mimetype: 'image',
-            width: thumbRes
-          }
-        })
-          .then((result) => {
-            if (result.success === true) {
-              numComplete += 1
-              const percent = Math.round(100 * numComplete / total)
-              document.getElementById('optimizeContentProgressBar').style.width = String(percent) + '%'
-              document.getElementById('optimizeContentProgressBarDiv').setAttribute('aria-valuenow', percent)
-            }
-          })
-      })
-    })
-}
+//       toOptimize.forEach((file) => {
+//         exCommon.makeHelperRequest({
+//           method: 'POST',
+//           endpoint: '/files/generateThumbnail',
+//           params: {
+//             source: file,
+//             mimetype: 'image',
+//             width: thumbRes
+//           }
+//         })
+//           .then((result) => {
+//             if (result.success === true) {
+//               numComplete += 1
+//               const percent = Math.round(100 * numComplete / total)
+//               document.getElementById('optimizeContentProgressBar').style.width = String(percent) + '%'
+//               document.getElementById('optimizeContentProgressBarDiv').setAttribute('aria-valuenow', percent)
+//             }
+//           })
+//       })
+//     })
+// }
 
 function populateKeySelects (keyList, langToPopulate = null) {
   // Take a list of keys and use it to populate all the selects used to match keys to parameters.
@@ -1256,8 +1184,8 @@ document.getElementById('showCheckContentButton').addEventListener('click', () =
   $('#checkContentModal').modal('show')
 })
 document.getElementById('checkContentButton').addEventListener('click', checkContentExists)
-document.getElementById('optimizeContentButton').addEventListener('click', showOptimizeContentModal)
-document.getElementById('optimizeContentBeginButton').addEventListener('click', optimizeMediaFromModal)
+// document.getElementById('optimizeContentButton').addEventListener('click', showOptimizeContentModal)
+// document.getElementById('optimizeContentBeginButton').addEventListener('click', optimizeMediaFromModal)
 
 // Definition fields
 document.getElementById('spreadsheetSelect').addEventListener('click', (event) => {
