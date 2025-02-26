@@ -461,6 +461,7 @@
                   <div id="componentInfoModalDefinitionList" class="row mx-1">
                   </div>
                 </div>
+
                 <!-- DMX page -->
                 <div class="tab-pane fade" id="componentInfoModalDMXTab" role="tabpanel" aria-labelledby="componentInfoModalDMXTabButton">
                   <div class="row mt-3">
@@ -779,6 +780,35 @@
               <button id='componentInfoModalDefinitionSaveButton' class='btn btn-primary'>Save</button>
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Copy definition modal -->
+      <div class="modal" tabindex="-1" role="dialog" id="copyDefinitionModal">
+        <div class="modal-dialog modal-dialog-centered exhibitera-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Copy a definition</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div class="row gy-2">
+                <div id="copyDefinitionModalSourceCol" class="col-12 col-md-6 border-end">
+                  <div class='fs-5 text-center border-bottom'>Copy these files</div>
+                  <div class="row gy-2 mt-2" id="copyDefinitionModalSourceFiles"></div>
+                </div>
+                <div id="copyDefinitionModalDestinationCol" class="col-12 col-md-6">
+                  <div class='fs-5 text-center border-bottom'>To these components</div>
+                  <div class="row gy-2 mt-2" id="copyDefinitionModalDestinations"></div>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button id="copyDefinitionModalSubmitButton" type="button" class="btn btn-primary" data-bs-dismiss="modal">Copy</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
           </div>
         </div>
       </div>

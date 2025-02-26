@@ -70,10 +70,14 @@ async def get_definition_content_list(this_uuid: str):
         if (definition["style"]["background"].get("image", "") != ""
                 and definition["style"]["background"]["mode"] == "image"):
             content.append(definition["style"]["background"]["image"])
+        if "watermark" in definition and definition["watermark"].get('file', '') != '':
+            content.append(definition["watermark"]["file"])
         for item_uuid in definition["content"]:
             item = definition["content"][item_uuid]
             if item["filename"] not in content:
                 content.append(item["filename"])
+            if "subtitles" in item and item["subtitles"].get("filename", "") != '':
+                content.append(item["subtitles"]["filename"])
     elif definition["app"] == "voting_kiosk":
         if (definition["style"]["background"].get("image", "") != ""
                 and definition["style"]["background"]["mode"] == "image"):
@@ -95,22 +99,18 @@ async def get_definition_content_list(this_uuid: str):
         return {"success": False, "reason": f"This endpoint is not yet implemented for {definition['app']}"}
 
     content_details = []
-
+    total_size = 0
     for file in content:
-        file_details = {
-            'name': file
-        }
         path = helper_files.get_path(["content", file], user_file=True)
-        file_details['size'] = os.path.getsize(path)  # in bytes
-        if file_details['size'] > 1e9:
-            file_details['size_text'] = str(round(file_details['size'] / 1e9 * 10) / 100) + ' GB'
-        elif file_details['size'] > 1e6:
-            file_details['size_text'] = str(round(file_details['size'] / 1e6 * 00) / 100) + ' MB'
-        elif file_details['size'] > 1e3:
-            file_details['size_text'] = str(round(file_details['size'])) + ' kB'
-        else:
-            file_details['size_text'] = str(file_details['size']) + ' bytes'
+        size, size_text = helper_files.get_file_size(path)
 
-        content_details.append(file_details)
+        total_size += size
+        content_details.append({
+            'name': file,
+            'size': size,
+            'size_text': size_text
+        })
 
-    return {"success": True, "content": content_details}
+    return {"success": True,
+            "total_size": helper_files.convert_bytes_to_readable(total_size),
+            "content": content_details}

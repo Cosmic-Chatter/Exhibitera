@@ -835,6 +835,33 @@ def check_directory_structure():
         os.mkdir(v2_thumbs)
 
 
+def get_file_size(path: str) -> (int, str):
+    """Return the size of the specified file.
+
+    Returns a tuple of (size_in_bytes, human_readable)
+    """
+
+    file_size = os.path.getsize(path)  # in bytes
+    return file_size, convert_bytes_to_readable(file_size)
+
+
+def convert_bytes_to_readable(file_size: int | float) -> str:
+    """Convert the given file size in bytes to a human-readable string."""
+
+    if file_size > 1e12:
+        size_text = str(round(file_size / 1e12 * 100) / 100) + ' TB'
+    elif file_size > 1e9:
+        size_text = str(round(file_size / 1e9 * 100) / 100) + ' GB'
+    elif file_size > 1e6:
+        size_text = str(round(file_size / 1e6 * 10) / 10) + ' MB'
+    elif file_size > 1e3:
+        size_text = str(round(file_size / 1e3)) + ' kB'
+    else:
+        size_text = str(file_size) + ' bytes'
+
+    return size_text
+
+
 # Set up log file
 log_path: str = get_path(["apps.log"], user_file=True)
 logging.basicConfig(datefmt='%Y-%m-%d %H:%M:%S',

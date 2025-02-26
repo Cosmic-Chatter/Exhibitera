@@ -1729,7 +1729,7 @@ function populateComponentDefinitionList (definitions, thumbnails, permission) {
         copyOption.classList = 'dropdown-item'
         copyOption.innerHTML = 'Copy to...'
         copyOption.addEventListener('click', () => {
-          showCopyDefinitionModal(component.uuid, definition.uuid)
+          showCopyDefinitionModal(component.uuid, definition.uuid, definition.name)
         })
         dropdownMenu.appendChild(copyOption)
       }
@@ -1793,10 +1793,15 @@ function populateComponentDefinitionList (definitions, thumbnails, permission) {
   })
 }
 
-function showCopyDefinitionModal (componentUUID, definitionUUID) {
+function showCopyDefinitionModal (componentUUID, definitionUUID, definitionName) {
   // Set up and show the model for copying a definition from one component to another
 
   const component = getExhibitComponentByUUID(componentUUID)
+  const modal = document.getElementById('copyDefinitionModal')
+  modal.setAttribute('data-definition', definitionUUID)
+  modal.setAttribute('data-component', componentUUID)
+
+  document.getElementById('copyDefinitionModalSubmitButton').style.display = 'none'
 
   const url = component.getHelperURL()
   if (url == null) {
@@ -1810,7 +1815,97 @@ function showCopyDefinitionModal (componentUUID, definitionUUID) {
     endpoint: '/definitions/' + definitionUUID + '/getContentList'
   }).then((result) => {
     console.log(result)
+
+    // Populate source files
+    const sourceDiv = document.getElementById('copyDefinitionModalSourceFiles')
+    sourceDiv.innerHTML = ''
+
+    sourceDiv.appendChild(copyDefinitionModalCreateSourceHTML(definitionName, '', true))
+    if (result.content.length > 0) {
+      let supportingText = ' supporting file'
+      if (result.content.length > 1) supportingText = ' supporting files'
+      sourceDiv.appendChild(copyDefinitionModalCreateSourceHTML(String(result.content.length) + supportingText, result?.total_size ?? ''))
+    }
+
+    // Populate destination options
+    const destDiv = document.getElementById('copyDefinitionModalDestinations')
+    destDiv.innerHTML = ''
+
+    for (const comp of exConfig.exhibitComponents) {
+      if (comp.type !== 'exhibit_component') continue
+      if (comp.status !== exConfig.STATUS.ONLINE && comp.status !== exConfig.STATUS.ACTIVE) continue
+      // if (comp.uuid === componentUUID) continue
+      console.log(comp)
+      destDiv.appendChild(copyDefinitionModalCreateDestinationHTML(comp))
+    }
+
+    $('#componentInfoModal').modal('hide')
+    $('#copyDefinitionModal').modal('show')
   })
+}
+
+function copyDefinitionModalCreateDestinationHTML (component) {
+  // Take an exhibit component and build an HTML representation.
+
+  const modal = document.getElementById('copyDefinitionModal')
+  const submitButton = document.getElementById('copyDefinitionModalSubmitButton')
+
+  const col = document.createElement('div')
+  col.classList = 'col-12'
+
+  const group = document.createElement('div')
+  group.classList = 'form-check'
+  col.appendChild(group)
+
+  const input = document.createElement('input')
+  input.classList = 'form-check-input copyDest'
+  input.setAttribute('type', 'checkbox')
+  input.setAttribute('id', 'copyOption_' + component.uuid)
+  input.setAttribute('data-uuid', component.uuid)
+  input.value = ''
+  input.addEventListener('change', (ev) => {
+    const checked = modal.querySelectorAll('input.copyDest:checked')
+    if (checked.length > 0) {
+      submitButton.style.display = 'block'
+    } else submitButton.style.display = 'none'
+  })
+  group.appendChild(input)
+
+  const label = document.createElement('label')
+  label.classList = 'form-check-label'
+  label.setAttribute('for', 'copyOption_' + component.uuid)
+  label.innerHTML = component.id
+  group.appendChild(label)
+
+  return col
+}
+
+function copyDefinitionModalCreateSourceHTML (filename, sizeText, isDefinition = false) {
+  // Create an HTML representation of the given file for the definitionCopyModal.
+
+  const col = document.createElement('div')
+  col.classList = 'col-12'
+
+  const row = document.createElement('div')
+  row.classList = 'row gy-2'
+  col.appendChild(row)
+
+  const name = document.createElement('div')
+  name.classList = 'col-8'
+  if (isDefinition) {
+    name.classList.add('fw-bold')
+  } else {
+    name.classList.add('ps-4')
+  }
+  name.innerHTML = filename
+  row.appendChild(name)
+
+  const size = document.createElement('div')
+  size.classList = 'col-4'
+  size.innerHTML = sizeText
+  row.appendChild(size)
+
+  return col
 }
 
 function handleDefinitionItemSelection (uuid) {
