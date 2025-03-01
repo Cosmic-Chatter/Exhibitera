@@ -379,7 +379,7 @@ def execute_scheduled_action(action: str,
 
 
 def seconds_from_midnight(input_time: str) -> float:
-    """Parse a natural language expression of time and return the number of seconds from midight."""
+    """Parse a natural language expression of time and return the number of seconds from midnight."""
 
     time_dt = dateutil.parser.parse(input_time)
     return (time_dt - time_dt.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()

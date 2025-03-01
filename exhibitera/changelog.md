@@ -12,6 +12,9 @@
 - Copy definitions from one component to others
   - Image Compare, Media Player, Timelapse Viewer, Voting Kiosk, and Word Cloud are currently supported
 
+### Schedule
+- Downloading or creating a schedule from CSV has been removed. JSON will be the only supported format moving forward.
+
 ## Apps
 
 ### General

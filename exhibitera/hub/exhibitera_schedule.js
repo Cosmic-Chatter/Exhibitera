@@ -126,17 +126,6 @@ export function populateSchedule (schedule) {
     dropdownMenu.classList = 'dropdown-menu'
     dropdownDiv.appendChild(dropdownMenu)
 
-    const csvLi = document.createElement('li')
-    dropdownMenu.appendChild(csvLi)
-
-    const csv = document.createElement('button')
-    csv.classList = 'dropdown-item'
-    csv.innerHTML = 'Download as CSV'
-    csv.addEventListener('click', () => {
-      downloadScheduleAsCSV(scheduleName)
-    })
-    csvLi.appendChild(csv)
-
     const jsonLi = document.createElement('li')
     dropdownMenu.appendChild(jsonLi)
 
@@ -1071,7 +1060,7 @@ export function onscheduleFromFileDateSelectChange () {
 }
 
 export function previewScheduleFromFile () {
-  // Use details from scheduleFromCSVModal to preview a new schedule.
+  // Use details from scheduleFromFileModal to preview a new schedule.
 
   const fileInput = document.getElementById('scheduleFromFileModalFileInput')
   if (fileInput.files.length === 0) return
@@ -1080,9 +1069,7 @@ export function previewScheduleFromFile () {
 
   const fileReader = new FileReader()
   fileReader.onload = (result) => {
-    if (extension === 'csv') {
-      previewCSVSchedule(result.target.result)
-    } else if (extension === 'json') {
+    if (extension === 'json') {
       previewJSONSchedule(result.target.result)
     }
   }
@@ -1121,53 +1108,7 @@ export function createScheduleFromFile () {
     })
 }
 
-async function previewCSVSchedule (csv) {
-  // Build an HTML representation of the uploaded schedule
-
-  const result = exTools.csvToJSON(csv)
-  const schedule = result.json
-
-  // Convert any comma-separated values into arrays
-  const scheduleDict = {}
-  for (const entry of schedule) {
-    // First, convert the given time into seconds from midnight
-    entry.time_in_seconds = await _getSecondsFromMidnight(entry.time)
-
-    if (entry.action === 'note') {
-      // Notes may have commas that are okay.
-      scheduleDict[exTools.uuid()] = entry
-      continue
-    }
-    for (const key of ['target', 'value']) {
-      if ((entry[key] == null) || (entry[key].includes(',') === false)) continue
-      entry[key] = entry[key].split(',').map(function (item) {
-        return item.trim()
-      })
-    }
-    scheduleDict[exTools.uuid()] = entry
-  }
-
-  const newScheduleEl = document.getElementById('scheduleFromFileNewSchedule')
-  const type = document.getElementById('scheduleFromFileKindSelect').value
-  newScheduleEl.innerHTML = ''
-
-  // Loop through the schedule elements and add a row for each
-  const scheduleIDs = Object.keys(scheduleDict)
-
-  scheduleIDs.forEach((scheduleID) => {
-    newScheduleEl.appendChild(createScheduleEntryHTML(scheduleDict[scheduleID], scheduleID, type, 'day-specific', false))
-
-    // Sort the elements by time
-    const events = $(newScheduleEl).children('.eventListing')
-    events.sort(function (a, b) {
-      return $(a).data('time_in_seconds') - $(b).data('time_in_seconds')
-    })
-    $(newScheduleEl).append(events)
-  })
-  document.getElementById('scheduleFromFileModal').setAttribute('data-schedule', JSON.stringify(scheduleDict))
-}
-
-function previewJSONSchedule (jsonStr) {
+async function previewJSONSchedule (jsonStr) {
   // Read the given JSON string and turn it into a schedule
 
   const schedule = JSON.parse(jsonStr)
@@ -1176,23 +1117,25 @@ function previewJSONSchedule (jsonStr) {
   const type = document.getElementById('scheduleFromFileKindSelect').value
   newScheduleEl.innerHTML = ''
 
-  // Loop through the schedule elements and add a row for each
+  // Sort schedule IDs in time order
   const scheduleIDs = Object.keys(schedule)
+  for (const entryID of scheduleIDs) {
+    schedule[entryID].time_in_seconds = await _getSecondsFromMidnight(schedule[entryID].time)
+  }
+  scheduleIDs.sort((a, b) => {
+    const scheduleA = schedule[a]
+    const scheduleB = schedule[b]
+    return scheduleA.time_in_seconds - scheduleB.time_in_seconds
+  })
 
+  // Loop through the schedule elements and add a row for each
   scheduleIDs.forEach((scheduleID) => {
     newScheduleEl.appendChild(createScheduleEntryHTML(schedule[scheduleID], scheduleID, type, 'day-specific', false))
-
-    // Sort the elements by time
-    const events = $(newScheduleEl).children('.eventListing')
-    events.sort(function (a, b) {
-      return $(a).data('time_in_seconds') - $(b).data('time_in_seconds')
-    })
-    $(newScheduleEl).append(events)
   })
   document.getElementById('scheduleFromFileModal').setAttribute('data-schedule', JSON.stringify(schedule))
 }
 
-async function _getSecondsFromMidnight (timeString) {
+function _getSecondsFromMidnight (timeString) {
   return new Promise(function (resolve, reject) {
     exTools.makeServerRequest({
       method: 'POST',
