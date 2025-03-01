@@ -227,15 +227,24 @@ function showUpdateInfoModal (id, kind, details) {
 }
 
 export function rebuildNotificationList () {
-  // Function to use the exConfig.errorDict   to build a set of buttons indicating
+  // Function to use the exConfig.errorDict to build a set of buttons indicating
   // that there is a notification from a component.
 
+  const notificationsCol = document.getElementById('notificationsDropdownCol')
+  const dropdownButton = document.getElementById('notificationsDropdownButton')
+  const notificationDisplayRow = document.getElementById('notificationDisplayRow')
+  const errorKeys = Object.keys(exConfig.errorDict)
+
+  dropdownButton.classList.add('btn-info')
+  dropdownButton.classList.remove('btn-danger')
+
   // Clear the existing buttons
-  $('#notificationDisplayRow').empty()
+  document.getElementById('notificationDisplayRow').innerHTML = ''
 
   // Iterate through the items in the exConfig.errorDict. Each item should correspond
   // to one component with an notification.
-  Object.keys(exConfig.errorDict).forEach((item, i) => {
+  let notificationCount = 0
+  errorKeys.forEach((item, i) => {
     // Then, iterate through the notifications on that given item
     Object.keys(exConfig.errorDict[item]).forEach((itemError, j) => {
       let notification
@@ -244,22 +253,35 @@ export function rebuildNotificationList () {
           const labelName = 'Hub: Software update available'
           notification = createNotificationHTML(labelName, 'update')
           notification.addEventListener('click', notification.addEventListener('click', () => { showUpdateInfoModal('Hub', 'control_server', exConfig.errorDict[item].software_update) }))
+          notificationCount += 1
         } else {
           const labelName = item + ': Software update available'
           notification = createNotificationHTML(labelName, 'update')
           notification.addEventListener('click', notification.addEventListener('click', () => { showUpdateInfoModal(item, 'apps', exConfig.errorDict[item].software_update) }))
+          notificationCount += 1
         }
       } else {
         const itemErrorMsg = (exConfig.errorDict[item])[itemError]
         if (itemErrorMsg.length > 0) {
+          notificationCount += 1
           const labelName = item + ': ' + itemError + ': ' + itemErrorMsg
           // Create and add the button
           notification = createNotificationHTML(labelName, 'error')
+
+          // Recolor the dropdown to red to indicate an error
+          dropdownButton.classList.remove('btn-info')
+          dropdownButton.classList.add('btn-danger')
         }
       }
-      $('#notificationDisplayRow').append(notification)
+      notificationDisplayRow.appendChild(notification)
     })
   })
+
+  if (notificationCount.length > 0) {
+    notificationsCol.style.display = 'block'
+  } else {
+    notificationsCol.style.display = 'none'
+  }
 }
 
 function createNotificationHTML (name, kind) {
@@ -272,15 +294,15 @@ function createNotificationHTML (name, kind) {
     colorClass = 'btn-info'
   }
 
-  const col = document.createElement('div')
-  col.classList = 'col-auto mt-3'
+  const li = document.createElement('li')
+  li.classList = 'dropdown-item'
 
   const button = document.createElement('button')
   button.classList = 'btn btn-block ' + colorClass
   button.innerHTML = name
-  col.appendChild(button)
+  li.appendChild(button)
 
-  return col
+  return li
 }
 
 export function stringToBool (str) {

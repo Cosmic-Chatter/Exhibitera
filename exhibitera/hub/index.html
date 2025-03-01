@@ -1285,6 +1285,7 @@
           </div>
 
           <div class="row mt-3" id="componentsTabSettingsRow">
+            <!-- Add item -->
             <div class="col-3 col-md-2 col-xl-1">
               <div class="dropdown">
                 <button class="btn btn-primary dropdown-toggle w-100" type="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -1297,10 +1298,13 @@
                 </ul>
               </div>
             </div>
-            <div class="col-5 col-md-3 col-xl-2">
+            
+            <!-- View options -->
+            <div class="col-4 col-md-3 col-xl-2">
               <div class="dropdown">
                 <button class="btn btn-info dropdown-toggle w-100" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
-                  View options
+                  <span class='d-none d-md-inline'>View options</span>
+                  <span class='d-inline d-md-none'>Options</span>
                 </button>
                 <ul class="dropdown-menu w-100">
                   <li>
@@ -1356,12 +1360,22 @@
                 </ul>
               </div>
             </div>
+
+            <!-- Notifications dropdown -->
+            <div id="notificationsDropdownCol" class="col-5 col-md-3 col-xl-2">
+              <div class="dropdown">
+                <button id="notificationsDropdownButton" class="btn btn-info dropdown-toggle w-100" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  Notifications
+                </button>
+                <ul id="notificationDisplayRow" class="dropdown-menu">
+                </ul>
+              </div>
+            </div>
             <div class="col d-flex align-items-end">
               
             </div>
           </div>
-          <div class="row" id="notificationDisplayRow">
-          </div>
+
           <div class="row" id="componentGroupsRow">
           </div>
         </div>

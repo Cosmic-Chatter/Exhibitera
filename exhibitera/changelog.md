@@ -4,6 +4,7 @@
 
 ### General
 - Toggle between light and dark mode from the new user preferences window
+- Notifications are now displayed in a dropdown list to better handle large quantities
 
 ### Components
 - The components view can now be arranged as a grid or a list
