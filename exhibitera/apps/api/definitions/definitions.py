@@ -6,11 +6,22 @@ import uuid
 # Third-party modules
 from fastapi import APIRouter
 from fastapi import Body
+from fastapi.responses import FileResponse
 
 # Exhibitera modules
 import helper_files
 
 router = APIRouter()
+
+
+@router.get("/definitions/{this_uuid}")
+async def load_definition(this_uuid: str):
+    """Return the given definition as a binary file"""
+
+    path = helper_files.get_path(["definitions", helper_files.with_extension(this_uuid, "json")], user_file=True)
+
+    headers = {'Access-Control-Expose-Headers': 'Content-Disposition'}
+    return FileResponse(path, headers=headers)
 
 
 @router.get("/definitions/{app_id}/getAvailable")

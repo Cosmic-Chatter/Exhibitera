@@ -306,24 +306,29 @@ def create_zip(background_tasks: BackgroundTasks,
 
 @app.post('/files/retrieve')
 async def retrieve_file(file_url: Annotated[str, Body(description="The URL of the file to retrieve")],
-                        path: Annotated[list[str], Body(description="A series of directories ending with the filename.")],
+                        path_list: Annotated[list[str], Body(description="A series of directories ending with the filename.")],
                         config: const_config = Depends(get_config)):
     """Download the given file and save it to disk."""
 
-    if not helper_files.path_safe(path):
+    if not helper_files.path_safe(path_list):
         return {"success": False, "reason": "invalid_path"}
     if not helper_files.is_url(file_url):
         return {"success": False, "reason": "invalid_url"}
 
-    r = requests.get(file_url)
-    if r.status_code != 200:
-        return {"success": False, "reason": r.reason}
-
-    path = helper_files.get_path(path, user_file=True)
-    with config.content_file_lock:
-        with open(path, 'wb') as f:
-            f.write(r.content)
-    return {"success": True}
+    path = helper_files.get_path(path_list, user_file=True)
+    success = helper_files.download_file(file_url, path)
+    # print(file_url)
+    # try:
+    #     r = requests.get(file_url, timeout=1)
+    #     if r.status_code != 200:
+    #         return {"success": False, "reason": r.reason}
+    # except requests.exceptions.ReadTimeout:
+    #     print('retrieve_file: timeout retrieving file ', file_url)
+    #
+    # with config.content_file_lock:
+    #     with open(path, 'wb') as f:
+    #         f.write(r.content)
+    return {"success": success}
 
 
 @app.get('/system/getPlatformDetails')

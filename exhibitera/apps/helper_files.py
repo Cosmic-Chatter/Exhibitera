@@ -16,6 +16,7 @@ import zipfile
 
 # Non-standard imports
 import mimetypes
+import requests
 
 ffmpeg_path: str
 try:
@@ -509,7 +510,9 @@ def create_thumbnail(filename: str,
 
             # First, find the length of the video
             _, video_details = get_video_file_details(filename)
-            duration_sec = round(video_details["duration"])
+            duration_sec = round(video_details.get('duration', 0))
+            if duration_sec == 0:
+                return False, "video has no duration"
 
             # Then, create the video thumbnail
             proc = subprocess.Popen([ffmpeg_path, "-y", "-i", file_path,
@@ -629,6 +632,9 @@ def get_video_file_details(filename: str) -> tuple[bool, dict[str, Any]]:
         success = False
     except ImportError as e:
         print("get_video_file_details: error loading FFmpeg: ", e)
+        success = False
+    except ValueError as e:
+        print("get_video_file_details: value error: ", e)
         success = False
 
     return success, details
@@ -860,6 +866,28 @@ def convert_bytes_to_readable(file_size: int | float) -> str:
         size_text = str(file_size) + ' bytes'
 
     return size_text
+
+
+def download_file(url: str, path_to_save: str) -> bool:
+    """Download the file at the given url and save it to disk."""
+
+    with config.content_file_lock:
+        try:
+            with requests.get(url, stream=True, timeout=2) as r:
+                try:
+                    # Check that we received a good response
+                    r.raise_for_status()
+                except requests.HTTPError:
+                    return False
+
+                with open(path_to_save, 'wb') as f:
+                    for chunk in r.iter_content(chunk_size=8192):
+                        f.write(chunk)
+        except requests.exceptions.ReadTimeout:
+            print("download_file: timeout retrieving ", url)
+            return False
+
+    return True
 
 
 # Set up log file

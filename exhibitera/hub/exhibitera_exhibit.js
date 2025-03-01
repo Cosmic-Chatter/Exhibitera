@@ -1,3 +1,5 @@
+/* global bootstrap */
+
 import config from './config.js'
 import exConfig from './config.js'
 import * as constDMX from './exhibitera_dmx.js'
@@ -1801,7 +1803,11 @@ function showCopyDefinitionModal (componentUUID, definitionUUID, definitionName)
   modal.setAttribute('data-definition', definitionUUID)
   modal.setAttribute('data-component', componentUUID)
 
-  document.getElementById('copyDefinitionModalSubmitButton').style.display = 'none'
+  const submitButton = document.getElementById('copyDefinitionModalSubmitButton')
+  submitButton.innerHTML = 'Copy'
+  submitButton.classList.remove('btn-info')
+  submitButton.classList.add('btn-primary')
+  submitButton.style.display = 'none'
 
   const url = component.getHelperURL()
   if (url == null) {
@@ -1822,29 +1828,54 @@ function showCopyDefinitionModal (componentUUID, definitionUUID, definitionName)
 
     sourceDiv.appendChild(copyDefinitionModalCreateSourceHTML(definitionName, '', true))
     if (result.content.length > 0) {
+      modal.setAttribute('data-sourceFiles', JSON.stringify(result.content))
+
       let supportingText = ' supporting file'
       if (result.content.length > 1) supportingText = ' supporting files'
       sourceDiv.appendChild(copyDefinitionModalCreateSourceHTML(String(result.content.length) + supportingText, result?.total_size ?? ''))
+    } else {
+      modal.setAttribute('data-sourceFiles', JSON.stringify([]))
     }
 
     // Populate destination options
     const destDiv = document.getElementById('copyDefinitionModalDestinations')
     destDiv.innerHTML = ''
 
-    for (const comp of exConfig.exhibitComponents) {
-      if (comp.type !== 'exhibit_component') continue
-      if (comp.status !== exConfig.STATUS.ONLINE && comp.status !== exConfig.STATUS.ACTIVE) continue
-      // if (comp.uuid === componentUUID) continue
-      console.log(comp)
-      destDiv.appendChild(copyDefinitionModalCreateDestinationHTML(comp))
+    const compsByGroup = exTools.sortComponentsByGroup()
+    const groups = Object.keys(compsByGroup)
+    let totalComps = 0
+
+    for (const group of groups) {
+      const comps = compsByGroup[group]
+
+      const compsToShow = []
+      for (const comp of comps) {
+        if (comp.type !== 'exhibit_component') continue
+        if (comp.status !== exConfig.STATUS.ONLINE && comp.status !== exConfig.STATUS.ACTIVE) continue
+        if (comp.uuid === componentUUID) continue
+        totalComps += 1
+        compsToShow.push(comp)
+      }
+      if (compsToShow.length === 0) continue
+
+      const label = document.createElement('label')
+      label.innerHTML = exTools.getGroup(group)?.name ?? group
+      label.classList = 'text-secondary'
+      destDiv.appendChild(label)
+
+      for (const comp of compsToShow) {
+        destDiv.appendChild(copyDefinitionModalCreateDestinationHTML(comp, group, definitionUUID))
+      }
     }
+
+    if (totalComps === 0) destDiv.innerHTML = '<i>No available components</i>'
 
     $('#componentInfoModal').modal('hide')
     $('#copyDefinitionModal').modal('show')
   })
 }
 
-function copyDefinitionModalCreateDestinationHTML (component) {
+function copyDefinitionModalCreateDestinationHTML (component, group, def) {
   // Take an exhibit component and build an HTML representation.
 
   const modal = document.getElementById('copyDefinitionModal')
@@ -1853,14 +1884,14 @@ function copyDefinitionModalCreateDestinationHTML (component) {
   const col = document.createElement('div')
   col.classList = 'col-12'
 
-  const group = document.createElement('div')
-  group.classList = 'form-check'
-  col.appendChild(group)
+  const checkGroup = document.createElement('div')
+  checkGroup.classList = 'form-check'
+  col.appendChild(checkGroup)
 
   const input = document.createElement('input')
   input.classList = 'form-check-input copyDest'
   input.setAttribute('type', 'checkbox')
-  input.setAttribute('id', 'copyOption_' + component.uuid)
+  input.setAttribute('id', 'copyOption_' + group + '_' + component.uuid)
   input.setAttribute('data-uuid', component.uuid)
   input.value = ''
   input.addEventListener('change', (ev) => {
@@ -1869,13 +1900,28 @@ function copyDefinitionModalCreateDestinationHTML (component) {
       submitButton.style.display = 'block'
     } else submitButton.style.display = 'none'
   })
-  group.appendChild(input)
+  checkGroup.appendChild(input)
 
   const label = document.createElement('label')
   label.classList = 'form-check-label'
-  label.setAttribute('for', 'copyOption_' + component.uuid)
+  label.setAttribute('for', 'copyOption_' + group + '_' + component.uuid)
   label.innerHTML = component.id
-  group.appendChild(label)
+  checkGroup.appendChild(label)
+
+  // Check if the given definition already exists on the destination
+  exTools.makeRequest({
+    method: 'GET',
+    url: component.getHelperURL(),
+    endpoint: '/definitions/all/getAvailable'
+  })
+    .then((result) => {
+      if (def in result.definitions) {
+        label.innerHTML += '<span class="badge bg-warning ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="This definition already exists here and will be overwritten." style="font-size: 0.55em;">!</span>'
+      }
+      // Enable all tooltips
+      const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+      const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+    })
 
   return col
 }
@@ -1906,6 +1952,62 @@ function copyDefinitionModalCreateSourceHTML (filename, sizeText, isDefinition =
   row.appendChild(size)
 
   return col
+}
+
+export async function copyDefinitionModalPerformCopy () {
+  // Collect information from the modal and trigger the file copy to each destinaition.
+
+  const modal = document.getElementById('copyDefinitionModal')
+  const submitButton = document.getElementById('copyDefinitionModalSubmitButton')
+  submitButton.innerHTML = 'Copying...'
+  submitButton.classList.add('btn-info')
+  submitButton.classList.remove('btn-primary')
+
+  // Sources
+  const definitionUUID = modal.getAttribute('data-definition')
+  const sourceUUID = modal.getAttribute('data-component')
+  const sourceComponent = getExhibitComponentByUUID(sourceUUID)
+  const filesToCopy = JSON.parse(modal.getAttribute('data-sourceFiles')) ?? []
+
+  // Destinations
+  const checkedElements = modal.querySelectorAll('input.copyDest:checked')
+  const destComponents = []
+  for (const el of checkedElements) {
+    const destUUID = el.getAttribute('data-uuid')
+    if (destUUID != null) {
+      const destComp = getExhibitComponentByUUID(destUUID)
+      if (destComp != null) destComponents.push(destComp)
+    }
+  }
+
+  // Cycle the destinations and copy the files
+  for (const destComp of destComponents) {
+    const destUrl = destComp.getHelperURL()
+    if (destUrl == null) continue
+
+    await exTools.makeRequest({
+      method: 'POST',
+      url: destUrl,
+      endpoint: '/files/retrieve',
+      params: {
+        file_url: sourceComponent.getHelperURL() + '/definitions/' + definitionUUID + '.json',
+        path_list: ['definitions', definitionUUID + '.json']
+      }
+    })
+
+    for (const file of filesToCopy) {
+      await exTools.makeRequest({
+        method: 'POST',
+        url: destUrl,
+        endpoint: '/files/retrieve',
+        params: {
+          file_url: sourceComponent.getHelperURL() + '/content/' + file.name,
+          path_list: ['content', file.name]
+        }
+      })
+    }
+  }
+  $(modal).modal('hide')
 }
 
 function handleDefinitionItemSelection (uuid) {

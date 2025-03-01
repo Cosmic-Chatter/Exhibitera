@@ -606,11 +606,11 @@ function createLanguageTab (code) {
     label.innerHTML = inputFields[key].name
 
     if ('hint' in inputFields[key]) {
-      label.innerHTML += ' ' + `<span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="${inputFields[key].hint}" style="font-size: 0.55em;">?</span>`
+      label.innerHTML += ' ' + `<span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="${inputFields[key].hint}" style="font-size: 0.55em;">?</span>`
     }
 
     if ('tooltip' in inputFields[key]) {
-      const tooltip = '\n<span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="' + inputFields[key].tooltip + '" style="font-size: 0.55em;">?</span>'
+      const tooltip = '\n<span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="' + inputFields[key].tooltip + '" style="font-size: 0.55em;">?</span>'
       label.innerHTML += tooltip
     }
     col.appendChild(label)

@@ -1061,6 +1061,10 @@ Array.from(document.querySelectorAll('.componentInfoWakeOnLANSetting')).forEach(
   })
 })
 document.getElementById('componentInfoModalWakeOnLANSettingsSaveButton').addEventListener('click', exExhibit.updateWakeOnLANComponentFromInfoModal)
+
+// Copy definition modal
+document.getElementById('copyDefinitionModalSubmitButton').addEventListener('click', exExhibit.copyDefinitionModalPerformCopy)
+
 // Schedule tab
 // =========================
 document.getElementById('manageFutureDateButton').addEventListener('click', exSchedule.showManageFutureDateModal)
