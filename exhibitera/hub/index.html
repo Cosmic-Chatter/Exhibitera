@@ -1376,16 +1376,16 @@
                   <h5 class="modal-title">Manage a future date</h5>
                   <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body h-75 h-sm-100">
                   <div class="row h-100">
-                    <div class="col-12 col-sm-5 h-100">
+                    <div id="manageFutureDateLeftPane" class="col-12 col-sm-5">
                       <div>
                         <label for="manageFutureDateCalendarInput" class="visually-hidden">Date</label>
                         <input id="manageFutureDateCalendarInput" type="date" class="form-control mb-3">
                       </div>
                       <div id="manageFutureDateAvailableSchedulesList" style="max-height: 50vh; overflow-y: auto;"></div>
                     </div>
-                    <div class="col-12 col-sm-7">
+                    <div id="manageFutureDateRightPane" class="col-12 col-sm-7">
                       <div class="row">
                         <div id="manageFutureDateCreateScheduleButtonContainer" class="col-12 text-center mt-auto">
                           <button id="manageFutureDateCreateScheduleButton" class="btn btn-primary">Create date-specific schedule</button>
@@ -1397,7 +1397,7 @@
                           <button id="manageFutureDateDeleteScheduleButton" type="button" class="btn btn-danger w-100" data-bs-toggle="popover" title="Are you sure?" data-bs-content="<a id='manageFutureDateDeleteScheduleButtonPopover' class='btn btn-danger w-100 schedule-delete'>Confirm</a>" data-bs-trigger="focus" data-bs-html="true"  style="display: none;">Delete schedule</button>
                         </div>
                       </div>
-                      <div id="manageFutureDateEntryList" class="mt-3" style="max-height: 50vh; overflow-y: auto; overflow-x: hidden;"></div>
+                      <div id="manageFutureDateEntryList" class="mt-3"></div>
                     </div>
                   </div>
                   
