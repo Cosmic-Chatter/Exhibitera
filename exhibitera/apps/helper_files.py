@@ -792,15 +792,9 @@ def get_all_directory_contents(directory: str = "content") -> tuple[list, list[d
             'name': file
         }
         path = get_path(["content", file], user_file=True)
-        file_details['size'] = os.path.getsize(path)  # in bytes
-        if file_details['size'] > 1e9:
-            file_details['size_text'] = str(round(file_details['size'] / 1e9 * 10) / 10) + ' GB'
-        elif file_details['size'] > 1e6:
-            file_details['size_text'] = str(round(file_details['size'] / 1e6 * 10) / 10) + ' MB'
-        elif file_details['size'] > 1e3:
-            file_details['size_text'] = str(round(file_details['size'] / 1e3)) + ' kB'
-        else:
-            file_details['size_text'] = str(file_details['size']) + ' bytes'
+        file_size, size_text = get_file_size(path)
+        file_details['size'] = file_size
+        file_details['size_text'] = size_text
         content_details.append(file_details)
 
     return content, content_details

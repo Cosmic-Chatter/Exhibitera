@@ -117,7 +117,7 @@ function localize (lang) {
   document.getElementById('buttonRow').innerHTML = ''
   document.getElementById('nav-tabContent').innerHTML = ''
 
-  if (definition.header != null) {
+  if (definition && definition.header != null) {
     document.getElementById('masthead').innerHTML = exMarkdown.formatText(definition.header, { string: true, removeParagraph: true })
   } else {
     document.getElementById('masthead').innerHTML = ''
