@@ -43,6 +43,9 @@ For example, if your static IP is `10.8.2.100`, and your port is the default `80
 ### Configuration
 Core settings, such as the IP address and port, can be configured from the _Settings_ tab. These settings may require Hub to be restarted before they take effect.
 
+#### Groups
+`Groups` help you organize your components. By putting components in groups, you can restrict who can access them using the _Users_ tab. You can also send commands to multiple components in the same group at the same (approximate) time. A `component` can be an as many groups as you want. Groups are created in teh _Settings_ tab.
+
 Hub enables you to manage and track several types of devices beyond the apps provided by Exhibitera Apps. These include projectors, PCs configured to respond to Wake on LAN requests, as well as a category for generic items. To add one of these items, click the _Add_ button on the _Components_ tab.
 
 #### Controlling projectors
@@ -61,6 +64,11 @@ To configure a component for Wake on LAN, you must specify its MAC address. If t
 #### Static Components
 
 In order to view the real-time status of a component, it must be either running Exhibitera Apps or sending pings that conform to the API. However, non-Exhibitera components can be added in order to make use of the maintenance tracking system.
+
+### Users
+You can create separate accounts for each user of Exhibitera. Accounts allow you to control who has access to parts of Hub and groups of components. For example, an exhibit technician might have access to change the IP address for a component, while a guest services manager might only be able to change the component's content.
+
+**While care has been taken to make user accounts secure, the users system is not intended as a defense against a malicious actor.**
 
 ## Using the web console
 

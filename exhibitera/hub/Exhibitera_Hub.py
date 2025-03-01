@@ -676,7 +676,7 @@ async def edit_group(request: Request,
     return {"success": success}
 
 
-@app.get("/group/{uuid_str}/delete  ")
+@app.get("/group/{uuid_str}/delete")
 async def delete_group(request: Request, uuid_str: str):
     """Return the details for the given group."""
 
