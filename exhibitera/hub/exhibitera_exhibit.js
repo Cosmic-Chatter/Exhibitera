@@ -1726,7 +1726,7 @@ function populateComponentDefinitionList (definitions, thumbnails, permission) {
       editOption.innerHTML = 'Edit'
       dropdownMenu.appendChild(editOption)
 
-      if (['media_player', 'voting_kiosk', 'word_cloud_input', 'word_cloud_viewer'].includes(definition.app)) {
+      if (['image_compare', 'media_player', 'timelapse_viewer', 'voting_kiosk', 'word_cloud_input', 'word_cloud_viewer'].includes(definition.app)) {
         const copyOption = document.createElement('a')
         copyOption.classList = 'dropdown-item'
         copyOption.innerHTML = 'Copy to...'
@@ -1815,6 +1815,7 @@ function showCopyDefinitionModal (componentUUID, definitionUUID, definitionName)
     console.log('Error: No helper address')
   }
 
+  let content = []
   exTools.makeRequest({
     method: 'GET',
     url,
@@ -1827,7 +1828,8 @@ function showCopyDefinitionModal (componentUUID, definitionUUID, definitionName)
     sourceDiv.innerHTML = ''
 
     sourceDiv.appendChild(copyDefinitionModalCreateSourceHTML(definitionName, '', true))
-    if (result.content.length > 0) {
+    if (result.content && result.content.length > 0) {
+      content = result.content
       modal.setAttribute('data-sourceFiles', JSON.stringify(result.content))
 
       let supportingText = ' supporting file'
@@ -1864,7 +1866,7 @@ function showCopyDefinitionModal (componentUUID, definitionUUID, definitionName)
       destDiv.appendChild(label)
 
       for (const comp of compsToShow) {
-        destDiv.appendChild(copyDefinitionModalCreateDestinationHTML(comp, group, definitionUUID))
+        destDiv.appendChild(copyDefinitionModalCreateDestinationHTML(comp, group, definitionUUID, content))
       }
     }
 
@@ -1875,8 +1877,10 @@ function showCopyDefinitionModal (componentUUID, definitionUUID, definitionName)
   })
 }
 
-function copyDefinitionModalCreateDestinationHTML (component, group, def) {
+function copyDefinitionModalCreateDestinationHTML (component, group, def, content) {
   // Take an exhibit component and build an HTML representation.
+  // Check if the given destination contains a definition or content of the
+  // same name and warn the user.
 
   const modal = document.getElementById('copyDefinitionModal')
   const submitButton = document.getElementById('copyDefinitionModalSubmitButton')
@@ -1912,11 +1916,16 @@ function copyDefinitionModalCreateDestinationHTML (component, group, def) {
   exTools.makeRequest({
     method: 'GET',
     url: component.getHelperURL(),
-    endpoint: '/definitions/all/getAvailable'
+    endpoint: '/getAvailableContent'
   })
     .then((result) => {
       if (def in result.definitions) {
         label.innerHTML += '<span class="badge bg-warning ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="This definition already exists here and will be overwritten." style="font-size: 0.55em;">!</span>'
+      }
+      for (const file of content) {
+        if (result.all_exhibits.includes(file.name)) {
+          label.innerHTML += `<span class="badge bg-warning ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="${file.name} already exists here and will be overwritten." style="font-size: 0.55em;">!</span>`
+        }
       }
       // Enable all tooltips
       const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')

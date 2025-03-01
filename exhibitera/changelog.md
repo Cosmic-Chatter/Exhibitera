@@ -10,7 +10,7 @@
 - Change the size of the items in the component view
 - Show or hide individual groups to declutter your interface
 - Copy definitions from one component to others
-  - Media Player, Voting Kiosk, and Word Cloud are currently supported
+  - Image Compare, Media Player, Timelapse Viewer, Voting Kiosk, and Word Cloud are currently supported
 
 ## Apps
 
