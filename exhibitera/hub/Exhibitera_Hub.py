@@ -243,6 +243,7 @@ def load_default_configuration() -> None:
     ex_legacy.convert_legacy_static_configuration()
     ex_legacy.convert_legacy_WOL_configuration()
     ex_legacy.convert_schedule_targets_to_json()
+    ex_legacy.convert_legacy_tracker_templates_to_json()
 
     ex_tools.start_debug_loop()
     ex_sched.retrieve_json_schedule()
@@ -784,8 +785,11 @@ async def get_exhibit_details(name: str = Body(description='The name of the exhi
 
 # Flexible Tracker actions
 @app.post("/tracker/{tracker_type}/createTemplate")
-async def create_tracker_template(request: Request, data: dict[str, Any], tracker_type: str):
-    """Create a new tracker template, overwriting if necessary."""
+async def create_tracker_template(request: Request,
+                                  tracker_type: str,
+                                  template: dict[str, Any] = Body(description='A dictionary containing the template'),
+                                  tracker_uuid: str = Body(description='The UUID for the template we are creating.')):
+    """Write the given tracker template to file"""
 
     # Check permission
     token = request.cookies.get("authToken", "")
@@ -793,17 +797,11 @@ async def create_tracker_template(request: Request, data: dict[str, Any], tracke
     if success is False:
         return {"success": False, "reason": reason}
 
-    if "name" not in data or "template" not in data:
-        response = {"success": False,
-                    "reason": "Request missing 'name' or 'template' field."}
-        return response
-    name = data["name"]
-    if not name.lower().endswith(".ini"):
-        name += ".ini"
-    file_path = ex_tools.get_path([tracker_type, "templates", name], user_file=True)
-    success = ex_track.create_template(file_path, data["template"])
-    response = {"success": success}
-    return response
+    template_path = ex_tools.get_path(
+        [tracker_type, "templates", ex_tools.with_extension(tracker_uuid, 'json')],
+        user_file=True)
+    success, reason = ex_tools.write_json(template, template_path)
+    return {"success": success, "reason": reason}
 
 
 @app.post("/tracker/{tracker_type}/deleteData")
@@ -880,17 +878,19 @@ async def get_available_tracker_data(tracker_type: str):
     return response
 
 
-@app.get("/tracker/{tracker_type}/getAvailableDefinitions")
-async def get_available_tracker_definitions(tracker_type: str):
-    """Send a list of all the available definitions for the given tracker group (usually flexible-tracker)."""
+@app.get("/tracker/{tracker_type}/getAvailableTemplates")
+async def get_available_tracker_templates(tracker_type: str):
+    """Send a list of all the available templates for the given tracker group (usually flexible-tracker)."""
 
-    definition_list = []
+    template_list = []
     template_path = ex_tools.get_path([tracker_type, "templates"], user_file=True)
     for file in os.listdir(template_path):
-        if file.lower().endswith(".ini"):
-            definition_list.append(file)
+        if file.lower().endswith(".json"):
+            file_path = ex_tools.get_path([tracker_type, "templates", file], user_file=True)
+            template = ex_tools.load_json(file_path)
+            template_list.append({"name": template["name"], "uuid": template["uuid"]})
 
-    return definition_list
+    return template_list
 
 
 @app.post("/tracker/{tracker_type}/getDataAsCSV")
@@ -911,21 +911,18 @@ async def get_tracker_data_csv(data: dict[str, Any], tracker_type: str):
     return {"success": True, "csv": result}
 
 
-@app.post("/tracker/{tracker_type}/getLayoutDefinition")
-async def get_tracker_layout_definition(data: dict[str, Any], tracker_type: str):
-    """Load the requested INI file and return it as a dictionary."""
+@app.get("/tracker/{tracker_type}/{template_uuid}")
+async def get_tracker_template(tracker_type: str, template_uuid: str):
+    """Load the requested tracker template and return it as a dictionary."""
 
-    if "name" not in data:
-        response = {"success": False,
-                    "reason": "Request missing 'name' field."}
-        return response
+    template_path = ex_tools.get_path([tracker_type, "templates", ex_tools.with_extension(template_uuid, "json")])
+    template = ex_tools.load_json(template_path)
+    if template is None:
+        success = False
+    else:
+        success = True
 
-    layout_definition, success, reason = ex_track.get_layout_definition(data["name"] + ".ini", kind=tracker_type)
-
-    response = {"success": success,
-                "reason": reason,
-                "layout": layout_definition}
-    return response
+    return {"success": success, "template": template}
 
 
 @app.post("/tracker/{tracker_type}/getRawText")
@@ -946,13 +943,11 @@ async def submit_analytics(data: dict[str, Any]):
     """Write the provided analytics data to file."""
 
     if "data" not in data or 'name' not in data:
-        response = {"success": False,
-                    "reason": "Request missing 'data' or 'name' field."}
-        return response
-    file_path = ex_tools.get_path(["analytics", data["name"] + ".txt"], user_file=True)
-    success, reason = ex_track.write_JSON(data["data"], file_path)
-    response = {"success": success, "reason": reason}
-    return response
+        return {"success": False, "reason": "Request missing 'data' or 'name' field."}
+
+    file_path = ex_tools.get_path(["analytics", ex_tools.with_extension(data["name"], "txt")], user_file=True)
+    success, reason = ex_tools.write_json(data["data"], file_path, append=True)
+    return {"success": success, "reason": reason}
 
 
 @app.post("/tracker/{tracker_type}/submitData")
@@ -960,13 +955,11 @@ async def submit_tracker_data(data: dict[str, Any], tracker_type: str):
     """Record the submitted data to file."""
 
     if "data" not in data or "name" not in data:
-        response = {"success": False,
-                    "reason": "Request missing 'data' or 'name' field."}
-        return response
+        return {"success": False, "reason": "Request missing 'data' or 'name' field."}
+
     file_path = ex_tools.get_path([tracker_type, "data", ex_tools.with_extension(data["name"], 'txt')], user_file=True)
-    success, reason = ex_track.write_JSON(data["data"], file_path)
-    response = {"success": success, "reason": reason}
-    return response
+    success, reason = ex_tools.write_json(data["data"], file_path, append=True)
+    return {"success": success, "reason": reason}
 
 
 @app.post("/tracker/{tracker_type}/submitRawText")

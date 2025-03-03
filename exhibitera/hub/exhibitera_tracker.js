@@ -1,19 +1,14 @@
 import * as exTools from './exhibitera_tools.js'
 
-export function getAvailableDefinitions (complete) {
+export async function getAvailableTemplates () {
   // Ask Hub to send a list of availble definition files
   // Pass a function and it will be called with the list as the
   // only parameter
 
-  exTools.makeServerRequest({
+  return await exTools.makeServerRequest({
     method: 'GET',
-    endpoint: '/tracker/flexible-tracker/getAvailableDefinitions'
+    endpoint: '/tracker/flexible-tracker/getAvailableTemplates'
   })
-    .then((definitionList) => {
-      if (typeof complete === 'function') {
-        complete(definitionList)
-      }
-    })
 }
 
 export function getAvailableTrackerData (complete) {
@@ -36,30 +31,14 @@ export function getAvailableTrackerData (complete) {
     })
 }
 
-export function loadLayoutDefinition (name, complete) {
-  // Ask Hub to send a JSON dict with the layout definition
-  // from the file with `name`
-  // After the layout is retrieved, the function `complete` will be called
-  // with the layout as the only parameter
+export async function loadTemplate (uuid) {
+  // Ask Hub to send a JSON dict with the template
 
-  exTools.makeServerRequest({
-    method: 'POST',
-    endpoint: '/tracker/flexible-tracker/getLayoutDefinition',
-    params: { name }
+  const response = await exTools.makeServerRequest({
+    method: 'GET',
+    endpoint: '/tracker/flexible-tracker/' + uuid
   })
-    .then((definition) => {
-      if ('success' in definition) {
-        if (definition.success === true) {
-          if (typeof complete === 'function') {
-            complete(definition.layout)
-          }
-        } else {
-          console.log('Error: could not load layout definition:', definition.reason)
-        }
-      } else {
-        console.log('Error: Did not receive valid JSON')
-      }
-    })
+  return response.template
 }
 
 export function downloadTrackerData (name) {

@@ -1792,7 +1792,10 @@
 
                       <div id='editTrackerTemplateMultipleInputGroup' class='editTrackerTemplateInputGroup'>
                         <hr>
-                        <label>Multiple</label>
+                        <label>
+                          Multiple
+                          <span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Allow more than one option to be selected." style="font-size: 0.55em; color: black">?</span>
+                        </label>
                         <br>
                         <div class="form-check form-check-inline">
                           <input class="form-check-input editTrackerTemplateInputField" type="radio" name="editTrackerTemplateMultipleInput" id="editTrackerTemplateMultipleInputTrue" value="true">
@@ -1802,33 +1805,33 @@
                           <input class="form-check-input editTrackerTemplateInputField" type="radio" name="editTrackerTemplateMultipleInput" id="editTrackerTemplateMultipleInputFalse" value="false" checked>
                           <label class="form-check-label" for="editTrackerTemplateMultipleInputFalse">False</label>
                         </div>
-                        <p><i>Allow more than one option to be selected.</i></p>
                       </div>
 
                       <div id='editTrackerTemplateOptionsInputGroup' class='editTrackerTemplateInputGroup'>
                         <hr>
                         <label for='editTrackerTemplateOptionsInput'>Options</label>
+                        <br>
+                        <i>Separate each option with a comma.</i>
                         <input id="editTrackerTemplateOptionsInput" type="text" class='form-control editTrackerTemplateInputField'></input>
-                        <p><i>Separate each option with a comma.</i></p>
                       </div>
 
                       <div id='editTrackerTemplateSliderInputGroup' class='editTrackerTemplateInputGroup'>
                         <hr>
                         <label>Slider options</label>
-                        <div class='row no-gutters'>
-                          <div class='col-6 col-lg-3 px-1'>
+                        <div class='row'>
+                          <div class='col-6 col-lg-3'>
                             <label for='editTrackerTemplateSliderInputMin'>Min</label>
                             <input id="editTrackerTemplateSliderInputMin" type="number" class='form-control editTrackerTemplateInputField' value=1></input>
                           </div>
-                          <div class='col-6 col-lg-3 px-1'>
+                          <div class='col-6 col-lg-3'>
                             <label for='editTrackerTemplateSliderInputMax'>Max</label>
                             <input id="editTrackerTemplateSliderInputMax" type="number" class='form-control editTrackerTemplateInputField' value=5></input>
                           </div>
-                          <div class='col-6 col-lg-3 px-1'>
+                          <div class='col-6 col-lg-3'>
                             <label for='editTrackerTemplateSliderInputStep'>Step</label>
                             <input id="editTrackerTemplateSliderInputStep" type="number" class='form-control editTrackerTemplateInputField' value=1></input>
                           </div>
-                          <div class='col-6 col-lg-3 px-1'>
+                          <div class='col-6 col-lg-3'>
                             <label for='editTrackerTemplateSliderInputStart'>Start</label>
                             <input id="editTrackerTemplateSliderInputStart" type="number" class='form-control editTrackerTemplateInputField' value=3></input>
                           </div>
@@ -1837,7 +1840,10 @@
 
                       <div id='editTrackerTemplateExclusiveInputGroup' class='editTrackerTemplateInputGroup'>
                         <hr>
-                        <label>Exclusive</label>
+                        <label>
+                          Exclusive
+                          <span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Starting an exclusive timer stops other exclusive timers." style="font-size: 0.55em; color: black">?</span>
+                        </label>
                         <br>
                         <div class="form-check form-check-inline">
                           <input class="form-check-input editTrackerTemplateInputField" type="radio" name="editTrackerTemplateExclusiveInput" id="editTrackerTemplateExclusiveInputTrue" value="true">
@@ -1847,16 +1853,16 @@
                           <input class="form-check-input editTrackerTemplateInputField" type="radio" name="editTrackerTemplateExclusiveInput" id="editTrackerTemplateExclusiveInputFalse" value="false" checked>
                           <label class="form-check-label" for="editTrackerTemplateExclusiveInputFalse">False</label>
                         </div>
-                        <p><i>Starting an exclusive timer stops the others.</i></p>
                       </div>
 
                       <div id='editTrackerTemplateLinesInputGroup' class='editTrackerTemplateInputGroup'>
                         <hr>
-                        <label for='editTrackerTemplateLinesInput'>Lines</label>
+                        <label for='editTrackerTemplateLinesInput'>
+                          Lines
+                          <span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Number of lines shown for text input." style="font-size: 0.55em; color: black">?</span>
+                        </label>
                         <input id="editTrackerTemplateLinesInput" type="number" class='form-control editTrackerTemplateInputField' value=5></input>
-                        <p><i>Number of lines visible.</i></p>
                       </div>
-                      <button id="editTrackerTemplateModalDeleteWidgetButton" class='btn btn-danger w-100 mt-4 mt-auto'>Delete</button>
                     </div>
                   </div>
                 </div>
@@ -1880,7 +1886,7 @@
                 </div>
                 <div class="modal-footer">
                   <button id="deleteTrackerTemplateFromModalButton" type="button" class="btn btn-danger">Delete template</button>
-                  <button type="button" class="btn btn-success" data-bs-dismiss="modal">Cancel</button>
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 </div>
               </div>
             </div>
@@ -1895,13 +1901,13 @@
                 </div>
                 <div class="modal-body">
                   Deleting the data cannot be undone. To continue, please retype the name of the data to be deleted:
-                  <center><div id='deleteTrackerDataModalDeletedName' class='h4 mt-1'>TEST</div></center>
-                  <center><input type="text" id='deleteTrackerDataModalDeletedInput'></input></center>
+                  <div id='deleteTrackerDataModalDeletedName' class='h4 mt-1 text-center'>TEST</div>
+                  <input type="text" id='deleteTrackerDataModalDeletedInput' class="form-control"></input>
                   <p id='deleteTrackerDataModalSpellingError' class='text-danger mt-2'>Your typed name does not match. Are you sure you want to delete these data?</p>
                 </div>
                 <div class="modal-footer">
                   <button type="button" class="btn btn-danger" id="deleteTrackerDataFromModalButton">Delete data</button>
-                  <button type="button" class="btn btn-success" data-bs-dismiss="modal">Cancel</button>
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 </div>
               </div>
             </div>

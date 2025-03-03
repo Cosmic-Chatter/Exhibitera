@@ -319,32 +319,6 @@ function deleteLanguageTab (lang) {
   $('.language-tab').click()
 }
 
-function deleteLanguageFlag (lang) {
-  // Ask the server to delete the language flag and remove it from the working definition.
-
-  const flag = $('#definitionSaveButton').data('workingDefinition').languages[lang].custom_flag
-
-  if (flag == null) {
-    // No custom flag
-    return
-  }
-
-  // Delete filename from working definition
-  delete $('#definitionSaveButton').data('workingDefinition').languages[lang].custom_flag
-
-  // Remove the icon
-  $('#flagImg_' + lang).attr('src', '../_static/flags/' + lang + '.svg')
-
-  // Delete from server
-  exCommon.makeHelperRequest({
-    method: 'POST',
-    endpoint: '/file/delete',
-    params: {
-      file: flag
-    }
-  })
-}
-
 function createInfoStationTab (lang, uuid = '') {
   // Create a new InfoStation tab and attach it to the given language.
 
@@ -497,43 +471,6 @@ function deleteInfoStationTab (lang, uuid) {
   $('#infostationTab_' + lang + '_' + uuid).remove()
   $('#infostationPane_' + lang + '_' + uuid).remove()
   $('.infostation-tab').click()
-}
-
-function onFlagUploadChange (lang) {
-  // Called when the user selects a flag image file to upload
-
-  const fileInput = $('#uploadFlagInput_' + lang)[0]
-
-  const file = fileInput.files[0]
-  if (file == null) return
-
-  $('#uploadFlagFilename_' + lang).html('Uploading')
-
-  const ext = file.name.split('.').pop()
-  const newName = $('#definitionSaveButton').data('workingDefinition').uuid + '_flag_' + lang + '.' + ext
-
-  const formData = new FormData()
-
-  formData.append('files', fileInput.files[0], newName)
-
-  const xhr = new XMLHttpRequest()
-  xhr.open('POST', '/upload', true)
-
-  xhr.onreadystatechange = function () {
-    if (this.readyState !== 4) return
-    if (this.status === 200) {
-      const response = JSON.parse(this.responseText)
-
-      if ('success' in response) {
-        $('#uploadFlagFilename_' + lang).html('Upload')
-        $('#flagImg_' + lang).attr('src', '../content/' + newName)
-        exSetup.updateWorkingDefinition(['languages', lang, 'custom_flag'], newName)
-      }
-    } else if (this.status === 422) {
-      console.log(JSON.parse(this.responseText))
-    }
-  }
-  xhr.send(formData)
 }
 
 function onAttractorFileChange () {

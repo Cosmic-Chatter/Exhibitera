@@ -548,7 +548,8 @@ function loadLayout (toLoad = '') {
       configurationName = toLoad
     }
   }
-  exTracker.loadLayoutDefinition(toLoad, buildLayout)
+  const template = exTracker.loadTemplate(toLoad)
+  buildLayout(template)
 }
 
 function parseQueryString () {
@@ -590,6 +591,6 @@ let textList = []
 let timerList = []
 
 const serverIP = window.location.origin
-exTracker.getAvailableDefinitions(populateLayoutDropdown)
+exTracker.getAvailableTemplates(populateLayoutDropdown)
 setTimeout(parseQueryString, 300)
 setInterval(checkConnection, 500)
