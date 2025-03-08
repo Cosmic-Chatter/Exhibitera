@@ -763,6 +763,7 @@ document.getElementById('editTrackerTemplateModalAddTimerButton')
   .addEventListener('click', () => exTracker.editTrackerTemplateModalAddWidget('New Timer', 'timer'))
 document.getElementById('editTrackerTemplateModalSubmitChangesButton')
   .addEventListener('click', () => exTracker.editTrackerTemplateModalSubmitChanges())
+document.getElementById('editTrackerTemplateGuestFacingCheckbox').addEventListener('change', exTracker.makeGuestFacing)
 
 // Users tab
 // =========================

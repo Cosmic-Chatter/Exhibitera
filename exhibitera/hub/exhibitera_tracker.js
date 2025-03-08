@@ -598,7 +598,6 @@ export async function createTrackerTemplate (name = '') {
   if (result.success === true) {
     createTrackerTemplateName.value = ''
     const templates = await getAvailableTemplates()
-    console.log(templates)
     populateTrackerTemplateSelect(templates)
     showEditTrackerTemplateModal(uuid)
   }
@@ -696,4 +695,17 @@ export function launchTracker () {
     url += '?layout=' + uuid
   }
   window.open(url, '_blank').focus()
+}
+
+export function makeGuestFacing () {
+  // Toggle on/off the option of making the template guest-facing
+
+  const modal = document.getElementById('editTrackerTemplateModal')
+  const checkbox = document.getElementById('editTrackerTemplateGuestFacingCheckbox')
+  const template = JSON.parse(modal.getAttribute('data-template'))
+
+  template.guest_facing = checkbox.checked
+
+  // Update the data attribute with the updated template
+  modal.setAttribute('data-template', JSON.stringify(template))
 }

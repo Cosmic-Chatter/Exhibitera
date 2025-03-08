@@ -163,7 +163,7 @@ function buildLayout (definition) {
 
     // Start the card
     const col = document.createElement('div')
-    col.classList = 'col-12 col-sm-6 col-md-6 col-lg-4 mt-2'
+    col.classList = 'col-12 col-sm-6 col-md-6 col-lg-4 col-xl-3 mt-2'
 
     const card = document.createElement('div')
     card.classList = 'card h-100'
@@ -553,9 +553,19 @@ async function loadLayout (toLoad = '') {
   const template = await exTracker.loadTemplate(toLoad)
   configurationName = template?.name ?? 'Tracker Data'
   buildLayout(template)
+
+  const definitionListCol = document.getElementById('definitionListCol')
+  const titleCol = document.getElementById('titleCol')
+  if ((template?.guest_facing ?? false) === true) {
+    definitionListCol.style.display = 'none'
+    titleCol.style.display = 'none'
+  } else {
+    definitionListCol.style.display = 'block'
+    titleCol.style.display = 'block'
+  }
 }
 
-function parseQueryString () {
+async function parseQueryString () {
   // Read the query string to determine what options to set
 
   const queryString = decodeURIComponent(window.location.search)
@@ -568,8 +578,12 @@ function parseQueryString () {
     configurationName = layoutUUID
     document.getElementById('definitionListDropdown').value = layoutUUID
 
-    // Clear the query string so it reloads clean on refresh
-    history.pushState(null, '', location.href.split('?')[0])
+    const template = await exTracker.loadTemplate(layoutUUID)
+
+    if ((template?.guest_facing ?? false) === false) {
+      // Clear the query string so it reloads clean on refresh
+      history.pushState(null, '', location.href.split('?')[0])
+    }
   }
 }
 

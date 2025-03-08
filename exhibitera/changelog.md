@@ -13,6 +13,9 @@
 - Copy definitions from one component to others
   - Image Compare, Media Player, Timelapse Viewer, Voting Kiosk, and Word Cloud are currently supported
 
+### Flexible Tracker
+- Experimental option to configure interface for guest-facing data collection
+
 ### Schedule
 - Downloading or creating a schedule from CSV has been removed. JSON will be the only supported format moving forward.
 
