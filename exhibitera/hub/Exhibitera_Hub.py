@@ -844,8 +844,8 @@ async def delete_tracker_data(request: Request, data: dict[str, Any], tracker_ty
     return response
 
 
-@app.post("/tracker/{tracker_type}/deleteTemplate")
-async def delete_tracker_template(request: Request, data: dict[str, Any], tracker_type: str):
+@app.delete("/tracker/{tracker_type}/{tracker_uuid}/deleteTemplate")
+async def delete_tracker_template(request: Request, tracker_type: str, tracker_uuid: str):
     """Delete the specified tracker template."""
 
     # Check permission
@@ -854,11 +854,7 @@ async def delete_tracker_template(request: Request, data: dict[str, Any], tracke
     if success is False:
         return {"success": False, "reason": reason}
 
-    if "name" not in data:
-        response = {"success": False,
-                    "reason": "Request missing 'name' field."}
-        return response
-    file_path = ex_tools.get_path([tracker_type, "templates", data["name"] + ".ini"], user_file=True)
+    file_path = ex_tools.get_path([tracker_type, "templates", ex_tools.with_extension(tracker_uuid, 'json')], user_file=True)
     with ex_config.trackerTemplateWriteLock:
         response = ex_tools.delete_file(file_path)
     return response
@@ -958,7 +954,7 @@ async def submit_tracker_data(data: dict[str, Any], tracker_type: str):
         return {"success": False, "reason": "Request missing 'data' or 'name' field."}
 
     file_path = ex_tools.get_path([tracker_type, "data", ex_tools.with_extension(data["name"], 'txt')], user_file=True)
-    success, reason = ex_tools.write_json(data["data"], file_path, append=True)
+    success, reason = ex_tools.write_json(data["data"], file_path, append=True, indent=None, newline=True)
     return {"success": success, "reason": reason}
 
 
