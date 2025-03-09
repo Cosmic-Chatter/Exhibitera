@@ -31,6 +31,8 @@ export class ExhibiteraMarkdownEditor {
     this.options = options
 
     // Create TinyMDE editor instance
+    options.editorDiv.innerHTML = ''
+    options.commandDiv.innerHTML = ''
     this.tinyMDE = new TinyMDE.Editor({
       content: options.content,
       element: options.editorDiv

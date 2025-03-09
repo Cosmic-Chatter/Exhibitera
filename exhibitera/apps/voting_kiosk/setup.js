@@ -3,6 +3,7 @@
 import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exFileSelect from '../js/exhibitera_file_select_modal.js'
 import * as exSetup from '../js/exhibitera_setup_common.js'
+import * as exMarkdown from '../js/exhibitera_setup_markdown.js'
 
 async function initializeWizard () {
   // Setup the wizard
@@ -274,16 +275,41 @@ async function clearDefinitionInput (full = true) {
   document.getElementById('behaviorInput_recording_interval').value = 60
   document.getElementById('behaviorInput_touch_cooldown').value = 2
 
-  // Reset text inputs
-  document.getElementById('headerInput').value = ''
-  document.getElementById('subheaderInput').value = ''
-  document.getElementById('footerInput').value = ''
-  document.getElementById('subfooterInput').value = ''
-  document.getElementById('success_messageInput').value = ''
+  // Markdown fields
+  for (const item of ['header', 'subheader', 'footer', 'subfooter']) {
+    const editor = new exMarkdown.ExhibiteraMarkdownEditor({
+      content: '',
+      editorDiv: document.getElementById(item + 'Input'),
+      commandDiv: document.getElementById(item + 'InputCommandBar'),
+      commands: ['basic'],
+      callback: (content) => {
+        exSetup.updateWorkingDefinition(['text', item], content)
+        exSetup.previewDefinition(true)
+      }
+    })
+  }
+
+  const successEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+    content: 'Thank you!',
+    editorDiv: document.getElementById('success_messageInput'),
+    commandDiv: document.getElementById('success_messageInputCommandBar'),
+    commands: ['basic'],
+    callback: (content) => {
+      exSetup.updateWorkingDefinition(['text', 'success_message'], content)
+      exSetup.previewDefinition(true)
+    }
+  })
 
   // Reset option edit fields
   document.getElementById('optionRow').innerHTML = ''
-  document.getElementById('optionInput_label').value = ''
+  const editor = new exMarkdown.ExhibiteraMarkdownEditor({
+    content: '',
+    editorDiv: document.getElementById('optionInput_label'),
+    commandDiv: document.getElementById('optionInputCommandBar_label'),
+    commands: ['basic'],
+    callback: (content) => {
+    }
+  })
   document.getElementById('optionInput_value').value = ''
   document.getElementById('optionInput_icon').value = ''
   setIconUserFile('')
@@ -336,8 +362,33 @@ function editDefinition (uuid = '') {
   })
 
   // Set the appropriate values for the text fields
-  Object.keys(def.text).forEach((key) => {
-    document.getElementById(key + 'Input').value = def.text[key]
+  // Object.keys(def.text).forEach((key) => {
+  //   document.getElementById(key + 'Input').value = def.text[key]
+  // })
+
+  // Markdown fields
+  for (const item of ['header', 'subheader', 'footer', 'subfooter']) {
+    const editor = new exMarkdown.ExhibiteraMarkdownEditor({
+      content: def?.text?.[item] ?? '',
+      editorDiv: document.getElementById(item + 'Input'),
+      commandDiv: document.getElementById(item + 'InputCommandBar'),
+      commands: ['basic'],
+      callback: (content) => {
+        exSetup.updateWorkingDefinition(['text', item], content)
+        exSetup.previewDefinition(true)
+      }
+    })
+  }
+
+  const successEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+    content: def?.text?.success_message ?? 'Thank you!',
+    editorDiv: document.getElementById('success_messageInput'),
+    commandDiv: document.getElementById('success_messageInputCommandBar'),
+    commands: ['basic'],
+    callback: (content) => {
+      exSetup.updateWorkingDefinition(['text', 'success_message'], content)
+      exSetup.previewDefinition(true)
+    }
   })
 
   // Create any existing options
@@ -605,7 +656,16 @@ function populateOptionEditor (id) {
   document.getElementById('optionEditor').setAttribute('data-option-id', id)
 
   // Fill in the input fields
-  document.getElementById('optionInput_label').value = details.label
+  const editor = new exMarkdown.ExhibiteraMarkdownEditor({
+    content: details?.label ?? '',
+    editorDiv: document.getElementById('optionInput_label'),
+    commandDiv: document.getElementById('optionInputCommandBar_label'),
+    commands: ['basic'],
+    callback: (content) => {
+      exSetup.updateWorkingDefinition(['options', id, 'label'], content)
+      exSetup.previewDefinition(true)
+    }
+  })
   document.getElementById('optionInput_value').value = details.value
   document.getElementById('optionInput_icon').value = details.icon
   setIconUserFile(details.icon_user_file)
