@@ -45,7 +45,7 @@ export function submitComponentMaintenanceStatusChange (type = 'component') {
 
   let uuid, status, notes
   if (type === 'component') {
-    uuid = $('#componentInfoModal').data('uuid')
+    uuid = document.getElementById('componentInfoModal').getAttribute('data-uuid')
     status = $('#componentInfoModalMaintenanceStatusSelector').val()
     notes = $('#componentInfoModalMaintenanceNote').val()
   }

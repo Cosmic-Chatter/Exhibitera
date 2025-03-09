@@ -1,4 +1,5 @@
 # Standard modules
+import glob
 import os.path
 from typing import Any
 import uuid
@@ -6,11 +7,23 @@ import uuid
 # Third-party modules
 from fastapi import APIRouter
 from fastapi import Body
+from fastapi.responses import FileResponse
 
+import exhibitera_tools
 # Exhibitera modules
 import helper_files
 
 router = APIRouter()
+
+
+@router.get("/definitions/{this_uuid}")
+async def load_definition(this_uuid: str):
+    """Return the given definition as a binary file"""
+
+    path = helper_files.get_path(["definitions", helper_files.with_extension(this_uuid, "json")], user_file=True)
+
+    headers = {'Access-Control-Expose-Headers': 'Content-Disposition'}
+    return FileResponse(path, headers=headers)
 
 
 @router.get("/definitions/{app_id}/getAvailable")
@@ -66,51 +79,68 @@ async def get_definition_content_list(this_uuid: str):
 
     content = []
 
-    if definition["app"] == 'media_player':
-        if (definition["style"]["background"].get("image", "") != ""
-                and definition["style"]["background"]["mode"] == "image"):
-            content.append(definition["style"]["background"]["image"])
+    # First pull out any shared style elements
+    field = "style"
+    if definition["app"].startswith('word_cloud'):
+        field = "appearance"
+
+    if (definition[field]["background"].get("image", "") != ""
+            and definition[field]["background"]["mode"] == "image"):
+        content.append(definition[field]["background"]["image"])
+
+    if "font" in definition[field]:
+        for item in definition[field]["font"]:
+            file = definition[field]["font"][item]
+            # Check if this file in the content directory vs an Exhibitera source directory like _fonts/
+            if os.path.basename(os.path.dirname(file)) == 'content':
+                content.append(os.path.basename(file))
+
+    # Then add app-specific content fields
+    if definition["app"] == "image_compare":
+        for item_uuid in definition["content"]:
+            item = definition["content"][item_uuid]
+            content.append(item["image1"])
+            content.append(item["image2"])
+    elif definition["app"] == 'media_player':
+        if "watermark" in definition and definition["watermark"].get('file', '') != '':
+            content.append(definition["watermark"]["file"])
         for item_uuid in definition["content"]:
             item = definition["content"][item_uuid]
             if item["filename"] not in content:
                 content.append(item["filename"])
+            if "subtitles" in item and item["subtitles"].get("filename", "") != '':
+                content.append(item["subtitles"]["filename"])
+    elif definition["app"] == "timelapse_viewer":
+        if "attractor" in definition and "font" in definition["attractor"]:
+            if os.path.basename(os.path.dirname(definition["attractor"]["font"])) == 'content':
+                content.append(os.path.basename(definition["attractor"]["font"]))
+        content += glob.glob(definition["files"], root_dir=helper_files.get_path(["content"], user_file=True))
     elif definition["app"] == "voting_kiosk":
-        if (definition["style"]["background"].get("image", "") != ""
-                and definition["style"]["background"]["mode"] == "image"):
-            content.append(definition["style"]["background"]["image"])
         for item_uuid in definition["options"]:
             item = definition["options"][item_uuid]
             if item.get("icon_user_file", "") != "":
                 if item["icon_user_file"] not in content:
                     content.append(item["icon_user_file"])
     elif definition["app"] == "word_cloud_input":
-        if (definition["appearance"]["background"].get("image", "") != ""
-                and definition["appearance"]["background"]["mode"] == "image"):
-            content.append(definition["appearance"]["background"]["image"])
+        pass
     elif definition["app"] == "word_cloud_viewer":
-        if (definition["appearance"]["background"].get("image", "") != ""
-                and definition["appearance"]["background"]["mode"] == "image"):
-            content.append(definition["appearance"]["background"]["image"])
+        pass
     else:
         return {"success": False, "reason": f"This endpoint is not yet implemented for {definition['app']}"}
 
     content_details = []
-
+    total_size = 0
     for file in content:
-        file_details = {
-            'name': file
-        }
         path = helper_files.get_path(["content", file], user_file=True)
-        file_details['size'] = os.path.getsize(path)  # in bytes
-        if file_details['size'] > 1e9:
-            file_details['size_text'] = str(round(file_details['size'] / 1e9 * 10) / 100) + ' GB'
-        elif file_details['size'] > 1e6:
-            file_details['size_text'] = str(round(file_details['size'] / 1e6 * 00) / 100) + ' MB'
-        elif file_details['size'] > 1e3:
-            file_details['size_text'] = str(round(file_details['size'])) + ' kB'
-        else:
-            file_details['size_text'] = str(file_details['size']) + ' bytes'
+        size, size_text = helper_files.get_file_size(path)
 
-        content_details.append(file_details)
+        total_size += size
+        content_details.append({
+            'name': file,
+            'size': size,
+            'size_text': size_text
+        })
 
-    return {"success": True, "content": content_details}
+    return {"success": True,
+            "total_size": helper_files.convert_bytes_to_readable(total_size),
+            "content": content_details}

@@ -1,6 +1,8 @@
 /* global swearList */
 
 import * as exCommon from '../js/exhibitera_app_common.js'
+import * as exMarkdown from '../js/exhibitera_app_markdown.js'
+
 let maxCharacterCount = -1
 const Keyboard = window.SimpleKeyboard.default
 let keyboard = ''
@@ -45,7 +47,9 @@ function setLengthHint (length) {
   }
 }
 function clear () {
-  $('#inputField').val('')
+  // Clear any text entry
+
+  document.getElementById('inputField').value = ''
   if (keyboard) {
     keyboard.input.default = ''
     keyboard.input.inputField = ''
@@ -55,10 +59,14 @@ function clear () {
 function getCleanText () {
   // Run the profanity checker on the input field
 
-  $('#profanityCheckingDiv').html($('#inputField').val()).profanityFilter({ customSwears: swearList, replaceWith: '#' })
-  $('#profanityCheckingDiv').html($('#profanityCheckingDiv').html().replace(/#/g, ''))
-  console.log($('#profanityCheckingDiv').html().trim())
-  return ($('#profanityCheckingDiv').html().trim())
+  const profanityCheckingDiv = document.getElementById('profanityCheckingDiv')
+  const input = document.getElementById('inputField').value
+
+  $(profanityCheckingDiv).html(input).profanityFilter({ customSwears: swearList, replaceWith: '#' })
+  $(profanityCheckingDiv).html($(profanityCheckingDiv).html().replace(/#/g, ''))
+
+  console.log(profanityCheckingDiv.innerHTML.trim())
+  return profanityCheckingDiv.innerHTML.trim()
 }
 
 function sendTextToServer () {
@@ -112,20 +120,11 @@ function loadDefinition (definition) {
   // Set up a new interface to collect input
 
   // Parse the settings and make the appropriate changes
-  if ('prompt' in definition.content) {
-    document.getElementById('promptText').innerHTML = definition.content.prompt
-  } else {
-    document.getElementById('promptText').innerHTML = ''
-  }
-  if ('collection_name' in definition.behavior) {
-    collectionName = definition.behavior.collection_name
-  } else {
-    collectionName = 'default'
-  }
+  document.getElementById('promptText').innerHTML = exMarkdown.formatText(definition?.content?.prompt ?? '', { removeParagraph: true, string: true })
+  collectionName = definition?.behavior?.collection_name ?? 'default'
+  maxCharacterCount = definition?.behavior?.max_character_count ?? -1
   let showKeyboard = true
-  if ('max_character_count' in definition.behavior) {
-    maxCharacterCount = definition.behavior.max_character_count
-  }
+
   if ('enable_keyboard_input' in definition.behavior) {
     if (definition.behavior.enable_keyboard_input) {
       AddKeyboardListeners(maxCharacterCount)

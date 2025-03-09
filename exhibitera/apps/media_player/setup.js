@@ -30,12 +30,26 @@ async function clearDefinitionInput (full = true) {
   // Definition details
   $('#definitionNameInput').val('')
 
+  // Reset style options
+  const colorInputs = ['subtitleColor']
+  colorInputs.forEach((input) => {
+    const el = document.getElementById('colorPicker_' + input)
+    el.value = el.getAttribute('data-default')
+    document.querySelector('#colorPicker_' + input).dispatchEvent(new Event('input', { bubbles: true }))
+  })
+
   exSetup.updateAdvancedColorPicker('style>background', {
     mode: 'color',
     color: '#000',
     gradient_color_1: '#000',
     gradient_color_2: '#000'
   })
+
+  // Reset font face options
+  exSetup.resetAdvancedFontPickers()
+
+  // Reset text size options
+  document.getElementById('subtitleTextSizeSlider').value = 0
 
   document.getElementById('itemList').innerHTML = ''
   const watermarkSelect = document.getElementById('watermarkSelect')
@@ -90,6 +104,26 @@ function editDefinition (uuid = '') {
     document.getElementById('watermarkSize').value = def.watermark.size
   }
 
+  // Set the appropriate values for the color pickers
+  Object.keys(def.style.color).forEach((key) => {
+    const el = document.getElementById('colorPicker_' + key)
+    el.value = def.style.color[key]
+    el.dispatchEvent(new Event('input', { bubbles: true }))
+  })
+
+  // Set the appropriate values for the advanced font pickers
+  if ('font' in def.style) {
+    Object.keys(def.style.font).forEach((key) => {
+      const picker = document.querySelector(`.AFP-select[data-path="style>font>${key}"`)
+      exSetup.setAdvancedFontPicker(picker, def.style.font[key])
+    })
+  }
+
+  // Set the appropriate values for the text size selects
+  Object.keys(def.style.text_size).forEach((key) => {
+    document.getElementById(key + 'TextSizeSlider').value = def.style.text_size[key]
+  })
+
   // Configure the preview frame
   document.getElementById('previewFrame').src = '../media_player.html?standalone=true&definition=' + def.uuid
 }
@@ -125,7 +159,7 @@ function addItem () {
   const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
 
   const item = {
-    uuid: String(Math.random() * 1e20),
+    uuid: exCommon.uuid(),
     filename: '',
     duration: 30
   }
@@ -422,6 +456,26 @@ function createItemHTML (item, num) {
   `
   cacheGroup.appendChild(cacheLabel)
 
+  const subtitleCol = document.createElement('div')
+  subtitleCol.classList = 'col-12 subtitle-col'
+  modifyRow.appendChild(subtitleCol)
+
+  const subtitleButton = document.createElement('button')
+  subtitleButton.classList = 'btn btn-primary w-100'
+  subtitleButton.setAttribute('id', 'subttileButton_' + item.uuid)
+  if ((item?.subtitles?.filename ?? '') !== '') {
+    subtitleButton.innerHTML = 'Configure subtitles'
+  } else {
+    subtitleButton.innerHTML = 'Add subtitles'
+  }
+  subtitleButton.addEventListener('click', () => {
+    showConfigureSubtitlesModal(item.uuid)
+  })
+  subtitleCol.appendChild(subtitleButton)
+  if ((item?.mimetype ?? exCommon.guessMimetype(item.filename)) !== 'video') {
+    subtitleCol.style.display = 'none'
+  }
+
   const annotateCol = document.createElement('div')
   annotateCol.classList = 'col-12'
   modifyRow.appendChild(annotateCol)
@@ -499,6 +553,50 @@ function createItemHTML (item, num) {
   })
 }
 
+function showConfigureSubtitlesModal (itemUUID) {
+  // Prepare and show the modal for setting up video subtitles.
+
+  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+  const modal = document.getElementById('configureSubtitlesModal')
+  const selectButton = document.getElementById('configureSubtitlesModalSelectButton')
+
+  modal.setAttribute('data-uuid', itemUUID)
+
+  // Add any existing subtitles
+  if (workingDefinition.content[itemUUID]?.subtitles?.filename != null) {
+    selectButton.innerHTML = workingDefinition.content[itemUUID].subtitles.filename
+  } else {
+    selectButton.innerHTML = 'Select subtitles file'
+  }
+
+  $(modal).modal('show')
+}
+
+function selectSubtitlesFile () {
+  // Prompt the user to select a file and configure the subtitle modal based on it.
+
+  const modal = document.getElementById('configureSubtitlesModal')
+
+  exFileSelect.createFileSelectionModal({ multiple: false, filetypes: ['vtt'] })
+    .then((files) => {
+      if (files.length === 0) return
+      document.getElementById('configureSubtitlesModalSelectButton').innerHTML = files[0]
+      modal.setAttribute('data-filename', files[0])
+    })
+}
+
+function submitSubtitlesFromModal () {
+  // Gather subtitle information and update the definition.
+
+  const modal = document.getElementById('configureSubtitlesModal')
+  const itemUUID = modal.getAttribute('data-uuid')
+  const filename = modal.getAttribute('data-filename')
+
+  exSetup.updateWorkingDefinition(['content', itemUUID, 'subtitles', 'filename'], filename)
+  exSetup.previewDefinition(true)
+  $(modal).modal('hide')
+}
+
 function showAnnotateFromJSONModal (itemUUID, annotationUUID = null) {
   // Prepare and show the modal for creating an annotation from JSON.
 
@@ -549,7 +647,7 @@ function populateAnnotateFromJSONModal (file, type = 'file') {
   parent.innerHTML = ''
 
   if (type === 'file') {
-    exCommon.makeServerRequest({
+    exCommon.makeHelperRequest({
       method: 'GET',
       endpoint: '/content/' + file,
       noCache: true
@@ -965,8 +1063,10 @@ function setContentFromURLModal () {
 function setItemContent (uuid, itemEl, file, type = 'file') {
   // Populate the given element, item, with content.
 
+  const mimetype = exCommon.guessMimetype(file)
   exSetup.updateWorkingDefinition(['content', uuid, 'filename'], file)
   exSetup.updateWorkingDefinition(['content', uuid, 'type'], type)
+  exSetup.updateWorkingDefinition(['content', uuid, 'mimetype'], mimetype)
   exSetup.previewDefinition(true)
 
   const image = itemEl.querySelector('.image-preview')
@@ -975,7 +1075,7 @@ function setItemContent (uuid, itemEl, file, type = 'file') {
 
   itemEl.setAttribute('data-filename', file)
   itemEl.setAttribute('data-type', type)
-  const mimetype = exCommon.guessMimetype(file)
+
   fileField.innerHTML = file
   if (mimetype === 'audio') {
     image.src = exFileSelect.getDefaultAudioIcon()
@@ -987,6 +1087,9 @@ function setItemContent (uuid, itemEl, file, type = 'file') {
     itemEl.querySelector('.rotation-col').style.display = 'none'
     // Hide the material input
     itemEl.querySelector('.material-col').style.display = 'none'
+    // Hide the subtitle input
+    itemEl.querySelector('.subtitle-col').style.display = 'none'
+    exSetup.updateWorkingDefinition(['content', uuid, 'subtitles'], null)
   } else if (mimetype === 'image') {
     if (type === 'file') {
       image.src = '/thumbnails/' + exCommon.withExtension(file, 'jpg')
@@ -1001,10 +1104,16 @@ function setItemContent (uuid, itemEl, file, type = 'file') {
     itemEl.querySelector('.rotation-col').style.display = 'none'
     // Hide the material input
     itemEl.querySelector('.material-col').style.display = 'none'
+    // Hide the subtitle input
+    itemEl.querySelector('.subtitle-col').style.display = 'none'
+    exSetup.updateWorkingDefinition(['content', uuid, 'subtitles'], null)
   } else if (mimetype === 'model') {
     image.src = exFileSelect.getDefaultModelIcon()
     image.style.display = 'block'
     video.style.display = 'none'
+    // Hide the subtitle input
+    itemEl.querySelector('.subtitle-col').style.display = 'none'
+    exSetup.updateWorkingDefinition(['content', uuid, 'subtitles'], null)
     // Show the duration input
     itemEl.querySelector('.duration-col').style.display = 'block'
     // Show the rotation input
@@ -1026,6 +1135,8 @@ function setItemContent (uuid, itemEl, file, type = 'file') {
     itemEl.querySelector('.rotation-col').style.display = 'none'
     // Hide the material input
     itemEl.querySelector('.material-col').style.display = 'none'
+    // Show the subtitle input
+    itemEl.querySelector('.subtitle-col').style.display = 'block'
   }
 }
 
@@ -1135,6 +1246,18 @@ document.getElementById('chooseURLModalFetchButton').addEventListener('click', (
 })
 document.getElementById('chooseURLModalSubmitButton').addEventListener('click', setContentFromURLModal)
 
+// Subtitles
+document.getElementById('configureSubtitlesModalSelectButton').addEventListener('click', selectSubtitlesFile)
+document.getElementById('configureSubtitlesModalSubmitButton').addEventListener('click', submitSubtitlesFromModal)
+document.getElementById('configureSubtitlesModalDeleteButton').addEventListener('click', (ev) => {
+  const modal = document.getElementById('configureSubtitlesModal')
+  const itemUUID = modal.getAttribute('data-uuid')
+  document.getElementById('subttileButton_' + itemUUID).innerHTML = 'Add subtitles'
+  exSetup.updateWorkingDefinition(['content', itemUUID, 'subtitles'], null)
+  $(modal).modal('hide')
+  exSetup.previewDefinition(true)
+})
+
 // Annotations
 document.getElementById('annotateFromJSONModalFileSelect').addEventListener('click', () => {
   exFileSelect.createFileSelectionModal({ filetypes: ['json'] })
@@ -1192,8 +1315,28 @@ Array.from(document.querySelectorAll('.watermark-slider')).forEach((el) => {
   })
 })
 
-// Set helper address for use with exCommon.makeHelperRequest
-exCommon.config.helperAddress = window.location.origin
+// Style fields
+document.querySelectorAll('.coloris').forEach((element) => {
+  element.addEventListener('change', function () {
+    const value = this.value.trim()
+    const property = this.getAttribute('data-property')
+    exSetup.updateWorkingDefinition(['style', 'color', property], value)
+    exSetup.previewDefinition(true)
+  })
+})
+document.getElementById('manageFontsButton').addEventListener('click', (event) => {
+  exFileSelect.createFileSelectionModal({ filetypes: ['otf', 'ttf', 'woff', 'woff2'], manage: true })
+    .then(exSetup.refreshAdvancedFontPickers)
+})
+
+// Text size fields
+Array.from(document.querySelectorAll('.text-size-slider')).forEach((el) => {
+  el.addEventListener('input', (event) => {
+    const property = event.target.getAttribute('data-property')
+    exSetup.updateWorkingDefinition(['style', 'text_size', property], parseFloat(event.target.value))
+    exSetup.previewDefinition(true)
+  })
+})
 
 clearDefinitionInput()
 

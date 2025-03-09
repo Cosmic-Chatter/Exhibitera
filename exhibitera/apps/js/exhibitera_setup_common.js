@@ -3,17 +3,17 @@
 import * as exCommon from './exhibitera_app_common.js'
 import * as exFileSelect from './exhibitera_file_select_modal.js'
 
-$.fn.visibleHeight = function () {
-  // JQuery function to calculate the visible height of an element
-  // From https://stackoverflow.com/a/29944927
+HTMLElement.prototype.visibleHeight = function () {
+  // Calculate the visible height of an element
 
-  const scrollTop = $(window).scrollTop()
-  const scrollBot = scrollTop + $(window).height()
-  const elTop = this.offset().top
-  const elBottom = elTop + this.outerHeight()
-  const visibleTop = elTop < scrollTop ? scrollTop : elTop
-  const visibleBottom = elBottom > scrollBot ? scrollBot : elBottom
-  return Math.max(visibleBottom - visibleTop, 0)
+  const scrollTop = window.scrollY // Top of the visible area
+  const scrollBot = scrollTop + window.innerHeight // Bottom of the visible area
+  const elTop = this.getBoundingClientRect().top + scrollTop // Top of the element (absolute position)
+  const elBottom = elTop + this.offsetHeight // Bottom of the element (absolute position)
+  const visibleTop = Math.max(elTop, scrollTop) // The visible top of the element
+  const visibleBottom = Math.min(elBottom, scrollBot) // The visible bottom of the element
+
+  return Math.max(visibleBottom - visibleTop, 0) // The visible height of the element
 }
 
 export const config = {
@@ -23,31 +23,69 @@ export const config = {
   onDefinitionSave: null,
   fontCache: {}, // Keys with any value indicate that font has already been made
   languages: [
+    { code: 'af', name: 'Afrikaans', name_en: 'Afrikaans' },
+    { code: 'sq', name: 'Shqip', name_en: 'Albanian' },
     { code: 'ar-dz', name: 'عربي', name_en: 'Arabic (Algeria)' },
     { code: 'ar-eg', name: 'عربي', name_en: 'Arabic (Egypt)' },
     { code: 'ar-iq', name: 'عربي', name_en: 'Arabic (Iraq)' },
     { code: 'ar-sa', name: 'عربي', name_en: 'Arabic (Saudi Arabia)' },
     { code: 'ar-ae', name: 'عربي', name_en: 'Arabic (U.A.E.)' },
     { code: 'bn', name: 'বাংলা', name_en: 'Bengali' },
+    { code: 'bg', name: 'български език', name_en: 'Bulgarian' },
+    { code: 'ca', name: 'Català', name_en: 'Catalan' },
     { code: 'zh', name: '中国人', name_en: 'Chinese (China)' },
     { code: 'zh-tw', name: '中国人', name_en: 'Chinese (Taiwan)' },
+    { code: 'hr', name: 'Hrvatski', name_en: 'Croatian' },
+    { code: 'cs', name: 'Čeština', name_en: 'Czech' },
+    { code: 'da', name: 'Dansk', name_en: 'Danish' },
+    { code: 'nl', name: 'Nederlands', name_en: 'Dutch' },
     { code: 'en-au', name: 'English', name_en: 'English (Australia)' },
     { code: 'en-nz', name: 'English', name_en: 'English (New Zealand)' },
     { code: 'en-gb', name: 'English', name_en: 'English (U.K.)' },
     { code: 'en-us', name: 'English', name_en: 'English (U.S.)' },
+    { code: 'et', name: 'Eesti keel', name_en: 'Estonian' },
+    { code: 'fi', name: 'Suomi', name_en: 'Finnish' },
     { code: 'fr', name: 'Français', name_en: 'French' },
     { code: 'de', name: 'Deutsch', name_en: 'German' },
+    { code: 'el', name: 'Ελληνικά', name_en: 'Greek' },
+    { code: 'he', name: 'עִברִית', name_en: 'Hebrew' },
     { code: 'hi', name: 'हिंदी', name_en: 'Hindi' },
-    { code: 'id', name: 'bahasa Indonesia', name_en: 'Indonesian' },
+    { code: 'hu', name: 'Magyar nyelv', name_en: 'Hungarian' },
+    { code: 'is', name: 'Íslenskur', name_en: 'Icelandic' },
+    { code: 'id', name: 'Bahasa Indonesia', name_en: 'Indonesian' },
+    { code: 'ga', name: 'Gaeilge', name_en: 'Irish' },
+    { code: 'gd', name: 'Gàidhlig', name_en: 'Scottish Gaelic' },
     { code: 'it', name: 'Italiano', name_en: 'Italian' },
     { code: 'jp', name: '日本語', name_en: 'Japanese' },
     { code: 'kr', name: '한국인', name_en: 'Korean' },
+    { code: 'lv', name: 'Latviešu valoda', name_en: 'Latvian' },
+    { code: 'lt', name: 'Lietuvių kalba', name_en: 'Lithuanian' },
+    { code: 'ms', name: 'بهاس ملايو', name_en: 'Malay' },
+    { code: 'mt', name: 'Malti', name_en: 'Maltese' },
+    { code: 'no', name: 'Norsk', name_en: 'Norwegian' },
+    { code: 'fa', name: 'فارسی', name_en: 'Persian' },
+    { code: 'pl', name: 'Polski', name_en: 'Polish' },
     { code: 'pt', name: 'Português', name_en: 'Portuguese (Portugal)' },
     { code: 'pt-br', name: 'Português', name_en: 'Portuguese (Brazil)' },
+    { code: 'pa', name: 'Português', name_en: 'Punjabi' },
+    { code: 'ro', name: 'Limba română', name_en: 'Romanian' },
     { code: 'ru', name: 'Русский', name_en: 'Russian' },
+    { code: 'sr', name: 'Cрпски језик', name_en: 'Serbian' },
+    { code: 'sk', name: 'Slovenčina', name_en: 'Slovak' },
+    { code: 'sl', name: 'Slovenščina', name_en: 'Slovene' },
     { code: 'es-mx', name: 'Español', name_en: 'Spanish (Mexico)' },
     { code: 'es', name: 'Español', name_en: 'Spanish (Spain)' },
-    { code: 'ur', name: 'اردو', name_en: 'Urdu' }
+    { code: 'sv', name: 'Svenska', name_en: 'Swedish' },
+    { code: 'th', name: 'ภาษาไทย', name_en: 'Thai' },
+    { code: 'ts', name: 'Xitsonga', name_en: 'Tsonga' },
+    { code: 'tn', name: 'Setswana', name_en: 'Tswana' },
+    { code: 'tr', name: 'Türkçe', name_en: 'Turkish' },
+    { code: 'uk', name: 'українська мова', name_en: 'Ukrainian' },
+    { code: 'ur', name: 'اردو', name_en: 'Urdu' },
+    { code: 'vi', name: 'Tiếng Việt', name_en: 'Vietnamese' },
+    { code: 'cy', name: 'Cymraeg', name_en: 'Welsh' },
+    { code: 'xh', name: 'IsiXhosa', name_en: 'Xhosa' },
+    { code: 'zu', name: 'IsiXhosa', name_en: 'Zulu' }
   ]
 }
 
@@ -141,19 +179,10 @@ function configureGUIForUser (user) {
     })
 }
 
-export function getLanguageDisplayName (langCode, en = false) {
-  // Return the display name for the given language code.
-  // By default, the name will be returned in that language.
-
-  const lang = config.languages.find(({ code }) => code === langCode)
-
-  if (lang == null) return langCode
-  if (en === true) return lang.name_en
-  return lang.name
-}
-
 export function showAppHelpModal (app) {
   // Ask the helper to send the relavent README.md file and display it in the modal
+
+  const helpTextDiv = document.getElementById('helpTextDiv')
 
   const endpointStems = {
     dmx_control: '/dmx_control/',
@@ -177,16 +206,18 @@ export function showAppHelpModal (app) {
     .then((result) => {
       const formattedText = markdownConverter.makeHtml(result)
       // Add the formatted text
-      $('#helpTextDiv').html(formattedText)
-      // Then, search the children for images and fix the links with the right endpoints
-      $('#helpTextDiv').find('img').each((i, img) => {
-        // Strip off the http://localhost:8000/ porition
-        const src = img.src.split('/').slice(3).join('/')
-        // Rebuild the correct path
-        img.src = exCommon.config.helperAddress + endpointStems[app] + '/' + src
+      helpTextDiv.innerHTML = formattedText
+
+      // Set the max-width of all images inside the #helpTextDiv element
+      document.querySelectorAll('#helpTextDiv img').forEach((img) => {
         img.style.maxWidth = '100%'
       })
-      $('#helpTextDiv').parent().parent().scrollTop(0)
+
+      // Scroll the grandparent element of #helpTextDiv to the top
+      const grandParent = helpTextDiv.parentElement?.parentElement
+      if (grandParent) {
+        grandParent.scrollTop = 0
+      }
     })
 
   $('#appHelpModal').modal('show')
@@ -195,7 +226,8 @@ export function showAppHelpModal (app) {
 export function populateAvailableDefinitions (definitions) {
   // Take a list of definitions and add them to the select.
 
-  document.getElementById('availableDefinitionSelect').innerHTML = ''
+  const availableDefinitionSelect = document.getElementById('availableDefinitionSelect')
+  availableDefinitionSelect.innerHTML = ''
   config.availableDefinitions = definitions
   const keys = Object.keys(definitions).sort((a, b) => {
     const aName = definitions[a].name.toLowerCase()
@@ -212,7 +244,7 @@ export function populateAvailableDefinitions (definitions) {
     option.value = uuid
     option.innerHTML = definition.name
 
-    $('#availableDefinitionSelect').append(option)
+    availableDefinitionSelect.appendChild(option)
   })
 }
 
@@ -257,7 +289,8 @@ async function showSetupWizard () {
 }
 
 export function addWizardLanguage () {
-  // Create HTML for a new wizard language selector
+  // Create HTML for a new wizard language selector. This is a simplified version
+  // of the main language picker
 
   const col = document.createElement('div')
   col.classList = 'col'
@@ -318,7 +351,7 @@ export function initializeDefinition () {
 function deleteDefinition () {
   // Delete the definition currently listed in the select.
 
-  const definition = $('#availableDefinitionSelect').val()
+  const definition = document.getElementById('availableDefinitionSelect').value
 
   exCommon.makeHelperRequest({
     method: 'GET',
@@ -379,7 +412,7 @@ export async function saveDefinition (name = '') {
   const definition = $('#definitionSaveButton').data('workingDefinition')
   const initialDefinition = $('#definitionSaveButton').data('initialDefinition')
   definition.app = config.app
-  if (name === '') definition.name = $('#definitionNameInput').val()
+  if (name === '') definition.name = document.getElementById('definitionNameInput').value
   definition.uuid = initialDefinition.uuid
   console.log(name, definition)
 
@@ -454,37 +487,33 @@ function createEventListeners () {
   })
 
   // configure preview options
+  const refreshOnChangeCheckbox = document.getElementById('refreshOnChangeCheckbox')
+
   document.getElementById('previewAspect16x9').addEventListener('click', () => {
-    const autoRefresh = $('#refreshOnChangeCheckbox').prop('checked')
-    configurePreview('16x9', autoRefresh)
+    configurePreview('16x9', refreshOnChangeCheckbox.checked)
   })
   document.getElementById('previewAspect9x16').addEventListener('click', () => {
-    const autoRefresh = $('#refreshOnChangeCheckbox').prop('checked')
-    configurePreview('9x16', autoRefresh)
+    configurePreview('9x16', refreshOnChangeCheckbox.checked)
   })
   document.getElementById('previewAspect16x10').addEventListener('click', () => {
-    const autoRefresh = $('#refreshOnChangeCheckbox').prop('checked')
-    configurePreview('16x10', autoRefresh)
+    configurePreview('16x10', refreshOnChangeCheckbox.checked)
   })
   document.getElementById('previewAspect10x16').addEventListener('click', () => {
-    const autoRefresh = $('#refreshOnChangeCheckbox').prop('checked')
-    configurePreview('10x16', autoRefresh)
+    configurePreview('10x16', refreshOnChangeCheckbox.checked)
   })
   document.getElementById('previewAspect4x3').addEventListener('click', () => {
-    const autoRefresh = $('#refreshOnChangeCheckbox').prop('checked')
-    configurePreview('4x3', autoRefresh)
+    configurePreview('4x3', refreshOnChangeCheckbox.checked)
   })
   document.getElementById('previewAspect3x4').addEventListener('click', () => {
-    const autoRefresh = $('#refreshOnChangeCheckbox').prop('checked')
-    configurePreview('3x4', autoRefresh)
+    configurePreview('3x4', refreshOnChangeCheckbox.checked)
   })
 
   document.getElementById('refreshOnChangeCheckbox').addEventListener('change', () => {
     const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
-    const autoRefresh = $('#refreshOnChangeCheckbox').prop('checked')
     let previewRatio = '16x9'
+    const autoRefresh = refreshOnChangeCheckbox.checked
     if ('setup' in workingDefinition) previewRatio = workingDefinition.setup.preview_ratio
-    configurePreview(previewRatio, autoRefresh)
+    if (autoRefresh === true) configurePreview(previewRatio, autoRefresh)
   })
 
   // Help button
@@ -513,9 +542,12 @@ function createDefinitionDeletePopup () {
   deleteDefinitionButton.setAttribute('data-bs-content', '<a id="DefinitionDeletePopover" class="btn btn-danger w-100">Confirm</a>')
   deleteDefinitionButton.setAttribute('data-bs-trigger', 'focus')
   deleteDefinitionButton.setAttribute('data-bs-html', 'true')
-  $(document).on('click', '#DefinitionDeletePopover', function () {
-    deleteDefinition()
+  document.addEventListener('click', function (event) {
+    if (event.target && event.target.id === 'DefinitionDeletePopover') {
+      deleteDefinition()
+    }
   })
+
   deleteDefinitionButton.addEventListener('click', function () { deleteDefinitionButton.focus() })
   const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
   popoverTriggerList.map(function (popoverTriggerEl) {
@@ -564,21 +596,23 @@ export function configurePreviewFromDefinition (def) {
 function resizePreview () {
   // Resize the preview so that it always fits the view.
 
+  const previewPane = document.getElementById('previewPane')
+  const previewFrame = document.getElementById('previewFrame')
   // Size of things above view area
-  const headerHeight = $('#setupHeader').visibleHeight()
-  const toolsHeight = $('#setupTools').visibleHeight()
+  const headerHeight = document.getElementById('setupHeader').visibleHeight()
+  const toolsHeight = document.getElementById('setupTools').visibleHeight()
   const viewportHeight = window.innerHeight
 
   // First, set the height of the area available for the preview
-  $('#previewPane').css('height', viewportHeight - headerHeight - toolsHeight)
+  previewPane.style.height = String(viewportHeight - headerHeight - toolsHeight) + 'px'
 
   // Size of available area
-  const paneWidth = $('#previewPane').width()
-  const paneHeight = $('#previewPane').height()
+  const paneWidth = previewPane.offsetWidth
+  const paneHeight = previewPane.offsetHeight
 
   // Size of frame (this will be 1920 on the long axis)
-  const frameWidth = $('#previewFrame').width()
-  const frameHeight = $('#previewFrame').height()
+  const frameWidth = previewFrame.offsetWidth
+  const frameHeight = previewFrame.offsetHeight
   const frameAspect = frameWidth / frameHeight
 
   let transformRatio
@@ -590,7 +624,7 @@ function resizePreview () {
     transformRatio = 1.0 * paneWidth / frameWidth
   }
 
-  $('#previewFrame').css('transform', 'scale(' + transformRatio + ')')
+  previewFrame.style.transform = 'scale(' + transformRatio + ')'
 }
 
 export function previewDefinition (automatic = false) {
@@ -598,7 +632,7 @@ export function previewDefinition (automatic = false) {
   // If automatic == true, we've called this function beceause a definition field
   // has been updated. Only preview if the 'Refresh on change' checkbox is checked
 
-  if ((automatic === true) && $('#refreshOnChangeCheckbox').prop('checked') === false) {
+  if ((automatic === true) && document.getElementById('refreshOnChangeCheckbox').checked === false) {
     return
   }
 

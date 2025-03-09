@@ -342,6 +342,7 @@ function _populateComponentContent (fileDict, options) {
 
     const entry = document.createElement('div')
     entry.classList = 'col-12 row py-2 ps-4 const-file-entry'
+    entry.style.cursor = 'default'
     entry.setAttribute('data-filtered-out', 'false')
     entry.innerHTML = `
       <div class='col-1 my-auto px-0 const-file-select-col' style="cursor: pointer;">
@@ -361,6 +362,7 @@ function _populateComponentContent (fileDict, options) {
     else box.classList.add('border-dark')
 
     entry.setAttribute('data-filename', file)
+    entry.setAttribute('data-details', JSON.stringify(fileDetails))
 
     // Hover
     entry.addEventListener('mouseenter', (event) => {
@@ -368,7 +370,7 @@ function _populateComponentContent (fileDict, options) {
         el.classList.remove('bg-secondary', 'text-dark')
       })
       event.target.classList.add('bg-secondary', 'text-dark')
-      const file = event.target.getAttribute('data-filename')
+      const fileDetails = JSON.parse(entry.getAttribute('data-details'))
       previewFile(fileDetails)
     })
 
@@ -765,6 +767,9 @@ function downloadMultipleFiles () {
       a.click()
       a.remove() // afterward, remove the element
     })
+
+  document.getElementById('exFileSelectModalDeleteMultipleButtonCol').style.display = 'none'
+  document.getElementById('exFileSelectModalDownloadMultipleButtonCol').style.display = 'none'
 }
 
 function deleteMultipleFiles () {
@@ -776,6 +781,8 @@ function deleteMultipleFiles () {
     filenamesToDelete.push(el.getAttribute('data-filename'))
   })
   deleteFiles(filenamesToDelete)
+  document.getElementById('exFileSelectModalDeleteMultipleButtonCol').style.display = 'none'
+  document.getElementById('exFileSelectModalDownloadMultipleButtonCol').style.display = 'none'
 }
 
 function showRenameField () {
@@ -829,8 +836,12 @@ function renameFile () {
         } else if (result.success === true) {
           // Update the preview pane
           document.getElementById('exFileSelectModalFilePreview').setAttribute('data-filename', newName)
+
           // Update the entry
           const entry = document.getElementById('exFileSelectModal').querySelector(`.const-file-entry[data-filename="${originalName}"]`)
+          const fileDetails = JSON.parse(entry.getAttribute('data-details'))
+          fileDetails.name = newName
+          entry.setAttribute('data-details', JSON.stringify(fileDetails))
           entry.setAttribute('data-filename', newName)
           entry.querySelector('.const-file-name').title = newName
           entry.querySelector('.const-file-name').innerHTML = shortenFilename(newName)

@@ -41,14 +41,17 @@ To access the web console from any device on the same subnet, open a browser and
 For example, if your static IP is `10.8.2.100`, and your port is the default `8082`, your web address would be `http://10.8.2.100:8082`. You can bookmark this address for future access.
 
 ### Configuration
-Basic settings, such as the IP address and port, can be configured from the _Settings_ tab. These settings may require Hub to be restarted before they take effect.
+Core settings, such as the IP address and port, can be configured from the _Settings_ tab. These settings may require Hub to be restarted before they take effect.
+
+#### Groups
+`Groups` help you organize your components. By putting components in groups, you can restrict who can access them using the _Users_ tab. You can also send commands to multiple components in the same group at the same (approximate) time. A `component` can be an as many groups as you want. Groups are created in teh _Settings_ tab.
 
 Hub enables you to manage and track several types of devices beyond the apps provided by Exhibitera Apps. These include projectors, PCs configured to respond to Wake on LAN requests, as well as a category for generic items. To add one of these items, click the _Add_ button on the _Components_ tab.
 
 #### Controlling projectors
 Hub can manage projectors over IP using the PJLink protocol.
 
-The PJLink protocol returns a defined set of information about the state of the connected projector. Each manufacturer implements the protocol slightly differently, so the available information may vary marginally.
+The PJLink protocol returns a defined set of information about the state of the connected projector. Each manufacturer implements the protocol slightly differently, so the available information may vary a little.
 
 To configure a PJLink projector, it should have a static IP address. Some projectors require a password, which you can also specify here.
 
@@ -62,9 +65,14 @@ To configure a component for Wake on LAN, you must specify its MAC address. If t
 
 In order to view the real-time status of a component, it must be either running Exhibitera Apps or sending pings that conform to the API. However, non-Exhibitera components can be added in order to make use of the maintenance tracking system.
 
+### Users
+You can create separate accounts for each user of Exhibitera. Accounts allow you to control who has access to parts of Hub and groups of components. For example, an exhibit technician might have access to change the IP address for a component, while a guest services manager might only be able to change the component's content.
+
+**While care has been taken to make user accounts secure, the users system is not intended as a defense against a malicious actor.**
+
 ## Using the web console
 
-The web console provides an interface for managing settings and seeing the real-time status of every component. It can be accessed through any web browser at the address `http://<control_server_ip>:<control_server_port>`.
+The web console provides an interface for managing settings and seeing the real-time status of every component. It can be accessed through any web browser at the address `http://<statici IP>:<port>`.
 
 Multiple users may access the web console simultaneously.
 
@@ -73,7 +81,7 @@ Multiple users may access the web console simultaneously.
 The _Components_ tab lists every managed component and projector, each with its own tile.
 
 #### View options
-The _View options_ menu enables you to customize the components interface. You can toggle on or off the display of static components, and modify the data presented by each tile.
+The _View options_ menu enables you to customize the components interface. You can toggle on or off the display of static components, and modify the data presented by each tile. You can also change how components are arranged and how large they appear.
 
 #### Real-time status
 
@@ -103,6 +111,14 @@ Clicking on a component opens its status view. Here, you can see a snapshot of t
 #### Definitions pane
 
 The _Definitions_ pane allows you to select the app definition that you want to display. A given component can have only one active definition. If the definition you selected belongs to an app other than the one that is currently active, the app will be changed before the new definition is applied.
+
+##### Copying definitions
+Definitions for some apps can be copied from one component to another. This can be helpful if you want ot deploy the same definition across many systems, such as when using Media Player for digital signage. Copying definitions is supported for these apps:
+- Image Compare
+- Media Player
+- Timelapse Viewer
+- Voting Kiosk
+- Word Cloud
 
 #### Maintenance pane
 

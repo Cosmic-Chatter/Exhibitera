@@ -1,6 +1,7 @@
 /* global showdown textFit */
 
 import * as exCommon from '../js/exhibitera_app_common.js'
+import * as exMarkdown from '../js/exhibitera_app_markdown.js'
 
 function updateFunc (update) {
   // Read updates for media player-specific actions and act on them
@@ -63,12 +64,24 @@ function loadDefinition (def) {
   root.style.setProperty('--Title-font', 'Title-default')
   root.style.setProperty('--Time-font', 'Time-default')
   root.style.setProperty('--Body-font', 'Body-default')
-
   // Then, apply the definition settings
   Object.keys(def.style.font).forEach((key) => {
     const font = new FontFace(key, 'url(' + encodeURI(def.style.font[key]) + ')')
     document.fonts.add(font)
     root.style.setProperty('--' + key + '-font', key)
+  })
+
+  // Text size settings
+
+  // First, reset to defaults (in case a style option doesn't exist in the definition)
+  root.style.setProperty('--title-font-adjust', 0)
+  root.style.setProperty('--time-font-adjust', 0)
+  root.style.setProperty('--body-font-adjust', 0)
+
+  // Then, apply the definition settings
+  Object.keys(def.style?.text_size ?? {}).forEach((key) => {
+    const value = def.style.text_size[key]
+    root.style.setProperty('--' + key + '-font-adjust', value)
   })
 
   const langs = Object.keys(def.languages)
@@ -77,9 +90,7 @@ function loadDefinition (def) {
   exCommon.createLanguageSwitcher(def, localize)
 
   // Find the default language
-  Object.keys(def.languages).forEach((lang) => {
-    if (def.languages[lang].default === true) defaultLang = lang
-  })
+  defaultLang = def.language_order[0]
 
   // Load the CSV file containing the timeline data and use it to build the timeline entries.
   exCommon.makeHelperRequest({
@@ -106,6 +117,7 @@ function loadDefinition (def) {
     setAttractor('', '')
   }
 
+  localize(defaultLang)
   // Send a thumbnail to the helper
   setTimeout(() => exCommon.saveScreenshotAsThumbnail(def.uuid + '.png'), 100)
 }
@@ -132,22 +144,31 @@ function localize (lang) {
 
   const spreadsheet = $(document).data('spreadsheet')
   const definition = $(document).data('timelineDefinition')
+  const header = document.getElementById('headerText')
+  const root = document.querySelector(':root')
 
-  $('#timelineContainer').empty()
-  spreadsheet.forEach((entry) => {
-    createTimelineEntry(entry, lang)
-  })
-  $('#headerText').html(definition.languages[lang].header_text || '')
-  textFit($('#headerText'))
+  document.getElementById('timelineContainer').innerHTML = ''
+  if (spreadsheet != null) {
+    spreadsheet.forEach((entry) => {
+      createTimelineEntry(entry, lang)
+    })
+  }
+
+  const headerText = exMarkdown.formatText(definition?.languages?.[lang]?.header_text ?? '', { string: true, removeParagraph: true })
+
+  header.innerHTML = headerText
+  if (headerText !== '') {
+    root.style.setProperty('--header-height', '7.5vh')
+    textFit(header)
+  } else {
+    root.style.setProperty('--header-height', '0vh')
+  }
 }
 
 function createTimelineEntry (entry, langCode) {
   // Take the provided object and turn it into a set of HTML elements representing the entry.
 
   const langDef = $(document).data('timelineDefinition').languages[langCode]
-
-  // Initialize the Markdown converter
-  const converter = new showdown.Converter({ parseImgDimensions: true })
 
   const li = document.createElement('li')
 
@@ -162,7 +183,7 @@ function createTimelineEntry (entry, langCode) {
   container.appendChild(flex1)
 
   const timeEl = document.createElement('time')
-  timeEl.innerHTML = converter.makeHtml(entry[langDef.time_key])
+  timeEl.innerHTML = exMarkdown.formatText(entry[langDef.time_key], { string: true, removeParagraph: true })
   flex1.appendChild(timeEl)
 
   const title = document.createElement('div')
@@ -171,15 +192,15 @@ function createTimelineEntry (entry, langCode) {
   } else if (parseInt(entry.Level) > 4) {
     title.classList = 'size4'
   } else {
-    title.classList = 'size' + parseInt(entry[langDef.level_key])
+    title.classList = 'size' + parseInt(entry[langDef.level_key] ?? 4)
   }
   title.classList.add('timeline-item-header')
-  title.innerHTML = converter.makeHtml(entry[langDef.title_key])
+  title.innerHTML = exMarkdown.formatText(entry[langDef.title_key], { string: true, removeParagraph: true })
   flex1.appendChild(title)
 
   const bodyEl = document.createElement('p')
   bodyEl.classList = 'timeline-body'
-  bodyEl.innerHTML = converter.makeHtml(entry[langDef.short_text_key])
+  bodyEl.innerHTML = exMarkdown.formatText(entry[langDef.short_text_key], { string: true, removeParagraph: true })
   flex1.appendChild(bodyEl)
 
   // Image
@@ -196,11 +217,22 @@ function createTimelineEntry (entry, langCode) {
 
     const image = document.createElement('img')
     image.style.width = '100%'
-    image.src = 'thumbnails/' + imageName
+    // image.src = 'thumbnails/' + imageName
+    // Calculate size of image
+    const width = window.innerWidth
+    const height = window.innerHeight
+    let thumbRes
+    if (width > height) {
+      thumbRes = Math.round(width * 0.25)
+    } else {
+      thumbRes = Math.round(width * 0.5)
+    }
+    console.log(exCommon.config.helperAddress + '/files/' + imageName + '/thumbnail/' + String(thumbRes))
+    image.src = exCommon.config.helperAddress + '/files/' + imageName + '/thumbnail/' + String(thumbRes)
     flex2.appendChild(image)
   }
 
-  $('#timelineContainer').append(li)
+  document.getElementById('timelineContainer').appendChild(li)
   configureVisibleElements()
 }
 

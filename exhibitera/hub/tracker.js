@@ -3,9 +3,9 @@ import * as exTracker from './exhibitera_tracker.js'
 class TimingObject {
   // This class is to keep track of elapsed time for the timer input type
 
-  constructor (name, exclusive = false) {
+  constructor (uuid, name, exclusive = false) {
     this.displayName = name
-    this.name = name.replace(/\s/g, '') // Strip spaces
+    this.uuid = uuid
     this.exclusive = exclusive // Exclusive timers will stop all other exclusive timers when started
     this.elapsedTime = 0
     this.timerRunning = false
@@ -25,12 +25,13 @@ class TimingObject {
 
     const button = document.createElement('button')
     button.classList = 'btn btn-primary w-100'
-    button.setAttribute('id', 'TimerStartStopButton_' + this.name)
+    button.setAttribute('id', 'TimerStartStopButton_' + this.uuid)
     button.innerHTML = 'Start'
-    const thisName = this.name
-    $(button).click(function () {
-      getTimer(thisName).toggleTimer()
+    const thisUUID = this.uuid
+    button.addEventListener('click', () => {
+      getTimer(thisUUID).toggleTimer()
     })
+
     col1.appendChild(button)
 
     const col2 = document.createElement('div')
@@ -38,9 +39,9 @@ class TimingObject {
     row.appendChild(col2)
 
     const span = document.createElement('span')
-    span.classList = 'btn btn-secondary disabled w-100'
-    span.setAttribute('id', 'TimerCounterView_' + this.name)
-    span.innerHTML = '0 sec'
+    span.classList = 'btn btn-secondary disabled w-100 timer-view'
+    span.setAttribute('id', 'TimerCounterView_' + this.uuid)
+    span.innerHTML = '00:00'
     col2.appendChild(span)
 
     return row
@@ -54,7 +55,7 @@ class TimingObject {
     this.timerRunning = false
     this.startTime = null
     this.timerInterval = null
-    $('#TimerCounterView_' + this.name).html('0 sec')
+    document.getElementById('TimerCounterView_' + this.uuid).innerHTML = '0 sec'
   }
 
   startTimer () {
@@ -76,14 +77,15 @@ class TimingObject {
           thisObject.updateInterface()
         }, 1000) // Once per second
 
-      $('#TimerStartStopButton_' + this.name).html('Stop')
-      $('#TimerStartStopButton_' + this.name).addClass('btn-danger').removeClass('btn-primary')
+      const buttonEl = document.getElementById('TimerStartStopButton_' + this.uuid)
+      buttonEl.innerHTML = 'Stop'
+      buttonEl.classList.add('btn-danger')
+      buttonEl.classList.remove('btn-primary')
     }
   }
 
   stopTimer () {
-    // Stop the timer from incrementing and add the accumulated time to
-    // elapsedTime
+    // Stop the timer from incrementing and add the accumulated time to elapsedTime
 
     if (this.timerRunning) {
       const d = new Date()
@@ -95,8 +97,10 @@ class TimingObject {
       this.timerInterval = null
       this.timerRunning = false
 
-      $('#TimerStartStopButton_' + this.name).html('Start')
-      $('#TimerStartStopButton_' + this.name).addClass('btn-primary').removeClass('btn-danger')
+      const buttonEl = document.getElementById('TimerStartStopButton_' + this.uuid)
+      buttonEl.innerHTML = 'Start'
+      buttonEl.classList.remove('btn-danger')
+      buttonEl.classList.add('btn-primary')
     }
   }
 
@@ -113,18 +117,36 @@ class TimingObject {
 
     const d = new Date()
     const nowTime = d.getTime()
-    const displayTime = String(Math.round((nowTime - this.startTime + this.elapsedTime) / 1000)) + ' sec'
+    const seconds = Math.round((nowTime - this.startTime + this.elapsedTime) / 1000)
 
-    $('#TimerCounterView_' + this.name).html(displayTime)
+    const viewEL = document.getElementById('TimerCounterView_' + this.uuid)
+    viewEL.innerHTML = formatTime(seconds)
   }
 }
 
-function buildLayout (definition) {
-  // Take a layout defition in the form of a dictionary of dictionaries and
-  // create cards for each element
+function formatTime (totalSeconds) {
+  // Time a number of seconds and format it to be human-readable
 
-  // Clear the exisiting layout
-  $('#cardRow').empty()
+  const hours = Math.floor(totalSeconds / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+
+  // Pad with leading zeros to ensure two-digit format
+  const formattedHours = String(hours).padStart(2, '0')
+  const formattedMinutes = String(minutes).padStart(2, '0')
+  const formattedSeconds = String(seconds).padStart(2, '0')
+
+  let result = ''
+  if (formattedHours !== '00') result += formattedHours + ':'
+  result += formattedMinutes + ':' + formattedSeconds
+  return result
+}
+
+function buildLayout (definition) {
+  // Take a layout defition  and create cards for each element
+
+  const cardRow = document.getElementById('cardRow')
+  cardRow.innerHTML = ''
 
   // Clear existing references to cards
   counterList = []
@@ -134,24 +156,18 @@ function buildLayout (definition) {
   textList = []
   timerList = []
 
-  // Loop the dictionaries in the definition and make a card for each
-  const keys = Object.keys(definition)
+  // Loop the widgets in the definition and make a card for each
 
-  for (let i = 0; i < keys.length; i++) {
-    const item = definition[keys[i]]
-    const itemID = keys[i].replace(/[^\p{L}\p{N}]/giu, '_') // Replace non-alphanumeric characters
-    const itemName = keys[i].replace(/,/g, '') // Replace commas, but leave spaces
-    if (!('type' in item)) {
-      console.log(`buildLayout: Error: item ${keys[i]} does not have a type!`)
-      continue
-    }
+  for (const widgetUUID of definition.widget_order) {
+    const item = definition.widgets[widgetUUID]
+
     // Start the card
     const col = document.createElement('div')
-    col.classList = 'col-12 col-sm-6 col-md-6 col-lg-4 mt-2'
+    col.classList = 'col-12 col-sm-6 col-md-6 col-lg-4 col-xl-3 mt-2'
 
     const card = document.createElement('div')
     card.classList = 'card h-100'
-    card.setAttribute('data-name', keys[i])
+    card.setAttribute('data-uuid', item.uuid)
     col.appendChild(card)
 
     const body = document.createElement('div')
@@ -160,23 +176,20 @@ function buildLayout (definition) {
 
     const title = document.createElement('H2')
     title.classList = 'card-title'
-    title.innerHTML = keys[i]
+    title.innerHTML = item.name
     body.appendChild(title)
 
     if ('label' in item) {
       const label = document.createElement('label')
       label.classList = 'form-label'
-      label.setAttribute('for', itemID + '_input')
+      label.setAttribute('for', item.uuid + '_input')
       label.innerHTML = item.label
       body.appendChild(label)
-      // html += `<label for="${itemID}_input">${item.label}</label>`
     }
 
     const inputGroup = document.createElement('div')
     inputGroup.classList = 'input-group mb-3'
     body.appendChild(inputGroup)
-
-    // html += '<div class="input-group mb-3">'
 
     switch (item.type) {
       case 'counter':
@@ -192,9 +205,10 @@ function buildLayout (definition) {
           const decButton = document.createElement('button')
           decButton.classList = 'counter-button btn btn-danger w-100'
           decButton.innerHTML = '-'
-          $(decButton).click(function () {
-            incrementCounter(itemID, -1)
+          decButton.addEventListener('click', () => {
+            incrementCounter(item.uuid, -1)
           })
+
           counterCol1.appendChild(decButton)
 
           const counterCol2 = document.createElement('div')
@@ -207,8 +221,9 @@ function buildLayout (definition) {
 
           const counterVal = document.createElement('span')
           counterVal.classList = 'align-self-center justify-content-center'
-          counterVal.setAttribute('id', itemID + '_counter')
-          counterVal.setAttribute('data-name', itemName)
+          counterVal.setAttribute('id', item.uuid + '_counter')
+          counterVal.setAttribute('data-name', item.name)
+          counterVal.setAttribute('data-count', '0')
           counterVal.style.fontSize = '50px'
           counterVal.innerHTML = 0
           flexRow.appendChild(counterVal)
@@ -220,168 +235,129 @@ function buildLayout (definition) {
           const incButton = document.createElement('button')
           incButton.classList = 'counter-button btn btn-success w-100'
           incButton.innerHTML = '+'
-          $(incButton).click(function () {
-            incrementCounter(itemID, 1)
+          incButton.addEventListener('click', () => {
+            incrementCounter(item.uuid, 1)
           })
+
           counterCol3.appendChild(incButton)
         }
         break
 
       case 'dropdown':
-        if ('options' in item) {
-          let isMultiple = false
-          if ('multiple' in item) {
-            if (item.multiple.toLowerCase() === 'true') {
-              isMultiple = true
-            }
-          }
+      {
+        const isMultiple = item?.multiple ?? false
 
-          const select = document.createElement('select')
-          inputGroup.appendChild(select)
-          select.classList = 'form-select w-100'
-          select.setAttribute('id', itemID + '_input')
-          if (isMultiple) {
-            select.setAttribute('multiple', true)
-          }
-          select.setAttribute('data-name', itemName)
+        const select = document.createElement('select')
+        inputGroup.appendChild(select)
+        select.classList = 'form-select w-100'
+        select.setAttribute('id', item.uuid + '_input')
+        select.setAttribute('data-name', item.name)
 
-          // If we do not have a multiple selector, add a blank entry first
-          // so that it doesn't look like anything has been selected.
-          if (isMultiple === false) {
-            const nullOption = document.createElement('option')
-            nullOption.value = ''
-            select.appendChild(nullOption)
-          }
+        if (isMultiple) {
+          select.setAttribute('multiple', true)
+        } else {
+          // Add a blank option
+          const nullOption = document.createElement('option')
+          nullOption.value = ''
+          select.appendChild(nullOption)
+        }
 
-          const split = item.options.split(',')
-          for (let j = 0; j < split.length; j++) {
-            const value = split[j].trim()
-            const option = document.createElement('option')
-            option.value = value
-            option.innerHTML = value
-            select.appendChild(option)
-          }
+        for (const optionText of item?.options ?? []) {
+          select.appendChild(new Option(optionText))
         }
         break
+      }
 
       case 'number':
-        {
-          const input = document.createElement('input')
-          input.setAttribute('type', 'number')
-          input.setAttribute('id', itemID + '_input')
-          input.setAttribute('data-name', itemName)
-          input.classList = 'form-control'
-          inputGroup.appendChild(input)
-        }
+      {
+        const input = document.createElement('input')
+        input.setAttribute('type', 'number')
+        input.setAttribute('id', item.uuid + '_input')
+        input.setAttribute('data-name', item.name)
+        input.classList = 'form-control'
+        inputGroup.appendChild(input)
         break
+      }
 
       case 'slider':
-        {
-          let min, max, step, start
-          if ('min' in item) {
-            min = item.min
-          } else {
-            min = 0
-          }
-          if ('max' in item) {
-            max = item.max
-          } else {
-            max = 100
-          }
-          if ('step' in item) {
-            step = item.step
-          } else {
-            step = 1
-          }
-          if ('start' in item) {
-            start = item.start
-          } else {
-            start = Math.round((max - min) / 2)
-          }
-          const sliderRow = document.createElement('div')
-          sliderRow.classList = 'row w-100 mx-0'
-          inputGroup.appendChild(sliderRow)
+      {
+        const min = item?.min ?? 1
+        const max = item?.max ?? 5
+        const step = item?.step ?? 1
+        const start = item?.start ?? Math.round((min + max) / 2)
 
-          const col9 = document.createElement('div')
-          col9.classList = 'col-9 ps-0'
-          sliderRow.appendChild(col9)
+        const sliderRow = document.createElement('div')
+        sliderRow.classList = 'row w-100 mx-0'
+        inputGroup.appendChild(sliderRow)
 
-          const slider = document.createElement('input')
-          slider.setAttribute('type', 'range')
-          slider.setAttribute('id', itemID + '_input')
-          slider.setAttribute('data-name', itemName)
-          slider.setAttribute('data-start', start)
-          slider.setAttribute('min', min)
-          slider.setAttribute('max', max)
-          slider.setAttribute('step', step)
-          slider.value = start
-          slider.classList = 'w-100'
-          $(slider).on('input', function () {
-            updateValue(itemID + '_input', itemID + '_input_label')
-          })
-          col9.appendChild(slider)
+        const col9 = document.createElement('div')
+        col9.classList = 'col-9 ps-0'
+        sliderRow.appendChild(col9)
 
-          const col3 = document.createElement('div')
-          col3.classList = 'col-3 pe-0 text-center'
-          sliderRow.appendChild(col3)
+        const slider = document.createElement('input')
+        slider.setAttribute('type', 'range')
+        slider.setAttribute('id', item.uuid + '_input')
+        slider.setAttribute('data-name', item.name)
+        slider.setAttribute('data-start', start)
+        slider.setAttribute('min', min)
+        slider.setAttribute('max', max)
+        slider.setAttribute('step', step)
+        slider.value = start
+        slider.classList = 'w-100'
+        slider.addEventListener('input', () => {
+          updateValue(item.uuid + '_input', item.uuid + '_input_label')
+        })
+        col9.appendChild(slider)
 
-          const sliderLabel = document.createElement('span')
-          sliderLabel.setAttribute('id', itemID + '_input_label')
-          sliderLabel.innerHTML = start
-          col3.appendChild(sliderLabel)
-        }
+        const col3 = document.createElement('div')
+        col3.classList = 'col-3 pe-0 text-center'
+        sliderRow.appendChild(col3)
+
+        const sliderLabel = document.createElement('span')
+        sliderLabel.setAttribute('id', item.uuid + '_input_label')
+        sliderLabel.innerHTML = start
+        col3.appendChild(sliderLabel)
         break
+      }
 
       case 'text':
       {
-        let rows = 5
-        if ('lines' in item) {
-          rows = Math.round(item.lines)
-        }
         const textArea = document.createElement('textarea')
         textArea.classList = 'form-control w-100'
-        textArea.setAttribute('id', itemID + '_input')
-        textArea.setAttribute('data-name', itemName)
-        textArea.setAttribute('rows', rows)
+        textArea.setAttribute('id', item.uuid + '_input')
+        textArea.setAttribute('data-name', item.name)
+        textArea.setAttribute('rows', item?.lines ?? 5)
         inputGroup.appendChild(textArea)
         break
       }
 
       case 'timer':
       {
-        let exclusive = false
-        if ('exclusive' in item) {
-          if (item.exclusive.toLowerCase() === 'true') {
-            exclusive = true
-          }
-        }
-        const timer = new TimingObject(itemName, exclusive)
-
+        const timer = new TimingObject(item.uuid, item.name, item?.exclusive ?? false)
         inputGroup.appendChild(timer.createWidget())
-
         timerList.push(timer)
         break
       }
     }
 
-    $('#cardRow').append(col)
+    cardRow.appendChild(col)
 
     // Store a reference to the appropriate object
     switch (item.type) {
       case 'counter':
-        counterList.push(document.getElementById(itemID + '_counter'))
+        counterList.push(document.getElementById(item.uuid + '_counter'))
         break
       case 'dropdown':
-        dropdownList.push(document.getElementById(itemID + '_input'))
+        dropdownList.push(document.getElementById(item.uuid + '_input'))
         break
       case 'number':
-        numberList.push(document.getElementById(itemID + '_input'))
+        numberList.push(document.getElementById(item.uuid + '_input'))
         break
       case 'slider':
-        sliderList.push(document.getElementById(itemID + '_input'))
+        sliderList.push(document.getElementById(item.uuid + '_input'))
         break
       case 'text':
-        textList.push(document.getElementById(itemID + '_input'))
+        textList.push(document.getElementById(item.uuid + '_input'))
         break
       case 'timer':
         // We already store this reference in timerList as part of object creation
@@ -390,15 +366,25 @@ function buildLayout (definition) {
   }
 }
 
+function badConnection () {
+  // Disable the interface and show a warning
+
+  document.getElementById('connectionWarning').style.display = 'block'
+  document.getElementById('recordButton').setAttribute('disabled', true)
+}
+
+function goodConnection () {
+  // Hide the warning and enable the interface
+
+  document.getElementById('connectionWarning').style.display = 'none'
+  document.getElementById('recordButton').removeAttribute('disabled')
+}
+
 function checkConnection () {
   // Send a message to the server checking that the connection is stable.
 
-  function badConnection () {
-    $('#connectionWarning').show()
-    $('#recordButton').prop('disabled', true)
-  }
   const xhr = new XMLHttpRequest()
-  xhr.open('GET', serverIP + '/system/checkConnection', true)
+  xhr.open('GET', '/system/checkConnection', true)
   xhr.timeout = 1000
   xhr.setRequestHeader('Content-Type', 'application/json')
   xhr.overrideMimeType('text/plain; charset=x-user-defined')
@@ -410,8 +396,7 @@ function checkConnection () {
     if (this.status === 200) {
       const response = JSON.parse(this.responseText)
       if (response.success === true) {
-        $('#connectionWarning').hide()
-        $('#recordButton').prop('disabled', false)
+        goodConnection()
       }
     }
   }
@@ -423,6 +408,7 @@ function clearInput () {
 
   counterList.forEach(item => {
     item.innerHTML = '0'
+    item.setAttribute('data-count', '0')
   })
   dropdownList.forEach(item => {
     item.value = ''
@@ -433,8 +419,9 @@ function clearInput () {
   })
 
   sliderList.forEach(item => {
-    item.value = $(item).data('start')
-    document.getElementById(item.id + '_label').innerHTML = $(item).data('start')
+    const start = item.getAttribute('data-start')
+    item.value = start
+    document.getElementById(item.id + '_label').innerHTML = start
   })
 
   textList.forEach(item => {
@@ -446,18 +433,21 @@ function clearInput () {
   })
 }
 
-function incrementCounter (id, valueToAdd) {
+function incrementCounter (uuid, valueToAdd) {
   // Function to add the given number to the counter with the specified id
 
-  const curValue = parseInt($('#' + id + '_counter').html())
-  $('#' + id + '_counter').html(curValue + valueToAdd)
+  const counterEl = document.getElementById(uuid + '_counter')
+  const value = parseInt(counterEl.getAttribute('data-count')) + valueToAdd
+
+  counterEl.setAttribute('data-count', value)
+  counterEl.innerHTML = value
 }
 
-function getTimer (name) {
-  // Get a TimingObject by its name
+function getTimer (uuid) {
+  // Get a TimingObject by its uuid
 
   const result = timerList.find(obj => {
-    return obj.name === name
+    return obj.uuid === uuid
   })
 
   return result
@@ -475,22 +465,36 @@ function sendData () {
     resultDict[item.displayName] = item.elapsedTime / 1000
   })
   counterList.forEach(item => {
-    resultDict[$(item).data('name')] = parseInt(item.innerHTML)
+    const name = item.getAttribute('data-name')
+    resultDict[name] = parseInt(item.getAttribute('data-count'))
   })
   dropdownList.forEach(item => {
-    resultDict[$(item).data('name')] = $(item).val() // To support getting multiple values
+    const name = item.getAttribute('data-name')
+    let result = []
+
+    for (const opt of item.options) {
+      if (opt.selected) {
+        result.push(opt.value || opt.text)
+      }
+    }
+    if (item.getAttribute('multiple') == null) result = result[0]
+
+    resultDict[name] = result
   })
 
   numberList.forEach(item => {
-    resultDict[$(item).data('name')] = parseFloat(item.value)
+    const name = item.getAttribute('data-name')
+    resultDict[name] = parseFloat(item.value)
   })
 
   sliderList.forEach(item => {
-    resultDict[$(item).data('name')] = parseFloat(item.value)
+    const name = item.getAttribute('data-name')
+    resultDict[name] = parseFloat(item.value)
   })
 
   textList.forEach(item => {
-    resultDict[$(item).data('name')] = item.value
+    const name = item.getAttribute('data-name')
+    resultDict[name] = item.value
   })
 
   // Append the date and time of this recording
@@ -506,7 +510,7 @@ function sendData () {
   const requestString = JSON.stringify(requestDict)
 
   const xhr = new XMLHttpRequest()
-  xhr.open('POST', serverIP + '/tracker/flexible-tracker/submitData', true)
+  xhr.open('POST', '/tracker/flexible-tracker/submitData', true)
   xhr.timeout = 5000
   xhr.setRequestHeader('Content-Type', 'application/json')
   xhr.overrideMimeType('text/plain; charset=x-user-defined')
@@ -529,29 +533,39 @@ function updateValue (fromID, toID) {
   document.getElementById(toID).innerHTML = obj.value
 }
 
-function populateLayoutDropdown (definitionList) {
+function populateLayoutDropdown (templateList) {
   // Take a list of layouts and fill up the dropdown list
-  definitionList.forEach(item => {
-    const name = item.split('.').slice(0, -1).join('.')
-    const html = `<option value="${name}">${name}</option>`
-    $('#definitionListDropdown').append(html)
-  })
+
+  const definitionListDropdown = document.getElementById('definitionListDropdown')
+  for (const template of templates) {
+    definitionListDropdown.appendChild(new Option(template.name, template.uuid))
+  }
 }
 
-function loadLayout (toLoad = '') {
+async function loadLayout (toLoad = '') {
+  // Load the template with the specified UUID or get the selected value from the list
   if (toLoad === '') {
     const dropdownName = document.getElementById('definitionListDropdown').value
-    if (dropdownName === '') {
-      return
-    } else {
-      toLoad = dropdownName
-      configurationName = toLoad
-    }
+    if (dropdownName === '') return
+    toLoad = dropdownName
   }
-  exTracker.loadLayoutDefinition(toLoad, buildLayout)
+
+  const template = await exTracker.loadTemplate(toLoad)
+  configurationName = template?.name ?? 'Tracker Data'
+  buildLayout(template)
+
+  const definitionListCol = document.getElementById('definitionListCol')
+  const titleCol = document.getElementById('titleCol')
+  if ((template?.guest_facing ?? false) === true) {
+    definitionListCol.style.display = 'none'
+    titleCol.style.display = 'none'
+  } else {
+    definitionListCol.style.display = 'block'
+    titleCol.style.display = 'block'
+  }
 }
 
-function parseQueryString () {
+async function parseQueryString () {
   // Read the query string to determine what options to set
 
   const queryString = decodeURIComponent(window.location.search)
@@ -559,12 +573,17 @@ function parseQueryString () {
   const searchParams = new URLSearchParams(queryString)
 
   if (searchParams.has('layout')) {
-    const layout = searchParams.get('layout')
-    loadLayout(layout)
-    configurationName = layout
-    $('#definitionListDropdown').val(layout)
-    // Clear the query string so it reloads clean on refresh
-    history.pushState(null, '', location.href.split('?')[0])
+    const layoutUUID = searchParams.get('layout')
+    loadLayout(layoutUUID)
+    configurationName = layoutUUID
+    document.getElementById('definitionListDropdown').value = layoutUUID
+
+    const template = await exTracker.loadTemplate(layoutUUID)
+
+    if ((template?.guest_facing ?? false) === false) {
+      // Clear the query string so it reloads clean on refresh
+      history.pushState(null, '', location.href.split('?')[0])
+    }
   }
 }
 
@@ -575,9 +594,11 @@ if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').match
   document.querySelector('html').setAttribute('data-bs-theme', 'light')
 }
 
-$('#recordButton').click(sendData)
-$('#clearButton').click(clearInput)
-$('#definitionListDropdown').change(function () { loadLayout() })
+document.getElementById('recordButton').addEventListener('click', sendData)
+document.getElementById('clearButton').addEventListener('click', clearInput)
+document.getElementById('definitionListDropdown').addEventListener('change', () => {
+  loadLayout()
+})
 
 let configurationName = 'test'
 
@@ -589,7 +610,7 @@ let sliderList = []
 let textList = []
 let timerList = []
 
-const serverIP = window.location.origin
-exTracker.getAvailableDefinitions(populateLayoutDropdown)
+const templates = await exTracker.getAvailableTemplates()
+populateLayoutDropdown(templates)
 setTimeout(parseQueryString, 300)
 setInterval(checkConnection, 500)

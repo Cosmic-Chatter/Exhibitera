@@ -1,4 +1,4 @@
-/* global platform, html2canvas, $ */
+/* global platform, html2canvas */
 
 export const config = {
   permissions: {
@@ -21,16 +21,22 @@ export const config = {
   group: 'Default',
   helperAddress: 'http://localhost:8000',
   id: 'TEMP ' + String(new Date().getTime()),
-  platformDetails: {
-    operating_system: String(platform.os),
-    browser: platform.name + ' ' + platform.version
-  },
   remoteDisplay: false, // false == we are using the webview app, true == browser
   serverAddress: '',
-  softwareVersion: 5.2,
+  softwareVersion: 5.1,
   standalone: false, // false == we are using Hub
   updateParser: null, // Function used by readUpdate() to parse app-specific updates
   uuid: ''
+}
+
+// platform.js might not be included in 3rd-party apps
+try {
+  config.platformDetails = {
+    operating_system: String(platform.os),
+    browser: platform.name + ' ' + platform.version
+  }
+} catch {
+  console.log('script platform.js not found. Include this script to send additional details to Hub.')
 }
 
 export function configureApp (opt = {}) {
@@ -420,8 +426,12 @@ export function askForDefaults (changeApp = true) {
   // Set changeApp === false to supress changing the app based on the current definition
 
   const checkAgain = function () {
-    $('#helperConnectionWarningAddress').text(config.helperAddress)
-    $('#helperConnectionWarning').show()
+    try {
+      document.getElementById('helperConnectionWarningAddress').innerHTML = config.helperAddress
+      document.getElementById('helperConnectionWarning').style.display = 'block'
+    } catch {
+      // Will fail if these elements don't exist
+    }
     console.log('Could not get defaults... checking again')
     setTimeout(askForDefaults, 500)
   }
@@ -601,6 +611,7 @@ export function gotoApp (app, other = '') {
   console.log(app)
   const appLocations = {
     dmx_control: '/dmx_control.html',
+    image_compare: '/image_compare.html',
     infostation: '/infostation.html',
     media_browser: '/media_browser.html',
     media_player: '/media_player.html',
@@ -624,6 +635,7 @@ export function gotoApp (app, other = '') {
 export function appNameToDisplayName (appName) {
   const displayNames = {
     dmx_control: 'DMX Control',
+    image_compare: 'Image Compare',
     infostation: 'InfoStation',
     media_browser: 'Media Browser',
     media_player: 'Media Player',
@@ -736,16 +748,22 @@ export function createLanguageSwitcher (def, localize) {
 
   const langs = Object.keys(def.languages)
 
-  if (langs.length === 1) {
+  const langSwitchDropdown = document.getElementById('langSwitchDropdown')
+  const langSwitchOptions = document.getElementById('langSwitchOptions')
+
+  if (langs.length < 2) {
     // No switcher necessary
-    $('#langSwitchDropdown').hide()
+    langSwitchDropdown.style.display = 'none'
     return
   }
 
-  $('#langSwitchDropdown').show()
+  langSwitchDropdown.style.display = 'flex'
+
   // Cycle the languages and build an entry for each
-  $('#langSwitchOptions').empty()
-  langs.forEach((code) => {
+  const langOrder = def?.language_order || langs
+  langSwitchOptions.innerHTML = ''
+
+  langOrder.forEach((code) => {
     const name = def.languages[code].display_name
 
     const li = document.createElement('li')
@@ -776,16 +794,21 @@ export function createLanguageSwitcher (def, localize) {
     span.innerHTML = name
     button.appendChild(span)
 
-    $('#langSwitchOptions').append(li)
+    langSwitchOptions.appendChild(li)
   })
 }
 
 export function getColorAsRGBA (el, prop) {
   // Look up the given CSS property on the given element and return an object with the RGBA values.
 
-  if ((typeof el === 'string') && (el[0] !== '#')) el = '#' + el
+  // Get the element (assumes el is a DOM element or a selector string)
+  const element = typeof el === 'string' ? document.querySelector(el) : el
+  if (!element) {
+    throw new Error(`Element ${el} not found.`)
+  }
 
-  const color = $(el).css(prop) // Should be string of form RGBA(R,G,B,A) or RGB(R,G,B)
+  // Get the computed style for the given property
+  const color = window.getComputedStyle(element).getPropertyValue(prop)
   const colorSplit = color.split(', ')
   const result = {
     r: parseInt(colorSplit[0].split('(')[1]),
@@ -793,18 +816,22 @@ export function getColorAsRGBA (el, prop) {
     b: parseInt(colorSplit[2].split(')')[0].trim())
   }
 
-  if (color.slice(0, 4) === 'RGBA') {
-    result.a = parseFloat(colorSplit.split(',')[3].split(')')[0].trim())
+  if (color.slice(0, 4).toLowerCase() === 'rgba') {
+    try {
+      result.a = parseFloat(colorSplit[3].split(')')[0].trim())
+    } catch {
+      console.log('getColorAsRGBA: error getting opacity')
+    }
   }
   return result
 }
 
 export function classifyColor (color) {
-  // Take an object of the form {r: 134, g: 234, b: 324} and return 'light' or 'dark'
+  // Take an object of the form {r: 134, g: 234, b: 224} and return 'light' or 'dark'
   // Depending on the luminance
   // From https://stackoverflow.com/questions/3942878/how-to-decide-font-color-in-white-or-black-depending-on-background-color
 
-  if ((color.r * 0.299 + color.g * 0.587 + color.b * 0.114) > 186) {
+  if ((color.r * 0.299 + color.g * 0.587 + color.b * 0.114) > 125) {
     return 'light'
   }
   return 'dark'

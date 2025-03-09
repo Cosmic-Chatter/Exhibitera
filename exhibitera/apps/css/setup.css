@@ -1,4 +1,3 @@
-/* Style for the color pickers */
 .accordion-button {
     font-size: 20px;
     display: block;
@@ -39,7 +38,6 @@
     overflow-y: auto;
 }
 
-/* Classes for various preview aspect ratios */
 .preview-16x9 {
     --previewHeight: 1080px;
     width: 1920px;
@@ -63,4 +61,11 @@
 .preview-3x4 {
     --previewHeight: 1920px;
     width: 1440px;
+}
+
+@media (prefers-color-scheme: dark) {
+}
+
+@media (prefers-color-scheme: light) {
+
 }

@@ -1,4 +1,5 @@
 import * as exCommon from '../js/exhibitera_app_common.js'
+import * as exMarkdown from '../js/exhibitera_app_markdown.js'
 
 function buildLayout (definition) {
   // Take a layout defition in the form of a dictionary of dictionaries and
@@ -62,7 +63,7 @@ function buildLayout (definition) {
       card.appendChild(img)
     }
 
-    if ('label' in buttonDef && buttonDef.label.trim() !== '') {
+    if (buttonDef.label && buttonDef.label.trim() !== '') {
       const text = document.createElement('div')
       text.classList = 'd-flex align-items-center justify-content-center'
       card.appendChild(text)
@@ -70,7 +71,7 @@ function buildLayout (definition) {
       const title = document.createElement('div')
       title.classList = 'card-title my-0 noselect'
 
-      title.innerHTML = buttonDef.label
+      title.innerHTML = exMarkdown.formatText(buttonDef.label, { removeParagraph: true, string: true })
       text.append(title)
     }
   })
@@ -196,38 +197,22 @@ function loadDefinition (definition) {
   // Parse the settings and make the appropriate changes
 
   // Text settings
-  if ('header' in definition.text && definition.text.header.trim() !== '') {
-    document.getElementById('header').innerHTML = definition.text.header
-    document.getElementById('headerCol').style.display = 'block'
-  } else {
-    document.getElementById('header').innerHTML = ''
-    document.getElementById('headerCol').style.display = 'none'
-  }
-  if ('subheader' in definition.text && definition.text.subheader.trim() !== '') {
-    document.getElementById('subheader').innerHTML = definition.text.subheader
-    document.getElementById('subheaderCol').style.display = 'block'
-  } else {
-    document.getElementById('subheader').innerHTML = ''
-    document.getElementById('subheaderCol').style.display = 'none'
-  }
-  if ('footer' in definition.text && definition.text.footer.trim() !== '') {
-    document.getElementById('footer').innerHTML = definition.text.footer
-    document.getElementById('footerCol').style.display = 'block'
-  } else {
-    document.getElementById('footer').innerHTML = ''
-    document.getElementById('footerCol').style.display = 'none'
-  }
-  if ('subfooter' in definition.text && definition.text.subfooter.trim() !== '') {
-    document.getElementById('subfooter').innerHTML = definition.text.subfooter
-    document.getElementById('subfooterCol').style.display = 'block'
-  } else {
-    document.getElementById('subfooter').innerHTML = ''
-    document.getElementById('subfooterCol').style.display = 'none'
-  }
-  if ('success_message' in definition.text && definition.text.success_message.trim() !== '') {
-    document.getElementById('successMessageBody').innerHTML = definition.text.success_message
-  } else {
-    document.getElementById('successMessageBody').innerHTML = 'Thank you!'
+  for (const item of ['header', 'subheader', 'footer', 'subfooter', 'success_message']) {
+    const text = definition?.text?.[item] ?? ''
+    const col = document.getElementById(item + 'Col')
+    const el = document.getElementById(item)
+    if (text !== '') {
+      if (item !== 'success_message') {
+        col.style.display = 'block'
+        el.innerHTML = exMarkdown.formatText(text, { removeParagraph: true, string: true })
+      } else {
+        document.getElementById('successMessageBody').innerHTML = exMarkdown.formatText(text, { removeParagraph: true, string: true })
+      }
+    } else {
+      if (item !== 'success_message') {
+        col.style.display = 'none'
+      }
+    }
   }
 
   // Color settings

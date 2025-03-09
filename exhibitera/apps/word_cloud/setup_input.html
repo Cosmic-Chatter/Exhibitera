@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="../css/bootstrap_5_3/bootstrap.min.css">
     <link rel="stylesheet" href="../css/coloris.min.css">
     <link rel="stylesheet" href="../css/setup.css">
+    <link rel="stylesheet" href="../css/tiny-mde-Exhiibtera.css">
 
     <title>Word Cloud Input Setup</title>
 
@@ -381,11 +382,12 @@
               <div id="content" class="accordion-collapse collapse" data-bs-parent="#topLevelAccordion">
                 <div class="accordion-body">
                   <div class="row gy-2">
-                    <div class="col-12 col-md-6 col-lg-4">
+                    <div class="col-12 col-md-6 col-xl-4">
                       <label for="promptInput" class="form-label">Prompt</label>
-                      <input type="text" class="form-control" id="promptInput">
+                      <div id="promptInputCommandBar"></div>
+                      <div id="promptInput"></div>
                     </div>
-                    <div class="col-12 col-md-6 col-lg-4">
+                    <div class="col-12 col-md-6 col-xl-4">
                       <label for="placeholderTextInput" class="form-label">Placeholder text</label>
                       <input type="text" class="form-control localization-input" id="placeholderTextInput" placeholder="Type to enter response" data-property="placeholder">
                     </div>
@@ -526,6 +528,7 @@
   <script type="text/javascript" src="../js/jquery-3.7.1.min.js"></script>
   <script type="text/javascript" src="../js/bootstrap_5_3/bootstrap.bundle.min.js"></script>
   <script type="text/javascript" src="../js/showdown.min.js"></script>
+  <script type="text/javascript" src="../js/tiny-mde.min.js"></script>
   <script type="text/javascript" src="../js/platform.js"></script>
   <script type="text/javascript" src="../js/coloris.min.js"></script>
   <script type="module" src="setup_input.js"></script>

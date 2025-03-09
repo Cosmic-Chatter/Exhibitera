@@ -16,6 +16,7 @@ import zipfile
 
 # Non-standard imports
 import mimetypes
+import requests
 
 ffmpeg_path: str
 try:
@@ -509,7 +510,9 @@ def create_thumbnail(filename: str,
 
             # First, find the length of the video
             _, video_details = get_video_file_details(filename)
-            duration_sec = round(video_details["duration"])
+            duration_sec = round(video_details.get('duration', 0))
+            if duration_sec == 0:
+                return False, "video has no duration"
 
             # Then, create the video thumbnail
             proc = subprocess.Popen([ffmpeg_path, "-y", "-i", file_path,
@@ -629,6 +632,9 @@ def get_video_file_details(filename: str) -> tuple[bool, dict[str, Any]]:
         success = False
     except ImportError as e:
         print("get_video_file_details: error loading FFmpeg: ", e)
+        success = False
+    except ValueError as e:
+        print("get_video_file_details: value error: ", e)
         success = False
 
     return success, details
@@ -786,15 +792,9 @@ def get_all_directory_contents(directory: str = "content") -> tuple[list, list[d
             'name': file
         }
         path = get_path(["content", file], user_file=True)
-        file_details['size'] = os.path.getsize(path)  # in bytes
-        if file_details['size'] > 1e9:
-            file_details['size_text'] = str(round(file_details['size'] / 1e9 * 10) / 10) + ' GB'
-        elif file_details['size'] > 1e6:
-            file_details['size_text'] = str(round(file_details['size'] / 1e6 * 10) / 10) + ' MB'
-        elif file_details['size'] > 1e3:
-            file_details['size_text'] = str(round(file_details['size'] / 1e3)) + ' kB'
-        else:
-            file_details['size_text'] = str(file_details['size']) + ' bytes'
+        file_size, size_text = get_file_size(path)
+        file_details['size'] = file_size
+        file_details['size_text'] = size_text
         content_details.append(file_details)
 
     return content, content_details
@@ -833,6 +833,55 @@ def check_directory_structure():
         os.listdir(v2_thumbs)
     except FileNotFoundError:
         os.mkdir(v2_thumbs)
+
+
+def get_file_size(path: str) -> (int, str):
+    """Return the size of the specified file.
+
+    Returns a tuple of (size_in_bytes, human_readable)
+    """
+
+    file_size = os.path.getsize(path)  # in bytes
+    return file_size, convert_bytes_to_readable(file_size)
+
+
+def convert_bytes_to_readable(file_size: int | float) -> str:
+    """Convert the given file size in bytes to a human-readable string."""
+
+    if file_size > 1e12:
+        size_text = str(round(file_size / 1e12 * 100) / 100) + ' TB'
+    elif file_size > 1e9:
+        size_text = str(round(file_size / 1e9 * 100) / 100) + ' GB'
+    elif file_size > 1e6:
+        size_text = str(round(file_size / 1e6 * 10) / 10) + ' MB'
+    elif file_size > 1e3:
+        size_text = str(round(file_size / 1e3)) + ' kB'
+    else:
+        size_text = str(file_size) + ' bytes'
+
+    return size_text
+
+
+def download_file(url: str, path_to_save: str) -> bool:
+    """Download the file at the given url and save it to disk."""
+
+    with config.content_file_lock:
+        try:
+            with requests.get(url, stream=True, timeout=2) as r:
+                try:
+                    # Check that we received a good response
+                    r.raise_for_status()
+                except requests.HTTPError:
+                    return False
+
+                with open(path_to_save, 'wb') as f:
+                    for chunk in r.iter_content(chunk_size=8192):
+                        f.write(chunk)
+        except requests.exceptions.ReadTimeout:
+            print("download_file: timeout retrieving ", url)
+            return False
+
+    return True
 
 
 # Set up log file

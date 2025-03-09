@@ -1,3 +1,5 @@
+/* global bootstrap */
+
 import config from './config.js'
 import exConfig from './config.js'
 import * as constDMX from './exhibitera_dmx.js'
@@ -169,7 +171,7 @@ class BaseComponent {
   populateActionMenu (dropdownMenu, groupUUID, permission = 'view') {
     // Build out the dropdown menu options based on the this.permissions.
 
-    $(dropdownMenu).empty()
+    dropdownMenu.innerHTML = ''
     const thisId = this.id
     const thisUUID = this.uuid
     let numOptions = 0
@@ -327,8 +329,13 @@ class BaseComponent {
       }
 
       // Strip all existing classes, then add the new one
-      $('#' + this.uuid + '_' + group + '_MainButton').removeClass('btn-primary btn-warning btn-danger btn-success btn-info').addClass(btnClass)
-      $('#' + this.uuid + '_' + group + '_DropdownButton').removeClass('btn-primary btn-warning btn-danger btn-success btn-info').addClass(btnClass)
+      const mainButton = document.getElementById(this.uuid + '_' + group + '_MainButton')
+      mainButton.classList.remove('btn-primary', 'btn-warning', 'btn-danger', 'btn-success', 'btn-info')
+      mainButton.classList.add(btnClass)
+
+      const dropdownButton = document.getElementById(this.uuid + '_' + group + '_DropdownButton')
+      dropdownButton.classList.remove('btn-primary', 'btn-warning', 'btn-danger', 'btn-success', 'btn-info')
+      dropdownButton.classList.add(btnClass)
     }
   }
 
@@ -880,10 +887,9 @@ function showExhibitComponentInfo (uuid, groupUUID) {
   }
 
   const obj = getExhibitComponentByUUID(uuid)
-
-  $('#componentInfoModal').data('id', obj.id)
-  $('#componentInfoModal').data('uuid', uuid)
-  document.getElementById('componentInfoModal').setAttribute('data-uuid', obj.uuid)
+  const componentInfoModal = document.getElementById('componentInfoModal')
+  componentInfoModal.setAttribute('data-id', obj.id)
+  componentInfoModal.setAttribute('data-uuid', uuid)
 
   document.getElementById('componentInfoModalTitle').innerHTML = obj.id
 
@@ -951,8 +957,6 @@ function showExhibitComponentInfo (uuid, groupUUID) {
   updateComponentInfoDescription(obj.description)
 
   // Show/hide warnings and checkboxes as appropriate
-  $('#componentInfoModalThumbnailCheckbox').prop('checked', true)
-  $('#componentSaveConfirmationButton').hide()
   clearComponentInfoStatusMessage()
 
   document.getElementById('componentInfoModalViewScreenshot').style.display = 'none'
@@ -961,7 +965,8 @@ function showExhibitComponentInfo (uuid, groupUUID) {
   document.getElementById('componentInfoModalWakeOnLANSettings').style.display = 'none'
 
   $('#componentInfoModaProejctorTabButton').hide()
-  $('#componentInfoModalModelGroup').hide()
+  document.getElementById('componentInfoModalModelGroup').style.display = 'none'
+
   document.getElementById('componentInfoModalProjectorSettings').style.display = 'none'
 
   // Populate maintenance details
@@ -982,7 +987,7 @@ function showExhibitComponentInfo (uuid, groupUUID) {
   document.getElementById('componentInfoModalDefinitionsTabButton').style.display = 'none'
 
   $('#componentInfoModalDMXTabButton').hide()
-  $('#contentUploadSystemStatsView').hide()
+  document.getElementById('contentUploadSystemStatsView').style.display = 'none'
 
   // Based on the component type, configure the various tabs and panes
   if (obj.type === 'exhibit_component') {
@@ -1032,13 +1037,12 @@ function configureComponentInfoModalForExhibitComponent (obj, permission) {
     groupSelect.appendChild(option)
   }
 
-  $('#componentInfoModalSettingsAppName').val(obj.exhibiteraAppId)
   $('#componentInfoModalFullSettingsButton').prop('href', obj.helperAddress + '?showSettings=true')
-  $('#componentInfoModalSettingsAutoplayAudio').val(String(obj.permissions.audio))
-  $('#componentInfoModalSettingsAllowRefresh').val(String(obj.permissions.refresh))
-  $('#componentInfoModalSettingsAllowRestart').val(String(obj.permissions.restart))
-  $('#componentInfoModalSettingsAllowShutdown').val(String(obj.permissions.shutdown))
-  $('#componentInfoModalSettingsAllowSleep').val(String(obj.permissions.sleep))
+  document.getElementById('componentInfoModalSettingsAutoplayAudio').value = String(obj.permissions.audio)
+  document.getElementById('componentInfoModalSettingsAllowRefresh').value = String(obj.permissions.refresh)
+  document.getElementById('componentInfoModalSettingsAllowRestart').value = String(obj.permissions.restart)
+  document.getElementById('componentInfoModalSettingsAllowShutdown').value = String(obj.permissions.shutdown)
+  document.getElementById('componentInfoModalSettingsAllowSleep').value = String(obj.permissions.sleep)
 
   document.getElementById('componentInfoModalSettingsPermissionsPane').style.display = 'flex'
   document.getElementById('componentInfoModalFullSettingsButton').style.display = 'inline-block'
@@ -1104,25 +1108,18 @@ function configureComponentInfoModalForProjector (obj) {
     if (('other' in obj.state.error_status) && (obj.state.error_status.other !== 'ok')) {
       createProjectorWarningEntry('Other', obj.state.error_status.other, "An unspecified error. Consult the projector's menu for more information")
     }
-  } else {
-    $('#projectorInfoLampState').html('-')
-    $('#projectorInfoFanState').html('-')
-    $('#projectorInfoFilterState').html('-')
-    $('#projectorInfoCoverState').html('-')
-    $('#projectorInfoOtherState').html('-')
-    $('#projectorInfoTempState').html('-')
   }
   if ('model' in obj.state) {
-    $('#componentInfoModalModel').html(obj.state.model)
-    $('#componentInfoModalModelGroup').show()
+    document.getElementById('componentInfoModalModel').innerHTML = obj.state.model
+    document.getElementById('componentInfoModalModelGroup').style.display = 'block'
   } else {
-    $('#componentInfoModalModelGroup').hide()
+    document.getElementById('componentInfoModalModelGroup').style.display = 'none'
   }
 
   if ('lamp_status' in obj.state && obj.state.lamp_status !== '') {
     const lampList = obj.state.lamp_status
 
-    $('#componentInfoModalProjectorLampList').empty()
+    document.getElementById('componentInfoModalProjectorLampList').innerHTML = ''
     for (let i = 0; i < lampList.length; i++) {
       createProjectorLampStatusEntry(lampList[i], i)
     }
@@ -1416,6 +1413,7 @@ export function convertAppIDtoDisplayName (appName) {
     const exhibiteraAppIdDisplayNames = {
       dmx_control: 'DMX Control',
       heartbeat: 'Heartbeat',
+      image_compare: 'Image Compare',
       infostation: 'InfoStation',
       media_browser: 'Media Browser',
       media_player: 'Media Player',
@@ -1445,7 +1443,7 @@ function createProjectorLampStatusEntry (entry, number) {
   const containerCol = document.createElement('div')
   containerCol.classList = 'col-6 col-sm-4 mb-3'
   $(containerCol).data('config', entry)
-  $('#componentInfoModalProjectorLampList').append(containerCol)
+  document.getElementById('componentInfoModalProjectorLampList').appendChild(containerCol)
 
   const containerRow = document.createElement('div')
   containerRow.classList = 'row px-1'
@@ -1580,9 +1578,11 @@ export function removeExhibitComponentFromModal () {
 function populateComponentDefinitionList (definitions, thumbnails, permission) {
   // Take a dictionary of definitions and convert it to GUI elements.
 
-  const component = getExhibitComponent($('#componentInfoModal').data('id'))
+  const id = document.getElementById('componentInfoModal').getAttribute('data-id')
+  const component = getExhibitComponent(id)
 
-  $('#componentInfoModalDefinitionList').empty()
+  const componentInfoModalDefinitionList = document.getElementById('componentInfoModalDefinitionList')
+  componentInfoModalDefinitionList.innerHTML = ''
 
   const sortedByName = Object.keys(definitions).sort((a, b) => {
     try {
@@ -1681,12 +1681,12 @@ function populateComponentDefinitionList (definitions, thumbnails, permission) {
       editOption.innerHTML = 'Edit'
       dropdownMenu.appendChild(editOption)
 
-      if (['media_player', 'voting_kiosk', 'word_cloud_input', 'word_cloud_viewer'].includes(definition.app)) {
+      if (['image_compare', 'media_player', 'timelapse_viewer', 'voting_kiosk', 'word_cloud_input', 'word_cloud_viewer'].includes(definition.app)) {
         const copyOption = document.createElement('a')
         copyOption.classList = 'dropdown-item'
         copyOption.innerHTML = 'Copy to...'
         copyOption.addEventListener('click', () => {
-          showCopyDefinitionModal(component.uuid, definition.uuid)
+          showCopyDefinitionModal(component.uuid, definition.uuid, definition.name)
         })
         dropdownMenu.appendChild(copyOption)
       }
@@ -1746,14 +1746,23 @@ function populateComponentDefinitionList (definitions, thumbnails, permission) {
 
     row.appendChild(app)
 
-    $('#componentInfoModalDefinitionList').append(col)
+    componentInfoModalDefinitionList.appendChild(col)
   })
 }
 
-function showCopyDefinitionModal (componentUUID, definitionUUID) {
+function showCopyDefinitionModal (componentUUID, definitionUUID, definitionName) {
   // Set up and show the model for copying a definition from one component to another
 
   const component = getExhibitComponentByUUID(componentUUID)
+  const modal = document.getElementById('copyDefinitionModal')
+  modal.setAttribute('data-definition', definitionUUID)
+  modal.setAttribute('data-component', componentUUID)
+
+  const submitButton = document.getElementById('copyDefinitionModalSubmitButton')
+  submitButton.innerHTML = 'Copy'
+  submitButton.classList.remove('btn-info')
+  submitButton.classList.add('btn-primary')
+  submitButton.style.display = 'none'
 
   const url = component.getHelperURL()
   if (url == null) {
@@ -1761,26 +1770,249 @@ function showCopyDefinitionModal (componentUUID, definitionUUID) {
     console.log('Error: No helper address')
   }
 
+  let content = []
   exTools.makeRequest({
     method: 'GET',
     url,
     endpoint: '/definitions/' + definitionUUID + '/getContentList'
   }).then((result) => {
     console.log(result)
+
+    // Populate source files
+    const sourceDiv = document.getElementById('copyDefinitionModalSourceFiles')
+    sourceDiv.innerHTML = ''
+
+    sourceDiv.appendChild(copyDefinitionModalCreateSourceHTML(definitionName, '', true))
+    if (result.content && result.content.length > 0) {
+      content = result.content
+      modal.setAttribute('data-sourceFiles', JSON.stringify(result.content))
+
+      let supportingText = ' supporting file'
+      if (result.content.length > 1) supportingText = ' supporting files'
+      sourceDiv.appendChild(copyDefinitionModalCreateSourceHTML(String(result.content.length) + supportingText, result?.total_size ?? ''))
+    } else {
+      modal.setAttribute('data-sourceFiles', JSON.stringify([]))
+    }
+
+    // Populate destination options
+    const destDiv = document.getElementById('copyDefinitionModalDestinations')
+    destDiv.innerHTML = ''
+
+    const compsByGroup = exTools.sortComponentsByGroup()
+    const groups = Object.keys(compsByGroup)
+    let totalComps = 0
+
+    for (const group of groups) {
+      const comps = compsByGroup[group]
+
+      const compsToShow = []
+      for (const comp of comps) {
+        if (comp.type !== 'exhibit_component') continue
+        if (comp.status !== exConfig.STATUS.ONLINE && comp.status !== exConfig.STATUS.ACTIVE) continue
+        if (comp.uuid === componentUUID) continue
+        totalComps += 1
+        compsToShow.push(comp)
+      }
+      if (compsToShow.length === 0) continue
+
+      const label = document.createElement('label')
+      label.innerHTML = exTools.getGroup(group)?.name ?? group
+      label.classList = 'text-secondary'
+      destDiv.appendChild(label)
+
+      for (const comp of compsToShow) {
+        destDiv.appendChild(copyDefinitionModalCreateDestinationHTML(comp, group, definitionUUID, content))
+      }
+    }
+
+    if (totalComps === 0) destDiv.innerHTML = '<i>No available components</i>'
+
+    $('#componentInfoModal').modal('hide')
+    $('#copyDefinitionModal').modal('show')
   })
+}
+
+function copyDefinitionModalCreateDestinationHTML (component, group, def, content) {
+  // Take an exhibit component and build an HTML representation.
+  // Check if the given destination contains a definition or content of the
+  // same name and warn the user.
+
+  const modal = document.getElementById('copyDefinitionModal')
+  const submitButton = document.getElementById('copyDefinitionModalSubmitButton')
+
+  const col = document.createElement('div')
+  col.classList = 'col-12'
+
+  const checkGroup = document.createElement('div')
+  checkGroup.classList = 'form-check'
+  col.appendChild(checkGroup)
+
+  const input = document.createElement('input')
+  input.classList = 'form-check-input copyDest'
+  input.setAttribute('type', 'checkbox')
+  input.setAttribute('id', 'copyOption_' + group + '_' + component.uuid)
+  input.setAttribute('data-uuid', component.uuid)
+  input.value = ''
+  input.addEventListener('change', (ev) => {
+    const checked = modal.querySelectorAll('input.copyDest:checked')
+    if (checked.length > 0) {
+      submitButton.style.display = 'block'
+    } else submitButton.style.display = 'none'
+  })
+  checkGroup.appendChild(input)
+
+  const label = document.createElement('label')
+  label.classList = 'form-check-label'
+  label.setAttribute('for', 'copyOption_' + group + '_' + component.uuid)
+  label.innerHTML = component.id
+  checkGroup.appendChild(label)
+
+  // Check if the given definition already exists on the destination
+  exTools.makeRequest({
+    method: 'GET',
+    url: component.getHelperURL(),
+    endpoint: '/getAvailableContent'
+  })
+    .then((result) => {
+      if (def in result.definitions) {
+        label.innerHTML += '<span class="badge bg-warning ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="This definition already exists here and will be overwritten." style="font-size: 0.55em;">!</span>'
+      }
+      for (const file of content) {
+        if (result.all_exhibits.includes(file.name)) {
+          label.innerHTML += `<span class="badge bg-warning ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="${file.name} already exists here and will be overwritten." style="font-size: 0.55em;">!</span>`
+        }
+      }
+      // Enable all tooltips
+      const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+      const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+    })
+
+  return col
+}
+
+function copyDefinitionModalCreateSourceHTML (filename, sizeText, isDefinition = false) {
+  // Create an HTML representation of the given file for the definitionCopyModal.
+
+  const col = document.createElement('div')
+  col.classList = 'col-12'
+
+  const row = document.createElement('div')
+  row.classList = 'row gy-2'
+  col.appendChild(row)
+
+  const name = document.createElement('div')
+  name.classList = 'col-8'
+  if (isDefinition) {
+    name.classList.add('fw-bold')
+  } else {
+    name.classList.add('ps-4')
+  }
+  name.innerHTML = filename
+  row.appendChild(name)
+
+  const size = document.createElement('div')
+  size.classList = 'col-4'
+  size.innerHTML = sizeText
+  row.appendChild(size)
+
+  return col
+}
+
+export async function copyDefinitionModalPerformCopy () {
+  // Collect information from the modal and trigger the file copy to each destinaition.
+
+  const modal = document.getElementById('copyDefinitionModal')
+  const submitButton = document.getElementById('copyDefinitionModalSubmitButton')
+  submitButton.innerHTML = 'Copying...'
+  submitButton.classList.add('btn-info')
+  submitButton.classList.remove('btn-primary')
+
+  // Sources
+  const definitionUUID = modal.getAttribute('data-definition')
+  const sourceUUID = modal.getAttribute('data-component')
+  const sourceComponent = getExhibitComponentByUUID(sourceUUID)
+  const filesToCopy = JSON.parse(modal.getAttribute('data-sourceFiles')) ?? []
+
+  // Destinations
+  const checkedElements = modal.querySelectorAll('input.copyDest:checked')
+  const destComponents = []
+  for (const el of checkedElements) {
+    const destUUID = el.getAttribute('data-uuid')
+    if (destUUID != null) {
+      const destComp = getExhibitComponentByUUID(destUUID)
+      if (destComp != null) destComponents.push(destComp)
+    }
+  }
+
+  // Cycle the destinations and copy the files
+  for (const destComp of destComponents) {
+    const destUrl = destComp.getHelperURL()
+    if (destUrl == null) continue
+
+    await exTools.makeRequest({
+      method: 'POST',
+      url: destUrl,
+      endpoint: '/files/retrieve',
+      params: {
+        file_url: sourceComponent.getHelperURL() + '/definitions/' + definitionUUID + '.json',
+        path_list: ['definitions', definitionUUID + '.json']
+      }
+    })
+
+    for (const file of filesToCopy) {
+      await exTools.makeRequest({
+        method: 'POST',
+        url: destUrl,
+        endpoint: '/files/retrieve',
+        params: {
+          file_url: sourceComponent.getHelperURL() + '/content/' + file.name,
+          path_list: ['content', file.name]
+        }
+      })
+    }
+  }
+  $(modal).modal('hide')
 }
 
 function handleDefinitionItemSelection (uuid) {
   // Called when a user clicks on the definition in the componentInfoModal.
 
-  $('.definition-entry').removeClass('definition-selected')
-  $('.definition-name').removeClass('btn-success')
-  $('.definition-name').addClass('btn-primary')
-  $('.definition-dropdown').removeClass('btn-success')
-  $('.definition-dropdown').addClass('btn-primary')
-  $('#definitionButton_' + uuid).addClass('definition-selected')
-  $('#definitionButtonName_' + uuid).addClass('btn-success')
-  $('#definitionButtonDropdown_' + uuid).addClass('btn-success')
+  // Remove classes from all elements with the 'definition-entry' class
+  document.querySelectorAll('.definition-entry').forEach((el) => {
+    el.classList.remove('definition-selected')
+  })
+
+  // Remove and add classes to all elements with the 'definition-name' class
+  document.querySelectorAll('.definition-name').forEach((el) => {
+    el.classList.remove('btn-success')
+    el.classList.add('btn-primary')
+  })
+
+  // Remove and add classes to all elements with the 'definition-dropdown' class
+  document.querySelectorAll('.definition-dropdown').forEach((el) => {
+    el.classList.remove('btn-success')
+    el.classList.add('btn-primary')
+  })
+
+  // Add the 'definition-selected' class to the specific button
+  const definitionButton = document.getElementById('definitionButton_' + uuid)
+  if (definitionButton) {
+    definitionButton.classList.add('definition-selected')
+  }
+
+  // Add the 'btn-success' class to the specific button name
+  const definitionButtonName = document.getElementById('definitionButtonName_' + uuid)
+  if (definitionButtonName) {
+    definitionButtonName.classList.add('btn-success')
+  }
+
+  // Add the 'btn-success' class to the specific button dropdown
+  const definitionButtonDropdown = document.getElementById('definitionButtonDropdown_' + uuid)
+  if (definitionButtonDropdown) {
+    definitionButtonDropdown.classList.add('btn-success')
+  }
+
+  // Show the save button
   document.getElementById('componentInfoModalDefinitionSaveButton').style.display = 'block'
 }
 
@@ -1788,7 +2020,7 @@ export function submitDefinitionSelectionFromModal () {
   // Called when the "Save changes" button is pressed on the definitions pane of the componentInfoModal.
 
   const definition = $('.definition-selected').data('definition')
-  const id = $('#componentInfoModal').data('id')
+  const id = document.getElementById('componentInfoModal').getAttribute('data-id')
   const componentUUID = document.getElementById('componentInfoModal').getAttribute('data-uuid')
 
   // Exhibitera 5 starts the transition from ID to UUID
@@ -1837,52 +2069,70 @@ function updateComponentInfoModalFromHelper (id, permission) {
       // If it is provided, show the system stats
       if ('system_stats' in availableContent) {
         const stats = availableContent.system_stats
-
+        console.log(stats)
         // Disk
-        $('#contentUploadDiskSpaceUsedBar').attr('ariaValueNow', 100 - stats.disk_pct_free)
-        $('#contentUploadDiskSpaceUsedBar').width(String(100 - stats.disk_pct_free) + '%')
-        $('#contentUploadDiskSpaceFreeBar').attr('ariaValueNow', stats.disk_pct_free)
-        $('#contentUploadDiskSpaceFreeBar').width(String(stats.disk_pct_free) + '%')
-        $('#contentUploadDiskSpaceFree').html(`Disk: ${String(Math.round(stats.disK_free_GB))} GB`)
+        const spaceUsedBar = document.getElementById('contentUploadDiskSpaceUsedBar')
+        const spaceFreeBar = document.getElementById('contentUploadDiskSpaceFreeBar')
+        spaceUsedBar.setAttribute('ariaValueNow', 100 - stats.disk_pct_free)
+        spaceUsedBar.style.width = String(100 - stats.disk_pct_free) + '%'
+        spaceFreeBar.setAttribute('ariaValueNow', stats.disk_pct_free)
+        spaceFreeBar.style.width = String(stats.disk_pct_free) + '%'
+        document.getElementById('contentUploadDiskSpaceFree').innerHTML = `Disk: ${String(Math.round(stats.disK_free_GB))} GB`
+
         if (stats.disk_pct_free > 20) {
-          $('#contentUploadDiskSpaceUsedBar').removeClass('bg-warning bg-danger').addClass('bg-success')
+          spaceUsedBar.classList.remove('bg-warning', 'bg-danger')
+          spaceUsedBar.classList.add('bg-success')
         } else if (stats.disk_pct_free > 10) {
-          $('#contentUploadDiskSpaceUsedBar').removeClass('bg-success bg-danger').addClass('bg-warning')
+          spaceUsedBar.classList.remove('bg-success', 'bg-danger')
+          spaceUsedBar.classList.add('bg-warning')
         } else {
-          $('#contentUploadDiskSpaceUsedBar').removeClass('bg-success bg-warning').addClass('bg-danger')
+          spaceUsedBar.classList.remove('bg-success', 'bg-warning')
+          spaceUsedBar.classList.add('bg-danger')
         }
 
         // CPU
-        $('#contentUploadCPUUsedBar').attr('ariaValueNow', stats.cpu_load_pct)
-        $('#contentUploadCPUUsedBar').width(String(stats.cpu_load_pct) + '%')
-        $('#contentUploadCPUFreeBar').attr('ariaValueNow', 100 - stats.cpu_load_pct)
-        $('#contentUploadCPUFreeBar').width(String(100 - stats.cpu_load_pct) + '%')
-        $('#contentUploadCPUUsed').html(`CPU: ${String(Math.round(stats.cpu_load_pct))}%`)
+        const CPUUsedBar = document.getElementById('contentUploadCPUUsedBar')
+        const CPUFreeBar = document.getElementById('contentUploadCPUFreeBar')
+        CPUUsedBar.setAttribute('ariaValueNow', stats.cpu_load_pct)
+        CPUUsedBar.style.width = String(stats.cpu_load_pct) + '%'
+        document.getElementById('contentUploadCPUUsed').innerHTML = `CPU: ${String(Math.round(stats.cpu_load_pct))}%`
+        CPUFreeBar.setAttribute('ariaValueNow', 100 - stats.cpu_load_pct)
+        CPUFreeBar.style.width = String(100 - stats.cpu_load_pct) + '%'
+
         if (stats.cpu_load_pct < 80) {
-          $('#contentUploadCPUUsedBar').removeClass('bg-warning bg-danger').addClass('bg-success')
+          CPUUsedBar.classList.remove('bg-warning', 'bg-danger')
+          CPUUsedBar.classList.add('bg-success')
         } else if (stats.cpu_load_pct < 90) {
-          $('#contentUploadCPUUsedBar').removeClass('bg-success bg-danger').addClass('bg-warning')
+          CPUUsedBar.classList.remove('bg-success', 'bg-danger')
+          CPUUsedBar.classList.add('bg-warning')
         } else {
-          $('#contentUploadCPUUsedBar').removeClass('bg-success bg-warning').addClass('bg-danger')
+          CPUUsedBar.classList.remove('bg-success', 'bg-warning')
+          CPUUsedBar.classList.add('bg-danger')
         }
 
         // RAM
-        $('#contentUploadRAMUsedBar').attr('ariaValueNow', stats.ram_used_pct)
-        $('#contentUploadRAMUsedBar').width(String(stats.ram_used_pct) + '%')
-        $('#contentUploadRAMFreeBar').attr('ariaValueNow', 100 - stats.ram_used_pct)
-        $('#contentUploadRAMFreeBar').width(String(100 - stats.ram_used_pct) + '%')
-        $('#contentUploadRAMUsed').html(`RAM: ${String(Math.round(stats.ram_used_pct))}%`)
+        const RAMUsedBar = document.getElementById('contentUploadRAMUsedBar')
+        const RAMFreeBar = document.getElementById('contentUploadRAMFreeBar')
+        RAMUsedBar.setAttribute('ariaValueNow', stats.ram_used_pct)
+        RAMUsedBar.style.width = String(stats.ram_used_pct) + '%'
+        document.getElementById('contentUploadRAMUsed').innerHTML = `RAM: ${String(Math.round(stats.ram_used_pct))}%`
+        RAMFreeBar.setAttribute('ariaValueNow', 100 - stats.ram_used_pct)
+        RAMFreeBar.style.width = String(100 - stats.ram_used_pct) + '%'
+
         if (stats.ram_used_pct < 80) {
-          $('#contentUploadRAMUsedBar').removeClass('bg-warning bg-danger').addClass('bg-success')
+          RAMUsedBar.classList.remove('bg-warning', 'bg-danger')
+          RAMUsedBar.classList.add('bg-success')
         } else if (stats.ram_used_pct < 90) {
-          $('#contentUploadRAMUsedBar').removeClass('bg-success bg-danger').addClass('bg-warning')
+          RAMUsedBar.classList.remove('bg-success', 'bg-danger')
+          RAMUsedBar.classList.add('bg-warning')
         } else {
-          $('#contentUploadCPUUsedBar').removeClass('bg-success bg-warning').addClass('bg-danger')
+          RAMUsedBar.classList.remove('bg-success', 'bg-warning')
+          RAMUsedBar.classList.add('bg-danger')
         }
 
-        $('#contentUploadSystemStatsView').show()
+        document.getElementById('contentUploadSystemStatsView').style.display = 'flex'
       } else {
-        $('#contentUploadSystemStatsView').hide()
+        document.getElementById('contentUploadSystemStatsView').style.display = 'none'
       }
     })
     .catch(() => {
@@ -1969,18 +2219,18 @@ export function submitComponentBasicSettingsChange () {
 export function submitComponentSettingsChange () {
   // Collect the current settings and send them to the component's helper for saving.
 
-  const obj = getExhibitComponent($('#componentInfoModalTitle').html())
+  const obj = getExhibitComponent(document.getElementById('componentInfoModalTitle').innerHTML)
 
   // Update component settings, if allowed
   const settingsAvailable = document.getElementById('componentInfoModalSettingsPermissionsPane').style.display === 'flex'
   if (settingsAvailable === true) {
     const settings = {
       permissions: {
-        audio: exTools.stringToBool($('#componentInfoModalSettingsAutoplayAudio').val()),
-        refresh: exTools.stringToBool($('#componentInfoModalSettingsAllowRefresh').val()),
-        restart: exTools.stringToBool($('#componentInfoModalSettingsAllowRestart').val()),
-        shutdown: exTools.stringToBool($('#componentInfoModalSettingsAllowShutdown').val()),
-        sleep: exTools.stringToBool($('#componentInfoModalSettingsAllowSleep').val())
+        audio: exTools.stringToBool(document.getElementById('componentInfoModalSettingsAutoplayAudio').value),
+        refresh: exTools.stringToBool(document.getElementById('componentInfoModalSettingsAllowRefresh').value),
+        restart: exTools.stringToBool(document.getElementById('componentInfoModalSettingsAllowRestart').value),
+        shutdown: exTools.stringToBool(document.getElementById('componentInfoModalSettingsAllowRestart').value),
+        sleep: exTools.stringToBool(document.getElementById('componentInfoModalSettingsAllowRestart').value)
       }
     }
     exTools.makeRequest({

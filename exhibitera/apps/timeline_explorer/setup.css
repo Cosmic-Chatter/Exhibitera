@@ -1,0 +1,4 @@
+#spreadsheetSelect{
+    text-overflow: ellipsis;
+    overflow-x: hidden;
+}

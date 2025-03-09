@@ -3,17 +3,50 @@
 ## Hub
 
 ### General
-- Toggle between light and dark mode from the new user preferences window [Morgan Rehnberg]
+- Toggle between light and dark mode from the new user preferences window
+- Notifications are now displayed in a dropdown list to better handle large quantities
 
 ### Components
-- The components view can now be arranged as a grid or a list [Morgan Rehnberg]
-- Change the size of the items in the component view [Morgan Rehnberg]
-- Show or hide individual groups to declutter your interface [Morgan Rehnberg]
+- The components view can now be arranged as a grid or a list
+- Change the size of the items in the component view
+- Show or hide individual groups to declutter your interface
+- Copy definitions from one component to others
+  - Image Compare, Media Player, Timelapse Viewer, Voting Kiosk, and Word Cloud are currently supported
+
+### Flexible Tracker
+- Experimental option to configure interface for guest-facing data collection
+
+### Schedule
+- Downloading or creating a schedule from CSV has been removed. JSON will be the only supported format moving forward.
 
 ## Apps
 
 ### General
-- See file sizes when browsing files [Morgan Rehnberg]
+- Rich text editor for easier text styling with Markdown
+- New size and placement options when inserting images into Markdown
+- See file sizes when browsing files
+- Improved multilingual support, including flags for 38 additional languages
+
+### Image Compare
+_Image Compare is a new app that creates a before/after slider between a pair of images._
+
+### InfoStation
+- Adjust the height of the header area or hide it entirely
+- Insert block quotes and style them separately from regular text
+- Hide the button row in portrait orientation if there is only one tab
+
+### Media Browser
+- Format text using Markdown in your spreadsheet
+- Media is automatically optimized when app launches
+
+### Media Player
+- Add subtitles to videos to improve accessibility or support a second language
+- Customize the appearance of your subtitles
+
+### Timeline Explorer
+- Setup wizard makes getting started a breeze
+- FIne-grained control over text size
+- Media is automatically optimized when app launches
 
 # **Exhibitera 5.2**
 

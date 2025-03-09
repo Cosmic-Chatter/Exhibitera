@@ -494,130 +494,6 @@ function changeExhibit (warningShown) {
   }
 }
 
-function populateTrackerDataSelect (data) {
-  // Take a list of data filenames and populate the TrackerDataSelect
-
-  const trackerDataSelect = $('#trackerDataSelect')
-  trackerDataSelect.empty()
-
-  const sortedList = data.sort((a, b) => {
-    const aVal = a.toLowerCase()
-    const bVal = b.toLowerCase()
-
-    if (aVal > bVal) return 1
-    if (aVal < bVal) return -1
-    return 0
-  })
-
-  sortedList.forEach(item => {
-    const name = item.split('.').slice(0, -1).join('.')
-    const html = `<option value="${name}">${name}</option>`
-    trackerDataSelect.append(html)
-  })
-}
-
-function showDeleteTrackerDataModal () {
-  // Show a modal confirming the request to delete a specific dataset. To be sure
-  // populate the modal with data for a test.
-
-  const name = $('#trackerDataSelect').val()
-  $('#deleteTrackerDataModalDeletedName').html(name)
-  $('#deleteTrackerDataModalDeletedInput').val('')
-  $('#deleteTrackerDataModalSpellingError').hide()
-  $('#deleteTrackerDataModal').modal('show')
-}
-
-function deleteTrackerDataFromModal () {
-  // Check inputed answer and confirm it is correct. If so, ask for the data to
-  // be deleted.
-
-  const name = $('#deleteTrackerDataModalDeletedName').html()
-  const input = $('#deleteTrackerDataModalDeletedInput').val()
-
-  if (name === input) {
-    deleteTrackerData()
-  } else {
-    $('#deleteTrackerDataModalSpellingError').show()
-  }
-}
-
-function deleteTrackerData () {
-  // Send a message to the server asking it to delete the data for the currently
-  // selected template
-
-  const name = $('#trackerDataSelect').val()
-
-  exTools.makeServerRequest({
-    method: 'POST',
-    endpoint: '/tracker/flexible-tracker/deleteData',
-    params: { name }
-  })
-    .then((result) => {
-      if ('success' in result && result.success === true) {
-        $('#deleteTrackerDataModal').modal('hide')
-        exTracker.getAvailableTrackerData(populateTrackerDataSelect)
-      }
-    })
-}
-
-function launchTracker () {
-  // Open the tracker in a new tab with the currently selected layout
-
-  const name = $('#trackerTemplateSelect').val()
-
-  let url = exConfig.serverAddress + '/tracker.html'
-  if (name != null) {
-    url += '?layout=' + name
-  }
-  window.open(url, '_blank').focus()
-}
-
-function createTrackerTemplate (name = '') {
-  // Ask the server to create a template with the name provided in the text entry
-  // field.
-
-  if (name === '') {
-    name = $('#createTrackerTemplateName').val()
-  }
-
-  const requestDict = {
-    name,
-    template: {}
-  }
-
-  exTools.makeServerRequest({
-    method: 'POST',
-    endpoint: '/tracker/flexible-tracker/createTemplate',
-    params: requestDict
-  })
-    .then((result) => {
-      if ('success' in result && result.success === true) {
-        $('#createTrackerTemplateName').val('')
-        exTracker.getAvailableDefinitions(populateTrackerTemplateSelect)
-      }
-    })
-}
-
-function deleteTrackerTemplate (name = '') {
-  // Ask the server to delete the specified tracker template
-
-  if (name === '') {
-    name = $('#trackerTemplateSelect').val()
-  }
-
-  exTools.makeServerRequest({
-    method: 'POST',
-    endpoint: '/tracker/flexible-tracker/deleteTemplate',
-    params: { name }
-  })
-    .then((result) => {
-      if ('success' in result && result.success === true) {
-        exTracker.getAvailableDefinitions(populateTrackerTemplateSelect)
-        $('#deleteTrackerTemplateModal').modal('hide')
-      }
-    })
-}
-
 function parseUpdate (update) {
   // Take a dictionary of updates from Hub and act on them.
 
@@ -736,332 +612,6 @@ function populateHelpTab () {
         $('#helpTextDiv').html('Help text not available.')
       }
     })
-}
-
-function populateTrackerTemplateSelect (definitionList) {
-  // Get a list of the available tracker layout templates and populate the
-  // selector
-
-  const templateSelect = $('#trackerTemplateSelect')
-  templateSelect.empty()
-
-  definitionList.forEach(item => {
-    const name = item.split('.').slice(0, -1).join('.')
-    const html = `<option value="${name}">${name}</option>`
-    templateSelect.append(html)
-  })
-}
-
-function showEditTrackerTemplateModal () {
-  // Retrieve the currently-selected layout and use it to configure the
-  // editTrackerTemplateModal
-
-  const layoutToLoad = $('#trackerTemplateSelect').val()
-  const lamda = function (template) { _showEditTrackerTemplateModal(layoutToLoad, template) }
-  exTracker.loadLayoutDefinition(layoutToLoad, lamda)
-}
-
-function _showEditTrackerTemplateModal (name, template) {
-  // Set the provided template in the data attributes, reset all the fields,
-  // and show the modal
-
-  // Set default values
-  $('#editTrackerTemplateNameInput').val('')
-  $('#editTrackerTemplateLabelInput').val('')
-  $('#editTrackerTemplateMultipleInputFalse').prop('checked', true)
-  $('#editTrackerTemplateExclusiveInputFalse').prop('checked', true)
-  $('#editTrackerTemplateSliderInputMin').val(1)
-  $('#editTrackerTemplateSliderInputMax').val(100)
-  $('#editTrackerTemplateSliderInputStep').val(1)
-  $('#editTrackerTemplateSliderInputStart').val(50)
-  $('#editTrackerTemplateLinesInput').val(5)
-  $('#editTrackerTemplateModalTitle').html('Edit template: ' + name)
-
-  $('#editTrackerTemplateModal').data('template', template)
-  $('#editTrackerTemplateModal').data('templateName', name)
-
-  populateEditTrackerTemplateCurrentLayout()
-  configureEditTrackerTemplateModal(Object.keys(template)[0])
-  $('#editTrackerTemplateModal').modal('show')
-}
-
-function configureEditTrackerTemplateModal (key) {
-  // Read the layout for the given key and set the appropriate divs visible to
-  // support editing it.
-
-  $('.editTrackerTemplateInputGroup').hide()
-  if (key == null) {
-    $('#editTrackerTemplateNameInputGroup').hide()
-    $('#editTrackerTemplateLabelInputGroup').hide()
-    $('#editTrackerTemplateModalDeleteWidgetButton').hide()
-    return
-  } else {
-    $('#editTrackerTemplateNameInputGroup').show()
-    $('#editTrackerTemplateLabelInputGroup').show()
-    $('#editTrackerTemplateModalDeleteWidgetButton').show()
-  }
-
-  const template = $('#editTrackerTemplateModal').data('template')[key]
-
-  $('#editTrackerTemplateModal').data('currentWidget', key)
-  $('.editTrackerTemplateInputGroup').hide()
-
-  $('#editTrackerTemplateNameInput').val(key)
-  $('#editTrackerTemplateLabelInput').val(template.label)
-
-  if (['counter', 'number'].includes(template.type)) {
-    // Only name and label
-  } else if (template.type === 'dropdown') {
-    $('#editTrackerTemplateOptionsInput').val(template.options)
-    $('#editTrackerTemplateOptionsInputGroup').show()
-    if (template.multiple === 'true') {
-      $('#editTrackerTemplateMultipleInputTrue').prop('checked', true)
-    } else {
-      $('#editTrackerTemplateMultipleInputFalse').prop('checked', true)
-    }
-    $('#editTrackerTemplateMultipleInputGroup').show()
-  } else if (template.type === 'slider') {
-    $('#editTrackerTemplateSliderInputMin').val(template.min || 1)
-    $('#editTrackerTemplateSliderInputMax').val(template.max || 100)
-    $('#editTrackerTemplateSliderInputStep').val(template.step || 1)
-    $('#editTrackerTemplateSliderInputStart').val(template.start || 50)
-    $('#editTrackerTemplateSliderInputGroup').show()
-  } else if (template.type === 'text') {
-    $('#editTrackerTemplateLinesInput').val(template.lines || 5)
-    $('#editTrackerTemplateLinesInputGroup').show()
-  } else if (template.type === 'timer') {
-    if (template.exclusive === 'true') {
-      $('#editTrackerTemplateExclusiveInputTrue').prop('checked', true)
-    } else {
-      $('#editTrackerTemplateExclusiveInputFalse').prop('checked', true)
-    }
-    $('#editTrackerTemplateExclusiveInputGroup').show()
-  }
-}
-
-function populateEditTrackerTemplateCurrentLayout () {
-  // Take the current template dictionary and render a set of buttons
-
-  const template = $('#editTrackerTemplateModal').data('template')
-  // const numItems = Object.keys(template).length
-
-  $('#editTrackerTemplateModalCurrentLayout').empty()
-  Object.keys(template).forEach((key, i) => {
-    const col = document.createElement('div')
-    col.classList = 'col-12 col-md-6 col-lg-4 mt-2 w-100'
-
-    const widget = document.createElement('div')
-    widget.classList = 'mx-1'
-    const row1 = document.createElement('div')
-    row1.classList = 'row'
-    widget.appendChild(row1)
-    const nameCol = document.createElement('div')
-    nameCol.classList = 'col-12 bg-secondary rounded-top'
-    row1.appendChild(nameCol)
-    const name = document.createElement('div')
-    name.classList = ' text-light w-100 text-center font-weight-bold'
-    name.innerHTML = key
-    nameCol.appendChild(name)
-    const row2 = document.createElement('div')
-    row2.classList = 'row'
-    widget.appendChild(row2)
-
-    const editCol = document.createElement('div')
-    editCol.classList = 'col-6 mx-0 px-0'
-    row2.appendChild(editCol)
-    const edit = document.createElement('div')
-    edit.classList = 'text-light bg-info w-100 h-100 justify-content-center d-flex ps-1'
-    edit.style.borderBottomLeftRadius = '0.25rem'
-    edit.innerHTML = 'Edit'
-    edit.style.cursor = 'pointer'
-    edit.addEventListener('click', function () { configureEditTrackerTemplateModal(key) })
-    editCol.appendChild(edit)
-
-    const leftCol = document.createElement('div')
-    leftCol.classList = 'col-3 mx-0 px-0'
-    row2.appendChild(leftCol)
-    const left = document.createElement('div')
-    left.classList = 'text-light bg-primary w-100 h-100 justify-content-center d-flex'
-    left.innerHTML = '◀'
-    left.style.cursor = 'pointer'
-
-    left.addEventListener('click', function () { editTrackerTemplateModalMoveWidget(key, -1) })
-    leftCol.appendChild(left)
-
-    const rightCol = document.createElement('div')
-    rightCol.classList = 'col-3 mx-0 px-0'
-    row2.appendChild(rightCol)
-    const right = document.createElement('div')
-    right.classList = 'text-light bg-primary w-100 h-100 justify-content-center d-flex pe-1'
-    right.style.borderBottomRightRadius = '0.25rem'
-    right.innerHTML = '▶'
-    right.style.cursor = 'pointer'
-    right.addEventListener('click', function () { editTrackerTemplateModalMoveWidget(key, 1) })
-    rightCol.appendChild(right)
-
-    col.appendChild(widget)
-    $('#editTrackerTemplateModalCurrentLayout').append(col)
-  })
-}
-
-function editTrackerTemplateModalMoveWidget (key, dir) {
-  // Reorder the dictionary of widgets, moving the given key the specified number
-  // of places
-
-  if (dir === 0) {
-    populateEditTrackerTemplateCurrentLayout()
-    return
-  }
-
-  const template = $('#editTrackerTemplateModal').data('template')
-  const keys = Object.keys(template)
-  const loc = keys.indexOf(key)
-  let newLoc = loc + dir
-  newLoc = Math.max(newLoc, 0)
-  newLoc = Math.min(newLoc, keys.length - 1)
-
-  // Iterate through the keys, inserting key into its new place
-  const newArray = []
-  keys.forEach((item, i) => {
-    if (dir < 0) {
-      if (i === newLoc) {
-        newArray.push(key)
-      }
-    }
-    if (item !== key) {
-      newArray.push(item)
-    }
-    if (dir > 0) {
-      if (item !== key) {
-        newArray.push(item)
-      }
-      if (i === newLoc) {
-        newArray.push(key)
-      }
-    }
-  })
-
-  // Build a new dictionary with the new order
-  const newDict = {}
-  newArray.forEach((item, i) => {
-    newDict[item] = template[item]
-  })
-
-  // Update the data attribute with the new dictionary
-  $('#editTrackerTemplateModal').data('template', newDict)
-  populateEditTrackerTemplateCurrentLayout()
-}
-
-function editTrackerTemplateModalAddWidget (name, type) {
-  // Create a new widget with the given name and add it to the template.
-  // If the name already exists, append a number
-
-  const template = $('#editTrackerTemplateModal').data('template')
-  const names = Object.keys(template)
-
-  // Check if name exists
-  let i = 2
-  let workingName = name
-  while (true) {
-    if (names.includes(workingName)) {
-      workingName = name + ' ' + String(i)
-      i++
-    } else {
-      name = workingName
-      break
-    }
-  }
-
-  template[name] = { type }
-  $('#editTrackerTemplateModal').data('template', template)
-  configureEditTrackerTemplateModal(name)
-  editTrackerTemplateModalUpdateFromInput()
-  populateEditTrackerTemplateCurrentLayout()
-}
-
-function editTrackerTemplateModalDeleteWidget () {
-  // Delete the given widget and shift focus to the neighboring one
-
-  const template = $('#editTrackerTemplateModal').data('template')
-  const currentWidgetName = $('#editTrackerTemplateModal').data('currentWidget')
-  const originalPosition = Object.keys(template).indexOf(currentWidgetName)
-
-  delete template[currentWidgetName]
-  $('#editTrackerTemplateModal').data('template', template)
-  const newPosition = Math.max(0, originalPosition - 1)
-  const newCurrentWidget = Object.keys(template)[newPosition]
-  $('#editTrackerTemplateModal').data('currentWidget', newCurrentWidget)
-
-  configureEditTrackerTemplateModal(newCurrentWidget)
-  populateEditTrackerTemplateCurrentLayout()
-}
-
-function editTrackerTemplateModalUpdateFromInput () {
-  // Fired when a change is made to a widget property. Write the new data into
-  // the template
-
-  const template = $('#editTrackerTemplateModal').data('template')
-  const originalWidgetName = $('#editTrackerTemplateModal').data('currentWidget')
-  const originalPosition = Object.keys(template).indexOf(originalWidgetName)
-  const currentWidget = template[originalWidgetName]
-
-  const currentWidgetName = $('#editTrackerTemplateNameInput').val()
-
-  currentWidget.label = $('#editTrackerTemplateLabelInput').val()
-  if (['counter', 'number'].includes(currentWidget.type)) {
-    // Only name and label
-  } else if (currentWidget.type === 'dropdown') {
-    currentWidget.options = $('#editTrackerTemplateOptionsInput').val()
-    currentWidget.multiple = String($('#editTrackerTemplateMultipleInputTrue').prop('checked'))
-  } else if (currentWidget.type === 'slider') {
-    currentWidget.min = $('#editTrackerTemplateSliderInputMin').val()
-    currentWidget.max = $('#editTrackerTemplateSliderInputMax').val()
-    currentWidget.step = $('#editTrackerTemplateSliderInputStep').val()
-    currentWidget.start = $('#editTrackerTemplateSliderInputStart').val()
-  } else if (currentWidget.type === 'text') {
-    currentWidget.lines = $('#editTrackerTemplateLinesInput').val()
-  } else if (currentWidget.type === 'timer') {
-    currentWidget.exclusive = String($('#editTrackerTemplateExclusiveInputTrue').prop('checked'))
-  }
-  delete template[originalWidgetName]
-  template[currentWidgetName] = currentWidget
-  $('#editTrackerTemplateModal').data('currentWidget', currentWidgetName)
-
-  $('#editTrackerTemplateModal').data('template', template)
-  $('#editTrackerTemplateModal').data('currentWidget', currentWidget.name)
-  // We have changed the name and need to move it back to the right place
-  editTrackerTemplateModalMoveWidget(currentWidgetName, originalPosition - Object.keys(template).length + 1)
-}
-
-function editTrackerTemplateModalSubmitChanges () {
-  // Send a message to the server with the updated template
-
-  const template = $('#editTrackerTemplateModal').data('template')
-  const templateName = $('#editTrackerTemplateModal').data('templateName')
-
-  const requestDict = {
-    name: templateName,
-    template
-  }
-
-  exTools.makeServerRequest({
-    method: 'POST',
-    endpoint: '/tracker/flexible-tracker/createTemplate',
-    params: requestDict
-  })
-    .then((response) => {
-      if ('success' in response && response.success === true) {
-        $('#editTrackerTemplateModal').modal('hide')
-      }
-    })
-}
-
-function parseQueryString () {
-  // Read the query string to determine what options to set
-
-  const queryString = decodeURIComponent(window.location.search)
-
-  const searchParams = new URLSearchParams(queryString)
 }
 
 function createExhibit (name, cloneFrom) {
@@ -1285,11 +835,11 @@ document.getElementById('definitionTabThumbnailsCheckbox').addEventListener('cha
 document.getElementById('componentInfoModalDefinitionSaveButton').addEventListener('click', exExhibit.submitDefinitionSelectionFromModal)
 
 document.getElementById('componentInfoModalViewScreenshot').addEventListener('click', () => {
-  const component = exExhibit.getExhibitComponent($('#componentInfoModal').data('id'))
+  const component = exExhibit.getExhibitComponent(document.getElementById('componentInfoModal').getAttribute('data-id'))
   exTools.openMediaInNewTab([component.getHelperURL() + '/system/getScreenshot'], ['image'])
 })
 document.getElementById('componentInfoModalEditDMXButton').addEventListener('click', (event) => {
-  const component = exExhibit.getExhibitComponent($('#componentInfoModal').data('id'))
+  const component = exExhibit.getExhibitComponent(document.getElementById('componentInfoModal').getAttribute('data-id'))
   window.open(component.getHelperURL() + '/dmx_control.html?standalone=true', '_blank').focus()
 })
 Array.from(document.querySelectorAll('.componentInfoProjectorSetting')).forEach((el) => {
@@ -1310,6 +860,10 @@ Array.from(document.querySelectorAll('.componentInfoWakeOnLANSetting')).forEach(
   })
 })
 document.getElementById('componentInfoModalWakeOnLANSettingsSaveButton').addEventListener('click', exExhibit.updateWakeOnLANComponentFromInfoModal)
+
+// Copy definition modal
+document.getElementById('copyDefinitionModalSubmitButton').addEventListener('click', exExhibit.copyDefinitionModalPerformCopy)
+
 // Schedule tab
 // =========================
 document.getElementById('manageFutureDateButton').addEventListener('click', exSchedule.showManageFutureDateModal)
@@ -1435,46 +989,44 @@ $('#componentInfoModalMaintenanceNote').on('input', function () {
 
 // Analytics tab
 // =========================
-$('#createTrackerTemplateButton').click(function () {
-  createTrackerTemplate()
+document.getElementById('createTrackerTemplateButton').addEventListener('click', () => {
+  exTracker.createTrackerTemplate()
 })
-$('#launchTrackerButton').click(launchTracker)
-$('#showEditTrackerTemplateButton').click(showEditTrackerTemplateModal)
-$('#deleteTrackerTemplateButton').click(function () {
+document.getElementById('launchTrackerButton').addEventListener('click', exTracker.launchTracker)
+document.getElementById('showEditTrackerTemplateButton').addEventListener('click', () => {
+  exTracker.showEditTrackerTemplateModal()
+})
+document.getElementById('deleteTrackerTemplateButton').addEventListener('click', () => {
+  const trackerTemplateSelect = document.getElementById('trackerTemplateSelect')
+  const name = trackerTemplateSelect.options[trackerTemplateSelect.selectedIndex].text
+  document.getElementById('deleteTrackerTemplateModalTemplateName').innerHTML = name
   $('#deleteTrackerTemplateModal').modal('show')
 })
-$('#deleteTrackerTemplateFromModalButton').click(function () {
-  deleteTrackerTemplate()
-})
-$('#getAvailableTrackerDataButton').click(function () {
-  exTracker.getAvailableTrackerData(populateTrackerDataSelect)
-})
-$('#downloadTrackerDataButton').click(function () {
-  exTracker.downloadTrackerData($('#trackerDataSelect').val())
-})
-$('#showDeleteTrackerDataModalButton').click(showDeleteTrackerDataModal)
-$('#deleteTrackerDataFromModalButton').click(deleteTrackerDataFromModal)
-$('#editTrackerTemplateModalAddCounterButton').click(function () {
-  editTrackerTemplateModalAddWidget('New Counter', 'counter')
-})
-$('#editTrackerTemplateModalAddDropdownButton').click(function () {
-  editTrackerTemplateModalAddWidget('New Dropdown', 'dropdown')
-})
-$('#editTrackerTemplateModalAddNumberButton').click(function () {
-  editTrackerTemplateModalAddWidget('New Number', 'number')
-})
-$('#editTrackerTemplateModalAddSliderButton').click(function () {
-  editTrackerTemplateModalAddWidget('New Slider', 'slider')
-})
-$('#editTrackerTemplateModalAddTextButton').click(function () {
-  editTrackerTemplateModalAddWidget('New Text', 'text')
-})
-$('#editTrackerTemplateModalAddTimerButton').click(function () {
-  editTrackerTemplateModalAddWidget('New Timer', 'timer')
-})
-$('#editTrackerTemplateModalDeleteWidgetButton').click(editTrackerTemplateModalDeleteWidget)
-$('#editTrackerTemplateModalSubmitChangesButton').click(editTrackerTemplateModalSubmitChanges)
-$('.editTrackerTemplateInputField').on('input', editTrackerTemplateModalUpdateFromInput)
+document.getElementById('deleteTrackerTemplateFromModalButton')
+  .addEventListener('click', () => exTracker.deleteTrackerTemplate())
+document.getElementById('getAvailableTrackerDataButton')
+  .addEventListener('click', () => exTracker.getAvailableTrackerData(exTracker.populateTrackerDataSelect))
+document.getElementById('downloadTrackerDataButton')
+  .addEventListener('click', () => exTracker.downloadTrackerData(document.getElementById('trackerDataSelect').value))
+document.getElementById('showDeleteTrackerDataModalButton')
+  .addEventListener('click', () => exTracker.showDeleteTrackerDataModal())
+document.getElementById('deleteTrackerDataFromModalButton')
+  .addEventListener('click', () => exTracker.deleteTrackerDataFromModal())
+document.getElementById('editTrackerTemplateModalAddCounterButton')
+  .addEventListener('click', () => exTracker.editTrackerTemplateModalAddWidget('New Counter', 'counter'))
+document.getElementById('editTrackerTemplateModalAddDropdownButton')
+  .addEventListener('click', () => exTracker.editTrackerTemplateModalAddWidget('New Dropdown', 'dropdown'))
+document.getElementById('editTrackerTemplateModalAddNumberButton')
+  .addEventListener('click', () => exTracker.editTrackerTemplateModalAddWidget('New Number', 'number'))
+document.getElementById('editTrackerTemplateModalAddSliderButton')
+  .addEventListener('click', () => exTracker.editTrackerTemplateModalAddWidget('New Slider', 'slider'))
+document.getElementById('editTrackerTemplateModalAddTextButton')
+  .addEventListener('click', () => exTracker.editTrackerTemplateModalAddWidget('New Text', 'text'))
+document.getElementById('editTrackerTemplateModalAddTimerButton')
+  .addEventListener('click', () => exTracker.editTrackerTemplateModalAddWidget('New Timer', 'timer'))
+document.getElementById('editTrackerTemplateModalSubmitChangesButton')
+  .addEventListener('click', () => exTracker.editTrackerTemplateModalSubmitChanges())
+document.getElementById('editTrackerTemplateGuestFacingCheckbox').addEventListener('change', exTracker.makeGuestFacing)
 
 // Users tab
 // =========================
@@ -1535,8 +1087,8 @@ loadVersion()
 populateHelpTab()
 exUsers.populateUsers()
 populateControlServerSettings()
-parseQueryString()
-exTracker.getAvailableDefinitions(populateTrackerTemplateSelect)
+const trackerTemplates = await exTracker.getAvailableTemplates()
+exTracker.populateTrackerTemplateSelect(trackerTemplates)
 
 exUsers.authenticateUser()
   .then(() => {

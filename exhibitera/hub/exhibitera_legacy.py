@@ -5,7 +5,8 @@ to aid in deprecating them.
 """
 
 # Standard imports
-import json
+from collections import OrderedDict
+import configparser
 import os
 import shutil
 import uuid
@@ -216,3 +217,65 @@ def _convert_schedule_set_exhibit(name, uuid_str):
             ex_sched.write_json_schedule(file, schedule)
 
     ex_exhibit.check_available_exhibits()
+
+
+# Added in Ex5.3 to convert tracker templates from INI to JSON
+def convert_legacy_tracker_templates_to_json():
+    """Convert tracker templates from INI to JSON"""
+
+    config_parser = configparser.ConfigParser(dict_type=OrderedDict)
+    config_parser.optionxform = str  # preserve case for keys
+
+    template_dir = ex_tools.get_path(["flexible-tracker", "templates"], user_file=True)
+
+    for file in os.listdir(template_dir):
+        if file.startswith('.'):
+            continue
+        if not file.lower().endswith('.ini'):
+            continue
+
+        this_name = os.path.splitext(file)[0]
+        this_uuid = str(uuid.uuid4())
+        ini_filepath = ex_tools.get_path(["flexible-tracker", "templates", file], user_file=True)
+        json_filepath = ex_tools.get_path(
+            ["flexible-tracker", "templates", ex_tools.with_extension(this_uuid, 'json')],
+            user_file=True)
+        config_parser.read(ini_filepath)
+
+        widgets = {}
+        widget_order = []
+
+        for section in config_parser.sections():
+            # Each section becomes an object with a "name" field
+            section_uuid = str(uuid.uuid4())
+            section_obj = {"name": section, "uuid": section_uuid}
+            for key, value in config_parser.items(section):
+                value = value.strip()
+                # Convert booleans
+                if value.lower() in ('true', 'false'):
+                    converted = value.lower() == 'true'
+                else:
+                    # Attempt to convert to a number if possible
+                    try:
+                        if '.' in value:
+                            converted = float(value)
+                        else:
+                            converted = int(value)
+                    except ValueError:
+                        # Convert comma-separated values to a list if applicable
+                        if ',' in value:
+                            converted = [item.strip() for item in value.split(',')]
+                        else:
+                            converted = value
+                section_obj[key] = converted
+            widgets[section_uuid] = section_obj
+            widget_order.append(section_uuid)
+
+        output = {"name": this_name,
+                  "uuid": this_uuid,
+                  "widgets": widgets,
+                  "widget_order":widget_order}
+        ex_tools.write_json(output, json_filepath)
+
+        # Rename the INI file, so we don't convert it again
+        os.rename(ini_filepath, ini_filepath+'.old')

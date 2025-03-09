@@ -341,7 +341,7 @@
       </div>
 
       <!-- Optimize content modal -->
-      <div id="optimizeContentModal" class="modal" tabindex="-1">
+      <!-- <div id="optimizeContentModal" class="modal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered mw-100 w-75">
           <div class="modal-content">
             <div class="modal-header">
@@ -379,7 +379,7 @@
             </div>
           </div>
         </div>
-      </div>
+      </div> -->
 
       <div class="row">
         <div class="col-10" id="setupHeader">
@@ -499,6 +499,7 @@
           </div>
         </div>
       </div>
+
       <div class="row align-items-start">
         <div id='editPane' class="col-6 col-lg-7">
 
@@ -579,27 +580,19 @@
               <div id="content" class="accordion-collapse collapse" data-bs-parent="#topLevelAccordion">
                 <div class="accordion-body">
                   <div class="row gy-2">
-                    <div class="row gy-2 align-items-center">
-                      <div class="col-12 col-md-6 col-lg-4">
+                    <div class="row gy-2 align-items-end">
+                      <div class="col-12 col-lg-6 col-xl-4">
                         <button id="manageContentButton" class="btn btn-primary w-100">Manage content</button>
                       </div>
-                      <div class="col-12 col-md-6 col-lg-4">
+                      <div class="col-12 col-lg-6 col-xl-4">
                         <button id="showCheckContentButton" class="btn btn-info w-100">Check content</button>
                       </div>
-                      <div class="col-12 col-md-6 col-lg-4">
+                      <!-- <div class="col-12 col-lg-6 col-xl-4">
                         <button id="optimizeContentButton" class="btn btn-info w-100">Optimize content</button>
-                      </div>
+                      </div> -->
                       <H5 class="mt-2">Add a langauge</H5>
                       <i>For each language you suppot, you need to match columns in your spreadsheet to properties of the browser.</i>
-                      <div class="col-12 col-md-6">
-                        <select id="languageSelect" class="form-select"></select>
-                      </div>
-                      <div class="col-12 col-md-6 col-lg-4">
-                        <button id="languageAddButton" class="btn btn-primary w-100">Add</button>
-                      </div>
-                      <div class="col-12 mt-1">
-                        <span id="languageAddExistsWarning" class="text-danger">You have already included this language.</span>
-                      </div>
+                      <div id="language-picker"></div>
                     </div>
                     <H5>Current langauges</H5>
                     <nav>
@@ -648,20 +641,20 @@
                             Image height
                             <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="How much of each item's vertical space should be used by the image." style="font-size: 0.55em;">?</span>
                           </label>
-                          <input id="imageHeightSlider" type="range" calss="form-range layout-property-int" data-property="image_height" min="10" max="100" step="5" value="70">
+                          <input id="imageHeightSlider" type="range" class="form-range layout-property-int" data-property="image_height" min="10" max="100" step="5" value="70">
                         </div>
                         <div class="col-12 col-md-6 col-lg-4 col-xxl-3">
                           <label for="titleHeightSlider" class="form-label">
                             Title height
                             <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="How much of each item's vertical space that is not used by the image should be used by the title. Titles that do not fit this space will have their text shrunk until they do." style="font-size: 0.55em;">?</span>
                           </label>
-                          <input id="titleHeightSlider" type="range" calss="form-range layout-property-int" data-property="title_height" min="10" max="100" step="5" value="50">
+                          <input id="titleHeightSlider" type="range" class="form-range layout-property-int" data-property="title_height" min="10" max="100" step="5" value="50">
                         </div>
                         <div class="col-12 col-md-6 col-lg-4 col-xxl-3">
                           <label for="cornerRadiusSlider" class="form-label">
                             Round image corners
                           </label>
-                          <input id="cornerRadiusSlider" type="range" calss="form-range layout-property-int" data-property="corner_radius" min="0" max="50" step="1" value="0">
+                          <input id="cornerRadiusSlider" type="range" class="form-range layout-property-int" data-property="corner_radius" min="0" max="50" step="1" value="0">
                         </div>
                         <div class="col-12 col-md-6 col-lg-4 col-xxl-3">
                           <label for="imageShapeSelect" class="form-label">

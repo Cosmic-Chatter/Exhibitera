@@ -65,17 +65,38 @@ def load_json(path: str):
             return result
 
 
-def write_json(data, path: str, append: bool = False) -> None:
-    """Take the given object and try to write it to a JSON file."""
+def write_json(data,
+               path: str,
+               append: bool = False,
+               indent: int | str | None = 2,
+               newline: bool = False) -> tuple[bool, str]:
+    """Take the given object and try to write it to a JSON file.
+
+    Setting newline=True adds a newline character before the JSON is written
+    """
 
     if append:
         mode = 'a'
     else:
         mode = 'w'
 
-    with config.galleryConfigurationLock:
-        with open(path, mode, encoding='UTF-8') as f:
-            json.dump(data, f, indent=2, sort_keys=True)
+    success = True
+    reason = ""
+
+    try:
+        with config.galleryConfigurationLock:
+            with open(path, mode, encoding='UTF-8') as f:
+                if newline is True:
+                    f.write('\n')
+                json.dump(data, f, indent=indent, sort_keys=True)
+    except TypeError:
+        success = False
+        reason = "Data is not JSON serializable"
+    except PermissionError:
+        success = False
+        reason = f"You do not have write permission for the file {path}"
+
+    return success, reason
 
 
 def load_system_configuration(from_dict: Union[dict[str, Any], None] = None) -> None:

@@ -1,11 +1,22 @@
 :root {
     /* Colors */
     --background-color: black;
+    --subtitleColor: white;
+
+    /* Font facts */
+    --subtitle-font: "subtitles-default";
+
+    /* Font modifiers */
+    --subtitle-font-adjust: 0;
   }
 
 /* Font definitions */
 @font-face {
     font-family: "annotation-default";
+    src: url("../_fonts/OpenSans-Regular.ttf");
+}
+@font-face {
+    font-family: "subtitles-default";
     src: url("../_fonts/OpenSans-Regular.ttf");
 }
 
@@ -77,6 +88,11 @@ body,html {
     height: 100%;
     user-select: none;
     webkit-user-select: none;
+}
+#fullscreenVideo::cue {
+    font-size: calc(6vh + var(--subtitle-font-adjust) * 1vmax);
+    font-family: var(--subtitle-font);
+    color: var(--subtitleColor);
 }
 #watermark {
     position: absolute;

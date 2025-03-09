@@ -3,6 +3,7 @@
 import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exFileSelect from '../js/exhibitera_file_select_modal.js'
 import * as exSetup from '../js/exhibitera_setup_common.js'
+import * as exLang from '../js/exhibitera_setup_languages.js'
 
 async function initializeWizard () {
   // Setup the wizard
@@ -128,15 +129,15 @@ async function wizardCreateDefinition () {
   exSetup.updateWorkingDefinition(['name'], defName)
 
   // Langauges
-  let first = true
+  const langOrder = []
   for (const langEl of document.getElementById('wizardLanguages').children) {
     const lang = langEl.querySelector('select').value
+    langOrder.push(lang)
     const langDef = {
       caption_key: null,
       code: lang,
       credit_key: null,
-      default: first,
-      display_name: exSetup.getLanguageDisplayName(lang),
+      display_name: exLang.getLanguageDisplayName(lang),
       filter_order: [],
       filters: {},
       media_key: 'Media filename',
@@ -151,9 +152,9 @@ async function wizardCreateDefinition () {
     if (document.getElementById('wizardCheckboxCredit').checked === true) {
       langDef.credit_key = 'Credit (' + lang + ')'
     }
-    first = false
     exSetup.updateWorkingDefinition(['languages', lang], langDef)
   }
+  exSetup.updateWorkingDefinition(['language_older'], langOrder)
 
   // Basics
   exSetup.updateWorkingDefinition(['name'], document.getElementById('wizardDefinitionNameInput').value.trim())
@@ -257,11 +258,13 @@ async function clearDefinitionInput (full = true) {
   const spreadsheetSelect = document.getElementById('spreadsheetSelect')
   spreadsheetSelect.innerHTML = 'Select file'
   spreadsheetSelect.setAttribute('data-filename', '')
-  $(spreadsheetSelect).data('availableKeys', [])
+  spreadsheetSelect.setAttribute('data-availableKeys', '[]')
 
-  // Language add
-  $('#languageAddEmptyFieldsWarning').hide()
-  $('#languageAddExistsWarning').hide()
+  // Language
+  exLang.clearLanguagePicker(document.getElementById('language-picker'))
+  exLang.createLanguagePicker(document.getElementById('language-picker'), { onLanguageRebuild: rebuildLanguageElements })
+
+  rebuildLanguageElements([])
 
   // Attractor
   document.getElementById('inactivityTimeoutField').value = 30
@@ -273,9 +276,8 @@ async function clearDefinitionInput (full = true) {
   document.getElementById('loopResultsCheckbox').checked = true
 
   // Definition details
-  $('#definitionNameInput').val('')
-  $('#languageNav').empty()
-  $('#languageNavContent').empty()
+  document.getElementById('definitionNameInput').value = ''
+  document.getElementById('languageNav').innerHTML = ''
   document.getElementById('missingContentWarningField').innerHTML = ''
 
   // Reset layout options
@@ -290,8 +292,8 @@ async function clearDefinitionInput (full = true) {
   // Reset style options
   const colorInputs = ['titleColor', 'filterBackgroundColor', 'filterLabelColor', 'filterTextColor']
   colorInputs.forEach((input) => {
-    const el = $('#colorPicker_' + input)
-    el.val(el.data('default'))
+    const el = document.getElementById('colorPicker_' + input)
+    el.value = el.getAttribute('data-default')
     document.querySelector('#colorPicker_' + input).dispatchEvent(new Event('input', { bubbles: true }))
   })
 
@@ -324,24 +326,22 @@ function editDefinition (uuid = '') {
   // Configure preview behavior
   exSetup.configurePreviewFromDefinition(def)
 
-  $('#definitionNameInput').val(def.name)
+  document.getElementById('definitionNameInput').value = def.name
 
   // Spreadsheet
-  $('#spreadsheetSelect').html(def.spreadsheet)
-  document.getElementById('spreadsheetSelect').setAttribute('data-filename', def.spreadsheet)
+  const spreadsheetSelect = document.getElementById('spreadsheetSelect')
+  spreadsheetSelect.innerHTML = def.spreadsheet
+  spreadsheetSelect.setAttribute('data-filename', def.spreadsheet)
 
   // Attractor
+  const attractorSelect = document.getElementById('attractorSelect')
   if ('attractor' in def && def.attractor.trim() !== '') {
-    $('#attractorSelect').html(def.attractor)
+    attractorSelect.innerHTML = def.attractor
   } else {
-    $('#attractorSelect').html('Select file')
+    attractorSelect.innerHTML = 'Select file'
   }
-  document.getElementById('attractorSelect').setAttribute('data-filename', def.attractor)
-  if ('inactivity_timeout' in def) {
-    document.getElementById('inactivityTimeoutField').value = def.inactivity_timeout
-  } else {
-    document.getElementById('inactivityTimeoutField').value = 30
-  }
+  attractorSelect.setAttribute('data-filename', def.attractor)
+  document.getElementById('inactivityTimeoutField').value = def?.inactivity_timeout || 30
 
   // Page looping
   if (('behavior' in def) && 'loop_results' in def.behavior) {
@@ -399,8 +399,9 @@ function editDefinition (uuid = '') {
 
   // Set the appropriate values for the color pickers
   Object.keys(def.style.color).forEach((key) => {
-    $('#colorPicker_' + key).val(def.style.color[key])
-    document.querySelector('#colorPicker_' + key).dispatchEvent(new Event('input', { bubbles: true }))
+    const el = document.getElementById('colorPicker_' + key)
+    el.value = def.style.color[key]
+    el.dispatchEvent(new Event('input', { bubbles: true }))
   })
 
   // Set the appropriate values for the advanced font pickers
@@ -416,23 +417,26 @@ function editDefinition (uuid = '') {
     document.getElementById(key + 'TextSizeSlider').value = def.style.text_size[key]
   })
 
-  // Build out the key input interface
-  let first = null
-  Object.keys(def.languages).forEach((lang) => {
-    const langDef = def.languages[lang]
-    const displayNameEn = exSetup.getLanguageDisplayName(langDef.code, true)
-    if (first == null) {
-      createLanguageTab(lang, displayNameEn)
-      first = lang
-    } else {
-      createLanguageTab(lang, displayNameEn)
+  // Set up any existing languages and tabs
+  // In Ex5.3, we added the language_order field. If it doesn't exist
+  // set it up now
+  if ((def?.language_order ?? []).length === 0) {
+    def.language_order = []
+    for (const code of Object.keys(def.languages)) {
+      const lang = def.languages[code]
+      if (lang.default === true) {
+        def.language_order.unshift(code)
+      } else def.language_order.push(code)
     }
-    $('#languagePane_' + lang).removeClass('active').removeClass('show')
+    exSetup.updateWorkingDefinition(['language_order'], def.language_order)
+  }
 
-    $('#headerText' + '_' + lang).val(langDef.header_text)
-  })
-  $('#languageTab_' + first).click()
-  $('#languagePane_' + first).addClass('active')
+  const langSelect = document.getElementById('language-picker')
+  exLang.createLanguagePicker(langSelect,
+    {
+      onLanguageRebuild: rebuildLanguageElements
+    }
+  )
 
   // Load the spreadsheet to populate the existing keys
   onSpreadsheetFileChange()
@@ -441,55 +445,25 @@ function editDefinition (uuid = '') {
   document.getElementById('previewFrame').src = '../media_browser.html?standalone=true&definition=' + def.uuid
 }
 
-function populateLanguagePicker () {
-  // Build the language picker based on available languages
+function rebuildLanguageElements (langOrder) {
+  // Clear and rebuild GUI elements when the languages have been modified
 
-  const select = document.getElementById('languageSelect')
-  for (const lang of exSetup.config.languages) {
-    const option = new Option(lang.name_en, lang.code)
-    select.appendChild(option)
-  }
-  select.value = 'en-gb'
-}
+  document.getElementById('languageNav').innerHTML = ''
+  document.getElementById('languageNavContent').innerHTML = ''
 
-function addLanguage () {
-  // Add a new supported language to the definition.
-
-  const code = document.getElementById('languageSelect').value
-  const displayNameEn = exSetup.getLanguageDisplayName(code, true)
-  const displayName = exSetup.getLanguageDisplayName(code)
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
-
-  // Check if name or code already exist
-  let error = false
-  Object.keys(workingDefinition.languages).forEach((key) => {
-    if (key === code) {
-      $('#languageAddExistsWarning').show()
-      error = true
-    } else {
-      $('#languageAddExistsWarning').hide()
+  let first = null
+  for (const lang of langOrder) {
+    const tabButton = createLanguageTab(lang)
+    if (first == null) {
+      first = tabButton
     }
-  })
-  if (error) return
-
-  // If this is the first language added, make it the default
-  let defaultLang = false
-  if (Object.keys(workingDefinition.languages).length === 0) defaultLang = true
-
-  workingDefinition.languages[code] = {
-    display_name: displayName,
-    code,
-    default: defaultLang
   }
-  createLanguageTab(code, displayNameEn)
-
-  $('#definitionSaveButton').data('workingDefinition', structuredClone(workingDefinition))
-  $('#languageNameInput').val('')
-  $('#languageCodeInput').val('')
+  if (first) first.click()
 }
 
-function createLanguageTab (code, displayName) {
+function createLanguageTab (code) {
   // Create a new language tab for the given details.
+  // first = true means this is the first tab to be built on this cycle, so show it.
 
   const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
 
@@ -501,8 +475,8 @@ function createLanguageTab (code, displayName) {
   tabButton.setAttribute('data-bs-target', '#languagePane_' + code)
   tabButton.setAttribute('type', 'button')
   tabButton.setAttribute('role', 'tab')
-  tabButton.innerHTML = displayName
-  $('#languageNav').append(tabButton)
+  tabButton.innerHTML = exLang.getLanguageDisplayName(code, true)
+  document.getElementById('languageNav').appendChild(tabButton)
 
   // Create corresponding pane
   const tabPane = document.createElement('div')
@@ -510,114 +484,114 @@ function createLanguageTab (code, displayName) {
   tabPane.setAttribute('id', 'languagePane_' + code)
   tabPane.setAttribute('role', 'tabpanel')
   tabPane.setAttribute('aria-labelledby', 'languageTab_' + code)
-  $('#languageNavContent').append(tabPane)
+  document.getElementById('languageNavContent').appendChild(tabPane)
 
   const row = document.createElement('div')
   row.classList = 'row gy-2 mt-2 mb-3'
   tabPane.appendChild(row)
 
   // Create default language checkbox
-  const defaultCol = document.createElement('div')
-  defaultCol.classList = 'col-12'
-  row.appendChild(defaultCol)
+  // const defaultCol = document.createElement('div')
+  // defaultCol.classList = 'col-12'
+  // row.appendChild(defaultCol)
 
-  const checkContainer = document.createElement('div')
-  checkContainer.classList = 'form-check'
-  defaultCol.appendChild(checkContainer)
+  // const checkContainer = document.createElement('div')
+  // checkContainer.classList = 'form-check'
+  // defaultCol.appendChild(checkContainer)
 
-  const defaultCheckbox = document.createElement('input')
-  defaultCheckbox.classList = 'form-check-input default-lang-checkbox'
-  defaultCheckbox.setAttribute('id', 'defaultCheckbox_' + code)
-  defaultCheckbox.setAttribute('data-lang', code)
-  defaultCheckbox.setAttribute('type', 'radio')
-  defaultCheckbox.checked = workingDefinition.languages[code].default
-  defaultCheckbox.addEventListener('change', (event) => {
-    // If the checkbox is checked, uncheck all the others and save to the working definition.
-    Array.from(document.querySelectorAll('.default-lang-checkbox')).forEach((el) => {
-      el.checked = false
-      exSetup.updateWorkingDefinition(['languages', el.getAttribute('data-lang'), 'default'], false)
-    })
-    event.target.checked = true
-    exSetup.updateWorkingDefinition(['languages', code, 'default'], true)
-    exSetup.previewDefinition(true)
-  })
-  checkContainer.appendChild(defaultCheckbox)
+  // const defaultCheckbox = document.createElement('input')
+  // defaultCheckbox.classList = 'form-check-input default-lang-checkbox'
+  // defaultCheckbox.setAttribute('id', 'defaultCheckbox_' + code)
+  // defaultCheckbox.setAttribute('data-lang', code)
+  // defaultCheckbox.setAttribute('type', 'radio')
+  // defaultCheckbox.checked = workingDefinition.languages[code].default
+  // defaultCheckbox.addEventListener('change', (event) => {
+  //   // If the checkbox is checked, uncheck all the others and save to the working definition.
+  //   Array.from(document.querySelectorAll('.default-lang-checkbox')).forEach((el) => {
+  //     el.checked = false
+  //     exSetup.updateWorkingDefinition(['languages', el.getAttribute('data-lang'), 'default'], false)
+  //   })
+  //   event.target.checked = true
+  //   exSetup.updateWorkingDefinition(['languages', code, 'default'], true)
+  //   exSetup.previewDefinition(true)
+  // })
+  // checkContainer.appendChild(defaultCheckbox)
 
-  const defaultCheckboxLabel = document.createElement('label')
-  defaultCheckboxLabel.classList = 'form-check-label'
-  defaultCheckboxLabel.setAttribute('for', 'defaultCheckbox_' + code)
-  defaultCheckboxLabel.innerHTML = 'Default language'
-  checkContainer.appendChild(defaultCheckboxLabel)
+  // const defaultCheckboxLabel = document.createElement('label')
+  // defaultCheckboxLabel.classList = 'form-check-label'
+  // defaultCheckboxLabel.setAttribute('for', 'defaultCheckbox_' + code)
+  // defaultCheckboxLabel.innerHTML = 'Default language'
+  // checkContainer.appendChild(defaultCheckboxLabel)
 
-  // Create the flag input
-  const flagImgCol = document.createElement('div')
-  flagImgCol.classList = 'col-3 col-lg-2 d-flex'
-  row.append(flagImgCol)
+  // // Create the flag input
+  // const flagImgCol = document.createElement('div')
+  // flagImgCol.classList = 'col-3 col-lg-2 d-flex'
+  // row.append(flagImgCol)
 
-  const flagImg = document.createElement('img')
-  flagImg.setAttribute('id', 'flagImg_' + code)
-  const customFlag = $('#definitionSaveButton').data('workingDefinition').languages[code].custom_flag
-  if (customFlag != null) {
-    flagImg.src = '../content/' + customFlag
-  } else {
-    flagImg.src = '../_static/flags/' + code + '.svg'
-  }
-  flagImg.classList = 'align-self-center'
-  flagImg.style.width = '100%'
-  flagImg.addEventListener('error', function () {
-    this.src = '../_static/icons/translation-icon_black.svg'
-  })
-  flagImgCol.appendChild(flagImg)
+  // const flagImg = document.createElement('img')
+  // flagImg.setAttribute('id', 'flagImg_' + code)
+  // const customFlag = $('#definitionSaveButton').data('workingDefinition').languages[code].custom_flag
+  // if (customFlag != null) {
+  //   flagImg.src = '../content/' + customFlag
+  // } else {
+  //   flagImg.src = '../_static/flags/' + code + '.svg'
+  // }
+  // flagImg.classList = 'align-self-center'
+  // flagImg.style.width = '100%'
+  // flagImg.addEventListener('error', function () {
+  //   this.src = '../_static/icons/translation-icon_black.svg'
+  // })
+  // flagImgCol.appendChild(flagImg)
 
-  const clearFlagCol = document.createElement('div')
-  clearFlagCol.classList = 'col-2 col-lg-1 d-flex mx-0 px-0 text-center4'
-  row.appendChild(clearFlagCol)
+  // const clearFlagCol = document.createElement('div')
+  // clearFlagCol.classList = 'col-2 col-lg-1 d-flex mx-0 px-0 text-center4'
+  // row.appendChild(clearFlagCol)
 
-  const clearFlagButton = document.createElement('button')
-  clearFlagButton.classList = 'btn btn-danger align-self-center'
-  clearFlagButton.innerHTML = '✕'
-  clearFlagButton.addEventListener('click', function () {
-    deleteLanguageFlag(code)
-  })
-  clearFlagCol.append(clearFlagButton)
+  // const clearFlagButton = document.createElement('button')
+  // clearFlagButton.classList = 'btn btn-danger align-self-center'
+  // clearFlagButton.innerHTML = '✕'
+  // clearFlagButton.addEventListener('click', function () {
+  //   deleteLanguageFlag(code)
+  // })
+  // clearFlagCol.append(clearFlagButton)
 
-  const uploadFlagCol = document.createElement('div')
-  uploadFlagCol.classList = 'col-7 col-lg-3 d-flex'
-  row.append(uploadFlagCol)
+  // const uploadFlagCol = document.createElement('div')
+  // uploadFlagCol.classList = 'col-7 col-lg-3 d-flex'
+  // row.append(uploadFlagCol)
 
-  const uploadFlagBox = document.createElement('label')
-  uploadFlagBox.classList = 'btn btn-outline-primary w-100 align-self-center d-flex'
-  uploadFlagCol.appendChild(uploadFlagBox)
+  // const uploadFlagBox = document.createElement('label')
+  // uploadFlagBox.classList = 'btn btn-outline-primary w-100 align-self-center d-flex'
+  // uploadFlagCol.appendChild(uploadFlagBox)
 
-  const uploadFlagFileName = document.createElement('span')
-  uploadFlagFileName.setAttribute('id', 'uploadFlagFilename_' + code)
-  uploadFlagFileName.classList = 'w-100 align-self-center'
-  uploadFlagFileName.innerHTML = 'Upload flag'
-  uploadFlagBox.appendChild(uploadFlagFileName)
+  // const uploadFlagFileName = document.createElement('span')
+  // uploadFlagFileName.setAttribute('id', 'uploadFlagFilename_' + code)
+  // uploadFlagFileName.classList = 'w-100 align-self-center'
+  // uploadFlagFileName.innerHTML = 'Upload flag'
+  // uploadFlagBox.appendChild(uploadFlagFileName)
 
-  const uploadFlagInput = document.createElement('input')
-  uploadFlagInput.setAttribute('id', 'uploadFlagInput_' + code)
-  uploadFlagInput.classList = 'form-control-file w-100 align-self-center'
-  uploadFlagInput.setAttribute('type', 'file')
-  uploadFlagInput.setAttribute('hidden', true)
-  uploadFlagInput.setAttribute('accept', 'image/*')
-  uploadFlagInput.addEventListener('change', function () {
-    onFlagUploadChange(code)
-  })
-  uploadFlagBox.appendChild(uploadFlagInput)
+  // const uploadFlagInput = document.createElement('input')
+  // uploadFlagInput.setAttribute('id', 'uploadFlagInput_' + code)
+  // uploadFlagInput.classList = 'form-control-file w-100 align-self-center'
+  // uploadFlagInput.setAttribute('type', 'file')
+  // uploadFlagInput.setAttribute('hidden', true)
+  // uploadFlagInput.setAttribute('accept', 'image/*')
+  // uploadFlagInput.addEventListener('change', function () {
+  //   onFlagUploadChange(code)
+  // })
+  // uploadFlagBox.appendChild(uploadFlagInput)
 
-  // Create the delete button
-  const deleteCol = document.createElement('div')
-  deleteCol.classList = 'col col-12 col-lg-6 col-xl-4 d-flex'
-  row.appendChild(deleteCol)
+  // // Create the delete button
+  // const deleteCol = document.createElement('div')
+  // deleteCol.classList = 'col col-12 col-lg-6 col-xl-4 d-flex'
+  // row.appendChild(deleteCol)
 
-  const deleteButton = document.createElement('button')
-  deleteButton.classList = 'btn btn-danger w-100 align-self-center'
-  deleteButton.innerHTML = 'Delete language'
-  deleteButton.addEventListener('click', () => {
-    deleteLanguageTab(code)
-  })
-  deleteCol.appendChild(deleteButton)
+  // const deleteButton = document.createElement('button')
+  // deleteButton.classList = 'btn btn-danger w-100 align-self-center'
+  // deleteButton.innerHTML = 'Delete language'
+  // deleteButton.addEventListener('click', () => {
+  //   deleteLanguageTab(code)
+  // })
+  // deleteCol.appendChild(deleteButton)
 
   // Create the various inputs
   Object.keys(inputFields).forEach((key) => {
@@ -632,11 +606,11 @@ function createLanguageTab (code, displayName) {
     label.innerHTML = inputFields[key].name
 
     if ('hint' in inputFields[key]) {
-      label.innerHTML += ' ' + `<span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="${inputFields[key].hint}" style="font-size: 0.55em;">?</span>`
+      label.innerHTML += ' ' + `<span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="${inputFields[key].hint}" style="font-size: 0.55em;">?</span>`
     }
 
     if ('tooltip' in inputFields[key]) {
-      const tooltip = '\n<span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="' + inputFields[key].tooltip + '" style="font-size: 0.55em;">?</span>'
+      const tooltip = '\n<span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="' + inputFields[key].tooltip + '" style="font-size: 0.55em;">?</span>'
       label.innerHTML += tooltip
     }
     col.appendChild(label)
@@ -656,7 +630,7 @@ function createLanguageTab (code, displayName) {
     }
     input.setAttribute('id', langKey)
     input.addEventListener('change', function () {
-      let value = $(this).val()
+      let value = this.value
       if (typeof value === 'string') value = value.trim()
       exSetup.updateWorkingDefinition(['languages', code, inputFields[key].property], value)
       exSetup.previewDefinition(true)
@@ -665,9 +639,9 @@ function createLanguageTab (code, displayName) {
   })
 
   // If we have already loaded a spreadhseet, populate the key options
-  const keyList = $('#spreadsheetSelect').data('availableKeys')
+  const keyList = document.getElementById('spreadsheetSelect').getAttribute('data-availableKeys')
   if (keyList != null) {
-    populateKeySelects(keyList)
+    populateKeySelects(JSON.parse(keyList), code)
   }
 
   // Create the filter options
@@ -710,8 +684,7 @@ function createLanguageTab (code, displayName) {
     return new bootstrap.Tooltip(tooltipTriggerEl)
   })
 
-  // Switch to this new tab
-  $(tabButton).click()
+  return tabButton
 }
 
 function addFilter (lang, details = {}, addition = true) {
@@ -781,9 +754,9 @@ function addFilter (lang, details = {}, addition = true) {
   })
 
   // If we have already loaded a spreadhseet, populate the key options
-  const keyList = $('#spreadsheetSelect').data('availableKeys')
+  const keyList = document.getElementById('spreadsheetSelect').getAttribute('data-availableKeys')
   if (keyList != null) {
-    populateFilterSelects(keyList)
+    populateFilterSelects(JSON.parse(keyList))
   }
 
   exSetup.previewDefinition(true)
@@ -843,78 +816,6 @@ function changeFilterOrder (lang, uuid, direction) {
   exSetup.previewDefinition(true)
 }
 
-function deleteLanguageTab (lang) {
-  // Delete the given language tab.
-
-  delete $('#definitionSaveButton').data('workingDefinition').languages[lang]
-  $('#languageTab_' + lang).remove()
-  $('#languagePane_' + lang).remove()
-  $('.language-tab').click()
-}
-
-function deleteLanguageFlag (lang) {
-  // Ask the server to delete the language flag and remove it from the working definition.
-
-  const flag = $('#definitionSaveButton').data('workingDefinition').languages[lang].custom_flag
-
-  if (flag == null) {
-    // No custom flag
-    return
-  }
-
-  // Delete filename from working definition
-  delete $('#definitionSaveButton').data('workingDefinition').languages[lang].custom_flag
-
-  // Remove the icon
-  $('#flagImg_' + lang).attr('src', '../_static/flags/' + lang + '.svg')
-
-  // Delete from server
-  exCommon.makeHelperRequest({
-    method: 'POST',
-    endpoint: '/file/delete',
-    params: {
-      file: flag
-    }
-  })
-}
-
-function onFlagUploadChange (lang) {
-  // Called when the user selects a flag image file to upload
-
-  const fileInput = $('#uploadFlagInput_' + lang)[0]
-
-  const file = fileInput.files[0]
-  if (file == null) return
-
-  $('#uploadFlagFilename_' + lang).html('Uploading')
-
-  const ext = file.name.split('.').pop()
-  const newName = $('#definitionSaveButton').data('workingDefinition').uuid + '_flag_' + lang + '.' + ext
-
-  const formData = new FormData()
-
-  formData.append('files', fileInput.files[0], newName)
-
-  const xhr = new XMLHttpRequest()
-  xhr.open('POST', '/upload', true)
-
-  xhr.onreadystatechange = function () {
-    if (this.readyState !== 4) return
-    if (this.status === 200) {
-      const response = JSON.parse(this.responseText)
-
-      if ('success' in response) {
-        $('#uploadFlagFilename_' + lang).html('Upload')
-        $('#flagImg_' + lang).attr('src', '../content/' + newName)
-        exSetup.updateWorkingDefinition(['languages', lang, 'custom_flag'], newName)
-      }
-    } else if (this.status === 422) {
-      console.log(JSON.parse(this.responseText))
-    }
-  }
-  xhr.send(formData)
-}
-
 function onAttractorFileChange () {
   // Called when a new image or video is selected.
 
@@ -956,7 +857,7 @@ function onSpreadsheetFileChange () {
       }
       const spreadsheet = csvAsJSON.json
       const keys = Object.keys(spreadsheet[0])
-      $('#spreadsheetSelect').data('availableKeys', keys)
+      document.getElementById('spreadsheetSelect').setAttribute('data-availableKeys', JSON.stringify(keys))
       populateKeySelects(keys)
       populateFilterSelects(keys)
       exSetup.previewDefinition(true)
@@ -1039,104 +940,115 @@ function _checkContentExists (spreadsheet, keys) {
   })
 }
 
-function showOptimizeContentModal () {
-  // Show the modal for optimizing the content and thumbnails.
+// function showOptimizeContentModal () {
+//   // Show the modal for optimizing the content and thumbnails.
 
-  document.getElementById('optimizeContentProgressBarDiv').style.display = 'none'
-  $('#optimizeContentModal').modal('show')
-}
+//   document.getElementById('optimizeContentProgressBarDiv').style.display = 'none'
+//   $('#optimizeContentModal').modal('show')
+// }
 
-function optimizeMediaFromModal () {
-  // Collect the necessary information and then optimize the media.
+// function optimizeMediaFromModal () {
+//   // Collect the necessary information and then optimize the media.
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+//   const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
 
-  const resolution = document.getElementById('resolutionSelect').value
-  const width = parseInt(resolution.split('_')[0])
-  const nCols = parseInt(document.getElementById('numColsSelect').value)
-  const thumbRes = width / nCols
+//   const resolution = document.getElementById('resolutionSelect').value
+//   const width = parseInt(resolution.split('_')[0])
+//   const nCols = parseInt(document.getElementById('numColsSelect').value)
+//   const thumbRes = width / nCols
 
-  // Loop through the defintion and collect any unique image keys
-  const imageKeys = []
+//   // Loop through the defintion and collect any unique image keys
+//   const imageKeys = []
 
-  Object.keys(workingDefinition.languages).forEach((lang) => {
-    if (imageKeys.includes(workingDefinition.languages[lang].media_key) === false) {
-      imageKeys.push(workingDefinition.languages[lang].media_key)
-    }
-  })
+//   Object.keys(workingDefinition.languages).forEach((lang) => {
+//     if (imageKeys.includes(workingDefinition.languages[lang].media_key) === false) {
+//       imageKeys.push(workingDefinition.languages[lang].media_key)
+//     }
+//   })
 
-  // Retrieve the spreadsheet and collect all images
-  const toOptimize = []
+//   // Retrieve the spreadsheet and collect all images
+//   const toOptimize = []
 
-  exCommon.makeHelperRequest({
-    method: 'GET',
-    endpoint: '/content/' + workingDefinition.spreadsheet,
-    rawResponse: true,
-    noCache: true
-  })
-    .then((raw) => {
-      const spreadsheet = exCommon.csvToJSON(raw).json
-      spreadsheet.forEach((row) => {
-        imageKeys.forEach((key) => {
-          if (row[key].trim() === '') return
-          toOptimize.push(row[key])
-        })
-      })
-      const total = toOptimize.length
-      let numComplete = 0
+//   exCommon.makeHelperRequest({
+//     method: 'GET',
+//     endpoint: '/content/' + workingDefinition.spreadsheet,
+//     rawResponse: true,
+//     noCache: true
+//   })
+//     .then((raw) => {
+//       const spreadsheet = exCommon.csvToJSON(raw).json
+//       spreadsheet.forEach((row) => {
+//         imageKeys.forEach((key) => {
+//           if (row[key].trim() === '') return
+//           toOptimize.push(row[key])
+//         })
+//       })
+//       const total = toOptimize.length
+//       let numComplete = 0
 
-      // Show the progress bar
-      document.getElementById('optimizeContentProgressBarDiv').style.display = 'flex'
-      document.getElementById('optimizeContentProgressBar').style.width = '0%'
-      document.getElementById('optimizeContentProgressBarDiv').setAttribute('aria-valuenow', 0)
+//       // Show the progress bar
+//       document.getElementById('optimizeContentProgressBarDiv').style.display = 'flex'
+//       document.getElementById('optimizeContentProgressBar').style.width = '0%'
+//       document.getElementById('optimizeContentProgressBarDiv').setAttribute('aria-valuenow', 0)
 
-      toOptimize.forEach((file) => {
-        exCommon.makeHelperRequest({
-          method: 'POST',
-          endpoint: '/files/generateThumbnail',
-          params: {
-            source: file,
-            mimetype: 'image',
-            width: thumbRes
-          }
-        })
-          .then((result) => {
-            if (result.success === true) {
-              numComplete += 1
-              const percent = Math.round(100 * numComplete / total)
-              document.getElementById('optimizeContentProgressBar').style.width = String(percent) + '%'
-              document.getElementById('optimizeContentProgressBarDiv').setAttribute('aria-valuenow', percent)
-            }
-          })
-      })
-    })
-}
+//       toOptimize.forEach((file) => {
+//         exCommon.makeHelperRequest({
+//           method: 'POST',
+//           endpoint: '/files/generateThumbnail',
+//           params: {
+//             source: file,
+//             mimetype: 'image',
+//             width: thumbRes
+//           }
+//         })
+//           .then((result) => {
+//             if (result.success === true) {
+//               numComplete += 1
+//               const percent = Math.round(100 * numComplete / total)
+//               document.getElementById('optimizeContentProgressBar').style.width = String(percent) + '%'
+//               document.getElementById('optimizeContentProgressBarDiv').setAttribute('aria-valuenow', percent)
+//             }
+//           })
+//       })
+//     })
+// }
 
-function populateKeySelects (keyList) {
+function populateKeySelects (keyList, langToPopulate = null) {
   // Take a list of keys and use it to populate all the selects used to match keys to parameters.
 
   const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
   if (('languages' in workingDefinition) === false) return
 
-  Object.keys(workingDefinition.languages).forEach((lang) => {
+  // Add a blank entry for no selection
+  keyList.unshift(null)
+
+  let langs
+  if (langToPopulate == null) {
+    langs = workingDefinition.language_order
+  } else langs = [langToPopulate]
+  langs.forEach((lang) => {
+    console.log(lang)
     const langDict = workingDefinition.languages[lang]
+
     Object.keys(inputFields).forEach((input) => {
       const inputDict = inputFields[input]
+      const inputEl = document.getElementById(input + '_' + lang)
+
       if (inputDict.kind === 'select') {
-        $('#' + input + '_' + lang).empty()
+        inputEl.innerHTML = ''
 
         keyList.forEach((key) => {
           const option = document.createElement('option')
-          option.value = key
-          option.innerHTML = key
-          $('#' + input + '_' + lang).append(option)
+          option.value = key || ''
+          option.innerHTML = key || '-'
+          inputEl.appendChild(option)
         })
 
         // If we already have a value for this select, set it
         if (inputDict.property in langDict) {
-          $('#' + input + '_' + lang).val(langDict[inputDict.property])
+          inputEl.value = langDict[inputDict.property]
         } else {
-          $('#' + input + '_' + lang).val(null)
+          inputEl.valule = null
         }
       }
     })
@@ -1264,7 +1176,6 @@ document.getElementById('wizardUploadMediaButton').addEventListener('click', () 
 })
 
 // Main buttons
-$('#languageAddButton').click(addLanguage)
 document.getElementById('manageContentButton').addEventListener('click', (event) => {
   exFileSelect.createFileSelectionModal({ manage: true })
 })
@@ -1273,8 +1184,8 @@ document.getElementById('showCheckContentButton').addEventListener('click', () =
   $('#checkContentModal').modal('show')
 })
 document.getElementById('checkContentButton').addEventListener('click', checkContentExists)
-document.getElementById('optimizeContentButton').addEventListener('click', showOptimizeContentModal)
-document.getElementById('optimizeContentBeginButton').addEventListener('click', optimizeMediaFromModal)
+// document.getElementById('optimizeContentButton').addEventListener('click', showOptimizeContentModal)
+// document.getElementById('optimizeContentBeginButton').addEventListener('click', optimizeMediaFromModal)
 
 // Definition fields
 document.getElementById('spreadsheetSelect').addEventListener('click', (event) => {
@@ -1360,10 +1271,13 @@ Array.from(document.querySelectorAll('.height-slider')).forEach((el) => {
 })
 
 // Style fields
-$('.coloris').change(function () {
-  const value = $(this).val().trim()
-  exSetup.updateWorkingDefinition(['style', 'color', $(this).data('property')], value)
-  exSetup.previewDefinition(true)
+document.querySelectorAll('.coloris').forEach((element) => {
+  element.addEventListener('change', function () {
+    const value = this.value.trim()
+    const property = this.getAttribute('data-property')
+    exSetup.updateWorkingDefinition(['style', 'color', property], value)
+    exSetup.previewDefinition(true)
+  })
 })
 document.getElementById('manageFontsButton').addEventListener('click', (event) => {
   exFileSelect.createFileSelectionModal({ filetypes: ['otf', 'ttf', 'woff', 'woff2'], manage: true })
@@ -1387,7 +1301,7 @@ if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').match
 }
 
 // Populate available languages
-populateLanguagePicker()
+exLang.createLanguagePicker(document.getElementById('language-picker'), { onLanguageRebuild: rebuildLanguageElements })
 
 // Set helper address for use with exCommon.makeHelperRequest
 exCommon.config.helperAddress = window.location.origin
@@ -1399,6 +1313,7 @@ exSetup.configure({
   loadDefinition: editDefinition,
   blankDefinition: {
     languages: {},
+    language_order: [],
     style: {
       background: {
         color: '#719abf',
@@ -1406,6 +1321,7 @@ exSetup.configure({
       },
       color: {},
       font: {},
+      layout: {},
       text_size: {}
     }
   }

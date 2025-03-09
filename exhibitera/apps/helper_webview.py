@@ -50,6 +50,7 @@ def show_webview_window(app: str, reload: bool = False):
     endpoints = {
         "app": "/app.html",
         "dmx_control": "/dmx_control.html",
+        "image_compare_setup": "/image_compare/setup.html",
         "infostation_setup": "/InfoStation/setup.html",
         "media_browser_setup": "/media_browser/setup.html",
         "media_player_setup": "/media_player/setup.html",
@@ -65,6 +66,7 @@ def show_webview_window(app: str, reload: bool = False):
     names = {
         "app": "",
         "dmx_control": "DMX Control",
+        "image_compare_setup": "Image Compare",
         "infostation_setup": "InfoStation",
         "media_browser_setup": "Media Browser",
         "media_player_setup": "Media Player",
