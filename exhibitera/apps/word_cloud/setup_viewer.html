@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="../css/bootstrap_5_3/bootstrap.min.css">
     <link rel="stylesheet" href="../css/coloris.min.css">
     <link rel="stylesheet" href="../css/setup.css">
+    <link rel="stylesheet" href="../css/tiny-mde-Exhiibtera.css">
 
     <style>
       @font-face {
@@ -102,7 +103,12 @@
             </div>
             <div class="modal-body"  style="max-height: 70vh; overflow-y: auto;">
               <div class="row gy-2">
-                <div class="col-12 fst-italic">Word Cloud Viewer automatically filters out a list of English-language profanity and inappropriate words. Use the text entry below to add additional words, separated by either a comma or a new line.</div>
+                <div class="col-12 fst-italic">
+                  <p>
+                    Word Cloud Viewer automatically filters out a list of English-language profanity and inappropriate words. Use the text entry below to add additional words, separated by either a comma or a new line.
+                  </p>
+                  Note that these excluded words don't apply to the preview word cloud during setup.
+                </div>
                 <div class="col-12">
                   <textarea id="excludedWordsInput" class="form-control" rows="10"></textarea>
                 </div>
@@ -441,9 +447,10 @@
 
               <h3 class="mt-2">Content</h3>
               <div class="row gy-2 align-items-end">
-                <div class="col-12 col-md-6 col-lg-4">
+                <div class="col-12 col-lg-6">
                   <label for="promptInput" class="form-label">Prompt</label>
-                  <input type="text" class="form-control" id="promptInput">
+                  <div id="promptInputCommandBar"></div>
+                  <div id="promptInput"></div>
                 </div>
                 <div class="col-12 col-md-6 col-lg-4">
                   <button id="showExcludedWordsModalButton" class="btn btn-primary w-100">Excluded words</button>
@@ -556,6 +563,7 @@
   <script type="text/javascript" src="../js/showdown.min.js"></script>
   <script type="text/javascript" src="../js/platform.js"></script>
   <script type="text/javascript" src="../js/coloris.min.js"></script>
+  <script type="text/javascript" src="../js/tiny-mde.min.js"></script>
   <script type="module" src="setup_viewer.js"></script>
 
   </body>

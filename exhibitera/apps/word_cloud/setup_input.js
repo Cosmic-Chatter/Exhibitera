@@ -3,6 +3,7 @@
 import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exSetup from '../js/exhibitera_setup_common.js'
 import * as exFileSelect from '../js/exhibitera_file_select_modal.js'
+import * as exMarkdown from '../js/exhibitera_setup_markdown.js'
 
 async function initializeWizard () {
   // Setup the wizard
@@ -97,8 +98,16 @@ async function clearDefinitionInput (full = true) {
   document.getElementById('collectionNameInput').value = ''
   document.getElementById('enableKeyboardInput').checked = false
   document.getElementById('maxCharacterCount').value = '-1'
+
   // Content details
-  document.getElementById('promptInput').value = ''
+  const editor = new exMarkdown.ExhibiteraMarkdownEditor({
+    content: '',
+    editorDiv: document.getElementById('promptInput'),
+    commandDiv: document.getElementById('promptInputCommandBar'),
+    commands: ['basic'],
+    callback: (content) => {
+    }
+  })
   Array.from(document.querySelectorAll('.localization-input')).forEach((el) => {
     el.value = ''
   })
@@ -134,28 +143,22 @@ function editDefinition (uuid = '') {
   $('#definitionSaveButton').data('initialDefinition', structuredClone(def))
   $('#definitionSaveButton').data('workingDefinition', structuredClone(def))
 
-  $('#definitionNameInput').val(def.name)
-  if ('collection_name' in def.behavior) {
-    document.getElementById('collectionNameInput').value = def.behavior.collection_name
-  } else {
-    document.getElementById('collectionNameInput').value = ''
-  }
-  if ('enable_keyboard_input' in def.behavior) {
-    document.getElementById('enableKeyboardInput').checked = def.behavior.enable_keyboard_input
-  } else {
-    document.getElementById('enableKeyboardInput').checked = false
-  }
-  if ('max_character_count' in def.behavior) {
-    document.getElementById('maxCharacterCount').value = def.behavior.max_character_count
-  } else {
-    document.getElementById('maxCharacterCount').value = -1
-  }
+  document.getElementById('definitionNameInput').value = def.name
+  document.getElementById('collectionNameInput').value = def?.behavior?.collection_name ?? ''
+  document.getElementById('enableKeyboardInput').checked = def?.behavior?.enable_keyboard_input ?? false
+  document.getElementById('maxCharacterCount').value = def?.behavior?.max_character_count ?? -1
+
   // Content
-  if ('prompt' in def.content) {
-    document.getElementById('promptInput').value = def.content.prompt
-  } else {
-    document.getElementById('promptInput').value = ''
-  }
+  const editor = new exMarkdown.ExhibiteraMarkdownEditor({
+    content: def?.content?.prompt ?? '',
+    editorDiv: document.getElementById('promptInput'),
+    commandDiv: document.getElementById('promptInputCommandBar'),
+    commands: ['basic'],
+    callback: (content) => {
+      exSetup.updateWorkingDefinition(['content', 'prompt'], content)
+      exSetup.previewDefinition(true)
+    }
+  })
 
   Array.from(document.querySelectorAll('.localization-input')).forEach((el) => {
     const property = el.getAttribute('data-property')
