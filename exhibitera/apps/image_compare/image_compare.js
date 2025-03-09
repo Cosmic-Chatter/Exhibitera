@@ -189,8 +189,6 @@ function loadDefinition (definition) {
 
   const root = document.querySelector(':root')
 
-  console.log(definition)
-
   // Configure the attractor
   inactivityTimeout = definition?.inactivity_timeout * 1000 || 30000
 
@@ -333,6 +331,9 @@ function loadDefinition (definition) {
   })
 
   localize(currentLang)
+
+  // Send a thumbnail to the helper
+  setTimeout(() => exCommon.saveScreenshotAsThumbnail(definition.uuid + '.png'), 500)
 }
 
 function populateItemList (def) {
