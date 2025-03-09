@@ -707,6 +707,7 @@ def check_available_exhibits():
 
     if config.current_exhibit not in config.exhibit_list:
         config.current_exhibit = config.exhibit_list[0]["uuid"]
+        c_tools.update_system_configuration({"current_exhibit": config.current_exhibit})
 
 
 def command_all_exhibit_components(cmd: str):
