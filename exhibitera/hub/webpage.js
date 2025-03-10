@@ -11,7 +11,7 @@ import * as exTools from './exhibitera_tools.js'
 import * as exTracker from './exhibitera_tracker.js'
 import * as exUsers from './exhibitera_users.js'
 
-function editExhibitPopulateExhibitContent (exhibit) {
+async function editExhibitPopulateExhibitContent (exhibit) {
   // Create a GUI representation of the given exhibit that shows the defintion for each component.
 
   const contentList = document.getElementById('editExhibitExhibitContentList')
@@ -20,161 +20,159 @@ function editExhibitPopulateExhibitContent (exhibit) {
   contentList.innerHTML = ''
   exhibitNameField.setAttribute('data-uuid', exhibit)
 
-  exTools.makeServerRequest({
+  const result = await exTools.makeServerRequest({
     method: 'GET',
     endpoint: '/exhibit/' + exhibit + '/details'
   })
-    .then((result) => {
-      exhibitNameField.value = result.exhibit.name
+  exhibitNameField.value = result.exhibit.name
 
-      result.exhibit.components.forEach((component) => {
-        const col = document.createElement('div')
-        col.classList = 'col manageExhibit-component-col'
-        col.setAttribute('data-component-uuid', component.uuid)
-        contentList.appendChild(col)
+  for (const component of result.exhibit.components) {
+    const col = document.createElement('div')
+    col.classList = 'col manageExhibit-component-col'
+    col.setAttribute('data-component-uuid', component.uuid)
+    contentList.appendChild(col)
 
-        const row = document.createElement('div')
-        row.classList = 'row mx-0'
-        col.appendChild(row)
+    const row = document.createElement('div')
+    row.classList = 'row mx-0'
+    col.appendChild(row)
 
-        const header = document.createElement('div')
-        header.classList = 'col-12 d-flex justify-content-between align-items-center bg-primary rounded-top text-light py-1'
-        row.appendChild(header)
+    const header = document.createElement('div')
+    header.classList = 'col-12 d-flex justify-content-between align-items-center bg-primary rounded-top text-light py-1'
+    row.appendChild(header)
 
-        const nameDiv = document.createElement('div')
-        nameDiv.classList = 'fs-5'
-        nameDiv.innerHTML = component.id
-        header.appendChild(nameDiv)
+    const nameDiv = document.createElement('div')
+    nameDiv.classList = 'fs-5'
+    nameDiv.innerHTML = component.id
+    header.appendChild(nameDiv)
 
-        const deleteButton = document.createElement('button')
-        deleteButton.classList = 'btn btn-danger btn-sm py-0'
-        deleteButton.innerHTML = '✕'
-        deleteButton.addEventListener('click', () => {
-          deleteButton.closest('.manageExhibit-component-col').remove()
-        })
-        header.appendChild(deleteButton)
+    const deleteButton = document.createElement('button')
+    deleteButton.classList = 'btn btn-danger btn-sm py-0'
+    deleteButton.innerHTML = '✕'
+    deleteButton.addEventListener('click', () => {
+      deleteButton.closest('.manageExhibit-component-col').remove()
+    })
+    header.appendChild(deleteButton)
 
-        const body = document.createElement('div')
-        body.classList = 'col-12 bg-secondary rounded-bottom py-2'
-        row.appendChild(body)
+    const body = document.createElement('div')
+    body.classList = 'col-12 bg-secondary rounded-bottom py-2'
+    row.appendChild(body)
 
-        const bodyRow = document.createElement('div')
-        bodyRow.classList = 'row gy-2'
-        body.appendChild(bodyRow)
+    const bodyRow = document.createElement('div')
+    bodyRow.classList = 'row gy-2'
+    body.appendChild(bodyRow)
 
-        const componentObj = exExhibit.getExhibitComponent(component.id)
-        if (componentObj != null) {
-          // This component exists in the system
+    const componentObj = exExhibit.getExhibitComponent(component.id)
+    if (componentObj != null) {
+      // This component exists in the system
 
-          const definitionPreviewCol = document.createElement('div')
-          definitionPreviewCol.classList = 'col-12 exhibit-thumbnail'
-          if (document.getElementById('editExhibitThumbnailCheckbox').checked === false) definitionPreviewCol.style.display = 'none'
-          bodyRow.appendChild(definitionPreviewCol)
+      const definitionPreviewCol = document.createElement('div')
+      definitionPreviewCol.classList = 'col-12 exhibit-thumbnail'
+      if (document.getElementById('editExhibitThumbnailCheckbox').checked === false) definitionPreviewCol.style.display = 'none'
+      bodyRow.appendChild(definitionPreviewCol)
 
-          const definitionPreviewImage = document.createElement('img')
-          definitionPreviewImage.style.width = '100%'
-          definitionPreviewImage.style.height = '100px'
-          definitionPreviewImage.style.objectFit = 'contain'
-          definitionPreviewCol.appendChild(definitionPreviewImage)
+      const definitionPreviewImage = document.createElement('img')
+      definitionPreviewImage.style.width = '100%'
+      definitionPreviewImage.style.height = '100px'
+      definitionPreviewImage.style.objectFit = 'contain'
+      definitionPreviewCol.appendChild(definitionPreviewImage)
 
-          const definitionPreviewVideo = document.createElement('video')
-          definitionPreviewVideo.setAttribute('autoplay', true)
-          definitionPreviewVideo.muted = 'true'
-          definitionPreviewVideo.setAttribute('loop', 'true')
-          definitionPreviewVideo.setAttribute('playsinline', 'true')
-          definitionPreviewVideo.setAttribute('webkit-playsinline', 'true')
-          definitionPreviewVideo.setAttribute('disablePictureInPicture', 'true')
-          definitionPreviewVideo.style.width = '100%'
-          definitionPreviewVideo.style.height = '100px'
-          definitionPreviewVideo.style.objectFit = 'contain'
-          definitionPreviewCol.appendChild(definitionPreviewVideo)
+      const definitionPreviewVideo = document.createElement('video')
+      definitionPreviewVideo.setAttribute('autoplay', true)
+      definitionPreviewVideo.muted = 'true'
+      definitionPreviewVideo.setAttribute('loop', 'true')
+      definitionPreviewVideo.setAttribute('playsinline', 'true')
+      definitionPreviewVideo.setAttribute('webkit-playsinline', 'true')
+      definitionPreviewVideo.setAttribute('disablePictureInPicture', 'true')
+      definitionPreviewVideo.style.width = '100%'
+      definitionPreviewVideo.style.height = '100px'
+      definitionPreviewVideo.style.objectFit = 'contain'
+      definitionPreviewCol.appendChild(definitionPreviewVideo)
 
-          const definitionSelectCol = document.createElement('div')
-          definitionSelectCol.classList = 'col-12'
-          bodyRow.appendChild(definitionSelectCol)
+      const definitionSelectCol = document.createElement('div')
+      definitionSelectCol.classList = 'col-12'
+      bodyRow.appendChild(definitionSelectCol)
 
-          const definitionSelect = document.createElement('select')
-          definitionSelect.classList = 'form-select manageExhibit-definition-select'
-          definitionSelect.setAttribute('data-component-uuid', component.uuid)
-          definitionSelect.setAttribute('data-component-id', component.id)
-          definitionSelect.setAttribute('data-initial-definition', component.definition)
-          definitionSelectCol.appendChild(definitionSelect)
+      const definitionSelect = document.createElement('select')
+      definitionSelect.classList = 'form-select manageExhibit-definition-select'
+      definitionSelect.setAttribute('data-component-uuid', component.uuid)
+      definitionSelect.setAttribute('data-component-id', component.id)
+      definitionSelect.setAttribute('data-initial-definition', component.definition)
+      definitionSelectCol.appendChild(definitionSelect)
 
-          exTools.makeRequest({
-            method: 'GET',
-            url: componentObj.getHelperURL(),
-            endpoint: '/getAvailableContent'
+      exTools.makeRequest({
+        method: 'GET',
+        url: componentObj.getHelperURL(),
+        endpoint: '/getAvailableContent'
+      })
+        .then((availableContent) => {
+          // Build an option for each definition
+          const appDict = exTools.sortDefinitionsByApp(availableContent.definitions)
+          Object.keys(appDict).sort().forEach((app) => {
+            const header = new Option(exExhibit.convertAppIDtoDisplayName(app))
+            header.setAttribute('disabled', true)
+            definitionSelect.appendChild(header)
+
+            appDict[app].forEach((def) => {
+              const option = new Option(def.name, def.uuid)
+              definitionSelect.appendChild(option)
+            })
           })
-            .then((availableContent) => {
-              // Build an option for each definition
-              const appDict = exTools.sortDefinitionsByApp(availableContent.definitions)
-              Object.keys(appDict).sort().forEach((app) => {
-                const header = new Option(exExhibit.convertAppIDtoDisplayName(app))
-                header.setAttribute('disabled', true)
-                definitionSelect.appendChild(header)
 
-                appDict[app].forEach((def) => {
-                  const option = new Option(def.name, def.uuid)
-                  definitionSelect.appendChild(option)
-                })
-              })
+          const changeThumb = function () {
+            if (availableContent.thumbnails.includes(definitionSelect.value + '.mp4')) {
+              definitionPreviewVideo.src = componentObj.getHelperURL() + '/thumbnails/' + definitionSelect.value + '.mp4'
+              definitionPreviewVideo.play()
+              definitionPreviewImage.style.display = 'none'
+              definitionPreviewVideo.style.display = 'block'
+            } else if (availableContent.thumbnails.includes(definitionSelect.value + '.jpg')) {
+              definitionPreviewImage.src = componentObj.getHelperURL() + '/thumbnails/' + definitionSelect.value + '.jpg'
+              definitionPreviewVideo.style.display = 'none'
+              definitionPreviewImage.style.display = 'block'
+            } else {
+              definitionPreviewVideo.style.display = 'none'
+              definitionPreviewImage.style.display = 'none'
+            }
+          }
 
-              const changeThumb = function () {
-                if (availableContent.thumbnails.includes(definitionSelect.value + '.mp4')) {
-                  definitionPreviewVideo.src = componentObj.getHelperURL() + '/thumbnails/' + definitionSelect.value + '.mp4'
-                  definitionPreviewVideo.play()
-                  definitionPreviewImage.style.display = 'none'
-                  definitionPreviewVideo.style.display = 'block'
-                } else if (availableContent.thumbnails.includes(definitionSelect.value + '.jpg')) {
-                  definitionPreviewImage.src = componentObj.getHelperURL() + '/thumbnails/' + definitionSelect.value + '.jpg'
-                  definitionPreviewVideo.style.display = 'none'
-                  definitionPreviewImage.style.display = 'block'
-                } else {
-                  definitionPreviewVideo.style.display = 'none'
-                  definitionPreviewImage.style.display = 'none'
-                }
-              }
-
-              definitionSelect.addEventListener('change', changeThumb)
-              definitionSelect.value = component.definition
-              changeThumb()
-            })
-            .catch((result) => {
-              // This component is offline
-              const badComponentCol = document.createElement('div')
-              badComponentCol.classList = 'col-12'
-              bodyRow.appendChild(badComponentCol)
-
-              const badComponentAlert = document.createElement('div')
-              badComponentAlert.classList = 'alert alert-danger fst-italic text-center py-2 mb-0'
-              badComponentAlert.innerHTML = 'Component offline'
-              badComponentCol.appendChild(badComponentAlert)
-
-              // Hide the thumbnail and select
-              definitionPreviewCol.style.display = 'none'
-              definitionSelectCol.style.display = 'none'
-            })
-        } else {
-          // This component doesn't exist
+          definitionSelect.addEventListener('change', changeThumb)
+          definitionSelect.value = component.definition
+          changeThumb()
+        })
+        .catch((result) => {
+          // This component is offline
           const badComponentCol = document.createElement('div')
           badComponentCol.classList = 'col-12'
           bodyRow.appendChild(badComponentCol)
 
           const badComponentAlert = document.createElement('div')
           badComponentAlert.classList = 'alert alert-danger fst-italic text-center py-2 mb-0'
-          badComponentAlert.innerHTML = 'Component does not exist'
+          badComponentAlert.innerHTML = 'Component offline'
           badComponentCol.appendChild(badComponentAlert)
-        }
-      })
 
-      const actionsList = document.getElementById('editExhibitActionsList')
-      actionsList.innerHTML = ''
+          // Hide the thumbnail and select
+          definitionPreviewCol.style.display = 'none'
+          definitionSelectCol.style.display = 'none'
+        })
+    } else {
+      // This component doesn't exist
+      const badComponentCol = document.createElement('div')
+      badComponentCol.classList = 'col-12'
+      bodyRow.appendChild(badComponentCol)
 
-      result.exhibit.commands.forEach((command) => {
-        actionsList.append(createExhibitActionEntryHTML(command))
-      })
-      showEditExhibitGUI()
-    })
+      const badComponentAlert = document.createElement('div')
+      badComponentAlert.classList = 'alert alert-danger fst-italic text-center py-2 mb-0'
+      badComponentAlert.innerHTML = 'Component does not exist'
+      badComponentCol.appendChild(badComponentAlert)
+    }
+  }
+
+  const actionsList = document.getElementById('editExhibitActionsList')
+  actionsList.innerHTML = ''
+
+  result.exhibit.commands.forEach((command) => {
+    actionsList.append(createExhibitActionEntryHTML(command))
+  })
+  showEditExhibitGUI()
 }
 
 export function createExhibitActionEntryHTML (item, allowEdit = exTools.checkPermission('exhibits', 'edit')) {
@@ -184,6 +182,7 @@ export function createExhibitActionEntryHTML (item, allowEdit = exTools.checkPer
 
   if (description == null) return
 
+  console.log(item)
   const eventRow = document.createElement('div')
   eventRow.classList = 'row mt-2 actionListing'
   eventRow.setAttribute('id', 'actionListing_' + item.uuid)
@@ -206,7 +205,8 @@ export function createExhibitActionEntryHTML (item, allowEdit = exTools.checkPer
   eventDescriptionInnerContainer.classList = 'align-self-center justify-content-center text-wrap'
   eventDescriptionOuterContainer.appendChild(eventDescriptionInnerContainer)
 
-  const eventDescription = document.createElement('center')
+  const eventDescription = document.createElement('div')
+  eventDescription.classList = 'text-center'
   eventDescription.innerHTML = description
   eventDescriptionOuterContainer.appendChild(eventDescription)
 
@@ -222,7 +222,8 @@ export function createExhibitActionEntryHTML (item, allowEdit = exTools.checkPer
     eventEditButton.style.border = '0px'
     eventEditButton.innerHTML = 'Edit'
     eventEditButton.addEventListener('click', function () {
-      showEditExhibitActionModal(item)
+      const currentActionDict = JSON.parse(eventRow.getAttribute('data-action'))
+      showEditExhibitActionModal(currentActionDict)
     })
     eventEditButtonCol.appendChild(eventEditButton)
   } else {
@@ -323,28 +324,43 @@ function editExhibitSubmitUpdate () {
     })
 }
 
-function showEditExhibitActionModal (actionDict = null) {
+async function showEditExhibitActionModal (actionDict = null) {
   // Configure the modal for editing an action and show it.
 
   const actionSelector = document.getElementById('editExhibitActionSelector')
   actionSelector.value = null
+
   const targetSelector = document.getElementById('editExhibitActionTargetSelector')
   targetSelector.value = null
   targetSelector.style.display = 'none'
   document.getElementById('editExhibitActionTargetSelectorLabel').style.display = 'none'
+
   const valueSelector = document.getElementById('editExhibitActionValueSelector')
   valueSelector.value = null
   valueSelector.style.display = 'none'
   document.getElementById('editExhibitActionValueSelectorLabel').style.display = 'none'
+
   const modal = document.getElementById('editExhibitActionModal')
   modal.setAttribute('data-uuid', exTools.uuid())
+  modal.setAttribute('data-isEdit', 'false')
 
   if (actionDict != null) {
     modal.setAttribute('data-uuid', actionDict.uuid)
+    modal.setAttribute('data-isEdit', 'true')
+
     actionSelector.value = actionDict.action
+
     editExhibitActionConfigureTargetSelector(actionDict.action)
-    targetSelector.value = JSON.stringify(actionDict.target)
-    editExhibitActionConfigureValueSelector(actionDict.action, actionDict.target)
+    setTimeout(() => {
+      for (const target of actionDict.target) {
+        const targetStr = JSON.stringify(target)
+        for (const option of targetSelector.options) {
+          if (option.value === targetStr) option.selected = true
+        }
+      }
+    }, 0) // Make sure the DOM is updated
+
+    await editExhibitActionConfigureValueSelector(actionDict.action, actionDict.target)
     valueSelector.value = actionDict.value
   }
 
@@ -382,11 +398,11 @@ function editExhibitActionConfigureTargetSelector (action = null, target = null)
   }
 }
 
-function editExhibitActionConfigureValueSelector (action = null, target = null) {
+async function editExhibitActionConfigureValueSelector (action = null, target = null) {
   // Show/hide the select element for picking the value of an action when appropriate
 
   if (action == null) action = document.getElementById('editExhibitActionSelector').value
-  if (target == null) action = JSON.parse(document.getElementById('editExhibitActionTargetSelector').value)
+  if (target == null) target = JSON.parse(document.getElementById('editExhibitActionTargetSelector').value)
 
   const valueSelector = document.getElementById('editExhibitActionValueSelector')
   const valueSelectorLabel = document.getElementById('editExhibitActionValueSelectorLabel')
@@ -399,30 +415,30 @@ function editExhibitActionConfigureValueSelector (action = null, target = null) 
     } catch {
       return
     }
+    if (component.helperAddress == null) {
+      console.log('editExhibitActionConfigureValueSelector: invalid helper address')
+      return
+    }
 
-    exTools.makeRequest({
+    const response = await exTools.makeRequest({
       method: 'GET',
       url: component.helperAddress,
       endpoint: '/DMX/getScenes'
     })
-      .then((response) => {
-        if ('success' in response && response.success === true) {
-          response.groups.forEach((group) => {
-            const groupName = new Option(group.name, null)
-            groupName.setAttribute('disabled', true)
-            valueSelector.appendChild(groupName)
 
-            group.scenes.forEach((scene) => {
-              valueSelector.appendChild(new Option(scene.name, scene.uuid))
-            })
-          })
+    if (response?.success ?? false) {
+      for (const group of response.groups) {
+        const groupName = new Option(group.name)
+        groupName.setAttribute('disabled', true)
+        valueSelector.appendChild(groupName)
+
+        for (const scene of group.scenes) {
+          valueSelector.appendChild(new Option(scene.name, scene.uuid))
         }
-
-        // In the case of editing an action, preselect any existing values
-        valueSelector.val($('#scheduleEditModal').data('currentValue'))
-        valueSelector.style.display = 'block'
-        valueSelectorLabel.style.display = 'block'
-      })
+      }
+    }
+    valueSelector.style.display = 'block'
+    valueSelectorLabel.style.display = 'block'
   } else {
     valueSelector.style.display = 'none'
     valueSelectorLabel.style.display = 'none'
@@ -438,6 +454,41 @@ function editExhibitActionDeleteAction (uuid) {
 
 function showEditExhibitGUI () {
   document.getElementById('editExhibitPane').style.display = 'flex'
+}
+
+function editExhibitActionSubmit () {
+  // Collect info from the edit exhibit action modal and create/update the action.
+
+  const modal = document.getElementById('editExhibitActionModal')
+  const isEdit = modal.getAttribute('data-isEdit') === 'true'
+  const uuid = modal.getAttribute('data-uuid')
+
+  let action, value
+  const targets = []
+  try {
+    action = document.getElementById('editExhibitActionSelector').value
+    value = document.getElementById('editExhibitActionValueSelector').value
+
+    const targetSelector = document.getElementById('editExhibitActionTargetSelector')
+    const targetStrings = Array.from(targetSelector.selectedOptions).map(option => option.value)
+    for (const target of targetStrings) {
+      targets.push(JSON.parse(target))
+    }
+  } catch {
+    console.log('editExhibitActionSubmit: JSON parse error')
+    return
+  }
+
+  if (action === '') return
+
+  const actionsList = document.getElementById('editExhibitActionsList')
+  const actionHTML = createExhibitActionEntryHTML({ action, target: targets, uuid, value })
+  if (isEdit === false) {
+    actionsList.appendChild(actionHTML)
+  } else {
+    document.getElementById('actionListing_' + uuid).replaceWith(actionHTML)
+  }
+  $('#editExhibitActionModal').modal('hide')
 }
 
 function hideEditExhibitGUI () {
@@ -940,6 +991,7 @@ document.getElementById('editExhibitActionEditDeleteActionButton').addEventListe
   const uuid = document.getElementById('editExhibitActionModal').getAttribute('data-uuid')
   editExhibitActionDeleteAction(uuid)
 })
+document.getElementById('editExhibitActionEditSubmitButton').addEventListener('click', editExhibitActionSubmit)
 
 // Maintenance tab
 // =========================
