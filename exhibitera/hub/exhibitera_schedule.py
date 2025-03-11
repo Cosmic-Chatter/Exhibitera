@@ -335,10 +335,6 @@ def execute_scheduled_action(action: str,
         print("Changing exhibit to:", target["value"])
         logging.info("Changing exhibit to %s", target["value"])
         ex_exhibit.read_exhibit_configuration(target["value"])
-
-        # Update the components that the configuration has changed
-        for component in config.componentList:
-            component.update_configuration()
     elif target is not None:
         if isinstance(target, dict):
             target = [target]

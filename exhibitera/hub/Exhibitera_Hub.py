@@ -251,10 +251,6 @@ def load_default_configuration() -> None:
     ex_exhibit.read_descriptions_configuration()
     ex_exhibit.read_exhibit_configuration(ex_config.current_exhibit)
 
-    # Update the components that their configuration may have changed
-    for component in ex_config.componentList:
-        component.update_configuration()
-
     # Build any existing issues
     ex_issues.read_issue_list()
 
@@ -756,12 +752,8 @@ async def set_exhibit(uuid_str: str):
     """Set the specified exhibit as the current one."""
 
     ex_tools.update_system_configuration({"current_exhibit": uuid_str})
-    ex_exhibit.read_exhibit_configuration(uuid_str)
-
-    # Update the components that the configuration has changed
-    for component in ex_config.componentList:
-        component.update_configuration()
-    return {"success": True, "reason": ""}
+    success, reason = ex_exhibit.read_exhibit_configuration(uuid_str)
+    return {"success": success, "reason": reason}
 
 
 @app.get("/exhibit/getAvailable")

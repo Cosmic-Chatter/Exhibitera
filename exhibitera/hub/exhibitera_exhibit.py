@@ -851,33 +851,27 @@ def poll_wake_on_LAN_devices():
     config.polling_thread_dict["poll_wake_on_LAN_devices"].start()
 
 
-def read_exhibit_configuration(name: str):
-    # We want the format of name to be "XXXX.json", but it might be
-    # "exhibits/XXXX.json"
-    error = False
-    split_path = os.path.split(name)
-    if len(split_path) == 2:
-        if split_path[0] == "exhibits":
-            name = split_path[1]
-        elif split_path[0] == "":
-            pass
-        else:
-            error = True
-    else:
-        error = True
+def read_exhibit_configuration(uuid_str: str) -> tuple[bool, str]:
+    """Load the given exhibit configuration and trigger an update."""
 
-    if error:
-        # Something bad has happened. Display an error and bail out
-        print(
-            f"Error: exhibit definition with name {name} does not appear to be properly formatted. This file should be located in the exhibits directory.")
-        with config.logLock:
-            logging.error('Bad exhibit definition filename: %s', name)
-        return
+    exhibit_path = c_tools.get_path(["exhibits", c_tools.with_extension(uuid_str, 'json')], user_file=True)
+    if not os.path.exists(exhibit_path):
+        logging.error('read_exhibit_configuration: exhibit does not exist: ' + uuid_str)
+        return False, 'does_not_exist'
 
-    exhibit_path = c_tools.get_path(["exhibits", name + ".json"], user_file=True)
-    config.current_exhibit = os.path.splitext(name)[0]
-    config.exhibit_configuration = c_tools.load_json(exhibit_path)
+    try:
+        config.exhibit_configuration = c_tools.load_json(exhibit_path)
+    except json.JSONDecodeError:
+        logging.error('read_exhibit_configuration: bad JSON in ' + uuid_str)
+        return False, 'invalid_json'
+
+    # Update the components that the configuration has changed
+    for component in config.componentList:
+        component.update_configuration()
+
+    config.current_exhibit = uuid_str
     config.last_update_time = time.time()
+    return True, ''
 
 
 def update_exhibit_configuration(update: dict[str, Any],
