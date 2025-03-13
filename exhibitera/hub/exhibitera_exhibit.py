@@ -705,7 +705,7 @@ def check_available_exhibits():
     if len(config.exhibit_list) == 0:
         create_new_exhibit("Default", None)
 
-    if config.current_exhibit not in config.exhibit_list:
+    if config.current_exhibit not in [x["uuid"] for x in config.exhibit_list]:
         config.current_exhibit = config.exhibit_list[0]["uuid"]
         c_tools.update_system_configuration({"current_exhibit": config.current_exhibit})
 

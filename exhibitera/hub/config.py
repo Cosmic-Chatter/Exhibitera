@@ -57,7 +57,7 @@ json_next_event: list[dict] = []
 scheduleUpdateTime: float = 0
 
 # Exhibit stuff
-current_exhibit: str | None = "Default.json"  # The JSON file defining the current exhibit "name.json"
+current_exhibit: str | None = "Default"  # The JSON file defining the current exhibit without the json extension
 exhibit_configuration: dict[str, Any] | None = None
 exhibit_list: list[str] = []
 

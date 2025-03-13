@@ -190,7 +190,6 @@ export function createExhibitActionEntryHTML (item, allowEdit = exTools.checkPer
 
   if (description == null) return
 
-  console.log(item)
   const eventRow = document.createElement('div')
   eventRow.classList = 'row mt-2 actionListing'
   eventRow.setAttribute('id', 'actionListing_' + item.uuid)
@@ -737,7 +736,14 @@ function showExhibitDeleteModal () {
 function deleteExhibitFromModal () {
   // Take the info from the selector and delete the correct exhibit
 
-  deleteExhibit(document.getElementById('exhibitSelect').value)
+  const UUIDToDelete = document.getElementById('exhibitSelect').value
+
+  // Check if we're currently editing this exhibit and clear
+  const exhibitNameField = document.getElementById('editExhibitName')
+  const editedUUID = exhibitNameField.getAttribute('data-uuid')
+  if (UUIDToDelete === editedUUID) hideEditExhibitGUI()
+
+  deleteExhibit(UUIDToDelete)
   $('#deleteExhibitModal').modal('hide')
 }
 
