@@ -1870,6 +1870,8 @@ app.mount("/",
 if __name__ == "__main__":
     print("Checking file structure...")
     ex_tools.check_file_structure()
+    print("Loading components...")
+    ex_exhibit.load_components()
     print("Loading exhibits...")
     ex_exhibit.check_available_exhibits()
     print("Loading configuration...")
@@ -1878,8 +1880,7 @@ if __name__ == "__main__":
     ex_users.load_users()
     print("Loading groups...")
     ex_group.load_groups()
-    print("Loading components...")
-    ex_exhibit.load_components()
+
     ex_proj.poll_projectors()
     ex_exhibit.poll_wake_on_LAN_devices()
     check_for_software_update()

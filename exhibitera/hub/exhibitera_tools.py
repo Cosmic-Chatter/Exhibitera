@@ -108,7 +108,7 @@ def load_system_configuration(from_dict: Union[dict[str, Any], None] = None) -> 
     else:
         system = from_dict
 
-    config.current_exhibit = system.get("current_exhibit", "Default.json")
+    config.current_exhibit = system.get("current_exhibit", "Default")
     config.port = system.get("port", 8082)
     config.ip_address = system.get("ip_address", "localhost")
     config.gallery_name = system.get("gallery_name", "")
