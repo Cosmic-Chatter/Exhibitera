@@ -10,6 +10,7 @@
 - The components view can now be arranged as a grid or a list
 - Change the size of the items in the component view
 - Show or hide individual groups to declutter your interface
+- Sort components and groups alphabetically or by their status
 - Copy definitions from one component to others
   - Image Compare, Media Player, Timelapse Viewer, Voting Kiosk, and Word Cloud are currently supported
 

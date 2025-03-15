@@ -307,8 +307,13 @@ class BaseComponent {
   setStatus (status, maintenanceStatus) {
     // Set the component's status and change the GUI to reflect the change.
 
+    const oldStatus = this.status
     this.status = exConfig.STATUS[status]
+    const oldMaintStatus = this.maintenanceStatus
     this.maintenanceStatus = exConfig.MAINTANANCE_STATUS[maintenanceStatus]
+
+    // If nothing has changed, bail out
+    if ((oldStatus === this.status) && (oldMaintStatus === this.maintenanceStatus)) return
 
     for (const group of this.groups) {
       // Make sure this is a group we can actually see
