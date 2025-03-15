@@ -496,38 +496,47 @@ class ExhibitComponentGroup {
 
   addComponent (component) {
     this.components.push(component)
-    this.sortComponentList()
+    this.sortComponentList(exUsers.checkUserPreference('sort_order'))
   }
 
-  sortComponentList () {
+  sortComponentList (method) {
     // Sort the component list by ID and then rebuild the HTML
     // representation in order
 
-    this.components.sort(
-      function (a, b) {
-        if (a.status === exConfig.STATUS.STATIC && b.status !== exConfig.STATUS.STATIC) {
-          return 1
-        } else if (b.status === exConfig.STATUS.STATIC && a.status !== exConfig.STATUS.STATIC) {
-          return -1
-        }
-        if (a.status.value > b.status.value) {
-          return -1
-        } else if (b.status.value > a.status.value) {
-          return 1
-        } else if (a.id > b.id) {
-          return 1
-        } else if (b.id > a.id) {
-          return -1
-        }
-        return 0
-      }
-    )
+    if (method === 'alphabetical') {
+      this.components.sort((a, b) => {
+        const aName = a.id.toLowerCase()
+        const bName = b.id.toLowerCase()
+        return aName.localeCompare(bName)
+      })
+    } else if (method === 'status') {
+      this.components.sort((a, b) => {
+        const aName = a.id.toLowerCase()
+        const bName = b.id.toLowerCase()
+        const aStatus = a.getStatus().value
+        const bStatus = b.getStatus().value
+        if (aStatus > bStatus) return -1
+        if (bStatus > aStatus) return 1
+
+        // Fall back to alphabetical if they are the same
+        return aName.localeCompare(bName)
+      })
+    }
   }
 
   removeComponent (uuid) {
     // Remove a component based on its id
 
     this.components = $.grep(this.components, function (el, idx) { return el.uuid === uuid }, true)
+  }
+
+  getStatus () {
+    // Return the most problematic status from the components
+    let status = exConfig.STATUS.STATIC
+    for (const component of this.components) {
+      if (component.status.value > status.value) status = component.status
+    }
+    return status
   }
 
   buildHTML () {
@@ -2069,7 +2078,6 @@ function updateComponentInfoModalFromHelper (id, permission) {
       // If it is provided, show the system stats
       if ('system_stats' in availableContent) {
         const stats = availableContent.system_stats
-        console.log(stats)
         // Disk
         const spaceUsedBar = document.getElementById('contentUploadDiskSpaceUsedBar')
         const spaceFreeBar = document.getElementById('contentUploadDiskSpaceFreeBar')
@@ -2285,9 +2293,13 @@ export function checkForRemovedComponents (update) {
 export function rebuildComponentInterface () {
   // Clear the componentGroupsRow and rebuild it
 
+  const sortOrder = exUsers.checkUserPreference('sort_order')
   document.getElementById('componentGroupsRow').innerHTML = ''
+
+  exTools.sortGroups(sortOrder)
+
   for (let i = 0; i < exConfig.componentGroups.length; i++) {
-    exConfig.componentGroups[i].sortComponentList()
+    exConfig.componentGroups[i].sortComponentList(sortOrder)
     exConfig.componentGroups[i].buildHTML()
   }
 }

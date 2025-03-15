@@ -50,47 +50,28 @@ export function checkUserPermission (action, neededLevel, group = null) {
 }
 
 export function checkUserPreference (pref) {
-  // Return a user preference value, substituting a default if necessary.
+  // Return a user preference value, or a default
 
-  if (pref === 'appearance') {
-    if (('preferences' in exConfig.user) && 'appearance' in exConfig.user.preferences) {
-      return exConfig.user.preferences.appearance
-    } else {
-      return 'auto'
-    }
-  } else if (pref === 'components_layout') {
-    if (('preferences' in exConfig.user) && 'components_layout' in exConfig.user.preferences) {
-      return exConfig.user.preferences.components_layout
-    } else {
-      return 'grid'
-    }
-  } else if (pref === 'components_size') {
-    if (('preferences' in exConfig.user) && 'components_size' in exConfig.user.preferences) {
-      return exConfig.user.preferences.components_size
-    } else {
-      return 'regular'
-    }
-  } else if (pref === 'show_groups') {
-    if (('preferences' in exConfig.user) && 'show_groups' in exConfig.user.preferences) {
-      return exConfig.user.preferences.show_groups
-    } else {
-      return {}
-    }
-  } else if (pref === 'show_static') {
-    if (('preferences' in exConfig.user) && 'show_static' in exConfig.user.preferences) {
-      return exConfig.user.preferences.show_static
-    } else {
-      return true
-    }
-  } else if (pref === 'status_mode') {
-    if (('preferences' in exConfig.user) && 'status_mode' in exConfig.user.preferences) {
-      return exConfig.user.preferences.status_mode
-    } else {
-      return 'realtime'
-    }
+  const prefs = exConfig.user?.preferences
+
+  switch (pref) {
+    case 'appearance':
+      return prefs?.appearance ?? 'auto'
+    case 'components_layout':
+      return prefs?.components_layout ?? 'grid'
+    case 'components_size':
+      return prefs?.components_size ?? 'regular'
+    case 'show_groups':
+      return prefs?.show_groups ?? {}
+    case 'show_static':
+      return prefs?.show_static ?? true
+    case 'sort_order':
+      return prefs?.sort_order ?? 'status'
+    case 'status_mode':
+      return prefs?.status_mode ?? 'realtime'
+    default:
+      console.log('checkUserPreference: error: unknown preference:', pref)
   }
-
-  console.log('checkUserPreference: error: unknown preference:', pref)
 }
 
 export function showUserPreferenceModal () {
@@ -595,6 +576,9 @@ function configureUserPreferences () {
   } else {
     document.querySelector('html').setAttribute('data-bs-theme', exConfig.user.preferences.appearance)
   }
+
+  // sort_order
+  document.getElementById('componentsTabSettingsSortSelect').value = checkUserPreference('sort_order')
 
   // components_layout
   document.getElementById('componentsTabSettingsLayoutSelect').value = checkUserPreference('components_layout')

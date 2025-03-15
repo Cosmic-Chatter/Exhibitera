@@ -369,6 +369,37 @@ export function sortComponentsByGroup () {
   return result
 }
 
+export function sortGroups (method) {
+  // Return the componentGroups sorted in the given way.
+
+  if (method === 'alphabetical') {
+    exConfig.componentGroups.sort((a, b) => {
+      const aName = getGroupName(a.group).toLowerCase()
+      const bName = getGroupName(b.group).toLowerCase()
+      return aName.localeCompare(bName)
+    })
+  } else if (method === 'status') {
+    exConfig.componentGroups.sort((a, b) => {
+      const aName = getGroupName(a.group).toLowerCase()
+      const bName = getGroupName(b.group).toLowerCase()
+      const aStatus = a.getStatus().value
+      const bStatus = b.getStatus().value
+      if (aStatus > bStatus) return -1
+      if (bStatus > aStatus) return 1
+
+      // Fall back to alphabetical if they are the same
+      return aName.localeCompare(bName)
+    })
+  }
+
+  // Move the Default group to the front if it exists
+  const index = exConfig.componentGroups.findIndex(obj => obj.group === 'Default')
+  if (index > -1) {
+    const [item] = exConfig.componentGroups.splice(index, 1)
+    exConfig.componentGroups.unshift(item)
+  }
+}
+
 export function sortDefinitionsByApp (defDict, dropPreview = true) {
   // Take a dictionary of app definitions with their UUIDs as keys and return a
   // dictionary sorted by app name.

@@ -832,6 +832,14 @@ document.getElementById('passwordChangeModalSubmitButton').addEventListener('cli
 
 // Components tab
 // =========================
+document.getElementById('componentsTabSettingsSortSelect').addEventListener('change', () => {
+  // Update user preference
+  exUsers.updateUserPreferences({ sort_order: document.getElementById('componentsTabSettingsSortSelect').value })
+    .then(() => {
+      // Rebuild the interface with the new option
+      exExhibit.rebuildComponentInterface()
+    })
+})
 document.getElementById('componentsTabSettingsLayoutSelect').addEventListener('change', () => {
   // Update user preference
   exUsers.updateUserPreferences({ components_layout: document.getElementById('componentsTabSettingsLayoutSelect').value })
