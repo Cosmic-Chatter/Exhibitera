@@ -1,6 +1,7 @@
 aiofiles
 argon2-cffi
 cryptography
+distro
 fastapi
 icmplib
 psutil

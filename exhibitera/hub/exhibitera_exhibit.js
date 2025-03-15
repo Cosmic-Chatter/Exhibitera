@@ -929,6 +929,7 @@ function showExhibitComponentInfo (uuid, groupUUID) {
   }
 
   if ('platformDetails' in obj) {
+
     if ('operating_system' in obj.platformDetails) {
       document.getElementById('componentInfoModalOperatingSystem').innerHTML = obj.platformDetails.operating_system.replace('OS X', 'macOS')
       document.getElementById('componentInfoModalOperatingSystemGroup').style.display = 'block'

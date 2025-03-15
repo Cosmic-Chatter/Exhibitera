@@ -317,56 +317,8 @@ async def retrieve_file(file_url: Annotated[str, Body(description="The URL of th
 
     path = helper_files.get_path(path_list, user_file=True)
     success = helper_files.download_file(file_url, path)
-    # print(file_url)
-    # try:
-    #     r = requests.get(file_url, timeout=1)
-    #     if r.status_code != 200:
-    #         return {"success": False, "reason": r.reason}
-    # except requests.exceptions.ReadTimeout:
-    #     print('retrieve_file: timeout retrieving file ', file_url)
-    #
-    # with config.content_file_lock:
-    #     with open(path, 'wb') as f:
-    #         f.write(r.content)
+
     return {"success": success}
-
-
-@app.get('/system/getPlatformDetails')
-async def get_platform_details():
-    """Return details on the current operating system."""
-
-    details = {
-        "architecture": platform.architecture()[0],
-        "os_version": platform.release()
-    }
-
-    os = sys.platform
-    if os == "darwin":
-        os = 'macOS'
-    elif os == "win32":
-        os = "Windows"
-    details["os"] = os
-
-    return details
-
-
-@app.get('/system/getScreenshot', responses={200: {"content": {"image/png": {}}}}, response_class=Response)
-async def get_screenshot():
-    """Capture a screenshot and return it as a JPEG response."""
-
-    image = helper_utilities.capture_screenshot()
-    byte_array = io.BytesIO()
-    image.save(byte_array, format='JPEG', quality=85)
-    byte_array = byte_array.getvalue()
-    return Response(content=byte_array,
-                    media_type="image/jpeg",
-                    headers={
-                        "Pragma-directive": "no-cache",
-                        "Cache-directive": "no-cache",
-                        "Cache-control": "no-cache",
-                        "Pragma": "no-cache",
-                        "Expires": "0"
-                    })
 
 
 @app.get("/getDefaults")

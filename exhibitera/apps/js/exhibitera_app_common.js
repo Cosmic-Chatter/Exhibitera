@@ -38,6 +38,14 @@ try {
 } catch {
   console.log('script platform.js not found. Include this script to send additional details to Hub.')
 }
+makeHelperRequest({
+  method: 'GET',
+  endpoint: '/system/getPlatformDetails'
+})
+.then((result) => {
+  config.platformDetails.outdated = result?.outdated ?? false
+})
+
 
 export function configureApp (opt = {}) {
   // Perform basic app setup

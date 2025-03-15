@@ -216,6 +216,9 @@ function configureInterface () {
       if (result.os === 'linux') {
         document.getElementById('useRemoteDisplayToggle').setAttribute('disabled', true)
       }
+      if (result?.outdated ?? false) {
+        document.getElementById('outdatedOSCol').style.display = 'block'
+      }
     })
 
   // Smart Restart
@@ -489,3 +492,7 @@ if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').match
 } else {
   document.querySelector('html').setAttribute('data-bs-theme', 'light')
 }
+
+// Initialize popovers
+const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]')
+const popoverList = [...popoverTriggerList].map(popoverTriggerEl => new bootstrap.Popover(popoverTriggerEl))

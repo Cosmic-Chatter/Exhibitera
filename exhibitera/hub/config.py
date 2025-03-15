@@ -20,6 +20,7 @@ software_version: float = 5.2
 software_update_available: bool = False
 software_update_available_version: str = ""
 software_update_timer: threading.Timer | None = None  # Timer reference to check for an update once daily
+outdated_os: bool = False
 
 # Threading resources
 polling_thread_dict: dict[str, threading.Timer] = {}

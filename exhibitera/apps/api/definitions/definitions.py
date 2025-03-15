@@ -9,7 +9,6 @@ from fastapi import APIRouter
 from fastapi import Body
 from fastapi.responses import FileResponse
 
-import exhibitera_tools
 # Exhibitera modules
 import helper_files
 
