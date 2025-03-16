@@ -148,7 +148,7 @@ def send_webpage_update():
     update_dict["gallery"] = {"current_exhibit": ex_config.current_exhibit,
                               "availableExhibits": ex_config.exhibit_list,
                               "galleryName": ex_config.gallery_name,
-                              "outdatedOS": ex_config.outdated_os,
+                              "outdated_os": ex_config.outdated_os,
                               "softwareVersion": str(ex_config.software_version),
                               "softwareVersionAvailable": ex_config.software_update_available_version,
                               "updateAvailable": str(ex_config.software_update_available).lower()}

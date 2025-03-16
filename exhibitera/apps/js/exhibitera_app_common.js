@@ -42,10 +42,9 @@ makeHelperRequest({
   method: 'GET',
   endpoint: '/system/getPlatformDetails'
 })
-.then((result) => {
-  config.platformDetails.outdated = result?.outdated ?? false
-})
-
+  .then((result) => {
+    config.platformDetails.outdated = result?.outdated ?? false
+  })
 
 export function configureApp (opt = {}) {
   // Perform basic app setup
@@ -237,34 +236,31 @@ function readServerUpdate (update) {
 
   let sendUpdate = false
 
-  if ('commands' in update) {
-    for (let i = 0; i < update.commands.length; i++) {
-      const cmd = (update.commands)[i]
-
-      if (cmd === 'restart') {
-        askForRestart()
-      } else if (cmd === 'shutdown' || cmd === 'power_off') {
-        askForShutdown()
-      } else if (cmd === 'sleepDisplay') {
-        sleepDisplay()
-      } else if (cmd === 'wakeDisplay' || cmd === 'power_on') {
-        wakeDisplay()
-      } else if (cmd === 'refresh_page') {
-        if ('refresh' in config.permissions && config.permissions.refresh === true) {
-          location.reload()
-        }
-      } else if (cmd === 'reloadDefaults') {
-        askForDefaults()
-      } else if (cmd.slice(0, 15) === 'set_dmx_scene__') {
-        makeHelperRequest({
-          method: 'GET',
-          endpoint: '/DMX/setScene/' + cmd.slice(15)
-        })
-      } else {
-        console.log(`Command not recognized: ${cmd}`)
+  for (const cmd of update?.commands ?? []) {
+    if (cmd === 'restart') {
+      askForRestart()
+    } else if (cmd === 'shutdown' || cmd === 'power_off') {
+      askForShutdown()
+    } else if (cmd === 'sleepDisplay') {
+      sleepDisplay()
+    } else if (cmd === 'wakeDisplay' || cmd === 'power_on') {
+      wakeDisplay()
+    } else if (cmd === 'refresh_page') {
+      if ('refresh' in config.permissions && config.permissions.refresh === true) {
+        location.reload()
       }
+    } else if (cmd === 'reloadDefaults') {
+      askForDefaults()
+    } else if (cmd.slice(0, 15) === 'set_dmx_scene__') {
+      makeHelperRequest({
+        method: 'GET',
+        endpoint: '/DMX/setScene/' + cmd.slice(15)
+      })
+    } else {
+      console.log(`Command not recognized: ${cmd}`)
     }
   }
+
   if ('id' in update) {
     config.id = update.id
   }
@@ -290,8 +286,8 @@ function readServerUpdate (update) {
   if ('permissions' in update) {
     config.permissions = update.permissions
   }
-  if ('software_update' in update) {
-    if (update.software_update.update_available === true) { config.errorDict.software_update = update.software_update }
+  if (update?.software_update?.update_available) {
+    config.errorDict.software_update = update.software_update
   }
   if (sendUpdate) {
     sendConfigUpdate(update)
@@ -331,48 +327,41 @@ function readHelperUpdate (update, changeApp = true) {
   // Function to read a message from the helper and take action based on the contents
   // 'update' should be an object
   // Set changeApp === false to suppress changing the app if the definition has changed
-
+  console.log(update)
   const sendUpdate = false
 
-  if ('commands' in update) {
-    for (let i = 0; i < update.commands.length; i++) {
-      const cmd = (update.commands)[i]
-
-      if (cmd === 'restart') {
-        askForRestart()
-      } else if (cmd === 'shutdown' || cmd === 'power_off') {
-        askForShutdown()
-      } else if (cmd === 'sleepDisplay') {
-        sleepDisplay()
-      } else if (cmd === 'wakeDisplay' || cmd === 'power_on') {
-        wakeDisplay()
-      } else if (cmd === 'refresh_page') {
-        if ('refresh' in config.permissions && config.permissions.refresh === true) {
-          location.reload()
-        }
-      } else if (cmd === 'reloadDefaults') {
-        askForDefaults()
-      } else if (cmd.slice(0, 15) === 'set_dmx_scene__') {
-        makeHelperRequest({
-          method: 'GET',
-          endpoint: '/DMX/setScene/' + cmd.slice(15)
-        })
-      } else {
-        console.log(`Command not recognized: ${cmd}`)
+  for (const cmd of update?.commands ?? []) {
+    if (cmd === 'restart') {
+      askForRestart()
+    } else if (cmd === 'shutdown' || cmd === 'power_off') {
+      askForShutdown()
+    } else if (cmd === 'sleepDisplay') {
+      sleepDisplay()
+    } else if (cmd === 'wakeDisplay' || cmd === 'power_on') {
+      wakeDisplay()
+    } else if (cmd === 'refresh_page') {
+      if ('refresh' in config.permissions && config.permissions.refresh === true) {
+        location.reload()
       }
+    } else if (cmd === 'reloadDefaults') {
+      askForDefaults()
+    } else if (cmd.slice(0, 15) === 'set_dmx_scene__') {
+      makeHelperRequest({
+        method: 'GET',
+        endpoint: '/DMX/setScene/' + cmd.slice(15)
+      })
+    } else {
+      console.log(`Command not recognized: ${cmd}`)
     }
   }
 
   // App settings
-  if ('app' in update) {
-    if ('id' in update.app) config.id = update.app.id
-    if ('definition' in update.app) config.definition = update.app.definition
-    if ('uuid' in update.app) config.uuid = update.app.uuid
-  }
-  if ('control_server' in update) {
-    if (('ip_address' in update.control_server) && ('port' in update.control_server)) {
-      config.serverAddress = 'http://' + update.control_server.ip_address + ':' + update.control_server.port
-    }
+  if (update?.app?.id) config.id = update.app.id
+  if (update?.app?.definition) config.definition = update.app.definition
+  if (update?.app?.uuid) config.uuid = update.app.uuid
+
+  if ((update?.control_server?.ip_address) && (update?.control_server?.port)) {
+    config.serverAddress = 'http://' + update.control_server.ip_address + ':' + update.control_server.port
   }
   if ('permissions' in update) {
     config.permissions = update.permissions
@@ -380,14 +369,13 @@ function readHelperUpdate (update, changeApp = true) {
   if ('software_update' in update) {
     if (update.software_update.update_available === true) { config.errorDict.software_update = update.software_update }
   }
-  if ('system' in update) {
-    if ('remote_display' in update.system) {
-      config.remoteDisplay = update.system.remote_display
-    }
-    if ('standalone' in update.system) {
-      config.standalone = update.system.standalone
-    }
+  if (update?.system?.remote_display) {
+    config.remoteDisplay = update.system.remote_display
   }
+  if (update?.system?.standalone) {
+    config.standalone = update.system.standalone
+  }
+
   if (sendUpdate) {
     sendConfigUpdate(update)
   }
@@ -428,21 +416,22 @@ function readHelperUpdate (update, changeApp = true) {
   }
 }
 
+function checkAgain () {
+  try {
+    document.getElementById('helperConnectionWarningAddress').innerHTML = config.helperAddress
+    document.getElementById('helperConnectionWarning').style.display = 'block'
+  } catch {
+    // Will fail if these elements don't exist
+  }
+  console.log('Could not get defaults... checking again')
+  setTimeout(askForDefaults, 500)
+}
+
 export function askForDefaults (changeApp = true) {
   // Send a message to the local helper and ask for the latest configuration
   // defaults, then use them.
   // Set changeApp === false to supress changing the app based on the current definition
 
-  const checkAgain = function () {
-    try {
-      document.getElementById('helperConnectionWarningAddress').innerHTML = config.helperAddress
-      document.getElementById('helperConnectionWarning').style.display = 'block'
-    } catch {
-      // Will fail if these elements don't exist
-    }
-    console.log('Could not get defaults... checking again')
-    setTimeout(askForDefaults, 500)
-  }
   return makeHelperRequest({
     method: 'GET',
     endpoint: '/getDefaults'

@@ -929,7 +929,6 @@ function showExhibitComponentInfo (uuid, groupUUID) {
   }
 
   if ('platformDetails' in obj) {
-
     if ('operating_system' in obj.platformDetails) {
       document.getElementById('componentInfoModalOperatingSystem').innerHTML = obj.platformDetails.operating_system.replace('OS X', 'macOS')
       document.getElementById('componentInfoModalOperatingSystemGroup').style.display = 'block'
@@ -1104,23 +1103,23 @@ function configureComponentInfoModalForProjector (obj) {
   // // Projector status pane
   document.getElementById('componentInfoModalProjectorWarningList').innerHTML = ''
 
-  if (('error_status' in obj.state) && (obj.state.error_status.constructor === Object)) {
-    if (('lamp' in obj.state.error_status) && (obj.state.error_status.lamp !== 'ok')) {
+  if (obj?.state?.error_status?.constructor === Object) {
+    if ((obj?.state?.error_status?.lamp ?? 'ok') !== 'ok') {
       createProjectorWarningEntry('Lamp', obj.state.error_status.lamp, 'A projector lamp or light engine may have blown.')
     }
-    if (('fan' in obj.state.error_status) && (obj.state.error_status.fan !== 'ok')) {
+    if ((obj?.state?.error_status?.fan ?? 'ok') !== 'ok') {
       createProjectorWarningEntry('Fan', obj.state.error_status.fan, 'Fan warnings or errors are often related to the dust filter.')
     }
-    if (('filter' in obj.state.error_status) && (obj.state.error_status.filter !== 'ok')) {
+    if ((obj?.state?.error_status?.filter ?? 'ok') !== 'ok') {
       createProjectorWarningEntry('Filter', obj.state.error_status.filter, 'Filter warnings or errors usually indicate the dust filter needs to be cleaned.')
     }
-    if (('cover' in obj.state.error_status) && (obj.state.error_status.cover !== 'ok')) {
+    if ((obj?.state?.error_status?.cover ?? 'ok') !== 'ok') {
       createProjectorWarningEntry('Cover', obj.state.error_status.cover)
     }
-    if (('temperature' in obj.state.error_status) && (obj.state.error_status.temperature !== 'ok')) {
+    if ((obj?.state?.error_status?.temperature ?? 'ok') !== 'ok') {
       createProjectorWarningEntry('Temperature', obj.state.error_status.temperature, 'The projector may be overheating.')
     }
-    if (('other' in obj.state.error_status) && (obj.state.error_status.other !== 'ok')) {
+    if ((obj?.state?.error_status?.other ?? 'ok') !== 'ok') {
       createProjectorWarningEntry('Other', obj.state.error_status.other, "An unspecified error. Consult the projector's menu for more information")
     }
   }
@@ -1131,7 +1130,7 @@ function configureComponentInfoModalForProjector (obj) {
     document.getElementById('componentInfoModalModelGroup').style.display = 'none'
   }
 
-  if ('lamp_status' in obj.state && obj.state.lamp_status !== '') {
+  if ((obj?.state?.lamp_status ?? '') !== '') {
     const lampList = obj.state.lamp_status
 
     document.getElementById('componentInfoModalProjectorLampList').innerHTML = ''
@@ -1150,9 +1149,7 @@ function configureComponentInfoModalForProjector (obj) {
   groupSelect.appendChild(defaultOption)
   for (const group of exConfig.groups) {
     const option = new Option(group.name, group.uuid)
-    if (obj.groups.includes(group.uuid)) {
-      option.selected = true
-    }
+    if (obj.groups.includes(group.uuid)) option.selected = true
     groupSelect.appendChild(option)
   }
 
@@ -2285,15 +2282,15 @@ export function checkForRemovedComponents (update) {
   // Check exConfig.exhibitComponents and remove any components not in `update`
 
   const updateIDs = []
-  update.forEach((component) => {
+  for (const component of update) {
     updateIDs.push(component.id)
-  })
+  }
 
-  exConfig.exhibitComponents.forEach((component) => {
+  for (const component of exConfig.exhibitComponents) {
     if (updateIDs.includes(component.id) === false) {
       component.remove(false) // Remove from interface, but not the config
     }
-  })
+  }
 }
 
 export function rebuildComponentInterface () {
@@ -2304,9 +2301,9 @@ export function rebuildComponentInterface () {
 
   exTools.sortGroups(sortOrder)
 
-  for (let i = 0; i < exConfig.componentGroups.length; i++) {
-    exConfig.componentGroups[i].sortComponentList(sortOrder)
-    exConfig.componentGroups[i].buildHTML()
+  for (const group of exConfig.componentGroups) {
+    group.sortComponentList(sortOrder)
+    group.buildHTML()
   }
 }
 

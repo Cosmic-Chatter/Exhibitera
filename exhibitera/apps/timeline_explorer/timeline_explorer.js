@@ -227,7 +227,6 @@ function createTimelineEntry (entry, langCode) {
     } else {
       thumbRes = Math.round(width * 0.5)
     }
-    console.log(exCommon.config.helperAddress + '/files/' + imageName + '/thumbnail/' + String(thumbRes))
     image.src = exCommon.config.helperAddress + '/files/' + imageName + '/thumbnail/' + String(thumbRes)
     flex2.appendChild(image)
   }

@@ -260,6 +260,16 @@ export function rebuildNotificationList () {
           notification.addEventListener('click', notification.addEventListener('click', () => { showUpdateInfoModal(item, 'apps', exConfig.errorDict[item].software_update) }))
           notificationCount += 1
         }
+      } else if (itemError === 'outdated_os') {
+        let labelName
+        if (item === '__control_server') {
+          labelName = 'Hub: This OS may not be supported in the next version of Exhibitera.'
+        } else {
+          labelName = item + ': This OS may not be supported in the next version of Exhibitera.'
+        }
+
+        notification = createNotificationHTML(labelName, 'outdated_os')
+        notificationCount += 1
       } else {
         const itemErrorMsg = (exConfig.errorDict[item])[itemError]
         if (itemErrorMsg.length > 0) {
@@ -277,7 +287,7 @@ export function rebuildNotificationList () {
     })
   })
 
-  if (notificationCount.length > 0) {
+  if (notificationCount > 0) {
     notificationsCol.style.display = 'block'
   } else {
     notificationsCol.style.display = 'none'
@@ -292,6 +302,8 @@ function createNotificationHTML (name, kind) {
     colorClass = 'btn-danger'
   } else if (kind === 'update') {
     colorClass = 'btn-info'
+  } else if (kind === 'outdated_os') {
+    colorClass = 'btn-warning'
   }
 
   const li = document.createElement('li')

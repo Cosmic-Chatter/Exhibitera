@@ -585,6 +585,12 @@ function parseUpdate (update) {
         exTools.rebuildNotificationList()
       }
     }
+    if (update?.gallery?.outdated_os ?? false) {
+      exConfig.errorDict.__control_server = {
+        outdated_os: true
+      }
+      exTools.rebuildNotificationList()
+    }
   }
 
   if ('groups' in update) {
@@ -606,7 +612,7 @@ function parseUpdate (update) {
     let numStatic = 0
 
     exExhibit.checkForRemovedComponents(update.components)
-    update.components.forEach((component) => {
+    for (const component of update.components) {
       numComps += 1
       if ((component.status === exConfig.STATUS.ONLINE.name) || (component.status === exConfig.STATUS.STANDBY.name) || (component.status === exConfig.STATUS['SYSTEM ON'].name) || (component.status === exConfig.STATUS.STATIC.name)) {
         numOnline += 1
@@ -615,7 +621,7 @@ function parseUpdate (update) {
         numStatic += 1
       }
       exExhibit.updateComponentFromServer(component)
-    })
+    }
 
     // Set the favicon to reflect the aggregate status
     if (numOnline === numComps) {
