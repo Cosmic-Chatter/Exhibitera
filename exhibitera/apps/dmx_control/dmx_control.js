@@ -1759,10 +1759,12 @@ function getDMXConfiguration () {
 function rebuildUniverseInterface () {
   // Take the list of universes and add the HTML representation of each.
 
+  const universeRow = document.getElementById('universeRow')
+
   document.getElementById('noUniverseWarning').style.display = 'none'
-  $('#universeRow').empty()
+  universeRow.innerHTML = ''
   for (const universe of universeList) {
-    $('#universeRow').append(universe.createHTML())
+    universeRow.appendChild(universe.createHTML())
     // Then, bind the color picker to each element.
     for (const fixtureName of Object.keys(universe.fixtures)) {
       const fixture = universe.fixtures[fixtureName]
@@ -1781,6 +1783,8 @@ function rebuildUniverseInterface () {
 function rebuildGroupsInterface () {
   // Take the list of group and add the HTML representation of each.
 
+  const groupsRow = document.getElementById('groupsRow')
+
   if (groupList.length > 0) {
     document.getElementById('noGroupsWarning').style.display = 'none'
     document.getElementById('createNewGroupButton').style.display = 'block'
@@ -1788,9 +1792,12 @@ function rebuildGroupsInterface () {
     document.getElementById('noGroupsWarning').style.display = 'block'
     document.getElementById('createNewGroupButton').style.display = 'none'
   }
-  $('#groupsRow').empty()
+
+  groupsRow.innerHTML = ''
+
   for (const group of groupList) {
-    $('#groupsRow').append(group.createHTML())
+    groupsRow.appendChild(group.createHTML())
+
     // Then, bind the color picker to each element.
     for (const fixtureName of Object.keys(group.fixtures)) {
       const fixture = group.fixtures[fixtureName]
@@ -1817,10 +1824,11 @@ function rebuildGroupsInterface () {
 function showAddUniverseMOdal () {
   // Show the addUniverseModal
 
+  const addUniverseController = document.getElementById('addUniverseController')
   // Clear previous input
-  $('#addUniverseName').val('')
-  $('#addUniverseController').empty()
-  $('#addUniverseMissingNameWarning').hide()
+  document.getElementById('addUniverseName').value = ''
+  addUniverseController.innerHTML = ''
+  document.getElementById('addUniverseMissingNameWarning').style.display = 'none'
 
   // Get a list of available DMX controllers
   exCommon.makeHelperRequest({
@@ -1841,9 +1849,9 @@ function showAddUniverseMOdal () {
           } else if (controller.model === 'uDMX') {
             option.innerHTML = `uDMX (Bus: ${controller.bus}, address: ${controller.address})`
           }
-          $(option).data('value', controller)
+          option.setAttribute('data-value', controller)
 
-          $('#addUniverseController').append(option)
+          addUniverseController.appendChild(option)
         }
       }
     })
@@ -1854,11 +1862,11 @@ function showAddUniverseMOdal () {
 function addUniverseFromModal () {
   // Use the addUniverseModal to create a new universe.
 
-  const name = $('#addUniverseName').val().trim()
-  const controller = $('#addUniverseController').find(':selected').data('value')
+  const name = document.getElementById('addUniverseName').value.trim()
+  const controller = document.getElementById('addUniverseController')?.selectedOptions[0]?.getAttribute('data-value')
 
   if (name === '') {
-    $('#addUniverseMissingNameWarning').show()
+    document.getElementById('addUniverseMissingNameWarning').style.display = 'block'
     return
   }
 
@@ -1872,8 +1880,7 @@ function addUniverseFromModal () {
     }
   })
     .then((response) => {
-      if ('success' in response && response.success === true) {
-        console.log(response)
+      if (response?.success === true) {
         createUniverse(response.universe.name,
           response.universe.uuid,
           response.universe.controller)
@@ -1885,51 +1892,46 @@ function addUniverseFromModal () {
 
 // Add event listeners
 // Universe tab
-$('#showAddUniverseModalButton').click(showAddUniverseMOdal)
-$('#addFixtureAddChannelButton').click(addChannelToModal)
+document.getElementById('showAddUniverseModalButton')?.addEventListener('click', showAddUniverseMOdal)
+document.getElementById('addFixtureAddChannelButton')?.addEventListener('click', addChannelToModal)
+document.getElementById('addFixtureFromModalButton')?.addEventListener('click', addFixtureFromModal)
 document.getElementById('addFixtureStartingChannel').addEventListener('input', updateModalChannelCounts)
-$('#addFixtureFromModalButton').click(addFixtureFromModal)
 document.getElementById('deleteFixtureFromModalButton').addEventListener('click', () => {
-  const fixtureUUID = $('#addFixtureModal').data('fixtureUUID')
+  const fixtureUUID = document.getElementById('addFixtureModal').getAttribute('data-fixtureUUID')
   exCommon.makeHelperRequest({
     method: 'POST',
     endpoint: '/DMX/fixture/remove',
     params: { fixture_uuid: fixtureUUID }
   })
     .then((response) => {
-      if ('success' in response && response.success === true) {
+      if (response?.success === true) {
         getFixtureByUUID(fixtureUUID).remove()
         exSetup.hideModal('#addFixtureModal')
       }
     })
 })
-$('#addUniverseFromModalButton').click(addUniverseFromModal)
-$('#editUniverseModalSaveButton').click(updateUniverseFromModal)
+document.getElementById('addUniverseFromModalButton')?.addEventListener('click', addUniverseFromModal)
+document.getElementById('editUniverseModalSaveButton')?.addEventListener('click', updateUniverseFromModal)
 document.getElementById('cloneFixtureButton').addEventListener('click', () => {
   cloneFixture()
 })
 document.getElementById('createNewUniverseButton').addEventListener('click', showAddUniverseMOdal)
 
 // Group tab
-$('#createNewGroupFromWarningButton').click(() => {
-  showEditGroupModal('')
-})
-$('#createNewGroupButton').click(() => {
-  showEditGroupModal('')
-})
-$('#editGroupModalSaveButton').click(editGroupFromModal)
-$('#editSceneModalSaveButton').click(editSceneFromModal)
-$('#editSceneModalDeleteButton').click(deleteSceneFromModal)
-// document.getElementById('groupDeletePopover').addEventListener('click', deleteGroupFromModal)
+document.getElementById('createNewGroupFromWarningButton')?.addEventListener('click', () => showEditGroupModal(''))
+document.getElementById('createNewGroupButton')?.addEventListener('click', () => showEditGroupModal(''))
+document.getElementById('editGroupModalSaveButton')?.addEventListener('click', editGroupFromModal)
+document.getElementById('editSceneModalSaveButton')?.addEventListener('click', editSceneFromModal)
+document.getElementById('editSceneModalDeleteButton')?.addEventListener('click', deleteSceneFromModal)
 
 // Place the popover trigger after all the event listeners
 document.addEventListener('click', (event) => {
   switch (event.target.getAttribute('id')) {
     case 'groupDeletePopover':
-      deleteGroup($('#editGroupModal').data('group'))
+      deleteGroup(document.getElementById('editGroupModal').dataset.group)
       break
     case 'universeDeletePopover':
-      deleteUniverse($('#editUniverseModal').data('uuid'))
+      deleteUniverse(document.getElementById('editUniverseModal').dataset.uuid)
       break
   }
 })

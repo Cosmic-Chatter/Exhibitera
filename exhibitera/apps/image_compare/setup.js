@@ -14,9 +14,9 @@ async function initializeWizard () {
   await exSetup.initializeDefinition()
 
   // Hide all but the welcome screen
-  Array.from(document.querySelectorAll('.wizard-pane')).forEach((el) => {
+  for (const el of document.querySelectorAll('.wizard-pane')) {
     el.style.display = 'none'
-  })
+  }
   document.getElementById('wizardPane_Welcome').style.display = 'block'
 
   // Reset fields
@@ -111,11 +111,10 @@ function wizardBack (currentPage) {
 }
 
 function wizardGoTo (page) {
-  Array.from(document.querySelectorAll('.wizard-pane')).forEach((el) => {
+  for (const el of document.querySelectorAll('.wizard-pane')) {
     el.style.display = 'none'
-  })
+  }
   document.getElementById('wizardPane_' + page).style.display = 'block'
-  console.log('wizardPane_' + page)
 }
 
 async function wizardCreateDefinition () {
@@ -125,7 +124,7 @@ async function wizardCreateDefinition () {
   const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
   exSetup.updateWorkingDefinition(['name'], defName)
 
-  $('#setupWizardModal').modal('hide')
+  exSetup.hideModal('#setupWizardModal')
 
   await exSetup.saveDefinition(defName)
   await exCommon.getAvailableDefinitions(exCommon.config.app)
@@ -238,7 +237,7 @@ async function clearDefinitionInput (full = true) {
   document.getElementById('inactivityTimeoutField').value = 30
   const attractorSelect = document.getElementById('attractorSelect')
   attractorSelect.innerHTML = 'Select file'
-  attractorSelect.setAttribute('data-filename', '')
+  attractorSelect.dataset.filename = ''
 
   // Language
   exLang.clearLanguagePicker(document.getElementById('language-select'))
@@ -247,10 +246,10 @@ async function clearDefinitionInput (full = true) {
   rebuildLanguageElements([])
 
   // Reset style options
-  document.querySelectorAll('.coloris').forEach(el => {
-    el.value = el.getAttribute('data-default')
+  for (const el of document.querySelectorAll('.coloris')) {
+    el.value = el.dataset.default
     el.dispatchEvent(new Event('input', { bubbles: true }))
-  })
+  }
 
   exSetup.updateAdvancedColorPicker('style>background', {
     mode: 'color',
@@ -263,9 +262,9 @@ async function clearDefinitionInput (full = true) {
   exSetup.resetAdvancedFontPickers()
 
   // Reset text size options
-  document.querySelectorAll('.text-size-slider').forEach(el => {
+  for (const el of document.querySelectorAll('.text-size-slider')) {
     el.value = 0
-  })
+  }
 }
 
 function editDefinition (uuid = '') {
@@ -286,7 +285,7 @@ function editDefinition (uuid = '') {
   } else {
     attractorSelect.innerHTML = 'Select file'
   }
-  attractorSelect.setAttribute('data-filename', def.attractor)
+  attractorSelect.dataset.filename = def.attractor
   document.getElementById('inactivityTimeoutField').value = def?.inactivity_timeout || 30
 
   rebuildItemList()
@@ -309,11 +308,11 @@ function editDefinition (uuid = '') {
   }
 
   // Set the appropriate values for the color pickers
-  Object.keys(def.style.color).forEach((key) => {
+  for (const key of Object.keys(def.style.color)) {
     const el = document.getElementById('colorPicker_' + key)
     el.value = def.style.color[key]
     el.dispatchEvent(new Event('input', { bubbles: true }))
-  })
+  }
 
   // Set the appropriate values for any advanced color pickers
   if ('background' in def.style) {
@@ -322,16 +321,16 @@ function editDefinition (uuid = '') {
 
   // Set the appropriate values for the advanced font pickers
   if ('font' in def.style) {
-    Object.keys(def.style.font).forEach((key) => {
+    for (const key of Object.keys(def.style.font)) {
       const picker = document.querySelector(`.AFP-select[data-path="style>font>${key}"`)
       exSetup.setAdvancedFontPicker(picker, def.style.font[key])
-    })
+    }
   }
 
   // Set the appropriate values for the text size selects
-  Object.keys(def.style.text_size).forEach((key) => {
-    document.getElementById(key + 'TextSizeSlider').value = def.style.text_size?.[key] || 0
-  })
+  for (const key of Object.keys(def.style.text_size)) {
+    document.getElementById(key + 'TextSizeSlider').value = def.style.text_size?.[key] ?? 0
+  }
 
   // Configure the preview frame
   document.getElementById('previewFrame').src = '../image_compare.html?standalone=true&definition=' + def.uuid
@@ -595,11 +594,11 @@ function createItemHTML (item, num, show = false, wizard = false) {
       const wizardImagesNav = document.getElementById('wizardImagesNav')
       // Renumber the remaining tabs
       let i = 1
-      Array.from(wizardImagesNav.children).forEach((el) => {
+      for (const el of wizardImagesNav.children) {
         if (i === 1) el.click()
         el.innerHTML = String(i)
         i++
-      })
+      }
     }
   })
   deleteCol.appendChild(deleteButton)
@@ -972,17 +971,17 @@ function rebuildItemList () {
   document.getElementById('contentNavContent').innerHTML = ''
 
   let num = 1
-  workingDefinition.content_order.forEach((uuid) => {
+  for (const uuid of workingDefinition.content_order) {
     const item = workingDefinition.content[uuid]
     createItemHTML(item, num, num === 1)
     num += 1
-  })
+  }
 }
 
 function onAttractorFileChange () {
   // Called when a new image or video is selected.
 
-  const file = document.getElementById('attractorSelect').getAttribute('data-filename')
+  const file = document.getElementById('attractorSelect').dataset.filename
   const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
 
   workingDefinition.attractor = file
@@ -1035,16 +1034,16 @@ exLang.createLanguagePicker(document.getElementById('language-select'), rebuildI
 // Wizard
 
 // Connect the forward and back buttons
-Array.from(document.querySelectorAll('.wizard-forward')).forEach((el) => {
+for (const el of document.querySelectorAll('.wizard-forward')) {
   el.addEventListener('click', () => {
-    wizardForward(el.getAttribute('data-current-page'))
+    wizardForward(el.dataset.currentPage)
   })
-})
-Array.from(document.querySelectorAll('.wizard-back')).forEach((el) => {
+}
+for (const el of document.querySelectorAll('.wizard-back')) {
   el.addEventListener('click', () => {
-    wizardBack(el.getAttribute('data-current-page'))
+    wizardBack(el.dataset.currentPage)
   })
-})
+}
 
 document.getElementById('wizardAddImagePairButton').addEventListener('click', () => {
   const warning = document.getElementById('wizardMaxImagePairsWarning')
@@ -1063,7 +1062,7 @@ document.getElementById('attractorSelect').addEventListener('click', (event) => 
     .then((files) => {
       if (files.length === 1) {
         event.target.innerHTML = files[0]
-        event.target.setAttribute('data-filename', files[0])
+        event.target.dataset.filename = files[0]
         onAttractorFileChange()
       }
     })
@@ -1071,7 +1070,7 @@ document.getElementById('attractorSelect').addEventListener('click', (event) => 
 document.getElementById('attractorSelectClear').addEventListener('click', (event) => {
   const attractorSelect = document.getElementById('attractorSelect')
   attractorSelect.innerHTML = 'Select file'
-  attractorSelect.setAttribute('data-filename', '')
+  attractorSelect.dataset.filename = ''
   onAttractorFileChange()
 })
 document.getElementById('inactivityTimeoutField').addEventListener('change', (event) => {
@@ -1089,14 +1088,14 @@ document.getElementById('imagePairMaxNumberWarningDismissButton').addEventListen
 })
 
 // Style fields
-document.querySelectorAll('.coloris').forEach((element) => {
-  element.addEventListener('change', function () {
+for (const el of document.querySelectorAll('.coloris')) {
+  el.addEventListener('change', function () {
     const value = this.value.trim()
-    const property = this.getAttribute('data-property')
+    const property = this.dataset.property
     exSetup.updateWorkingDefinition(['style', 'color', property], value)
     exSetup.previewDefinition(true)
   })
-})
+}
 
 // Font fields
 document.getElementById('manageFontsButton').addEventListener('click', (event) => {
@@ -1105,13 +1104,13 @@ document.getElementById('manageFontsButton').addEventListener('click', (event) =
 })
 
 // Text size fields
-Array.from(document.querySelectorAll('.text-size-slider')).forEach((el) => {
+for (const el of document.querySelectorAll('.text-size-slider')) {
   el.addEventListener('input', (event) => {
-    const property = event.target.getAttribute('data-property')
+    const property = event.target.dataset.property
     exSetup.updateWorkingDefinition(['style', 'text_size', property], parseFloat(event.target.value))
     exSetup.previewDefinition(true)
   })
-})
+}
 
 // Set helper address for use with exCommon.makeHelperRequest
 exCommon.config.helperAddress = window.location.origin
