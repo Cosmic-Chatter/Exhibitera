@@ -32,9 +32,9 @@ export function setComponentInfoModalMaintenanceStatus (uuid, id) {
     endpoint: '/issue/list/' + uuid
   }).then((response) => {
     if (response.success === true) {
-      response.issueList.forEach((issue) => {
+      for (const issue of response.issueList) {
         issueList.appendChild(exIssues.createIssueHTML(issue, false))
-      })
+      }
     }
   })
 }

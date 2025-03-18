@@ -17,14 +17,14 @@ export function showAddProjectorModal () {
   document.getElementById('addProjectorModalIDError').style.display = 'none'
   document.getElementById('addProjectorModalIPError').style.display = 'none'
 
-  $('#addProjectorModal').modal('show')
+  exTools.showModal('#addProjectorModal')
 }
 
 export function submitProjectorAdditionFromModal () {
   // Set up a new projector from the components tab modal
 
   // Check that the fields are properly filled out
-  let groups = Array.from(document.getElementById('addProjectorModalGroupField').querySelectorAll("option:checked"),e=>e.value)
+  let groups = Array.from(document.getElementById('addProjectorModalGroupField').querySelectorAll('option:checked'), e => e.value)
   const id = document.getElementById('addProjectorModalIDField').value.trim()
   const ipAddress = document.getElementById('addProjectorModalIPField').value.trim()
 
@@ -36,7 +36,7 @@ export function submitProjectorAdditionFromModal () {
   }
   if (groups.length === 0) {
     groups = ['Default']
-  } 
+  }
   if (ipAddress === '') {
     document.getElementById('addProjectorModalIPError').style.display = 'block'
     return
@@ -54,5 +54,5 @@ export function submitProjectorAdditionFromModal () {
       password: document.getElementById('addProjectorModalPasswordField').value
     }
   })
-  $('#addProjectorModal').modal('hide')
+  exTools.hideModal('#addProjectorModal')
 }

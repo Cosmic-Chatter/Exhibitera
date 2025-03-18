@@ -186,6 +186,7 @@ export function showAppHelpModal (app) {
 
   const endpointStems = {
     dmx_control: '/dmx_control/',
+    image_compare: '/image_compare/',
     infostation: '/InfoStation/',
     media_browser: '/media_browser/',
     media_player: '/media_player/',
@@ -220,7 +221,7 @@ export function showAppHelpModal (app) {
       }
     })
 
-  $('#appHelpModal').modal('show')
+  showModal('#appHelpModal')
 }
 
 export function populateAvailableDefinitions (definitions) {
@@ -260,7 +261,7 @@ export function configureFromQueryString () {
   } else {
     if (config.clearDefinition != null) config.clearDefinition()
     if (config.loggedIn) {
-      $('#appWelcomeModal').modal('show')
+      showModal('#appWelcomeModal')
     }
   }
 }
@@ -285,7 +286,7 @@ async function showSetupWizard () {
   // Show the modal for the setup wizard
 
   await config.initializeWizard()
-  $('#setupWizardModal').modal('show')
+  showModal('#setupWizardModal')
 }
 
 export function addWizardLanguage () {
@@ -459,7 +460,7 @@ function createEventListeners () {
   }
   try {
     document.getElementById('appWelcomeModalWizardButton').addEventListener('click', () => {
-      $('#appWelcomeModal').modal('hide')
+      hideModal('#appWelcomeModal')
       showSetupWizard()
     })
   } catch {
@@ -1104,7 +1105,7 @@ export function showPasswordChangeModal () {
   document.getElementById('passwordChangeModalPassMismatchWarning').style.display = 'none'
   document.getElementById('passwordChangeModalBadCurrentPassWarning').style.display = 'none'
 
-  $('#passwordChangeModal').modal('show')
+  showModal('#passwordChangeModal')
 }
 
 export function submitUserPasswordChange () {
@@ -1146,10 +1147,26 @@ export function submitUserPasswordChange () {
           document.getElementById('passwordChangeModalBadCurrentPassWarning').style.display = 'block'
         }
       } else {
-        $('changePasswordModal').modal('hide')
+        hideModal('#changePasswordModal')
         logoutUser()
       }
     })
+}
+
+export function showModal (modal) {
+  // Show the given Bootstrap modal
+  // Modal can either be a string starting with # (e.g., '#myID') or a DOM element
+
+  const myModal = new bootstrap.Modal(modal)
+  myModal.show()
+}
+
+export function hideModal (modal) {
+  // Hide the given Bootstrap modal
+  // Modal can either be a string starting with # (e.g., '#myID') or a DOM element
+
+  const myModal = bootstrap.Modal.getInstance(modal)
+  myModal.hide()
 }
 
 const markdownConverter = new showdown.Converter()

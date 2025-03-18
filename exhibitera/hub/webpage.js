@@ -96,16 +96,16 @@ function editExhibitCreateComponentHTML (component) {
       .then((availableContent) => {
         // Build an option for each definition
         const appDict = exTools.sortDefinitionsByApp(availableContent.definitions)
-        Object.keys(appDict).sort().forEach((app) => {
+        for (const app of Object.keys(appDict).sort()) {
           const header = new Option(exExhibit.convertAppIDtoDisplayName(app))
           header.setAttribute('disabled', true)
           definitionSelect.appendChild(header)
 
-          appDict[app].forEach((def) => {
+          for (const def of appDict[app]) {
             const option = new Option(def.name, def.uuid)
             definitionSelect.appendChild(option)
-          })
-        })
+          }
+        }
 
         const changeThumb = function () {
           if (availableContent.thumbnails.includes(definitionSelect.value + '.mp4')) {
@@ -177,9 +177,9 @@ async function editExhibitPopulateExhibitContent (exhibit) {
   const actionsList = document.getElementById('editExhibitActionsList')
   actionsList.innerHTML = ''
 
-  result.exhibit.commands.forEach((command) => {
+  for (const command of result.exhibit.commands) {
     actionsList.append(createExhibitActionEntryHTML(command))
-  })
+  }
   showEditExhibitGUI()
 }
 
@@ -245,13 +245,13 @@ function onManageExhibitModalThumbnailCheckboxChange () {
   // tbumbnails as appropriate.
 
   const checked = document.getElementById('editExhibitThumbnailCheckbox').checked
-  document.querySelectorAll('.exhibit-thumbnail').forEach((el) => {
+  for (const el of document.querySelectorAll('.exhibit-thumbnail')) {
     if (checked) {
       el.style.display = 'block'
     } else {
       el.style.display = 'none'
     }
-  })
+  }
 }
 
 function editExhibitAddComponentPopulateList () {
@@ -380,7 +380,7 @@ async function showEditExhibitActionModal (actionDict = null) {
     valueSelector.value = actionDict.value
   }
 
-  $('#editExhibitActionModal').modal('show')
+  exTools.showModal('#editExhibitActionModal')
 }
 
 function editExhibitActionConfigureTargetSelector (action = null, target = null) {
@@ -465,7 +465,7 @@ function editExhibitActionDeleteAction (uuid) {
   // Remove the entry for the given action
 
   document.getElementById('actionListing_' + uuid).remove()
-  $('#editExhibitActionModal').modal('hide')
+  exTools.hideModal('#editExhibitActionModal')
 }
 
 function showEditExhibitGUI () {
@@ -505,7 +505,7 @@ function editExhibitActionSubmit () {
   } else {
     document.getElementById('actionListing_' + uuid).replaceWith(actionHTML)
   }
-  $('#editExhibitActionModal').modal('hide')
+  exTools.hideModal('#editExhibitActionModal')
 }
 
 function hideEditExhibitGUI () {
@@ -532,9 +532,9 @@ function updateAvailableExhibits (exhibitList) {
   exConfig.availableExhibits = sortedExhibitList
   exhibitSelect.innerHTML = ''
 
-  sortedExhibitList.forEach((exhibit) => {
+  for (const exhibit of sortedExhibitList) {
     exhibitSelect.appendChild(new Option(exhibit.name, exhibit.uuid))
-  })
+  }
 
   exhibitSelect.value = exConfig.currentExhibit
   updateExhibitButtons()
@@ -544,9 +544,9 @@ async function changeExhibit (warningShown) {
   // Send a command to Hub to change the current exhibit
 
   if (warningShown === false) {
-    $('#changeExhibitModal').modal('show')
+    exTools.showModal('#changeExhibitModal')
   } else {
-    $('#changeExhibitModal').modal('hide')
+    exTools.hideModal('#changeExhibitModal')
     const uuid = document.getElementById('exhibitSelect').value
 
     const response = await exTools.makeServerRequest({
@@ -736,7 +736,7 @@ function updateExhibitButtons (uuid = '') {
 }
 
 function showExhibitDeleteModal () {
-  $('#deleteExhibitModal').modal('show')
+  exTools.showModal('#deleteExhibitModal')
 }
 
 function deleteExhibitFromModal () {
@@ -750,7 +750,7 @@ function deleteExhibitFromModal () {
   if (UUIDToDelete === editedUUID) hideEditExhibitGUI()
 
   deleteExhibit(UUIDToDelete)
-  $('#deleteExhibitModal').modal('hide')
+  exTools.hideModal('#deleteExhibitModal')
 }
 
 function populateControlServerSettings () {
@@ -871,20 +871,16 @@ document.getElementById('componentsTabSettingsShowStatic').addEventListener('cha
     })
 })
 
-Array.from(document.getElementsByClassName('view-mode-radio')).forEach((el) => {
+for (const el of document.querySelectorAll('.view-mode-radio')) {
   el.addEventListener('change', () => {
-    let mode
-    if (document.getElementById('componentStatusModeRealtimeCheckbox').checked === true) {
-      // Set real-time mode (default)
+    let mode = 'maintenance'
+    if (document.getElementById('componentStatusModeRealtimeCheckbox').checked) {
       mode = 'realtime'
-    } else {
-      // Set maintenance status mode
-      mode = 'maintenance'
     }
     exUsers.updateUserPreferences({ status_mode: mode })
       .then(exExhibit.rebuildComponentInterface)
   })
-})
+}
 
 document.getElementById('showHideGroupsModalShowButton').addEventListener('click', exExhibit.configureVisibleGroups)
 document.getElementById('showHideGroupsModalSaveButton').addEventListener('click', exExhibit.updateVisibleGroupsPreference)
@@ -905,11 +901,11 @@ $('#componentInfoModalMaintenanceStatusSelector').change(function () {
   $('#componentInfoModalMaintenanceSaveButton').show()
 })
 document.getElementById('componentInfoModalBasicSettingsSaveButton').addEventListener('click', exExhibit.submitComponentBasicSettingsChange)
-Array.from(document.querySelectorAll('.componentInfoBasicSetting')).forEach((el) => {
+for (const el of document.querySelectorAll('.componentInfoBasicSetting')) {
   el.addEventListener('change', () => {
     document.getElementById('componentInfoModalBasicSettingsSaveButton').style.display = 'block'
   })
-})
+}
 $('.componentInfoSetting').change(function () {
   $('#componentInfoModalSettingsSaveButton').show()
 })
@@ -930,23 +926,23 @@ document.getElementById('componentInfoModalEditDMXButton').addEventListener('cli
   const component = exExhibit.getExhibitComponent(document.getElementById('componentInfoModal').getAttribute('data-id'))
   window.open(component.getHelperURL() + '/dmx_control.html?standalone=true', '_blank').focus()
 })
-Array.from(document.querySelectorAll('.componentInfoProjectorSetting')).forEach((el) => {
+for (const el of document.querySelectorAll('.componentInfoProjectorSetting')) {
   el.addEventListener('change', () => {
     document.getElementById('componentInfoModalProjectorSettingsSaveButton').style.display = 'block'
   })
-})
+}
 document.getElementById('componentInfoModalProjectorSettingsSaveButton').addEventListener('click', exExhibit.updateProjectorFromInfoModal)
-Array.from(document.querySelectorAll('.componentInfoStaticSetting')).forEach((el) => {
+for (const el of document.querySelectorAll('.componentInfoStaticSetting')) {
   el.addEventListener('change', () => {
     document.getElementById('componentInfoModalStaticSettingsSaveButton').style.display = 'block'
   })
-})
+}
 document.getElementById('componentInfoModalStaticSettingsSaveButton').addEventListener('click', exExhibit.updateStaticComponentFromInfoModal)
-Array.from(document.querySelectorAll('.componentInfoWakeOnLANSetting')).forEach((el) => {
+for (const el of document.querySelectorAll('.componentInfoWakeOnLANSetting')) {
   el.addEventListener('change', () => {
     document.getElementById('componentInfoModalWakeOnLANSettingsSaveButton').style.display = 'block'
   })
-})
+}
 document.getElementById('componentInfoModalWakeOnLANSettingsSaveButton').addEventListener('click', exExhibit.updateWakeOnLANComponentFromInfoModal)
 
 // Copy definition modal
@@ -1046,12 +1042,12 @@ document.addEventListener('click', (event) => {
 document.getElementById('issueModifyModalDeleteButton').addEventListener('click', () => {
   const id = document.getElementById('issueModifyModal').getAttribute('data-id')
   exIssues.modifyIssue(id, 'delete')
-  $('#issueModifyModal').modal('hide')
+  exTools.hideModal('#issueModifyModal')
 })
 document.getElementById('issueModifyModalArchiveButton').addEventListener('click', () => {
   const id = document.getElementById('issueModifyModal').getAttribute('data-id')
   exIssues.modifyIssue(id, 'archive')
-  $('#issueModifyModal').modal('hide')
+  exTools.hideModal('#issueModifyModal')
 })
 $('#issueMediaViewFromModal').click(function () {
   const file = document.getElementById('issueMediaViewFromModalSelect').value
@@ -1089,7 +1085,7 @@ document.getElementById('deleteTrackerTemplateButton').addEventListener('click',
   const trackerTemplateSelect = document.getElementById('trackerTemplateSelect')
   const name = trackerTemplateSelect.options[trackerTemplateSelect.selectedIndex].text
   document.getElementById('deleteTrackerTemplateModalTemplateName').innerHTML = name
-  $('#deleteTrackerTemplateModal').modal('show')
+  exTools.showModal('#deleteTrackerTemplateModal')
 })
 document.getElementById('deleteTrackerTemplateFromModalButton')
   .addEventListener('click', () => exTracker.deleteTrackerTemplate())
@@ -1122,11 +1118,11 @@ document.getElementById('editTrackerTemplateGuestFacingCheckbox').addEventListen
 document.getElementById('showEditUserModalButton').addEventListener('click', () => {
   exUsers.showEditUserModal()
 })
-Array.from(document.querySelectorAll('.editUserField')).forEach((el) => {
+for (const el of document.querySelectorAll('.editUserField')) {
   el.addEventListener('change', () => {
     document.getElementById('editUserSubmitButton').style.display = 'block'
   })
-})
+}
 document.getElementById('editUserPermissionGroups').addEventListener('change', (event) => {
   if (event.target.value === 'custom') {
     document.getElementById('editUserGroupsRow').style.display = 'flex'
@@ -1147,11 +1143,11 @@ document.getElementById('editGroupModalSubmitButton').addEventListener('click', 
 document.getElementById('deleteGroupConfirmationButton').addEventListener('click', exGroup.deleteGroupFromModal)
 
 // Server settings
-Array.from(document.querySelectorAll('.controlServerSettingsInputField')).forEach((el) => {
+for (const el of document.querySelectorAll('.controlServerSettingsInputField')) {
   el.addEventListener('change', () => {
     document.getElementById('controlServerSettingsSaveButton').style.display = 'block'
   })
-})
+}
 document.getElementById('controlServerSettingsSaveButton').addEventListener('click', updateSystemConfiguration)
 
 // Activate all popovers

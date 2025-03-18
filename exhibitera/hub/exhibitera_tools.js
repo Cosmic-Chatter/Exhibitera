@@ -1,4 +1,4 @@
-/* global showdown */
+/* global showdown, bootstrap */
 
 import exConfig from './config.js'
 
@@ -99,8 +99,14 @@ export function guessMimetype (filename) {
 
   if (['mp4', 'mpeg', 'webm', 'mov', 'm4v', 'avi', 'flv'].includes(ext)) {
     return 'video'
-  } else if (['jpeg', 'jpg', 'tiff', 'tif', 'png', 'bmp', 'gif', 'webp', 'eps', 'ps', 'svg'].includes(ext)) {
+  }
+
+  if (['jpeg', 'jpg', 'tiff', 'tif', 'png', 'bmp', 'gif', 'webp', 'eps', 'ps', 'svg'].includes(ext)) {
     return 'image'
+  }
+
+  if (['wav', 'mp3', 'aac', 'm4a', 'ogg'].includes(ext)) {
+    return 'audio'
   }
 }
 
@@ -244,9 +250,10 @@ export function rebuildNotificationList () {
   // Iterate through the items in the exConfig.errorDict. Each item should correspond
   // to one component with an notification.
   let notificationCount = 0
-  errorKeys.forEach((item, i) => {
+
+  for (const item of errorKeys) {
     // Then, iterate through the notifications on that given item
-    Object.keys(exConfig.errorDict[item]).forEach((itemError, j) => {
+    for (const itemError of Object.keys(exConfig.errorDict[item])) {
       let notification
       if (itemError === 'software_update') {
         if (item === '__control_server') {
@@ -284,8 +291,8 @@ export function rebuildNotificationList () {
         }
       }
       notificationDisplayRow.appendChild(notification)
-    })
-  })
+    }
+  }
 
   if (notificationCount > 0) {
     notificationsCol.style.display = 'block'
@@ -297,22 +304,15 @@ export function rebuildNotificationList () {
 function createNotificationHTML (name, kind) {
   // Create and return a DOM element representing a notification.
 
-  let colorClass
-  if (kind === 'error') {
-    colorClass = 'btn-danger'
-  } else if (kind === 'update') {
-    colorClass = 'btn-info'
-  } else if (kind === 'outdated_os') {
-    colorClass = 'btn-warning'
-  }
+  const colorClass = {
+    error: 'btn-danger',
+    update: 'btn-info',
+    outdated_os: 'btn-warning'
+  }[kind] ?? 'btn-info'
 
   const li = document.createElement('li')
   li.classList = 'dropdown-item'
-
-  const button = document.createElement('button')
-  button.classList = 'btn btn-block ' + colorClass
-  button.innerHTML = name
-  li.appendChild(button)
+  li.innerHTML = `<button class="btn btn-block ${colorClass}">${name}</button>`
 
   return li
 }
@@ -368,7 +368,7 @@ export function sortComponentsByGroup () {
 
   const result = {}
 
-  exConfig.exhibitComponents.forEach((component) => {
+  for (const component of exConfig.exhibitComponents) {
     for (const group of component.groups) {
       if (group in result) {
         result[group].push(component)
@@ -376,7 +376,7 @@ export function sortComponentsByGroup () {
         result[group] = [component]
       }
     }
-  })
+  }
 
   return result
 }
@@ -420,21 +420,15 @@ export function sortDefinitionsByApp (defDict, dropPreview = true) {
 
   const result = {}
 
-  Object.keys(defDict).forEach((uuid) => {
-    const def = defDict[uuid]
-    try {
-      if ((def.uuid.slice(0, 9) === '__preview') && (dropPreview === true)) return
-    } catch {
-      // If we don't have a name, this definition is faulty.
-      return
-    }
+  for (const def of Object.values(defDict)) {
+    if (def?.uuid?.startsWith('__preview') && dropPreview === true) continue
 
     if (def.app in result) {
       result[def.app].push(def)
     } else {
       result[def.app] = [def]
     }
-  })
+  }
 
   // Sort the arrays
   Object.keys(result).forEach((key) => {
@@ -672,4 +666,20 @@ function splitCsv (str) {
     }
     return accum
   }, { soFar: [], isConcatting: false }).soFar
+}
+
+export function showModal (modal) {
+  // Show the given Bootstrap modal
+  // Modal can either be a string starting with # (e.g., '#myID') or a DOM element
+
+  const myModal = new bootstrap.Modal(modal)
+  myModal.show()
+}
+
+export function hideModal (modal) {
+  // Hide the given Bootstrap modal
+  // Modal can either be a string starting with # (e.g., '#myID') or a DOM element
+
+  const myModal = bootstrap.Modal.getInstance(modal)
+  myModal.hide()
 }

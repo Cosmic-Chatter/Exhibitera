@@ -471,11 +471,11 @@ class Projector extends BaseComponent {
       if ('error_status' in state) {
         this.state.error_status = state.error_status
         const errorList = {}
-        Object.keys(state.error_status).forEach((item, i) => {
+        for (const item of Object.keys(state.error_status)) {
           if ((state.error_status)[item] !== 'ok') {
             errorList[item] = (state.error_status)[item]
           }
-        })
+        }
         exConfig.errorDict[this.id] = errorList
         exTools.rebuildNotificationList()
       }
@@ -577,11 +577,11 @@ class ExhibitComponentGroup {
     // Cycle through the components and count how many we will actually be displaying
     const showStatic = exUsers.checkUserPreference('show_static')
     let numToDisplay = 0
-    this.components.forEach((component) => {
+    for (const component of this.components) {
       if (showStatic || component.status !== exConfig.STATUS.STATIC) {
         numToDisplay += 1
       }
-    })
+    }
 
     if (numToDisplay === 0) {
       // Nothing to do
@@ -674,10 +674,10 @@ class ExhibitComponentGroup {
     col.appendChild(componentList)
 
     document.getElementById('componentGroupsRow').appendChild(col)
-    this.components.forEach((component) => {
+    for (const component of this.components) {
       const componentToAdd = component.buildHTML(this.group)
       if (componentToAdd != null) componentList.appendChild(componentToAdd)
-    })
+    }
   }
 }
 
@@ -786,7 +786,7 @@ export function configureVisibleGroups () {
     formCheck.appendChild(checkLabel)
   }
 
-  $('#showHideGroupsModal').modal('show')
+  exTools.showModal('#showHideGroupsModal')
 }
 
 export function updateVisibleGroupsPreference () {
@@ -803,7 +803,7 @@ export function updateVisibleGroupsPreference () {
   })
     .then(rebuildComponentInterface)
 
-  $('#showHideGroupsModal').modal('hide')
+  exTools.hideModal('#showHideGroupsModal')
 }
 
 export function sendGroupCommand (group, cmd) {
@@ -1029,7 +1029,7 @@ function showExhibitComponentInfo (uuid, groupUUID) {
   document.getElementById('componentInfoModalBasicSettingsSaveButton').style.display = 'none'
 
   // Make the modal visible
-  $('#componentInfoModal').modal('show')
+  exTools.showModal('#componentInfoModal')
 }
 
 function configureComponentInfoModalForExhibitComponent (obj, permission) {
@@ -1236,7 +1236,7 @@ function configureComponentInfoModalForWakeOnLAN (obj) {
 function configureNewDefinitionOptions (obj) {
   // Use the given IP address to configure the URLs for creating new definitions.
 
-  Array.from(document.querySelectorAll('.defintion-new-option')).forEach((el) => {
+  for (const el of document.querySelectorAll('.defintion-new-option')) {
     const app = el.getAttribute('data-app')
     if (app === 'word_cloud_input') {
       el.href = obj.getHelperURL() + '/word_cloud/setup_input.html'
@@ -1245,7 +1245,7 @@ function configureNewDefinitionOptions (obj) {
     } else {
       el.href = obj.getHelperURL() + '/' + app + '/setup.html'
     }
-  })
+  }
 }
 
 export function updateProjectorFromInfoModal () {
@@ -1582,7 +1582,7 @@ export function removeExhibitComponentFromModal () {
     .then((response) => {
       if ('success' in response && response.success === true) {
         getExhibitComponentByUUID(uuid).remove()
-        $('#componentInfoModal').modal('hide')
+        exTools.hideModal('#componentInfoModal')
       }
     })
 }
@@ -1607,8 +1607,8 @@ function populateComponentDefinitionList (definitions, thumbnails, permission) {
     }
     return 0
   })
-  sortedByName.forEach((uuid) => {
-    if ((uuid.slice(0, 9) === '__preview') || uuid.trim() === '') return
+  for (const uuid of sortedByName) {
+    if (uuid.startsWith('__preview') || uuid.trim() === '') continue
 
     const definition = definitions[uuid]
 
@@ -1759,7 +1759,7 @@ function populateComponentDefinitionList (definitions, thumbnails, permission) {
     row.appendChild(app)
 
     componentInfoModalDefinitionList.appendChild(col)
-  })
+  }
 }
 
 function showCopyDefinitionModal (componentUUID, definitionUUID, definitionName) {
@@ -1839,8 +1839,8 @@ function showCopyDefinitionModal (componentUUID, definitionUUID, definitionName)
 
     if (totalComps === 0) destDiv.innerHTML = '<i>No available components</i>'
 
-    $('#componentInfoModal').modal('hide')
-    $('#copyDefinitionModal').modal('show')
+    exTools.hideModal('#componentInfoModal')
+    exTools.showModal('#copyDefinitionModal')
   })
 }
 
@@ -1983,28 +1983,28 @@ export async function copyDefinitionModalPerformCopy () {
       })
     }
   }
-  $(modal).modal('hide')
+  exTools.hideModal(modal)
 }
 
 function handleDefinitionItemSelection (uuid) {
   // Called when a user clicks on the definition in the componentInfoModal.
 
   // Remove classes from all elements with the 'definition-entry' class
-  document.querySelectorAll('.definition-entry').forEach((el) => {
+  for (const el of document.querySelectorAll('.definition-entry')) {
     el.classList.remove('definition-selected')
-  })
+  }
 
   // Remove and add classes to all elements with the 'definition-name' class
-  document.querySelectorAll('.definition-name').forEach((el) => {
+  for (const el of document.querySelectorAll('.definition-name')) {
     el.classList.remove('btn-success')
     el.classList.add('btn-primary')
-  })
+  }
 
   // Remove and add classes to all elements with the 'definition-dropdown' class
-  document.querySelectorAll('.definition-dropdown').forEach((el) => {
+  for (const el of document.querySelectorAll('.definition-dropdown')) {
     el.classList.remove('btn-success')
     el.classList.add('btn-primary')
-  })
+  }
 
   // Add the 'definition-selected' class to the specific button
   const definitionButton = document.getElementById('definitionButton_' + uuid)
@@ -2058,7 +2058,7 @@ function updateComponentInfoModalFromHelper (id, permission) {
     componentCannotConnect()
 
     // Make the modal visible
-    $('#componentInfoModal').modal('show')
+    exTools.showModal('#componentInfoModal')
     return
   }
 
@@ -2157,13 +2157,13 @@ export function onDefinitionTabThumbnailsCheckboxChange () {
   const defList = document.getElementById('componentInfoModalDefinitionList')
   const checkState = document.getElementById('definitionTabThumbnailsCheckbox').checked
 
-  Array.from(defList.querySelectorAll('.definition-thumbnail')).forEach((entry) => {
+  for (const entry of defList.querySelectorAll('.definition-thumbnail')) {
     if (checkState === true) {
       entry.style.display = 'block'
     } else {
       entry.style.display = 'none'
     }
-  })
+  }
 }
 
 export function filterDefinitionListByApp () {
@@ -2172,14 +2172,14 @@ export function filterDefinitionListByApp () {
   const appToShow = document.getElementById('definitionTabAppFilterSelect').value
   const defList = document.getElementById('componentInfoModalDefinitionList')
 
-  Array.from(defList.querySelectorAll('.definition-entry')).forEach((entry) => {
+  for (const entry of defList.querySelectorAll('.definition-entry')) {
     const thisApp = entry.getAttribute('data-app')
     if ((thisApp === appToShow) || (appToShow === 'all')) {
       entry.style.display = 'block'
     } else {
       entry.style.display = 'none'
     }
-  })
+  }
 }
 
 export function submitComponentBasicSettingsChange () {
@@ -2360,7 +2360,7 @@ export function showAddStaticComponentsModal () {
   // Hide warnings
   document.getElementById('addStaticComponentModalIDError').style.display = 'none'
 
-  $('#addStaticComponentModal').modal('show')
+  exTools.showModal('#addStaticComponentModal')
 }
 
 export function submitStaticComponentAdditionFromModal () {
@@ -2385,7 +2385,7 @@ export function submitStaticComponentAdditionFromModal () {
     params: { id, groups }
   })
     .then((response) => {
-      $('#addStaticComponentModal').modal('hide')
+      exTools.hideModal('#addStaticComponentModal')
     })
 }
 
@@ -2408,7 +2408,7 @@ export function showAddWakeOnLANModal () {
   document.getElementById('addWakeOnLANModalMACError').style.display = 'none'
   document.getElementById('addWakeOnLANModalBadMACError').style.display = 'none'
 
-  $('#addWakeOnLANModal').modal('show')
+  exTools.showModal('#addWakeOnLANModal')
 }
 
 export function submitWakeOnLANAdditionFromModal () {
@@ -2454,6 +2454,6 @@ export function submitWakeOnLANAdditionFromModal () {
     }
   })
     .then((response) => {
-      $('#addWakeOnLANModal').modal('hide')
+      exTools.hideModal('#addWakeOnLANModal')
     })
 }

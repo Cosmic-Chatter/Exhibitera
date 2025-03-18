@@ -71,10 +71,10 @@ function populateWidgetProperties (widgetDef) {
   // Create HTML representation of widget properties to aid editing from the modal.
 
   // Recolor the widget name to indicate which we are editing
-  document.querySelectorAll('.widget-header').forEach((el) => {
+  for (const el of document.querySelectorAll('.widget-header')) {
     el.classList.remove('text-info')
     el.classList.add('text-light')
-  })
+  }
   const nameField = document.getElementById('editTrackerWidgetNameField_' + widgetDef.uuid)
   nameField.classList.add('text-info')
   nameField.classList.remove('text-light')
@@ -538,7 +538,7 @@ function _showEditTrackerTemplateModal (template) {
   modal.setAttribute('data-uuid', template.uuid)
 
   populateEditTrackerTemplateCurrentLayout(template)
-  $('#editTrackerTemplateModal').modal('show')
+  exTools.showModal('#editTrackerTemplateModal')
 }
 
 export function editTrackerTemplateModalSubmitChanges () {
@@ -559,7 +559,7 @@ export function editTrackerTemplateModalSubmitChanges () {
   })
     .then((response) => {
       if (response.success === true) {
-        $(modal).modal('hide')
+        exTools.hideModal(modal)
       }
     })
 }
@@ -617,7 +617,7 @@ export async function deleteTrackerTemplate (uuid = '') {
   if (result.success) {
     const templates = await getAvailableTemplates()
     populateTrackerTemplateSelect(templates)
-    $('#deleteTrackerTemplateModal').modal('hide')
+    exTools.hideModal('#deleteTrackerTemplateModal')
   }
 }
 
@@ -635,10 +635,10 @@ export function populateTrackerDataSelect (data) {
     if (aVal < bVal) return -1
     return 0
   })
-  sortedList.forEach(item => {
+  for (const item of sortedList) {
     const name = item.split('.').slice(0, -1).join('.')
     trackerDataSelect.appendChild(new Option(name, name))
-  })
+  }
 }
 
 export function showDeleteTrackerDataModal () {
@@ -649,7 +649,7 @@ export function showDeleteTrackerDataModal () {
   $('#deleteTrackerDataModalDeletedName').html(name)
   $('#deleteTrackerDataModalDeletedInput').val('')
   $('#deleteTrackerDataModalSpellingError').hide()
-  $('#deleteTrackerDataModal').modal('show')
+  exTools.showModal('#deleteTrackerDataModal')
 }
 
 export function deleteTrackerDataFromModal () {
@@ -679,7 +679,7 @@ export function deleteTrackerData () {
   })
     .then((result) => {
       if ('success' in result && result.success === true) {
-        $('#deleteTrackerDataModal').modal('hide')
+        exTools.hideModal('#deleteTrackerDataModal')
         getAvailableTrackerData(populateTrackerDataSelect)
       }
     })

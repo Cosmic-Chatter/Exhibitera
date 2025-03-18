@@ -79,7 +79,7 @@ export function showUserPreferenceModal () {
 
   document.getElementById('userPreferencesModalAppearanceSelect').value = checkUserPreference('appearance')
 
-  $('#userPreferencesModal').modal('show')
+  exTools.showModal('#userPreferencesModal')
 }
 
 export function submitUserPreferencesFromModal () {
@@ -90,7 +90,7 @@ export function submitUserPreferencesFromModal () {
   }
   updateUserPreferences(prefs)
     .then(configureUserPreferences)
-  $('#userPreferencesModal').modal('hide')
+  exTools.hideModal('#userPreferencesModal')
 }
 
 export function showEditUserModal (user = null) {
@@ -111,7 +111,7 @@ export function showEditUserModal (user = null) {
   document.getElementById('editUserUsernameExists').style.display = 'none'
 
   document.getElementById('editUserSubmitButton').style.display = 'none'
-  $('#editUserModal').modal('show')
+  exTools.showModal('#editUserModal')
 }
 
 function configureEditUserModalForNewUser () {
@@ -267,7 +267,7 @@ export function submitChangeFromEditUserModal () {
   } else {
     // Custom
     const obj = { edit: [], edit_content: [], view: [] }
-    Array.from(document.querySelectorAll('.editUserGroupSelect')).forEach((el) => {
+    for (const el of document.querySelectorAll('.editUserGroupSelect')) {
       const groupUUID = el.getAttribute('data-uuid')
       if (el.value === 'edit') {
         obj.edit.push(groupUUID)
@@ -276,7 +276,7 @@ export function submitChangeFromEditUserModal () {
       } else if (el.value === 'view') {
         obj.view.push(groupUUID)
       }
-    })
+    }
     details.permissions.components = obj
   }
 
@@ -321,7 +321,7 @@ export function submitChangeFromEditUserModal () {
         if (response.success === false && response.reason === 'username_taken') {
           document.getElementById('editUserUsernameExists').style.display = 'block'
         } else if (response.success === true) {
-          $('#editUserModal').modal('hide')
+          exTools.hideModal('#editUserModal')
           populateUsers()
         }
       })
@@ -341,7 +341,7 @@ export function submitChangeFromEditUserModal () {
         if (response.success === false && response.reason === 'username_taken') {
           document.getElementById('editUserUsernameExists').style.display = 'block'
         } else if (response.success === true) {
-          $('#editUserModal').modal('hide')
+          exTools.hideModal('#editUserModal')
           populateUsers()
         }
       })
@@ -411,12 +411,12 @@ export function authenticateUser () {
   // If authToken exists in the cookie, use it to log in
 
   let token = ''
-  document.cookie.split(';').forEach((item) => {
+  for (let item of document.cookie.split(';')) {
     item = item.trim()
     if (item.startsWith('authToken="')) {
       token = item.slice(11, -1)
     }
-  })
+  }
 
   if (token === '') {
     token = 'This will fail' // Token cannot be an empty string
@@ -469,9 +469,9 @@ function configureUser (userDict, login = true) {
     // Set the name of the account
     document.getElementById('userMenuUserDisplayName').innerHTML = userDict.display_name
     let initials = ''
-    userDict.display_name.split(' ').forEach((word) => {
+    for (const word of userDict.display_name.split(' ')) {
       initials += word.slice(0, 1)
-    })
+    }
     document.getElementById('userMenuUserShortName').innerHTML = initials
 
     configureUserPreferences()
@@ -604,7 +604,7 @@ export function deleteUser (uuid) {
     .then((response) => {
       if ('success' in response && response.success === true) {
         populateUsers()
-        $('#editUserModal').modal('hide')
+        exTools.hideModal('#editUserModal')
       }
     })
 }
@@ -647,7 +647,7 @@ export function showPasswordChangeModal () {
   document.getElementById('passwordChangeModalPassMismatchWarning').style.display = 'none'
   document.getElementById('passwordChangeModalBadCurrentPassWarning').style.display = 'none'
 
-  $('#passwordChangeModal').modal('show')
+  exTools.showModal('#passwordChangeModal')
 }
 
 export function submitUserPasswordChange () {
@@ -689,7 +689,7 @@ export function submitUserPasswordChange () {
           document.getElementById('passwordChangeModalBadCurrentPassWarning').style.display = 'block'
         }
       } else {
-        $('changePasswordModal').modal('hide')
+        exTools.hideModal('#changePasswordModal')
         logoutUser()
       }
     })
