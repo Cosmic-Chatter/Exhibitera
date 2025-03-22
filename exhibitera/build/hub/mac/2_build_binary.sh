@@ -25,10 +25,8 @@ pyinstaller --clean --onefile  \
 			--add-data "exhibitera_tracker.js:." \
 			--add-data "exhibitera_users.js:." \
 			--add-data "README.md:." \
-			--add-data "css/*:./css/." \
-			--add-data "css/bootstrap_5_3/*:./css/bootstrap_5_3/." \
-			--add-data "js/bootstrap_5_3/*:./js/bootstrap_5_3/." \
-			--add-data "js/*:./js/." \
-			--add-data "icon/*:./icon/." \
-			--add-data "images/*:./images/." \
+			--add-data "css/:./css/." \
+			--add-data "js/:./js/." \
+			--add-data "icon/:./icon/." \
+			--add-data "images/:./images/." \
 		Exhibitera_Hub.py
