@@ -556,6 +556,21 @@ function _showTab (tab) {
 function configureUserPreferences () {
   // Take the user preferences and adjust the GUI to match
 
+  // Check for admin account
+  const userPrefs = document.querySelectorAll('.user-preference')
+  const adminWarning = document.getElementById('componentsTabSettingAdminWarning')
+  if (exConfig.user.uuid === 'admin') {
+    adminWarning.style.display = 'block'
+    for (const pref of userPrefs) {
+      pref.style.display = 'none'
+    }
+  } else {
+    adminWarning.style.display = 'none'
+    for (const pref of userPrefs) {
+      pref.style.display = 'block'
+    }
+  }
+
   // show_static
   document.getElementById('componentsTabSettingsShowStatic').checked = checkUserPreference('show_static')
 

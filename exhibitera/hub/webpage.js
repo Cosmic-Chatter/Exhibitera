@@ -1168,6 +1168,11 @@ if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').match
   document.querySelector('html').setAttribute('data-bs-theme', 'light')
 }
 
+// Fix bootstrap modal accessibility issue
+document.addEventListener('hidden.bs.modal', function (event) {
+  if (document.activeElement) document.activeElement.blur()
+})
+
 loadVersion()
 populateHelpTab()
 exUsers.populateUsers()

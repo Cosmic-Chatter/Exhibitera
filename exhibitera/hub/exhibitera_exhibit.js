@@ -93,7 +93,11 @@ class BaseComponent {
     if (exUsers.checkUserPreference('components_layout') === 'grid') {
       displayNameCol.classList = 'col-12 d-flex justify-content-center align-items-center'
     } else {
-      displayNameCol.classList = 'col-8 d-flex justify-content-start align-items-center'
+      if (exUsers.checkUserPreference('status_mode') === 'realtime') {
+        displayNameCol.classList = 'col-8 d-flex justify-content-start align-items-center'
+      } else {
+        displayNameCol.classList = 'col-5 d-flex justify-content-start align-items-center'
+      }
     }
     row.appendChild(displayNameCol)
 
@@ -111,7 +115,11 @@ class BaseComponent {
     if (exUsers.checkUserPreference('components_layout') === 'grid') {
       statusFieldCol.classList = 'col-12 d-flex justify-content-center  align-items-center'
     } else {
-      statusFieldCol.classList = 'col-4 d-flex justify-content-end  align-items-center'
+      if (exUsers.checkUserPreference('status_mode') === 'realtime') {
+        statusFieldCol.classList = 'col-4 d-flex justify-content-end align-items-center'
+      } else {
+        statusFieldCol.classList = 'col-7 d-flex justify-content-end  align-items-center'
+      }
     }
     row.appendChild(statusFieldCol)
 

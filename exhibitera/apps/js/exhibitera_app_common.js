@@ -38,6 +38,7 @@ try {
 } catch {
   console.log('script platform.js not found. Include this script to send additional details to Hub.')
 }
+
 makeHelperRequest({
   method: 'GET',
   endpoint: '/system/getPlatformDetails'
@@ -45,6 +46,11 @@ makeHelperRequest({
   .then((result) => {
     config.platformDetails.outdated = result?.outdated ?? false
   })
+
+// Fix bootstrap modal accessibility issue
+document.addEventListener('hidden.bs.modal', function (event) {
+  if (document.activeElement) document.activeElement.blur()
+})
 
 export function configureApp (opt = {}) {
   // Perform basic app setup

@@ -46,7 +46,7 @@ def deep_merge(source: dict, destination: dict):
             deep_merge(value, node)
         else:
             destination[key] = value
-
+    return destination
 
 def load_json(path: str):
     """Load the requested JSON file from disk and return it as a dictionary."""

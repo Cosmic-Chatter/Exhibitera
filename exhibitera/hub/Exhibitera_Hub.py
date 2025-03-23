@@ -504,7 +504,7 @@ def edit_user(request: Request,
 @app.post("/user/{uuid_str}/editPreferences")
 def edit_user_preferences(request: Request,
                           uuid_str: str,
-                          preferences: dict[str, Any] = Body(description="A dictionary of preferences update.",
+                          preferences: dict[str, Any] = Body(description="A dictionary of preferences to update.",
                                                              embed=True)):
     """Update the preferences for the given user."""
 
@@ -520,7 +520,8 @@ def edit_user_preferences(request: Request,
     user = ex_users.get_user(uuid_str=uuid_str)
     if user is None:
         return {"success": False, "reason": "user_does_not_exist"}
-    ex_tools.deep_merge(preferences, user.preferences)
+    result = ex_tools.deep_merge(preferences, user.preferences)
+    user.preferences = result
     ex_users.save_users()
 
     return {"success": True, "user": user.get_dict()}
