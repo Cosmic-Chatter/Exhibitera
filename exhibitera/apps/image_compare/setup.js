@@ -49,8 +49,8 @@ async function wizardForward (currentPage) {
         const code = langEl.querySelector('select').value
         const langDef = {
           code,
-          display_name: exSetup.getLanguageDisplayName(code),
-          english_name: exSetup.getLanguageDisplayName(code, true)
+          display_name: exLang.getLanguageDisplayName(code),
+          english_name: exLang.getLanguageDisplayName(code, true)
         }
         langOrder.push(code)
 
