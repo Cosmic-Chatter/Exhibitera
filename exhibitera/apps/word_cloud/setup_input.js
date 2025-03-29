@@ -80,10 +80,15 @@ async function wizardCreateDefinition () {
   const collection = document.getElementById('wizardCollection').value.trim()
   exSetup.updateWorkingDefinition(['behavior', 'collection_name'], collection)
 
+  const uuid = $('#definitionSaveButton').data('workingDefinition').uuid
+
   await exSetup.saveDefinition(defName)
-  await exCommon.getAvailableDefinitions(exCommon.config.app)
-  editDefinition($('#definitionSaveButton').data('workingDefinition').uuid)
-  $('#setupWizardModal').modal('hide')
+  const result = await exCommon.getAvailableDefinitions('timeline_explorer')
+  exSetup.populateAvailableDefinitions(result.definitions)
+  document.getElementById('availableDefinitionSelect').value = uuid
+
+  editDefinition(uuid)
+  exSetup.hideModal('#setupWizardModal')
 }
 
 async function clearDefinitionInput (full = true) {

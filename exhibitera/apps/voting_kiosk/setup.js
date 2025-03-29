@@ -184,10 +184,15 @@ async function wizardCreateDefinition () {
       value: '5_star'
     })
   }
+  const uuid = $('#definitionSaveButton').data('workingDefinition').uuid
+
   await exSetup.saveDefinition(defName)
-  await exCommon.getAvailableDefinitions(exCommon.config.app)
-  editDefinition($('#definitionSaveButton').data('workingDefinition').uuid)
-  $('#setupWizardModal').modal('hide')
+  const result = await exCommon.getAvailableDefinitions('timeline_explorer')
+  exSetup.populateAvailableDefinitions(result.definitions)
+  document.getElementById('availableDefinitionSelect').value = uuid
+
+  editDefinition(uuid)
+  exSetup.hideModal('#setupWizardModal')
 }
 
 function wizardCreateAnswerOption (userDetails) {

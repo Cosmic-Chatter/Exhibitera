@@ -121,7 +121,6 @@ function slide (x) {
 function loadImages (item) {
   // Load the images corresponding to the given object
 
-  console.log(item)
   if (homeScreenDisabled === false) {
     document.getElementById('pulsingHandContainer').style.display = 'none'
   }

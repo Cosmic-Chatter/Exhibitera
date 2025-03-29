@@ -238,15 +238,12 @@ export function populateAvailableDefinitions (definitions) {
     return 0
   })
 
-  keys.forEach((uuid) => {
-    if ((uuid.slice(0, 9) === '__preview') || uuid.trim() === '') return
-    const definition = definitions[uuid]
-    const option = document.createElement('option')
-    option.value = uuid
-    option.innerHTML = definition.name
+  for (const uuid of keys) {
+    if (uuid.startsWith('__preview') || uuid.trim() === '') continue
 
+    const option = new Option(definitions[uuid].name, uuid)
     availableDefinitionSelect.appendChild(option)
-  })
+  }
 }
 
 export function configureFromQueryString () {

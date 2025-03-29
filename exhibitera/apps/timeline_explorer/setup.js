@@ -197,11 +197,15 @@ async function wizardCreateDefinition () {
     exSetup.configurePreview('16x9', true)
   } else exSetup.configurePreview('9x16', true)
 
-  await exSetup.saveDefinition(defName)
-  await exCommon.getAvailableDefinitions(exCommon.config.app)
-  editDefinition($('#definitionSaveButton').data('workingDefinition').uuid)
+  const uuid = $('#definitionSaveButton').data('workingDefinition').uuid
 
-  console.log($('#definitionSaveButton').data('workingDefinition'))
+  await exSetup.saveDefinition(defName)
+  const result = await exCommon.getAvailableDefinitions('timeline_explorer')
+  exSetup.populateAvailableDefinitions(result.definitions)
+  document.getElementById('availableDefinitionSelect').value = uuid
+
+  editDefinition(uuid)
+  exSetup.hideModal('#setupWizardModal')
 }
 
 function generateSpreadsheetTemplate () {

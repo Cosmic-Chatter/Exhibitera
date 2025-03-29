@@ -92,7 +92,7 @@ export class ExhibiteraMarkdownEditor {
     if ((new Date() - this.lastUndoCacheUpdate) > undoCacheUpdateThreshold) {
       this.appendToUndo(event.content, this.tinyMDE.getSelection())
     }
-    console.log('clearing redo')
+
     this.redoCache = []
 
     this.updateSinceUndo = true

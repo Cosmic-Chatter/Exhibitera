@@ -19,11 +19,24 @@ async function initializeWizard () {
   }
   document.getElementById('wizardPane_Welcome').style.display = 'block'
 
-  // Reset fields
+  resetWizardFields()
+}
+
+function resetWizardFields () {
+  // Reset populated fields in the wizard
+
   document.getElementById('wizardDefinitionNameInput').value = ''
   document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'none'
   document.getElementById('wizardLanguages').innerHTML = ''
   document.getElementById('wizardLanguagesBlankWarning').style.display = 'none'
+  document.getElementById('wizardImagesNav').innerHTML = ''
+  document.getElementById('wizardImagesNavContent').innerHTML = ''
+  document.getElementById('wizardNoImagePairsWarning').style.display = 'none'
+  document.getElementById('wizardEmptyImagePairsWarning').style.display = 'none'
+  document.getElementById('wizardPairDetailsNav').innerHTML = ''
+  document.getElementById('wizardPairDetailsNavContent').innerHTML = ''
+  document.getElementById('wizardHomeDetailsNav').innerHTML = ''
+  document.getElementById('wizardHomeDetailsNavContent').innerHTML = ''
 }
 
 async function wizardForward (currentPage) {
@@ -120,17 +133,21 @@ function wizardGoTo (page) {
 async function wizardCreateDefinition () {
   // Use the provided details to build a definition file.
 
+  const uuid = $('#definitionSaveButton').data('workingDefinition').uuid
+
   // Definition name
   const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
   exSetup.updateWorkingDefinition(['name'], defName)
 
   exSetup.hideModal('#setupWizardModal')
+  resetWizardFields() // Must clear navs before building new ones for the main editor
 
   await exSetup.saveDefinition(defName)
-  await exCommon.getAvailableDefinitions(exCommon.config.app)
-  editDefinition($('#definitionSaveButton').data('workingDefinition').uuid)
-
-  console.log($('#definitionSaveButton').data('workingDefinition'))
+  const result = await exCommon.getAvailableDefinitions('image_compare')
+  exSetup.populateAvailableDefinitions(result.definitions)
+  document.getElementById('availableDefinitionSelect').value = uuid
+  editDefinition(uuid)
+  exSetup.hideModal('#setupWizardModal')
 }
 
 function wizardBuildPairDetailsPage () {
@@ -272,11 +289,11 @@ function editDefinition (uuid = '') {
 
   clearDefinitionInput(false)
   const def = exSetup.getDefinitionByUUID(uuid)
-
+  console.log(def)
   $('#definitionSaveButton').data('initialDefinition', structuredClone(def))
   $('#definitionSaveButton').data('workingDefinition', structuredClone(def))
 
-  $('#definitionNameInput').val(def.name)
+  document.getElementById('definitionNameInput').value = def.name
 
   // Attractor
   const attractorSelect = document.getElementById('attractorSelect')
@@ -878,7 +895,7 @@ function createHomeTextLocalizationHTML (tabList = null, navContent = null) {
     tabPane.appendChild(tabRow)
 
     const titleCol = document.createElement('div')
-    titleCol.classList = 'col-12 col-md-6'
+    titleCol.classList = 'col-12 col-lg-6'
     tabRow.appendChild(titleCol)
 
     const titleLabel = document.createElement('label')
@@ -927,7 +944,11 @@ function createHomeTextLocalizationHTML (tabList = null, navContent = null) {
       }
     })
 
-    if (i === 0) tabButton.click()
+    if (i === 0) {
+      tabButton.click()
+      tabPane.classList.add('show', 'active')
+    }
+
     i++
   }
 }
