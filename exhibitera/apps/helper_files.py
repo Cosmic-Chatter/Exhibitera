@@ -17,6 +17,7 @@ import zipfile
 # Non-standard imports
 import mimetypes
 import requests
+from PIL.ImageOps import deform
 
 ffmpeg_path: str
 try:
@@ -461,6 +462,31 @@ def load_thumbnail_archive() -> None:
             config.thumbnail_archive = {}
 
 
+def create_definition_thumbnail(filename: str, width: int = 600) -> tuple[bool, str]:
+    """Create a thumbnail for a definition."""
+
+    try:
+        file_path = get_path(['content', filename], user_file=True)
+        if not os.path.exists(file_path):
+            return False, "file_does_not_exist"
+
+        thumb_filename = with_extension(filename, 'png')
+        thumb_path = get_path(['thumbnails', 'definitions', thumb_filename], user_file=True)
+
+        proc = subprocess.Popen([ffmpeg_path, "-y", "-i", file_path, "-vf", f"scale={width}:-1", thumb_path])
+        try:
+            proc.communicate(timeout=3600)  # 1 hour
+        except subprocess.TimeoutExpired:
+            proc.kill()
+    except OSError as e:
+        print("create_thumbnail: error:", e)
+        return False, 'OSError'
+    except ImportError as e:
+        print("create_thumbnail: error loading FFmpeg: ", e)
+        return False, 'ImportError'
+
+    return True, ""
+
 def create_thumbnail(filename: str,
                      mimetype: str,
                      block: bool = False,
@@ -561,10 +587,10 @@ def is_url(filename: str) -> bool:
     return False
 
 
-def create_thumbnail_video_from_frames(frames: list, filename: str, duration: float = 5) -> bool:
+def create_definition_thumbnail_video_from_frames(frames: list, filename: str, duration: float = 5) -> bool:
     """Take a list of image filenames and use FFmpeg to turn it into a video thumbnail."""
 
-    output_path = get_path(['thumbnails', with_extension(filename, 'mp4')], user_file=True)
+    output_path = get_path(['thumbnails', 'definitions', with_extension(filename, 'mp4')], user_file=True)
     fps = len(frames) / duration
 
     # First, render each file in a consistent format
@@ -768,6 +794,28 @@ def get_thumbnail(filename: str,
     return thumb_path, mimetype
 
 
+def get_definition_thumbnail(uuid_str: str) -> tuple[str, str]:
+    """Retrieve the thumbnail for the given definition or a default one."""
+
+    thumbs = get_directory_contents(['thumbnails', 'definitions'])
+    matches = [x for x in thumbs if uuid_str in x]
+
+    if len(matches) > 0:
+        thumb_path = get_path(['thumbnails', 'definitions', matches[0]], user_file=True)
+        return thumb_path, get_mimetype(thumb_path)
+
+    # Need to find a default image
+    def_path = get_path(["definitions", with_extension(uuid_str, 'json')], user_file=True)
+    definition = load_json(def_path)
+    if definition is None:
+        app = "document_missing"
+    else:
+        app = definition.get("app", "document_missing_black")
+    if app == 'other':
+        app = 'document_missing_black'
+    return get_path(["_static", "icons", with_extension(app, "svg")]), 'image'
+
+
 def create_missing_thumbnails() -> None:
     """Check the content directory for files without thumbnails and create them."""
 
@@ -800,14 +848,11 @@ def get_all_directory_contents(directory: str = "content") -> tuple[list, list[d
     return content, content_details
 
 
-def get_directory_contents(directory: str, absolute: bool = False) -> list:
+def get_directory_contents(directory: list[str]) -> list:
     """Return the contents of a directory."""
 
-    if absolute:
-        contents = os.listdir(directory)
-    else:
-        content_path = get_path([directory], user_file=True)
-        contents = os.listdir(content_path)
+    content_path = get_path(directory, user_file=True)
+    contents = os.listdir(content_path)
     return [x for x in contents if x[0] != "."]  # Don't return hidden files
 
 

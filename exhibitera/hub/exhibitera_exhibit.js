@@ -1595,7 +1595,7 @@ export function removeExhibitComponentFromModal () {
     })
 }
 
-function populateComponentDefinitionList (definitions, thumbnails, permission) {
+async function populateComponentDefinitionList (definitions, thumbnails, permission) {
   // Take a dictionary of definitions and convert it to GUI elements.
 
   const id = document.getElementById('componentInfoModal').getAttribute('data-id')
@@ -1713,17 +1713,28 @@ function populateComponentDefinitionList (definitions, thumbnails, permission) {
     }
     btnGroup.appendChild(dropdownMenu)
 
-    if (thumbnails.includes(uuid + '.mp4')) {
-      const thumbCol = document.createElement('div')
-      thumbCol.classList = 'col-12 bg-secondary pt-2 definition-thumbnail'
-      if (permission === 'edit' || permission === 'edit_content') {
-        thumbCol.addEventListener('click', () => {
-          handleDefinitionItemSelection(uuid)
-        })
-      }
+    const thumbCol = document.createElement('div')
+    thumbCol.classList = 'col-12 bg-secondary pt-2 definition-thumbnail'
+    if (permission === 'edit' || permission === 'edit_content') {
+      thumbCol.addEventListener('click', () => {
+        handleDefinitionItemSelection(uuid)
+      })
+    }
+    row.append(thumbCol)
 
-      row.append(thumbCol)
-
+    // First try to load the thumbnail as an image.
+    const img = new Image()
+    img.crossOrigin = 'anonymous' // Allow cross-origin requests
+    img.onload = () => {
+      // If the image loads successfully, append it to the container
+      img.style.height = '100px'
+      img.style.width = '100%'
+      img.style.objectFit = 'contain'
+      thumbCol.innerHTML = ''
+      thumbCol.appendChild(img)
+    }
+    img.onerror = () => {
+      // If the image fails to load, try loading it as a video
       const thumb = document.createElement('video')
       thumb.style.height = '100px'
       thumb.style.width = '100%'
@@ -1734,25 +1745,11 @@ function populateComponentDefinitionList (definitions, thumbnails, permission) {
       thumb.setAttribute('playsinline', 'true')
       thumb.setAttribute('webkit-playsinline', 'true')
       thumb.setAttribute('disablePictureInPicture', 'true')
-      thumb.src = component.getHelperURL() + '/thumbnails/' + uuid + '.mp4'
-      thumbCol.appendChild(thumb)
-    } else if (thumbnails.includes(uuid + '.jpg')) {
-      const thumbCol = document.createElement('div')
-      thumbCol.classList = 'col-12 bg-secondary pt-2 definition-thumbnail'
-      if (permission === 'edit' || permission === 'edit_content') {
-        thumbCol.addEventListener('click', () => {
-          handleDefinitionItemSelection(uuid)
-        })
-      }
-      row.append(thumbCol)
-
-      const thumb = document.createElement('img')
-      thumb.style.height = '100px'
-      thumb.style.width = '100%'
-      thumb.style.objectFit = 'contain'
-      thumb.src = component.getHelperURL() + '/thumbnails/' + uuid + '.jpg'
+      thumb.src = component.getHelperURL() + '/definitions/' + uuid + '/thumbnail?' + Date.now()
       thumbCol.appendChild(thumb)
     }
+
+    img.src = component.getHelperURL() + '/definitions/' + uuid + '/thumbnail?' + Date.now()
 
     const app = document.createElement('div')
     app.classList = 'col-12 bg-secondary text-dark rounded-bottom pb-1'

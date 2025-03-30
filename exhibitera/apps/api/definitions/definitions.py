@@ -16,7 +16,7 @@ router = APIRouter()
 
 
 @router.get("/definitions/{this_uuid}")
-async def load_definition(this_uuid: str):
+async def load_definition_as_binary(this_uuid: str):
     """Return the given definition as a binary file"""
 
     path = helper_files.get_path(["definitions", helper_files.with_extension(this_uuid, "json")], user_file=True)
@@ -65,6 +65,20 @@ async def load_definition(this_uuid: str):
     if definition is None:
         return {"success": False, "reason": f"The definition {this_uuid} does not exist."}
     return {"success": True, "definition": definition}
+
+@router.get("/definitions/{this_uuid}/thumbnail")
+@router.head("/definitions/{this_uuid}/thumbnail")
+async def load_definition_thumbnail(this_uuid: str):
+    """Return a thumbnail  for this definition."""
+
+    thumbnail_path, mimetype = helper_files.get_definition_thumbnail(this_uuid)
+
+    headers = {
+        'Cache-Control': 'no-store',  # Forces browser to always request the resource
+        'Access-Control-Allow-Origin': '*',  # Allow CORS
+        'Access-Control-Expose-Headers': 'Content-Disposition'
+    }
+    return FileResponse(thumbnail_path, headers=headers)
 
 
 @router.get("/definitions/{this_uuid}/getContentList")

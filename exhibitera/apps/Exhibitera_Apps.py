@@ -25,6 +25,7 @@ import uvicorn
 import config as const_config
 import helper_dmx
 import helper_files
+import helper_legacy
 import helper_system
 import helper_utilities
 
@@ -171,7 +172,6 @@ async def get_available_content(config: const_config = Depends(get_config)):
     response = {"all_exhibits": content,
                 "content_details": content_details,
                 "definitions": helper_files.get_available_definitions(),
-                "thumbnails": helper_files.get_directory_contents("thumbnails"),
                 "system_stats": helper_utilities.get_system_stats()}
 
     return response
@@ -211,7 +211,7 @@ async def create_thumbnail_video_from_frames(
     if not helper_files.filename_safe(filename):
         return {"success": False, "reason": "Invalid character in filename"}
 
-    success = helper_files.create_thumbnail_video_from_frames(frames, filename, duration)
+    success = helper_files.create_definition_thumbnail_video_from_frames(frames, filename, duration)
     return {"success": success}
 
 
@@ -230,39 +230,6 @@ def get_v2_thumbnail(filename: str, width: str = "400", force_image: bool = Fals
     if not os.path.exists(thumbnail_path):
         return FileResponse(helper_files.get_path(["_static", "icons", "document_missing.svg"]))
     return FileResponse(thumbnail_path)
-
-
-@app.post('/files/generateThumbnail')
-def generate_thumbnail(source: str | list[str] = Body(description='The file(s) in content to generate thumbnails for'),
-                       mimetype: str | list[str] = Body(
-                           description='One of [image | video] that gives the mimetype of the file. Must have the same length as source.'),
-                       width: int = Body(description="The pixel width of the thumbnails.",
-                                         default=400)):
-    """Generate new thumbnail(s) from files in the content directory"""
-
-    if isinstance(source, str):
-        source = [source]
-    if isinstance(mimetype, str):
-        mimetype = [mimetype]
-
-    if len(source) != len(mimetype):
-        return {"success": False, "reason": "source and mimetype must have the same length."}
-
-    request_success = True
-    request_reason = ""
-    for i in range(len(source)):
-        file = source[i]
-        file_mime = mimetype[i]
-
-        success, reason = helper_files.create_thumbnail(file, file_mime, block=True, width=width)
-        if success is False and reason == "ImportError":
-            request_success = False
-            request_reason = "FFmpeg not found"
-
-    result = {"success": request_success}
-    if request_reason != "":
-        result["reason"] = request_reason
-    return result
 
 
 @app.post('/files/uploadThumbnail')
@@ -285,7 +252,7 @@ def upload_thumbnail(files: list[UploadFile] = File(),
             finally:
                 file.file.close()
             # Next, generate a thumbnail
-            helper_files.create_thumbnail(filename, 'image', block=True)
+            helper_files.create_definition_thumbnail(filename)
             # Finally, delete the source file
             os.remove(temp_path)
     return {"success": True}
@@ -1075,8 +1042,8 @@ if __name__ == "__main__":
             create_config()
             helper_utilities.read_defaults()
 
-        # Check for missing content thumbnails and create them
-        helper_files.create_missing_thumbnails()
+        # Migrate legacy thumbnails
+        helper_legacy.migrate_definition_thumbnails()
 
         # Check the GitHub server for an available software update
         helper_utilities.check_for_software_update()
