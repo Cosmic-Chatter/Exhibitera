@@ -507,7 +507,7 @@ export function getUserDisplayName (uuid) {
     }
     makeServerRequest({
       method: 'GET',
-      endpoint: `/user/${uuid}/getDisplayName`
+      endpoint: `/user/${uuid}/displayName`
     })
       .then((response) => {
         if (response.success === true) {

@@ -115,7 +115,7 @@ def read_defaults() -> bool:
     return True
 
 
-def update_defaults(data: dict[str, Any], cull: bool = False):
+def update_configuration(data: dict[str, Any], cull: bool = False):
     """Take a dictionary 'data' and write relevant parameters to disk if they have changed.
 
     If cull == True, remove any entries not included in 'data'
@@ -321,7 +321,7 @@ def handle_missing_defaults_file():
         _ = input("Press Enter to continue...")
         _ = capture_screenshot()
 
-    update_defaults(defaults, cull=True)
+    update_configuration(defaults, cull=True)
 
 
 def find_available_port(start: int = 8000) -> int:

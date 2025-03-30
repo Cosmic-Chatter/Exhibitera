@@ -26,11 +26,6 @@ class BaseComponent {
     this.lastContactDateTime = null
   }
 
-  cleanID () {
-    // Return the ID sanitized of bad characters for DOM selectors.
-    return this.id.replaceAll(' ', '_').replaceAll('.', '_').replaceAll('#', '_').replaceAll("'", '_').replaceAll('"', '_').replaceAll('/', '_').replaceAll('\\', '_')
-  }
-
   buildHTML (group) {
     // Function to build the HTML representation of this component
     // and add it to the row of the parent group
@@ -191,7 +186,7 @@ class BaseComponent {
         refreshAction.classList = 'dropdown-item handCursor'
         refreshAction.innerHTML = 'Refresh component'
         refreshAction.addEventListener('click', function () {
-          queueCommand(thisId, 'refresh')
+          queueCommand(thisUUID, 'refresh')
         }, false)
         dropdownMenu.appendChild(refreshAction)
       }
@@ -202,7 +197,7 @@ class BaseComponent {
         sleepAction.classList = 'dropdown-item handCursor'
         sleepAction.innerHTML = 'Sleep display'
         sleepAction.addEventListener('click', function () {
-          queueCommand(thisId, 'sleepDisplay')
+          queueCommand(thisUUID, 'sleepDisplay')
         }, false)
         dropdownMenu.appendChild(sleepAction)
 
@@ -210,7 +205,7 @@ class BaseComponent {
         wakeAction.classList = 'dropdown-item handCursor'
         wakeAction.innerHTML = 'Wake display'
         wakeAction.addEventListener('click', function () {
-          queueCommand(thisId, 'wakeDisplay')
+          queueCommand(thisUUID, 'wakeDisplay')
         }, false)
         dropdownMenu.appendChild(wakeAction)
       }
@@ -221,7 +216,7 @@ class BaseComponent {
         restartAction.classList = 'dropdown-item handCursor'
         restartAction.innerHTML = 'Restart component'
         restartAction.addEventListener('click', function () {
-          queueCommand(thisId, 'restart')
+          queueCommand(thisUUID, 'restart')
         }, false)
         dropdownMenu.appendChild(restartAction)
       }
@@ -232,7 +227,7 @@ class BaseComponent {
         shutdownAction.classList = 'dropdown-item handCursor'
         shutdownAction.innerHTML = 'Power off component'
         shutdownAction.addEventListener('click', function () {
-          queueCommand(thisId, 'restart')
+          queueCommand(thisUUID, 'restart')
         }, false)
         dropdownMenu.appendChild(shutdownAction)
       }
@@ -243,7 +238,7 @@ class BaseComponent {
         powerOnAction.classList = 'dropdown-item handCursor'
         powerOnAction.innerHTML = 'Power on component'
         powerOnAction.addEventListener('click', function () {
-          queueCommand(thisId, 'power_on')
+          queueCommand(thisUUID, 'power_on')
         }, false)
         dropdownMenu.appendChild(powerOnAction)
       }
@@ -501,12 +496,6 @@ class ExhibitComponentGroup {
     this.buildHTML()
   }
 
-  cleanID () {
-    // Return the ID sanitized of characters unsafe for DOM selectors.
-
-    return this.group.replaceAll(' ', '_').replaceAll('.', '_').replaceAll('#', '_').replaceAll("'", '_').replaceAll('"', '_').replaceAll('/', '_').replaceAll('\\', '_')
-  }
-
   addComponent (component) {
     this.components.push(component)
     this.sortComponentList(exUsers.checkUserPreference('sort_order'))
@@ -668,7 +657,7 @@ class ExhibitComponentGroup {
 
     const componentList = document.createElement('div')
     componentList.classList = 'row'
-    componentList.setAttribute('id', this.cleanID() + 'ComponentList')
+    componentList.setAttribute('id', this.uuid + 'ComponentList')
     if (exUsers.checkUserPreference('components_layout') === 'grid') {
       if (numToDisplay > 7) {
         componentList.classList.add('row-cols-2', 'row-cols-sm-3', 'row-cols-md-4')
@@ -693,7 +682,7 @@ export function createComponentFromUpdate (update) {
   // Use an update dictionary to create a new component
 
   // Make sure this component doesn't already exist
-  const obj = getExhibitComponent(update.id)
+  const obj = getExhibitComponent(update.uuid)
   if (obj != null) return
 
   // First, make sure the groups exist
@@ -732,7 +721,7 @@ export function updateComponentFromServer (update) {
   // Read the dictionary of component information from Hub
   // and use it to set up the component
 
-  const obj = getExhibitComponent(update.id)
+  const obj = getExhibitComponent(update.uuid)
 
   if (obj != null) {
     // Update the object with the latest info from the server
@@ -821,7 +810,7 @@ export function sendGroupCommand (group, cmd) {
   group = exTools.getExhibitComponentGroup(group)
   console.log(group, cmd)
   for (let i = 0; i < group.components.length; i++) {
-    queueCommand(group.components[i].id, cmd)
+    queueCommand(group.components[i].uuid, cmd)
   }
 }
 
@@ -908,18 +897,18 @@ function showExhibitComponentInfo (uuid, groupUUID) {
     document.getElementById('componentInfoModalMaintenanceTabButton').style.display = 'none'
   }
 
-  const obj = getExhibitComponentByUUID(uuid)
+  const obj = getExhibitComponent(uuid)
   const componentInfoModal = document.getElementById('componentInfoModal')
-  componentInfoModal.setAttribute('data-id', obj.id)
-  componentInfoModal.setAttribute('data-uuid', uuid)
+  componentInfoModal.dataset.id = obj.id
+  componentInfoModal.dataset.uuid = obj.uuid
 
-  document.getElementById('componentInfoModalTitle').innerHTML = obj.id
+  document.getElementById('componentInfoModalTitle').innerText = obj.id
 
   // Set up the upper-right dropdown menu with helpful details
-  document.getElementById('exhibiteraComponentIdButton').innerHTML = convertAppIDtoDisplayName(obj.exhibiteraAppId)
+  document.getElementById('exhibiteraComponentIdButton').innerText = convertAppIDtoDisplayName(obj.exhibiteraAppId)
 
   if (obj.ip_address != null && obj.ip_address !== '') {
-    document.getElementById('componentInfoModalIPAddress').innerHTML = obj.ip_address
+    document.getElementById('componentInfoModalIPAddress').innerText = obj.ip_address
     document.getElementById('componentInfoModalIPAddressGroup').style.display = 'block'
   } else {
     document.getElementById('componentInfoModalIPAddressGroup').style.display = 'none'
@@ -928,7 +917,7 @@ function showExhibitComponentInfo (uuid, groupUUID) {
       exTools.extractIPAddress(obj.helperAddress) != null &&
       obj.ip_address !== exTools.extractIPAddress(obj.helperAddress)
   ) {
-    document.getElementById('componentInfoModalHelperIPAddress').innerHTML = exTools.extractIPAddress(obj.helperAddress)
+    document.getElementById('componentInfoModalHelperIPAddress').innerText = exTools.extractIPAddress(obj.helperAddress)
     document.getElementById('componentInfoModalHelperIPAddressGroup').style.display = 'block'
     // Cannot take screenshots of components with a remote helper
     document.getElementById('componentInfoModalViewScreenshot').style.display = 'none'
@@ -1080,7 +1069,7 @@ function configureComponentInfoModalForExhibitComponent (obj, permission) {
   $('#componentInfoModalDefinitionsTabButton').tab('show')
 
   // This component may be accessible over the network.
-  updateComponentInfoModalFromHelper(obj.id, permission)
+  updateComponentInfoModalFromHelper(obj.uuid, permission)
   configureNewDefinitionOptions(obj)
 
   // Fetch any DMX lighting scenes and show the tab if necessary
@@ -1300,7 +1289,7 @@ export function updateProjectorFromInfoModal () {
   })
     .then((response) => {
       if (response.success === true) {
-        document.getElementById('componentInfoModalTitle').innerHTML = update.id
+        document.getElementById('componentInfoModalTitle').innerText = update.id
         document.getElementById('componentInfoModalProjectorSettingsSaveButton').style.display = 'none'
         updateComponentInfoDescription(update.description)
         rebuildComponentInterface()
@@ -1589,7 +1578,7 @@ export function removeExhibitComponentFromModal () {
   })
     .then((response) => {
       if ('success' in response && response.success === true) {
-        getExhibitComponentByUUID(uuid).remove()
+        getExhibitComponent(uuid).remove()
         exTools.hideModal('#componentInfoModal')
       }
     })
@@ -1598,8 +1587,8 @@ export function removeExhibitComponentFromModal () {
 async function populateComponentDefinitionList (definitions, thumbnails, permission) {
   // Take a dictionary of definitions and convert it to GUI elements.
 
-  const id = document.getElementById('componentInfoModal').getAttribute('data-id')
-  const component = getExhibitComponent(id)
+  const uuid = document.getElementById('componentInfoModal').dataset.uuid
+  const component = getExhibitComponent(uuid)
 
   const componentInfoModalDefinitionList = document.getElementById('componentInfoModalDefinitionList')
   componentInfoModalDefinitionList.innerHTML = ''
@@ -1770,7 +1759,7 @@ async function populateComponentDefinitionList (definitions, thumbnails, permiss
 function showCopyDefinitionModal (componentUUID, definitionUUID, definitionName) {
   // Set up and show the model for copying a definition from one component to another
 
-  const component = getExhibitComponentByUUID(componentUUID)
+  const component = getExhibitComponent(componentUUID)
   const modal = document.getElementById('copyDefinitionModal')
   modal.setAttribute('data-definition', definitionUUID)
   modal.setAttribute('data-component', componentUUID)
@@ -1881,7 +1870,7 @@ function copyDefinitionModalCreateDestinationHTML (component, group, def, conten
   const label = document.createElement('label')
   label.classList = 'form-check-label'
   label.setAttribute('for', 'copyOption_' + group + '_' + component.uuid)
-  label.innerHTML = component.id
+  label.innerText = component.id
   checkGroup.appendChild(label)
 
   // Check if the given definition already exists on the destination
@@ -1947,7 +1936,7 @@ export async function copyDefinitionModalPerformCopy () {
   // Sources
   const definitionUUID = modal.getAttribute('data-definition')
   const sourceUUID = modal.getAttribute('data-component')
-  const sourceComponent = getExhibitComponentByUUID(sourceUUID)
+  const sourceComponent = getExhibitComponent(sourceUUID)
   const filesToCopy = JSON.parse(modal.getAttribute('data-sourceFiles')) ?? []
 
   // Destinations
@@ -1956,7 +1945,7 @@ export async function copyDefinitionModalPerformCopy () {
   for (const el of checkedElements) {
     const destUUID = el.getAttribute('data-uuid')
     if (destUUID != null) {
-      const destComp = getExhibitComponentByUUID(destUUID)
+      const destComp = getExhibitComponent(destUUID)
       if (destComp != null) destComponents.push(destComp)
     }
   }
@@ -2037,25 +2026,19 @@ export function submitDefinitionSelectionFromModal () {
   // Called when the "Save changes" button is pressed on the definitions pane of the componentInfoModal.
 
   const definition = $('.definition-selected').data('definition')
-  const id = document.getElementById('componentInfoModal').getAttribute('data-id')
   const componentUUID = document.getElementById('componentInfoModal').getAttribute('data-uuid')
 
-  // Exhibitera 5 starts the transition from ID to UUID
   exTools.makeServerRequest({
     method: 'POST',
-    endpoint: '/component/' + id + '/setDefinition',
-    params: {
-      component_uuid: componentUUID,
-      definition_uuid: definition.uuid
-    }
+    endpoint: '/component/' + componentUUID + '/definition/' + definition.uuid
   })
   document.getElementById('componentInfoModalDefinitionSaveButton').style.display = 'none'
 }
 
-function updateComponentInfoModalFromHelper (id, permission) {
+function updateComponentInfoModalFromHelper (uuid, permission) {
   // Ask the given helper to send an update and use it to update the interface.
 
-  const obj = getExhibitComponent(id)
+  const obj = getExhibitComponent(uuid)
 
   const url = obj.getHelperURL()
   if (url == null) {
@@ -2235,7 +2218,7 @@ export function submitComponentBasicSettingsChange () {
 export function submitComponentSettingsChange () {
   // Collect the current settings and send them to the component's helper for saving.
 
-  const obj = getExhibitComponent(document.getElementById('componentInfoModalTitle').innerHTML)
+  const obj = getExhibitComponent(document.getElementById('componentInfoModal').dataset.uuid)
 
   // Update component settings, if allowed
   const settingsAvailable = document.getElementById('componentInfoModalSettingsPermissionsPane').style.display === 'flex'
@@ -2252,7 +2235,7 @@ export function submitComponentSettingsChange () {
     exTools.makeRequest({
       method: 'POST',
       url: obj.getHelperURL(),
-      endpoint: '/setDefaults',
+      endpoint: '/system/configuration/update',
       params: { defaults: settings }
     })
       .then((response) => {
@@ -2265,16 +2248,7 @@ export function submitComponentSettingsChange () {
   }
 }
 
-export function getExhibitComponent (id) {
-  // Function to search the exhibitComponents list for a given id
-
-  const result = exConfig.exhibitComponents.find(obj => {
-    return obj.id === id
-  })
-  return result
-}
-
-export function getExhibitComponentByUUID (uuid) {
+export function getExhibitComponent (uuid) {
   // Function to search the exhibitComponents list for a given uuid
 
   const result = exConfig.exhibitComponents.find(obj => {
@@ -2286,13 +2260,13 @@ export function getExhibitComponentByUUID (uuid) {
 export function checkForRemovedComponents (update) {
   // Check exConfig.exhibitComponents and remove any components not in `update`
 
-  const updateIDs = []
+  const updateUUIDs = []
   for (const component of update) {
-    updateIDs.push(component.id)
+    updateUUIDs.push(component.uuid)
   }
 
   for (const component of exConfig.exhibitComponents) {
-    if (updateIDs.includes(component.id) === false) {
+    if (updateUUIDs.includes(component.uuid) === false) {
       component.remove(false) // Remove from interface, but not the config
     }
   }
@@ -2312,11 +2286,11 @@ export function rebuildComponentInterface () {
   }
 }
 
-export function queueCommand (id, cmd) {
+export function queueCommand (uuid, cmd) {
   // Function to send a command to Hub that will then
   // be sent to the component the next time it pings the server
 
-  const obj = getExhibitComponent(id)
+  const obj = getExhibitComponent(uuid)
   if (['shutdown', 'restart'].includes(cmd) && obj.type === 'exhibit_component') {
     // We send these commands directly to the helper
     exTools.makeRequest({
@@ -2326,26 +2300,11 @@ export function queueCommand (id, cmd) {
     })
   } else {
     // We send these commands to the server to pass to the component itself
-    let cmdPath = ''
-    if (obj.type === 'projector') {
-      cmdPath = '/projector/queueCommand'
-    } else if (obj.type === 'wol_component') {
-      cmdPath = '/exhibit/queueWOLCommand'
-    } else {
-      cmdPath = '/exhibit/queueCommand'
-    }
-
-    const requestDict = {
-      component: {
-        id
-      },
-      command: cmd
-    }
 
     exTools.makeServerRequest({
       method: 'POST',
-      endpoint: cmdPath,
-      params: requestDict
+      endpoint: '/component/' + uuid + '/queueCommand',
+      params: { command: cmd }
     })
   }
 }

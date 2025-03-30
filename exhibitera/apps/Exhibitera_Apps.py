@@ -1,8 +1,6 @@
 # Standard modules
 from functools import lru_cache, partial
-import io
 import logging
-import mimetypes
 import os
 import shutil
 import sys
@@ -17,21 +15,20 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.background import BackgroundTasks
-import platform
-import requests
 import uvicorn
 
 # Exhibitera modules
-import config as const_config
+import config as ex_config
 import helper_dmx
 import helper_files
 import helper_legacy
 import helper_system
 import helper_utilities
 
-# Api Modules
+# API Modules
 from api.system import system
 from api.definitions import definitions
+from exhibitera_tools import with_extension
 
 # If we're not on Linux, prepare to use the webview
 if sys.platform != 'linux':
@@ -47,14 +44,14 @@ logging.basicConfig(datefmt='%Y-%m-%d %H:%M:%S',
                     format='%(levelname)s, %(asctime)s, %(message)s',
                     level=logging.INFO)
 
-const_config.exec_path = os.path.dirname(os.path.abspath(__file__))
+ex_config.exec_path = os.path.dirname(os.path.abspath(__file__))
 if getattr(sys, 'frozen', False):
     # If the application is run as a --onefile bundle, the PyInstaller bootloader
     # extends the sys module by a flag frozen=True and sets the app
     # path into variable sys.executable.
-    const_config.application_path = os.path.dirname(sys.executable)
+    ex_config.application_path = os.path.dirname(sys.executable)
 else:
-    const_config.application_path = const_config.exec_path
+    ex_config.application_path = ex_config.exec_path
 
 helper_files.check_directory_structure()
 
@@ -136,7 +133,7 @@ app.include_router(definitions.router)
 
 @lru_cache()
 def get_config():
-    return const_config
+    return ex_config
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -165,7 +162,7 @@ async def serve_readme():
 
 
 @app.get("/getAvailableContent")
-async def get_available_content(config: const_config = Depends(get_config)):
+async def get_available_content(config: ex_config = Depends(get_config)):
     """Return a list of all files in the content directory, plus some useful system info."""
 
     content, content_details = helper_files.get_all_directory_contents()
@@ -177,24 +174,24 @@ async def get_available_content(config: const_config = Depends(get_config)):
     return response
 
 
-@app.post('/files/getVideoDetails')
-async def get_video_details(filename: str = Body(description='The filename of the file.', embed=True)):
+@app.get('/files/{filename}/videoDetails')
+async def get_video_details(filename: str):
     """Return a dictionary of useful information about a video file in the content directory."""
 
     if not helper_files.filename_safe(filename):
-        return {"success": False, "details": "Invalid character in filename"}
+        return {"success": False, "details": "unsafe_filename"}
 
     success, details = helper_files.get_video_file_details(filename)
     return {"success": success, "details": details}
 
 
-@app.post('/files/convertVideoToFrames')
-async def convert_video_to_frames(filename: str = Body(description='The filename of the file.'),
-                                  file_type: str = Body(description='The output filetype to use.', default='jpg')):
+@app.post('/files/{filename}/convertVideoToFrames')
+async def convert_video_to_frames(filename: str,
+                                  file_type: str = Body(description='The output filetype to use.', default='jpg', embed=True)):
     """Convert the given file to a set of frames."""
 
     if not helper_files.filename_safe(filename):
-        return {"success": False, "reason": "Invalid character in filename"}
+        return {"success": False, "reason": "unsafe_filename"}
 
     success = helper_files.convert_video_to_frames(filename, file_type)
 
@@ -220,13 +217,13 @@ async def create_thumbnail_video_from_frames(
 def get_v2_thumbnail(filename: str, width: str = "400", force_image: bool = False):
     """
 
-    :param force_image: Always return a jpg thumbnail, even for videos
+    :param force_image: Always return a png thumbnail, even for videos
     :param filename: The name of a file in the content directory
     :param width: The width of the file to be returned
     :return: Image or video data for the requested thumbnail
     """
 
-    thumbnail_path, mimetype = helper_files.get_thumbnail(filename, v2=True, width=width, force_image=force_image)
+    thumbnail_path, mimetype = helper_files.get_thumbnail(filename, width=width, force_image=force_image)
     if not os.path.exists(thumbnail_path):
         return FileResponse(helper_files.get_path(["_static", "icons", "document_missing.svg"]))
     return FileResponse(thumbnail_path)
@@ -234,7 +231,7 @@ def get_v2_thumbnail(filename: str, width: str = "400", force_image: bool = Fals
 
 @app.post('/files/uploadThumbnail')
 def upload_thumbnail(files: list[UploadFile] = File(),
-                     config: const_config = Depends(get_config)):
+                     config: ex_config = Depends(get_config)):
     """Save uploaded files as thumbnails, formatting them appropriately."""
 
     for file in files:
@@ -274,7 +271,7 @@ def create_zip(background_tasks: BackgroundTasks,
 @app.post('/files/retrieve')
 async def retrieve_file(file_url: Annotated[str, Body(description="The URL of the file to retrieve")],
                         path_list: Annotated[list[str], Body(description="A series of directories ending with the filename.")],
-                        config: const_config = Depends(get_config)):
+                        config: ex_config = Depends(get_config)):
     """Download the given file and save it to disk."""
 
     if not helper_files.path_safe(path_list):
@@ -288,28 +285,17 @@ async def retrieve_file(file_url: Annotated[str, Body(description="The URL of th
     return {"success": success}
 
 
-@app.get("/getDefaults")
-async def send_defaults(config: const_config = Depends(get_config)):
+@app.get("/system/configuration")
+async def send_configuration(config: ex_config = Depends(get_config)):
     config_to_send = config.defaults.copy()
 
     # Add the current update availability to pass to Hub
     config_to_send["software_update"] = config.software_update
-
-    config_to_send["availableContent"] = \
-        {"all_exhibits": helper_files.get_all_directory_contents()[0]}
-
     return config_to_send
 
 
-@app.get('/uuid/new')
-async def get_new_uuid():
-    """Return a new uuid."""
-
-    return {"success": True, "uuid": str(uuid.uuid4())}
-
-
 @app.get("/getUpdate")
-async def send_update(config: const_config = Depends(get_config)):
+async def send_update(config: ex_config = Depends(get_config)):
     """Get some key info for updating the component and web console."""
 
     response_dict = {
@@ -342,7 +328,7 @@ async def do_wake():
     helper_system.wake_display()
 
 
-@app.post("/file/delete")
+@app.post("/files/delete")
 async def delete_file(file: str | list[str] = Body(description="The file(s) to delete", embed=True)):
     """Delete the specified file(s) from the content directory"""
 
@@ -355,35 +341,35 @@ async def delete_file(file: str | list[str] = Body(description="The file(s) to d
     return {"success": True}
 
 
-@app.post("/renameFile")
-async def rename_file(current_name: str = Body(description="The file to be renamed."),
-                      new_name: str = Body(description="The new name of the file.")):
+@app.post("/files/{current_name}/rename")
+async def rename_file(current_name: str,
+                      new_name: str = Body(description="The new name of the file.", embed=True)):
     """Rename a file in the content directory."""
 
     if not helper_files.filename_safe(current_name) or not helper_files.filename_safe(new_name):
-        return {"success": False, "reason": "Invalid character in filename"}
+        return {"success": False, "reason": "unsafe_filename"}
 
     return helper_files.rename_file(current_name, new_name)
 
 
-@app.post("/data/write")
-async def write_data(data: dict[str, Any] = Body(description="A dictionary of data to be written to file as JSON."),
-                     name: str = Body(description="The name of the file to write,")):
+@app.post("/data/{name}/append")
+async def append_data(name: str,
+                     data: dict[str, Any] = Body(description="A dictionary of data to be written to file as JSON.", embed=True)):
     """Record the submitted data to file as JSON."""
 
     if not helper_files.filename_safe(name):
         return {"success": False, "reason": "Invalid character in filename"}
 
-    file_path = helper_files.get_path(["data", name + ".txt"], user_file=True)
+    file_path = helper_files.get_path(["data", with_extension(name, 'txt')], user_file=True)
     success, reason = helper_files.write_json(data, file_path, append=True, compact=True)
     response = {"success": success, "reason": reason}
     return response
 
 
-@app.post("/data/writeRawText")
-async def write_raw_text(text: str = Body(description='The data to write.'),
-                         mode: str = Body(description="Pass 'a' to append or 'w' or overwrite.", default='a'),
-                         name: str = Body(description='The name of the file to write.')):
+@app.post("/data/{name}/rawText")
+async def write_raw_text(name: str,
+                         text: str = Body(description='The data to write.'),
+                         mode: str = Body(description="Pass 'a' to append or 'w' or overwrite.", default='a')):
     """Write the raw text to file.
 
     Set mode == 'a' to append or 'w' to overwrite the file.
@@ -401,8 +387,8 @@ async def write_raw_text(text: str = Body(description='The data to write.'),
     return response
 
 
-@app.post("/data/getRawText")
-async def read_raw_text(name: str = Body(description='The name of the file to read.', embed=True)):
+@app.get("/data/{name}/rawText")
+async def read_raw_text(name: str):
     """Load the given file and return the raw text."""
 
     if not helper_files.filename_safe(name):
@@ -414,8 +400,8 @@ async def read_raw_text(name: str = Body(description='The name of the file to re
     return response
 
 
-@app.post("/data/getCSV")
-async def get_tracker_data_csv(name: str = Body(description='The name of the filename to return as a CSV', embed=True)):
+@app.get("/data/{name}/csv")
+async def get_tracker_data_csv(name: str):
     """Return the requested data file as a CSV string."""
 
     if not helper_files.filename_safe(name):
@@ -434,14 +420,13 @@ async def get_tracker_data_csv(name: str = Body(description='The name of the fil
 async def get_available_data():
     """Return a list of files in the /data directory."""
 
-    return {"success": True, "files": helper_files.get_available_data()}
+    return {"success": True, "files": helper_files.get_directory_contents(["data"])}
 
 
-@app.post("/upload")
+@app.post("/files/upload")
 def upload_files(files: list[UploadFile] = File(),
                  path: list[str] = Form(default=['content']),
-                 create_thumbnail: bool = True,
-                 config: const_config = Depends(get_config)):
+                 config: ex_config = Depends(get_config)):
     """Receive uploaded files and save them to disk.
 
     `path` should be a relative path from the Exhibitera Apps directory.
@@ -468,23 +453,16 @@ def upload_files(files: list[UploadFile] = File(),
                     shutil.copyfileobj(file.file, out_file)
             finally:
                 file.file.close()
-
-        if create_thumbnail:
-            mimetype = mimetypes.guess_type(file_path, strict=False)[0]
-            if mimetype is not None:
-                th = threading.Thread(target=helper_files.create_thumbnail, args=(filename, mimetype.split("/")[0]),
-                                      daemon=True)
-                th.start()
     return {"success": True}
 
 
-@app.post("/setDefaults")
+@app.post("/system/configuration/update")
 async def set_defaults(defaults: dict = Body(description="A dictionary matching the structure of config.json."),
                        cull: bool = Body(description="Whether to replace the existing defaults with the provided ones.",
                                          default=False)):
-    """Update the given defaults with the specified values"""
+    """Update the given configuration with the specified values"""
 
-    helper_utilities.update_defaults(defaults, cull=cull)
+    helper_utilities.update_configuration(defaults, cull=cull)
 
     return {"success": True}
 
@@ -504,11 +482,11 @@ async def get_dmx_controllers():
 async def debug_dmx_universe(universe_index: int):
     """Trigger the debug mode for the universe at the given index"""
 
-    print(const_config.dmx_universes, universe_index, type(universe_index))
-    const_config.dmx_universes[universe_index].controller.web_control()
+    print(ex_config.dmx_universes, universe_index, type(universe_index))
+    ex_config.dmx_universes[universe_index].controller.web_control()
 
 
-@app.get("/DMX/getConfiguration")
+@app.get("/DMX/configuration")
 async def get_dmx_configuration():
     """Return the JSON DMX configuration file."""
 
@@ -525,7 +503,7 @@ async def get_dmx_configuration():
     return {"success": success, "reason": reason, "configuration": config_dict}
 
 
-@app.get("/DMX/getStatus")
+@app.get("/DMX/status")
 async def get_dmx_status():
     """Return a dictionary with the current channel value for every channel in every fixture."""
 
@@ -533,7 +511,7 @@ async def get_dmx_status():
 
     result = {}
 
-    for fixture in const_config.dmx_fixtures:
+    for fixture in ex_config.dmx_fixtures:
         result[fixture.uuid] = fixture.get_all_channel_values()
 
     return {"success": success, "reason": reason, "status": result}
@@ -557,7 +535,7 @@ async def create_dmx_fixture(name: str = Body(description="The name of the fixtu
 
 
 @app.post("/DMX/fixture/edit")
-async def edit_dmx_fixture(fixture_uuid: str = Body(description="The UUID of the fixture to remove."),
+async def edit_dmx_fixture(fixture_uuid: str = Body(description="The UUID of the fixture to edit."),
                            name: str = Body(description="The name of the fixture.", default=None),
                            channels: list[str] = Body(description="A list of channel names.", default=None),
                            start_channel: int = Body(description="The first channel to allocate.", default=None),
@@ -921,7 +899,7 @@ async def create_dmx_universe(name: str = Body(description="The name of the univ
                                               controller=controller,
                                               device_details=device_details)
     helper_dmx.write_dmx_configuration()
-    const_config.dmx_active = True
+    ex_config.dmx_active = True
 
     return {"success": True, "universe": new_universe.get_dict()}
 
@@ -941,14 +919,16 @@ async def create_dmx_universe(uuid: str = Body(description="The UUID of the univ
     return {"success": True}
 
 
-@app.get("/DMX/universe/{universe_uuid}/delete")
+@app.delete("/DMX/universe/{universe_uuid}")
 async def delete_dmx_universe(universe_uuid: str):
     success, reason = helper_dmx.activate_dmx()
     if not success:
         return {"success": False, "reason": reason}
 
-    helper_dmx.get_universe(uuid_str=universe_uuid).delete()
-
+    universe = helper_dmx.get_universe(uuid_str=universe_uuid)
+    if universe is None:
+        return {"success": False, "reason": "Universe does not exist"}
+    universe.delete()
     return {"success": True}
 
 
@@ -996,15 +976,15 @@ def start_app(port=None, with_webview: bool = True):
     """
 
     if with_webview is True:
-        const_config.server_process = threading.Thread(target=_start_server, daemon=True, kwargs={"port": port})
-        const_config.server_process.start()
+        ex_config.server_process = threading.Thread(target=_start_server, daemon=True, kwargs={"port": port})
+        ex_config.server_process.start()
     else:
         _start_server()
 
 
 def _start_server(port=None):
     if port is None:
-        port = int(const_config.defaults["system"]["port"])
+        port = int(ex_config.defaults["system"]["port"])
 
     # Must use only one worker, since we are relying on the config module being in global
     uvicorn.run(app,
@@ -1052,27 +1032,27 @@ if __name__ == "__main__":
         helper_system.smart_restart_check()
 
         # Make sure we have a port available
-        if "port" not in const_config.defaults['system']:
-            const_config.defaults["system"]["port"] = helper_utilities.find_available_port()
+        if "port" not in ex_config.defaults['system']:
+            ex_config.defaults["system"]["port"] = helper_utilities.find_available_port()
 
-        if const_config.defaults['system']['standalone'] is True:
-            print(f"Starting Exhibitera Apps on port {const_config.defaults['system']['port']}.")
+        if ex_config.defaults['system']['standalone'] is True:
+            print(f"Starting Exhibitera Apps on port {ex_config.defaults['system']['port']}.")
         else:
             print(
-                f"Starting Exhibitera Apps for ID {const_config.defaults['app']['id']} on port {const_config.defaults['system']['port']}.")
+                f"Starting Exhibitera Apps for ID {ex_config.defaults['app']['id']} on port {ex_config.defaults['system']['port']}.")
     else:
         # We need to create a config.json file based on user input.
         create_config()
 
-    if const_config.defaults["system"].get("remote_display", True) is True:
+    if ex_config.defaults["system"].get("remote_display", True) is True:
         # Start the server but don't create a GUI window
         start_app(with_webview=False)
     else:
         # Create a GUI window and then start the server
         option_fullscreen = "fullscreen" in sys.argv
 
-        if "port" not in const_config.defaults['system']:
-            const_config.defaults["system"]["port"] = helper_utilities.find_available_port()
+        if "port" not in ex_config.defaults['system']:
+            ex_config.defaults["system"]["port"] = helper_utilities.find_available_port()
 
         app_window = webview.create_window('Exhibitera Apps',
                                            confirm_close=False,
@@ -1081,7 +1061,7 @@ if __name__ == "__main__":
                                            width=1280,
                                            min_size=(1280, 720),
                                            url='http://localhost:' + str(
-                                               const_config.defaults["system"]["port"]) + '/app.html')
+                                               ex_config.defaults["system"]["port"]) + '/app.html')
 
         # Subscribe to event listeners
         app_window.events.closed += helper_webview.on_closed

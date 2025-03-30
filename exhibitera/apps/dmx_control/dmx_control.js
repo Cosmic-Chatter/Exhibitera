@@ -1582,8 +1582,8 @@ function deleteUniverse (uuid) {
   // Ask the helper to delete the given universe and then remove it from the interface.
 
   exCommon.makeHelperRequest({
-    method: 'GET',
-    endpoint: '/DMX/universe/' + uuid + '/delete'
+    method: 'DELETE',
+    endpoint: '/DMX/universe/' + uuid
   })
     .then((result) => {
       if ('success' in result && result.success === true) {
@@ -1686,7 +1686,7 @@ function getDMXStatus () {
 
   exCommon.makeHelperRequest({
     method: 'GET',
-    endpoint: '/DMX/getStatus'
+    endpoint: '/DMX/status'
   })
     .then((response) => {
       for (const key of Object.keys(response.status)) {
@@ -1705,7 +1705,7 @@ function getDMXConfiguration () {
 
   exCommon.makeHelperRequest({
     method: 'GET',
-    endpoint: '/DMX/getConfiguration'
+    endpoint: '/DMX/configuration'
   })
     .then((response) => {
       universeList.length = 0

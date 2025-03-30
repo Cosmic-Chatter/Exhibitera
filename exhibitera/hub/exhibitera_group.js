@@ -14,7 +14,7 @@ export function showEditGroupModal (uuid = '') {
 
     exTools.makeServerRequest({
       method: 'GET',
-      endpoint: '/group/' + uuid + '/getDetails'
+      endpoint: '/group/' + uuid + '/details'
     })
       .then((response) => {
         if (response.success === true) {
@@ -160,8 +160,8 @@ export function deleteGroupFromModal () {
   const uuid = document.getElementById('deleteGroupModal').getAttribute('data-uuid')
 
   exTools.makeServerRequest({
-    method: 'GET',
-    endpoint: '/group/' + uuid + '/delete'
+    method: 'DELETE',
+    endpoint: '/group/' + uuid
   })
     .then(() => {
       exTools.hideModal('#deleteGroupModal')

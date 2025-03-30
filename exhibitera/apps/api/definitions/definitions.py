@@ -69,7 +69,7 @@ async def load_definition(this_uuid: str):
 @router.get("/definitions/{this_uuid}/thumbnail")
 @router.head("/definitions/{this_uuid}/thumbnail")
 async def load_definition_thumbnail(this_uuid: str):
-    """Return a thumbnail  for this definition."""
+    """Return a thumbnail for this definition."""
 
     thumbnail_path, mimetype = helper_files.get_definition_thumbnail(this_uuid)
 

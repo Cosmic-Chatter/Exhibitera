@@ -50,7 +50,7 @@ function editExhibitCreateComponentHTML (component) {
   bodyRow.classList = 'row gy-2'
   body.appendChild(bodyRow)
 
-  const componentObj = exExhibit.getExhibitComponent(component.id)
+  const componentObj = exExhibit.getExhibitComponent(component.uuid)
   if (componentObj != null) {
     // This component exists in the system
 
@@ -427,7 +427,7 @@ async function editExhibitActionConfigureValueSelector (action = null, target = 
   if (action === 'set_dmx_scene') {
     let component
     try {
-      component = exExhibit.getExhibitComponentByUUID(target.uuid)
+      component = exExhibit.getExhibitComponent(target.uuid)
     } catch {
       return
     }
@@ -713,7 +713,7 @@ function deleteExhibit (uuid) {
 
   exTools.makeServerRequest({
     method: 'DELETE',
-    endpoint: '/exhibit/' + uuid + '/delete'
+    endpoint: '/exhibit/' + uuid
   })
 }
 
@@ -763,7 +763,7 @@ function populateControlServerSettings () {
 
   exTools.makeServerRequest({
     method: 'GET',
-    endpoint: '/system/system/getConfiguration'
+    endpoint: '/system/configuration/system'
   })
     .then((result) => {
       const config = result.configuration
@@ -801,7 +801,7 @@ function updateSystemConfiguration () {
 
   exTools.makeServerRequest({
     method: 'POST',
-    endpoint: '/system/system/updateConfiguration',
+    endpoint: '/system/configuration/system/update',
     params: {
       configuration: update
     }
@@ -919,11 +919,11 @@ document.getElementById('definitionTabThumbnailsCheckbox').addEventListener('cha
 document.getElementById('componentInfoModalDefinitionSaveButton').addEventListener('click', exExhibit.submitDefinitionSelectionFromModal)
 
 document.getElementById('componentInfoModalViewScreenshot').addEventListener('click', () => {
-  const component = exExhibit.getExhibitComponent(document.getElementById('componentInfoModal').getAttribute('data-id'))
+  const component = exExhibit.getExhibitComponent(document.getElementById('componentInfoModal').dataset.uuid)
   exTools.openMediaInNewTab([component.getHelperURL() + '/system/getScreenshot'], ['image'])
 })
 document.getElementById('componentInfoModalEditDMXButton').addEventListener('click', (event) => {
-  const component = exExhibit.getExhibitComponent(document.getElementById('componentInfoModal').getAttribute('data-id'))
+  const component = exExhibit.getExhibitComponent(document.getElementById('componentInfoModal').dataset.uuid)
   window.open(component.getHelperURL() + '/dmx_control.html?standalone=true', '_blank').focus()
 })
 for (const el of document.querySelectorAll('.componentInfoProjectorSetting')) {

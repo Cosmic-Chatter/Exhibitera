@@ -78,7 +78,7 @@ function showUpdateInfoModal (details) {
 
   return exCommon.makeHelperRequest({
     method: 'GET',
-    endpoint: '/getDefaults'
+    endpoint: '/system/configuration'
   })
     .then((result) => {
       const details = result.software_update
@@ -151,7 +151,7 @@ function saveConfiguration () {
 
   exCommon.makeHelperRequest({
     method: 'POST',
-    endpoint: '/setDefaults',
+    endpoint: '/system/configuration/update',
     params: { defaults }
   })
     .then((result) => {
@@ -271,12 +271,11 @@ function downloadDataAsCSV () {
 
   const name = document.getElementById('votingKioskCSVDownloadSelect').value
   exCommon.makeHelperRequest({
-    method: 'POST',
-    endpoint: '/data/getCSV',
-    params: { name }
+    method: 'GET',
+    endpoint: '/data/' + name + '/csv'
   })
     .then((result) => {
-      if ('success' in result && result.success === true) {
+      if (result?.success === true) {
         if (exCommon.config.remoteDisplay === false) {
           // Ask the app to create a save dialog
           exCommon.makeHelperRequest({

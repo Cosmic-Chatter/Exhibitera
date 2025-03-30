@@ -250,7 +250,6 @@ def load_default_configuration() -> None:
 
     ex_tools.start_debug_loop()
     ex_sched.retrieve_json_schedule()
-    ex_exhibit.read_descriptions_configuration()
     ex_exhibit.read_exhibit_configuration(ex_config.current_exhibit)
 
     # Build any existing issues
@@ -280,11 +279,6 @@ def quit_handler(*args) -> None:
 
     with ex_config.logLock:
         logging.info("Server shutdown")
-
-    # with ex_config.galleryConfigurationLock:
-    #     with ex_config.scheduleLock:
-    #         with ex_config.trackingDataWriteLock:
-    #             sys.exit(exit_code)
 
 
 def error_handler(*exc_info) -> None:
@@ -527,9 +521,8 @@ def edit_user_preferences(request: Request,
     return {"success": True, "user": user.get_dict()}
 
 
-@app.post("/user/{uuid_str}/delete")
-def delete_user(request: Request,
-                uuid_str: str):
+@app.delete("/user/{uuid_str}")
+def delete_user(request: Request, uuid_str: str):
     """Delete the given user"""
 
     token = request.cookies.get("authToken", "")
@@ -560,7 +553,7 @@ def list_users(permissions: dict[str, str] = Body(description="A dictionary of p
     return {"success": True, "users": matched_users}
 
 
-@app.get("/user/{user_uuid}/getDisplayName")
+@app.get("/user/{user_uuid}/displayName")
 def get_user_display_name(user_uuid: str):
     """Get the display name for a user account."""
 
@@ -590,14 +583,6 @@ def change_user_password(user_uuid: str,
         ex_users.create_root_admin(new_password)
 
     return {"success": True}
-
-
-# Exhibit component actions
-class ExhibitComponent(BaseModel):
-    id: str = Field(
-        description="A unique identifier for this component",
-        title="ID"
-    )
 
 
 @app.get("/component/{uuid_str}/groups")
@@ -645,21 +630,17 @@ async def edit_component(request: Request,
     return {"success": True}
 
 
-@app.post("/component/{component_id}/setDefinition")
-async def set_component_definition(component_id: str,
-                                   component_uuid: str = Body(description="The UUID of the component to modify."),
-                                   definition_uuid: str = Body(
-                                       description="The UUID of the definition file to be set.")):
+@app.post("/component/{component_uuid}/definition/{definition_uuid}")
+async def set_component_definition(component_uuid: str, definition_uuid: str):
     """Set the definition for the component."""
 
     ex_exhibit.update_exhibit_configuration({"definition": definition_uuid},
-                                            component_id=component_id,
                                             component_uuid=component_uuid)
 
     return {"success": True}
 
 
-@app.get("/group/{uuid_str}/getDetails")
+@app.get("/group/{uuid_str}/details")
 async def get_group_details(request: Request, uuid_str: str):
     """Return the details for the given group."""
 
@@ -706,9 +687,9 @@ async def edit_group(request: Request,
     return {"success": success}
 
 
-@app.get("/group/{uuid_str}/delete")
+@app.delete("/group/{uuid_str}")
 async def delete_group(request: Request, uuid_str: str):
-    """Return the details for the given group."""
+    """Delete the given group."""
 
     token = request.cookies.get("authToken", "")
     success, authorizing_user, reason = ex_users.check_user_permission("settings", "edit", token=token)
@@ -756,7 +737,7 @@ async def edit_exhibit(request: Request,
     return {"success": True, "reason": ""}
 
 
-@app.delete("/exhibit/{uuid_str}/delete")
+@app.delete("/exhibit/{uuid_str}")
 async def delete_exhibit(request: Request, uuid_str: str):
     """Delete the specified exhibit."""
 
@@ -767,24 +748,6 @@ async def delete_exhibit(request: Request, uuid_str: str):
         return {"success": False, "reason": reason}
 
     ex_exhibit.delete_exhibit(uuid_str)
-    return {"success": True, "reason": ""}
-
-
-@app.post("/exhibit/queueCommand")
-async def queue_command(component: ExhibitComponent,
-                        command: str = Body(description="The command to be sent to the specified component")):
-    """Queue the specified command for the exhibit component to retrieve."""
-
-    ex_exhibit.get_exhibit_component(component_id=component.id).queue_command(command)
-    return {"success": True, "reason": ""}
-
-
-@app.post("/exhibit/queueWOLCommand")
-async def queue_WOL_command(component: ExhibitComponent,
-                            command: str = Body(description="The command to be sent to the specified component")):
-    """Queue the Wake on Lan command for the exhibit component to retrieve."""
-
-    ex_exhibit.get_wake_on_LAN_component(component_id=component.id).queue_command(command)
     return {"success": True, "reason": ""}
 
 
@@ -808,9 +771,7 @@ async def get_available_exhibits():
 async def get_exhibit_details(uuid_str: str):
     """Return the JSON for a particular exhibit."""
 
-    if not uuid_str.endswith('.json'):
-        uuid_str += '.json'
-    exhibit_path = ex_tools.get_path(["exhibits", uuid_str], user_file=True)
+    exhibit_path = ex_tools.get_path(["exhibits", ex_tools.with_extension(uuid_str, 'json')], user_file=True)
     result = ex_tools.load_json(exhibit_path)
     if result is None:
         return {"success": False, "reason": "Exhibit does not exist."}
@@ -1216,7 +1177,7 @@ async def upload_issue_media(request: Request, files: list[UploadFile] = File())
 
 
 # Maintenance actions
-@app.post("/maintenance/{uuid_str}/delete")
+@app.delete("/maintenance/{uuid_str}")
 async def delete_maintenance_record(request: Request, uuid_str: str):
     """Clear the maintenance log for the given component."""
 
@@ -1243,7 +1204,7 @@ async def delete_maintenance_record(request: Request, uuid_str: str):
     return {"success": True}
 
 
-@app.get("/maintenance/getAllStatuses")
+@app.get("/maintenance")
 async def get_all_maintenance_statuses(request: Request):
     """Send a list of all the maintenance statuses for known components"""
 
@@ -1263,7 +1224,7 @@ async def get_all_maintenance_statuses(request: Request):
     return {"success": True, "records": record_list}
 
 
-@app.get("/maintenance/{uuid_str}/status")
+@app.get("/maintenance/{uuid_str}")
 async def get_maintenance_status(request: Request, uuid_str: str):
     """Return the maintenance status for the given component."""
 
@@ -1279,7 +1240,7 @@ async def get_maintenance_status(request: Request, uuid_str: str):
     return {"success": True, "status": component.get_maintenance_report()}
 
 
-@app.post("/maintenance/{uuid_str}/updateStatus")
+@app.post("/maintenance/{uuid_str}")
 async def update_maintenance_status(request: Request,
                                     uuid_str: str,
                                     notes: str = Body(description="Text notes about this component."),
@@ -1308,6 +1269,7 @@ async def update_maintenance_status(request: Request,
     return {"success": True}
 
 
+# Projector actions
 @app.post("/projector/create")
 async def create_projector(request: Request,
                            id: str = Body(description="The ID of the projector to add."),
@@ -1366,13 +1328,13 @@ async def edit_projector(request: Request,
     return {"success": True}
 
 
-@app.post("/projector/queueCommand")
-async def queue_projector_command(component: ExhibitComponent,
-                                  command: str = Body(
-                                      description="The command to be sent to the specified projector.")):
-    """Send a command to the specified projector."""
+# Component actions
+@app.post("/component/{uuid_str}/queueCommand")
+async def queue_component_command(uuid_str: str,
+                                  command: str = Body(description="The command to be sent to the specified component", embed=True)):
+    """Queue the specified command for the given exhibit component."""
 
-    ex_exhibit.get_exhibit_component(component_id=component.id).queue_command(command)
+    ex_exhibit.get_exhibit_component(component_uuid=uuid_str).queue_command(command)
     return {"success": True, "reason": ""}
 
 
@@ -1436,7 +1398,7 @@ async def edit_static_component(request: Request,
 
 
 @app.post("/component/WOL/create")
-async def create_wake_on_LAN_component(request: Request,
+async def create_wake_on_lan_component(request: Request,
                                        id: str = Body(description="The ID of the projector to add."),
                                        groups: list[str] = Body(description="The groups of the projector to add."),
                                        mac_address: str = Body(description="The MAC address of the machine to wake."),
@@ -1456,7 +1418,7 @@ async def create_wake_on_LAN_component(request: Request,
 
 
 @app.post("/component/WOL/{uuid_str}/edit")
-async def edit_wake_on_LAN_component(request: Request,
+async def edit_wake_on_lan_component(request: Request,
                                      uuid_str: str,
                                      id: str | None = Body(description="The ID of the projector to add.", default=None),
                                      groups: list[str] | None = Body(description="The groups of the projector to add.",
@@ -1555,21 +1517,6 @@ async def get_seconds_from_midnight(time_str: str = Body(description="The time t
     return {"success": True, "seconds": ex_sched.seconds_from_midnight(time_str)}
 
 
-@app.get("/schedule/{schedule_name}/getCSV")
-async def get_schedule_as_csv(request: Request,
-                              schedule_name: str):
-    """Return the requested schedule as a CSV."""
-
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = ex_users.check_user_permission("schedule", "view", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
-
-    success, csv = ex_sched.convert_schedule_to_csv(schedule_name + '.json')
-    return {"success": success, "csv": csv}
-
-
 @app.get("/schedule/{schedule_name}/getJSONString")
 async def get_schedule_as_json_string(request: Request,
                                       schedule_name: str):
@@ -1594,11 +1541,8 @@ async def get_schedule_as_json_string(request: Request,
     return {"success": success, "json": json.dumps(result, indent=2, sort_keys=True)}
 
 
-@app.post("/schedule/deleteAction")
-async def delete_schedule_action(request: Request,
-                                 schedule_name: str = Body(description="The schedule to delete the action from."),
-                                 schedule_id: str = Body(
-                                     description="The unique identifier of the action to be deleted.")):
+@app.delete("/schedule/{schedule_name}/action/{action_id}")
+async def delete_schedule_action(request: Request, schedule_name: str, action_id: str):
     """Delete the given action from the specified schedule."""
 
     # Check permission
@@ -1607,7 +1551,7 @@ async def delete_schedule_action(request: Request,
     if success is False:
         return {"success": False, "reason": reason}
 
-    ex_sched.delete_json_schedule_event(schedule_name + ".json", schedule_id)
+    ex_sched.delete_json_schedule_event(ex_tools.with_extension(schedule_name, 'json'), action_id)
     ex_sched.retrieve_json_schedule()
 
     # Send the updated schedule back
@@ -1619,9 +1563,8 @@ async def delete_schedule_action(request: Request,
     return response_dict
 
 
-@app.post("/schedule/deleteSchedule")
-async def delete_schedule(request: Request,
-                          name: str = Body(description="The name of the schedule to delete.", embed=True)):
+@app.delete("/schedule/{schedule_name}")
+async def delete_schedule(request: Request, schedule_name: str):
     """Delete the given schedule."""
 
     # Check permission
@@ -1630,39 +1573,21 @@ async def delete_schedule(request: Request,
     if success is False:
         return {"success": False, "reason": reason}
 
+    # Check filename is safe
+    if ex_tools.filename_safe(schedule_name) is False:
+        return {"success": False, "reason": "unsafe_filename"}
+
     with ex_config.scheduleLock:
-        json_schedule_path = ex_tools.get_path(["schedules", name + ".json"], user_file=True)
+        json_schedule_path = ex_tools.get_path(["schedules", ex_tools.with_extension(schedule_name, 'json')], user_file=True)
         os.remove(json_schedule_path)
-    ex_config.last_update_time = time.time()
 
     # Reload the schedule from disk
     ex_sched.retrieve_json_schedule()
+    ex_config.last_update_time = time.time()
 
     # Send the updated schedule back
     with ex_config.scheduleLock:
         response_dict = {"success": True,
-                         "updateTime": ex_config.scheduleUpdateTime,
-                         "schedule": ex_config.json_schedule_list,
-                         "nextEvent": ex_config.json_next_event}
-    return response_dict
-
-
-@app.get("/schedule/refresh")
-async def refresh_schedule(request: Request):
-    """Reload the schedule from disk and return it."""
-
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = ex_users.check_user_permission("schedule", "view", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
-
-    ex_sched.retrieve_json_schedule()
-
-    # Send the updated schedule back
-    with ex_config.scheduleLock:
-        response_dict = {"success": True,
-                         "class": "schedule",
                          "updateTime": ex_config.scheduleUpdateTime,
                          "schedule": ex_config.json_schedule_list,
                          "nextEvent": ex_config.json_next_event}
@@ -1682,7 +1607,7 @@ async def get_date_specific_schedules(request: Request):
     return {"success": True, "schedules": ex_sched.get_available_date_specific_schedules()}
 
 
-@app.get("/schedule/{schedule_name}/get")
+@app.get("/schedule/{schedule_name}")
 async def get_specific_schedule(request: Request, schedule_name: str):
     """Retrieve the given schedule and return it as a dictionary."""
 
@@ -1699,16 +1624,16 @@ async def get_specific_schedule(request: Request, schedule_name: str):
     return {"success": success, "schedule": schedule}
 
 
-@app.post("/schedule/update")
+@app.post("/schedule/{schedule_name}/action/{action_id}/update")
 async def update_schedule(
         request: Request,
-        name: str = Body(),
+        schedule_name: str,
+        action_id: str,
         time_to_set: str = Body(description="The time of the action to set, expressed in any normal way."),
         action_to_set: str = Body(description="The action to set."),
         target_to_set: list[dict] | dict | None = Body(default=None,
                                                        description="The details of the component(s) that should be acted upon."),
-        value_to_set: str = Body(default="", description="A value corresponding to the action."),
-        schedule_id: str = Body(description="A unique identifier corresponding to the schedule entry.")):
+        value_to_set: str = Body(default="", description="A value corresponding to the action.")):
     """Write a schedule update to disk.
 
     This command handles both adding a new scheduled action and editing an existing action
@@ -1728,8 +1653,8 @@ async def update_schedule(
                          "reason": "Time not valid"}
         return response_dict
 
-    ex_sched.update_json_schedule(name + ".json", {
-        schedule_id: {"time": time_to_set, "action": action_to_set,
+    ex_sched.update_json_schedule(ex_tools.with_extension(schedule_name, 'json'), {
+        action_id: {"time": time_to_set, "action": action_to_set,
                       "target": target_to_set, "value": value_to_set}})
 
     error = False
@@ -1754,13 +1679,6 @@ async def update_schedule(
 
 # System actions
 
-@app.get("/system/getVersion")
-async def get_version():
-    """Return the current version of Hub"""
-
-    return {"success": True, "version": ex_config.software_version}
-
-
 @app.get("/system/checkConnection")
 async def check_connection():
     """Respond to request to confirm that the connection is active"""
@@ -1768,15 +1686,18 @@ async def check_connection():
     return {"success": True}
 
 
-@app.get("/system/{target}/getConfiguration")
+@app.get("/system/configuration/{target}")
 async def get_json_configuration(target: str):
     """Return the requested JSON configuration."""
 
-    config_path = ex_tools.get_path(["configuration", f"{target}.json"], user_file=True)
+    if not ex_tools.filename_safe(target):
+        return {"success": False, "reason": "unsafe_filename"}
+
+    config_path = ex_tools.get_path(["configuration", ex_tools.with_extension(target, "json")], user_file=True)
     configuration = ex_tools.load_json(config_path)
-    if configuration is not None:
-        return {"success": True, "configuration": configuration}
-    return {"success": False, "reason": "File does not exist."}
+    if configuration is  None:
+        return {"success": False, "reason": "File does not exist."}
+    return {"success": True, "configuration": configuration}
 
 
 @app.get("/system/getHelpText")
@@ -1806,17 +1727,6 @@ async def get_help_text():
     return response
 
 
-@app.get('/system/getSoftwareVersion')
-async def get_version():
-    """Send the current software version."""
-
-    response = {
-        "success": True,
-        "version": str(ex_config.software_version)
-    }
-    return response
-
-
 @app.post("/system/ping")
 async def handle_ping(data: dict[str, Any], request: Request):
     """Respond to an incoming heartbeat signal with ahy updates."""
@@ -1837,21 +1747,18 @@ async def handle_ping(data: dict[str, Any], request: Request):
     return dict_to_send
 
 
-@app.post("/system/{target}/updateConfiguration")
-async def update_configuration(target: str,
-                               configuration=Body(description="A JSON object specifying the configuration.",
-                                                  embed=True)):
+@app.post("/system/configuration/{target}/update")
+async def update_system_configuration(target: str,
+                                      configuration=Body(description="A JSON object specifying the configuration.", embed=True)):
     """Write the given object to the matching JSON file as the configuration."""
 
     if target == "system":
         ex_tools.update_system_configuration(configuration)
     else:
-        config_path = ex_tools.get_path(["configuration", f"{target}.json"], user_file=True)
+        if not ex_tools.filename_safe(target):
+            return {"success": False, "reason": "unsafe_filename"}
+        config_path = ex_tools.get_path(["configuration", ex_tools.with_extension(target, "json")], user_file=True)
         ex_tools.write_json(configuration, config_path)
-
-        if target == "descriptions":
-            ex_exhibit.read_descriptions_configuration()
-            ex_config.last_update_time = time.time()
 
     return {"success": True}
 

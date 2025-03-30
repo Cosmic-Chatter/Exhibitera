@@ -4,7 +4,7 @@ import * as exSetup from '../js/exhibitera_setup_common.js'
 async function initializeWizard () {
   // Set up the wizard
 
-  await exSetup.initializeDefinition()
+  exSetup.initializeDefinition()
 
   // Hide all but the welcome screen
   Array.from(document.querySelectorAll('.wizard-pane')).forEach((el) => {
@@ -20,9 +20,7 @@ async function initializeWizard () {
 async function clearDefinitionInput (full = true) {
   // Clear all input related to a defnition
 
-  if (full === true) {
-    await exSetup.initializeDefinition()
-  }
+  if (full === true) exSetup.initializeDefinition()
 
   // Definition details
   document.getElementById('definitionNameInput').value = ''

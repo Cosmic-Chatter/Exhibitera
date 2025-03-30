@@ -1056,24 +1056,6 @@ def update_exhibit_component_status(data: dict[str, Any], ip: str):
     if "exhibiteraAppID" in data:
         component.config["app_id"] = data["exhibiteraAppID"]
 
-
-def read_descriptions_configuration():
-    """Read the descriptions.json configuration file."""
-
-    config_path = c_tools.get_path(["configuration", "descriptions.json"], user_file=True)
-    descriptions = c_tools.load_json(config_path)
-    if descriptions is None:
-        return
-    config.componentDescriptions = {}
-
-    for entry in descriptions:
-        config.componentDescriptions[entry["id"]] = entry["description"]
-
-        component = get_exhibit_component(component_id=entry["id"])
-        if component is not None:
-            component.config["description"] = entry["description"]
-
-
 # Set up log file
 log_path = c_tools.get_path(["hub.log"], user_file=True)
 logging.basicConfig(datefmt='%Y-%m-%d %H:%M:%S',

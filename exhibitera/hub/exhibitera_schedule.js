@@ -7,9 +7,8 @@ export function deleteSchedule (name) {
   // file with the given name. The name should not include ".ini"
 
   exTools.makeServerRequest({
-    method: 'POST',
-    endpoint: '/schedule/deleteSchedule',
-    params: { name }
+    method: 'DELETE',
+    endpoint: '/schedule/' + name
   })
     .then((response) => {
       if ('success' in response && response.success === true) {
@@ -401,7 +400,7 @@ function scheduleTargetToDescription (targetList, action = '') {
     return 'all ' + exTools.getGroupName(target.uuid)
   } else if (target.type === 'component') {
     if ('uuid' in target) {
-      const component = exExhibit.getExhibitComponentByUUID(target.uuid)
+      const component = exExhibit.getExhibitComponent(target.uuid)
       if (component) return component.id
     }
     // Deprecated in Ex5.2
@@ -552,12 +551,7 @@ export function setScheduleActionValueSelector (action = null, target = null) {
   if (['set_definition'].includes(action)) {
     let component
     try {
-      if ('uuid' in target) {
-        component = exExhibit.getExhibitComponentByUUID(target.uuid)
-      } else {
-        // Deprecated in Ex5.2
-        component = exExhibit.getExhibitComponent(target.id)
-      }
+      component = exExhibit.getExhibitComponent(target.uuid)
     } catch {
       console.log('error')
       return
@@ -594,20 +588,16 @@ export function setScheduleActionValueSelector (action = null, target = null) {
             }
           }
         }
+
         // In the case of editing an action, preselect any existing values
-        valueSelector.val($('#scheduleEditModal').data('currentValue'))
+        valueSelector.value = document.getElementById('scheduleEditModal').dataset.currentValue
         valueSelector.show()
         $('#scheduleValueSelectorLabel').show()
       })
   } else if (action === 'set_dmx_scene') {
     let component
     try {
-      if ('uuid' in target) {
-        component = exExhibit.getExhibitComponentByUUID(target.uuid)
-      } else {
-        // Deprecated in Ex5.2
-        component = exExhibit.getExhibitComponent(target.id)
-      }
+      component = exExhibit.getExhibitComponent(target.uuid)
     } catch {
       return
     }
@@ -631,7 +621,7 @@ export function setScheduleActionValueSelector (action = null, target = null) {
         }
 
         // In the case of editing an action, preselect any existing values
-        valueSelector.val($('#scheduleEditModal').data('currentValue'))
+        valueSelector.value = document.getElementById('scheduleEditModal').dataset.currentValue
         valueSelector.show()
         $('#scheduleValueSelectorLabel').show()
       })
@@ -652,6 +642,8 @@ export function scheduleConfigureEditModal (scheduleName,
   // Set up and then show the modal that enables editing a scheduled event
   // or adding a new one
 
+  const scheduleEditModal = document.getElementById('scheduleEditModal')
+
   // If currentScheduleID == null, we are adding a new schedule item, so create a unique ID
   if (currentScheduleID == null) {
     currentScheduleID = exTools.uuid()
@@ -668,19 +660,19 @@ export function scheduleConfigureEditModal (scheduleName,
 
   // Tag the modal with a bunch of data that we can read if needed when
   // submitting the change
-  $('#scheduleEditModal').data('scheduleName', scheduleName)
-  $('#scheduleEditModal').data('scheduleID', currentScheduleID)
-  $('#scheduleEditModal').data('isAddition', isAddition)
-  $('#scheduleEditModal').data('currentTime', currentTime)
-  $('#scheduleEditModal').data('currentAction', currentAction)
-  $('#scheduleEditModal').data('currentTarget', currentTarget)
-  $('#scheduleEditModal').data('currentValue', currentValue)
+  scheduleEditModal.dataset.scheduleName = scheduleName
+  scheduleEditModal.dataset.scheduleID = currentScheduleID
+  scheduleEditModal.dataset.isAddition = isAddition
+  scheduleEditModal.dataset.currentTime = currentTime
+  scheduleEditModal.dataset.currentAction = currentAction
+  scheduleEditModal.dataset.currentTarget = currentTarget
+  scheduleEditModal.dataset.currentValue = currentValue
 
   // Set the modal title
   if (isAddition) {
-    document.getElementById('scheduleEditModalTitle').innerHTML = 'Add action'
+    document.getElementById('scheduleEditModalTitle').innerText = 'Add action'
   } else {
-    document.getElementById('scheduleEditModalTitle').innerHTML = 'Edit action'
+    document.getElementById('scheduleEditModalTitle').innerText = 'Edit action'
   }
 
   // Set the scope notice so that users know what their change will affect
@@ -738,7 +730,7 @@ export function sendScheduleUpdateFromModal () {
   // Gather necessary info from the schedule editing modal and send a
   // message to Hub asking to add the given action
 
-  const scheduleName = $('#scheduleEditModal').data('scheduleName')
+  const scheduleName = document.getElementById('scheduleEditModal').dataset.scheduleName
   const time = document.getElementById('scheduleActionTimeInput').value.trim()
   const action = document.getElementById('scheduleActionSelector').value
   let target = $('#scheduleTargetSelector').val() // Gets all selected options
@@ -758,7 +750,7 @@ export function sendScheduleUpdateFromModal () {
   } else {
     value = document.getElementById('scheduleValueSelector').value
   }
-  const scheduleID = $('#scheduleEditModal').data('scheduleID')
+  const scheduleID = document.getElementById('scheduleEditModal').dataset.scheduleID
 
   if (time === '' || time == null) {
     $('#scheduleEditErrorAlert').html('You must specifiy a time for the action').show()
@@ -778,17 +770,15 @@ export function sendScheduleUpdateFromModal () {
   }
 
   const requestDict = {
-    name: scheduleName,
     time_to_set: time,
     action_to_set: action,
     target_to_set: target,
-    value_to_set: value,
-    schedule_id: scheduleID
+    value_to_set: value
   }
 
   exTools.makeServerRequest({
     method: 'POST',
-    endpoint: '/schedule/update',
+    endpoint: '/schedule/' + scheduleName + '/action/' + scheduleID + '/update',
     params: requestDict
   })
     .then((update) => {
@@ -810,20 +800,13 @@ export function scheduleDeleteActionFromModal () {
   // Gather necessary info from the schedule editing modal and send a
   // message to Hub asking to delete the given action
 
-  const scheduleName = $('#scheduleEditModal').data('scheduleName')
-  const scheduleID = $('#scheduleEditModal').data('scheduleID')
-
-  console.log('Delete:', scheduleName, scheduleID)
-
-  const requestDict = {
-    schedule_name: scheduleName,
-    schedule_id: scheduleID
-  }
+  const scheduleEditModal = document.getElementById('scheduleEditModal')
+  const scheduleName = scheduleEditModal.dataset.scheduleName
+  const scheduleID = scheduleEditModal.dataset.scheduleID
 
   exTools.makeServerRequest({
-    method: 'POST',
-    endpoint: '/schedule/deleteAction',
-    params: requestDict
+    method: 'DELETE',
+    endpoint: '/schedule/' + scheduleName + '/action/' + scheduleID
   })
     .then((update) => {
       if ('success' in update && update.success === true) {
@@ -927,7 +910,7 @@ export function populateFutureDateCalendarInput () {
 
   exTools.makeServerRequest({
     method: 'GET',
-    endpoint: '/schedule/' + date + '/get'
+    endpoint: '/schedule/' + date
   })
     .then((day) => {
       if (day.success === false) {
@@ -981,27 +964,6 @@ export function convertFutureScheduleFromModal () {
   })
     .then((result) => {
       populateFutureDatesList()
-    })
-}
-
-function downloadScheduleAsCSV (name) {
-  // Get the given schedule as a CSV from Hub and download for the user.
-
-  exTools.makeServerRequest({
-    method: 'GET',
-    endpoint: '/schedule/' + name + '/getCSV'
-  })
-    .then((result) => {
-      if ('success' in result && result.success === true) {
-        // Convert the text to a file and initiate download
-        const fileBlob = new Blob([result.csv], {
-          type: 'text/plain'
-        })
-        const a = document.createElement('a')
-        a.href = window.URL.createObjectURL(fileBlob)
-        a.download = name + '.csv'
-        a.click()
-      }
     })
 }
 
@@ -1169,7 +1131,7 @@ function _scheduleFromFilePreviewCurrentSchedule (name, kind, retry = false) {
   const currentScheduleEl = document.getElementById('scheduleFromFileCurrentSchedule')
   exTools.makeServerRequest({
     method: 'GET',
-    endpoint: '/schedule/' + name + '/get'
+    endpoint: '/schedule/' + name
   })
     .then((response) => {
       if (response.success === true) {

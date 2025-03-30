@@ -116,7 +116,7 @@ export async function configure (options) {
   config.loadDefinition = options.loadDefinition
   if (options.onDefinitionSave != null) config.onDefinitionSave = options.onDefinitionSave
 
-  await initializeDefinition()
+  initializeDefinition()
   const userFonts = await getUserFonts()
 
   createAdvancedColorPickers()
@@ -329,21 +329,12 @@ export function addWizardLanguage () {
 export function initializeDefinition () {
   // Create a blank definition at save it to workingDefinition.
 
-  return new Promise(function (resolve, reject) {
-    // Get a new temporary uuid
-    exCommon.makeHelperRequest({
-      method: 'GET',
-      endpoint: '/uuid/new'
-    })
-      .then((response) => {
-        const temp = structuredClone(config.blankDefinition)
-        temp.uuid = response.uuid
-        $('#definitionSaveButton').data('initialDefinition', temp)
-        $('#definitionSaveButton').data('workingDefinition', temp)
-        previewDefinition(false)
-        resolve()
-      })
-  })
+  const temp = structuredClone(config.blankDefinition)
+  if (temp == null) return
+  temp.uuid = exCommon.uuid()
+  $('#definitionSaveButton').data('initialDefinition', temp)
+  $('#definitionSaveButton').data('workingDefinition', temp)
+  previewDefinition(false)
 }
 
 function deleteDefinition () {

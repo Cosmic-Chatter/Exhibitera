@@ -613,8 +613,8 @@ export function deleteUser (uuid) {
   // Ask the server to delete the given user.
 
   exTools.makeServerRequest({
-    method: 'POST',
-    endpoint: '/user/' + uuid + '/delete'
+    method: 'DELETE',
+    endpoint: '/user/' + uuid
   })
     .then((response) => {
       if ('success' in response && response.success === true) {

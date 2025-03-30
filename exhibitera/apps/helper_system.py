@@ -38,7 +38,7 @@ def reboot():
         elif sys.platform == "win32":
             os.system("shutdown -t 0 -r")
     else:
-        print("Restart requested but not permitted by defaults.ini. Set allow_restart = true to enable")
+        print("Restart requested but not permitted by current permissions.")
 
 
 def shutdown():
@@ -147,7 +147,6 @@ def wake_display():
     elif sys.platform == "linux":
         os.system("xset dpms force on")
     elif sys.platform == "win32":
-        # os.system("nircmd.exe monitor async_on")
         nircmd_path = helper_files.get_path(["nircmd.exe"])
         os.system(nircmd_path + " sendkeypress ctrl")
 

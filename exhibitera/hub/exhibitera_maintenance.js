@@ -7,7 +7,7 @@ export function setComponentInfoModalMaintenanceStatus (uuid, id) {
 
   exTools.makeServerRequest({
     method: 'GET',
-    endpoint: '/maintenance/' + uuid + '/status'
+    endpoint: '/maintenance/' + uuid
   })
     .then((result) => {
       if ('success' in result && result.success === false) return
@@ -57,7 +57,7 @@ export function submitComponentMaintenanceStatusChange (type = 'component') {
 
   exTools.makeServerRequest({
     method: 'POST',
-    endpoint: '/maintenance/' + uuid + '/updateStatus',
+    endpoint: '/maintenance/' + uuid,
     params: requestDict
   })
     .then((result) => {

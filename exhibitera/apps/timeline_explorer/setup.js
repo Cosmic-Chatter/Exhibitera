@@ -11,7 +11,7 @@ const wizardHeaders = {} // Holds the markdown-formatted header text in each lan
 async function initializeWizard () {
   // Setup the wizard
 
-  await exSetup.initializeDefinition()
+  exSetup.initializeDefinition()
 
   // Hide all but the welcome screen
   Array.from(document.querySelectorAll('.wizard-pane')).forEach((el) => {
@@ -246,9 +246,7 @@ function generateSpreadsheetTemplate () {
 async function clearDefinitionInput (full = true) {
   // Clear all input related to a defnition
 
-  if (full === true) {
-    await exSetup.initializeDefinition()
-  }
+  if (full === true) exSetup.initializeDefinition()
 
   // Spreadsheet
   const spreadsheetSelect = document.getElementById('spreadsheetSelect')

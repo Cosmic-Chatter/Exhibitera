@@ -333,7 +333,7 @@ function readHelperUpdate (update, changeApp = true) {
   // Function to read a message from the helper and take action based on the contents
   // 'update' should be an object
   // Set changeApp === false to suppress changing the app if the definition has changed
-  console.log(update)
+
   const sendUpdate = false
 
   for (const cmd of update?.commands ?? []) {
@@ -434,13 +434,12 @@ function checkAgain () {
 }
 
 export function askForDefaults (changeApp = true) {
-  // Send a message to the local helper and ask for the latest configuration
-  // defaults, then use them.
+  // Send a message to the local helper and ask for the latest configuration, then use it.
   // Set changeApp === false to supress changing the app based on the current definition
 
   return makeHelperRequest({
     method: 'GET',
-    endpoint: '/getDefaults'
+    endpoint: '/system/configuration'
   })
     .then((update) => {
       readHelperUpdate(update, changeApp)
@@ -469,7 +468,7 @@ export function sendConfigUpdate (update) {
   makeHelperRequest(
     {
       method: 'POST',
-      endpoint: '/setDefaults',
+      endpoint: '/system/configuration/update',
       params: requestDict
     })
 }

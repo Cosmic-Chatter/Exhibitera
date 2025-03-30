@@ -11,7 +11,7 @@ const markdownConverter = new showdown.Converter({ parseImgDimensions: true })
 async function initializeWizard () {
   // Set up the wizard
 
-  await exSetup.initializeDefinition()
+  exSetup.initializeDefinition()
 
   // Hide all but the welcome screen
   for (const el of document.querySelectorAll('.wizard-pane')) {
@@ -243,12 +243,10 @@ function wizardBuildPairDetailsPage () {
 async function clearDefinitionInput (full = true) {
   // Clear all input related to a defnition
 
-  if (full === true) {
-    await exSetup.initializeDefinition()
-  }
+  if (full === true) exSetup.initializeDefinition()
 
   // Definition details
-  $('#definitionNameInput').val('')
+  document.getElementById('definitionNameInput').value = ''
 
   // Attractor
   document.getElementById('inactivityTimeoutField').value = 30
@@ -1136,8 +1134,6 @@ for (const el of document.querySelectorAll('.text-size-slider')) {
 // Set helper address for use with exCommon.makeHelperRequest
 exCommon.config.helperAddress = window.location.origin
 
-clearDefinitionInput()
-
 exSetup.configure({
   app: 'image_compare',
   clearDefinition: clearDefinitionInput,
@@ -1159,6 +1155,7 @@ exSetup.configure({
     }
   }
 })
+clearDefinitionInput()
 
 exCommon.askForDefaults(false)
   .then(() => {

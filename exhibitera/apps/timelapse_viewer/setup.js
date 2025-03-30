@@ -7,7 +7,7 @@ import * as exSetup from '../js/exhibitera_setup_common.js'
 async function initializeWizard () {
   // Set up the wizard
 
-  await exSetup.initializeDefinition()
+  exSetup.initializeDefinition()
 
   // Hide all but the welcome screen
   Array.from(document.querySelectorAll('.wizard-pane')).forEach((el) => {
@@ -23,9 +23,7 @@ async function initializeWizard () {
 async function clearDefinitionInput (full = true) {
   // Clear all input related to a defnition
 
-  if (full === true) {
-    await exSetup.initializeDefinition()
-  }
+  if (full === true) exSetup.initializeDefinition()
 
   // Definition details
   document.getElementById('definitionNameInput').value = ''
@@ -174,36 +172,35 @@ function retrieveMatchingFilesCount () {
   })
 }
 
-function convertVideo () {
+async function convertVideo () {
   // Ask the helper to convert the video to frames and track the progress.
 
-  const filename = document.getElementById('selectConversionVideoButton').getAttribute('data-filename')
+  const filename = document.getElementById('selectConversionVideoButton').dataset.filename
   if (filename == null || filename.trim() === '') {
     return
   }
   const button = document.getElementById('videoConversionModalSubmitButton')
-  button.innerHTML = 'Working...'
+  button.innerText = 'Working...'
   button.classList.add('btn-info')
   button.classList.remove('btn-primary')
   document.getElementById('conversionProgressBarDiv').style.display = 'flex'
 
+  const numFilesToCreate = parseInt(document.getElementById('outputFileCountField').value)
+  const response = await exCommon.makeHelperRequest({
+    method: 'GET',
+    endpoint: '/getAvailableContent'
+  })
+  const numFilesCurrent = response.all_exhibits.length
+
   exCommon.makeHelperRequest({
     method: 'POST',
-    endpoint: '/files/convertVideoToFrames',
+    endpoint: '/files/' + filename + '/convertVideoToFrames',
     params: {
-      filename,
       file_type: 'jpg'
     },
     timeout: 3.6e6 // 1 hr
   })
-
-  const numFiles = parseInt(document.getElementById('outputFileCountField').value)
-  exCommon.makeHelperRequest({
-    method: 'GET',
-    endpoint: '/getAvailableContent'
-  }).then((result) => {
-    trackConversionProgress(numFiles, result.all_exhibits.length)
-  })
+  trackConversionProgress(numFilesToCreate, numFilesCurrent)
 }
 
 function trackConversionProgress (total, starting) {
@@ -293,14 +290,11 @@ document.getElementById('selectConversionVideoButton').addEventListener('click',
       if (result != null && result.length > 0) {
         event.target.setAttribute('data-filename', result[0])
         event.target.innerHTML = result[0]
-        document.getElementById('fileConversionVideoPreview').src = exCommon.config.helperAddress + '/thumbnails/' + result[0].replace(/\.[^/.]+$/, '') + '.mp4'
+        document.getElementById('fileConversionVideoPreview').src = exCommon.config.helperAddress + '/files/' + result[0] + '/thumbnail'
 
         exCommon.makeHelperRequest({
-          method: 'POST',
-          endpoint: '/files/getVideoDetails',
-          params: {
-            filename: result[0]
-          }
+          method: 'GET',
+          endpoint: '/files/' + result[0] + '/videoDetails'
         })
           .then((response) => {
             if ('success' in response && response.success === true) {

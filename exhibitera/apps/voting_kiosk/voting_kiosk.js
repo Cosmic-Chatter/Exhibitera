@@ -369,8 +369,7 @@ function sendData () {
   }
 
   const requestDict = {
-    data: resultDict,
-    name: configurationName
+    data: resultDict
   }
 
   // Submit the data to Hub or the helper, depending on if we're standalone
@@ -378,7 +377,7 @@ function sendData () {
     exCommon.makeHelperRequest(
       {
         method: 'POST',
-        endpoint: '/data/write',
+        endpoint: '/data/' + configurationName + '/append',
         params: requestDict
       })
   } else {

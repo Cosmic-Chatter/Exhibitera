@@ -115,13 +115,12 @@ function getTextUpdateFromServer () {
   } else {
     exCommon.makeHelperRequest(
       {
-        method: 'POST',
-        endpoint: '/data/getRawText',
-        params: { name: 'Word_Cloud_' + collectionName }
+        method: 'GET',
+        endpoint: '/data/Word_Cloud_' + collectionName + '/rawText'
       })
       .then((result) => {
-        if ('success' in result && result.success === true) {
-          if ('text' in result && result.text !== '') {
+        if (result?.success === true) {
+          if (result.text && result.text !== '') {
             WordCloudOptions.list = createWordList(countText(cleanText(result.text)))
           }
         }

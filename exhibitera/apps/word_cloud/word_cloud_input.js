@@ -72,17 +72,16 @@ function getCleanText () {
 function sendTextToServer () {
   // Send the server the text that the user has inputted
   const text = getCleanText()
-  const requestDict = {
-    name: 'Word_Cloud_' + collectionName,
-    text
-  }
 
   if (exCommon.config.standalone === false) {
     exCommon.makeServerRequest(
       {
         method: 'POST',
         endpoint: '/tracker/flexible-tracker/submitRawText',
-        params: requestDict
+        params: {
+          name: 'Word_Cloud_' + collectionName,
+          text
+        }
       })
       .then((result) => {
         if ('success' in result && result.success === true) {
@@ -92,8 +91,8 @@ function sendTextToServer () {
   } else {
     exCommon.makeHelperRequest({
       method: 'POST',
-      endpoint: '/data/writeRawText',
-      params: requestDict
+      endpoint: '/data/Word_Cloud_' + collectionName + '/rawText',
+      params: { text }
     })
       .then((result) => {
         if ('success' in result && result.success === true) {

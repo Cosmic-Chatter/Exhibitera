@@ -27,6 +27,63 @@ def get_path(path_list: list[str], user_file: bool = False) -> str:
     return _path
 
 
+def path_safe(path: list[str]) -> bool:
+    """Ensure the given path doesn't escape the Exhibitera Apps directory.
+
+    `path` should be a list of directories, which should not include any path separators.
+    """
+
+    if len(path) == 0:
+        return False
+
+    if path[0] not in ['content', 'data', 'definitions', 'thumbnails']:
+        return False
+
+    for item in path:
+        if not isinstance(item, str):
+            return False
+        for char in ['/', '\\', '<', '>', ':', '"', '|', '?', '*']:
+            if char in item:
+                return False
+        if item in ['.', '..']:
+            return False
+
+    return True
+
+
+def filename_safe(filename: str) -> bool:
+    """Ensure the filename doesn't escape to another directory or is malformed.
+
+    Note that this should not be used on paths, which will obviously include some
+    of these cases.
+    """
+
+    if not isinstance(filename, str):
+        return False
+
+    # Trim any leading or trailing whitespace
+    filename = filename.strip()
+
+    if filename in ['', '.', '..']:
+        return False
+
+    # Check if the filename is too long (common filesystem limit is 255 characters)
+    if len(filename) > 255:
+        return False
+
+    for char in ['/', '\\', '<', '>', ':', '"', '|', '?', '*']:
+        if char in filename:
+            return False
+
+    # Check for reserved Windows filenames (case-insensitive)
+    if filename.upper() in ["CON", "PRN", "AUX", "NUL",
+                            *(f"COM{i}" for i in range(1, 10)),
+                            *(f"LPT{i}" for i in range(1, 10))]:
+        return False
+
+    return True
+
+
 def clear_terminal() -> None:
     """Clear the terminal"""
 
@@ -48,7 +105,8 @@ def deep_merge(source: dict, destination: dict):
             destination[key] = value
     return destination
 
-def load_json(path: str):
+
+def load_json(path: str) -> dict[str, Any] | None:
     """Load the requested JSON file from disk and return it as a dictionary."""
 
     if not os.path.exists(path):
@@ -57,12 +115,16 @@ def load_json(path: str):
         return None
 
     with config.galleryConfigurationLock:
-        with open(path, 'r', encoding='UTF-8') as f:
-            try:
+        try:
+            with open(path, 'r', encoding='UTF-8') as f:
                 result = json.load(f)
-            except json.decoder.JSONDecodeError:
-                result = None
-            return result
+        except (OSError, IOError) as e:
+            logging.error(f"load_json: Failed to read file {path}: {e}")
+            result = None
+        except json.decoder.JSONDecodeError as e:
+            logging.error(f"load_json: Invalid JSON in file {path}: {e}")
+            result = None
+    return result
 
 
 def write_json(data,

@@ -229,7 +229,7 @@ function submitSettings () {
 
   exCommon.makeHelperRequest({
     method: 'POST',
-    endpoint: '/setDefaults',
+    endpoint: '/system/configuration/update',
     params: {
       defaults: settings
     }

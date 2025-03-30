@@ -682,7 +682,7 @@ function uploadFile (options) {
     }
 
     const xhr = new XMLHttpRequest()
-    xhr.open('POST', exCommon.config.helperAddress + '/upload', true)
+    xhr.open('POST', exCommon.config.helperAddress + '/files/upload', true)
 
     xhr.onreadystatechange = function () {
       if (this.readyState !== 4) return
@@ -717,19 +717,20 @@ function uploadFile (options) {
 function deleteFiles (files) {
   // Delete the given files
 
+  const exFileSelectModal = document.getElementById('exFileSelectModal')
   exCommon.makeHelperRequest({
     method: 'POST',
-    endpoint: '/file/delete',
+    endpoint: '/files/delete',
     params: { file: files }
   })
     .then((result) => {
-      if ('success' in result && result.success === true) {
-        files.forEach((file) => {
-          const entry = document.getElementById('exFileSelectModal').querySelector(`.const-file-entry[data-filename="${file}"]`)
-          previewFile({})
-          document.getElementById('exFileSelectModalFilePreview').setAttribute('data-filename', '')
+      if (result?.success === true) {
+        for (const file of files) {
+          const entry = exFileSelectModal.querySelector(`.const-file-entry[data-filename="${file}"]`)
           entry.parentElement.removeChild(entry)
-        })
+        }
+        previewFile({})
+        document.getElementById('exFileSelectModalFilePreview').dataset.filename = ''
       }
     })
 }
@@ -739,9 +740,9 @@ function downloadMultipleFiles () {
 
   const filesToDownload = document.querySelectorAll('.const-file-select-box.const-file-selected')
   const filenamesToDownload = []
-  filesToDownload.forEach((el) => {
-    filenamesToDownload.push(el.getAttribute('data-filename'))
-  })
+  for (const el of filesToDownload) {
+    filenamesToDownload.push(el.dataset.filename)
+  }
 
   fetch(exCommon.config.helperAddress + '/files/createZip',
     {
@@ -777,9 +778,9 @@ function deleteMultipleFiles () {
 
   const filesToDelete = document.querySelectorAll('.const-file-select-box.const-file-selected')
   const filenamesToDelete = []
-  filesToDelete.forEach((el) => {
-    filenamesToDelete.push(el.getAttribute('data-filename'))
-  })
+  for (const el of filesToDelete) {
+    filenamesToDelete.push(el.dataset.filename)
+  }
   deleteFiles(filenamesToDelete)
   document.getElementById('exFileSelectModalDeleteMultipleButtonCol').style.display = 'none'
   document.getElementById('exFileSelectModalDownloadMultipleButtonCol').style.display = 'none'
@@ -788,7 +789,7 @@ function deleteMultipleFiles () {
 function showRenameField () {
   // Show the rename field for the file currently being previewed.
 
-  const filename = document.getElementById('exFileSelectModalFilePreview').getAttribute('data-filename')
+  const filename = document.getElementById('exFileSelectModalFilePreview').dataset.filename
 
   if (filename === '') return
 
@@ -798,13 +799,15 @@ function showRenameField () {
 
   const fileNameWithoutExt = filename.substring(0, filename.lastIndexOf('.')) || filename
   const renameField = document.getElementById('exFileSelectModalFilePreviewEditField')
-  renameField.setAttribute('filename', filename) // Save the original name to ensure we rename the correct file
+  renameField.dataset.filename = filename // Save the original name to ensure we rename the correct file
   renameField.value = filename
   renameField.setSelectionRange(0, fileNameWithoutExt.length)
   renameField.focus()
 }
 
 function cancelFileRename () {
+  // Reset the GUI after canceling a file rename
+
   document.getElementById('exFileSelectModalFilePreviewEditContainer').style.display = 'none'
   document.getElementById('exFileSelectModalFilePreviewFilename').style.display = 'block'
 }
@@ -813,7 +816,7 @@ function renameFile () {
   // Get the new name and send it to the helper to be changed.
 
   const renameField = document.getElementById('exFileSelectModalFilePreviewEditField')
-  const originalName = renameField.getAttribute('filename')
+  const originalName = renameField.dataset.filename
   const newName = renameField.value
 
   if (originalName === newName) {
@@ -823,7 +826,7 @@ function renameFile () {
 
   exCommon.makeHelperRequest({
     method: 'POST',
-    endpoint: '/renameFile',
+    endpoint: '/files/' + originalName + '/rename',
     params: {
       current_name: originalName,
       new_name: newName
