@@ -194,7 +194,7 @@ html, body {
 .overlay-button {
     position: absolute;
     bottom: 1vmax;
-    width: 5vmax;
+    width: 5vw;
     height: 4vmax;
     color: var(--buttonTextColor);
     font-family: "Button_font";
@@ -267,6 +267,7 @@ html, body {
 }
 #langSwitchDropdownButton {
     bottom: 0;
+    right: 0;
     border-radius: 0.5vmax;
     border-color: var(--buttonOutlineColor);
 }
@@ -306,7 +307,7 @@ html, body {
     left:  1vmax;
 }
 #aboutButton {
-    left: 47.5vmax;
+    left: 47.5vw;
 }
 #image1Label {
     right: 1vmax;
@@ -332,7 +333,7 @@ html, body {
     text-align: center;
     font-size: calc(3.9vmax + var(--title-font-adjust) * 1vmax);
     font-family: var(--title-font);
-    padding-top: 9.3vh;
+    padding-top: 9.3vmin;
 }
 #image2Label {
     left: 1vmax;
@@ -356,6 +357,12 @@ html, body {
 }
 
 @media (orientation: portrait) {
+    .overlay-button {
+        width: 10vw;
+    }
+    #aboutButton {
+        left: 45vw;
+    }
     #itemList {
         width: calc(var(--itemList-width-portrait)/12 * 100%);
         margin-left: calc((12 - var(--itemList-width-portrait)) /24 * 100%);
@@ -366,5 +373,8 @@ html, body {
     }
     #itemListContainer {
         height: 75vh;
+    }
+    #langSwitchDropdown {
+        /* right: 1vw; */
     }
 }
