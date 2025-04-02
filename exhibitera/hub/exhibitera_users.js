@@ -399,7 +399,6 @@ export function loginFromDropdown () {
     }
   })
     .then((response) => {
-      console.log(response)
       if (response.success === true) {
         // Reload the page now that the authentication cookie is set.
         location.reload()
@@ -430,6 +429,11 @@ export function authenticateUser () {
     .then((response) => {
       if (response.success === true) {
         configureUser(response.user)
+      } else {
+        if (document.cookie !== '') {
+          document.cookie = 'authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC;'
+          location.reload()
+        }
       }
     })
 }

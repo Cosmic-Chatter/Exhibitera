@@ -1130,15 +1130,18 @@
             <button class="btn btn-outline-primary btn-sm dropdown-toggle float-end" type="button" data-bs-toggle="dropdown" aria-expanded="false">Log in</button>
             <div class="dropdown-menu">
               <div class="px-4 py-3">
-                <div class="mb-3">
-                  <label for="loginDropdownUsername" class="form-label">Username</label>
-                  <input type="text" class="form-control" id="loginDropdownUsername">
-                </div>
-                <div class="mb-3">
-                  <label for="loginDropdownPassword" class="form-label">Password</label>
-                  <input type="password" class="form-control" id="loginDropdownPassword">
-                </div>
-                <button id="loginSubmitButton" class="btn btn-primary">Log in</button>
+                <form id="formTest">
+                  <div class="mb-3">
+                    <label for="loginDropdownUsername" class="form-label">Username</label>
+                    <input type="text" class="form-control" id="loginDropdownUsername">
+                  </div>
+                  <div class="mb-3">
+                    <label for="loginDropdownPassword" class="form-label">Password</label>
+                    <input type="password" class="form-control" id="loginDropdownPassword">
+                  </div>
+                  <button type="submit" id="loginSubmitButton" class="btn btn-primary">Log in</button>
+                </form>
+                
               </div>
               <div class="dropdown-divider"></div>
               <div class="dropdown-item text-center" data-bs-toggle="tooltip" data-bs-placement="top" title="To create an account or reset your password, contact your system administrator. To log in as the administrator, use the username 'admin'.">
