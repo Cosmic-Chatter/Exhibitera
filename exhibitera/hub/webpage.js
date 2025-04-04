@@ -814,15 +814,14 @@ function updateSystemConfiguration () {
 }
 
 function loadVersion () {
-  // Load version.txt and update the GUI with the current version
+  // Load version and update the GUI with the current version
 
   exTools.makeServerRequest({
     method: 'GET',
-    endpoint: '/version.txt',
-    rawResponse: true
+    endpoint: '/_static/semantic_version.json'
   })
     .then((response) => {
-      $('#versionSpan').html(response)
+      document.getElementById('versionSpan').textContent = exTools.formatSemanticVersion(response.version)
     })
 }
 

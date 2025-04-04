@@ -6,7 +6,6 @@ import shutil
 import sys
 import threading
 from typing import Annotated, Any
-import uuid
 
 # Third-party modules
 from fastapi import FastAPI, Body, Depends, File, Form, UploadFile

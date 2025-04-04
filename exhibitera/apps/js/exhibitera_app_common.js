@@ -498,6 +498,12 @@ export function stringToBool (str) {
   return ['True', 'true', 'TRUE', '1', 'yes', 'Yes', 'YES'].includes(str)
 }
 
+export function formatSemanticVersion (obj) {
+  // Take an object representing a semantic version and format it as a string
+
+  return (String(obj?.major) ?? '?') + '.' + (String(obj?.minor) ?? '?') + '.' + (String(obj?.patch) ?? '?')
+}
+
 export function sendAnalytics (data) {
   // Take the provided dictionary of data and send it to Hub
 

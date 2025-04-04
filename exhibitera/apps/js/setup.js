@@ -83,9 +83,9 @@ function showUpdateInfoModal (details) {
     .then((result) => {
       const details = result.software_update
 
-      $('#updateInfoModalCurrentVersion').html(details.current_version)
-      $('#updateInfoModalLatestVersion').html(details.available_version)
-      $('#updateInfoModalDownloadButton').attr('href', 'https://exhibitera.org/download/')
+      document.getElementById('updateInfoModalCurrentVersion').textContent = exCommon.formatSemanticVersion(details.current_version)
+      document.getElementById('updateInfoModalLatestVersion').textContent = exCommon.formatSemanticVersion(details.available_version)
+      document.getElementById('updateInfoModalDownloadButton').href = 'https://exhibitera.org/download/'
 
       // Get the changelog
       exCommon.makeRequest({
@@ -234,15 +234,14 @@ function configureInterface () {
 }
 
 function loadVersion () {
-  // Load version.txt and update the GUI with the current version
+  // Load version and update the GUI with the current version
 
-  exCommon.makeHelperRequest({
+  exCommon.makeServerRequest({
     method: 'GET',
-    endpoint: '/_static/version.txt',
-    rawResponse: true
+    endpoint: '/_static/semantic_version.json'
   })
     .then((response) => {
-      $('#versionSpan').html(response)
+      document.getElementById('versionSpan').textContent = exCommon.formatSemanticVersion(response.version)
     })
 }
 

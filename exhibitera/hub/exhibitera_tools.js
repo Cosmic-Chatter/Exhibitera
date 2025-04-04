@@ -193,7 +193,13 @@ export function openMediaInNewTab (filenames, fileTypes) {
   imageWindow.document.write(html)
 }
 
-function showUpdateInfoModal (id, kind, details) {
+export function formatSemanticVersion (obj) {
+  // Take an object representing a semantic version and format it as a string
+
+  return (String(obj?.major) ?? '?') + '.' + (String(obj?.minor) ?? '?') + '.' + (String(obj?.patch) ?? '?')
+}
+
+async function showUpdateInfoModal (id, kind, details) {
   // Populate the model with details about the update and show it.
 
   if (kind !== 'control_server' && kind !== 'apps') {
@@ -201,35 +207,36 @@ function showUpdateInfoModal (id, kind, details) {
     return
   }
 
-  $('#updateInfoModalTitleID').html(id)
-  $('#updateInfoModalCurrentVersion').html(details.current_version)
-  $('#updateInfoModalLatestVersion').html(details.available_version)
-  $('#updateInfoModalDownloadButton').attr('href', 'https://exhibitera.org/download/')
+  document.getElementById('updateInfoModalTitleID').textContent = id
+  document.getElementById('updateInfoModalCurrentVersion').textContent = formatSemanticVersion(details.current_version)
+  document.getElementById('updateInfoModalLatestVersion').textContent = formatSemanticVersion(details.available_version)
+  document.getElementById('updateInfoModalDownloadButton').href = 'https://exhibitera.org/download/'
 
   // Get the changelog
-  makeRequest({
+  const changelog = await makeRequest({
     method: 'GET',
     url: 'https://raw.githubusercontent.com/Cosmic-Chatter/Exhibitera/main/exhibitera/changelog.md',
     endpoint: '',
     rawResponse: true
   })
-    .then((response) => {
-      const markdownConverter = new showdown.Converter({ headerLevelStart: 4.0 })
-      markdownConverter.setFlavor('github')
 
-      const formattedText = markdownConverter.makeHtml(response)
-      $('#updateInfoModalChangelogContainer').html(formattedText)
-    })
+  const markdownConverter = new showdown.Converter({ headerLevelStart: 4.0 })
+  markdownConverter.setFlavor('github')
 
+  const formattedText = markdownConverter.makeHtml(changelog)
+  document.getElementById('updateInfoModalChangelogContainer').innerHTML = formattedText
+
+  const appsInstructions = document.getElementById('updateInfoModalAppsInstructions')
+  const hubInstructions = document.getElementById('updateInfoModalHubInstructions')
   if (kind === 'control_server') {
-    $('#updateInfoModalAppsInstructions').hide()
-    $('#updateInfoModalControlServerInstructions').show()
+    appsInstructions.style.display = 'none'
+    hubInstructions.style.display = 'block'
   } else {
-    $('#updateInfoModalAppsInstructions').show()
-    $('#updateInfoModalControlServerInstructions').hide()
+    appsInstructions.style.display = 'block'
+    hubInstructions.style.display = 'none'
   }
 
-  $('#updateInfoModal').modal('show')
+  showModal('#updateInfoModal')
 }
 
 export function rebuildNotificationList () {

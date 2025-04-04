@@ -23,29 +23,53 @@ import helper_files
 
 
 def check_for_software_update():
-    """Download the version.txt file from GitHub and check if there is an update"""
+    """Download the version file from GitHub and check if there is an update"""
 
     print("Checking for update... ", end="")
+    config.software_update["update_available"] = False
+
+    local_dict = helper_files.load_json(helper_files.get_path(["_static", "semantic_version.json"]))
+    if local_dict is None:
+        print("error. The semantic version file is corrupt and cannot be read.")
+        return
+
+    config.software_update["current_version"] = local_dict["version"]
+    remote_dict = None
     try:
-        for line in urllib.request.urlopen(
-                'https://raw.githubusercontent.com/Cosmic-Chatter/Exhibitera/main/exhibitera/apps/_static/version.txt',
-                timeout=1):
-            available_version = float(line.decode('utf-8'))
-            if available_version > config.HELPER_SOFTWARE_VERSION:
-                config.software_update = {
-                    "update_available": True,
-                    "current_version": str(config.HELPER_SOFTWARE_VERSION),
-                    "available_version": str(available_version)
-                }
-                break
-    except urllib.error.HTTPError:
+        version_url = "https://raw.githubusercontent.com/Cosmic-Chatter/Exhibitera/main/exhibitera/apps/_static/semantic_version.json"
+        response = requests.get(version_url, timeout=2)
+        response.raise_for_status()
+        remote_dict = response.json()
+    except requests.RequestException as e:
         print("cannot connect to update server")
-    except urllib.error.URLError:
-        print("network connection unavailable")
-    if config.software_update["update_available"]:
-        print("update available!")
-    else:
-        print("up to date.")
+    except ValueError as e:
+        print("cannot connect to update server")
+
+    if remote_dict is not None:
+        config.software_update["available_version"] = remote_dict["version"]
+
+        # Compare the local and remote versions to check for an update
+        if remote_dict["version"]["major"] > local_dict["version"]["major"]:
+            config.software_update["update_available"] = True
+        elif remote_dict["version"]["major"] < local_dict["version"]["major"]:
+            config.software_update["update_available"] = False
+        else:
+            # Major versions equal
+            if remote_dict["version"]["minor"] > local_dict["version"]["minor"]:
+                config.software_update["update_available"] = True
+            elif remote_dict["version"]["minor"] < local_dict["version"]["minor"]:
+                config.software_update["update_available"] = False
+            else:
+                # Major & minor versions equal
+                if remote_dict["version"]["patch"] > local_dict["version"]["patch"]:
+                    config.software_update["update_available"] = True
+                elif remote_dict["version"]["patch"] <= local_dict["version"]["patch"]:
+                    config.software_update["update_available"] = False
+
+        if config.software_update["update_available"]:
+            print("update available!")
+        else:
+            print("the server is up to date.")
 
     # Reset the timer to check for an update tomorrow
     if config.software_update_timer is not None:
@@ -53,23 +77,6 @@ def check_for_software_update():
     config.software_update_timer = threading.Timer(86400, check_for_software_update)
     config.software_update_timer.daemon = True
     config.software_update_timer.start()
-
-
-def get_local_address() -> str:
-    """Return the IP address and port of this helper"""
-
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.settimeout(0)
-    try:
-        # Doesn't even have to be reachable
-        s.connect(('10.255.255.255', 1))
-        ip_address = s.getsockname()[0]
-    except:
-        ip_address = '127.0.0.1'
-    finally:
-        s.close()
-
-    return "http://" + ip_address + ":" + str(config.defaults["system"]["port"])
 
 
 def get_system_stats() -> dict[str, Union[int, float]]:

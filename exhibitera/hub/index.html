@@ -1216,53 +1216,77 @@
           <!-- Software update details modal -->
           <div class="modal" tabindex="-1" role="dialog" id="updateInfoModal">
             <div class="modal-dialog modal-dialog-centered exhibitera-dialog" role="document">
-              <div class="modal-content" style="border:black 1px solid;">
+              <div class="modal-content">
                 <div class="modal-header">
+                  <h4 class="modal-title" id="updateInfoModalTitle">Update Available: <span id="updateInfoModalTitleID"></span></h4>
+                  
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
                   <div class="row w-100">
-                    <div class="col-12">
-                      <h4 class="modal-title" id="updateInfoModalTitle">Update Available: <span id="updateInfoModalTitleID"></span></h4>
-                    </div>
-                    <div class="col-6 col-sm-4 col-md-3 pt-2">
-                      <div class="row ps-3 pe-1">
-                        <div class="col-9 bg-info font-weight-bold ps-2 py-1 rounded-start me-0 pe-0 text-dark">Your version</div>
-                        <div id="updateInfoModalCurrentVersion" class="col-3  py-1 bg-warning text-dark fw-bold rounded-end ms-0 ps-2">1.0</div>
+                    <div class="col-12 col-sm-6 col-lg-4 col-xl-3 pt-2 px-4">
+                      <div class="row">
+                        <div class="col-8 bg-info text-dark font-weight-bold ps-2 py-1 rounded-start me-0 pe-0">Your version</div>
+                        <div id="updateInfoModalCurrentVersion" class="col-4  py-1 bg-warning text-dark text-center font-weight-bold rounded-end ms-0 ps-2">1.0</div>
                       </div>
                     </div>
-                    <div class="col-6 col-sm-4 col-md-3 pt-2">
-                      <div class="row ps-1 pe-3">
-                        <div class="col-9 bg-info text-dark font-weight-bold ps-2 py-1 rounded-start me-0 pe-0">Latest version</div>
-                        <div id="updateInfoModalLatestVersion" class="col-3  py-1 bg-success text-white fw-bold rounded-end ms-0 ps-2">2.0</div>
+                    <div class="col-12 col-sm-6 col-lg-4 col-xl-3 pt-2 px-4">
+                      <div class="row">
+                        <div class="col-8 bg-info text-dark font-weight-bold ps-2 py-1 rounded-start me-0 pe-0">Latest version</div>
+                        <div id="updateInfoModalLatestVersion" class="col-4 py-1 bg-success font-weight-bold text-white text-center rounded-end ms-0 ps-2">2.0</div>
                       </div>
                     </div>
                   </div>
-                </div>
-                <div class="modal-body">
-                  <div class="row">
-                    <div id="updateInfoModalControlServerInstructions" class="col-6 border-right border-secondary">
-                      <H4>Installation instructions</H4>
-                      Follow these steps to update Hub:
-                      <ol>
-                        <li>Click <i>Download update</i> and download the correct zipped update file for your operating system.</li>
-                        <li>Unzip the download to find the <code>Exhibitera_Hub</code> executable.</li>
-                        <li>From the Hub terminal window, press <code>Ctrl-c</code> to stop the server.</li>
-                        <li>Replace the existing <code>Exhibitera_Hub</code> file with the new one.</li>
-                        <li>Launch Hub to complete the update.</li>
-                      </ol>
-                      <strong>For best results, update Hub and all its components at the same time.</strong>
+
+                  <div class="accordion mt-3" id="updateInfoModalAccordion">
+                    <!-- Installation instructions -->
+                    <div class="accordion-item">
+                      <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#updateInfoModalInstructions" aria-expanded="true" aria-controls="updateInfoModalInstructions">
+                          Instllation instructions
+                        </button>
+                      </h2>
+                      <div id="updateInfoModalInstructions" class="accordion-collapse collapse" data-bs-parent="#updateInfoModalAccordion">
+                        <div class="accordion-body">
+                          <div id="updateInfoModalHubInstructions">
+                            Follow these steps to update Hub:
+                            <ol>
+                              <li>Click <i>Download update</i> and download the correct zipped update file for your operating system.</li>
+                              <li>Unzip the download to find the <code>Exhibitera_Hub</code> executable.</li>
+                              <li>From the Hub terminal window, press <code>Ctrl-c</code> to stop the server.</li>
+                              <li>Replace the existing <code>Exhibitera_Hub</code> file with the new one.</li>
+                              <li>Launch Hub to complete the update.</li>
+                            </ol>
+                            <strong>For best results, update Hub and all its components at the same time.</strong>
+                          </div>
+                          <div id="updateInfoModalAppsInstructions">
+                            Follow these steps to update Exhibitera Apps:
+                            <ol>
+                              <li>Click <i>Download update</i> and download the correct zipped update file for your operating system.</li>
+                              <li>Unzip the download to find the <code>Exhibitera_Apps</code> executable.</li>
+                              <li>Close any app or terminal windows.</li>
+                              <li>Replace the existing <code>Exhibitera_Apps</code> file with the new one.</li>
+                              <li>Launch Exhibitera Apps to complete the update. You may need to restart your PC for the update to take full effect.</li>
+                            </ol>
+                            <strong>For best results, update Hub and all its components at the same time.</strong>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <div id="updateInfoModalAppsInstructions" class="col-6 border-right border-secondary">
-                      <H4>Installation instructions</H4>
-                      Follow these steps to update Exhibitera Apps:
-                      <ol>
-                        <li>Click <i>Download update</i> and download the correct zipped update file for your operating system.</li>
-                        <li>Unzip the download to find the <code>Exhibitera_Apps</code> executable.</li>
-                        <li>Close any app or terminal windows.</li>
-                        <li>Replace the existing <code>Exhibitera_Apps</code> file with the new one.</li>
-                        <li>Launch Exhibitera Apps to complete the update. You may need to restart your PC for the update to take full effect.</li>
-                      </ol>
-                      <strong>For best results, update Hub and all its components at the same time.</strong>
+
+                    <!-- Update details -->
+                    <div class="accordion-item">
+                      <h2 class="accordion-header">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#updateInfoModalDetails" aria-expanded="false" aria-controls="updateInfoModalDetails">
+                          Update details
+                        </button>
+                      </h2>
+                      <div id="updateInfoModalDetails" class="accordion-collapse collapse show" data-bs-parent="#updateInfoModalAccordion">
+                        <div class="accordion-body">
+                          <div id="updateInfoModalChangelogContainer"></div>
+                        </div>
+                      </div>
                     </div>
-                    <div id="updateInfoModalChangelogContainer" class="col-6"></div>
                   </div>
                 </div>
                 <div class="modal-footer">

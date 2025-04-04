@@ -15,10 +15,10 @@ uuid: str = ''  # Loaded from configuration/uuid.txt
 
 commandList: list[str] = []  # List of queued commands to send to the client
 missingContentWarningList: list[dict] = []  # Holds a list of warning about missing content
-NEXT_EVENT: Union[tuple[datetime.time, list[str]], None] = None  # A tuple with the next event to occur and the time is happens
+NEXT_EVENT: Union[tuple[datetime.time, list[str]], None] = None  # A tuple with the next event to occur and the time it happens
 schedule: list[tuple[datetime.time, str]] = []  # List of upcoming actions and their times
 thumbnail_archive: dict[str, Any] | None = None
-HELPER_SOFTWARE_VERSION: float = 5.3
+software_version: dict[str, int] = {}
 debug: bool = True
 
 # DMX resources
@@ -38,8 +38,8 @@ smart_restart: dict[str: Any] = {
 
 software_update: dict[str, Any] = {
     "update_available": False,
-    "current_version": str(HELPER_SOFTWARE_VERSION),
-    "available_version": str(HELPER_SOFTWARE_VERSION)
+    "current_version": software_version,
+    "available_version": software_version
 }
 software_update_timer: threading.Timer | None = None
 

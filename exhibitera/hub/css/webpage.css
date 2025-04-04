@@ -120,11 +120,14 @@ tr, td, th {
     max-height: 45vh;
     overflow-y: scroll;
 }
-#updateInfoModalChangelogContainer {
-    max-height: 60vh;
-    min-height: 15vh;
+#updateInfoModalAccordion {
+    height: 60vh;
     overflow-y: auto;
-}
+  }
+  #updateInfoModalDetails{
+    max-height: 50vh;
+    overflow-y: auto;
+  }
 
 @media (min-width: 576px) {
     /* sm breakpoint */

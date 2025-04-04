@@ -30,7 +30,8 @@ from fastapi import Body, FastAPI, File, Response, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field
+import requests
+from setuptools.package_index import local_open
 from sse_starlette.sse import EventSourceResponse
 
 # Exhibitera modules
@@ -149,7 +150,7 @@ def send_webpage_update():
                               "availableExhibits": ex_config.exhibit_list,
                               "galleryName": ex_config.gallery_name,
                               "outdated_os": ex_config.outdated_os,
-                              "softwareVersion": str(ex_config.software_version),
+                              "softwareVersion": ex_config.software_version,
                               "softwareVersionAvailable": ex_config.software_update_available_version,
                               "updateAvailable": str(ex_config.software_update_available).lower()}
 
@@ -231,6 +232,9 @@ def command_line_setup() -> None:
 
 def load_default_configuration() -> None:
     """Initialize the server in a default state."""
+
+    # Load the current software version
+    ex_config.software_version = ex_tools.load_json((ex_tools.get_path(["_static", "semantic_version.json"]))).get("version", {})
 
     # Check if there is a configuration file
     config_path = ex_tools.get_path(["configuration", "system.json"], user_file=True)
@@ -325,27 +329,51 @@ def check_for_outdated_os() -> tuple[bool, str]:
 
 
 def check_for_software_update() -> None:
-    """Download the version.txt file from GitHub and check if there is an update"""
+    """Download the version file from GitHub and check if there is an update"""
 
     print("Checking for update... ", end="")
     ex_config.software_update_available = False
+
+    local_dict = ex_tools.load_json(ex_tools.get_path(["_static", "semantic_version.json"]))
+    if local_dict is None:
+        print("error. The semantic version file is corrupt and cannot be read.")
+        return
+
+    remote_dict = None
     try:
-        for line in urllib.request.urlopen(
-                "https://raw.githubusercontent.com/Cosmic-Chatter/Exhibitera/main/exhibitera/hub/version.txt",
-                timeout=2):
-            line_str = line.decode('utf-8')
-            if float(line_str) > ex_config.software_version:
+        version_url = "https://raw.githubusercontent.com/Cosmic-Chatter/Exhibitera/main/exhibitera/hub/_static/semantic_version.json"
+        response = requests.get(version_url, timeout=2)
+        response.raise_for_status()
+        remote_dict = response.json()
+    except requests.RequestException as e:
+        print("cannot connect to update server")
+    except ValueError as e:
+        print("cannot connect to update server")
+
+    if remote_dict is not None:
+        # Compare the local and remote versions to check for an update
+        if remote_dict["version"]["major"] > local_dict["version"]["major"]:
+            ex_config.software_update_available = True
+        elif remote_dict["version"]["major"] < local_dict["version"]["major"]:
+            ex_config.software_update_available = False
+        else:
+            # Major versions equal
+            if remote_dict["version"]["minor"] > local_dict["version"]["minor"]:
                 ex_config.software_update_available = True
-                ex_config.software_update_available_version = line_str.strip()
-                break
-    except urllib.error.HTTPError:
-        print("cannot connect to update server")
-    except urllib.error.URLError:
-        print("cannot connect to update server")
-    if ex_config.software_update_available:
-        print("update available!")
-    else:
-        print("the server is up to date.")
+            elif remote_dict["version"]["minor"] < local_dict["version"]["minor"]:
+                ex_config.software_update_available = False
+            else:
+                # Major & minor versions equal
+                if remote_dict["version"]["patch"] > local_dict["version"]["patch"]:
+                    ex_config.software_update_available = True
+                elif remote_dict["version"]["patch"] <= local_dict["version"]["patch"]:
+                    ex_config.software_update_available = False
+
+        if ex_config.software_update_available:
+            print("update available!")
+            ex_config.software_update_available_version = remote_dict["version"]
+        else:
+            print("the server is up to date.")
 
     # Check to see if the OS is out of date
     outdated, message = check_for_outdated_os()
