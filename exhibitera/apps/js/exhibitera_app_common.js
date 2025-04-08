@@ -618,19 +618,16 @@ export function gotoApp (app, other = '') {
   // Change the browser location to point to the given app.
   console.log(app)
   const appLocations = {
-    dmx_control: '/dmx_control.html',
-    image_compare: '/image_compare.html',
-    infostation: '/infostation.html',
-    media_browser: '/media_browser.html',
-    media_player: '/media_player.html',
-    // media_player_kiosk: 'Media Player Kiosk',
-    // sos_kiosk: 'SOS Kiosk',
-    // sos_screen_player: 'SOS Screen Player',
-    timelapse_viewer: '/timelapse_viewer.html',
-    timeline_explorer: '/timeline_explorer.html',
-    voting_kiosk: '/voting_kiosk.html',
-    word_cloud_input: '/word_cloud_input.html',
-    word_cloud_viewer: '/word_cloud_viewer.html'
+    dmx_control: '/dmx_control',
+    image_compare: '/image_compare',
+    infostation: '/infostation',
+    media_browser: '/media_browser',
+    media_player: '/media_player',
+    timelapse_viewer: '/timelapse_viewer',
+    timeline_explorer: '/timeline_explorer',
+    voting_kiosk: '/voting_kiosk',
+    word_cloud_input: '/word_cloud/input',
+    word_cloud_viewer: '/word_cloud/viewer'
   }
   console.log(config, app, other)
   if (other !== '') {

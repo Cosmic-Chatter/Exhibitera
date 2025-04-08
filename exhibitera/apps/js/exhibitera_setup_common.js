@@ -187,7 +187,7 @@ export function showAppHelpModal (app) {
   const endpointStems = {
     dmx_control: '/dmx_control/',
     image_compare: '/image_compare/',
-    infostation: '/InfoStation/',
+    infostation: '/infostation/',
     media_browser: '/media_browser/',
     media_player: '/media_player/',
     other: '/other/',
@@ -633,11 +633,15 @@ export function previewDefinition (automatic = false) {
     .then((result) => {
       if ('success' in result && result.success === true) {
         // Configure the preview frame
-        if (config.app !== 'other') {
-          document.getElementById('previewFrame').src = '../' + config.app + '.html?standalone=true&definition=' + '__preview_' + config.app
+        if (config.app === 'word_cloud_input') {
+          document.getElementById('previewFrame').src = '/word_cloud/input?standalone=true&definition=' + '__preview_' + config.app
+        } else if (config.app === 'word_cloud_viewer') {
+          document.getElementById('previewFrame').src = '/word_cloud/viewer?standalone=true&definition=' + '__preview_' + config.app
+        } else if (config.app !== 'other') {
+          document.getElementById('previewFrame').src = '/' + config.app + '?standalone=true&definition=' + '__preview_' + config.app
         } else {
           if (def.path === '') return
-          document.getElementById('previewFrame').src = '../' + def.path + '?standalone=true&definition=' + '__preview_other'
+          document.getElementById('previewFrame').src = '/' + def.path + '?standalone=true&definition=' + '__preview_other'
         }
       }
     })
@@ -854,7 +858,7 @@ export async function refreshAdvancedFontPickers () {
     const picker = document.getElementById(id)
     // Check if option still exists (font may have been deleted)
     if (Array.from(picker.options).map(o => o.value).includes(currentDict[id]) === false) {
-      picker.value = '../_fonts/' + picker.getAttribute('data-default')
+      picker.value = '/_fonts/' + picker.getAttribute('data-default')
     } else {
       picker.value = currentDict[id]
     }

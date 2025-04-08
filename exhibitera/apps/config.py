@@ -2,12 +2,8 @@
 
 import datetime
 import threading
-from typing import Any, Union
+from typing import Any
 
-# Path to the directory where the server is being launched from
-application_path: str = ""
-# Path to the directory the code is actually running from (different from APP_PATH when using Pyinstaller)
-exec_path: str = ""
 
 # Defaults (loaded from config.json)
 defaults: dict[str, Any] = {}
@@ -15,7 +11,7 @@ uuid: str = ''  # Loaded from configuration/uuid.txt
 
 commandList: list[str] = []  # List of queued commands to send to the client
 missingContentWarningList: list[dict] = []  # Holds a list of warning about missing content
-NEXT_EVENT: Union[tuple[datetime.time, list[str]], None] = None  # A tuple with the next event to occur and the time it happens
+NEXT_EVENT: tuple[datetime.time, list[str]] | None = None  # A tuple with the next event to occur and the time it happens
 schedule: list[tuple[datetime.time, str]] = []  # List of upcoming actions and their times
 thumbnail_archive: dict[str, Any] | None = None
 software_version: dict[str, int] = {}

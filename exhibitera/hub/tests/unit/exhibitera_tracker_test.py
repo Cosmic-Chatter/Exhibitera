@@ -1,4 +1,4 @@
-import exhibitera_tracker as ex_tracker
+from features import tracker as ex_tracker
 
 
 def test_JSON_list_to_CSV():

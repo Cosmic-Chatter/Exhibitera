@@ -217,7 +217,6 @@ function createTimelineEntry (entry, langCode) {
 
     const image = document.createElement('img')
     image.style.width = '100%'
-    // image.src = 'thumbnails/' + imageName
     // Calculate size of image
     const width = window.innerWidth
     const height = window.innerHeight

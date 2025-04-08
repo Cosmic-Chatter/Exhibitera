@@ -1,4 +1,4 @@
-import helper_utilities
+from features import helper_utilities
 
 
 def test_str_to_bool():

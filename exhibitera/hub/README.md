@@ -2,7 +2,7 @@
 
 ## Introduction
 
-<img src="images/Components_overview_tab.png" style="width: 50%; float: right; border: 2px solid gray; margin: 5px;"></img>
+<img src="_static/images/Components_overview_tab.png" style="width: 50%; float: right; border: 2px solid gray; margin: 5px;"></img>
 
 Hub coordinates communication between Exhibitera components and provides a web-based interface for controlling them. It also provides tools for collecting qualitative and quantitative data, tracking maintenance, and logging exhibit issues.
 
@@ -104,7 +104,7 @@ The maintenance status view shows the current maintenance state of each componen
 
 ### Component status view
 
-<img src="images/component_status_page.jpg" style="width: 50%; float: right; border: 2px solid gray; margin: 5px;"></img>
+<img src="_static/images/component_status_page.jpg" style="width: 50%; float: right; border: 2px solid gray; margin: 5px;"></img>
 
 Clicking on a component opens its status view. Here, you can see a snapshot of the remote system's performance, select a definition, change settings, and add maintenance details.
 
@@ -160,7 +160,7 @@ Note that sending power off and power on commands may affect different component
 
 ### Maintenance tab
 
-<img src="images/issue_creation_modal.jpg" style="width: 50%; float: left; border: 2px solid gray; margin: 5px;"></img>
+<img src="_static/images/issue_creation_modal.jpg" style="width: 50%; float: left; border: 2px solid gray; margin: 5px;"></img>
 
 The _Maintenance_ tab organizes information about the current state of the gallery and its components. It provides an easy interface for non-technical users to alert maintenance staff about a problem.
 
@@ -174,7 +174,7 @@ Known issues can be filtered by priority and who they are assigned to. Any issue
 
 The _Analytics_ tab allows you to configure Flexible Tracker, a powerful tool for creating data-collection interfaces.
 
-<img src="images/tracker_example.jpg" style="width: 50%; float: right; border: 2px solid gray; margin: 5px;"></img>
+<img src="_static/images/tracker_example.jpg" style="width: 50%; float: right; border: 2px solid gray; margin: 5px;"></img>
 
 Flexible Tracker enables the collection of a wide variety of quantitative and qualitative data using Hub. Collected data can then be downloaded as a standard CSV file for opening in any spreadsheet software.
 
@@ -192,7 +192,7 @@ Flexible Tracker can collect a variety of data types. Each type provides a widge
 
 #### Creating a template
 
-<img src="images/tracker_template_edit.jpg" style="width: 50%; float: right; border: 2px solid gray; margin: 5px;"></img>
+<img src="_static/images/tracker_template_edit.jpg" style="width: 50%; float: right; border: 2px solid gray; margin: 5px;"></img>
 
 A _template_ defines the collection types available for a given session. It allows you to customize Flexible Tracker for your specific needs.
 
