@@ -287,24 +287,15 @@ function displayImage (file) {
   // Handle switching the src on the appropriate image tag to `file`.
 
   if (file == null) return
+  const nextIndex = activeViewerIndex === 0 ? 1 : 0
+  activeViewerIndex = nextIndex
 
-  if (activeViewerIndex === 0) {
-    activeViewerIndex = 1
-    loadImage('content/' + file).then(newImage => {
-      viewerList[1].src = newImage.src
-      viewerList[1].style.display = 'block'
-      viewerList[0].style.display = 'none'
-      stopInput = false
-    })
-  } else {
-    activeViewerIndex = 0
-    loadImage('content/' + file).then(newImage => {
-      viewerList[0].src = newImage.src
-      viewerList[0].style.display = 'block'
-      viewerList[1].style.display = 'none'
-      stopInput = false
-    })
-  }
+  loadImage('/content/' + file).then(newImage => {
+    viewerList[nextIndex].src = newImage.src
+    viewerList[nextIndex].style.display = 'block'
+    viewerList[1 - nextIndex].style.display = 'none'
+    stopInput = false
+  })
 }
 
 function changeSource (dist) {

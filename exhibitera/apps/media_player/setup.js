@@ -123,7 +123,7 @@ function editDefinition (uuid = '') {
   })
 
   // Configure the preview frame
-  document.getElementById('previewFrame').src = '../media_player.html?standalone=true&definition=' + def.uuid
+  document.getElementById('previewFrame').src = 'index.html?standalone=true&definition=' + def.uuid
 }
 
 function createThumbnail () {

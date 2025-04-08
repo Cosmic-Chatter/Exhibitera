@@ -449,7 +449,7 @@ function editDefinition (uuid = '') {
   }
 
   // Configure the preview frame
-  document.getElementById('previewFrame').src = '../voting_kiosk.html?standalone=true&definition=' + def.uuid
+  document.getElementById('previewFrame').src = 'index.html?standalone=true&definition=' + def.uuid
   exSetup.previewDefinition()
 }
 

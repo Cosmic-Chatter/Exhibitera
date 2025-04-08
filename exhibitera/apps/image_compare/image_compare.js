@@ -195,7 +195,7 @@ function loadDefinition (definition) {
     if (exCommon.guessMimetype(definition.attractor) === 'video') {
       attractorType = 'video'
 
-      document.getElementById('attractorVideo').src = 'content/' + definition.attractor
+      document.getElementById('attractorVideo').src = '../content/' + definition.attractor
       document.getElementById('attractorVideo').style.display = 'block'
       document.getElementById('attractorImage').style.display = 'none'
       document.getElementById('attractorVideo').play()
@@ -207,7 +207,7 @@ function loadDefinition (definition) {
         // Ignore the error that arises if we're pausing a video that doesn't exist.
       }
 
-      document.getElementById('attractorImage').src = 'content/' + definition.attractor
+      document.getElementById('attractorImage').src = '../content/' + definition.attractor
       document.getElementById('attractorImage').style.display = 'block'
       document.getElementById('attractorVideo').style.display = 'none'
     }
@@ -292,9 +292,9 @@ function loadDefinition (definition) {
     }
 
     if (backgroundClassification === 'light') {
-      langSwitchDropdownIcon.src = '_static/icons/translation-icon_black.svg'
+      langSwitchDropdownIcon.src = '../_static/icons/translation-icon_black.svg'
     } else {
-      langSwitchDropdownIcon.src = '_static/icons/translation-icon_white.svg'
+      langSwitchDropdownIcon.src = '../_static/icons/translation-icon_white.svg'
     }
   }, 100)
 
@@ -407,7 +407,7 @@ function populateItemList (def) {
 
       const hand = document.createElement('img')
       hand.setAttribute('id', 'pulsingHand')
-      hand.src = '_static/icons/hand.svg'
+      hand.src = '../_static/icons/hand.svg'
       div.appendChild(hand)
 
       first = false

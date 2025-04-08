@@ -379,7 +379,7 @@ function editDefinition (uuid = '') {
   onSpreadsheetFileChange()
 
   // Configure the preview frame
-  document.getElementById('previewFrame').src = '../timeline_explorer.html?standalone=true&definition=' + def.uuid
+  document.getElementById('previewFrame').src = 'index.html?standalone=true&definition=' + def.uuid
 }
 
 function rebuildLanguageElements (langOrder) {

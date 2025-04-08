@@ -502,11 +502,11 @@ function loadDefinition (def) {
   }
 
   if (backgroundClassification === 'light') {
-    document.getElementById('langSwitchDropdownIcon').src = '_static/icons/translation-icon_black.svg'
-    document.getElementById('filterDropdownIcon').src = '_static/icons/filter_black.svg'
+    document.getElementById('langSwitchDropdownIcon').src = '../_static/icons/translation-icon_black.svg'
+    document.getElementById('filterDropdownIcon').src = '../_static/icons/filter_black.svg'
   } else {
-    document.getElementById('langSwitchDropdownIcon').src = '_static/icons/translation-icon_white.svg'
-    document.getElementById('filterDropdownIcon').src = '_static/icons/filter_white.svg'
+    document.getElementById('langSwitchDropdownIcon').src = '../_static/icons/translation-icon_white.svg'
+    document.getElementById('filterDropdownIcon').src = '../_static/icons/filter_white.svg'
   }
 
   // Font
@@ -700,10 +700,10 @@ function showMediaInLightbox (media, title = '', caption = '', credit = '') {
   // Load the media with a callback to fade it in when it is loaded
   const mimetype = exCommon.guessMimetype(media)
   if (mimetype === 'image') {
-    imageEl.src = 'content/' + media
+    imageEl.src = '/content/' + media
   } else if (mimetype === 'video') {
     videoPlaying = true
-    videoEl.src = 'content/' + media
+    videoEl.src = '/content/' + media
     videoEl.load()
     videoEl.play()
     document.querySelectorAll('.lightbox-text').forEach((el) => {

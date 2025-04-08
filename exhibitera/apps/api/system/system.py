@@ -1,15 +1,13 @@
 # Standard modules
 import io
-import platform
-import sys
 
 # Third-party modules
 from fastapi import APIRouter
 from fastapi.responses import Response
 
 # Exhibitera modules
-import helper_system
-import helper_utilities
+import exhibitera.apps.features.system as apps_system
+import exhibitera.apps.features.utilities as apps_utilities
 
 router = APIRouter()
 
@@ -18,14 +16,14 @@ router = APIRouter()
 async def get_platform_details():
     """Return details on the current operating system."""
 
-    return helper_system.get_platform_details()
+    return apps_system.get_platform_details()
 
 
 @router.get('/system/getScreenshot', responses={200: {"content": {"image/png": {}}}}, response_class=Response)
 async def get_screenshot():
     """Capture a screenshot and return it as a JPEG response."""
 
-    image = helper_utilities.capture_screenshot()
+    image = apps_utilities.capture_screenshot()
     byte_array = io.BytesIO()
     image.save(byte_array, format='JPEG', quality=85)
     byte_array = byte_array.getvalue()

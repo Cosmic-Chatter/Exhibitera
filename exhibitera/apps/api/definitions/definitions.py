@@ -10,7 +10,8 @@ from fastapi import Body
 from fastapi.responses import FileResponse
 
 # Exhibitera modules
-import helper_files
+import exhibitera.common.files as ex_files
+import exhibitera.apps.features.files as apps_files
 
 router = APIRouter()
 
@@ -19,7 +20,7 @@ router = APIRouter()
 async def load_definition_as_binary(this_uuid: str):
     """Return the given definition as a binary file"""
 
-    path = helper_files.get_path(["definitions", helper_files.with_extension(this_uuid, "json")], user_file=True)
+    path = ex_files.get_path(["definitions", ex_files.with_extension(this_uuid, "json")], user_file=True)
 
     headers = {'Access-Control-Expose-Headers': 'Content-Disposition'}
     return FileResponse(path, headers=headers)
@@ -29,7 +30,7 @@ async def load_definition_as_binary(this_uuid: str):
 async def get_available_definitions(app_id: str):
     """Return a list of all the definitions for the given app."""
 
-    return {"success": True, "definitions": helper_files.get_available_definitions(app_id)}
+    return {"success": True, "definitions": apps_files.get_available_definitions(app_id)}
 
 
 @router.post("/definitions/write")
@@ -39,10 +40,10 @@ async def write_definition(definition: dict[str, Any] = Body(description="The JS
     if "uuid" not in definition or definition["uuid"] == "":
         # Add a unique identifier
         definition["uuid"] = str(uuid.uuid4())
-    path = helper_files.get_path(["definitions",
-                                  helper_files.with_extension(definition["uuid"], ".json")],
-                                 user_file=True)
-    helper_files.write_json(definition, path)
+    path = ex_files.get_path(["definitions",
+                                ex_files.with_extension(definition["uuid"], ".json")],
+                               user_file=True)
+    ex_files.write_json(definition, path)
     return {"success": True, "uuid": definition["uuid"]}
 
 
@@ -50,8 +51,8 @@ async def write_definition(definition: dict[str, Any] = Body(description="The JS
 async def delete_definition(this_uuid: str):
     """Delete the given definition."""
 
-    path = helper_files.get_path(["definitions", helper_files.with_extension(this_uuid, "json")], user_file=True)
-    helper_files.delete_file(path)
+    path = ex_files.get_path(["definitions", ex_files.with_extension(this_uuid, "json")], user_file=True)
+    apps_files.delete_file(path)
 
     return {"success": True}
 
@@ -60,8 +61,8 @@ async def delete_definition(this_uuid: str):
 async def load_definition(this_uuid: str):
     """Load the given definition and return the JSON."""
 
-    path = helper_files.get_path(["definitions", helper_files.with_extension(this_uuid, "json")], user_file=True)
-    definition = helper_files.load_json(path)
+    path = ex_files.get_path(["definitions", ex_files.with_extension(this_uuid, "json")], user_file=True)
+    definition = ex_files.load_json(path)
     if definition is None:
         return {"success": False, "reason": f"The definition {this_uuid} does not exist."}
     return {"success": True, "definition": definition}
@@ -71,7 +72,7 @@ async def load_definition(this_uuid: str):
 async def load_definition_thumbnail(this_uuid: str):
     """Return a thumbnail for this definition."""
 
-    thumbnail_path, mimetype = helper_files.get_definition_thumbnail(this_uuid)
+    thumbnail_path, mimetype = apps_files.get_definition_thumbnail(this_uuid)
 
     headers = {
         'Cache-Control': 'no-store',  # Forces browser to always request the resource
@@ -85,8 +86,8 @@ async def load_definition_thumbnail(this_uuid: str):
 async def get_definition_content_list(this_uuid: str):
     """Return a list of all content used by the given definition."""
 
-    path = helper_files.get_path(["definitions", helper_files.with_extension(this_uuid, "json")], user_file=True)
-    definition = helper_files.load_json(path)
+    path = ex_files.get_path(["definitions", ex_files.with_extension(this_uuid, "json")], user_file=True)
+    definition = ex_files.load_json(path)
     if definition is None:
         return {"success": False, "reason": f"The definition {this_uuid} does not exist."}
 
@@ -127,7 +128,7 @@ async def get_definition_content_list(this_uuid: str):
         if "attractor" in definition and "font" in definition["attractor"]:
             if os.path.basename(os.path.dirname(definition["attractor"]["font"])) == 'content':
                 content.append(os.path.basename(definition["attractor"]["font"]))
-        content += glob.glob(definition["files"], root_dir=helper_files.get_path(["content"], user_file=True))
+        content += glob.glob(definition["files"], root_dir=ex_files.get_path(["content"], user_file=True))
     elif definition["app"] == "voting_kiosk":
         for item_uuid in definition["options"]:
             item = definition["options"][item_uuid]
@@ -144,8 +145,8 @@ async def get_definition_content_list(this_uuid: str):
     content_details = []
     total_size = 0
     for file in content:
-        path = helper_files.get_path(["content", file], user_file=True)
-        size, size_text = helper_files.get_file_size(path)
+        path = ex_files.get_path(["content", file], user_file=True)
+        size, size_text = ex_files.get_file_size(path)
 
         total_size += size
         content_details.append({
@@ -155,5 +156,5 @@ async def get_definition_content_list(this_uuid: str):
         })
 
     return {"success": True,
-            "total_size": helper_files.convert_bytes_to_readable(total_size),
+            "total_size": ex_files.convert_bytes_to_readable(total_size),
             "content": content_details}

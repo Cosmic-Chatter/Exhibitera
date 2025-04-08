@@ -88,9 +88,9 @@ function getIcon (name) {
   // Otherwise, assume the file is user-supplied and return the name as passed.
 
   if (['1-star_black', '2-star_black', '3-star_black', '4-star_black', '5-star_black', '1-star_white', '2-star_white', '3-star_white', '4-star_white', '5-star_white'].includes(name)) {
-    return '_static/icons/' + name + '.png'
+    return '../_static/icons/' + name + '.png'
   } else if (['thumbs-down_black', 'thumbs-down_red', 'thumbs-down_white', 'thumbs-up_black', 'thumbs-up_green', 'thumbs-up_white'].includes(name)) {
-    return '_static/icons/' + name + '.svg'
+    return '../_static/icons/' + name + '.svg'
   } else {
     return 'content/' + name
   }

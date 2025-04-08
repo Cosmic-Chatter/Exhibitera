@@ -348,7 +348,7 @@ function editDefinition (uuid = '') {
   }
 
   // Configure the preview frame
-  document.getElementById('previewFrame').src = '../image_compare.html?standalone=true&definition=' + def.uuid
+  document.getElementById('previewFrame').src = 'index.html?standalone=true&definition=' + def.uuid
 }
 
 function rebuildLanguageElements () {

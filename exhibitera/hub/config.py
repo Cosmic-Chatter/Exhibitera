@@ -5,10 +5,6 @@ import datetime
 import threading
 from typing import Any
 
-# Path to the directory where the server is being launched from
-APP_PATH: str = ""
-# Path to the directory the code is actually running from (different from APP_PATH when using Pyinstaller)
-EXEC_PATH: str = ""
 
 debug: bool = False  # True means print various debug info
 gallery_name: str = "Exhibitera"
