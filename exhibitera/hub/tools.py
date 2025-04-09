@@ -67,7 +67,7 @@ def load_system_configuration(from_dict: Union[dict[str, Any], None] = None) -> 
 
     if from_dict is None:
         config_path = ex_files.get_path(["configuration", "system.json"], user_file=True)
-        system = load_json(config_path)
+        system = ex_files.load_json(config_path)
     else:
         system = from_dict
 

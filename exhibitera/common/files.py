@@ -7,10 +7,16 @@ import json
 import logging
 import mimetypes
 import os
+import pathlib
 import sys
 from typing import Any
 import urllib
+import zipfile
 
+# Third-party modules
+import requests
+
+# Exhibitera modules
 import exhibitera.common.config as config
 
 
@@ -262,6 +268,100 @@ def write_json(data: dict[str, Any] | list,
         reason = f"You do not have write permission for the file {path}"
 
     return success, reason
+
+
+def write_text(data: str, file_path: str, mode: str = "a") -> tuple[bool, str]:
+    """Write an unformatted string to file"""
+
+    if not filename_safe(pathlib.Path(file_path).name):
+        return False, "Invalid character in filename"
+
+    success = True
+    reason = ""
+
+    if mode != "a" and mode != "w":
+        return False, "Mode must be either 'a' (append, [default]) or 'w' (overwrite)"
+
+    try:
+        with config.text_file_lock:
+            with open(file_path, mode, encoding="UTF-8") as f:
+                f.write(data + "\n")
+    except FileNotFoundError:
+        success = False
+        reason = f"File {file_path} does not exist"
+    except PermissionError:
+        success = False
+        reason = f"You do not have write permission for the file {file_path}"
+
+    return success, reason
+
+
+def get_text(file_path: str) -> tuple[str, bool, str]:
+    """Return the contents of a text file."""
+
+    if not filename_safe(pathlib.Path(file_path).name):
+        return "", False, "Invalid character in filename"
+
+    result = ""
+    success = True
+    reason = ""
+
+    try:
+        with config.text_file_lock:
+            with open(file_path, "r", encoding='UTF-8') as f:
+                result = f.read()
+    except FileNotFoundError:
+        success = False
+        reason = f"File {file_path} not found."
+    except PermissionError:
+        success = False
+        reason = f"You do not have read permission for the file {file_path}"
+
+    return result, success, reason
+
+
+def create_zip(zip_filename: str, files_to_zip: [str]) -> bool:
+    """Create a zip archive of the given files"""
+
+    zip_filename = with_extension(zip_filename, 'zip')
+
+    with zipfile.ZipFile(get_path(["temp", zip_filename], user_file=True), 'w') as myzip:
+        for file in files_to_zip:
+            file_path = get_path(["content", file], user_file=True)
+            if os.path.exists(file_path):
+                myzip.write(file_path, arcname=file)
+
+    return True
+
+
+def get_directory_contents(directory: list[str]) -> list:
+    """Return the contents of a directory."""
+
+    content_path = get_path(directory, user_file=True)
+    contents = os.listdir(content_path)
+    return [x for x in contents if x[0] != "."]  # Don't return hidden files
+
+
+def download_file(url: str, path_to_save: str) -> bool:
+    """Download the file at the given url and save it to disk."""
+
+    with config.binary_file_lock:
+        try:
+            with requests.get(url, stream=True, timeout=2) as r:
+                try:
+                    # Check that we received a good response
+                    r.raise_for_status()
+                except requests.HTTPError:
+                    return False
+
+                with open(path_to_save, 'wb') as f:
+                    for chunk in r.iter_content(chunk_size=8192):
+                        f.write(chunk)
+        except requests.exceptions.ReadTimeout:
+            print("download_file: timeout retrieving ", url)
+            return False
+
+    return True
 
 
 # Set up log file

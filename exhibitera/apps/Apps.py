@@ -13,6 +13,7 @@ from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
+from multipart import file_path
 from starlette.background import BackgroundTasks
 import uvicorn
 
@@ -243,7 +244,7 @@ def upload_thumbnail(files: list[UploadFile] = File(),
             continue
 
         temp_path = ex_files.get_path(["content", filename], user_file=True)
-        with config.content_file_lock:
+        with ex_config.binary_file_lock:
             # First write the file to content
             try:
                 with open(temp_path, 'wb') as out_file:
@@ -264,7 +265,7 @@ def create_zip(background_tasks: BackgroundTasks,
                zip_filename: str = Body(description="The filename of the zip file to be created.")):
     """Create a ZIP file containing the given files."""
 
-    apps_files.create_zip(zip_filename, files)
+    ex_files.create_zip(zip_filename, files)
     zip_path = ex_files.get_path(["temp", zip_filename], user_file=True)
     background_tasks.add_task(os.remove, zip_path)
     return FileResponse(zip_path, filename=zip_filename)
@@ -282,7 +283,7 @@ async def retrieve_file(file_url: Annotated[str, Body(description="The URL of th
         return {"success": False, "reason": "invalid_url"}
 
     path = ex_files.get_path(path_list, user_file=True)
-    success = apps_files.download_file(file_url, path)
+    success = ex_files.download_file(file_url, path)
 
     return {"success": success}
 
@@ -384,7 +385,8 @@ async def write_raw_text(name: str,
         response = {"success": False,
                     "reason": "Invalid mode field: must be 'a' (append, [default]) or 'w' (overwrite)"}
         return response
-    success, reason = apps_files.write_raw_text(text, ex_files.with_extension(name, 'txt'), mode=mode)
+    file_path = ex_files.get_path(["data", ex_files.with_extension(name, 'txt')])
+    success, reason = ex_files.write_text(text, file_path, mode=mode)
     response = {"success": success, "reason": reason}
     return response
 
@@ -393,10 +395,8 @@ async def write_raw_text(name: str,
 async def read_raw_text(name: str):
     """Load the given file and return the raw text."""
 
-    if not ex_files.filename_safe(name):
-        return {"success": False, "reason": "Invalid character in filename"}
-
-    result, success, reason = apps_files.get_raw_text(ex_files.with_extension(name, 'txt'))
+    file_path = ex_files.get_path(["data", ex_files.with_extension(name, 'txt')], user_file=True)
+    result, success, reason = ex_files.get_text(file_path)
 
     response = {"success": success, "reason": reason, "text": result}
     return response
@@ -422,7 +422,7 @@ async def get_tracker_data_csv(name: str):
 async def get_available_data():
     """Return a list of files in the /data directory."""
 
-    return {"success": True, "files": apps_files.get_directory_contents(["data"])}
+    return {"success": True, "files": ex_files.get_directory_contents(["data"])}
 
 
 @app.post("/files/upload")
@@ -449,7 +449,7 @@ def upload_files(files: list[UploadFile] = File(),
 
         file_path = ex_files.get_path(path_with_filename, user_file=True)
         print(f"Saving uploaded file to {file_path}")
-        with config.content_file_lock:
+        with ex_config.binary_file_lock:
             try:
                 with open(file_path, 'wb') as out_file:
                     shutil.copyfileobj(file.file, out_file)

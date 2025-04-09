@@ -43,7 +43,6 @@ import exhibitera.hub.features.legacy as ex_legacy
 import exhibitera.hub.features.projectors as ex_proj
 import exhibitera.hub.features.schedules as ex_sched
 import exhibitera.hub.tools as ex_tools
-import exhibitera.hub.features.tracker as ex_track
 import exhibitera.hub.features.users as ex_users
 
 
@@ -85,7 +84,7 @@ def send_webpage_update():
     component_dict_list = []
     for item in hub_config.componentList:
         temp = {"class": "exhibitComponent",
-                "exhibiteraAppID": item.apps_config["app_id"],
+                "exhibiteraAppID": item.config["app_id"],
                 "helperAddress": item.helperAddress,
                 "id": item.id,
                 "ip_address": item.ip_address,
@@ -93,21 +92,21 @@ def send_webpage_update():
                 "lastContactDateTime": item.last_contact_datetime,
                 "latency": item.latency,
                 "platform_details": item.platform_details,
-                "maintenance_status": item.apps_config.get("maintenance_status", "Off floor, not working"),
+                "maintenance_status": item.config.get("maintenance_status", "Off floor, not working"),
                 "status": item.current_status(),
                 "uuid": item.uuid}
-        if "content" in item.apps_config:
-            temp["content"] = item.apps_config["content"]
-        if "definition" in item.apps_config:
-            temp["definition"] = item.apps_config["definition"]
-        if "error" in item.apps_config:
-            temp["error"] = item.apps_config["error"]
-        if "permissions" in item.apps_config:
-            temp["permissions"] = item.apps_config["permissions"]
-        if "description" in item.apps_config:
-            temp["description"] = item.apps_config["description"]
-        if "autoplay_audio" in item.apps_config:
-            temp["autoplay_audio"] = item.apps_config["autoplay_audio"]
+        if "content" in item.config:
+            temp["content"] = item.config["content"]
+        if "definition" in item.config:
+            temp["definition"] = item.config["definition"]
+        if "error" in item.config:
+            temp["error"] = item.config["error"]
+        if "permissions" in item.config:
+            temp["permissions"] = item.config["permissions"]
+        if "description" in item.config:
+            temp["description"] = item.config["description"]
+        if "autoplay_audio" in item.config:
+            temp["autoplay_audio"] = item.config["autoplay_audio"]
         component_dict_list.append(temp)
 
     for item in hub_config.projectorList:
@@ -116,16 +115,16 @@ def send_webpage_update():
                 "id": item.id,
                 "ip_address": item.ip_address,
                 "latency": item.latency,
-                "maintenance_status": item.apps_config.get("maintenance_status", "Off floor, not working"),
+                "maintenance_status": item.config.get("maintenance_status", "Off floor, not working"),
                 "password": item.password,
                 "protocol": item.connection_type,
                 "state": item.state,
                 "status": item.state["status"],
                 "uuid": item.uuid}
-        if "permissions" in item.apps_config:
-            temp["permissions"] = item.apps_config["permissions"]
-        if "description" in item.apps_config:
-            temp["description"] = item.apps_config["description"]
+        if "permissions" in item.config:
+            temp["permissions"] = item.config["permissions"]
+        if "description" in item.config:
+            temp["description"] = item.config["description"]
         component_dict_list.append(temp)
 
     for item in hub_config.wakeOnLANList:
@@ -135,13 +134,13 @@ def send_webpage_update():
                 "ip_address": item.ip_address,
                 "latency": item.latency,
                 "mac_address": item.mac_address,
-                "maintenance_status": item.apps_config.get("maintenance_status", "Off floor, not working"),
+                "maintenance_status": item.config.get("maintenance_status", "Off floor, not working"),
                 "status": item.state["status"],
                 "uuid": item.uuid}
-        if "permissions" in item.apps_config:
-            temp["permissions"] = item.apps_config["permissions"]
-        if "description" in item.apps_config:
-            temp["description"] = item.apps_config["description"]
+        if "permissions" in item.config:
+            temp["permissions"] = item.config["permissions"]
+        if "description" in item.config:
+            temp["description"] = item.config["description"]
         component_dict_list.append(temp)
 
     update_dict["components"] = component_dict_list
@@ -951,7 +950,9 @@ async def get_tracker_raw_text(data: dict[str, Any], tracker_type: str):
         response = {"success": False,
                     "reason": "Request missing 'name' field."}
         return response
-    result, success, reason = ex_track.get_raw_text(ex_files.with_extension(data["name"], 'txt'), tracker_type)
+
+    file_path = ex_files.get_path([tracker_type, "data", ex_files.with_extension(data["name"], 'txt')], user_file=True)
+    result, success, reason = ex_files.get_text(file_path)
     response = {"success": success, "reason": reason, "text": result}
     return response
 
@@ -996,10 +997,8 @@ async def submit_tracker_raw_text(data: dict[str, Any], tracker_type: str):
         response = {"success": False,
                     "reason": "Invalid mode field: must be 'a' (append, [default]) or 'w' (overwrite)"}
         return response
-    success, reason = ex_track.write_raw_text(data["text"],
-                                              ex_files.with_extension(data["name"], 'txt'),
-                                              kind=tracker_type,
-                                              mode=mode)
+    file_path = ex_files.get_path([tracker_type, "data", ex_files.with_extension(data["name"], 'txt')], user_file=True)
+    success, reason = ex_files.write_text(data["text"],file_path, mode)
     response = {"success": success, "reason": reason}
     return response
 

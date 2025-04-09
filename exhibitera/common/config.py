@@ -11,3 +11,5 @@ debug: bool = False
 
 # Lock files
 json_file_lock: threading.Lock = threading.Lock()
+text_file_lock: threading.Lock = threading.Lock()
+binary_file_lock: threading.Lock = threading.Lock()

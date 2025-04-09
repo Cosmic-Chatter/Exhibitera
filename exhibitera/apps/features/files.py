@@ -8,7 +8,6 @@ import os
 import pathlib
 import subprocess
 from typing import Any
-import zipfile
 
 # Non-standard modules
 import requests
@@ -51,79 +50,13 @@ def path_safe(path: list[str]) -> bool:
     return True
 
 
-def write_raw_text(data: str, name: str, mode: str = "a") -> tuple[bool, str]:
-    """Write an un-formatted string to file"""
-
-    if not ex_files.filename_safe(name):
-        return False, "Invalid character in filename"
-
-    file_path = ex_files.get_path(["data", name], user_file=True)
-    success = True
-    reason = ""
-
-    if mode != "a" and mode != "w":
-        return False, "Mode must be either 'a' (append, [default]) or 'w' (overwrite)"
-
-    try:
-        with apps_config.content_file_lock:
-            with open(file_path, mode, encoding="UTF-8") as f:
-                f.write(data + "\n")
-    except FileNotFoundError:
-        success = False
-        reason = f"File {file_path} does not exist"
-    except PermissionError:
-        success = False
-        reason = f"You do not have write permission for the file {file_path}"
-
-    return success, reason
-
-
-def get_raw_text(name: str) -> tuple[str, bool, str]:
-    """Return the contents of a text file."""
-
-    if not ex_files.filename_safe(name):
-        return "", False, "Invalid character in filename"
-
-    file_path = ex_files.get_path(["data", name], user_file=True)
-    success = True
-    reason = ""
-    result = ""
-
-    try:
-        with apps_config.content_file_lock:
-            with open(file_path, "r", encoding='UTF-8') as f:
-                result = f.read()
-    except FileNotFoundError:
-        success = False
-        reason = f"File {file_path} not found."
-    except PermissionError:
-        success = False
-        reason = f"You do not have read permission for the file {file_path}"
-
-    return result, success, reason
-
-
-def create_zip(zip_filename: str, files_to_zip: [str]) -> bool:
-    """Create a zip archive of the given files"""
-
-    zip_filename = ex_files.with_extension(zip_filename, 'zip')
-
-    with zipfile.ZipFile(ex_files.get_path(["temp", zip_filename], user_file=True), 'w') as myzip:
-        for file in files_to_zip:
-            file_path = ex_files.get_path(["content", file], user_file=True)
-            if os.path.exists(file_path):
-                myzip.write(file_path, arcname=file)
-
-    return True
-
-
 def get_available_definitions(app_id: str = "all") -> dict[str, Any]:
     """Return all the *.json definition files that match the given app_id (or all of them)."""
 
     all_def = glob.glob(ex_files.get_path(["definitions"], user_file=True) + "/*.json")
     to_return = {}
     for path in all_def:
-        json_def = load_json(path)
+        json_def = ex_files.load_json(path)
         if json_def is not None:
             try:
                 if app_id == "all" or json_def["app"] == app_id:
@@ -143,7 +76,7 @@ def delete_file(file: str, absolute: bool = False):
         file_path = ex_files.get_path(["content", file], user_file=True)
 
     print("Deleting file:", file_path)
-    with apps_config.content_file_lock:
+    with ex_config.binary_file_lock:
         os.remove(file_path)
 
     load_thumbnail_archive()
@@ -513,7 +446,7 @@ def get_thumbnail(filename: str,
 def get_definition_thumbnail(uuid_str: str) -> tuple[str, str]:
     """Retrieve the thumbnail for the given definition or a default one."""
 
-    thumbs = get_directory_contents(['thumbnails', 'definitions'])
+    thumbs = ex_files.get_directory_contents(['thumbnails', 'definitions'])
     matches = [x for x in thumbs if uuid_str in x]
 
     if len(matches) > 0:
@@ -522,7 +455,7 @@ def get_definition_thumbnail(uuid_str: str) -> tuple[str, str]:
 
     # Need to find a default image
     def_path = ex_files.get_path(["definitions", ex_files.with_extension(uuid_str, 'json')], user_file=True)
-    definition = load_json(def_path)
+    definition = ex_files.load_json(def_path)
     if definition is None:
         app = "document_missing"
     else:
@@ -564,14 +497,6 @@ def get_all_directory_contents(directory: str = "content") -> tuple[list, list[d
     return content, content_details
 
 
-def get_directory_contents(directory: list[str]) -> list:
-    """Return the contents of a directory."""
-
-    content_path = ex_files.get_path(directory, user_file=True)
-    contents = os.listdir(content_path)
-    return [x for x in contents if x[0] != "."]  # Don't return hidden files
-
-
 def check_directory_structure():
     """Make sure the appropriate content directories are present and create them if they are not."""
 
@@ -597,28 +522,6 @@ def check_directory_structure():
             os.listdir(sub_dir)
         except FileNotFoundError:
             os.mkdir(sub_dir)
-
-
-def download_file(url: str, path_to_save: str) -> bool:
-    """Download the file at the given url and save it to disk."""
-
-    with apps_config.content_file_lock:
-        try:
-            with requests.get(url, stream=True, timeout=2) as r:
-                try:
-                    # Check that we received a good response
-                    r.raise_for_status()
-                except requests.HTTPError:
-                    return False
-
-                with open(path_to_save, 'wb') as f:
-                    for chunk in r.iter_content(chunk_size=8192):
-                        f.write(chunk)
-        except requests.exceptions.ReadTimeout:
-            print("download_file: timeout retrieving ", url)
-            return False
-
-    return True
 
 
 # Set up log file

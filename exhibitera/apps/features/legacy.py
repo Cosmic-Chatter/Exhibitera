@@ -16,7 +16,7 @@ def migrate_definition_thumbnails():
     if not os.path.exists(dir_path):
         os.mkdir(dir_path)
 
-    thumbs = apps_files.get_directory_contents(['thumbnails'])
+    thumbs = ex_files.get_directory_contents(['thumbnails'])
 
     uuid4_pattern = re.compile(
         r'\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}\b'

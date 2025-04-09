@@ -46,5 +46,4 @@ HELPING_REMOTE_CLIENT: bool = False
 # Threading resources
 server_process: threading.Thread
 defaults_file_lock: threading.Lock = threading.Lock()
-content_file_lock: threading.Lock = threading.Lock()
 thumbnail_lock: threading.Lock = threading.Lock()
