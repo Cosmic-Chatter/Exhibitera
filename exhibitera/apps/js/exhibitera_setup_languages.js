@@ -2,7 +2,7 @@
 
 // Manage the addition of languages for definitions
 
-import * as exCommon from './exhibitera_app_common.js'
+import * as exUtilities from '../../common/utilities.js'
 import * as exSetup from './exhibitera_setup_common.js'
 
 export const config = {
@@ -85,7 +85,7 @@ export function createLanguagePicker (parent, callbacks = {}) {
   //             }
 
   const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
-  const uuid = exCommon.uuid()
+  const uuid = exUtilities.uuid()
   parent.innerHTML = ''
 
   const row = document.createElement('div')

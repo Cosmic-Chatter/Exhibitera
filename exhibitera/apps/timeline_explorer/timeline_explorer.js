@@ -1,5 +1,6 @@
 /* global showdown textFit */
 
+import * as exFiles from '../../common/files.js'
 import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exMarkdown from '../js/exhibitera_app_markdown.js'
 
@@ -101,7 +102,7 @@ function loadDefinition (def) {
   })
     .then((response) => {
       $('#timelineContainer').empty()
-      const csvAsJSON = exCommon.csvToJSON(response).json
+      const csvAsJSON = exFiles.csvToJSON(response).json
       $(document).data('spreadsheet', csvAsJSON)
       localize(defaultLang)
     })
@@ -109,7 +110,7 @@ function loadDefinition (def) {
   // Set up the attractor
   inactivityTimeout = def.inactivity_timeout || 30
   if ('attractor' in def && def.attractor.trim() !== '') {
-    const fileType = exCommon.guessMimetype(def.attractor)
+    const fileType = exFiles.guessMimetype(def.attractor)
     if (['image', 'video'].includes(fileType)) {
       setAttractor(def.attractor, fileType)
     }

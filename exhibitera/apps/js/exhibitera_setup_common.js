@@ -1,5 +1,7 @@
 /* global bootstrap, showdown */
 
+import * as exFiles from '../../common/files.js'
+import * as exUtilities from '../../common/utilities.js'
 import * as exCommon from './exhibitera_app_common.js'
 import * as exFileSelect from './exhibitera_file_select_modal.js'
 
@@ -221,7 +223,7 @@ export function showAppHelpModal (app) {
       }
     })
 
-  showModal('#appHelpModal')
+  exUtilities.showModal('#appHelpModal')
 }
 
 export function populateAvailableDefinitions (definitions) {
@@ -258,7 +260,7 @@ export function configureFromQueryString () {
   } else {
     if (config.clearDefinition != null) config.clearDefinition()
     if (config.loggedIn) {
-      showModal('#appWelcomeModal')
+      exUtilities.showModal('#appWelcomeModal')
     }
   }
 }
@@ -283,7 +285,7 @@ async function showSetupWizard () {
   // Show the modal for the setup wizard
 
   await config.initializeWizard()
-  showModal('#setupWizardModal')
+  exUtilities.showModal('#setupWizardModal')
 }
 
 export function addWizardLanguage () {
@@ -331,7 +333,7 @@ export function initializeDefinition () {
 
   const temp = structuredClone(config.blankDefinition)
   if (temp == null) return
-  temp.uuid = exCommon.uuid()
+  temp.uuid = exUtilities.uuid()
   $('#definitionSaveButton').data('initialDefinition', temp)
   $('#definitionSaveButton').data('workingDefinition', temp)
   previewDefinition(false)
@@ -392,7 +394,7 @@ export function updateWorkingDefinition (property, value) {
     console.log(`skipping ${property}`)
     return
   }
-  exCommon.setObjectProperty($('#definitionSaveButton').data('workingDefinition'), property, value)
+  exUtilities.setObjectProperty($('#definitionSaveButton').data('workingDefinition'), property, value)
 }
 
 export async function saveDefinition (name = '') {
@@ -448,7 +450,7 @@ function createEventListeners () {
   }
   try {
     document.getElementById('appWelcomeModalWizardButton').addEventListener('click', () => {
-      hideModal('#appWelcomeModal')
+      exUtilities.hideModal('#appWelcomeModal')
       showSetupWizard()
     })
   } catch {
@@ -808,7 +810,7 @@ function createAdvancedFontPickers (userFonts) {
 export function createAdvancedFontPicker (details) {
   // Create an advanced font select
 
-  const id = exCommon.uuid()
+  const id = exUtilities.uuid()
   details.parent.setAttribute('data-constAFP-id', id)
 
   details.parent.innerHTML = `
@@ -834,7 +836,7 @@ function getUserFonts () {
       .then((result) => {
         const availableFonts = []
         result.all_exhibits.forEach((item) => {
-          if (exCommon.guessMimetype(item) === 'font') {
+          if (exFiles.guessMimetype(item) === 'font') {
             availableFonts.push(item)
           }
         })
@@ -889,7 +891,7 @@ function populateAdvancedFontPickers (userFonts) {
 
     // First, add the detault
     const defaultFont = parent.getAttribute('data-default')
-    _createAdvancedFontOption(parent, 'Default', '../_fonts/' + defaultFont)
+    _createAdvancedFontOption(parent, 'Default', '/_fonts/' + defaultFont)
 
     // Then, add the user fonts
     if (userFonts.length > 0) {
@@ -898,7 +900,7 @@ function populateAdvancedFontPickers (userFonts) {
       parent.appendChild(user)
 
       userFonts.forEach((font) => {
-        _createAdvancedFontOption(parent, font, '../content/' + font)
+        _createAdvancedFontOption(parent, font, '/content/' + font)
       })
     }
 
@@ -907,7 +909,7 @@ function populateAdvancedFontPickers (userFonts) {
     builtInLabel.setAttribute('disabled', true)
     parent.appendChild(builtInLabel)
     builtInFonts.forEach((font) => {
-      _createAdvancedFontOption(parent, font.name, '../_fonts/' + font.path)
+      _createAdvancedFontOption(parent, font.name, '/_fonts/' + font.path)
     })
 
     _onAdvancedFontPickerChange(parent, false)
@@ -966,7 +968,7 @@ export function setAdvancedFontPicker (el, value) {
 export function resetAdvancedFontPickers () {
   // Find and reset all advanced font pickers to their default values.
   Array.from(document.querySelectorAll('.AFP-select')).forEach((el) => {
-    const defaultFont = '../_fonts/' + el.getAttribute('data-default')
+    const defaultFont = '/_fonts/' + el.getAttribute('data-default')
     setAdvancedFontPicker(el, defaultFont)
   })
 }
@@ -1097,7 +1099,7 @@ export function showPasswordChangeModal () {
   document.getElementById('passwordChangeModalPassMismatchWarning').style.display = 'none'
   document.getElementById('passwordChangeModalBadCurrentPassWarning').style.display = 'none'
 
-  showModal('#passwordChangeModal')
+  exUtilities.showModal('#passwordChangeModal')
 }
 
 export function submitUserPasswordChange () {
@@ -1139,26 +1141,10 @@ export function submitUserPasswordChange () {
           document.getElementById('passwordChangeModalBadCurrentPassWarning').style.display = 'block'
         }
       } else {
-        hideModal('#changePasswordModal')
+        exUtilities.hideModal('#changePasswordModal')
         logoutUser()
       }
     })
-}
-
-export function showModal (modal) {
-  // Show the given Bootstrap modal
-  // Modal can either be a string starting with # (e.g., '#myID') or a DOM element
-
-  const myModal = new bootstrap.Modal(modal)
-  myModal.show()
-}
-
-export function hideModal (modal) {
-  // Hide the given Bootstrap modal
-  // Modal can either be a string starting with # (e.g., '#myID') or a DOM element
-
-  const myModal = bootstrap.Modal.getInstance(modal)
-  myModal.hide()
 }
 
 const markdownConverter = new showdown.Converter()

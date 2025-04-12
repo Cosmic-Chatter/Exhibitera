@@ -1,4 +1,5 @@
 /* global showdown */
+import * as exFiles from '../../common/files.js'
 import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exMarkdown from '../js/exhibitera_app_markdown.js'
 
@@ -192,7 +193,7 @@ function loadDefinition (definition) {
   inactivityTimeout = definition?.inactivity_timeout * 1000 || 30000
 
   if ((definition?.attractor || '') !== '') {
-    if (exCommon.guessMimetype(definition.attractor) === 'video') {
+    if (exFiles.guessMimetype(definition.attractor) === 'video') {
       attractorType = 'video'
 
       document.getElementById('attractorVideo').src = '../content/' + definition.attractor

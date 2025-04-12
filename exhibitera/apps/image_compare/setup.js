@@ -1,5 +1,6 @@
 /* global bootstrap, Coloris, showdown */
 
+import * as exUtilities from '../../common/utilities.js'
 import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exFileSelect from '../js/exhibitera_file_select_modal.js'
 import * as exSetup from '../js/exhibitera_setup_common.js'
@@ -139,7 +140,7 @@ async function wizardCreateDefinition () {
   const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
   exSetup.updateWorkingDefinition(['name'], defName)
 
-  exSetup.hideModal('#setupWizardModal')
+  exUtilities.hideModal('#setupWizardModal')
   resetWizardFields() // Must clear navs before building new ones for the main editor
 
   await exSetup.saveDefinition(defName)
@@ -147,7 +148,7 @@ async function wizardCreateDefinition () {
   exSetup.populateAvailableDefinitions(result.definitions)
   document.getElementById('availableDefinitionSelect').value = uuid
   editDefinition(uuid)
-  exSetup.hideModal('#setupWizardModal')
+  exUtilities.hideModal('#setupWizardModal')
 }
 
 function wizardBuildPairDetailsPage () {
@@ -374,7 +375,7 @@ function addItem (wizard = false) {
   }
 
   const item = {
-    uuid: exCommon.uuid(),
+    uuid: exUtilities.uuid(),
     image1: '',
     image2: ''
   }

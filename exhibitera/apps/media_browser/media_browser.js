@@ -1,5 +1,7 @@
 /* global bootstrap textFit */
 
+import * as exFiles from '../../common/files.js'
+import * as exUtilities from '../../common/utilities.js'
 import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exMarkdown from '../js/exhibitera_app_markdown.js'
 
@@ -239,7 +241,7 @@ function _getFilterOptions (key) {
   for (const row of spreadsheet) {
     if (key in row) resultDict[row[key]] = 1
   }
-  return exCommon.sortAlphabetically(Object.keys(resultDict))
+  return exUtilities.sortAlphabetically(Object.keys(resultDict))
 }
 
 function clearFilters () {
@@ -407,7 +409,7 @@ function loadDefinition (def) {
     inactivityTimeout = def.inactivity_timeout * 1000
   }
   if ('attractor' in def && def.attractor.trim() !== '') {
-    if (exCommon.guessMimetype(def.attractor) === 'video') {
+    if (exFiles.guessMimetype(def.attractor) === 'video') {
       attractorType = 'video'
 
       document.getElementById('attractorVideo').src = 'content/' + def.attractor
@@ -562,7 +564,7 @@ function loadDefinition (def) {
     noCache: true
   })
     .then((response) => {
-      const csvAsJSON = exCommon.csvToJSON(response)
+      const csvAsJSON = exFiles.csvToJSON(response)
       spreadsheet = csvAsJSON.json // Global property
       localize(defaultLang)
 
@@ -698,7 +700,7 @@ function showMediaInLightbox (media, title = '', caption = '', credit = '') {
   }
 
   // Load the media with a callback to fade it in when it is loaded
-  const mimetype = exCommon.guessMimetype(media)
+  const mimetype = exFiles.guessMimetype(media)
   if (mimetype === 'image') {
     imageEl.src = '/content/' + media
   } else if (mimetype === 'video') {

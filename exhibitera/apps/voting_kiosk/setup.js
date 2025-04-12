@@ -1,5 +1,6 @@
 /* global Coloris, bootstrap */
 
+import * as exUtilities from '../../common/utilities.js'
 import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exFileSelect from '../js/exhibitera_file_select_modal.js'
 import * as exSetup from '../js/exhibitera_setup_common.js'
@@ -105,7 +106,7 @@ async function wizardCreateDefinition () {
     exSetup.updateWorkingDefinition(['option_order'], [])
   }
   if (answersType === 'thumbs') {
-    const optionOrder = [exCommon.uuid(), exCommon.uuid()]
+    const optionOrder = [exUtilities.uuid(), exUtilities.uuid()]
     exSetup.updateWorkingDefinition(['option_order'], optionOrder)
     exSetup.updateWorkingDefinition(['options', optionOrder[0]], {
       icon: 'thumbs-down_red',
@@ -122,7 +123,7 @@ async function wizardCreateDefinition () {
       value: 'Good'
     })
   } else if (answersType === 'threeStars') {
-    const optionOrder = [exCommon.uuid(), exCommon.uuid(), exCommon.uuid()]
+    const optionOrder = [exUtilities.uuid(), exUtilities.uuid(), exUtilities.uuid()]
     exSetup.updateWorkingDefinition(['option_order'], optionOrder)
     exSetup.updateWorkingDefinition(['options', optionOrder[0]], {
       icon: '1-star_white',
@@ -146,7 +147,7 @@ async function wizardCreateDefinition () {
       value: '3_star'
     })
   } else if (answersType === 'fiveStars') {
-    const optionOrder = [exCommon.uuid(), exCommon.uuid(), exCommon.uuid(), exCommon.uuid(), exCommon.uuid()]
+    const optionOrder = [exUtilities.uuid(), exUtilities.uuid(), exUtilities.uuid(), exUtilities.uuid(), exUtilities.uuid()]
     exSetup.updateWorkingDefinition(['option_order'], optionOrder)
     exSetup.updateWorkingDefinition(['options', optionOrder[0]], {
       icon: '1-star_white',
@@ -192,7 +193,7 @@ async function wizardCreateDefinition () {
   document.getElementById('availableDefinitionSelect').value = uuid
 
   editDefinition(uuid)
-  exSetup.hideModal('#setupWizardModal')
+  exUtilities.hideModal('#setupWizardModal')
 }
 
 function wizardCreateAnswerOption (userDetails) {
@@ -201,7 +202,7 @@ function wizardCreateAnswerOption (userDetails) {
   const optionOrder = $('#definitionSaveButton').data('workingDefinition').option_order
 
   const defaults = {
-    uuid: exCommon.uuid(),
+    uuid: exUtilities.uuid(),
     label: '',
     value: '',
     icon: '',
@@ -470,7 +471,7 @@ function createSurveyOption (userDetails, populateEditor = false) {
   const optionOrder = $('#definitionSaveButton').data('workingDefinition').option_order
 
   const defaults = {
-    uuid: exCommon.uuid(),
+    uuid: exUtilities.uuid(),
     label: '',
     value: '',
     icon: '',

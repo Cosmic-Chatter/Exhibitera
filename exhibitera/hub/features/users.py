@@ -11,8 +11,8 @@ from cryptography.fernet import Fernet, InvalidToken
 
 # Exhibitera modules
 import exhibitera.common.files as ex_files
+import exhibitera.common.utilities as ex_utilities
 import exhibitera.hub.config as hub_config
-import exhibitera.hub.tools as hub_tools
 
 password_hasher = argon2.PasswordHasher(time_cost=1,
                                         memory_cost=1024,
@@ -209,7 +209,7 @@ def check_for_root_admin():
 
     path = ex_files.get_path(["configuration", "root_admin.txt"], user_file=True)
     if not os.path.exists(path):
-        hub_tools.clear_terminal()
+        ex_utilities.clear_terminal()
         print("##########################################################")
         print("Welcome to Exhibitera Hub!")
         print("")

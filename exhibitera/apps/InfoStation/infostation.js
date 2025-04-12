@@ -1,5 +1,6 @@
 /* global textFit */
 
+import * as exFiles from '../../common/files.js'
 import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exMarkdown from '../js/exhibitera_app_markdown.js'
 
@@ -22,7 +23,7 @@ function loadDefinition (definition) {
   // Configure the attractor
   attractorAvailable = false
   if ('attractor' in definition) {
-    const fileType = exCommon.guessMimetype(definition.attractor)
+    const fileType = exFiles.guessMimetype(definition.attractor)
     if (['image', 'video'].includes(fileType)) {
       setAttractor(definition.attractor, fileType)
     }

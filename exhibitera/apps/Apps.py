@@ -7,7 +7,7 @@ import sys
 import threading
 from typing import Annotated, Any
 
-# Third-party modules
+# Non-standard modules
 from fastapi import FastAPI, Body, Depends, File, Form, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -18,8 +18,9 @@ from starlette.background import BackgroundTasks
 import uvicorn
 
 # Exhibitera modules
-import exhibitera.common.files as ex_files
 import exhibitera.common.config as ex_config
+import exhibitera.common.files as ex_files
+import exhibitera.common.utilities as ex_utilities
 import exhibitera.apps.config as apps_config
 import exhibitera.apps.features.dmx as apps_dmx
 import exhibitera.apps.features.files as apps_files
@@ -28,8 +29,8 @@ import exhibitera.apps.features.utilities as apps_utilities
 import exhibitera.apps.features.system as apps_system
 
 # API Modules
-from api.system import system
-from api.definitions import definitions
+from exhibitera.apps.api.system import system
+from exhibitera.apps.api.definitions import definitions
 
 # If we're not on Linux, prepare to use the webview
 if sys.platform != 'linux':
@@ -67,6 +68,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.mount("/common",
+          StaticFiles(directory=ex_files.get_path(["..", 'common']), html=True),
+          name="common")
 app.mount("/dmx_control",
           StaticFiles(directory=ex_files.get_path(["dmx_control"]), html=True),
           name="dmx_control")
@@ -293,7 +297,7 @@ async def send_configuration(config: apps_config = Depends(get_config)):
     config_to_send = config.defaults.copy()
 
     # Add the current update availability to pass to Hub
-    config_to_send["software_update"] = config.software_update
+    config_to_send["software_update"] = ex_config.software_update
     return config_to_send
 
 
@@ -1030,7 +1034,7 @@ def run():
         apps_legacy.fix_appearance_to_style()
 
         # Check the GitHub server for an available software update
-        apps_utilities.check_for_software_update()
+        ex_utilities.check_for_software_update('apps')
 
         # Activate Smart Restart
         apps_system.smart_restart_check()

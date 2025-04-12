@@ -8,7 +8,6 @@ import socket
 import uuid
 import shutil
 import sys
-import threading
 from typing import Any, Union
 
 # Non-standard modules
@@ -19,65 +18,8 @@ import requests
 # Exhibitera modules
 import exhibitera.common.config as ex_config
 import exhibitera.common.files as ex_files
+import exhibitera.common.utilities as ex_utilities
 import exhibitera.apps.config as apps_config
-import exhibitera.apps.features.files as apps_files
-
-
-def check_for_software_update():
-    """Download the version file from GitHub and check if there is an update"""
-
-    print("Checking for update... ", end="")
-    apps_config.software_update["update_available"] = False
-
-    local_dict = ex_files.load_json(ex_files.get_path(["_static", "semantic_version.json"]))
-    if local_dict is None:
-        print("error. The semantic version file is corrupt and cannot be read.")
-        return
-
-    apps_config.software_update["current_version"] = local_dict["version"]
-    remote_dict = None
-    try:
-        version_url = "https://raw.githubusercontent.com/Cosmic-Chatter/Exhibitera/main/exhibitera/apps/_static/semantic_version.json"
-        response = requests.get(version_url, timeout=2)
-        response.raise_for_status()
-        remote_dict = response.json()
-    except requests.RequestException as e:
-        print("cannot connect to update server")
-    except ValueError as e:
-        print("cannot connect to update server")
-
-    if remote_dict is not None:
-        apps_config.software_update["available_version"] = remote_dict["version"]
-
-        # Compare the local and remote versions to check for an update
-        if remote_dict["version"]["major"] > local_dict["version"]["major"]:
-            apps_config.software_update["update_available"] = True
-        elif remote_dict["version"]["major"] < local_dict["version"]["major"]:
-            apps_config.software_update["update_available"] = False
-        else:
-            # Major versions equal
-            if remote_dict["version"]["minor"] > local_dict["version"]["minor"]:
-                apps_config.software_update["update_available"] = True
-            elif remote_dict["version"]["minor"] < local_dict["version"]["minor"]:
-                apps_config.software_update["update_available"] = False
-            else:
-                # Major & minor versions equal
-                if remote_dict["version"]["patch"] > local_dict["version"]["patch"]:
-                    apps_config.software_update["update_available"] = True
-                elif remote_dict["version"]["patch"] <= local_dict["version"]["patch"]:
-                    apps_config.software_update["update_available"] = False
-
-        if apps_config.software_update["update_available"]:
-            print("update available!")
-        else:
-            print("the server is up to date.")
-
-    # Reset the timer to check for an update tomorrow
-    if apps_config.software_update_timer is not None:
-        apps_config.software_update_timer.cancel()
-    apps_config.software_update_timer = threading.Timer(86400, check_for_software_update)
-    apps_config.software_update_timer.daemon = True
-    apps_config.software_update_timer.start()
 
 
 def get_system_stats() -> dict[str, Union[int, float]]:
@@ -141,7 +83,7 @@ def update_configuration(data: dict[str, Any], cull: bool = False):
     else:
         # Merge the new dictionary into the current one
         new_defaults = copy.deepcopy(prior_defaults)
-        deep_merge(data, new_defaults)
+        ex_utilities.deep_merge(data, new_defaults)
     new_defaults["app"]["uuid"] = uuid_str
 
     if new_defaults == prior_defaults:
@@ -155,27 +97,6 @@ def update_configuration(data: dict[str, Any], cull: bool = False):
 
     if ex_config.debug:
         print("apps_utilities.update_defaults: update written.")
-
-
-def deep_merge(source: dict, destination: dict):
-    """ Merge  a series of nested dictionaries. Merge source INTO destination
-
-    From https://stackoverflow.com/questions/20656135/python-deep-merge-dictionary-data/20666342#20666342
-    """
-
-    for key, value in source.items():
-        if isinstance(value, dict):
-            # get node or create one
-            node = destination.setdefault(key, {})
-            deep_merge(value, node)
-        else:
-            destination[key] = value
-
-
-def clear_terminal():
-    """Clear the terminal"""
-
-    os.system('cls' if os.name == 'nt' else 'clear')
 
 
 def capture_screenshot() -> Image | None:
@@ -192,7 +113,7 @@ def capture_screenshot() -> Image | None:
 def command_line_setup_print_gui() -> None:
     """Helper to print the header content for the setup tool"""
 
-    clear_terminal()
+    ex_utilities.clear_terminal()
     print("################################################################################")
     print("                      Welcome to Exhibitera Apps!")
     print("")
@@ -351,20 +272,3 @@ def find_available_port(start: int = 8000) -> int:
 
         s.close()
     return this_port
-
-
-def str_to_bool(val: str) -> bool:
-    """Take a string value like "false" and convert it to a bool"""
-
-    if isinstance(val, bool):
-        return val
-    else:
-        val = str(val).strip()
-        if val in ["false", "False", 'FALSE']:
-            val_to_return = False
-        elif val in ["true", "True", 'TRUE']:
-            val_to_return = True
-        else:
-            val_to_return = False
-            print("strToBool: Warning: ambiguous string, returning False:", val)
-    return val_to_return

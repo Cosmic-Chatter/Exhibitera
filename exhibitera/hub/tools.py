@@ -1,11 +1,10 @@
 """Helper functions for Hub."""
 
 # Standard imports
-import json
 import logging
 import os
 import threading
-from typing import Any, Union
+from typing import Any
 
 # Non-standard imports
 import psutil
@@ -40,29 +39,7 @@ def path_safe(path: list[str]) -> bool:
     return True
 
 
-def clear_terminal() -> None:
-    """Clear the terminal"""
-
-    os.system('cls' if os.name == 'nt' else 'clear')
-
-
-def deep_merge(source: dict, destination: dict):
-    """ Merge  a series of nested dictionaries. Merge source INTO destination
-
-    From https://stackoverflow.com/questions/20656135/python-deep-merge-dictionary-data/20666342#20666342
-    """
-
-    for key, value in source.items():
-        if isinstance(value, dict):
-            # get node or create one
-            node = destination.setdefault(key, {})
-            deep_merge(value, node)
-        else:
-            destination[key] = value
-    return destination
-
-
-def load_system_configuration(from_dict: Union[dict[str, Any], None] = None) -> None:
+def load_system_configuration(from_dict: dict[str, Any] | None = None) -> None:
     """Read system.json and set up apps_config."""
 
     if from_dict is None:

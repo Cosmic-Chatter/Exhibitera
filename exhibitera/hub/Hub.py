@@ -35,6 +35,7 @@ from sse_starlette.sse import EventSourceResponse
 # Exhibitera modules
 import exhibitera.common.config as ex_config
 import exhibitera.common.files as ex_files
+import exhibitera.common.utilities as ex_utilities
 import exhibitera.hub.config as hub_config
 import exhibitera.hub.features.exhibits as ex_exhibit
 import exhibitera.hub.features.groups as ex_group
@@ -169,7 +170,7 @@ def send_webpage_update():
 def command_line_setup_print_gui() -> None:
     """Helper to print the header content for the setup tool"""
 
-    ex_tools.clear_terminal()
+    ex_utilities.clear_terminal()
     print("##########################################################")
     print("Welcome to Exhibitera Hub!")
     print("")
@@ -323,7 +324,6 @@ def check_for_outdated_os() -> tuple[bool, str]:
         return False, ""
 
     return False, ""
-
 
 
 def check_for_software_update() -> None:
@@ -540,7 +540,7 @@ def edit_user_preferences(request: Request,
     user = ex_users.get_user(uuid_str=uuid_str)
     if user is None:
         return {"success": False, "reason": "user_does_not_exist"}
-    result = ex_tools.deep_merge(preferences, user.preferences)
+    result = ex_utilities.deep_merge(preferences, user.preferences)
     user.preferences = result
     ex_users.save_users()
 
@@ -1814,6 +1814,9 @@ async def send_update_stream(request: Request):
 
     return EventSourceResponse(event_generator())
 
+app.mount("/common",
+          StaticFiles(directory=ex_files.get_path(["..", 'common']), html=True),
+          name="common")
 app.mount("/css",
           StaticFiles(directory=ex_files.get_path(["css"])),
           name="css")

@@ -473,37 +473,6 @@ export function sendConfigUpdate (update) {
     })
 }
 
-export function arraysEqual (arr1, arr2) {
-  // Function to check if two arrays have the same elements in the same order
-
-  if (arr1.length !== arr2.length) {
-    return false
-  } else {
-    for (let i = 0; i < arr1.length; i++) {
-      if (arr1[i] !== arr2[i]) {
-        return false
-      }
-    }
-    return true
-  }
-}
-
-export function stringToBool (str) {
-  // Parse a given string and return an appropriate bool
-
-  if (typeof str === 'boolean') {
-    return str
-  }
-
-  return ['True', 'true', 'TRUE', '1', 'yes', 'Yes', 'YES'].includes(str)
-}
-
-export function formatSemanticVersion (obj) {
-  // Take an object representing a semantic version and format it as a string
-
-  return (String(obj?.major) ?? '?') + '.' + (String(obj?.minor) ?? '?') + '.' + (String(obj?.patch) ?? '?')
-}
-
 export function sendAnalytics (data) {
   // Take the provided dictionary of data and send it to Hub
 
@@ -526,92 +495,6 @@ export function sendAnalytics (data) {
       params: requestDict,
       timeout: 5000
     })
-}
-
-export function csvToJSON (csv) {
-  // From https://stackoverflow.com/questions/59016562/parse-csv-records-in-to-an-array-of-objects-in-javascript
-
-  const lines = csv.split('\n')
-  const result = []
-  const headers = lines[0].split(',')
-
-  for (let i = 1; i < lines.length; i++) {
-    const obj = {}
-
-    if (lines[i] === undefined || lines[i].trim() === '') {
-      continue
-    }
-
-    // regex to split on comma, but ignore inside of ""
-    const words = splitCsv(lines[i])
-    for (let j = 0; j < words.length; j++) {
-      // Clean up "" used to escape commas in the CSV
-      let word = words[j].trim()
-      if (word.slice(0, 1) === '"' && word.slice(-1) === '"') {
-        word = word.slice(1, -1)
-      }
-
-      word = word.replaceAll('""', '"')
-      obj[headers[j].trim()] = word.trim()
-    }
-
-    result.push(obj)
-  }
-  const detectBad = detectBadCSV(result)
-
-  if (detectBad.error === true) {
-    return {
-      json: result,
-      error: true,
-      error_index: detectBad.error_index
-    }
-  }
-
-  return { json: result, error: false }
-}
-
-function detectBadCSV (jsonArray) {
-  // Take the JSON array from csvToJSON and check if it seems properly formed.
-
-  const lengthCounts = {}
-  const lengthList = []
-  jsonArray.forEach((el) => {
-    // Count the number of fields (which should be the same for each row)
-    const length = Object.keys(el).length
-    if (length in lengthCounts) {
-      lengthCounts[length] += 1
-    } else {
-      lengthCounts[length] = 1
-    }
-    lengthList.push(length)
-  })
-
-  // Assume that the length that occurs most often is the correct one
-  const mostCommon = parseInt(Object.keys(lengthCounts).reduce((a, b) => lengthCounts[a] > lengthCounts[b] ? a : b))
-  const badIndices = []
-  lengthList.forEach((el, i) => {
-    if (el !== mostCommon) badIndices.push(i)
-  })
-  if (badIndices.length > 0) {
-    return { error: true, error_index: badIndices[0] }
-  }
-  return { error: false }
-}
-
-function splitCsv (str) {
-  // From https://stackoverflow.com/a/31955570
-
-  return str.split(',').reduce((accum, curr) => {
-    if (accum.isConcatting) {
-      accum.soFar[accum.soFar.length - 1] += ',' + curr
-    } else {
-      accum.soFar.push(curr)
-    }
-    if (curr.split('"').length % 2 === 0) {
-      accum.isConcatting = !accum.isConcatting
-    }
-    return accum
-  }, { soFar: [], isConcatting: false }).soFar
 }
 
 export function gotoApp (app, other = '') {
@@ -637,27 +520,6 @@ export function gotoApp (app, other = '') {
   }
 }
 
-export function appNameToDisplayName (appName) {
-  const displayNames = {
-    dmx_control: 'DMX Control',
-    image_compare: 'Image Compare',
-    infostation: 'InfoStation',
-    media_browser: 'Media Browser',
-    media_player: 'Media Player',
-    other: 'Other app',
-    settings: 'Settings',
-    timelapse_viewer: 'Timelapse Viewer',
-    timeline_explorer: 'Timeline Explorer',
-    voting_kiosk: 'Voting Kiosk',
-    web_viewer: 'Web Viewer',
-    word_cloud_input: 'Word Cloud Input',
-    word_cloud_viewer: 'word Cloud Viewer'
-  }
-  if (appName in displayNames) {
-    return displayNames[appName]
-  } else return appName
-}
-
 export async function getAvailableDefinitions (appID) {
   // Ask the helper for all the definition files for the given app and return a Promise with the result.
 
@@ -678,39 +540,6 @@ export async function writeDefinition (definition) {
     endpoint: '/definitions/write',
     params: { definition }
   })
-}
-
-export function setObjectProperty (obj, keys, val) {
-  // Set the location given by the keys to val, creating the path if necessary.
-  // E.g., keys = ['prop1', 'prop2', 'prop3'] sets obj.prop1.prop2.prop3 to val
-  // From https://stackoverflow.com/questions/5484673/javascript-how-to-dynamically-create-nested-objects-using-object-names-given-by
-
-  const lastKey = keys.pop()
-  const lastObj = keys.reduce((obj, key) =>
-    (obj[key] = obj[key] || {}),
-  obj)
-  lastObj[lastKey] = val
-}
-
-export function guessMimetype (filename) {
-  // Use filename extension to guess the mimetype
-
-  const ext = filename.split('.').slice(-1)[0].toLowerCase()
-
-  if (['mp4', 'mpeg', 'mpg', 'webm', 'mov', 'm4v', 'avi', 'flv'].includes(ext)) {
-    return 'video'
-  } else if (['jpeg', 'jpg', 'tiff', 'tif', 'png', 'bmp', 'gif', 'webp', 'eps', 'ps', 'svg'].includes(ext)) {
-    return 'image'
-  } else if (['aac', 'm4a', 'mp3', 'oga', 'ogg', 'wav'].includes(ext)) {
-    return 'audio'
-  } else if (['otf', 'ttf', 'woff', 'woff2'].includes(ext)) {
-    return 'font'
-  } else if (['fbx', 'glb', 'obj', 'stl', 'usdz'].includes(ext)) {
-    return 'model'
-  } else if (['csv'].includes(ext)) {
-    return 'spreadsheet'
-  }
-  return ''
 }
 
 export function loadDefinition (defName) {
@@ -842,12 +671,6 @@ export function classifyColor (color) {
   return 'dark'
 }
 
-export function withExtension (path, ext) {
-  // Return the given path with its extension replaced by ext
-
-  return path.split('.').slice(0, -1).join('.') + '.' + ext
-}
-
 export function setBackground (details, root, defaultColor = '#22222E', setStatusBar = false) {
   // Take the 'background' section of a definition and use it to configure the background
 
@@ -885,50 +708,6 @@ export function setBackground (details, root, defaultColor = '#22222E', setStatu
     // Image
     root.style.setProperty('--background-color', `url(../content/${details.image})`)
   }
-}
-
-export function uuid () {
-  // Generate a new UUID v4 without using the crypto library (we may not be in HTTPS).
-  // Format: 8-4-4-4-12
-
-  const chars = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
-  let result = ''
-  for (let i = 0; i < 8; i++) {
-    result += chars[Math.floor(Math.random() * 36)]
-  }
-  result += '-'
-  for (let i = 0; i < 4; i++) {
-    result += chars[Math.floor(Math.random() * 36)]
-  }
-  result += '-'
-  for (let i = 0; i < 4; i++) {
-    result += chars[Math.floor(Math.random() * 36)]
-  }
-  result += '-'
-  for (let i = 0; i < 4; i++) {
-    result += chars[Math.floor(Math.random() * 36)]
-  }
-  result += '-'
-  for (let i = 0; i < 12; i++) {
-    result += chars[Math.floor(Math.random() * 36)]
-  }
-  return result
-}
-
-export function sortAlphabetically (array) {
-  // Sort the given array alphabetically
-
-  return array.sort((a, b) => {
-    try {
-      const aName = a.toLowerCase()
-      const bName = b.toLowerCase()
-      if (aName > bName) return 1
-      if (aName < bName) return -1
-    } catch {
-
-    }
-    return 0
-  })
 }
 
 export function createFont (name, font) {

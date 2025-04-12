@@ -1,6 +1,7 @@
 /* global bootstrap, showdown, $ */
 
 import * as exCommon from './exhibitera_app_common.js'
+import * as exUtilities from '../../common/utilities.js'
 import * as exSetup from './exhibitera_setup_common.js'
 import * as exFileSelectModal from './exhibitera_file_select_modal.js'
 
@@ -83,8 +84,8 @@ function showUpdateInfoModal (details) {
     .then((result) => {
       const details = result.software_update
 
-      document.getElementById('updateInfoModalCurrentVersion').textContent = exCommon.formatSemanticVersion(details.current_version)
-      document.getElementById('updateInfoModalLatestVersion').textContent = exCommon.formatSemanticVersion(details.available_version)
+      document.getElementById('updateInfoModalCurrentVersion').textContent = exUtilities.formatSemanticVersion(details.current_version)
+      document.getElementById('updateInfoModalLatestVersion').textContent = exUtilities.formatSemanticVersion(details.available_version)
       document.getElementById('updateInfoModalDownloadButton').href = 'https://exhibitera.org/download/'
 
       // Get the changelog
@@ -125,11 +126,11 @@ function saveConfiguration () {
       port: parseInt(document.getElementById('controlServerPortInput').value)
     }
     defaults.permissions = {
-      audio: exCommon.stringToBool(document.getElementById('permissionsAudioInput').value),
-      refresh: exCommon.stringToBool(document.getElementById('permissionsRefreshInput').value),
-      restart: exCommon.stringToBool(document.getElementById('permissionsRestartInput').value),
-      shutdown: exCommon.stringToBool(document.getElementById('permissionsShutdownInput').value),
-      sleep: exCommon.stringToBool(document.getElementById('permissionsSleepInput').value)
+      audio: exUtilities.stringToBool(document.getElementById('permissionsAudioInput').value),
+      refresh: exUtilities.stringToBool(document.getElementById('permissionsRefreshInput').value),
+      restart: exUtilities.stringToBool(document.getElementById('permissionsRestartInput').value),
+      shutdown: exUtilities.stringToBool(document.getElementById('permissionsShutdownInput').value),
+      sleep: exUtilities.stringToBool(document.getElementById('permissionsSleepInput').value)
     }
     defaults.smart_restart = {
       state: document.getElementById('smartRestartStateSelect').value,
@@ -241,7 +242,7 @@ function loadVersion () {
     endpoint: '/_static/semantic_version.json'
   })
     .then((response) => {
-      document.getElementById('versionSpan').textContent = exCommon.formatSemanticVersion(response.version)
+      document.getElementById('versionSpan').textContent = exUtilities.formatSemanticVersion(response.version)
     })
 }
 
@@ -342,7 +343,7 @@ function populateAvailableDefinitions () {
       })
       // Then, sort the categories and add them with header entries
       Object.keys(optionsByApp).sort().forEach((app) => {
-        const header = new Option(exCommon.appNameToDisplayName(app))
+        const header = new Option(exUtilities.appNameToDisplayName(app))
         header.setAttribute('disabled', true)
         definitionSelect.appendChild(header)
 

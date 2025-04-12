@@ -1,5 +1,6 @@
 /* global Coloris, bootstrap */
 
+import * as exUtilities from '../../common/utilities.js'
 import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exSetup from '../js/exhibitera_setup_common.js'
 
@@ -1038,7 +1039,7 @@ function showUniverseEditModal (universeName, universeUUID) {
     fixtureRow.append(createFixtureCheckbox(fixture, universe))
   }
 
-  exSetup.showModal('#editUniverseModal')
+  exUtilities.showModal('#editUniverseModal')
 }
 
 function updateUniverseFromModal () {
@@ -1086,7 +1087,7 @@ function updateUniverseFromModal () {
         getDMXConfiguration()
       })
   }
-  exSetup.hideModal('#editUniverseModal')
+  exUtilities.hideModal('#editUniverseModal')
 }
 
 function showAddFixtureModal (universeUUID, fixture = null) {
@@ -1140,7 +1141,7 @@ function showAddFixtureModal (universeUUID, fixture = null) {
     cloneFixture(fixture)
   }
 
-  exSetup.showModal('#addFixtureModal')
+  exUtilities.showModal('#addFixtureModal')
 }
 
 function cloneFixture (fixtureToClone = null) {
@@ -1202,7 +1203,7 @@ function showEditGroupModal (groupUUID) {
     }
   }
 
-  exSetup.showModal('#editGroupModal')
+  exUtilities.showModal('#editGroupModal')
 }
 
 function editGroupFromModal () {
@@ -1243,7 +1244,7 @@ function editGroupFromModal () {
           group.uuid = result.uuid
         }
         rebuildGroupsInterface()
-        exSetup.hideModal('#editGroupModal')
+        exUtilities.hideModal('#editGroupModal')
       })
   } else {
     // We are creating a new group
@@ -1268,7 +1269,7 @@ function createGroupFromModal (name, fixturesToAdd, fixturesToAddUUID) {
         group.addFixtures(fixturesToAdd)
       }
       rebuildGroupsInterface()
-      exSetup.hideModal('#editGroupModal')
+      exUtilities.hideModal('#editGroupModal')
     })
 }
 
@@ -1302,7 +1303,7 @@ function showEditSceneModal (sceneName, groupUUID, uuid = '') {
     $('#editSceneModalDeleteButton').hide()
   }
 
-  exSetup.showModal('#editSceneModal')
+  exUtilities.showModal('#editSceneModal')
 }
 
 function editSceneFromModal () {
@@ -1336,7 +1337,7 @@ function editSceneFromModal () {
         if ('success' in result && result.success === true) {
           const group = getGroupByUUID(groupUUID)
           group.createScene(sceneName, result.uuid, sceneDict, duration)
-          exSetup.hideModal('#editSceneModal')
+          exUtilities.hideModal('#editSceneModal')
           rebuildGroupsInterface()
         }
       })
@@ -1355,7 +1356,7 @@ function editSceneFromModal () {
           scene.name = sceneName
           scene.duration = duration
           scene.values = sceneDict
-          exSetup.hideModal('#editSceneModal')
+          exUtilities.hideModal('#editSceneModal')
           rebuildGroupsInterface()
         }
       })
@@ -1377,7 +1378,7 @@ function deleteSceneFromModal () {
       if ('success' in result && result.success === true) {
         const group = getGroupByUUID(groupUUID)
         group.deleteScene(uuid)
-        exSetup.hideModal('#editSceneModal')
+        exUtilities.hideModal('#editSceneModal')
         rebuildGroupsInterface()
       }
     })
@@ -1565,7 +1566,7 @@ function addFixtureFromModal () {
   promise.then((response) => {
     if ('success' in response && response.success === true) {
       getDMXConfiguration()
-      exSetup.hideModal('#addFixtureModal')
+      exUtilities.hideModal('#addFixtureModal')
     }
   })
 }
@@ -1587,7 +1588,7 @@ function deleteUniverse (uuid) {
   })
     .then((result) => {
       if ('success' in result && result.success === true) {
-        exSetup.hideModal('#editUniverseModal')
+        exUtilities.hideModal('#editUniverseModal')
         getDMXConfiguration()
       }
     })
@@ -1622,7 +1623,7 @@ function deleteGroup (uuid) {
             fixture.groups = fixture.groups.filter(e => e !== uuid)
           }
         }
-        exSetup.hideModal('#editGroupModal')
+        exUtilities.hideModal('#editGroupModal')
         rebuildGroupsInterface()
       }
     })
@@ -1856,7 +1857,7 @@ function showAddUniverseMOdal () {
       }
     })
 
-  exSetup.showModal('#addUniverseModal')
+  exUtilities.showModal('#addUniverseModal')
 }
 
 function addUniverseFromModal () {
@@ -1885,7 +1886,7 @@ function addUniverseFromModal () {
           response.universe.uuid,
           response.universe.controller)
         rebuildUniverseInterface()
-        exSetup.hideModal('#addUniverseModal')
+        exUtilities.hideModal('#addUniverseModal')
       }
     })
 }
@@ -1906,7 +1907,7 @@ document.getElementById('deleteFixtureFromModalButton').addEventListener('click'
     .then((response) => {
       if (response?.success === true) {
         getFixtureByUUID(fixtureUUID).remove()
-        exSetup.hideModal('#addFixtureModal')
+        exUtilities.hideModal('#addFixtureModal')
       }
     })
 })

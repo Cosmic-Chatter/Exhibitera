@@ -14,7 +14,8 @@ if [ ! -e "$1/venv/bin/activate" ]; then
   python3.13 -m venv "$1/venv/"
 fi
 
-rsync -a ../../../apps/* "$1/."
+rsync -a ../../../exhibitera "$1/."
+cp ../../../Exhibitera_Apps.py "$1/."
 
 source 1_update_depends.sh
 source 2_build_binary.sh

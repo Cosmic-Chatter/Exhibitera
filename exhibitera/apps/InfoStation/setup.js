@@ -1,5 +1,6 @@
-/* global Coloris, TinyMDE */
+/* global Coloris */
 
+import * as exUtilities from '../../common/utilities.js'
 import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exFileSelect from '../js/exhibitera_file_select_modal.js'
 import * as exSetup from '../js/exhibitera_setup_common.js'
@@ -329,7 +330,7 @@ function createInfoStationTab (lang, uuid = '') {
     workingDefinition.languages[lang].tab_order = []
   }
   if (uuid === '') {
-    uuid = exCommon.uuid()
+    uuid = exUtilities.uuid()
     workingDefinition.languages[lang].tabs[uuid] = {
       button_text: '',
       type: 'text',

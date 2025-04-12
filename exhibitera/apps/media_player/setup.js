@@ -1,5 +1,7 @@
 /* global bootstrap, Coloris */
 
+import * as exFiles from '../../common/files.js'
+import * as exUtilities from '../../common/utilities.js'
 import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exFileSelect from '../js/exhibitera_file_select_modal.js'
 import * as exSetup from '../js/exhibitera_setup_common.js'
@@ -132,9 +134,9 @@ function createThumbnail () {
   const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
   const files = []
   workingDefinition.content_order.forEach((uuid) => {
-    if (exCommon.guessMimetype(workingDefinition.content[uuid].filename) === 'audio') {
+    if (exFiles.guessMimetype(workingDefinition.content[uuid].filename) === 'audio') {
       // Pass
-    } else if (exCommon.guessMimetype(workingDefinition.content[uuid].filename) === 'model') {
+    } else if (exFiles.guessMimetype(workingDefinition.content[uuid].filename) === 'model') {
       // Pass
     } else {
       files.push(workingDefinition.content[uuid].filename)
@@ -157,7 +159,7 @@ function addItem () {
   const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
 
   const item = {
-    uuid: exCommon.uuid(),
+    uuid: exUtilities.uuid(),
     filename: '',
     duration: 30
   }
@@ -322,7 +324,7 @@ function createItemHTML (item, num) {
   })
 
   durationCol.appendChild(durationInput)
-  if (['image', 'model'].includes(exCommon.guessMimetype(item.filename))) {
+  if (['image', 'model'].includes(exFiles.guessMimetype(item.filename))) {
     durationCol.style.display = 'block'
   } else {
     durationCol.style.display = 'none'
@@ -359,7 +361,7 @@ function createItemHTML (item, num) {
     exSetup.previewDefinition(true)
   })
   rotationCol.appendChild(rotationInput)
-  if (['model'].includes(exCommon.guessMimetype(item.filename))) {
+  if (['model'].includes(exFiles.guessMimetype(item.filename))) {
     rotationCol.style.display = 'block'
   } else {
     rotationCol.style.display = 'none'
@@ -470,7 +472,7 @@ function createItemHTML (item, num) {
     showConfigureSubtitlesModal(item.uuid)
   })
   subtitleCol.appendChild(subtitleButton)
-  if ((item?.mimetype ?? exCommon.guessMimetype(item.filename)) !== 'video') {
+  if ((item?.mimetype ?? exFiles.guessMimetype(item.filename)) !== 'video') {
     subtitleCol.style.display = 'none'
   }
 
@@ -727,7 +729,7 @@ function addAnnotationFromModal () {
 
   if ((annotationUUID == null) || (annotationUUID === '')) {
     // We are creating a new annotation.
-    annotationUUID = exCommon.uuid()
+    annotationUUID = exUtilities.uuid()
     annotation = {
       uuid: annotationUUID,
       path,
@@ -1011,7 +1013,7 @@ async function fetchContentFromURL () {
   const modal = document.getElementById('chooseURLModal')
   const error = document.getElementById('chooseURLModalError')
 
-  const mimetype = exCommon.guessMimetype(url)
+  const mimetype = exFiles.guessMimetype(url)
   modal.setAttribute('data-mimetype', mimetype)
   console.log(mimetype)
   if (mimetype === 'video') {
@@ -1061,7 +1063,7 @@ function setContentFromURLModal () {
 function setItemContent (uuid, itemEl, file, type = 'file') {
   // Populate the given element, item, with content.
 
-  const mimetype = exCommon.guessMimetype(file)
+  const mimetype = exFiles.guessMimetype(file)
   exSetup.updateWorkingDefinition(['content', uuid, 'filename'], file)
   exSetup.updateWorkingDefinition(['content', uuid, 'type'], type)
   exSetup.updateWorkingDefinition(['content', uuid, 'mimetype'], mimetype)
@@ -1090,7 +1092,7 @@ function setItemContent (uuid, itemEl, file, type = 'file') {
     exSetup.updateWorkingDefinition(['content', uuid, 'subtitles'], null)
   } else if (mimetype === 'image') {
     if (type === 'file') {
-      image.src = '/thumbnails/' + exCommon.withExtension(file, 'jpg')
+      image.src = '/thumbnails/' + exFiles.withExtension(file, 'jpg')
     } else if (type === 'url') {
       image.src = file
     }
@@ -1121,7 +1123,7 @@ function setItemContent (uuid, itemEl, file, type = 'file') {
     } else itemEl.querySelector('.material-col').style.display = 'none'
   } else if (mimetype === 'video') {
     if (type === 'file') {
-      video.src = '/thumbnails/' + exCommon.withExtension(file, 'mp4')
+      video.src = '/thumbnails/' + exFiles.withExtension(file, 'mp4')
     } else if (type === 'url') {
       video.src = file
     }

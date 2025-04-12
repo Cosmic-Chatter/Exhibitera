@@ -1,4 +1,5 @@
 /* global bootstrap */
+import * as exFiles from '../../common/files.js'
 import * as exCommon from './exhibitera_app_common.js'
 
 export function createFileSelectionModal (userOptions) {
@@ -328,7 +329,7 @@ function _populateComponentContent (fileDict, options) {
   fileList.forEach((fileDetails) => {
     const file = fileDetails.name
     const extension = file.split('.').slice(-1)[0].toLowerCase()
-    const mimetype = exCommon.guessMimetype(file)
+    const mimetype = exFiles.guessMimetype(file)
 
     // If we are provided a list of allowable filetypes, reject any files
     // that are not of an acceptable type.
@@ -400,7 +401,7 @@ function _populateThumbnail (file, thumbContainer) {
   // given by retries. This gives time for a thumbnail to be generated after an upload.
 
   let thumb
-  const mimetype = exCommon.guessMimetype(file)
+  const mimetype = exFiles.guessMimetype(file)
   thumbContainer.innerHTML = '' // Clear in case we're replacing an existing thumbnail
 
   if (mimetype === 'image') {
@@ -479,7 +480,7 @@ function previewFile (fileDetails) {
   download.href = exCommon.config.helperAddress + '/content/' + file
   download.download = file
 
-  const mimetype = exCommon.guessMimetype(file)
+  const mimetype = exFiles.guessMimetype(file)
 
   if (mimetype === 'image') {
     img.style.display = 'block'
