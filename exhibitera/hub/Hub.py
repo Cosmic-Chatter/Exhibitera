@@ -4,7 +4,6 @@
 # Released under the MIT license
 
 # Standard modules
-import asyncio
 from contextlib import asynccontextmanager
 import datetime
 import threading
@@ -13,8 +12,6 @@ from functools import lru_cache
 import json
 import logging
 import os
-import shutil
-import socket
 import sys
 import time
 import traceback
@@ -23,29 +20,32 @@ import uvicorn
 
 # Non-standard modules
 import aiofiles
-import dateutil.parser
 import distro
-from fastapi import Body, FastAPI, File, Response, Request, UploadFile
+from fastapi import Body, FastAPI, File, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from fastapi.staticfiles import StaticFiles
 import requests
-from sse_starlette.sse import EventSourceResponse
 
 # Exhibitera modules
 import exhibitera.common.config as ex_config
 import exhibitera.common.files as ex_files
-import exhibitera.common.utilities as ex_utilities
 import exhibitera.hub.config as hub_config
-import exhibitera.hub.features.exhibits as ex_exhibit
-import exhibitera.hub.features.groups as ex_group
-import exhibitera.hub.features.issues as ex_issues
-import exhibitera.hub.features.legacy as ex_legacy
-import exhibitera.hub.features.projectors as ex_proj
-import exhibitera.hub.features.schedules as ex_sched
-import exhibitera.hub.tools as ex_tools
-import exhibitera.hub.features.users as ex_users
+import exhibitera.hub.features.exhibits as hub_exhibit
+import exhibitera.hub.features.groups as hub_group
+import exhibitera.hub.features.issues as hub_issues
+import exhibitera.hub.features.legacy as hub_legacy
+import exhibitera.hub.features.projectors as hub_proj
+import exhibitera.hub.features.schedules as hub_schedule
+import exhibitera.hub.features.system as hub_system
+import exhibitera.hub.tools as hub_tools
+import exhibitera.hub.features.users as hub_users
 
+# API modules
+from exhibitera.hub.api.components import components
+from exhibitera.hub.api.schedule import schedule
+from exhibitera.hub.api.system import system
+from exhibitera.hub.api.users import users
 
 # Set up the automatic documentation
 def exhibitera_schema():
@@ -77,158 +77,6 @@ def exhibitera_schema():
     return app.openapi_schema
 
 
-def send_webpage_update():
-    """Collect the current exhibit status, format it, and send it back to the web client to update the page."""
-
-    update_dict = {}
-
-    component_dict_list = []
-    for item in hub_config.componentList:
-        temp = {"class": "exhibitComponent",
-                "exhibiteraAppID": item.config["app_id"],
-                "helperAddress": item.helperAddress,
-                "id": item.id,
-                "ip_address": item.ip_address,
-                "groups": item.groups,
-                "lastContactDateTime": item.last_contact_datetime,
-                "latency": item.latency,
-                "platform_details": item.platform_details,
-                "maintenance_status": item.config.get("maintenance_status", "Off floor, not working"),
-                "status": item.current_status(),
-                "uuid": item.uuid}
-        if "content" in item.config:
-            temp["content"] = item.config["content"]
-        if "definition" in item.config:
-            temp["definition"] = item.config["definition"]
-        if "error" in item.config:
-            temp["error"] = item.config["error"]
-        if "permissions" in item.config:
-            temp["permissions"] = item.config["permissions"]
-        if "description" in item.config:
-            temp["description"] = item.config["description"]
-        if "autoplay_audio" in item.config:
-            temp["autoplay_audio"] = item.config["autoplay_audio"]
-        component_dict_list.append(temp)
-
-    for item in hub_config.projectorList:
-        temp = {"class": "projector",
-                "groups": item.groups,
-                "id": item.id,
-                "ip_address": item.ip_address,
-                "latency": item.latency,
-                "maintenance_status": item.config.get("maintenance_status", "Off floor, not working"),
-                "password": item.password,
-                "protocol": item.connection_type,
-                "state": item.state,
-                "status": item.state["status"],
-                "uuid": item.uuid}
-        if "permissions" in item.config:
-            temp["permissions"] = item.config["permissions"]
-        if "description" in item.config:
-            temp["description"] = item.config["description"]
-        component_dict_list.append(temp)
-
-    for item in hub_config.wakeOnLANList:
-        temp = {"class": "wolComponent",
-                "id": item.id,
-                "groups": item.groups,
-                "ip_address": item.ip_address,
-                "latency": item.latency,
-                "mac_address": item.mac_address,
-                "maintenance_status": item.config.get("maintenance_status", "Off floor, not working"),
-                "status": item.state["status"],
-                "uuid": item.uuid}
-        if "permissions" in item.config:
-            temp["permissions"] = item.config["permissions"]
-        if "description" in item.config:
-            temp["description"] = item.config["description"]
-        component_dict_list.append(temp)
-
-    update_dict["components"] = component_dict_list
-    update_dict["gallery"] = {"current_exhibit": hub_config.current_exhibit,
-                              "availableExhibits": hub_config.exhibit_list,
-                              "galleryName": hub_config.gallery_name,
-                              "outdated_os": hub_config.outdated_os,
-                              "softwareVersion": hub_config.software_version,
-                              "softwareVersionAvailable": hub_config.software_update_available_version,
-                              "updateAvailable": str(hub_config.software_update_available).lower()}
-
-    update_dict["issues"] = {"issueList": [x.details for x in hub_config.issueList],
-                             "lastUpdateDate": hub_config.issueList_last_update_date}
-
-    update_dict["groups"] = {"group_list": hub_config.group_list,
-                             "last_update_date": hub_config.group_list_last_update_date}
-
-    with hub_config.scheduleLock:
-        update_dict["schedule"] = {"updateTime": hub_config.scheduleUpdateTime,
-                                   "schedule": hub_config.json_schedule_list,
-                                   "nextEvent": hub_config.json_next_event}
-
-    return update_dict
-
-
-def command_line_setup_print_gui() -> None:
-    """Helper to print the header content for the setup tool"""
-
-    ex_utilities.clear_terminal()
-    print("##########################################################")
-    print("Welcome to Exhibitera Hub!")
-    print("")
-    print("This appears to be your first time running Hub.")
-    print("In order to set up your configuration, let's answer a few")
-    print("questions. If you don't know the answer, or wish to")
-    print("accept the default, just press the enter key.")
-    print("")
-
-
-def command_line_setup() -> None:
-    """Prompt the user for several pieces of information on first-time setup"""
-
-    settings_dict = {}
-
-    command_line_setup_print_gui()
-    hub_config.gallery_name = input("Enter a name for the gallery (default: Exhibitera): ").strip()
-    if hub_config.gallery_name == "":
-        hub_config.gallery_name = "Exhibitera"
-    settings_dict["gallery_name"] = hub_config.gallery_name
-
-    command_line_setup_print_gui()
-    default_ip = socket.gethostbyname(socket.gethostname())
-    ip_address = input(f"Enter this computer's static IP address (default: {default_ip}): ").strip()
-    if ip_address == "":
-        ip_address = default_ip
-    settings_dict["ip_address"] = ip_address
-
-    command_line_setup_print_gui()
-    default_port = 8082
-    while True:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            if s.connect_ex((ip_address, default_port)) != 0:
-                # Port is free
-                break
-            else:
-                default_port += 1
-    port = input(f"Enter the desired port (default: {default_port}): ").strip()
-    if port == "":
-        port = default_port
-    else:
-        port = int(port)
-    settings_dict["port"] = port
-
-    settings_dict["current_exhibit"] = "Default"
-    # Create this exhibit file if it doesn't exist
-    if not os.path.exists(ex_files.get_path(["exhibits", "Default.json"], user_file=True)):
-        ex_exhibit.create_new_exhibit("Default", None)
-
-    # Write new system apps_config to file
-    config_path = ex_files.get_path(["configuration", "system.json"], user_file=True)
-    ex_files.write_json(settings_dict, config_path)
-
-    command_line_setup_print_gui()
-    print("Setup is complete! Exhibitera Hub will now start.")
-    print("")
-
-
 def load_default_configuration() -> None:
     """Initialize the server in a default state."""
 
@@ -239,24 +87,24 @@ def load_default_configuration() -> None:
     config_path = ex_files.get_path(["configuration", "system.json"], user_file=True)
     if not os.path.exists(config_path):
         # We don't have a apps_config file, so let's get info from the user to create one
-        command_line_setup()
-    ex_users.check_for_root_admin()
-    ex_tools.load_system_configuration()
+        hub_system.command_line_setup()
+    hub_users.check_for_root_admin()
+    hub_tools.load_system_configuration()
 
     # Handle legacy conversions
-    ex_legacy.convert_legacy_projector_configuration()
-    ex_legacy.convert_legacy_static_configuration()
-    ex_legacy.convert_legacy_WOL_configuration()
-    ex_legacy.convert_schedule_targets_to_json()
-    ex_legacy.convert_legacy_tracker_templates_to_json()
-    ex_legacy.convert_exhibit_files()
+    hub_legacy.convert_legacy_projector_configuration()
+    hub_legacy.convert_legacy_static_configuration()
+    hub_legacy.convert_legacy_WOL_configuration()
+    hub_legacy.convert_schedule_targets_to_json()
+    hub_legacy.convert_legacy_tracker_templates_to_json()
+    hub_legacy.convert_exhibit_files()
 
-    ex_tools.start_debug_loop()
-    ex_sched.retrieve_json_schedule()
-    ex_exhibit.read_exhibit_configuration(hub_config.current_exhibit)
+    hub_tools.start_debug_loop()
+    hub_schedule.retrieve_json_schedule()
+    hub_exhibit.read_exhibit_configuration(hub_config.current_exhibit)
 
     # Build any existing issues
-    ex_issues.read_issue_list()
+    hub_issues.read_issue_list()
 
     # Save the current software version in .last_ver
     last_ver_path = ex_files.get_path(["configuration", ".last_ver"], user_file=True)
@@ -401,8 +249,7 @@ logging.basicConfig(datefmt='%Y-%m-%d %H:%M:%S',
                     filename=log_path,
                     format='%(levelname)s, %(asctime)s, %(message)s',
                     level=logging.INFO)
-# signal.signal(signal.SIGINT, quit_handler)
-# signal.signal(signal.SIGTERM, quit_handler)
+
 sys.excepthook = error_handler
 
 with hub_config.logLock:
@@ -428,242 +275,15 @@ app.add_middleware(
 )
 app.openapi = exhibitera_schema
 
+# Link API routers
+app.include_router(components.router)
+app.include_router(schedule.router)
+app.include_router(system.router)
+app.include_router(users.router)
 
 @lru_cache()
 def get_config():
     return hub_config
-
-
-# User account actions
-
-@app.post("/user/login")
-def log_in(response: Response,
-           request: Request,
-           credentials: tuple[str, str] = Body(description="A tuple containing the username and password.",
-                                               default=("", "")),
-           token: str = Body(description="An authentication cookie.", default="")
-           ):
-    """Authenticate the user and return the permissions and an authentication token."""
-
-    if token == "":
-        token = request.cookies.get("authToken", "")
-
-    success, user_uuid = ex_users.authenticate_user(token=token, credentials=credentials)
-    if success is False:
-        return {"success": False, "reason": "authentication_failed"}
-
-    user = ex_users.get_user(uuid_str=user_uuid)
-    response_dict = {"success": True, "user": user.get_dict()}
-    if token == "":
-        token = ex_users.encrypt_token(user_uuid)
-        if ex_config.debug:
-            print(token)
-        response.set_cookie(key="authToken", value=token, max_age=int(3e7))  # Expire cookie in approx 1 yr
-        response_dict['authToken'] = token
-    return response_dict
-
-
-@app.post("/user/create")
-def create_user(request: Request,
-                username: str = Body(description="The username"),
-                password: str = Body(description="The password for the account to create."),
-                display_name: str = Body(description="The name of the account holder."),
-                permissions: dict | None = Body(description="A dictionary of permissions for the new account.",
-                                                default=None)):
-    """Create a new user account."""
-
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = ex_users.check_user_permission("users", "edit", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
-
-    success, user_dict = ex_users.create_user(username, display_name, password, permissions=permissions)
-
-    response = {"success": success, "user": user_dict}
-    if success is False:
-        response["reason"] = "username_taken"
-    return response
-
-
-@app.post("/user/{uuid_str}/edit")
-def edit_user(request: Request,
-              uuid_str: str,
-              username: str | None = Body(description="The username", default=None),
-              password: str | None = Body(description="A new password.", default=None),
-              display_name: str | None = Body(description="The name of the account holder.", default=None),
-              permissions: dict | None = Body(description="A dictionary of permissions for the account.",
-                                              default=None)):
-    """Edit the given user."""
-
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = ex_users.check_user_permission("users", "edit", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
-
-    user = ex_users.get_user(uuid_str=uuid_str)
-    if user is None:
-        return {"success": False, "reason": "user_does_not_exist"}
-
-    if username is not None and username != user.username:
-        if ex_users.check_username_available(username) is True:
-            user.username = username
-        else:
-            return {"success": False, "reason": "username_taken"}
-
-    if display_name is not None:
-        user.display_name = display_name
-    if password is not None:
-        user.password_hash = ex_users.hash_password(password)
-    if permissions is not None:
-        user.permissions = permissions
-    ex_users.save_users()
-
-    return {"success": success, "user": user.get_dict()}
-
-
-@app.post("/user/{uuid_str}/editPreferences")
-def edit_user_preferences(request: Request,
-                          uuid_str: str,
-                          preferences: dict[str, Any] = Body(description="A dictionary of preferences to update.",
-                                                             embed=True)):
-    """Update the preferences for the given user."""
-
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = ex_users.check_user_permission("users", "none", token=token)
-    if success is False:
-        # Should fail only if the user does not exist
-        return {"success": False, "reason": reason}
-    if uuid_str != authorizing_user:
-        # Only the user can change their preferences
-        return {"success": False, "reason": "invalid_credentials"}
-
-    user = ex_users.get_user(uuid_str=uuid_str)
-    if user is None:
-        return {"success": False, "reason": "user_does_not_exist"}
-    result = ex_utilities.deep_merge(preferences, user.preferences)
-    user.preferences = result
-    ex_users.save_users()
-
-    return {"success": True, "user": user.get_dict()}
-
-
-@app.delete("/user/{uuid_str}")
-def delete_user(request: Request, uuid_str: str):
-    """Delete the given user"""
-
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = ex_users.check_user_permission("users", "edit", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
-
-    return {"success": ex_users.delete_user(uuid_str)}
-
-
-@app.post("/users/list")
-def list_users(permissions: dict[str, str] = Body(description="A dictionary of permissions to match.",
-                                                  default={},
-                                                  embed=True)):
-    """Return a list of users matching the provided criteria"""
-
-    matched_users = []
-
-    for user in hub_config.user_list:
-        error = False
-        for key in permissions:
-
-            if user.check_permission(key, permissions[key]) is False:
-                error = True
-        if not error:
-            matched_users.append(user.get_dict())
-
-    return {"success": True, "users": matched_users}
-
-
-@app.get("/user/{user_uuid}/displayName")
-def get_user_display_name(user_uuid: str):
-    """Get the display name for a user account."""
-
-    display_name = ex_users.get_user_display_name(user_uuid)
-    if display_name is None:
-        return {"success": False, "reason": "user_does_not_exist"}
-    return {"success": True, "display_name": display_name}
-
-
-@app.post('/user/{user_uuid}/changePassword')
-def change_user_password(user_uuid: str,
-                         current_password: str = Body(description="The plaintext of the current password."),
-                         new_password: str = Body(description="The plaintext of the password to set.")):
-    """Change the password for the given user"""
-
-    user = ex_users.get_user(uuid_str=user_uuid)
-
-    # First, check that the current password is correct
-    if ex_users.hash_password(current_password) != user.password_hash:
-        return {"success": False, "reason": "authentication_failed"}
-
-    # Then, update the password
-    if user.uuid != "admin":
-        user.password_hash = ex_users.hash_password(new_password)
-        ex_users.save_users()
-    else:
-        ex_users.create_root_admin(new_password)
-
-    return {"success": True}
-
-
-@app.get("/component/{uuid_str}/groups")
-async def get_component_groups(uuid_str: str):
-    """Return the list of groups the given component belongs to."""
-
-    # Don't authenticate, as we use this as part of the component auth process
-
-    component = ex_exhibit.get_exhibit_component(component_uuid=uuid_str)
-    if component is None:
-        return {"success": False, "reason": "Component does not exist", "groups": []}
-
-    return {"success": True, "groups": component.groups}
-
-
-@app.post("/component/{uuid_str}/edit")
-async def edit_component(request: Request,
-                         uuid_str: str,
-                         id: str | None = Body(description="The ID of the component.", default=None),
-                         groups: list[str] | None = Body(description="The groups of the component.", default=None),
-                         description: str | None = Body(description="A short description of the component.",
-                                                        default=None)):
-    """Edit the given component."""
-
-    # Must get the component first, so we can use the groups to check for permissions
-    component = ex_exhibit.get_exhibit_component(component_uuid=uuid_str)
-    if component is None:
-        return {"success": False, "reason": "Component does not exist"}
-
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = ex_users.check_user_permission("components", "edit",
-                                                                       groups=component.groups, token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
-
-    if id is not None:
-        component.id = id
-    if groups is not None:
-        component.groups = groups
-    if description is not None:
-        component.config["description"] = description
-    component.save()
-    hub_config.last_update_time = time.time()
-    return {"success": True}
-
-
-@app.post("/component/{component_uuid}/definition/{definition_uuid}")
-async def set_component_definition(component_uuid: str, definition_uuid: str):
-    """Set the definition for the component."""
-
-    ex_exhibit.update_exhibit_configuration({"definition": definition_uuid},
-                                            component_uuid=component_uuid)
-
-    return {"success": True}
 
 
 @app.get("/group/{uuid_str}/details")
@@ -671,11 +291,11 @@ async def get_group_details(request: Request, uuid_str: str):
     """Return the details for the given group."""
 
     token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = ex_users.check_user_permission("settings", "edit", token=token)
+    success, authorizing_user, reason = hub_users.check_user_permission("settings", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}
 
-    group = ex_group.get_group(uuid_str)
+    group = hub_group.get_group(uuid_str)
 
     if group is None:
         return {"success": False, "reason": "Group does not exist."}
@@ -689,11 +309,11 @@ async def create_group(request: Request,
     """Create a group."""
 
     token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = ex_users.check_user_permission("settings", "edit", token=token)
+    success, authorizing_user, reason = hub_users.check_user_permission("settings", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}
 
-    group = ex_group.create_group(name, description)
+    group = hub_group.create_group(name, description)
     return {"success": True, "uuid": group["uuid"]}
 
 
@@ -705,11 +325,11 @@ async def edit_group(request: Request,
     """Edit a group"""
 
     token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = ex_users.check_user_permission("settings", "edit", token=token)
+    success, authorizing_user, reason = hub_users.check_user_permission("settings", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}
 
-    success = ex_group.edit_group(uuid_str, name=name, description=description)
+    success = hub_group.edit_group(uuid_str, name=name, description=description)
     return {"success": success}
 
 
@@ -718,11 +338,11 @@ async def delete_group(request: Request, uuid_str: str):
     """Delete the given group."""
 
     token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = ex_users.check_user_permission("settings", "edit", token=token)
+    success, authorizing_user, reason = hub_users.check_user_permission("settings", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}
 
-    ex_group.delete_group(uuid_str)
+    hub_group.delete_group(uuid_str)
     return {"success": True}
 
 
@@ -734,11 +354,11 @@ async def create_exhibit(request: Request,
 
     # Check permission
     token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = ex_users.check_user_permission("exhibits", "edit", token=token)
+    success, authorizing_user, reason = hub_users.check_user_permission("exhibits", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}
 
-    uuid_str = ex_exhibit.create_new_exhibit(name, clone_from)
+    uuid_str = hub_exhibit.create_new_exhibit(name, clone_from)
     return {"success": True, "reason": "", "uuid": uuid_str}
 
 
@@ -751,13 +371,13 @@ async def edit_exhibit(request: Request,
 
     # Check permission
     token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = ex_users.check_user_permission("exhibits", "edit", token=token)
+    success, authorizing_user, reason = hub_users.check_user_permission("exhibits", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}
 
     path = ex_files.get_path(["exhibits", ex_files.with_extension(uuid_str, '.json')], user_file=True)
     ex_files.write_json(details, path)
-    ex_exhibit.check_available_exhibits()
+    hub_exhibit.check_available_exhibits()
     hub_config.last_update_time = time.time()
 
     return {"success": True, "reason": ""}
@@ -769,11 +389,11 @@ async def delete_exhibit(request: Request, uuid_str: str):
 
     # Check permission
     token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = ex_users.check_user_permission("exhibits", "edit", token=token)
+    success, authorizing_user, reason = hub_users.check_user_permission("exhibits", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}
 
-    ex_exhibit.delete_exhibit(uuid_str)
+    hub_exhibit.delete_exhibit(uuid_str)
     return {"success": True, "reason": ""}
 
 
@@ -781,8 +401,8 @@ async def delete_exhibit(request: Request, uuid_str: str):
 async def set_exhibit(uuid_str: str):
     """Set the specified exhibit as the current one."""
 
-    ex_tools.update_system_configuration({"current_exhibit": uuid_str})
-    success, reason = ex_exhibit.read_exhibit_configuration(uuid_str)
+    hub_tools.update_system_configuration({"current_exhibit": uuid_str})
+    success, reason = hub_exhibit.read_exhibit_configuration(uuid_str)
     return {"success": success, "reason": reason}
 
 
@@ -814,7 +434,7 @@ async def create_tracker_template(request: Request,
 
     # Check permission
     token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = ex_users.check_user_permission("analytics", "edit", token=token)
+    success, authorizing_user, reason = hub_users.check_user_permission("analytics", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}
 
@@ -831,7 +451,7 @@ async def delete_tracker_data(request: Request, data: dict[str, Any], tracker_ty
 
     # Check permission
     token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = ex_users.check_user_permission("analytics", "edit", token=token)
+    success, authorizing_user, reason = hub_users.check_user_permission("analytics", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}
 
@@ -871,13 +491,13 @@ async def delete_tracker_template(request: Request, tracker_type: str, tracker_u
 
     # Check permission
     token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = ex_users.check_user_permission("analytics", "edit", token=token)
+    success, authorizing_user, reason = hub_users.check_user_permission("analytics", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}
 
     file_path = ex_files.get_path([tracker_type, "templates", ex_files.with_extension(tracker_uuid, 'json')], user_file=True)
     with hub_config.trackerTemplateWriteLock:
-        response = ex_tools.delete_file(file_path)
+        response = hub_tools.delete_file(file_path)
     return response
 
 
@@ -1010,12 +630,12 @@ async def create_issue(request: Request, details: dict[str, Any] = Body(embed=Tr
 
     # Check permission
     token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = ex_users.check_user_permission("maintenance", "edit", token=token)
+    success, authorizing_user, reason = hub_users.check_user_permission("maintenance", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}
 
-    ex_issues.create_issue(details, username=authorizing_user)
-    ex_issues.save_issue_list()
+    hub_issues.create_issue(details, username=authorizing_user)
+    hub_issues.save_issue_list()
     return {"success": True}
 
 
@@ -1025,11 +645,11 @@ async def delete_issue(request: Request, issue_id: str):
 
     # Check permission
     token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = ex_users.check_user_permission("maintenance", "edit", token=token)
+    success, authorizing_user, reason = hub_users.check_user_permission("maintenance", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}
 
-    ex_issues.remove_issue(issue_id)
+    hub_issues.remove_issue(issue_id)
     return {"success": True, "reason": ""}
 
 
@@ -1039,11 +659,11 @@ async def archive_issue(request: Request, issue_id: str):
 
     # Check permission
     token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = ex_users.check_user_permission("maintenance", "edit", token=token)
+    success, authorizing_user, reason = hub_users.check_user_permission("maintenance", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}
 
-    ex_issues.archive_issue(issue_id, authorizing_user)
+    hub_issues.archive_issue(issue_id, authorizing_user)
     return {"success": True}
 
 
@@ -1053,11 +673,11 @@ async def restore_issue(request: Request, issue_id: str):
 
     # Check permission
     token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = ex_users.check_user_permission("maintenance", "edit", token=token)
+    success, authorizing_user, reason = hub_users.check_user_permission("maintenance", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}
 
-    ex_issues.restore_issue(issue_id)
+    hub_issues.restore_issue(issue_id)
     return {"success": True}
 
 
@@ -1070,11 +690,11 @@ async def delete_issue_media(request: Request,
 
     # Check permission
     token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = ex_users.check_user_permission("maintenance", "edit", token=token)
+    success, authorizing_user, reason = hub_users.check_user_permission("maintenance", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}
 
-    ex_issues.delete_issue_media_file(filenames, owner=owner)
+    hub_issues.delete_issue_media_file(filenames, owner=owner)
     return {"success": True}
 
 
@@ -1085,13 +705,13 @@ async def edit_issue(request: Request,
 
     # Check permission
     token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = ex_users.check_user_permission("maintenance", "edit", token=token)
+    success, authorizing_user, reason = hub_users.check_user_permission("maintenance", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}
 
     if "id" in details:
-        ex_issues.edit_issue(details, authorizing_user)
-        ex_issues.save_issue_list()
+        hub_issues.edit_issue(details, authorizing_user)
+        hub_issues.save_issue_list()
         response_dict = {"success": True}
     else:
         response_dict = {
@@ -1107,7 +727,7 @@ async def get_issue_list(request: Request, match_uuid: str):
 
     # Check permission
     token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = ex_users.check_user_permission("maintenance", "view", token=token)
+    success, authorizing_user, reason = hub_users.check_user_permission("maintenance", "view", token=token)
     if success is False:
         return {"success": False, "reason": reason}
 
@@ -1132,7 +752,7 @@ async def get_archived_issues(request: Request, match_uuid: str):
 
     # Check permission
     token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = ex_users.check_user_permission("maintenance", "view", token=token)
+    success, authorizing_user, reason = hub_users.check_user_permission("maintenance", "view", token=token)
     if success is False:
         return {"success": False, "reason": reason}
 
@@ -1166,11 +786,11 @@ async def get_issue_media(request: Request, issue_id: str):
 
     # Check permission
     token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = ex_users.check_user_permission("maintenance", "view", token=token)
+    success, authorizing_user, reason = hub_users.check_user_permission("maintenance", "view", token=token)
     if success is False:
         return {"success": False, "reason": reason}
 
-    issue = ex_issues.get_issue(issue_id)
+    issue = hub_issues.get_issue(issue_id)
 
     if issue is None:
         return {"success": False, "reason": f"Issue does not exist: {issue_id}"}
@@ -1184,7 +804,7 @@ async def upload_issue_media(request: Request, files: list[UploadFile] = File())
 
     # Check permission
     token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = ex_users.check_user_permission("maintenance", "edit", token=token)
+    success, authorizing_user, reason = hub_users.check_user_permission("maintenance", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}
 
@@ -1209,11 +829,11 @@ async def delete_maintenance_record(request: Request, uuid_str: str):
 
     # Check permission
     token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = ex_users.check_user_permission("maintenance", "edit", token=token)
+    success, authorizing_user, reason = hub_users.check_user_permission("maintenance", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}
 
-    component = ex_exhibit.get_exhibit_component(component_uuid=uuid_str)
+    component = hub_exhibit.get_exhibit_component(component_uuid=uuid_str)
     if component is None:
         return {"success": False, "reason": "invalid_uuid"}
 
@@ -1236,7 +856,7 @@ async def get_all_maintenance_statuses(request: Request):
 
     # Check permission
     token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = ex_users.check_user_permission("maintenance", "view", token=token)
+    success, authorizing_user, reason = hub_users.check_user_permission("maintenance", "view", token=token)
     if success is False:
         return {"success": False, "reason": reason}
 
@@ -1256,11 +876,11 @@ async def get_maintenance_status(request: Request, uuid_str: str):
 
     # Check permission
     token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = ex_users.check_user_permission("maintenance", "view", token=token)
+    success, authorizing_user, reason = hub_users.check_user_permission("maintenance", "view", token=token)
     if success is False:
         return {"success": False, "reason": reason}
 
-    component = ex_exhibit.get_exhibit_component(component_uuid=uuid_str)
+    component = hub_exhibit.get_exhibit_component(component_uuid=uuid_str)
     if component is None:
         return {"success": False, "reason": "invalid_uuid"}
     return {"success": True, "status": component.get_maintenance_report()}
@@ -1275,11 +895,11 @@ async def update_maintenance_status(request: Request,
 
     # Check permission
     token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = ex_users.check_user_permission("maintenance", "edit", token=token)
+    success, authorizing_user, reason = hub_users.check_user_permission("maintenance", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}
 
-    component = ex_exhibit.get_exhibit_component(component_uuid=uuid_str)
+    component = hub_exhibit.get_exhibit_component(component_uuid=uuid_str)
     if component is None:
         return {"success": False, "reason": "invalid_uuid"}
 
@@ -1306,11 +926,11 @@ async def create_projector(request: Request,
 
     # Check permission
     token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = ex_users.check_user_permission("settings", "edit", token=token)
+    success, authorizing_user, reason = hub_users.check_user_permission("settings", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}
 
-    proj = ex_exhibit.add_projector(id, groups, ip_address, password=password)
+    proj = hub_exhibit.add_projector(id, groups, ip_address, password=password)
 
     return {"success": True, "uuid": proj.uuid}
 
@@ -1328,14 +948,14 @@ async def edit_projector(request: Request,
     """Edit the given projector."""
 
     # Get the projector first, so we can use the groups to authenticate
-    proj = ex_exhibit.get_projector(projector_uuid=uuid_str)
+    proj = hub_exhibit.get_projector(projector_uuid=uuid_str)
     if proj is None:
         return {"success": False, "reason": "Projector does not exist"}
 
     # Check permission
     token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = ex_users.check_user_permission("components", "edit",
-                                                                       groups=proj.groups, token=token)
+    success, authorizing_user, reason = hub_users.check_user_permission("components", "edit",
+                                                                        groups=proj.groups, token=token)
     if success is False:
         return {"success": False, "reason": reason}
 
@@ -1353,466 +973,6 @@ async def edit_projector(request: Request,
     hub_config.last_update_time = time.time()
     return {"success": True}
 
-
-# Component actions
-@app.post("/component/{uuid_str}/queueCommand")
-async def queue_component_command(uuid_str: str,
-                                  command: str = Body(description="The command to be sent to the specified component", embed=True)):
-    """Queue the specified command for the given exhibit component."""
-
-    ex_exhibit.get_exhibit_component(component_uuid=uuid_str).queue_command(command)
-    return {"success": True, "reason": ""}
-
-
-@app.delete("/component/{uuid_str}/delete")
-async def remove_component(uuid_str: str):
-    """Remove the specified exhibit component"""
-
-    to_remove = ex_exhibit.get_exhibit_component(component_uuid=uuid_str)
-    to_remove.remove()
-    return {"success": True, "reason": ""}
-
-
-@app.post("/component/static/create")
-async def create_static_component(request: Request,
-                                  id: str = Body(description="The ID of the projector to add."),
-                                  groups: list[str] = Body(description="The groups of the projector to add.")):
-    """Create a new static component."""
-
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = ex_users.check_user_permission("settings", "edit", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
-
-    component = ex_exhibit.add_exhibit_component(id, groups, 'static')
-
-    return {"success": True, "uuid": component.uuid}
-
-
-@app.post("/component/static/{uuid_str}/edit")
-async def edit_static_component(request: Request,
-                                uuid_str: str,
-                                id: str | None = Body(description="The ID of the static component.", default=None),
-                                description: str | None = Body(description="A short description of this component.",
-                                                               default=None),
-                                groups: list[str] | None = Body(description="The groups of the static component.",
-                                                                default=None)):
-    """Edit the given static component."""
-
-    # Load the component first, so we can use the groups to authenticate
-    component = ex_exhibit.get_exhibit_component(component_uuid=uuid_str)
-    if component is None:
-        return {"success": False, "reason": "Component does not exist"}
-
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = ex_users.check_user_permission("components", "edit",
-                                                                       groups=component.groups, token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
-
-    if id is not None:
-        component.id = id
-    if groups is not None:
-        component.groups = groups
-    if description is not None:
-        component.config["description"] = description
-    component.save()
-    hub_config.last_update_time = time.time()
-    return {"success": True}
-
-
-@app.post("/component/WOL/create")
-async def create_wake_on_lan_component(request: Request,
-                                       id: str = Body(description="The ID of the projector to add."),
-                                       groups: list[str] = Body(description="The groups of the projector to add."),
-                                       mac_address: str = Body(description="The MAC address of the machine to wake."),
-                                       ip_address: str = Body(description="The static IP address of the machine.",
-                                                              default="")):
-    """Create a new wake on LAN component."""
-
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = ex_users.check_user_permission("settings", "edit", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
-
-    component = ex_exhibit.add_wake_on_LAN_device(id, groups, mac_address, ip_address=ip_address)
-
-    return {"success": True, "uuid": component.uuid}
-
-
-@app.post("/component/WOL/{uuid_str}/edit")
-async def edit_wake_on_lan_component(request: Request,
-                                     uuid_str: str,
-                                     id: str | None = Body(description="The ID of the projector to add.", default=None),
-                                     groups: list[str] | None = Body(description="The groups of the projector to add.",
-                                                                     default=None),
-                                     description: str | None = Body(
-                                         description="A short description of this component.", default=None),
-                                     mac_address: str = Body(description="The MAC address of the machine to wake."),
-                                     ip_address: str = Body(description="The static IP address of the machine.",
-                                                            default="")):
-    """Edit the given wake on LAN component."""
-
-    # Load the component first, so we can use the groups to authenticate
-    component = ex_exhibit.get_wake_on_LAN_component(component_uuid=uuid_str)
-    if component is None:
-        return {"success": False, "reason": "Component does not exist"}
-
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = ex_users.check_user_permission("components", "edit",
-                                                                       groups=component.groups, token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
-
-    if id is not None:
-        component.id = id
-    if groups is not None:
-        component.groups = groups
-    if mac_address is not None:
-        component.mac_address = mac_address
-    if ip_address is not None:
-        component.ip_address = ip_address
-    if description is not None:
-        component.config["description"] = description
-    component.save()
-    hub_config.last_update_time = time.time()
-
-    return {"success": True}
-
-
-# Schedule actions
-@app.post("/schedule/convert")
-async def convert_schedule(
-        request: Request,
-        date: str = Body(description="The date of the schedule to create, in the form of YYYY-MM-DD."),
-        convert_from: str = Body(description="The name of the schedule to clone to the new date.")):
-    """Convert between date- and day-specific schedules."""
-
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = ex_users.check_user_permission("schedule", "edit", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
-
-    with hub_config.scheduleLock:
-        shutil.copy(ex_files.get_path(["schedules", convert_from.lower() + ".json"], user_file=True),
-                    ex_files.get_path(["schedules", date + ".json"], user_file=True))
-
-    hub_config.last_update_time = time.time()
-    # Reload the schedule from disk
-    ex_sched.retrieve_json_schedule()
-
-    # Send the updated schedule back
-    with hub_config.scheduleLock:
-        response_dict = {"success": True,
-                         "updateTime": hub_config.scheduleUpdateTime,
-                         "schedule": hub_config.json_schedule_list,
-                         "nextEvent": hub_config.json_next_event}
-    return response_dict
-
-
-@app.post("/schedule/create")
-async def create_schedule(request: Request,
-                          entries: dict[str, dict] = Body(
-                              description="A dict of dicts that each define one entry in the schedule."),
-                          name: str = Body(description="The name for the schedule to be created.")):
-    """Create a new schedule from an uploaded CSV file"""
-
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = ex_users.check_user_permission("schedule", "edit", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
-
-    success, schedule = ex_sched.create_schedule(ex_files.with_extension(name, 'json'), entries)
-    ex_sched.retrieve_json_schedule()
-    return {"success": success, "schedule": schedule}
-
-
-@app.post("/schedule/getSecondsFromMidnight")
-async def get_seconds_from_midnight(time_str: str = Body(description="The time to parse.", embed=True)):
-    """Return the number of seconds from midnight for the given natural language time.
-
-    This ensures that the value in the browser is consistent with how Python will process.
-    """
-
-    return {"success": True, "seconds": ex_sched.seconds_from_midnight(time_str)}
-
-
-@app.get("/schedule/{schedule_name}/getJSONString")
-async def get_schedule_as_json_string(request: Request,
-                                      schedule_name: str):
-    """Return the requested schedule as a JSON, excluding unnecessary fields."""
-
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = ex_users.check_user_permission("schedule", "view", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
-
-    success, schedule = ex_sched.load_json_schedule(schedule_name + '.json')
-    result = {}
-
-    for key in list(schedule.keys()):
-        result[key] = {
-            "time": schedule[key].get("time", ""),
-            "action": schedule[key].get("action", ""),
-            "target": schedule[key].get("target", ""),
-            "value": schedule[key].get("value", ""),
-        }
-    return {"success": success, "json": json.dumps(result, indent=2, sort_keys=True)}
-
-
-@app.delete("/schedule/{schedule_name}/action/{action_id}")
-async def delete_schedule_action(request: Request, schedule_name: str, action_id: str):
-    """Delete the given action from the specified schedule."""
-
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = ex_users.check_user_permission("schedule", "edit", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
-
-    ex_sched.delete_json_schedule_event(ex_files.with_extension(schedule_name, 'json'), action_id)
-    ex_sched.retrieve_json_schedule()
-
-    # Send the updated schedule back
-    with hub_config.scheduleLock:
-        response_dict = {"success": True,
-                         "updateTime": hub_config.scheduleUpdateTime,
-                         "schedule": hub_config.json_schedule_list,
-                         "nextEvent": hub_config.json_next_event}
-    return response_dict
-
-
-@app.delete("/schedule/{schedule_name}")
-async def delete_schedule(request: Request, schedule_name: str):
-    """Delete the given schedule."""
-
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = ex_users.check_user_permission("schedule", "edit", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
-
-    # Check filename is safe
-    if ex_files.filename_safe(schedule_name) is False:
-        return {"success": False, "reason": "unsafe_filename"}
-
-    with hub_config.scheduleLock:
-        json_schedule_path = ex_files.get_path(["schedules", ex_files.with_extension(schedule_name, 'json')], user_file=True)
-        os.remove(json_schedule_path)
-
-    # Reload the schedule from disk
-    ex_sched.retrieve_json_schedule()
-    hub_config.last_update_time = time.time()
-
-    # Send the updated schedule back
-    with hub_config.scheduleLock:
-        response_dict = {"success": True,
-                         "updateTime": hub_config.scheduleUpdateTime,
-                         "schedule": hub_config.json_schedule_list,
-                         "nextEvent": hub_config.json_next_event}
-    return response_dict
-
-
-@app.get("/schedule/availableDateSpecificSchedules")
-async def get_date_specific_schedules(request: Request):
-    """Retrieve a list of available date-specific schedules"""
-
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = ex_users.check_user_permission("schedule", "view", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
-
-    return {"success": True, "schedules": ex_sched.get_available_date_specific_schedules()}
-
-
-@app.get("/schedule/{schedule_name}")
-async def get_specific_schedule(request: Request, schedule_name: str):
-    """Retrieve the given schedule and return it as a dictionary."""
-
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = ex_users.check_user_permission("schedule", "view", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
-
-    if not schedule_name.endswith('.json'):
-        schedule_name += '.json'
-    success, schedule = ex_sched.load_json_schedule(schedule_name)
-
-    return {"success": success, "schedule": schedule}
-
-
-@app.post("/schedule/{schedule_name}/action/{action_id}/update")
-async def update_schedule(
-        request: Request,
-        schedule_name: str,
-        action_id: str,
-        time_to_set: str = Body(description="The time of the action to set, expressed in any normal way."),
-        action_to_set: str = Body(description="The action to set."),
-        target_to_set: list[dict] | dict | None = Body(default=None,
-                                                       description="The details of the component(s) that should be acted upon."),
-        value_to_set: str = Body(default="", description="A value corresponding to the action.")):
-    """Write a schedule update to disk.
-
-    This command handles both adding a new scheduled action and editing an existing action
-    """
-
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = ex_users.check_user_permission("schedule", "edit", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
-
-    # Make sure we were given a valid time to parse
-    try:
-        dateutil.parser.parse(time_to_set)
-    except dateutil.parser._parser.ParserError:
-        response_dict = {"success": False,
-                         "reason": "Time not valid"}
-        return response_dict
-
-    ex_sched.update_json_schedule(ex_files.with_extension(schedule_name, 'json'), {
-        action_id: {"time": time_to_set, "action": action_to_set,
-                      "target": target_to_set, "value": value_to_set}})
-
-    error = False
-    error_message = ""
-
-    response_dict = {}
-    if not error:
-        # Reload the schedule from disk
-        ex_sched.retrieve_json_schedule()
-
-        # Send the updated schedule back
-        with hub_config.scheduleLock:
-            response_dict["updateTime"] = hub_config.scheduleUpdateTime
-            response_dict["schedule"] = hub_config.json_schedule_list
-            response_dict["nextEvent"] = hub_config.json_next_event
-            response_dict["success"] = True
-    else:
-        response_dict["success"] = False
-        response_dict["reason"] = error_message
-    return response_dict
-
-
-# System actions
-
-@app.get("/system/checkConnection")
-async def check_connection():
-    """Respond to request to confirm that the connection is active"""
-
-    return {"success": True}
-
-
-@app.get("/system/configuration/{target}")
-async def get_json_configuration(target: str):
-    """Return the requested JSON configuration."""
-
-    if not ex_files.filename_safe(target):
-        return {"success": False, "reason": "unsafe_filename"}
-
-    config_path = ex_files.get_path(["configuration", ex_files.with_extension(target, "json")], user_file=True)
-    configuration = ex_files.load_json(config_path)
-    if configuration is  None:
-        return {"success": False, "reason": "File does not exist."}
-    return {"success": True, "configuration": configuration}
-
-
-@app.get("/system/getHelpText")
-async def get_help_text():
-    """Send the contents of README.md"""
-    try:
-        readme_path = ex_files.get_path(["README.md"])
-        with open(readme_path, 'r', encoding='UTF-8') as f:
-            text = f.read()
-        response = {"success": True, "text": text}
-    except FileNotFoundError:
-        with hub_config.logLock:
-            logging.error("Unable to read README.md")
-        response = {"success": False, "reason": "Unable to read README.md"}
-    except PermissionError:
-        # For some reason, Pyinstaller insists on placing the README in a directory of the same name on Windows.
-        try:
-            readme_path = ex_files.get_path(["README.md", "README.md"])
-            with open(readme_path, 'r', encoding='UTF-8') as f:
-                text = f.read()
-            response = {"success": True, "text": text}
-        except (FileNotFoundError, PermissionError):
-            with hub_config.logLock:
-                logging.error("Unable to read README.md")
-            response = {"success": False, "reason": "Unable to read README.md"}
-
-    return response
-
-
-@app.post("/system/ping")
-async def handle_ping(data: dict[str, Any], request: Request):
-    """Respond to an incoming heartbeat signal with ahy updates."""
-
-    if "uuid" not in data:
-        response = {"success": False,
-                    "reason": "Request missing 'uuid' field."}
-        return response
-
-    ex_exhibit.update_exhibit_component_status(data, request.client.host)
-
-    component = ex_exhibit.get_exhibit_component(component_uuid=data['uuid'])
-    dict_to_send = component.config.copy()
-
-    if len(dict_to_send["commands"]) > 0:
-        # Clear the command list now that we are sending
-        component.config["commands"] = []
-    return dict_to_send
-
-
-@app.post("/system/configuration/{target}/update")
-async def update_system_configuration(target: str,
-                                      configuration=Body(description="A JSON object specifying the configuration.", embed=True)):
-    """Write the given object to the matching JSON file as the configuration."""
-
-    if target == "system":
-        ex_tools.update_system_configuration(configuration)
-    else:
-        if not ex_files.filename_safe(target):
-            return {"success": False, "reason": "unsafe_filename"}
-        config_path = ex_files.get_path(["configuration", ex_files.with_extension(target, "json")], user_file=True)
-        ex_files.write_json(configuration, config_path)
-
-    return {"success": True}
-
-
-@app.get('/system/updateStream')
-async def send_update_stream(request: Request):
-    """Create a server-side event stream to send updates to the client."""
-
-    async def event_generator():
-        last_update_time = None
-        while True:
-            # If client closes connection, stop sending events
-            if await request.is_disconnected():
-                break
-
-            # Checks for new updates and return them to client
-            if hub_config.last_update_time != last_update_time:
-                last_update_time = hub_config.last_update_time
-
-                yield {
-                    "event": "update",
-                    "id": str(last_update_time),
-                    "retry": 5000,  # milliseconds
-                    "data": json.dumps(send_webpage_update(), default=str)
-                }
-            await asyncio.sleep(0.5)  # seconds
-
-    return EventSourceResponse(event_generator())
 
 app.mount("/common",
           StaticFiles(directory=ex_files.get_path(["..", 'common']), html=True),
@@ -1848,20 +1008,20 @@ app.mount("/",
 
 def run():
     print("Checking file structure...")
-    ex_tools.check_file_structure()
+    hub_tools.check_file_structure()
     print("Loading components...")
-    ex_exhibit.load_components()
+    hub_exhibit.load_components()
     print("Loading exhibits...")
-    ex_exhibit.check_available_exhibits()
+    hub_exhibit.check_available_exhibits()
     print("Loading configuration...")
     load_default_configuration()
     print("Loading users...")
-    ex_users.load_users()
+    hub_users.load_users()
     print("Loading groups...")
-    ex_group.load_groups()
+    hub_group.load_groups()
 
-    ex_proj.poll_projectors()
-    ex_exhibit.poll_wake_on_LAN_devices()
+    hub_proj.poll_projectors()
+    hub_exhibit.poll_wake_on_LAN_devices()
     check_for_software_update()
 
     log_level = "warning"

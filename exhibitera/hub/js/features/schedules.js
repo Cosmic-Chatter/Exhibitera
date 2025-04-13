@@ -973,7 +973,7 @@ function downloadScheduleAsJSON (name) {
 
   exTools.makeServerRequest({
     method: 'GET',
-    endpoint: '/schedule/' + name + '/getJSONString'
+    endpoint: '/schedule/' + name + '/JSONString'
   })
     .then((result) => {
       if ('success' in result && result.success === true) {

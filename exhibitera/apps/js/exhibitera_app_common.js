@@ -450,7 +450,7 @@ export function checkForHelperUpdates () {
 
   return makeHelperRequest({
     method: 'GET',
-    endpoint: '/getUpdate',
+    endpoint: '/update',
     timeout: 500
   })
     .then(readHelperUpdate)

@@ -2,10 +2,8 @@
 from functools import lru_cache, partial
 import logging
 import os
-import shutil
 import sys
 import threading
-from typing import Annotated, Any
 
 # Non-standard modules
 from fastapi import FastAPI, Body, Depends, File, Form, UploadFile
@@ -19,13 +17,12 @@ import exhibitera.common.config as ex_config
 import exhibitera.common.files as ex_files
 import exhibitera.common.utilities as ex_utilities
 import exhibitera.apps.config as apps_config
-import exhibitera.apps.features.dmx as apps_dmx
 import exhibitera.apps.features.files as apps_files
 import exhibitera.apps.features.legacy as apps_legacy
 import exhibitera.apps.features.utilities as apps_utilities
 import exhibitera.apps.features.system as apps_system
 
-# API Modules
+# API modules
 from exhibitera.apps.api.data import data
 from exhibitera.apps.api.definitions import definitions
 from exhibitera.apps.api.dmx import dmx
@@ -134,6 +131,7 @@ app.mount("/thumbnails",
               ["thumbnails"], user_file=True)),
           name="thumbnails")
 
+# Link API routers
 app.include_router(data.router)
 app.include_router(definitions.router)
 app.include_router(dmx.router)
@@ -171,7 +169,7 @@ async def serve_readme():
     return file
 
 
-@app.get("/getUpdate")
+@app.get("/update")
 async def send_update(config: apps_config = Depends(get_config)):
     """Get some key info for updating the component and web console."""
 
@@ -223,7 +221,7 @@ def bootstrap_app(port):
 def start_app(port=None, with_webview: bool = True):
     """Start the webserver.
 
-    If with_webview == True, start as a daemon thread so that when the webview closes, the app shuts down.
+    If with_webview is True, start as a daemon thread so that when the webview closes, the app shuts down.
     """
 
     if with_webview is True:
