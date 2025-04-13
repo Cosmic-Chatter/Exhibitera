@@ -835,7 +835,7 @@ function getUserFonts () {
     })
       .then((result) => {
         const availableFonts = []
-        result.all_exhibits.forEach((item) => {
+        result.content.forEach((item) => {
           if (exFiles.guessMimetype(item) === 'font') {
             availableFonts.push(item)
           }

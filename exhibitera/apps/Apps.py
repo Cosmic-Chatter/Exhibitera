@@ -169,18 +169,6 @@ async def serve_readme():
     return file
 
 
-@app.get("/update")
-async def send_update(config: apps_config = Depends(get_config)):
-    """Get some key info for updating the component and web console."""
-
-    response_dict = {
-        "permissions": config.defaults["permissions"],
-        "commands": config.commandList,
-        "missingContentWarnings": config.missingContentWarningList
-    }
-    return response_dict
-
-
 @app.get('/app/closeSetupWizard')
 def close_setup_wizard():
     """Destroy the setup wizard webview"""

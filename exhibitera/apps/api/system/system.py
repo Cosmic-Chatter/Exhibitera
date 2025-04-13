@@ -19,6 +19,18 @@ def get_config():
     return apps_config
 
 
+@router.get("/update")
+async def send_update(config: apps_config = Depends(get_config)):
+    """Get some key info for updating the component and web console."""
+
+    response_dict = {
+        "permissions": config.defaults["permissions"],
+        "commands": config.commandList,
+        "missingContentWarnings": config.missingContentWarningList
+    }
+    return response_dict
+
+
 @router.get("/checkConnection")
 async def check_connection():
     """Respond to request to confirm that the connection is active."""

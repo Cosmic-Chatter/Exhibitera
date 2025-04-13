@@ -610,7 +610,7 @@ function rebuildIssueMediaUploadedList (id = '') {
   } else {
     exTools.makeServerRequest({
       method: 'GET',
-      endpoint: '/issue/' + id + '/getMedia'
+      endpoint: '/issue/' + id + '/media'
     })
       .then((result) => {
         if (result.success === true) {
