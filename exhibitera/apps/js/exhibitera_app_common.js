@@ -204,17 +204,16 @@ export function wakeDisplay () {
 
   makeHelperRequest({
     method: 'GET',
-    endpoint: '/wakeDisplay'
+    endpoint: '/system/wakeDisplay'
   })
 }
 
 function sleepDisplay () {
-  // Send a message to the local helper process and ask it to sleep the
-  // displays
+  // Send a message to the local helper process and ask it to sleep the displays
 
   makeHelperRequest({
     method: 'GET',
-    endpoint: '/sleepDisplay'
+    endpoint: '/system/sleepDisplay'
   })
 }
 
@@ -223,7 +222,7 @@ export function askForRestart () {
 
   makeHelperRequest({
     method: 'GET',
-    endpoint: '/restart'
+    endpoint: '/system/restart'
   })
 }
 
@@ -232,7 +231,7 @@ export function askForShutdown () {
 
   makeHelperRequest({
     method: 'GET',
-    endpoint: '/shutdown'
+    endpoint: '/system/shutdown'
   })
 }
 

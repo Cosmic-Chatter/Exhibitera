@@ -251,7 +251,7 @@ function populateAvailableData () {
 
   exCommon.makeHelperRequest({
     method: 'GET',
-    endpoint: '/data/getAvailable'
+    endpoint: '/data/'
   })
     .then((result) => {
       const select = document.getElementById('votingKioskCSVDownloadSelect')

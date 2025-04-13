@@ -3,7 +3,7 @@ from functools import lru_cache
 import io
 
 # Third-party modules
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Body, Depends
 from fastapi.responses import Response
 
 # Exhibitera modules
@@ -67,3 +67,34 @@ async def send_configuration(config: apps_config = Depends(get_config)):
     # Add the current update availability to pass to Hub
     config_to_send["software_update"] = ex_config.software_update
     return config_to_send
+
+
+@router.post("/configuration/update")
+async def set_defaults(
+        defaults: dict = Body(description="A dictionary matching the structure of config.json."),
+        cull: bool = Body(description="Whether to replace the existing defaults with the provided ones.", default=False)):
+    """Update the given configuration with the specified values"""
+
+    apps_utilities.update_configuration(defaults, cull=cull)
+
+    return {"success": True}
+
+
+@router.get("/restart")
+async def do_restart():
+    apps_system.reboot()
+
+
+@router.get("/shutdown")
+async def do_shutdown():
+    apps_system.shutdown()
+
+
+@router.get("/wakeDisplay")
+async def do_wake():
+    apps_system.wake_display()
+
+
+@router.get("/sleepDisplay")
+async def do_sleep():
+    apps_system.sleep_display()
