@@ -571,7 +571,7 @@ export function setScheduleActionValueSelector (action = null, target = null) {
     exTools.makeRequest({
       method: 'GET',
       url: component.helperAddress,
-      endpoint: '/getAvailableContent'
+      endpoint: '/definitions'
     })
       .then((response) => {
         if (action === 'set_definition') {

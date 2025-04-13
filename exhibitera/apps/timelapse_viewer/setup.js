@@ -162,9 +162,9 @@ function retrieveMatchingFilesCount () {
 
   exCommon.makeHelperRequest({
     method: 'GET',
-    endpoint: '/getAvailableContent'
+    endpoint: '/files/availableContent'
   }).then((result) => {
-    const content = result.all_exhibits
+    const content = result.content
     matchedFiles = content.filter((item) => {
       return item.startsWith(split[0]) && item.endsWith(split[1])
     })
@@ -188,9 +188,9 @@ async function convertVideo () {
   const numFilesToCreate = parseInt(document.getElementById('outputFileCountField').value)
   const response = await exCommon.makeHelperRequest({
     method: 'GET',
-    endpoint: '/getAvailableContent'
+    endpoint: '/files/availableContent'
   })
-  const numFilesCurrent = response.all_exhibits.length
+  const numFilesCurrent = response.content.length
 
   exCommon.makeHelperRequest({
     method: 'POST',
@@ -211,9 +211,9 @@ function trackConversionProgress (total, starting) {
 
   exCommon.makeHelperRequest({
     method: 'GET',
-    endpoint: '/getAvailableContent'
+    endpoint: '/files/availableContent'
   }).then((result) => {
-    const numComplete = result.all_exhibits.length - starting
+    const numComplete = result.content.length - starting
     const percent = Math.round(100 * (numComplete / total))
     document.getElementById('conversionProgressBarDiv').setAttribute('aria-valuenow', percent)
     document.getElementById('conversionProgressBar').style.width = String(percent) + '%'

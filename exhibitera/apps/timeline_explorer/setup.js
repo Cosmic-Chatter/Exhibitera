@@ -606,10 +606,10 @@ function _checkContentExists (spreadsheet, keys) {
 
     exCommon.makeHelperRequest({
       method: 'GET',
-      endpoint: '/getAvailableContent'
+      endpoint: '/files/availableContent'
     })
       .then((result) => {
-        availableContent = result.all_exhibits
+        availableContent = result.content
         // Retrieve the spreadsheet and check the content for each image key against the available content
         exCommon.makeHelperRequest({
           method: 'GET',

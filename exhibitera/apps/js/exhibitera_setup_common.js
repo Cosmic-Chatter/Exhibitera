@@ -831,7 +831,7 @@ function getUserFonts () {
   return new Promise(function (resolve, reject) {
     exCommon.makeHelperRequest({
       method: 'GET',
-      endpoint: '/getAvailableContent'
+      endpoint: '/files/availableContent'
     })
       .then((result) => {
         const availableFonts = []

@@ -1552,7 +1552,7 @@ export function removeExhibitComponentFromModal () {
     })
 }
 
-async function populateComponentDefinitionList (definitions, thumbnails, permission) {
+async function populateComponentDefinitionList (definitions, permission) {
   // Take a dictionary of definitions and convert it to GUI elements.
 
   const uuid = document.getElementById('componentInfoModal').dataset.uuid
@@ -1804,7 +1804,7 @@ function showCopyDefinitionModal (componentUUID, definitionUUID, definitionName)
   })
 }
 
-function copyDefinitionModalCreateDestinationHTML (component, group, def, content) {
+async function copyDefinitionModalCreateDestinationHTML (component, group, def, content) {
   // Take an exhibit component and build an HTML representation.
   // Check if the given destination contains a definition or content of the
   // same name and warn the user.
@@ -1840,24 +1840,31 @@ function copyDefinitionModalCreateDestinationHTML (component, group, def, conten
   checkGroup.appendChild(label)
 
   // Check if the given definition already exists on the destination
-  hubTools.makeRequest({
+  const defRequest = await hubTools.makeRequest({
     method: 'GET',
     url: component.getHelperURL(),
-    endpoint: '/getAvailableContent'
+    endpoint: '/definitions'
   })
-    .then((result) => {
-      if (def in result.definitions) {
-        label.innerHTML += '<span class="badge bg-warning ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="This definition already exists here and will be overwritten." style="font-size: 0.55em;">!</span>'
-      }
-      for (const file of content) {
-        if (result.all_exhibits.includes(file.name)) {
-          label.innerHTML += `<span class="badge bg-warning ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="${file.name} already exists here and will be overwritten." style="font-size: 0.55em;">!</span>`
-        }
-      }
-      // Enable all tooltips
-      const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
-      const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
-    })
+
+  if (def in defRequest.definitions) {
+    label.innerHTML += '<span class="badge bg-warning ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="This definition already exists here and will be overwritten." style="font-size: 0.55em;">!</span>'
+  }
+
+  // Check if any of the content already exists on the destination
+  const contentResponse = await hubTools.makeRequest({
+    method: 'GET',
+    url: component.getHelperURL(),
+    endpoint: '/files/availableContent'
+  })
+
+  for (const file of content) {
+    if (contentResponse.content.includes(file.name)) {
+      label.innerHTML += `<span class="badge bg-warning ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="${file.name} already exists here and will be overwritten." style="font-size: 0.55em;">!</span>`
+    }
+  }
+  // Enable all tooltips
+  const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+  const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
 
   return col
 }
@@ -2001,7 +2008,7 @@ export function submitDefinitionSelectionFromModal () {
   document.getElementById('componentInfoModalDefinitionSaveButton').style.display = 'none'
 }
 
-function updateComponentInfoModalFromHelper (uuid, permission) {
+async function updateComponentInfoModalFromHelper (uuid, permission) {
   // Ask the given helper to send an update and use it to update the interface.
 
   const obj = getExhibitComponent(uuid)
@@ -2017,92 +2024,99 @@ function updateComponentInfoModalFromHelper (uuid, permission) {
   }
 
   setComponentInfoStatusMessage('Connecting to component...')
-  hubTools.makeRequest({
-    method: 'GET',
-    url,
-    endpoint: '/getAvailableContent',
-    timeout: 3000
-  })
-    .then((availableContent) => {
-      // Good connection, so show the interface elements
-      componentGoodConnection()
 
-      // Create entries for available definitions
-      if (availableContent.definitions != null) {
-        populateComponentDefinitionList(availableContent.definitions, availableContent.thumbnails, permission)
-      }
-
-      // If it is provided, show the system stats
-      if ('system_stats' in availableContent) {
-        const stats = availableContent.system_stats
-        // Disk
-        const spaceUsedBar = document.getElementById('contentUploadDiskSpaceUsedBar')
-        const spaceFreeBar = document.getElementById('contentUploadDiskSpaceFreeBar')
-        spaceUsedBar.setAttribute('ariaValueNow', 100 - stats.disk_pct_free)
-        spaceUsedBar.style.width = String(100 - stats.disk_pct_free) + '%'
-        spaceFreeBar.setAttribute('ariaValueNow', stats.disk_pct_free)
-        spaceFreeBar.style.width = String(stats.disk_pct_free) + '%'
-        document.getElementById('contentUploadDiskSpaceFree').innerHTML = `Disk: ${String(Math.round(stats.disK_free_GB))} GB`
-
-        if (stats.disk_pct_free > 20) {
-          spaceUsedBar.classList.remove('bg-warning', 'bg-danger')
-          spaceUsedBar.classList.add('bg-success')
-        } else if (stats.disk_pct_free > 10) {
-          spaceUsedBar.classList.remove('bg-success', 'bg-danger')
-          spaceUsedBar.classList.add('bg-warning')
-        } else {
-          spaceUsedBar.classList.remove('bg-success', 'bg-warning')
-          spaceUsedBar.classList.add('bg-danger')
-        }
-
-        // CPU
-        const CPUUsedBar = document.getElementById('contentUploadCPUUsedBar')
-        const CPUFreeBar = document.getElementById('contentUploadCPUFreeBar')
-        CPUUsedBar.setAttribute('ariaValueNow', stats.cpu_load_pct)
-        CPUUsedBar.style.width = String(stats.cpu_load_pct) + '%'
-        document.getElementById('contentUploadCPUUsed').innerHTML = `CPU: ${String(Math.round(stats.cpu_load_pct))}%`
-        CPUFreeBar.setAttribute('ariaValueNow', 100 - stats.cpu_load_pct)
-        CPUFreeBar.style.width = String(100 - stats.cpu_load_pct) + '%'
-
-        if (stats.cpu_load_pct < 80) {
-          CPUUsedBar.classList.remove('bg-warning', 'bg-danger')
-          CPUUsedBar.classList.add('bg-success')
-        } else if (stats.cpu_load_pct < 90) {
-          CPUUsedBar.classList.remove('bg-success', 'bg-danger')
-          CPUUsedBar.classList.add('bg-warning')
-        } else {
-          CPUUsedBar.classList.remove('bg-success', 'bg-warning')
-          CPUUsedBar.classList.add('bg-danger')
-        }
-
-        // RAM
-        const RAMUsedBar = document.getElementById('contentUploadRAMUsedBar')
-        const RAMFreeBar = document.getElementById('contentUploadRAMFreeBar')
-        RAMUsedBar.setAttribute('ariaValueNow', stats.ram_used_pct)
-        RAMUsedBar.style.width = String(stats.ram_used_pct) + '%'
-        document.getElementById('contentUploadRAMUsed').innerHTML = `RAM: ${String(Math.round(stats.ram_used_pct))}%`
-        RAMFreeBar.setAttribute('ariaValueNow', 100 - stats.ram_used_pct)
-        RAMFreeBar.style.width = String(100 - stats.ram_used_pct) + '%'
-
-        if (stats.ram_used_pct < 80) {
-          RAMUsedBar.classList.remove('bg-warning', 'bg-danger')
-          RAMUsedBar.classList.add('bg-success')
-        } else if (stats.ram_used_pct < 90) {
-          RAMUsedBar.classList.remove('bg-success', 'bg-danger')
-          RAMUsedBar.classList.add('bg-warning')
-        } else {
-          RAMUsedBar.classList.remove('bg-success', 'bg-warning')
-          RAMUsedBar.classList.add('bg-danger')
-        }
-
-        document.getElementById('contentUploadSystemStatsView').style.display = 'flex'
-      } else {
-        document.getElementById('contentUploadSystemStatsView').style.display = 'none'
-      }
+  let defResponse
+  try {
+    defResponse = await hubTools.makeRequest({
+      method: 'GET',
+      url,
+      endpoint: '/definitions',
+      timeout: 3000
     })
-    .catch(() => {
-      componentCannotConnect()
+  } catch {
+    componentCannotConnect()
+  }
+
+  // Good connection, so show the interface elements
+  componentGoodConnection()
+
+  populateComponentDefinitionList(defResponse.definitions, permission)
+
+  let statsResponse
+  try {
+    statsResponse = await hubTools.makeRequest({
+      method: 'GET',
+      url,
+      endpoint: '/system/stats',
+      timeout: 3000
     })
+  } catch {
+    document.getElementById('contentUploadSystemStatsView').style.display = 'none'
+    return
+  }
+
+  const stats = statsResponse.system_stats
+  // Disk
+  const spaceUsedBar = document.getElementById('contentUploadDiskSpaceUsedBar')
+  const spaceFreeBar = document.getElementById('contentUploadDiskSpaceFreeBar')
+  spaceUsedBar.setAttribute('ariaValueNow', 100 - stats.disk_pct_free)
+  spaceUsedBar.style.width = String(100 - stats.disk_pct_free) + '%'
+  spaceFreeBar.setAttribute('ariaValueNow', stats.disk_pct_free)
+  spaceFreeBar.style.width = String(stats.disk_pct_free) + '%'
+  document.getElementById('contentUploadDiskSpaceFree').innerHTML = `Disk: ${String(Math.round(stats.disK_free_GB))} GB`
+
+  if (stats.disk_pct_free > 20) {
+    spaceUsedBar.classList.remove('bg-warning', 'bg-danger')
+    spaceUsedBar.classList.add('bg-success')
+  } else if (stats.disk_pct_free > 10) {
+    spaceUsedBar.classList.remove('bg-success', 'bg-danger')
+    spaceUsedBar.classList.add('bg-warning')
+  } else {
+    spaceUsedBar.classList.remove('bg-success', 'bg-warning')
+    spaceUsedBar.classList.add('bg-danger')
+  }
+
+  // CPU
+  const CPUUsedBar = document.getElementById('contentUploadCPUUsedBar')
+  const CPUFreeBar = document.getElementById('contentUploadCPUFreeBar')
+  CPUUsedBar.setAttribute('ariaValueNow', stats.cpu_load_pct)
+  CPUUsedBar.style.width = String(stats.cpu_load_pct) + '%'
+  document.getElementById('contentUploadCPUUsed').innerHTML = `CPU: ${String(Math.round(stats.cpu_load_pct))}%`
+  CPUFreeBar.setAttribute('ariaValueNow', 100 - stats.cpu_load_pct)
+  CPUFreeBar.style.width = String(100 - stats.cpu_load_pct) + '%'
+
+  if (stats.cpu_load_pct < 80) {
+    CPUUsedBar.classList.remove('bg-warning', 'bg-danger')
+    CPUUsedBar.classList.add('bg-success')
+  } else if (stats.cpu_load_pct < 90) {
+    CPUUsedBar.classList.remove('bg-success', 'bg-danger')
+    CPUUsedBar.classList.add('bg-warning')
+  } else {
+    CPUUsedBar.classList.remove('bg-success', 'bg-warning')
+    CPUUsedBar.classList.add('bg-danger')
+  }
+
+  // RAM
+  const RAMUsedBar = document.getElementById('contentUploadRAMUsedBar')
+  const RAMFreeBar = document.getElementById('contentUploadRAMFreeBar')
+  RAMUsedBar.setAttribute('ariaValueNow', stats.ram_used_pct)
+  RAMUsedBar.style.width = String(stats.ram_used_pct) + '%'
+  document.getElementById('contentUploadRAMUsed').innerHTML = `RAM: ${String(Math.round(stats.ram_used_pct))}%`
+  RAMFreeBar.setAttribute('ariaValueNow', 100 - stats.ram_used_pct)
+  RAMFreeBar.style.width = String(100 - stats.ram_used_pct) + '%'
+
+  if (stats.ram_used_pct < 80) {
+    RAMUsedBar.classList.remove('bg-warning', 'bg-danger')
+    RAMUsedBar.classList.add('bg-success')
+  } else if (stats.ram_used_pct < 90) {
+    RAMUsedBar.classList.remove('bg-success', 'bg-danger')
+    RAMUsedBar.classList.add('bg-warning')
+  } else {
+    RAMUsedBar.classList.remove('bg-success', 'bg-warning')
+    RAMUsedBar.classList.add('bg-danger')
+  }
+
+  document.getElementById('contentUploadSystemStatsView').style.display = 'flex'
 }
 
 export function onDefinitionTabThumbnailsCheckboxChange () {

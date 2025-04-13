@@ -520,13 +520,13 @@ export function gotoApp (app, other = '') {
   }
 }
 
-export async function getAvailableDefinitions (appID) {
+export async function getAvailableDefinitions (appID = '') {
   // Ask the helper for all the definition files for the given app and return a Promise with the result.
 
-  return makeHelperRequest({
-    method: 'GET',
-    endpoint: '/definitions/' + appID + '/getAvailable'
-  })
+  let endpoint = '/definitions/app/' + appID
+  if (appID === '') endpoint = '/definitions'
+
+  return makeHelperRequest({ method: 'GET', endpoint })
 }
 
 export async function writeDefinition (definition) {

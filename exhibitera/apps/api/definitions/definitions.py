@@ -5,8 +5,7 @@ from typing import Any
 import uuid
 
 # Third-party modules
-from fastapi import APIRouter
-from fastapi import Body
+from fastapi import APIRouter, Body
 from fastapi.responses import FileResponse
 
 # Exhibitera modules
@@ -14,6 +13,14 @@ import exhibitera.common.files as ex_files
 import exhibitera.apps.features.files as apps_files
 
 router = APIRouter()
+
+
+@router.get("/definitions")
+@router.get("/definitions/app/{app_id}")
+async def get_available_definitions(app_id: str = 'all'):
+    """Return a list of all the definitions for the given app."""
+
+    return {"success": True, "definitions": apps_files.get_available_definitions(app_id)}
 
 
 @router.get("/definitions/{this_uuid}")
@@ -24,13 +31,6 @@ async def load_definition_as_binary(this_uuid: str):
 
     headers = {'Access-Control-Expose-Headers': 'Content-Disposition'}
     return FileResponse(path, headers=headers)
-
-
-@router.get("/definitions/{app_id}/getAvailable")
-async def get_available_definitions(app_id: str):
-    """Return a list of all the definitions for the given app."""
-
-    return {"success": True, "definitions": apps_files.get_available_definitions(app_id)}
 
 
 @router.post("/definitions/write")

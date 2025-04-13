@@ -306,7 +306,7 @@ function populateComponentContent (options) {
 
   return exCommon.makeHelperRequest({
     method: 'GET',
-    endpoint: '/getAvailableContent'
+    endpoint: '/files/availableContent'
   })
     .then((result) => {
       _populateComponentContent(result, options)
@@ -315,7 +315,7 @@ function populateComponentContent (options) {
 }
 
 function _populateComponentContent (fileDict, options) {
-  // Build HTML elements for every file in fileDict.all_exhibits, modified by
+  // Build HTML elements for every file in fileDict.content_details, modified by
   // the options passed in from createFileSelectionModal()
 
   const fileRow = document.getElementById('exFileSelectModalFileList')

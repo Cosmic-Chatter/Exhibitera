@@ -326,7 +326,7 @@ function populateAvailableDefinitions () {
 
   exCommon.makeHelperRequest({
     method: 'GET',
-    endpoint: '/getAvailableContent'
+    endpoint: '/definitions'
   })
     .then((result) => {
       // First, create option elements and sort them into catefories by app

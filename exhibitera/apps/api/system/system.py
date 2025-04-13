@@ -1,25 +1,46 @@
 # Standard modules
+from functools import lru_cache
 import io
 
 # Third-party modules
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from fastapi.responses import Response
 
 # Exhibitera modules
+import exhibitera.common.config as ex_config
 import exhibitera.apps.features.system as apps_system
 import exhibitera.apps.features.utilities as apps_utilities
+import exhibitera.apps.config as apps_config
 
-router = APIRouter()
+router = APIRouter(prefix='/system')
+
+@lru_cache()
+def get_config():
+    return apps_config
 
 
-@router.get('/system/getPlatformDetails')
+@router.get("/checkConnection")
+async def check_connection():
+    """Respond to request to confirm that the connection is active."""
+
+    return {"success": True}
+
+
+@router.get("/stats")
+async def get_system_stats():
+    """Return a summary of the current CPU, RAM, and storage usage."""
+
+    return {"success": True, "system_stats": apps_utilities.get_system_stats()}
+
+
+@router.get('/getPlatformDetails')
 async def get_platform_details():
     """Return details on the current operating system."""
 
     return apps_system.get_platform_details()
 
 
-@router.get('/system/getScreenshot', responses={200: {"content": {"image/png": {}}}}, response_class=Response)
+@router.get('/getScreenshot', responses={200: {"content": {"image/png": {}}}}, response_class=Response)
 async def get_screenshot():
     """Capture a screenshot and return it as a JPEG response."""
 
@@ -36,3 +57,13 @@ async def get_screenshot():
                         "Pragma": "no-cache",
                         "Expires": "0"
                     })
+
+
+
+@router.get("/configuration")
+async def send_configuration(config: apps_config = Depends(get_config)):
+    config_to_send = config.defaults.copy()
+
+    # Add the current update availability to pass to Hub
+    config_to_send["software_update"] = ex_config.software_update
+    return config_to_send

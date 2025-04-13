@@ -89,10 +89,10 @@ function updateSourceList (matchString) {
 
   exCommon.makeHelperRequest({
     method: 'GET',
-    endpoint: '/getAvailableContent'
+    endpoint: '/files/availableContent'
   })
     .then((content) => {
-      sourceList = content.all_exhibits.filter(
+      sourceList = content.content.filter(
         item => new RegExp('^' + matchString.replace(/\*/g, '.*') + '$').test(item)
       ).sort(function (a, b) {
         return a.localeCompare(b)

@@ -12,7 +12,7 @@ import * as exTools from './tools.js'
 import * as exTracker from './features/tracker.js'
 import * as exUsers from './features/users.js'
 
-function editExhibitCreateComponentHTML (component) {
+async function editExhibitCreateComponentHTML (component) {
   // Create the HTML representation of a component exhibit entry.
 
   const contentList = document.getElementById('editExhibitExhibitContentList')
@@ -52,108 +52,109 @@ function editExhibitCreateComponentHTML (component) {
   body.appendChild(bodyRow)
 
   const componentObj = exExhibit.getExhibitComponent(component.uuid)
-  if (componentObj != null) {
-    // This component exists in the system
 
-    const definitionPreviewCol = document.createElement('div')
-    definitionPreviewCol.classList = 'col-12 exhibit-thumbnail'
-    if (document.getElementById('editExhibitThumbnailCheckbox').checked === false) definitionPreviewCol.style.display = 'none'
-    bodyRow.appendChild(definitionPreviewCol)
+  const definitionPreviewCol = document.createElement('div')
+  definitionPreviewCol.classList = 'col-12 exhibit-thumbnail'
+  if (document.getElementById('editExhibitThumbnailCheckbox').checked === false) definitionPreviewCol.style.display = 'none'
+  bodyRow.appendChild(definitionPreviewCol)
 
-    const definitionPreviewImage = document.createElement('img')
-    definitionPreviewImage.style.width = '100%'
-    definitionPreviewImage.style.height = '100px'
-    definitionPreviewImage.style.objectFit = 'contain'
-    definitionPreviewCol.appendChild(definitionPreviewImage)
+  const definitionPreviewImage = document.createElement('img')
+  definitionPreviewImage.style.width = '100%'
+  definitionPreviewImage.style.height = '100px'
+  definitionPreviewImage.style.objectFit = 'contain'
+  definitionPreviewCol.appendChild(definitionPreviewImage)
 
-    const definitionPreviewVideo = document.createElement('video')
-    definitionPreviewVideo.setAttribute('autoplay', true)
-    definitionPreviewVideo.muted = 'true'
-    definitionPreviewVideo.setAttribute('loop', 'true')
-    definitionPreviewVideo.setAttribute('playsinline', 'true')
-    definitionPreviewVideo.setAttribute('webkit-playsinline', 'true')
-    definitionPreviewVideo.setAttribute('disablePictureInPicture', 'true')
-    definitionPreviewVideo.style.width = '100%'
-    definitionPreviewVideo.style.height = '100px'
-    definitionPreviewVideo.style.objectFit = 'contain'
-    definitionPreviewCol.appendChild(definitionPreviewVideo)
+  const definitionPreviewVideo = document.createElement('video')
+  definitionPreviewVideo.setAttribute('autoplay', true)
+  definitionPreviewVideo.muted = 'true'
+  definitionPreviewVideo.setAttribute('loop', 'true')
+  definitionPreviewVideo.setAttribute('playsinline', 'true')
+  definitionPreviewVideo.setAttribute('webkit-playsinline', 'true')
+  definitionPreviewVideo.setAttribute('disablePictureInPicture', 'true')
+  definitionPreviewVideo.style.width = '100%'
+  definitionPreviewVideo.style.height = '100px'
+  definitionPreviewVideo.style.objectFit = 'contain'
+  definitionPreviewCol.appendChild(definitionPreviewVideo)
 
-    const definitionSelectCol = document.createElement('div')
-    definitionSelectCol.classList = 'col-12'
-    bodyRow.appendChild(definitionSelectCol)
+  definitionPreviewImage.addEventListener('error', () => {
+    // Handle the case where we try to load a video into the img tag
 
-    const definitionSelect = document.createElement('select')
-    definitionSelect.classList = 'form-select manageExhibit-definition-select'
-    definitionSelect.setAttribute('data-component-uuid', component.uuid)
-    definitionSelect.setAttribute('data-component-id', component.id)
-    definitionSelect.setAttribute('data-initial-definition', component.definition)
-    definitionSelectCol.appendChild(definitionSelect)
+    const value = definitionPreviewImage.dataset.selectedDefinition
+    definitionPreviewVideo.src = componentObj.getHelperURL() + '/definitions/' + value + '/thumbnail'
+    definitionPreviewVideo.play()
+    definitionPreviewImage.style.display = 'none'
+    definitionPreviewVideo.style.display = 'block'
+  })
 
-    exTools.makeRequest({
-      method: 'GET',
-      url: componentObj.getHelperURL(),
-      endpoint: '/getAvailableContent'
+  const definitionSelectCol = document.createElement('div')
+  definitionSelectCol.classList = 'col-12'
+  bodyRow.appendChild(definitionSelectCol)
+
+  const definitionSelect = document.createElement('select')
+  definitionSelect.classList = 'form-select manageExhibit-definition-select'
+  definitionSelect.setAttribute('data-component-uuid', component.uuid)
+  definitionSelect.setAttribute('data-component-id', component.id)
+  definitionSelect.setAttribute('data-initial-definition', component.definition)
+  definitionSelectCol.appendChild(definitionSelect)
+
+  const badComponent = function () {
+    // This component is offline
+    const badComponentCol = Object.assign(document.createElement('div'), {
+      className: 'col-12',
+      innerHTML: '<div class="alert alert-danger fst-italic text-center py-2 mb-0">Component offline</div>'
     })
-      .then((availableContent) => {
-        // Build an option for each definition
-        const appDict = exTools.sortDefinitionsByApp(availableContent.definitions)
-        for (const app of Object.keys(appDict).sort()) {
-          const header = new Option(exUtilities.appNameToDisplayName(app))
-          header.setAttribute('disabled', true)
-          definitionSelect.appendChild(header)
-
-          for (const def of appDict[app]) {
-            const option = new Option(def.name, def.uuid)
-            definitionSelect.appendChild(option)
-          }
-        }
-
-        const changeThumb = function () {
-          if (availableContent.thumbnails.includes(definitionSelect.value + '.mp4')) {
-            definitionPreviewVideo.src = componentObj.getHelperURL() + '/thumbnails/' + definitionSelect.value + '.mp4'
-            definitionPreviewVideo.play()
-            definitionPreviewImage.style.display = 'none'
-            definitionPreviewVideo.style.display = 'block'
-          } else if (availableContent.thumbnails.includes(definitionSelect.value + '.jpg')) {
-            definitionPreviewImage.src = componentObj.getHelperURL() + '/thumbnails/' + definitionSelect.value + '.jpg'
-            definitionPreviewVideo.style.display = 'none'
-            definitionPreviewImage.style.display = 'block'
-          } else {
-            definitionPreviewVideo.style.display = 'none'
-            definitionPreviewImage.style.display = 'none'
-          }
-        }
-
-        definitionSelect.addEventListener('change', changeThumb)
-        definitionSelect.value = component.definition
-        changeThumb()
-      })
-      .catch((result) => {
-        // This component is offline
-        const badComponentCol = document.createElement('div')
-        badComponentCol.classList = 'col-12'
-        bodyRow.appendChild(badComponentCol)
-
-        const badComponentAlert = document.createElement('div')
-        badComponentAlert.classList = 'alert alert-danger fst-italic text-center py-2 mb-0'
-        badComponentAlert.innerHTML = 'Component offline'
-        badComponentCol.appendChild(badComponentAlert)
-
-        // Hide the thumbnail and select
-        definitionPreviewCol.style.display = 'none'
-        definitionSelectCol.style.display = 'none'
-      })
-  } else {
-    // This component doesn't exist
-    const badComponentCol = document.createElement('div')
-    badComponentCol.classList = 'col-12'
     bodyRow.appendChild(badComponentCol)
 
-    const badComponentAlert = document.createElement('div')
-    badComponentAlert.classList = 'alert alert-danger fst-italic text-center py-2 mb-0'
-    badComponentAlert.innerHTML = 'Component does not exist'
-    badComponentCol.appendChild(badComponentAlert)
+    // Hide the thumbnail and select
+    definitionPreviewCol.style.display = definitionSelectCol.style.display = 'none'
   }
+
+  if (componentObj == null) {
+    badComponent()
+    return
+  }
+
+  try {
+    await exTools.makeRequest({
+      method: 'GET',
+      url: componentObj.getHelperURL(),
+      endpoint: '/system/checkConnection'
+    })
+  } catch {
+    badComponent()
+    return
+  }
+
+  const response = await exTools.makeRequest({
+    method: 'GET',
+    url: componentObj.getHelperURL(),
+    endpoint: '/definitions'
+  })
+
+  // Build an option for each definition
+  const appDict = exTools.sortDefinitionsByApp(response.definitions)
+  for (const app of Object.keys(appDict).sort()) {
+    const header = new Option(exUtilities.appNameToDisplayName(app))
+    header.setAttribute('disabled', true)
+    definitionSelect.appendChild(header)
+
+    for (const def of appDict[app]) {
+      const option = new Option(def.name, def.uuid)
+      definitionSelect.appendChild(option)
+    }
+  }
+
+  const changeThumb = function () {
+    definitionPreviewImage.dataset.selectedDefinition = definitionSelect.value
+
+    definitionPreviewImage.src = componentObj.getHelperURL() + '/definitions/' + definitionSelect.value + '/thumbnail'
+    definitionPreviewVideo.style.display = 'none'
+    definitionPreviewImage.style.display = 'block'
+  }
+
+  definitionSelect.addEventListener('change', changeThumb)
+  definitionSelect.value = component.definition
+  changeThumb()
 }
 
 async function editExhibitPopulateExhibitContent (exhibit) {
