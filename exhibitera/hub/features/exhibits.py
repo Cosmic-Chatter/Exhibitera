@@ -931,7 +931,7 @@ def read_exhibit_configuration(uuid_str: str) -> tuple[bool, str]:
         component.update_configuration()
 
     # Trigger any exhibit actions
-    for command in hub_config.exhibit_configuration["commands"]:
+    for command in hub_config.exhibit_configuration.get("commands", []):
         execute_action(command["action"], command["target"], command["value"])
 
     hub_config.current_exhibit = uuid_str

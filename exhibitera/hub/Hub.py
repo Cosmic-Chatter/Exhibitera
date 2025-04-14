@@ -96,7 +96,6 @@ def load_default_configuration() -> None:
     hub_legacy.convert_legacy_WOL_configuration()
     hub_legacy.convert_schedule_targets_to_json()
     hub_legacy.convert_legacy_tracker_templates_to_json()
-    hub_legacy.convert_exhibit_files()
 
     hub_tools.start_debug_loop()
     hub_schedule.retrieve_json_schedule()
@@ -752,6 +751,7 @@ app.mount("/",
 def run():
     print("Checking file structure...")
     hub_tools.check_file_structure()
+    hub_legacy.convert_exhibit_files() # Run early before any exhibits are loaded
     print("Loading components...")
     hub_exhibit.load_components()
     print("Loading exhibits...")
