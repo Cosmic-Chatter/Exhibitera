@@ -246,7 +246,6 @@ def load_default_configuration() -> None:
     ex_legacy.convert_legacy_WOL_configuration()
     ex_legacy.convert_schedule_targets_to_json()
     ex_legacy.convert_legacy_tracker_templates_to_json()
-    ex_legacy.convert_exhibit_files()
 
     ex_tools.start_debug_loop()
     ex_sched.retrieve_json_schedule()
@@ -1911,6 +1910,7 @@ app.mount("/",
 if __name__ == "__main__":
     print("Checking file structure...")
     ex_tools.check_file_structure()
+    ex_legacy.convert_exhibit_files() # Run early before any exhibits are loaded.
     print("Loading components...")
     ex_exhibit.load_components()
     print("Loading exhibits...")

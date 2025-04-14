@@ -176,6 +176,7 @@ def convert_exhibit_files():
         uuid_str = str(uuid.uuid4())
         name = os.path.splitext(file)[0]
         new_exhibit = {
+            "commands": [],
             "components": exhibit,
             "name": name,
             "uuid": uuid_str,
@@ -192,6 +193,7 @@ def convert_exhibit_files():
         new_path = ex_tools.get_path(["exhibits", uuid_str + '.json'], user_file=True)
         ex_tools.write_json(new_exhibit, new_path)
 
+    ex_exhibit.check_available_exhibits()
 
 # Helper function for convert_exhibit_files()
 def _convert_schedule_set_exhibit(name, uuid_str):
@@ -216,7 +218,6 @@ def _convert_schedule_set_exhibit(name, uuid_str):
                         ex_tools.get_path(["schedules", file + ".backup"], user_file=True))
             ex_sched.write_json_schedule(file, schedule)
 
-    ex_exhibit.check_available_exhibits()
 
 
 # Added in Ex5.3 to convert tracker templates from INI to JSON
