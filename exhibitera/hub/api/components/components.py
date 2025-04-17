@@ -113,7 +113,7 @@ async def edit_wake_on_lan_component(request: Request,
     """Edit the given wake on LAN component."""
 
     # Load the component first, so we can use the groups to authenticate
-    component = hub_exhibit.get_wake_on_LAN_component(component_uuid=uuid_str)
+    component = hub_exhibit.get_wake_on_lan_component(component_uuid=uuid_str)
     if component is None:
         return {"success": False, "reason": "Component does not exist"}
 

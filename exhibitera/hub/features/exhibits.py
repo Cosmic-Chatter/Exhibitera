@@ -272,7 +272,7 @@ class ExhibitComponent(BaseComponent):
 
         # Check if we have specified a Wake on LAN device matching this id
         # If yes, subsume it into this component
-        wol = get_wake_on_LAN_component(component_id=self.id)
+        wol = get_wake_on_lan_component(component_id=self.id)
         if wol is not None:
             self.mac_address = wol.mac_address
             self.config["permissions"]["shutdown"] = True
@@ -864,7 +864,7 @@ def get_exhibit_component(component_id: str = "", component_uuid: str = "") -> E
 
     if component is None:
         # Try wake on LAN
-        component = get_wake_on_LAN_component(component_uuid=component_uuid, component_id=component_id)
+        component = get_wake_on_lan_component(component_uuid=component_uuid, component_id=component_id)
 
     return component
 
@@ -883,7 +883,7 @@ def get_projector(projector_id: str = "", projector_uuid: str = "") -> Projector
     return None
 
 
-def get_wake_on_LAN_component(component_id: str = "", component_uuid: str = "") -> WakeOnLANDevice | None:
+def get_wake_on_lan_component(component_id: str = "", component_uuid: str = "") -> WakeOnLANDevice | None:
     """Return a WakeOnLan device with the given id or uuid, or None if no such component exists"""
 
     if component_uuid == "" and component_id == "":
@@ -898,7 +898,7 @@ def get_wake_on_LAN_component(component_id: str = "", component_uuid: str = "") 
     return None
 
 
-def poll_wake_on_LAN_devices():
+def poll_wake_on_lan_devices():
     """Ask every Wake on LAN device to report its status at an interval.
     """
 
@@ -907,7 +907,7 @@ def poll_wake_on_LAN_devices():
         new_thread.daemon = True  # So it dies if we exit
         new_thread.start()
 
-    hub_config.polling_thread_dict["poll_wake_on_LAN_devices"] = threading.Timer(30, poll_wake_on_LAN_devices)
+    hub_config.polling_thread_dict["poll_wake_on_LAN_devices"] = threading.Timer(30, poll_wake_on_lan_devices)
     hub_config.polling_thread_dict["poll_wake_on_LAN_devices"].daemon = True
     hub_config.polling_thread_dict["poll_wake_on_LAN_devices"].start()
 
@@ -958,17 +958,15 @@ def update_exhibit_configuration(update: dict[str, Any],
     match_found = False
     for index, component in enumerate(exhibit_config.get("components", [])):
         # Prefer UUID to ID from Exhibitera 5
-        if component_uuid != '' and component_uuid is not None and 'uuid' in component:
-            if component["uuid"] == component_uuid:
-                exhibit_config["components"][index] |= update
+        if component_uuid and component.get("uuid") == component_uuid:
+            exhibit_config["components"][index] |= update
+            exhibit_config["components"][index]["uuid"] = component_uuid
+            match_found = True
+        elif component_id and component.get("id") == component_id:
+            exhibit_config["components"][index] |= update
+            if component_uuid:
                 exhibit_config["components"][index]["uuid"] = component_uuid
-                match_found = True
-        elif component_id != '' and component_id is not None and 'id' in component:
-            if component["id"] == component_id:
-                exhibit_config["components"][index] |= update
-                if component_uuid != '' and component_uuid is not None:
-                    exhibit_config["components"][index]["uuid"] = component_uuid
-                match_found = True
+            match_found = True
     if not match_found:
         new_entry = {}
         if component_id != '' and component_id is not None:
@@ -980,7 +978,7 @@ def update_exhibit_configuration(update: dict[str, Any],
     hub_config.exhibit_configuration = exhibit_config
 
     ex_files.write_json(exhibit_config, exhibit_path)
-    if component_uuid != "" and component_uuid is not None:
+    if component_uuid:
         this_component = get_exhibit_component(component_uuid=component_uuid)
     else:
         this_component = get_exhibit_component(component_id=component_id)

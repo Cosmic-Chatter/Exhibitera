@@ -42,6 +42,8 @@ import exhibitera.hub.features.users as hub_users
 from exhibitera.hub.api.components import components
 from exhibitera.hub.api.groups import groups
 from exhibitera.hub.api.issues import issues
+from exhibitera.hub.api.maintenance import maintenance
+from exhibitera.hub.api.projectors import projectors
 from exhibitera.hub.api.schedule import schedule
 from exhibitera.hub.api.system import system
 from exhibitera.hub.api.users import users
@@ -93,7 +95,7 @@ def load_default_configuration() -> None:
     # Handle legacy conversions
     hub_legacy.convert_legacy_projector_configuration()
     hub_legacy.convert_legacy_static_configuration()
-    hub_legacy.convert_legacy_WOL_configuration()
+    hub_legacy.convert_legacy_wol_configuration()
     hub_legacy.convert_schedule_targets_to_json()
     hub_legacy.convert_legacy_tracker_templates_to_json()
 
@@ -277,6 +279,8 @@ app.openapi = exhibitera_schema
 app.include_router(components.router)
 app.include_router(groups.router)
 app.include_router(issues.router)
+app.include_router(maintenance.router)
+app.include_router(projectors.router)
 app.include_router(schedule.router)
 app.include_router(system.router)
 app.include_router(users.router)
@@ -564,158 +568,6 @@ async def submit_tracker_raw_text(data: dict[str, Any], tracker_type: str):
     return response
 
 
-# Maintenance actions
-@app.delete("/maintenance/{uuid_str}")
-async def delete_maintenance_record(request: Request, uuid_str: str):
-    """Clear the maintenance log for the given component."""
-
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = hub_users.check_user_permission("maintenance", "edit", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
-
-    component = hub_exhibit.get_exhibit_component(component_uuid=uuid_str)
-    if component is None:
-        return {"success": False, "reason": "invalid_uuid"}
-
-    component.maintenance_log = {
-        "current": {
-            "date": str(datetime.datetime.now()),
-            "status": "On floor, not working",
-            "notes": ""
-        },
-        "history": []
-    }
-    component.save()
-    hub_config.last_update_time = time.time()
-    return {"success": True}
-
-
-@app.get("/maintenance")
-async def get_all_maintenance_statuses(request: Request):
-    """Send a list of all the maintenance statuses for known components"""
-
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = hub_users.check_user_permission("maintenance", "view", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
-
-    record_list = []
-    for component in hub_config.componentList:
-        record_list.append(component.get_maintenance_report())
-    for projector in hub_config.projectorList:
-        record_list.append(projector.get_maintenance_report())
-    for wol in hub_config.wakeOnLANList:
-        record_list.append(wol.get_maintenance_report())
-    return {"success": True, "records": record_list}
-
-
-@app.get("/maintenance/{uuid_str}")
-async def get_maintenance_status(request: Request, uuid_str: str):
-    """Return the maintenance status for the given component."""
-
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = hub_users.check_user_permission("maintenance", "view", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
-
-    component = hub_exhibit.get_exhibit_component(component_uuid=uuid_str)
-    if component is None:
-        return {"success": False, "reason": "invalid_uuid"}
-    return {"success": True, "status": component.get_maintenance_report()}
-
-
-@app.post("/maintenance/{uuid_str}")
-async def update_maintenance_status(request: Request,
-                                    uuid_str: str,
-                                    notes: str = Body(description="Text notes about this component."),
-                                    status: str = Body(description="The status of the component.")):
-    """Update the maintenance status for the given component."""
-
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = hub_users.check_user_permission("maintenance", "edit", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
-
-    component = hub_exhibit.get_exhibit_component(component_uuid=uuid_str)
-    if component is None:
-        return {"success": False, "reason": "invalid_uuid"}
-
-    record = {"id": component.id,
-              "date": datetime.datetime.now().isoformat(),
-              "status": status,
-              "notes": notes}
-    component.maintenance_log["current"] = record
-    component.maintenance_log["history"].append(record)
-    component.config["maintenance_status"] = status
-    component.save()
-
-    return {"success": True}
-
-
-# Projector actions
-@app.post("/projector/create")
-async def create_projector(request: Request,
-                           id: str = Body(description="The ID of the projector to add."),
-                           groups: list[str] = Body(description="The groups of the projector to add."),
-                           ip_address: str = Body(description="The IP address for the projector."),
-                           password: str = Body(description="The PJLink password", default="")):
-    """Create a new projector."""
-
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = hub_users.check_user_permission("settings", "edit", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
-
-    proj = hub_exhibit.add_projector(id, groups, ip_address, password=password)
-
-    return {"success": True, "uuid": proj.uuid}
-
-
-@app.post("/projector/{uuid_str}/edit")
-async def edit_projector(request: Request,
-                         uuid_str: str,
-                         id: str | None = Body(description="The ID of the projector to add.", default=None),
-                         groups: list[str] | None = Body(description="The groups of the projector to add.",
-                                                         default=None),
-                         description: str | None = Body(description="A short description of this projector.",
-                                                        default=None),
-                         ip_address: str | None = Body(description="The IP address for the projector.", default=None),
-                         password: str | None = Body(description="The PJLink password", default=None)):
-    """Edit the given projector."""
-
-    # Get the projector first, so we can use the groups to authenticate
-    proj = hub_exhibit.get_projector(projector_uuid=uuid_str)
-    if proj is None:
-        return {"success": False, "reason": "Projector does not exist"}
-
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = hub_users.check_user_permission("components", "edit",
-                                                                        groups=proj.groups, token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
-
-    if id is not None:
-        proj.id = id
-    if groups is not None:
-        proj.groups = groups
-    if ip_address is not None:
-        proj.ip_address = ip_address
-    if password is not None:
-        proj.password = password
-    if description is not None:
-        proj.config["description"] = description
-    proj.save()
-    hub_config.last_update_time = time.time()
-    return {"success": True}
-
-
 app.mount("/common",
           StaticFiles(directory=ex_files.get_path(["..", 'common']), html=True),
           name="common")
@@ -764,7 +616,7 @@ def run():
     hub_group.load_groups()
 
     hub_proj.poll_projectors()
-    hub_exhibit.poll_wake_on_LAN_devices()
+    hub_exhibit.poll_wake_on_lan_devices()
     check_for_software_update()
 
     log_level = "warning"

@@ -75,30 +75,30 @@ def convert_legacy_static_configuration():
 
 
 # Added in Ex5 to convert legacy C4 and earlier wake_on_LAN.json
-def convert_legacy_WOL_configuration():
+def convert_legacy_wol_configuration():
     """Convert wake_on_LAN.json to a series of components in the components directory."""
 
     config_path = ex_files.get_path(["configuration", "wake_on_LAN.json"], user_file=True)
     config_path_new = ex_files.get_path(["configuration", "wake_on_LAN.json.old"], user_file=True)
     if not os.path.exists(config_path):
         return
-    WOL_config = ex_files.load_json(config_path)
+    wol_config = ex_files.load_json(config_path)
 
-    for WOL in WOL_config:
-        maintenance_log = hub_maintain.convert_legacy_maintenance_log(WOL["id"], )
-        maint_path = ex_files.get_path(["maintenance-logs", WOL["id"] + '.txt'], user_file=True)
-        maint_path_new = ex_files.get_path(["maintenance-logs", WOL["id"] + '.txt.old'], user_file=True)
+    for wol in wol_config:
+        maintenance_log = hub_maintain.convert_legacy_maintenance_log(wol["id"], )
+        maintenance_path = ex_files.get_path(["maintenance-logs", wol["id"] + '.txt'], user_file=True)
+        maintenance_path_new = ex_files.get_path(["maintenance-logs", wol["id"] + '.txt.old'], user_file=True)
         try:
-            os.rename(maint_path, maint_path_new)
+            os.rename(maintenance_path, maintenance_path_new)
         except FileNotFoundError:
             pass
 
-        new_WOL = hub_exhibit.WakeOnLANDevice(WOL["id"],
-                                              WOL.get("group", "Default"),
-                                              WOL["mac_address"],
-                                              ip_address=WOL.get("ip_address", ""),
+        new_wol = hub_exhibit.WakeOnLANDevice(wol["id"],
+                                              wol.get("group", "Default"),
+                                              wol["mac_address"],
+                                              ip_address=wol.get("ip_address", ""),
                                               maintenance_log=maintenance_log)
-        new_WOL.save()
+        new_wol.save()
     os.rename(config_path, config_path_new)
 
 
