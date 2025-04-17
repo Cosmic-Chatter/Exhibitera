@@ -6,7 +6,7 @@ import socket
 import exhibitera.hub.config as hub_config
 import exhibitera.common.utilities as ex_utilities
 import exhibitera.common.files as ex_files
-import exhibitera.hub.features.exhibits as hub_exhibit
+import exhibitera.hub.features.exhibitions as hub_exhibitions
 
 
 def get_webpage_update():
@@ -150,7 +150,7 @@ def command_line_setup() -> None:
     settings_dict["current_exhibit"] = "Default"
     # Create this exhibit file if it doesn't exist
     if not os.path.exists(ex_files.get_path(["exhibits", "Default.json"], user_file=True)):
-        hub_exhibit.create_new_exhibit("Default", None)
+        hub_exhibitions.create_exhibition("Default", None)
 
     # Write new system apps_config to file
     config_path = ex_files.get_path(["configuration", "system.json"], user_file=True)

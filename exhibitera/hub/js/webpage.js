@@ -168,7 +168,7 @@ async function editExhibitPopulateExhibitContent (exhibit) {
 
   const result = await exTools.makeServerRequest({
     method: 'GET',
-    endpoint: '/exhibit/' + exhibit + '/details'
+    endpoint: '/exhibition/' + exhibit + '/details'
   })
   exhibitNameField.value = result.exhibit.name
 
@@ -334,7 +334,7 @@ function editExhibitSubmitUpdate () {
   }
   exTools.makeServerRequest({
     method: 'POST',
-    endpoint: '/exhibit/' + uuid + '/edit',
+    endpoint: '/exhibition/' + uuid + '/edit',
     params: { details: exhibit }
   })
     .then((result) => {
@@ -553,7 +553,7 @@ async function changeExhibit (warningShown) {
 
     const response = await exTools.makeServerRequest({
       method: 'POST',
-      endpoint: '/exhibit/' + uuid + '/set'
+      endpoint: '/exhibition/' + uuid + '/set'
     })
     if ((response?.success ?? false) === true) {
       updateExhibitButtons(uuid)
@@ -700,7 +700,7 @@ function createExhibit (name, cloneFrom) {
 
   exTools.makeServerRequest({
     method: 'POST',
-    endpoint: '/exhibit/create',
+    endpoint: '/exhibition/create',
     params: requestDict
   })
     .then((result) => {
@@ -715,7 +715,7 @@ function deleteExhibit (uuid) {
 
   exTools.makeServerRequest({
     method: 'DELETE',
-    endpoint: '/exhibit/' + uuid
+    endpoint: '/exhibition/' + uuid
   })
 }
 

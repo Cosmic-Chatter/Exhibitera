@@ -29,6 +29,7 @@ import exhibitera.common.config as ex_config
 import exhibitera.common.files as ex_files
 import exhibitera.hub.config as hub_config
 import exhibitera.hub.features.exhibits as hub_exhibit
+import exhibitera.hub.features.exhibitions as hub_exhibitions
 import exhibitera.hub.features.groups as hub_group
 import exhibitera.hub.features.issues as hub_issues
 import exhibitera.hub.features.legacy as hub_legacy
@@ -40,6 +41,7 @@ import exhibitera.hub.features.users as hub_users
 
 # API modules
 from exhibitera.hub.api.components import components
+from exhibitera.hub.api.exhibitions import exhibitions
 from exhibitera.hub.api.groups import groups
 from exhibitera.hub.api.issues import issues
 from exhibitera.hub.api.maintenance import maintenance
@@ -101,7 +103,7 @@ def load_default_configuration() -> None:
 
     hub_tools.start_debug_loop()
     hub_schedule.retrieve_json_schedule()
-    hub_exhibit.read_exhibit_configuration(hub_config.current_exhibit)
+    hub_exhibitions.load_exhibition(hub_config.current_exhibit)
 
     # Build any existing issues
     hub_issues.read_issue_list()
@@ -277,6 +279,7 @@ app.openapi = exhibitera_schema
 
 # Link API routers
 app.include_router(components.router)
+app.include_router(exhibitions.router)
 app.include_router(groups.router)
 app.include_router(issues.router)
 app.include_router(maintenance.router)
@@ -291,82 +294,7 @@ def get_config():
     return hub_config
 
 
-@app.post("/exhibit/create")
-async def create_exhibit(request: Request,
-                         name: str = Body(description="The name of the exhibit."),
-                         clone_from: str | None = Body(default=None, description="The name of the exhibit to clone.")):
-    """Create a new exhibit JSON file."""
 
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = hub_users.check_user_permission("exhibits", "edit", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
-
-    uuid_str = hub_exhibit.create_new_exhibit(name, clone_from)
-    return {"success": True, "reason": "", "uuid": uuid_str}
-
-
-@app.post("/exhibit/{uuid_str}/edit")
-async def edit_exhibit(request: Request,
-                       uuid_str: str,
-                       details: dict[str, Any] = Body(
-                           description="A dictionary specifying the details of the exhibit.", embed=True)):
-    """Update the given exhibit with the specified details."""
-
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = hub_users.check_user_permission("exhibits", "edit", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
-
-    path = ex_files.get_path(["exhibits", ex_files.with_extension(uuid_str, '.json')], user_file=True)
-    ex_files.write_json(details, path)
-    hub_exhibit.check_available_exhibits()
-    hub_config.last_update_time = time.time()
-
-    return {"success": True, "reason": ""}
-
-
-@app.delete("/exhibit/{uuid_str}")
-async def delete_exhibit(request: Request, uuid_str: str):
-    """Delete the specified exhibit."""
-
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = hub_users.check_user_permission("exhibits", "edit", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
-
-    hub_exhibit.delete_exhibit(uuid_str)
-    return {"success": True, "reason": ""}
-
-
-@app.post("/exhibit/{uuid_str}/set")
-async def set_exhibit(uuid_str: str):
-    """Set the specified exhibit as the current one."""
-
-    hub_tools.update_system_configuration({"current_exhibit": uuid_str})
-    success, reason = hub_exhibit.read_exhibit_configuration(uuid_str)
-    return {"success": success, "reason": reason}
-
-
-@app.get("/exhibit/getAvailable")
-async def get_available_exhibits():
-    """Return a list of available exhibits."""
-
-    return {"success": True, "available_exhibits": hub_config.exhibit_list}
-
-
-@app.get("/exhibit/{uuid_str}/details")
-async def get_exhibit_details(uuid_str: str):
-    """Return the JSON for a particular exhibit."""
-
-    exhibit_path = ex_files.get_path(["exhibits", ex_files.with_extension(uuid_str, 'json')], user_file=True)
-    result = ex_files.load_json(exhibit_path)
-    if result is None:
-        return {"success": False, "reason": "Exhibit does not exist."}
-    return {"success": True, "exhibit": result}
 
 
 # Flexible Tracker actions
@@ -607,7 +535,7 @@ def run():
     print("Loading components...")
     hub_exhibit.load_components()
     print("Loading exhibits...")
-    hub_exhibit.check_available_exhibits()
+    hub_exhibitions.check_available_exhibitions()
     print("Loading configuration...")
     load_default_configuration()
     print("Loading users...")

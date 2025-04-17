@@ -7,6 +7,7 @@ from fastapi import APIRouter, Body, Request
 # Exhibitera modules
 import exhibitera.hub.config as hub_config
 import exhibitera.hub.features.exhibits as hub_exhibit
+import exhibitera.hub.features.exhibitions as hub_exhibitions
 import exhibitera.hub.features.users as hub_users
 
 router = APIRouter(prefix="/component")
@@ -94,7 +95,7 @@ async def create_wake_on_lan_component(request: Request,
     if success is False:
         return {"success": False, "reason": reason}
 
-    component = hub_exhibit.add_wake_on_LAN_device(id, groups, mac_address, ip_address=ip_address)
+    component = hub_exhibit.add_wake_on_lan_device(id, groups, mac_address, ip_address=ip_address)
 
     return {"success": True, "uuid": component.uuid}
 
@@ -188,7 +189,6 @@ async def edit_component(request: Request,
 async def set_component_definition(component_uuid: str, definition_uuid: str):
     """Set the definition for the component."""
 
-    hub_exhibit.update_exhibit_configuration({"definition": definition_uuid},
-                                             component_uuid=component_uuid)
+    hub_exhibitions.update_exhibition(component_uuid, {"definition": definition_uuid})
 
     return {"success": True}

@@ -13,7 +13,7 @@ import threading
 # Exhibitera imports
 import exhibitera.common.files as ex_files
 import exhibitera.hub.config as hub_config
-import exhibitera.hub.features.exhibits as hub_exhibit
+import exhibitera.hub.features.exhibitions as hub_exhibitions
 
 
 def create_schedule(name: str, entries: dict[str, dict]) -> tuple[bool, dict]:
@@ -280,7 +280,7 @@ def execute_scheduled_action(action: str,
                              value: list | str | None):
     """Dispatch the appropriate action when called by a schedule timer"""
 
-    hub_exhibit.execute_action(action, target, value)
+    hub_exhibitions.execute_action(action, target, value)
     get_next_scheduled_action()
     hub_config.scheduleUpdateTime = time.time()
 

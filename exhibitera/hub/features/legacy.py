@@ -14,9 +14,9 @@ import uuid
 # Exhibitera imports
 import exhibitera.common.files as ex_files
 import exhibitera.hub.features.exhibits as hub_exhibit
+import exhibitera.hub.features.exhibitions as hub_exhibitions
 import exhibitera.hub.features.maintenance as hub_maintain
 import exhibitera.hub.features.schedules as hub_schedule
-import exhibitera.hub.tools as hub_tools
 
 
 # Added in Ex5 to convert legacy C4 and earlier projector.json
@@ -193,7 +193,7 @@ def convert_exhibit_files():
         new_path = ex_files.get_path(["exhibits", uuid_str + '.json'], user_file=True)
         ex_files.write_json(new_exhibit, new_path)
 
-    hub_exhibit.check_available_exhibits()
+    hub_exhibitions.check_available_exhibitions()
 
 
 # Helper function for convert_exhibit_files()
