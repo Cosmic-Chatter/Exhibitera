@@ -83,7 +83,7 @@ async def handle_ping(data: dict[str, Any], request: Request):
 
     hub_components.update_exhibit_component_status(data, request.client.host)
 
-    component = hub_components.get_exhibit_component(component_uuid=data['uuid'])
+    component = hub_components.get_exhibit_component(data['uuid'])
     dict_to_send = component.config.copy()
 
     if len(dict_to_send["commands"]) > 0:

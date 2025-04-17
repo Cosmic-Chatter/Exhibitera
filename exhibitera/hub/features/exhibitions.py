@@ -55,7 +55,7 @@ def delete_exhibition(name: str):
 
     file_to_delete = ex_files.get_path(["exhibits", ex_files.with_extension(name, 'json')], user_file=True)
 
-    with hub_config.exhibitsLock:
+    with hub_config.exhibitionsLock:
         try:
             os.remove(file_to_delete)
         except FileNotFoundError:
@@ -141,10 +141,7 @@ def update_exhibition(component_uuid: str,
     hub_config.exhibit_configuration = exhibit_config
 
     ex_files.write_json(exhibit_config, exhibit_path)
-    if component_uuid:
-        this_component = hub_components.get_exhibit_component(component_uuid=component_uuid)
-    else:
-        this_component = hub_components.get_exhibit_component(component_id=component_id)
+    this_component = hub_components.get_exhibit_component(component_uuid)
     if this_component is not None:
         this_component.update_configuration()
 
@@ -164,21 +161,9 @@ def execute_action(action: str,
     elif action == 'set_dmx_scene' and target is not None and value is not None:
         if isinstance(value, list):
             value = value[0]
-        target_uuid = None
-        target_id = None
-        if "uuid" in target:
-            target_uuid = target["uuid"]
-        elif "id" in target:
-            # Depreciated in Ex5.2 - UUID should be the default
-            target_id = target["id"]
-        else:
-            if ex_config.debug:
-                print("set_definition scheduled without a target uuid")
-                logging.error("set_definition scheduled without a target uuid")
-            return
 
         logging.info('Setting DMX scene for %s to %s', target, value)
-        component = hub_components.get_exhibit_component(component_id=target_id, component_uuid=target_uuid)
+        component = hub_components.get_exhibit_component(target["uuid"])
         if component is not None:
             component.queue_command("set_dmx_scene__" + value)
     elif action == 'set_exhibit' and target is not None:
@@ -203,19 +188,7 @@ def execute_action(action: str,
                     if group in component.groups:
                         component.queue_command(action)
             elif target_i["type"] == "component":
-                target_uuid = None
-                target_id = None
-                if "uuid" in target_i:
-                    target_uuid = target_i["uuid"]
-                elif "id" in target_i:
-                    # Depreciated in Ex5.2 - UUID should be the default
-                    target_id = target_i["id"]
-                else:
-                    if ex_config.debug:
-                        print("action scheduled without a target uuid")
-                        logging.error("set_definition scheduled without a target uuid")
-                    return
-                component = hub_components.get_exhibit_component(component_id=target_id, component_uuid=target_uuid)
+                component = hub_components.get_exhibit_component(target_i["uuid"])
                 if component is not None:
                     component.queue_command(action)
     else:

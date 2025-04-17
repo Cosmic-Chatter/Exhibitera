@@ -43,7 +43,7 @@ async def edit_projector(request: Request,
     """Edit the given projector."""
 
     # Get the projector first, so we can use the groups to authenticate
-    proj = hub_components.get_projector(projector_uuid=uuid_str)
+    proj = hub_components.get_projector(uuid_str)
     if proj is None:
         return {"success": False, "reason": "Projector does not exist"}
 

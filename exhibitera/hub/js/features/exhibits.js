@@ -1010,14 +1010,14 @@ function showExhibitComponentInfo (uuid, groupUUID) {
       configureComponentInfoModalForStatic(obj, permission, maintenancePermission)
     }
   } else if (obj.type === 'projector') {
-    configureComponentInfoModalForProjector(obj)
+    configureComponentInfoModalForProjector(obj, permission, maintenancePermission)
 
     if (obj.status === hubConfig.STATUS.OFFLINE) {
       componentCannotConnect('projector')
       document.getElementById('componentInfoModaProejctorTabButton').style.display = 'none'
     }
   } else if (obj.type === 'wol_component') {
-    configureComponentInfoModalForWakeOnLAN(obj)
+    configureComponentInfoModalForWakeOnLAN(obj, permission, maintenancePermission)
   }
 
   // Must be after all the settings are configured
@@ -1202,8 +1202,27 @@ function configureComponentInfoModalForStatic (obj, componentPermission, mainten
   }
 }
 
-function configureComponentInfoModalForWakeOnLAN (obj) {
+function configureComponentInfoModalForWakeOnLAN (obj, componentPermission, maintenancePermission) {
   // Configure componentInfoModal to show a Wake on LAN component
+
+  // Check permissions and show the right tab
+  if ((componentPermission !== 'edit') && (maintenancePermission === 'none')) {
+    // Nothing to show
+    document.getElementById('componentInfoModalTabList').style.display = 'none'
+    document.getElementById('componentInfoModalTabContainer').style.display = 'none'
+    setComponentInfoStatusMessage('Nothing to show')
+  } else {
+    // Something to show
+    document.getElementById('componentInfoModalTabList').style.display = 'flex'
+    document.getElementById('componentInfoModalTabContainer').style.display = 'block'
+    clearComponentInfoStatusMessage()
+
+    if (maintenancePermission !== 'none') {
+      $('#componentInfoModalMaintenanceTabButton').tab('show')
+    } else {
+      $('#componentInfoModalSettingsTabButton').tab('show')
+    }
+  }
 
   document.getElementById('componentInfoModalWakeOnLANSettings').style.display = 'block'
   document.getElementById('componentInfoModalWakeOnLANSettingsSaveButton').style.display = 'none'

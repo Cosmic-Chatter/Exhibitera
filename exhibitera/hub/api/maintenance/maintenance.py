@@ -43,7 +43,7 @@ async def get_maintenance_status(request: Request, uuid_str: str):
     if success is False:
         return {"success": False, "reason": reason}
 
-    component = hub_components.get_exhibit_component(component_uuid=uuid_str)
+    component = hub_components.get_exhibit_component(uuid_str)
     if component is None:
         return {"success": False, "reason": "invalid_uuid"}
     return {"success": True, "status": component.get_maintenance_report()}
@@ -62,7 +62,7 @@ async def update_maintenance_status(request: Request,
     if success is False:
         return {"success": False, "reason": reason}
 
-    component = hub_components.get_exhibit_component(component_uuid=uuid_str)
+    component = hub_components.get_exhibit_component(uuid_str)
     if component is None:
         return {"success": False, "reason": "invalid_uuid"}
 
@@ -87,7 +87,7 @@ async def delete_maintenance_record(request: Request, uuid_str: str):
     if success is False:
         return {"success": False, "reason": reason}
 
-    component = hub_components.get_exhibit_component(component_uuid=uuid_str)
+    component = hub_components.get_exhibit_component(uuid_str)
     if component is None:
         return {"success": False, "reason": "invalid_uuid"}
 

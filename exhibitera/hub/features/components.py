@@ -247,7 +247,7 @@ class ExhibitComponent(BaseComponent):
                  uuid_str: str = ""):
 
         # category='dynamic' for components that are connected over the network
-        # category='static' for components added from galleryConfiguration.ini
+        # category='static' for components added manually
 
         super().__init__(id_, groups,
                          description=description,
@@ -269,14 +269,6 @@ class ExhibitComponent(BaseComponent):
             self.poll_latency()
         else:
             self.last_contact_datetime = None
-
-        # Check if we have specified a Wake on LAN device matching this id
-        # If yes, subsume it into this component
-        wol = get_wake_on_lan_component(component_id=self.id)
-        if wol is not None:
-            self.mac_address = wol.mac_address
-            self.config["permissions"]["shutdown"] = True
-            hub_config.wakeOnLANList = [x for x in hub_config.wakeOnLANList if x.id != wol.id]
 
     def __repr__(self):
         return repr(f"[ExhibitComponent ID: {self.id} Group: {self.groups} UUID: {self.uuid}]")
@@ -392,7 +384,7 @@ class ExhibitComponent(BaseComponent):
 
 
 class WakeOnLANDevice(BaseComponent):
-    """Holds basic information about a wake on LAN device and facilitates waking it"""
+    """Hold basic information about a wake on LAN device and facilitate waking it"""
 
     def __init__(self, id_: str,
                  groups: list[str],
@@ -443,6 +435,10 @@ class WakeOnLANDevice(BaseComponent):
                                         ip_address=self.WOL_broadcast_address,
                                         port=self.WOL_port)
         except ValueError as e:
+            print(f"Wake on LAN error for component {self.id}: {str(e)}")
+            with hub_config.logLock:
+                logging.error(f"Wake on LAN error for component {self.id}: {str(e)}")
+        except OSError as e:
             print(f"Wake on LAN error for component {self.id}: {str(e)}")
             with hub_config.logLock:
                 logging.error(f"Wake on LAN error for component {self.id}: {str(e)}")
@@ -732,7 +728,7 @@ def add_wake_on_lan_device(this_id: str,
                            last_contact_datetime: str = "",
                            maintenance_log: dict[str, Any] | None = None,
                            uuid_str: str = "") -> WakeOnLANDevice:
-    """Create a new WakeOnLANDevice, add it to the apps_config.wakeOnLANList, and return it.
+    """Create a new WakeOnLANDevice, add it to the hub_config.wakeOnLANList, and return it.
 
     Set from_disk=True when loading a previously-created component to skip some steps.
     """
@@ -752,56 +748,32 @@ def add_wake_on_lan_device(this_id: str,
     return component
 
 
-def get_exhibit_component(component_id: str = "", component_uuid: str = "") -> ExhibitComponent | None:
-    """Return a component with the given UUID or id, or None if no such component exists"""
+def get_exhibit_component(component_uuid: str) -> ExhibitComponent | None:
+    """Return a component with the given UUID or None if no such component exists"""
 
-    if component_uuid == "" and component_id == "":
-        raise ValueError("Must specify one of 'component_id' or 'component_uuid'")
-
-    if component_uuid != "":
-        # Prefer UUID from Ex 5
-        component = next((x for x in hub_config.componentList if x.uuid == component_uuid), None)
-    else:
-        component = next((x for x in hub_config.componentList if x.id == component_id), None)
-
+    component = next((x for x in hub_config.componentList if x.uuid == component_uuid), None)
     if component is None:
         # Try projector
-        component = get_projector(projector_uuid=component_uuid, projector_id=component_id)
+        component = get_projector(component_uuid)
 
     if component is None:
         # Try wake on LAN
-        component = get_wake_on_lan_component(component_uuid=component_uuid, component_id=component_id)
+        component = get_wake_on_lan_component(component_uuid)
 
     return component
 
 
-def get_projector(projector_id: str = "", projector_uuid: str = "") -> Projector | None:
-    """Return a projector with the given id or uuid, or None if no such projector exists"""
+def get_projector(projector_uuid: str) -> Projector | None:
+    """Return a projector with the given uuid or None if no such projector exists"""
 
-    if projector_uuid == "" and projector_id == "":
-        raise ValueError("Must specify one of 'projector_id' or 'projector_uuid'")
-
-    if projector_uuid != "":
-        # Prefer UUID from Ex5
-        return next((x for x in hub_config.projectorList if x.uuid == projector_uuid), None)
-    if projector_id != "":
-        return next((x for x in hub_config.projectorList if x.id == projector_id), None)
-    return None
+    return next((x for x in hub_config.projectorList if x.uuid == projector_uuid), None)
 
 
-def get_wake_on_lan_component(component_id: str = "", component_uuid: str = "") -> WakeOnLANDevice | None:
+def get_wake_on_lan_component(component_uuid: str) -> WakeOnLANDevice | None:
     """Return a WakeOnLan device with the given id or uuid, or None if no such component exists"""
 
-    if component_uuid == "" and component_id == "":
-        raise ValueError("Must specify one of 'component_id' or 'component_uuid'")
+    return next((x for x in hub_config.wakeOnLANList if x.uuid == component_uuid), None)
 
-    if component_uuid != "":
-        # Prefer UUID from Ex5
-        return next((x for x in hub_config.wakeOnLANList if x.uuid == component_uuid), None)
-    if component_id != "":
-        return next((x for x in hub_config.wakeOnLANList if x.id == component_id), None)
-
-    return None
 
 
 def poll_wake_on_lan_devices():
@@ -824,13 +796,7 @@ def update_exhibit_component_status(data: dict[str, Any], ip: str):
     if ip == "::1":
         ip = "localhost"
 
-    if "uuid" in data:
-        # This is the preferred way from Exhibitera 5 onwards
-        component = get_exhibit_component(component_uuid=data["uuid"])
-    else:
-        # Legacy support
-        component = get_exhibit_component(component_id=data["id"])
-
+    component = get_exhibit_component(data["uuid"])
     if component is None:  # This is a new uuid, so make the component
         component = add_exhibit_component(data["id"], ["Default"], uuid_str=data.get("uuid", ""))
 

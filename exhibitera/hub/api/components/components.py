@@ -17,7 +17,7 @@ async def queue_component_command(uuid_str: str,
                                   command: str = Body(description="The command to be sent to the specified component", embed=True)):
     """Queue the specified command for the given exhibit component."""
 
-    hub_components.get_exhibit_component(component_uuid=uuid_str).queue_command(command)
+    hub_components.get_exhibit_component(uuid_str).queue_command(command)
     return {"success": True, "reason": ""}
 
 
@@ -25,7 +25,7 @@ async def queue_component_command(uuid_str: str,
 async def remove_component(uuid_str: str):
     """Remove the specified exhibit component"""
 
-    to_remove = hub_components.get_exhibit_component(component_uuid=uuid_str)
+    to_remove = hub_components.get_exhibit_component(uuid_str)
     to_remove.remove()
     return {"success": True, "reason": ""}
 
@@ -58,7 +58,7 @@ async def edit_static_component(request: Request,
     """Edit the given static component."""
 
     # Load the component first, so we can use the groups to authenticate
-    component = hub_components.get_exhibit_component(component_uuid=uuid_str)
+    component = hub_components.get_exhibit_component(uuid_str)
     if component is None:
         return {"success": False, "reason": "Component does not exist"}
 
@@ -114,7 +114,7 @@ async def edit_wake_on_lan_component(request: Request,
     """Edit the given wake on LAN component."""
 
     # Load the component first, so we can use the groups to authenticate
-    component = hub_components.get_wake_on_lan_component(component_uuid=uuid_str)
+    component = hub_components.get_wake_on_lan_component(uuid_str)
     if component is None:
         return {"success": False, "reason": "Component does not exist"}
 
@@ -146,7 +146,7 @@ async def get_component_groups(uuid_str: str):
 
     # Don't authenticate, as we use this as part of the component auth process
 
-    component = hub_components.get_exhibit_component(component_uuid=uuid_str)
+    component = hub_components.get_exhibit_component(uuid_str)
     if component is None:
         return {"success": False, "reason": "Component does not exist", "groups": []}
 
@@ -163,7 +163,7 @@ async def edit_component(request: Request,
     """Edit the given component."""
 
     # Must get the component first, so we can use the groups to check for permissions
-    component = hub_components.get_exhibit_component(component_uuid=uuid_str)
+    component = hub_components.get_exhibit_component(uuid_str)
     if component is None:
         return {"success": False, "reason": "Component does not exist"}
 
