@@ -6,7 +6,7 @@ from fastapi import APIRouter, Body, Request
 
 # Exhibitera modules
 import exhibitera.hub.config as hub_config
-import exhibitera.hub.features.exhibits as hub_exhibit
+import exhibitera.hub.features.components as hub_components
 import exhibitera.hub.features.exhibitions as hub_exhibitions
 import exhibitera.hub.features.users as hub_users
 
@@ -17,7 +17,7 @@ async def queue_component_command(uuid_str: str,
                                   command: str = Body(description="The command to be sent to the specified component", embed=True)):
     """Queue the specified command for the given exhibit component."""
 
-    hub_exhibit.get_exhibit_component(component_uuid=uuid_str).queue_command(command)
+    hub_components.get_exhibit_component(component_uuid=uuid_str).queue_command(command)
     return {"success": True, "reason": ""}
 
 
@@ -25,7 +25,7 @@ async def queue_component_command(uuid_str: str,
 async def remove_component(uuid_str: str):
     """Remove the specified exhibit component"""
 
-    to_remove = hub_exhibit.get_exhibit_component(component_uuid=uuid_str)
+    to_remove = hub_components.get_exhibit_component(component_uuid=uuid_str)
     to_remove.remove()
     return {"success": True, "reason": ""}
 
@@ -42,7 +42,7 @@ async def create_static_component(request: Request,
     if success is False:
         return {"success": False, "reason": reason}
 
-    component = hub_exhibit.add_exhibit_component(id, groups, 'static')
+    component = hub_components.add_exhibit_component(id, groups, 'static')
 
     return {"success": True, "uuid": component.uuid}
 
@@ -58,7 +58,7 @@ async def edit_static_component(request: Request,
     """Edit the given static component."""
 
     # Load the component first, so we can use the groups to authenticate
-    component = hub_exhibit.get_exhibit_component(component_uuid=uuid_str)
+    component = hub_components.get_exhibit_component(component_uuid=uuid_str)
     if component is None:
         return {"success": False, "reason": "Component does not exist"}
 
@@ -95,7 +95,7 @@ async def create_wake_on_lan_component(request: Request,
     if success is False:
         return {"success": False, "reason": reason}
 
-    component = hub_exhibit.add_wake_on_lan_device(id, groups, mac_address, ip_address=ip_address)
+    component = hub_components.add_wake_on_lan_device(id, groups, mac_address, ip_address=ip_address)
 
     return {"success": True, "uuid": component.uuid}
 
@@ -114,7 +114,7 @@ async def edit_wake_on_lan_component(request: Request,
     """Edit the given wake on LAN component."""
 
     # Load the component first, so we can use the groups to authenticate
-    component = hub_exhibit.get_wake_on_lan_component(component_uuid=uuid_str)
+    component = hub_components.get_wake_on_lan_component(component_uuid=uuid_str)
     if component is None:
         return {"success": False, "reason": "Component does not exist"}
 
@@ -146,7 +146,7 @@ async def get_component_groups(uuid_str: str):
 
     # Don't authenticate, as we use this as part of the component auth process
 
-    component = hub_exhibit.get_exhibit_component(component_uuid=uuid_str)
+    component = hub_components.get_exhibit_component(component_uuid=uuid_str)
     if component is None:
         return {"success": False, "reason": "Component does not exist", "groups": []}
 
@@ -163,7 +163,7 @@ async def edit_component(request: Request,
     """Edit the given component."""
 
     # Must get the component first, so we can use the groups to check for permissions
-    component = hub_exhibit.get_exhibit_component(component_uuid=uuid_str)
+    component = hub_components.get_exhibit_component(component_uuid=uuid_str)
     if component is None:
         return {"success": False, "reason": "Component does not exist"}
 

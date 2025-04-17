@@ -11,7 +11,7 @@ import  exhibitera.common.config as ex_config
 import exhibitera.common.files as ex_files
 import exhibitera.hub.config as hub_config
 import exhibitera.hub.tools as hub_tools
-import exhibitera.hub.features.exhibits as hub_exhibit
+import exhibitera.hub.features.components as hub_components
 
 
 def create_exhibition(name: str, clone: str | None) -> str:
@@ -142,9 +142,9 @@ def update_exhibition(component_uuid: str,
 
     ex_files.write_json(exhibit_config, exhibit_path)
     if component_uuid:
-        this_component = hub_exhibit.get_exhibit_component(component_uuid=component_uuid)
+        this_component = hub_components.get_exhibit_component(component_uuid=component_uuid)
     else:
-        this_component = hub_exhibit.get_exhibit_component(component_id=component_id)
+        this_component = hub_components.get_exhibit_component(component_id=component_id)
     if this_component is not None:
         this_component.update_configuration()
 
@@ -178,7 +178,7 @@ def execute_action(action: str,
             return
 
         logging.info('Setting DMX scene for %s to %s', target, value)
-        component = hub_exhibit.get_exhibit_component(component_id=target_id, component_uuid=target_uuid)
+        component = hub_components.get_exhibit_component(component_id=target_id, component_uuid=target_uuid)
         if component is not None:
             component.queue_command("set_dmx_scene__" + value)
     elif action == 'set_exhibit' and target is not None:
@@ -215,7 +215,7 @@ def execute_action(action: str,
                         print("action scheduled without a target uuid")
                         logging.error("set_definition scheduled without a target uuid")
                     return
-                component = hub_exhibit.get_exhibit_component(component_id=target_id, component_uuid=target_uuid)
+                component = hub_components.get_exhibit_component(component_id=target_id, component_uuid=target_uuid)
                 if component is not None:
                     component.queue_command(action)
     else:

@@ -11,7 +11,7 @@ from sse_starlette.sse import EventSourceResponse
 # Exhibitera modules
 import exhibitera.common.files as ex_files
 import exhibitera.hub.config as hub_config
-import exhibitera.hub.features.exhibits as hub_exhibit
+import exhibitera.hub.features.components as hub_components
 import exhibitera.hub.features.system as hub_system
 import exhibitera.hub.tools as hub_tools
 
@@ -81,9 +81,9 @@ async def handle_ping(data: dict[str, Any], request: Request):
                     "reason": "Request missing 'uuid' field."}
         return response
 
-    hub_exhibit.update_exhibit_component_status(data, request.client.host)
+    hub_components.update_exhibit_component_status(data, request.client.host)
 
-    component = hub_exhibit.get_exhibit_component(component_uuid=data['uuid'])
+    component = hub_components.get_exhibit_component(component_uuid=data['uuid'])
     dict_to_send = component.config.copy()
 
     if len(dict_to_send["commands"]) > 0:

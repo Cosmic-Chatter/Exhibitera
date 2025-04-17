@@ -8,7 +8,6 @@ from fastapi import APIRouter, Body, Request
 # Exhibitera modules
 import exhibitera.common.files as ex_files
 import exhibitera.hub.config as hub_config
-import exhibitera.hub.features.exhibits as hub_exhibit
 import exhibitera.hub.features.exhibitions as hub_exhibitions
 import exhibitera.hub.tools as hub_tools
 import exhibitera.hub.features.users as hub_users

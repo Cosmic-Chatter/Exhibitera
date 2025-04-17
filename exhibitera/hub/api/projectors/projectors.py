@@ -6,7 +6,7 @@ from fastapi import APIRouter, Body, Request
 
 # Exhibitera modules
 import exhibitera.hub.config as hub_config
-import exhibitera.hub.features.exhibits as hub_exhibit
+import exhibitera.hub.features.components as hub_components
 import exhibitera.hub.features.users as hub_users
 
 router = APIRouter(prefix="/projector")
@@ -25,7 +25,7 @@ async def create_projector(request: Request,
     if success is False:
         return {"success": False, "reason": reason}
 
-    proj = hub_exhibit.add_projector(id, groups, ip_address, password=password)
+    proj = hub_components.add_projector(id, groups, ip_address, password=password)
 
     return {"success": True, "uuid": proj.uuid}
 
@@ -43,7 +43,7 @@ async def edit_projector(request: Request,
     """Edit the given projector."""
 
     # Get the projector first, so we can use the groups to authenticate
-    proj = hub_exhibit.get_projector(projector_uuid=uuid_str)
+    proj = hub_components.get_projector(projector_uuid=uuid_str)
     if proj is None:
         return {"success": False, "reason": "Projector does not exist"}
 

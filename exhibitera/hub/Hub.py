@@ -28,7 +28,7 @@ import requests
 import exhibitera.common.config as ex_config
 import exhibitera.common.files as ex_files
 import exhibitera.hub.config as hub_config
-import exhibitera.hub.features.exhibits as hub_exhibit
+import exhibitera.hub.features.components as hub_components
 import exhibitera.hub.features.exhibitions as hub_exhibitions
 import exhibitera.hub.features.groups as hub_group
 import exhibitera.hub.features.issues as hub_issues
@@ -533,7 +533,7 @@ def run():
     hub_tools.check_file_structure()
     hub_legacy.convert_exhibit_files() # Run early before any exhibits are loaded
     print("Loading components...")
-    hub_exhibit.load_components()
+    hub_components.load_components()
     print("Loading exhibits...")
     hub_exhibitions.check_available_exhibitions()
     print("Loading configuration...")
@@ -544,7 +544,7 @@ def run():
     hub_group.load_groups()
 
     hub_proj.poll_projectors()
-    hub_exhibit.poll_wake_on_lan_devices()
+    hub_components.poll_wake_on_lan_devices()
     check_for_software_update()
 
     log_level = "warning"

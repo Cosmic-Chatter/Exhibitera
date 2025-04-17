@@ -13,7 +13,7 @@ import uuid
 
 # Exhibitera imports
 import exhibitera.common.files as ex_files
-import exhibitera.hub.features.exhibits as hub_exhibit
+import exhibitera.hub.features.components as hub_components
 import exhibitera.hub.features.exhibitions as hub_exhibitions
 import exhibitera.hub.features.maintenance as hub_maintain
 import exhibitera.hub.features.schedules as hub_schedule
@@ -38,11 +38,11 @@ def convert_legacy_projector_configuration():
         except FileNotFoundError:
             pass
 
-        new_proj = hub_exhibit.Projector(proj["id"],
-                                         proj.get("group", "Projectors"),
-                                         proj.get('ip_address', ''), "pjlink",
-                                         password=proj.get("password", None),
-                                         maintenance_log=maintenance_log)
+        new_proj = hub_components.Projector(proj["id"],
+                                            proj.get("group", "Projectors"),
+                                            proj.get('ip_address', ''), "pjlink",
+                                            password=proj.get("password", None),
+                                            maintenance_log=maintenance_log)
         new_proj.save()
     os.rename(config_path, config_path_new)
 
@@ -66,10 +66,10 @@ def convert_legacy_static_configuration():
         except FileNotFoundError:
             pass
 
-        new_static = hub_exhibit.ExhibitComponent(static["id"],
-                                                  static.get("group", "Default"),
-                                                  category="static",
-                                                  maintenance_log=maintenance_log)
+        new_static = hub_components.ExhibitComponent(static["id"],
+                                                     static.get("group", "Default"),
+                                                     category="static",
+                                                     maintenance_log=maintenance_log)
         new_static.save()
     os.rename(config_path, config_path_new)
 
@@ -93,11 +93,11 @@ def convert_legacy_wol_configuration():
         except FileNotFoundError:
             pass
 
-        new_wol = hub_exhibit.WakeOnLANDevice(wol["id"],
-                                              wol.get("group", "Default"),
-                                              wol["mac_address"],
-                                              ip_address=wol.get("ip_address", ""),
-                                              maintenance_log=maintenance_log)
+        new_wol = hub_components.WakeOnLANDevice(wol["id"],
+                                                 wol.get("group", "Default"),
+                                                 wol["mac_address"],
+                                                 ip_address=wol.get("ip_address", ""),
+                                                 maintenance_log=maintenance_log)
         new_wol.save()
     os.rename(config_path, config_path_new)
 
