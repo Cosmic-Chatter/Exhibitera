@@ -364,6 +364,21 @@ def download_file(url: str, path_to_save: str) -> bool:
     return True
 
 
+def delete_file(file_path) -> dict:
+    """Delete the specified file and return a dictionary with the result"""
+
+    response = {"success": False}
+    try:
+        os.remove(file_path)
+        response["success"] = True
+    except FileNotFoundError:
+        response["reason"] = f"File {file_path} does not exist"
+    except PermissionError:
+        response["reason"] = f"You do not have permission for the file f{file_path}"
+    return response
+
+
+
 # Set up log file
 log_path: str = get_path(["common.log"], user_file=True)
 logging.basicConfig(datefmt='%Y-%m-%d %H:%M:%S',

@@ -100,9 +100,8 @@ function getTextUpdateFromServer () {
 
     exCommon.makeServerRequest(
       {
-        method: 'POST',
-        endpoint: '/tracker/flexible-tracker/getRawText',
-        params: { name: 'Word_Cloud_' + collectionName }
+        method: 'GET',
+        endpoint: '/data/Word_Cloud_' + collectionName + '/rawText'
       })
       .then((result) => {
         if ('success' in result && result.success === true) {

@@ -384,7 +384,7 @@ function sendData () {
     exCommon.makeServerRequest(
       {
         method: 'POST',
-        endpoint: '/tracker/flexible-tracker/submitData',
+        endpoint: '/data/' + configurationName + '/append',
         params: requestDict
       })
   }

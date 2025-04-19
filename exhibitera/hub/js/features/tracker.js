@@ -11,7 +11,7 @@ export async function getAvailableTemplates () {
 
   return await exTools.makeServerRequest({
     method: 'GET',
-    endpoint: '/tracker/flexible-tracker/getAvailableTemplates'
+    endpoint: '/tracker/templates/list'
   })
 }
 
@@ -22,7 +22,7 @@ export function getAvailableTrackerData (complete) {
 
   exTools.makeServerRequest({
     method: 'GET',
-    endpoint: '/tracker/flexible-tracker/getAvailableData'
+    endpoint: '/data/list'
   })
     .then((response) => {
       if ('success' in response && response.success === false) {
@@ -40,7 +40,7 @@ export async function loadTemplate (uuid) {
 
   const response = await exTools.makeServerRequest({
     method: 'GET',
-    endpoint: '/tracker/flexible-tracker/' + uuid
+    endpoint: '/tracker/template/' + uuid
   })
   return response.template
 }
@@ -50,9 +50,8 @@ export function downloadTrackerData (name) {
   // and initiate a download.
 
   exTools.makeServerRequest({
-    method: 'POST',
-    endpoint: '/tracker/flexible-tracker/getDataAsCSV',
-    params: { name }
+    method: 'GET',
+    endpoint: '/data/' + name + '/csv'
   })
     .then((result) => {
       if ('success' in result && result.success === true) {
@@ -555,7 +554,7 @@ export function editTrackerTemplateModalSubmitChanges () {
 
   exTools.makeServerRequest({
     method: 'POST',
-    endpoint: '/tracker/flexible-tracker/createTemplate',
+    endpoint: '/tracker/template/create',
     params: requestDict
   })
     .then((response) => {
@@ -592,7 +591,7 @@ export async function createTrackerTemplate (name = '') {
 
   const result = await exTools.makeServerRequest({
     method: 'POST',
-    endpoint: '/tracker/flexible-tracker/createTemplate',
+    endpoint: '/tracker/template/create',
     params: requestDict
   })
 
@@ -613,7 +612,7 @@ export async function deleteTrackerTemplate (uuid = '') {
 
   const result = await exTools.makeServerRequest({
     method: 'DELETE',
-    endpoint: '/tracker/flexible-tracker/' + uuid + '/deleteTemplate'
+    endpoint: '/tracker/template/' + uuid
   })
   if (result.success) {
     const templates = await getAvailableTemplates()
@@ -674,9 +673,8 @@ export function deleteTrackerData () {
   const name = $('#trackerDataSelect').val()
 
   exTools.makeServerRequest({
-    method: 'POST',
-    endpoint: '/tracker/flexible-tracker/deleteData',
-    params: { name }
+    method: 'DELETE',
+    endpoint: '/data/' + name
   })
     .then((result) => {
       if ('success' in result && result.success === true) {

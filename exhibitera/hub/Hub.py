@@ -40,7 +40,9 @@ import exhibitera.hub.tools as hub_tools
 import exhibitera.hub.features.users as hub_users
 
 # API modules
+from exhibitera.hub.api.analytics import analytics
 from exhibitera.hub.api.components import components
+from exhibitera.hub.api.data import data
 from exhibitera.hub.api.exhibitions import exhibitions
 from exhibitera.hub.api.groups import groups
 from exhibitera.hub.api.issues import issues
@@ -48,6 +50,7 @@ from exhibitera.hub.api.maintenance import maintenance
 from exhibitera.hub.api.projectors import projectors
 from exhibitera.hub.api.schedule import schedule
 from exhibitera.hub.api.system import system
+from exhibitera.hub.api.tracker import tracker
 from exhibitera.hub.api.users import users
 
 # Set up the automatic documentation
@@ -100,6 +103,7 @@ def load_default_configuration() -> None:
     hub_legacy.convert_legacy_wol_configuration()
     hub_legacy.convert_schedule_targets_to_json()
     hub_legacy.convert_legacy_tracker_templates_to_json()
+    hub_legacy.migrate_tracker_data()
 
     hub_tools.start_debug_loop()
     hub_schedule.retrieve_json_schedule()
@@ -278,7 +282,9 @@ app.add_middleware(
 app.openapi = exhibitera_schema
 
 # Link API routers
+app.include_router(analytics.router)
 app.include_router(components.router)
+app.include_router(data.router)
 app.include_router(exhibitions.router)
 app.include_router(groups.router)
 app.include_router(issues.router)
@@ -286,214 +292,13 @@ app.include_router(maintenance.router)
 app.include_router(projectors.router)
 app.include_router(schedule.router)
 app.include_router(system.router)
+app.include_router(tracker.router)
 app.include_router(users.router)
 
 
 @lru_cache()
 def get_config():
     return hub_config
-
-
-
-
-
-# Flexible Tracker actions
-@app.post("/tracker/{tracker_type}/createTemplate")
-async def create_tracker_template(request: Request,
-                                  tracker_type: str,
-                                  template: dict[str, Any] = Body(description='A dictionary containing the template'),
-                                  tracker_uuid: str = Body(description='The UUID for the template we are creating.')):
-    """Write the given tracker template to file"""
-
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = hub_users.check_user_permission("analytics", "edit", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
-
-    template_path = ex_files.get_path(
-        [tracker_type, "templates", ex_files.with_extension(tracker_uuid, 'json')],
-        user_file=True)
-    success, reason = ex_files.write_json(template, template_path)
-    return {"success": success, "reason": reason}
-
-
-@app.post("/tracker/{tracker_type}/deleteData")
-async def delete_tracker_data(request: Request, data: dict[str, Any], tracker_type: str):
-    """Delete the specified tracker data file."""
-
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = hub_users.check_user_permission("analytics", "edit", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
-
-    if "name" not in data:
-        response = {"success": False,
-                    "reason": "Request missing 'name' field."}
-        return response
-    name = data["name"]
-    if name is None or name.strip() == "":
-        response = {"success": False,
-                    "reason": "'name' field is blank."}
-        return response
-    if not name.lower().endswith(".txt"):
-        name += ".txt"
-    data_path = ex_files.get_path([tracker_type, "data", name], user_file=True)
-    success = True
-    reason = ""
-    with hub_config.trackingDataWriteLock:
-        try:
-            os.remove(data_path)
-        except PermissionError:
-            success = False
-            reason = f"You do not have write permission for the file {data_path}"
-        except FileNotFoundError:
-            success = True  # This error results in the user's desired action!
-            reason = f"File does not exist: {data_path}"
-    if reason != "":
-        print(reason)
-    response = {"success": success,
-                "reason": reason}
-    return response
-
-
-@app.delete("/tracker/{tracker_type}/{tracker_uuid}/deleteTemplate")
-async def delete_tracker_template(request: Request, tracker_type: str, tracker_uuid: str):
-    """Delete the specified tracker template."""
-
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = hub_users.check_user_permission("analytics", "edit", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
-
-    file_path = ex_files.get_path([tracker_type, "templates", ex_files.with_extension(tracker_uuid, 'json')], user_file=True)
-    with hub_config.trackerTemplateWriteLock:
-        response = hub_tools.delete_file(file_path)
-    return response
-
-
-@app.get("/tracker/{tracker_type}/getAvailableData")
-async def get_available_tracker_data(tracker_type: str):
-    """Send a list of all the available data files for the given tracker group."""
-
-    data_path = ex_files.get_path([tracker_type, "data"], user_file=True)
-    data_list = []
-    for file in os.listdir(data_path):
-        if file.lower().endswith(".txt"):
-            data_list.append(file)
-    response = {"success": True,
-                "data": data_list}
-    return response
-
-
-@app.get("/tracker/{tracker_type}/getAvailableTemplates")
-async def get_available_tracker_templates(tracker_type: str):
-    """Send a list of all the available templates for the given tracker group (usually flexible-tracker)."""
-
-    template_list = []
-    template_path = ex_files.get_path([tracker_type, "templates"], user_file=True)
-    for file in os.listdir(template_path):
-        if file.lower().endswith(".json"):
-            file_path = ex_files.get_path([tracker_type, "templates", file], user_file=True)
-            template = ex_files.load_json(file_path)
-            template_list.append({"name": template["name"], "uuid": template["uuid"]})
-
-    return template_list
-
-
-@app.post("/tracker/{tracker_type}/getDataAsCSV")
-async def get_tracker_data_csv(data: dict[str, Any], tracker_type: str):
-    """Return the requested data file as a CSV string."""
-
-    if "name" not in data:
-        response = {"success": False,
-                    "reason": "Request missing 'name' field."}
-        return response
-    name = data["name"]
-    if not name.lower().endswith(".txt"):
-        name += ".txt"
-    data_path = ex_files.get_path([tracker_type, "data", name], user_file=True)
-    if not os.path.exists(data_path):
-        return {"success": False, "reason": f"File {data['name']}.txt does not exist!", "csv": ""}
-    result = ex_files.create_csv(data_path)
-    return {"success": True, "csv": result}
-
-
-@app.get("/tracker/{tracker_type}/{template_uuid}")
-async def get_tracker_template(tracker_type: str, template_uuid: str):
-    """Load the requested tracker template and return it as a dictionary."""
-
-    template_path = ex_files.get_path([tracker_type, "templates", ex_files.with_extension(template_uuid, "json")])
-    template = ex_files.load_json(template_path)
-    if template is None:
-        success = False
-    else:
-        success = True
-
-    return {"success": success, "template": template}
-
-
-@app.post("/tracker/{tracker_type}/getRawText")
-async def get_tracker_raw_text(data: dict[str, Any], tracker_type: str):
-    """Load the contents of the appropriate file and return them."""
-
-    if "name" not in data:
-        response = {"success": False,
-                    "reason": "Request missing 'name' field."}
-        return response
-
-    file_path = ex_files.get_path([tracker_type, "data", ex_files.with_extension(data["name"], 'txt')], user_file=True)
-    result, success, reason = ex_files.get_text(file_path)
-    response = {"success": success, "reason": reason, "text": result}
-    return response
-
-
-@app.post("/tracker/submitAnalytics")
-async def submit_analytics(data: dict[str, Any]):
-    """Write the provided analytics data to file."""
-
-    if "data" not in data or 'name' not in data:
-        return {"success": False, "reason": "Request missing 'data' or 'name' field."}
-
-    file_path = ex_files.get_path(["analytics", ex_files.with_extension(data["name"], "txt")], user_file=True)
-    success, reason = ex_files.write_json(data["data"], file_path, append=True)
-    return {"success": success, "reason": reason}
-
-
-@app.post("/tracker/{tracker_type}/submitData")
-async def submit_tracker_data(data: dict[str, Any], tracker_type: str):
-    """Record the submitted data to file."""
-
-    if "data" not in data or "name" not in data:
-        return {"success": False, "reason": "Request missing 'data' or 'name' field."}
-
-    file_path = ex_files.get_path([tracker_type, "data", ex_files.with_extension(data["name"], 'txt')], user_file=True)
-    success, reason = ex_files.write_json(data["data"], file_path, append=True, indent=None)
-    return {"success": success, "reason": reason}
-
-
-@app.post("/tracker/{tracker_type}/submitRawText")
-async def submit_tracker_raw_text(data: dict[str, Any], tracker_type: str):
-    """Write the raw text in data['text'] to file.
-
-    Set data['mode'] == 'a' to append or 'w' to overwrite the file.
-    """
-
-    if "text" not in data or "name" not in data:
-        response = {"success": False,
-                    "reason": "Request missing 'text' or 'name' field."}
-        return response
-    mode = data.get("mode", "a")
-    if mode != "a" and mode != "w":
-        response = {"success": False,
-                    "reason": "Invalid mode field: must be 'a' (append, [default]) or 'w' (overwrite)"}
-        return response
-    file_path = ex_files.get_path([tracker_type, "data", ex_files.with_extension(data["name"], 'txt')], user_file=True)
-    success, reason = ex_files.write_text(data["text"],file_path, mode)
-    response = {"success": success, "reason": reason}
-    return response
 
 
 app.mount("/common",
@@ -530,7 +335,7 @@ app.mount("/",
 
 def run():
     print("Checking file structure...")
-    hub_tools.check_file_structure()
+    hub_system.check_file_structure()
     hub_legacy.convert_exhibit_files() # Run early before any exhibits are loaded
     print("Loading components...")
     hub_components.load_components()

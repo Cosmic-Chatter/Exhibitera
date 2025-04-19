@@ -475,6 +475,8 @@ export function sendConfigUpdate (update) {
 export function sendAnalytics (data) {
   // Take the provided dictionary of data and send it to Hub
 
+  if (config.uuid === '') return
+
   // Append the date and time of this recording
   const tzoffset = (new Date()).getTimezoneOffset() * 60000 // Time zone offset in milliseconds
   data.datetime = (new Date(Date.now() - tzoffset)).toISOString().slice(0, -1)
@@ -483,14 +485,13 @@ export function sendAnalytics (data) {
   data.exhibit = config.current_exhibit
 
   const requestDict = {
-    data,
-    name: config.id
+    data
   }
 
   makeServerRequest(
     {
       method: 'POST',
-      endpoint: '/tracker/submitAnalytics',
+      endpoint: '/analytics/' + config.uuid + '/append',
       params: requestDict,
       timeout: 5000
     })

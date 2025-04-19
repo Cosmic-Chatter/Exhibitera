@@ -50,8 +50,7 @@ async def write_raw_text(name: str,
         return response
     file_path = ex_files.get_path(["data", ex_files.with_extension(name, 'txt')])
     success, reason = ex_files.write_text(text, file_path, mode=mode)
-    response = {"success": success, "reason": reason}
-    return response
+    return {"success": success, "reason": reason}
 
 
 @router.get("/{name}/rawText")
@@ -61,8 +60,7 @@ async def read_raw_text(name: str):
     file_path = ex_files.get_path(["data", ex_files.with_extension(name, 'txt')], user_file=True)
     result, success, reason = ex_files.get_text(file_path)
 
-    response = {"success": success, "reason": reason, "text": result}
-    return response
+    return {"success": success, "reason": reason, "text": result}
 
 
 @router.get("/{name}/csv")
@@ -72,9 +70,7 @@ async def get_tracker_data_csv(name: str):
     if not ex_files.filename_safe(name):
         return {"success": False, "reason": "Invalid character in filename"}
 
-    if not name.lower().endswith(".txt"):
-        name += ".txt"
-    data_path = ex_files.get_path(["data", name], user_file=True)
+    data_path = ex_files.get_path(["data", ex_files.with_extension(name, 'txt')], user_file=True)
     if not os.path.exists(data_path):
         return {"success": False, "reason": f"File {name}.txt does not exist!", "csv": ""}
     result = ex_files.create_csv(data_path)

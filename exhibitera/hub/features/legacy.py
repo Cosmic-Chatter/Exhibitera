@@ -280,3 +280,19 @@ def convert_legacy_tracker_templates_to_json():
 
         # Rename the INI file, so we don't convert it again
         os.rename(ini_filepath, ini_filepath+'.old')
+
+
+# Added in Ex 6
+def migrate_tracker_data():
+    """Move data directory from /flexible-tracker/data to /data."""
+
+    old_data = ex_files.get_path(["flexible-tracker", "data"], user_file=True)
+
+    if not os.path.exists(old_data):
+        return
+
+    new_data = ex_files.get_path(["data"], user_file=True)
+    shutil.copytree(old_data, new_data, dirs_exist_ok=True)
+
+    rename_old = ex_files.get_path(["flexible-tracker", "old_data"], user_file=True)
+    os.rename(old_data, rename_old)

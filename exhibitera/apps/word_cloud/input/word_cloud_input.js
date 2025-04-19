@@ -77,11 +77,8 @@ function sendTextToServer () {
     exCommon.makeServerRequest(
       {
         method: 'POST',
-        endpoint: '/tracker/flexible-tracker/submitRawText',
-        params: {
-          name: 'Word_Cloud_' + collectionName,
-          text
-        }
+        endpoint: '/data/Word_Cloud_' + collectionName + '/rawText',
+        params: { text }
       })
       .then((result) => {
         if ('success' in result && result.success === true) {

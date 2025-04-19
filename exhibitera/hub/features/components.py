@@ -613,7 +613,7 @@ def load_components():
             comp_dict = ex_files.load_json(comp_path)
         except json.JSONDecodeError:
             print("Bad component file detected. Removing and continuing")
-            c_tools.delete_file(comp_path)
+            ex_files.delete_file(comp_path)
             continue
         if comp_dict is None:
             continue

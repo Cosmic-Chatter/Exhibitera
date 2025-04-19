@@ -503,14 +503,13 @@ function sendData () {
   resultDict.Date = dateStr
 
   const requestDict = {
-    data: resultDict,
-    name: configurationName
+    data: resultDict
   }
 
   const requestString = JSON.stringify(requestDict)
 
   const xhr = new XMLHttpRequest()
-  xhr.open('POST', '/tracker/flexible-tracker/submitData', true)
+  xhr.open('POST', '/data/' + configurationName + '/append', true)
   xhr.timeout = 5000
   xhr.setRequestHeader('Content-Type', 'application/json')
   xhr.overrideMimeType('text/plain; charset=x-user-defined')

@@ -22,7 +22,6 @@ outdated_os: bool = False
 polling_thread_dict: dict[str, threading.Timer] = {}
 logLock: threading.Lock = threading.Lock()
 galleryConfigurationLock: threading.Lock = threading.Lock()
-trackingDataWriteLock: threading.Lock = threading.Lock()
 trackerTemplateWriteLock: threading.Lock = threading.Lock()
 scheduleLock: threading.Lock = threading.Lock()
 issueLock: threading.Lock = threading.Lock()
