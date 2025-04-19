@@ -387,6 +387,10 @@ class WakeOnLANDevice(BaseComponent):
             print(f"Wake on LAN error for component {self.id}: {str(e)}")
             with config.logLock:
                 logging.error(f"Wake on LAN error for component {self.id}: {str(e)}")
+        except OSError as e:
+            print(f"Wake on LAN error for component {self.id}: {str(e)}")
+            with config.logLock:
+                logging.error(f"Wake on LAN error for component {self.id}: {str(e)}")
 
     def update(self):
 
