@@ -333,7 +333,7 @@ function readHelperUpdate (update, changeApp = true) {
   // Function to read a message from the helper and take action based on the contents
   // 'update' should be an object
   // Set changeApp === false to suppress changing the app if the definition has changed
-  console.log(update)
+
   const sendUpdate = false
 
   for (const cmd of update?.commands ?? []) {
