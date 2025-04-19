@@ -188,7 +188,7 @@ async function wizardCreateDefinition () {
   const uuid = $('#definitionSaveButton').data('workingDefinition').uuid
 
   await exSetup.saveDefinition(defName)
-  const result = await exCommon.getAvailableDefinitions('timeline_explorer')
+  const result = await exCommon.getAvailableDefinitions('voting_kiosk')
   exSetup.populateAvailableDefinitions(result.definitions)
   document.getElementById('availableDefinitionSelect').value = uuid
 
