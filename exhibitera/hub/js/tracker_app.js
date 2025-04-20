@@ -1,4 +1,5 @@
-import * as exTracker from './exhibitera_tracker.js'
+import exConfig from '../../common/config.js'
+import * as exTracker from './features/tracker.js'
 
 class TimingObject {
   // This class is to keep track of elapsed time for the timer input type
@@ -384,7 +385,7 @@ function checkConnection () {
   // Send a message to the server checking that the connection is stable.
 
   const xhr = new XMLHttpRequest()
-  xhr.open('GET', '/system/checkConnection', true)
+  xhr.open('GET', exConfig.api + '/system/checkConnection', true)
   xhr.timeout = 1000
   xhr.setRequestHeader('Content-Type', 'application/json')
   xhr.overrideMimeType('text/plain; charset=x-user-defined')
@@ -509,7 +510,7 @@ function sendData () {
   const requestString = JSON.stringify(requestDict)
 
   const xhr = new XMLHttpRequest()
-  xhr.open('POST', '/data/' + configurationName + '/append', true)
+  xhr.open('POST', exConfig.api + '/data/' + configurationName + '/append', true)
   xhr.timeout = 5000
   xhr.setRequestHeader('Content-Type', 'application/json')
   xhr.overrideMimeType('text/plain; charset=x-user-defined')

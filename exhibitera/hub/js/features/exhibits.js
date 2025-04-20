@@ -2,6 +2,7 @@
 
 import * as exUtilities from '../../../common/utilities.js'
 import hubConfig from '../../config.js'
+import exConfig from '../../../common/config.js'
 import * as hubDMX from './dmx.js'
 import * as hubGroups from './groups.js'
 import * as hubMaint from './maintenance.js'
@@ -1719,11 +1720,11 @@ async function populateComponentDefinitionList (definitions, permission) {
       thumb.setAttribute('playsinline', 'true')
       thumb.setAttribute('webkit-playsinline', 'true')
       thumb.setAttribute('disablePictureInPicture', 'true')
-      thumb.src = component.getHelperURL() + '/definitions/' + uuid + '/thumbnail?' + Date.now()
+      thumb.src = component.getHelperURL() + exConfig.api + '/definitions/' + uuid + '/thumbnail?' + Date.now()
       thumbCol.appendChild(thumb)
     }
 
-    img.src = component.getHelperURL() + '/definitions/' + uuid + '/thumbnail?' + Date.now()
+    img.src = component.getHelperURL() + exConfig.api + '/definitions/' + uuid + '/thumbnail?' + Date.now()
 
     const app = document.createElement('div')
     app.classList = 'col-12 bg-secondary text-dark rounded-bottom pb-1'
@@ -1952,7 +1953,7 @@ export async function copyDefinitionModalPerformCopy () {
       url: destUrl,
       endpoint: '/files/retrieve',
       params: {
-        file_url: sourceComponent.getHelperURL() + '/definitions/' + definitionUUID + '.json',
+        file_url: sourceComponent.getHelperURL() + exConfig.api + '/definitions/' + definitionUUID + '.json',
         path_list: ['definitions', definitionUUID + '.json']
       }
     })

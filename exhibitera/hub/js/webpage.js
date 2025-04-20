@@ -1,7 +1,8 @@
 /* global bootstrap, showdown */
 
+import exConfig from '../../common/config.js'
 import * as exUtilities from '../../common/utilities.js'
-import exConfig from '../config.js'
+import hubConfig from '../config.js'
 import * as exExhibit from './features/exhibits.js'
 import * as exGroup from './features/groups.js'
 import * as exIssues from './features/issues.js'
@@ -268,10 +269,10 @@ function editExhibitAddComponentPopulateList () {
     existingComponents.push(component.getAttribute('data-component-uuid'))
   }
 
-  for (const component of exConfig.exhibitComponents) {
+  for (const component of hubConfig.exhibitComponents) {
     // Filter out components that shouldn't be added (projectors, static, offline, existing)
     if (component.type !== 'exhibit_component') continue
-    if ((component.status !== exConfig.STATUS.ONLINE) && (component.status !== exConfig.STATUS.ACTIVE) && (component.status !== exConfig.STATUS.WAITING)) continue
+    if ((component.status !== hubConfig.STATUS.ONLINE) && (component.status !== hubConfig.STATUS.ACTIVE) && (component.status !== hubConfig.STATUS.WAITING)) continue
     if (existingComponents.includes(component.uuid)) continue
 
     const li = document.createElement('li')
@@ -527,18 +528,18 @@ function updateAvailableExhibits (exhibitList) {
     return 0
   })
 
-  if (exUtilities.arraysEqual(sortedExhibitList, exConfig.availableExhibits, ['uuid', 'name']) === true) {
+  if (exUtilities.arraysEqual(sortedExhibitList, hubConfig.availableExhibits, ['uuid', 'name']) === true) {
     return
   }
 
-  exConfig.availableExhibits = sortedExhibitList
+  hubConfig.availableExhibits = sortedExhibitList
   exhibitSelect.innerHTML = ''
 
   for (const exhibit of sortedExhibitList) {
     exhibitSelect.appendChild(new Option(exhibit.name, exhibit.uuid))
   }
 
-  exhibitSelect.value = exConfig.currentExhibit
+  exhibitSelect.value = hubConfig.currentExhibit
   updateExhibitButtons()
 }
 
@@ -565,7 +566,7 @@ function parseUpdate (update) {
   // Take a dictionary of updates from Hub and act on them.
 
   if ('gallery' in update) {
-    exConfig.currentExhibit = update.gallery.current_exhibit
+    hubConfig.currentExhibit = update.gallery.current_exhibit
     updateAvailableExhibits(update.gallery.availableExhibits)
     document.getElementById('exhibitNameField').innerHTML = exTools.getExhibit(update.gallery.current_exhibit).name
 
@@ -581,14 +582,14 @@ function parseUpdate (update) {
           current_version: update.gallery.softwareVersion,
           available_version: update.gallery.softwareVersionAvailable
         }
-        exConfig.errorDict.__control_server = {
+        hubConfig.errorDict.__control_server = {
           software_update: notification
         }
         exTools.rebuildNotificationList()
       }
     }
     if (update?.gallery?.outdated_os ?? false) {
-      exConfig.errorDict.__control_server = {
+      hubConfig.errorDict.__control_server = {
         outdated_os: true
       }
       exTools.rebuildNotificationList()
@@ -599,11 +600,11 @@ function parseUpdate (update) {
     // Check if the list of groups has changed.
 
     const updateDate = new Date(update.groups.last_update_date)
-    const currentGroupsDate = new Date(exConfig.groupLastUpdateDate)
+    const currentGroupsDate = new Date(hubConfig.groupLastUpdateDate)
 
     if (updateDate > currentGroupsDate) {
-      exConfig.groupLastUpdateDate = update.groups.last_update_date
-      exConfig.groups = update.groups.group_list
+      hubConfig.groupLastUpdateDate = update.groups.last_update_date
+      hubConfig.groups = update.groups.group_list
       exGroup.populateGroupsRow()
     }
   }
@@ -616,10 +617,10 @@ function parseUpdate (update) {
     exExhibit.checkForRemovedComponents(update.components)
     for (const component of update.components) {
       numComps += 1
-      if ((component.status === exConfig.STATUS.ONLINE.name) || (component.status === exConfig.STATUS.STANDBY.name) || (component.status === exConfig.STATUS['SYSTEM ON'].name) || (component.status === exConfig.STATUS.STATIC.name)) {
+      if ((component.status === hubConfig.STATUS.ONLINE.name) || (component.status === hubConfig.STATUS.STANDBY.name) || (component.status === hubConfig.STATUS['SYSTEM ON'].name) || (component.status === hubConfig.STATUS.STATIC.name)) {
         numOnline += 1
       }
-      if (component.status === exConfig.STATUS.STATIC.name) {
+      if (component.status === hubConfig.STATUS.STATIC.name) {
         numStatic += 1
       }
       exExhibit.updateComponentFromServer(component)
@@ -647,11 +648,11 @@ function parseUpdate (update) {
     // Check for the time of the most recent update. If it is more
     // recent than our existing date, rebuild the issue list
 
-    const currentLastDate = Math.max.apply(Math, exConfig.issueList.map(function (o) { return new Date(o.lastUpdateDate) }))
+    const currentLastDate = Math.max.apply(Math, hubConfig.issueList.map(function (o) { return new Date(o.lastUpdateDate) }))
     const updatedDate = new Date(update.issues.lastUpdateDate)
 
     if (updatedDate > currentLastDate) {
-      exConfig.issueList = update.issues.issueList
+      hubConfig.issueList = update.issues.issueList
       // exIssues.rebuildIssueList()
       exIssues.upateIssueList()
       exIssues.rebuildIssueFilters()
@@ -660,7 +661,7 @@ function parseUpdate (update) {
 
   // Schedule should be after components
   if ('schedule' in update) {
-    if (exConfig.scheduleUpdateTime !== update.schedule.updateTime) {
+    if (hubConfig.scheduleUpdateTime !== update.schedule.updateTime) {
       exSchedule.populateSchedule(update.schedule)
     }
   }
@@ -722,7 +723,7 @@ function deleteExhibit (uuid) {
 function updateExhibitButtons (uuid = '') {
   // Adjust the exhibit buttons based on the value currently selected.
 
-  if (uuid === '') uuid = exConfig.currentExhibit
+  if (uuid === '') uuid = hubConfig.currentExhibit
 
   const exhibitSelect = document.getElementById('exhibitSelect')
   const deleteButton = document.getElementById('exhibitDeleteSelectorButton')
@@ -1167,7 +1168,7 @@ $(function () {
 const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
 const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
 
-exConfig.serverAddress = location.origin
+hubConfig.serverAddress = location.origin
 
 // Set color mode
 if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
@@ -1191,7 +1192,7 @@ exTracker.populateTrackerTemplateSelect(trackerTemplates)
 exUsers.authenticateUser()
   .then(() => {
     // Subscribe to updates from Hub once we're logged in (or not)
-    const eventSource = new EventSource(exConfig.serverAddress + '/v6/system/updateStream')
+    const eventSource = new EventSource(hubConfig.serverAddress + exConfig.api + '/system/updateStream')
     eventSource.addEventListener('update', function (event) {
       const update = JSON.parse(event.data)
       parseUpdate(update)

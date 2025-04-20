@@ -7,7 +7,7 @@ from typing import Any
 
 # Defaults (loaded from config.json)
 defaults: dict[str, Any] = {}
-uuid: str = ''  # Loaded from configuration/uuid.txt
+uuid: str = ''
 
 commandList: list[str] = []  # List of queued commands to send to the client
 missingContentWarningList: list[dict] = []  # Holds a list of warning about missing content

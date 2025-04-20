@@ -2,6 +2,8 @@
 
 // Helpful functions shared between Hub and Apps
 
+import exConfig from './config.js'
+
 const exhibiteraAppIdDisplayNames = {
   dmx_control: 'DMX Control',
   heartbeat: 'Heartbeat',
@@ -31,7 +33,7 @@ export function makeRequest (opt) {
     xhr.timeout = opt.timeout ?? 2000 // ms
     if ('withCredentials' in opt && opt.withCredentials === true) xhr.withCredentials = true
 
-    let apiVersion = opt?.api ?? '/v6'
+    let apiVersion = opt?.api ?? exConfig.api
     if ((apiVersion !== '') && (apiVersion[0] !== '/')) apiVersion = '/' + apiVersion
 
     const path = opt.url + apiVersion + opt.endpoint
