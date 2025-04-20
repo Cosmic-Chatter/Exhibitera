@@ -31,7 +31,10 @@ export function makeRequest (opt) {
     xhr.timeout = opt.timeout ?? 2000 // ms
     if ('withCredentials' in opt && opt.withCredentials === true) xhr.withCredentials = true
 
-    const path = opt.url + opt.endpoint
+    let apiVersion = opt?.api ?? '/v6'
+    if ((apiVersion !== '') && (apiVersion[0] !== '/')) apiVersion = '/' + apiVersion
+
+    const path = opt.url + apiVersion + opt.endpoint
     if (opt?.noCache ?? false) {
       xhr.open(opt.method, path + (/\?/.test(path) ? '&' : '?') + new Date().getTime(), true)
     } else {
@@ -48,7 +51,7 @@ export function makeRequest (opt) {
       } else {
         console.log('Submitted data: ', opt.params)
         console.log('Response: ', JSON.parse(xhr.response))
-        reject(new Error(`Unable to complete ${opt.method} to ${opt.url + opt.endpoint} with the above data`))
+        reject(new Error(`Unable to complete ${opt.method} to ${path} with the above data`))
       }
     }
     xhr.onerror = function () {

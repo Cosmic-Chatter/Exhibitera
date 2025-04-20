@@ -238,6 +238,7 @@ function loadVersion () {
   // Load version and update the GUI with the current version
 
   exCommon.makeServerRequest({
+    api: '',
     method: 'GET',
     endpoint: '/_static/semantic_version.json'
   })
@@ -305,6 +306,7 @@ function populateHelpTab () {
 
   exCommon.makeHelperRequest({
     method: 'GET',
+    api: '',
     endpoint: '/README.md',
     rawResponse: true
   })

@@ -819,6 +819,7 @@ function loadVersion () {
   // Load version and update the GUI with the current version
 
   exTools.makeServerRequest({
+    api: '',
     method: 'GET',
     endpoint: '/_static/semantic_version.json'
   })
@@ -1190,7 +1191,7 @@ exTracker.populateTrackerTemplateSelect(trackerTemplates)
 exUsers.authenticateUser()
   .then(() => {
     // Subscribe to updates from Hub once we're logged in (or not)
-    const eventSource = new EventSource(exConfig.serverAddress + '/system/updateStream')
+    const eventSource = new EventSource(exConfig.serverAddress + '/v6/system/updateStream')
     eventSource.addEventListener('update', function (event) {
       const update = JSON.parse(event.data)
       parseUpdate(update)

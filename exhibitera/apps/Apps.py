@@ -6,7 +6,7 @@ import sys
 import threading
 
 # Non-standard modules
-from fastapi import FastAPI, Body, Depends, File, Form, UploadFile
+from fastapi import FastAPI, Body
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -23,11 +23,11 @@ import exhibitera.apps.features.utilities as apps_utilities
 import exhibitera.apps.features.system as apps_system
 
 # API modules
-from exhibitera.apps.api.data import data
-from exhibitera.apps.api.definitions import definitions
-from exhibitera.apps.api.dmx import dmx
-from exhibitera.apps.api.files import files
-from exhibitera.apps.api.system import system
+from exhibitera.apps.api.v6.data import data as data_v6
+from exhibitera.apps.api.v6.definitions import definitions as definitions_v6
+from exhibitera.apps.api.v6.dmx import dmx as dmx_v6
+from exhibitera.apps.api.v6.files import files as files_v6
+from exhibitera.apps.api.v6.system import system as system_v6
 
 # If we're not on Linux, prepare to use the webview
 if sys.platform != 'linux':
@@ -132,11 +132,11 @@ app.mount("/thumbnails",
           name="thumbnails")
 
 # Link API routers
-app.include_router(data.router)
-app.include_router(definitions.router)
-app.include_router(dmx.router)
-app.include_router(files.router)
-app.include_router(system.router)
+app.include_router(data_v6.router, prefix='/v6')
+app.include_router(definitions_v6.router, prefix='/v6')
+app.include_router(dmx_v6.router, prefix='/v6')
+app.include_router(files_v6.router, prefix='/v6')
+app.include_router(system_v6.router, prefix='/v6')
 
 
 @lru_cache()

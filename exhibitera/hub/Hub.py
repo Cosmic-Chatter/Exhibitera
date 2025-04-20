@@ -40,18 +40,18 @@ import exhibitera.hub.tools as hub_tools
 import exhibitera.hub.features.users as hub_users
 
 # API modules
-from exhibitera.hub.api.analytics import analytics
-from exhibitera.hub.api.components import components
-from exhibitera.hub.api.data import data
-from exhibitera.hub.api.exhibitions import exhibitions
-from exhibitera.hub.api.groups import groups
-from exhibitera.hub.api.issues import issues
-from exhibitera.hub.api.maintenance import maintenance
-from exhibitera.hub.api.projectors import projectors
-from exhibitera.hub.api.schedule import schedule
-from exhibitera.hub.api.system import system
-from exhibitera.hub.api.tracker import tracker
-from exhibitera.hub.api.users import users
+from exhibitera.hub.api.v6.analytics import analytics as analytics_v6
+from exhibitera.hub.api.v6.components import components as components_v6
+from exhibitera.hub.api.v6.data import data as data_v6
+from exhibitera.hub.api.v6.exhibitions import exhibitions as exhibitions_v6
+from exhibitera.hub.api.v6.groups import groups as groups_v6
+from exhibitera.hub.api.v6.issues import issues as issues_v6
+from exhibitera.hub.api.v6.maintenance import maintenance as maintenance_v6
+from exhibitera.hub.api.v6.projectors import projectors as projectors_v6
+from exhibitera.hub.api.v6.schedule import schedule as schedule_v6
+from exhibitera.hub.api.v6.system import system as system_v6
+from exhibitera.hub.api.v6.tracker import tracker as tracker_v6
+from exhibitera.hub.api.v6.users import users as users_v6
 
 # Set up the automatic documentation
 def exhibitera_schema():
@@ -282,18 +282,18 @@ app.add_middleware(
 app.openapi = exhibitera_schema
 
 # Link API routers
-app.include_router(analytics.router)
-app.include_router(components.router)
-app.include_router(data.router)
-app.include_router(exhibitions.router)
-app.include_router(groups.router)
-app.include_router(issues.router)
-app.include_router(maintenance.router)
-app.include_router(projectors.router)
-app.include_router(schedule.router)
-app.include_router(system.router)
-app.include_router(tracker.router)
-app.include_router(users.router)
+app.include_router(analytics_v6.router, prefix='/v6')
+app.include_router(components_v6.router, prefix='/v6')
+app.include_router(data_v6.router, prefix='/v6')
+app.include_router(exhibitions_v6.router, prefix='/v6')
+app.include_router(groups_v6.router, prefix='/v6')
+app.include_router(issues_v6.router, prefix='/v6')
+app.include_router(maintenance_v6.router, prefix='/v6')
+app.include_router(projectors_v6.router, prefix='/v6')
+app.include_router(schedule_v6.router, prefix='/v6')
+app.include_router(system_v6.router, prefix='/v6')
+app.include_router(tracker_v6.router, prefix='/v6')
+app.include_router(users_v6.router, prefix='/v6')
 
 
 @lru_cache()
