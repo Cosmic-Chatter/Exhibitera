@@ -1,4 +1,4 @@
-import * as exTools from '../tools.js'
+import * as exUtilities from '../../../common/utilities.js'
 
 export function populateDMXScenesForInfoModal (groups, helperURL) {
   // Take an array of groups and build an HTML representation for each scene.
@@ -11,7 +11,7 @@ export function populateDMXScenesForInfoModal (groups, helperURL) {
       const col = document.createElement('div')
       col.classList = 'col-6 col-sm-4 mt-2 handCursor dmx-entry'
       col.addEventListener('click', (event) => {
-        exTools.makeRequest({
+        exUtilities.makeRequest({
           method: 'POST',
           url: helperURL,
           endpoint: '/DMX/group/' + group.uuid + '/showScene',

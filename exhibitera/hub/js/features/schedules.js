@@ -568,7 +568,7 @@ export function setScheduleActionValueSelector (action = null, target = null) {
     } else {
       errorAlert.style.display = 'none'
     }
-    exTools.makeRequest({
+    exUtilities.makeRequest({
       method: 'GET',
       url: component.helperAddress,
       endpoint: '/definitions'
@@ -603,7 +603,7 @@ export function setScheduleActionValueSelector (action = null, target = null) {
       return
     }
 
-    exTools.makeRequest({
+    exUtilities.makeRequest({
       method: 'GET',
       url: component.helperAddress,
       endpoint: '/DMX/getScenes'

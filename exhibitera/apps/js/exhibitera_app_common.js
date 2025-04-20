@@ -1,5 +1,7 @@
 /* global platform, html2canvas */
 
+import * as exUtilities from '../../common/utilities.js'
+
 export const config = {
   permissions: {
     audio: true,
@@ -100,57 +102,18 @@ export function configureApp (opt = {}) {
   }
 }
 
-export function makeRequest (opt) {
-  // Function to make a request to a server and return a Promise with the result
-  // 'opt' should be an object with all the necessry options
-
-  return new Promise(function (resolve, reject) {
-    const xhr = new XMLHttpRequest()
-    if ('withCredentials' in opt && opt.withCredentials === true) xhr.withCredentials = true
-    const path = opt.url + opt.endpoint
-    if ('noCache' in opt && opt.noCache === true) {
-      xhr.open(opt.method, path + (/\?/.test(path) ? '&' : '?') + new Date().getTime(), true)
-    } else {
-      xhr.open(opt.method, path, true)
-    }
-    xhr.timeout = opt.timeout ?? 2000 // ms
-    xhr.onload = function () {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        if ('rawResponse' in opt && opt.rawResponse === true) {
-          resolve(xhr.responseText)
-        } else {
-          resolve(JSON.parse(xhr.responseText))
-        }
-      } else {
-        console.log(xhr)
-        reject(new Error(`Unable to complete ${opt.method} to ${opt.url + opt.endpoint} with data`, opt.params))
-      }
-    }
-    xhr.onerror = function () {
-      console.log(xhr)
-      reject(new Error(`Unable to complete $opt.{method} to ${opt.url + opt.endpoint} with data`, opt.params))
-    }
-    let paramText = null
-    if (opt.params != null) {
-      xhr.setRequestHeader('Content-Type', 'application/json')
-      paramText = JSON.stringify(opt.params)
-    }
-    xhr.send(paramText)
-  })
-}
-
 export function makeServerRequest (opt) {
   // Shortcut for making a server request and returning a Promise
 
   opt.url = config.serverAddress
-  return makeRequest(opt)
+  return exUtilities.makeRequest(opt)
 }
 
 export function makeHelperRequest (opt) {
   // Shortcut for making a server request and returning a Promise
 
   opt.url = config.helperAddress
-  return makeRequest(opt)
+  return exUtilities.makeRequest(opt)
 }
 
 export function parseQueryString () {
@@ -162,6 +125,7 @@ export function parseQueryString () {
 
 export function sendPing () {
   // Contact Hub and ask for any updates
+
   if (config.serverAddress === '') {
     console.log('Aborting ping... no config.serverAddress')
     return

@@ -1073,7 +1073,7 @@ function configureComponentInfoModalForExhibitComponent (obj, permission) {
   configureNewDefinitionOptions(obj)
 
   // Fetch any DMX lighting scenes and show the tab if necessary
-  hubTools.makeRequest({
+  exUtilities.makeRequest({
     method: 'GET',
     url: obj.getHelperURL(),
     endpoint: '/DMX/getScenes'
@@ -1762,7 +1762,7 @@ function showCopyDefinitionModal (componentUUID, definitionUUID, definitionName)
   }
 
   let content = []
-  hubTools.makeRequest({
+  exUtilities.makeRequest({
     method: 'GET',
     url,
     endpoint: '/definitions/' + definitionUUID + '/getContentList'
@@ -1859,7 +1859,7 @@ async function copyDefinitionModalCreateDestinationHTML (component, group, def, 
   checkGroup.appendChild(label)
 
   // Check if the given definition already exists on the destination
-  const defRequest = await hubTools.makeRequest({
+  const defRequest = await exUtilities.makeRequest({
     method: 'GET',
     url: component.getHelperURL(),
     endpoint: '/definitions'
@@ -1870,7 +1870,7 @@ async function copyDefinitionModalCreateDestinationHTML (component, group, def, 
   }
 
   // Check if any of the content already exists on the destination
-  const contentResponse = await hubTools.makeRequest({
+  const contentResponse = await exUtilities.makeRequest({
     method: 'GET',
     url: component.getHelperURL(),
     endpoint: '/files/availableContent'
@@ -1947,7 +1947,7 @@ export async function copyDefinitionModalPerformCopy () {
     const destUrl = destComp.getHelperURL()
     if (destUrl == null) continue
 
-    await hubTools.makeRequest({
+    await exUtilities.makeRequest({
       method: 'POST',
       url: destUrl,
       endpoint: '/files/retrieve',
@@ -1958,7 +1958,7 @@ export async function copyDefinitionModalPerformCopy () {
     })
 
     for (const file of filesToCopy) {
-      await hubTools.makeRequest({
+      await exUtilities.makeRequest({
         method: 'POST',
         url: destUrl,
         endpoint: '/files/retrieve',
@@ -2046,7 +2046,7 @@ async function updateComponentInfoModalFromHelper (uuid, permission) {
 
   let defResponse
   try {
-    defResponse = await hubTools.makeRequest({
+    defResponse = await exUtilities.makeRequest({
       method: 'GET',
       url,
       endpoint: '/definitions',
@@ -2063,7 +2063,7 @@ async function updateComponentInfoModalFromHelper (uuid, permission) {
 
   let statsResponse
   try {
-    statsResponse = await hubTools.makeRequest({
+    statsResponse = await exUtilities.makeRequest({
       method: 'GET',
       url,
       endpoint: '/system/stats',
@@ -2231,7 +2231,7 @@ export function submitComponentSettingsChange () {
         sleep: exUtilities.stringToBool(document.getElementById('componentInfoModalSettingsAllowRestart').value)
       }
     }
-    hubTools.makeRequest({
+    exUtilities.makeRequest({
       method: 'POST',
       url: obj.getHelperURL(),
       endpoint: '/system/configuration/update',
@@ -2292,7 +2292,7 @@ export function queueCommand (uuid, cmd) {
   const obj = getExhibitComponent(uuid)
   if (['shutdown', 'restart'].includes(cmd) && obj.type === 'exhibit_component') {
     // We send these commands directly to the helper
-    hubTools.makeRequest({
+    exUtilities.makeRequest({
       method: 'GET',
       url: obj.getHelperURL(),
       endpoint: '/' + cmd

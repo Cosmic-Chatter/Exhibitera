@@ -1,4 +1,5 @@
 import * as exCommon from './exhibitera_app_common.js'
+import * as exUtilities from '../../common/utilities.js'
 
 function pageForward (current) {
   // Based on the current page, check that it is complete and go to the next one.
@@ -172,7 +173,7 @@ function authenticateUser () {
   const failureMsg = document.getElementById('hub-auth-failure')
   const badConnectionMsg = document.getElementById('hub-auth-bad')
 
-  exCommon.makeRequest({
+  exUtilities.makeRequest({
     method: 'POST',
     url: serverAddress,
     endpoint: '/user/login',

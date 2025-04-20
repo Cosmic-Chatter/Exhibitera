@@ -22,6 +22,48 @@ const exhibiteraAppIdDisplayNames = {
   word_cloud_viewer: 'Word Cloud Viewer'
 }
 
+export function makeRequest (opt) {
+  // Make a request to a server and return a Promise with the result
+  // 'opt' should be an object with all the necessry options
+
+  return new Promise(function (resolve, reject) {
+    const xhr = new XMLHttpRequest()
+    xhr.timeout = opt.timeout ?? 2000 // ms
+    if ('withCredentials' in opt && opt.withCredentials === true) xhr.withCredentials = true
+
+    const path = opt.url + opt.endpoint
+    if (opt?.noCache ?? false) {
+      xhr.open(opt.method, path + (/\?/.test(path) ? '&' : '?') + new Date().getTime(), true)
+    } else {
+      xhr.open(opt.method, path, true)
+    }
+
+    xhr.onload = function () {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        if (opt?.rawResponse ?? false) {
+          resolve(xhr.responseText)
+        } else {
+          resolve(JSON.parse(xhr.responseText))
+        }
+      } else {
+        console.log('Submitted data: ', opt.params)
+        console.log('Response: ', JSON.parse(xhr.response))
+        reject(new Error(`Unable to complete ${opt.method} to ${opt.url + opt.endpoint} with the above data`))
+      }
+    }
+    xhr.onerror = function () {
+      console.log('Submitted data: ', opt.params)
+      reject(new Error(`Unable to complete ${opt.method} to ${opt.url + opt.endpoint} with the above data`))
+    }
+    let paramText = null
+    if (opt.params != null) {
+      xhr.setRequestHeader('Content-Type', 'application/json')
+      paramText = JSON.stringify(opt.params)
+    }
+    xhr.send(paramText)
+  })
+}
+
 export function appNameToDisplayName (appName) {
   // Convert an app name to a formatted display name
 

@@ -115,7 +115,7 @@ async function editExhibitCreateComponentHTML (component) {
   }
 
   try {
-    await exTools.makeRequest({
+    await exUtilities.makeRequest({
       method: 'GET',
       url: componentObj.getHelperURL(),
       endpoint: '/system/checkConnection'
@@ -125,7 +125,7 @@ async function editExhibitCreateComponentHTML (component) {
     return
   }
 
-  const response = await exTools.makeRequest({
+  const response = await exUtilities.makeRequest({
     method: 'GET',
     url: componentObj.getHelperURL(),
     endpoint: '/definitions'
@@ -438,7 +438,7 @@ async function editExhibitActionConfigureValueSelector (action = null, target = 
       return
     }
 
-    const response = await exTools.makeRequest({
+    const response = await exUtilities.makeRequest({
       method: 'GET',
       url: component.helperAddress,
       endpoint: '/DMX/getScenes'

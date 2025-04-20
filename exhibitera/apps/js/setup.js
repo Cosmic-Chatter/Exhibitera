@@ -89,7 +89,7 @@ function showUpdateInfoModal (details) {
       document.getElementById('updateInfoModalDownloadButton').href = 'https://exhibitera.org/download/'
 
       // Get the changelog
-      exCommon.makeRequest({
+      exUtilities.makeRequest({
         method: 'GET',
         url: 'https://raw.githubusercontent.com/Cosmic-Chatter/Exhibitera/main/exhibitera/changelog.md',
         endpoint: '',
