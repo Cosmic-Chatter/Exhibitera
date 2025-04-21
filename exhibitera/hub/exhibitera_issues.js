@@ -131,16 +131,19 @@ export function createIssueHTML (issue, full = true, archived = false) {
   content.style.transition = 'all 1s'
   body.appendChild(content)
 
-  for (const uuid of issue.relatedComponentUUIDs) {
-    const component = exConfig.exhibitComponents.find(obj => {
-      return obj.uuid === uuid
-    })
-    if (component == null) continue
-    const tag = document.createElement('span')
-    tag.setAttribute('class', 'badge bg-secondary me-1')
-    tag.innerHTML = component.id
-    content.appendChild(tag)
+  if (issue.relatedComponentUUIDs) {
+    for (const uuid of issue.relatedComponentUUIDs) {
+      const component = exConfig.exhibitComponents.find(obj => {
+        return obj.uuid === uuid
+      })
+      if (component == null) continue
+      const tag = document.createElement('span')
+      tag.setAttribute('class', 'badge bg-secondary me-1')
+      tag.innerHTML = component.id
+      content.appendChild(tag)
+    }
   }
+  
 
   for (const uuid of issue.assignedTo) {
     const tag = document.createElement('span')
