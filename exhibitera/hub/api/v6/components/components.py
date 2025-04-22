@@ -189,6 +189,6 @@ async def edit_component(request: Request,
 async def set_component_definition(component_uuid: str, definition_uuid: str):
     """Set the definition for the component."""
 
-    hub_exhibitions.update_exhibition(component_uuid, {"definition": definition_uuid})
+    hub_exhibitions.add_exhibition_modification(component_uuid, {"definition": definition_uuid})
 
     return {"success": True}

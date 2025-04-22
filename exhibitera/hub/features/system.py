@@ -78,6 +78,7 @@ def get_webpage_update():
 
     update_dict["components"] = component_dict_list
     update_dict["gallery"] = {"current_exhibit": hub_config.current_exhibit,
+                              "exhibit_modified": len(hub_config.exhibit_modifications.get("components", [])) != 0,
                               "availableExhibits": hub_config.exhibit_list,
                               "galleryName": hub_config.gallery_name,
                               "outdated_os": hub_config.outdated_os,

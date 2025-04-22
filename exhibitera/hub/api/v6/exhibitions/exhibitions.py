@@ -52,6 +52,33 @@ async def edit_exhibition(request: Request,
     return {"success": True, "reason": ""}
 
 
+@router.post("/applyModifications")
+async def apply_exhibition_modifications(request: Request):
+    """Update any modifications to the current exhibition."""
+
+    # Check permission
+    token = request.cookies.get("authToken", "")
+    success, authorizing_user, reason = hub_users.check_user_permission("exhibits", "edit", token=token)
+    if success is False:
+        return {"success": False, "reason": reason}
+
+    hub_exhibitions.update_exhibition_from_modifications()
+    return {"success": True}
+
+
+@router.get("/modifications")
+async def get_exhibition_modifications(request: Request):
+    """Update any modifications to the current exhibition."""
+
+    # Check permission
+    token = request.cookies.get("authToken", "")
+    success, authorizing_user, reason = hub_users.check_user_permission("exhibits", "view", token=token)
+    if success is False:
+        return {"success": False, "reason": reason}
+
+    return {"success": True, "modifications": hub_config.exhibit_modifications}
+
+
 @router.delete("/{uuid_str}")
 async def delete_exhibition(request: Request, uuid_str: str):
     """Delete the specified exhibition."""

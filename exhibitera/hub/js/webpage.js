@@ -81,7 +81,7 @@ async function editExhibitCreateComponentHTML (component) {
     // Handle the case where we try to load a video into the img tag
 
     const value = definitionPreviewImage.dataset.selectedDefinition
-    definitionPreviewVideo.src = componentObj.getHelperURL() + '/definitions/' + value + '/thumbnail'
+    definitionPreviewVideo.src = componentObj.getHelperURL() + exConfig.api + '/definitions/' + value + '/thumbnail'
     definitionPreviewVideo.play()
     definitionPreviewImage.style.display = 'none'
     definitionPreviewVideo.style.display = 'block'
@@ -148,7 +148,7 @@ async function editExhibitCreateComponentHTML (component) {
   const changeThumb = function () {
     definitionPreviewImage.dataset.selectedDefinition = definitionSelect.value
 
-    definitionPreviewImage.src = componentObj.getHelperURL() + '/definitions/' + definitionSelect.value + '/thumbnail'
+    definitionPreviewImage.src = componentObj.getHelperURL() + exConfig.api + '/definitions/' + definitionSelect.value + '/thumbnail'
     definitionPreviewVideo.style.display = 'none'
     definitionPreviewImage.style.display = 'block'
   }
@@ -528,7 +528,12 @@ function updateAvailableExhibits (exhibitList) {
     return 0
   })
 
-  if (exUtilities.arraysEqual(sortedExhibitList, hubConfig.availableExhibits, ['uuid', 'name']) === true) {
+  const arr1UUIDs = []
+  const arr2UUIDs = []
+  for (const exhib of sortedExhibitList) arr1UUIDs.push(exhib.uuid)
+  for (const exhib of hubConfig.availableExhibits) arr2UUIDs.push(exhib.uuid)
+
+  if (exUtilities.arraysEqual(arr1UUIDs, arr2UUIDs) === true) {
     return
   }
 
@@ -588,11 +593,16 @@ function parseUpdate (update) {
         exTools.rebuildNotificationList()
       }
     }
-    if (update?.gallery?.outdated_os ?? false) {
+    if (update.gallery?.outdated_os ?? false) {
       hubConfig.errorDict.__control_server = {
         outdated_os: true
       }
       exTools.rebuildNotificationList()
+    }
+    if (update.gallery?.exhibit_modified ?? false) {
+      document.getElementById('exhibitModifiedButton').style.display = 'block'
+    } else {
+      document.getElementById('exhibitModifiedButton').style.display = 'none'
     }
   }
 
@@ -1001,6 +1011,7 @@ document.addEventListener('click', (event) => {
 // Exhibits tab
 // =========================
 // document.getElementById('manageExhibitsModalSaveButton').addEventListener('click', manageExhibitModalSubmitUpdate)
+document.getElementById('exhibitModifiedButton').addEventListener('click', exExhibit.showExhibitionModificationsModal)
 document.getElementById('exhibitSelect').addEventListener('change', () => {
   updateExhibitButtons()
 })

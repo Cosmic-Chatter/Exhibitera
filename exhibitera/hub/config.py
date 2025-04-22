@@ -53,8 +53,9 @@ json_next_event: list[dict] = []
 scheduleUpdateTime: float = 0
 
 # Exhibitions stuff
-current_exhibit: str | None = "Default"  # The JSON file defining the current exhibition without the json extension
+current_exhibit: str | None = "Default"  # The UUID of the current exhibition
 exhibit_configuration: dict[str, Any] | None = None
+exhibit_modifications: dict[str, Any] = {"components": []} # Changes to the current configuration that aren't saved
 exhibit_list: list[str] = []
 
 # User stuff

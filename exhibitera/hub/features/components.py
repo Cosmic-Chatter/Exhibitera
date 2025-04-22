@@ -302,22 +302,29 @@ class ExhibitComponent(BaseComponent):
 
         if hub_config.exhibit_configuration is None or self.category == 'static':
             return
+        self.config["current_exhibit"] = hub_config.current_exhibit
 
         update_made = False
-        try:
-            component_config = ([x for x in hub_config.exhibit_configuration["components"] if x["id"] == self.id])[0]
-
-            if "definition" in component_config and self.config["definition"] != component_config["definition"]:
+        # First check the exhibition modifications to see if we've changed this component
+        component_config = next(
+            (x for x in hub_config.exhibit_modifications["components"] if x["uuid"] == self.uuid),
+            None
+        )
+        if component_config is not None and component_config.get("definition") is not None:
+            if self.config["definition"] != component_config["definition"]:
                 self.config["definition"] = component_config["definition"]
                 update_made = True
-            if "app_name" in component_config and self.config["app_name"] != component_config["app_name"]:
-                self.config["app_name"] = component_config["app_name"]
-                update_made = True
-        except IndexError:
-            # This component is not specified in the current exhibit configuration
-            self.config["definition"] = ""
 
-        self.config["current_exhibit"] = os.path.splitext(hub_config.current_exhibit)[0]
+        if not update_made:
+            # If there are no modifications, find the component in the regular exhibition config
+            component_config = next(
+                (x for x in hub_config.exhibit_configuration["components"] if x["id"] == self.id),
+                None
+            )
+            if component_config is not None and component_config.get("definition") is not None:
+                if self.config["definition"] != component_config["definition"]:
+                    self.config["definition"] = component_config["definition"]
+                    update_made = True
 
         if update_made:
             hub_config.last_update_time = time.time()

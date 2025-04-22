@@ -1,5 +1,6 @@
 /* global platform, html2canvas */
 
+import exConfig from '../../common/config.js'
 import * as exUtilities from '../../common/utilities.js'
 
 export const config = {
@@ -527,7 +528,7 @@ export function saveScreenshotAsThumbnail (filename) {
       const formData = new FormData()
       if (img != null) {
         formData.append('files', img, filename)
-        fetch('/files/uploadThumbnail', {
+        fetch(exConfig.api + '/files/uploadThumbnail', {
           method: 'POST',
           body: formData
         })

@@ -1,5 +1,6 @@
 /* global bootstrap textFit */
 
+import exConfig from '../../common/config.js'
 import * as exFiles from '../../common/files.js'
 import * as exUtilities from '../../common/utilities.js'
 import * as exCommon from '../js/exhibitera_app_common.js'
@@ -66,7 +67,7 @@ function createCard (obj) {
     const numCols = def?.layout?.num_columns ?? 3
     const iconWidth = String(Math.round(window.innerWidth / numCols))
     const thumbName = String(obj[mediaKey])
-    thumb = exCommon.config.helperAddress + '/files/' + thumbName + '/thumbnail/' + iconWidth
+    thumb = exCommon.config.helperAddress + exConfig.api + '/files/' + thumbName + '/thumbnail/' + iconWidth
   }
 
   let title = ''
@@ -558,6 +559,7 @@ function loadDefinition (def) {
 
   // Load the CSV file containing the items ad build the results row
   exCommon.makeHelperRequest({
+    api: '',
     method: 'GET',
     endpoint: '/content/' + def.spreadsheet,
     rawResponse: true,

@@ -1,6 +1,7 @@
 /* global bootstrap, showdown, TinyMDE */
 // Create rich markdown editors for setup pages.
 
+import exConfig from '../../common/config.js'
 import * as exFileSelect from './exhibitera_file_select_modal.js'
 import * as exCommon from './exhibitera_app_common.js'
 
@@ -192,7 +193,7 @@ export class ExhibiteraMarkdownEditor {
         .then((files) => {
           if (files.length !== 0) {
             const exMarkdownSelectImage = document.getElementById('exMarkdownSelectImage')
-            exMarkdownSelectImage.src = exCommon.config.helperAddress + '/files/' + files[0] + '/thumbnail'
+            exMarkdownSelectImage.src = exCommon.config.helperAddress + exConfig.api + '/files/' + files[0] + '/thumbnail'
             exMarkdownSelectImage.setAttribute('data-filename', files[0])
           }
         })

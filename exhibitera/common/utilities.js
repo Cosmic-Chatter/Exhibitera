@@ -207,3 +207,40 @@ export function sortAlphabetically (array) {
     }
   })
 }
+
+export function getDefinitionThumbnail (helperAddress, uuid) {
+  // Return a DOM element for the definition thumbnail.
+  // The element will be a div containing an img that may convert to a video
+
+  const div = document.createElement('div')
+
+  // First try to load the thumbnail as an image.
+  const img = new Image()
+  img.crossOrigin = 'anonymous' // Allow cross-origin requests
+  img.onload = () => {
+    // If the image loads successfully, append it to the container
+    img.style.height = '100px'
+    img.style.width = '100%'
+    img.style.objectFit = 'contain'
+    div.innerHTML = ''
+    div.appendChild(img)
+  }
+  img.onerror = () => {
+    // If the image fails to load, try loading it as a video
+    const thumb = document.createElement('video')
+    thumb.style.height = '100px'
+    thumb.style.width = '100%'
+    thumb.style.objectFit = 'contain'
+    thumb.setAttribute('autoplay', true)
+    thumb.muted = 'true'
+    thumb.setAttribute('loop', 'true')
+    thumb.setAttribute('playsinline', 'true')
+    thumb.setAttribute('webkit-playsinline', 'true')
+    thumb.setAttribute('disablePictureInPicture', 'true')
+    thumb.src = helperAddress + exConfig.api + '/definitions/' + uuid + '/thumbnail?' + Date.now()
+    div.appendChild(thumb)
+  }
+
+  img.src = helperAddress + exConfig.api + '/definitions/' + uuid + '/thumbnail?' + Date.now()
+  return div
+}

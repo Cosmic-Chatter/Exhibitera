@@ -83,7 +83,7 @@ def check_for_software_update(application: str):
     # Reset the timer to check for an update tomorrow
     if ex_config.software_update_timer is not None:
         ex_config.software_update_timer.cancel()
-    ex_config.software_update_timer = threading.Timer(86400, check_for_software_update)
+    ex_config.software_update_timer = threading.Timer(86400, check_for_software_update, args=[application])
     ex_config.software_update_timer.daemon = True
     ex_config.software_update_timer.start()
 

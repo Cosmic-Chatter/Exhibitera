@@ -1697,34 +1697,7 @@ async function populateComponentDefinitionList (definitions, permission) {
     }
     row.append(thumbCol)
 
-    // First try to load the thumbnail as an image.
-    const img = new Image()
-    img.crossOrigin = 'anonymous' // Allow cross-origin requests
-    img.onload = () => {
-      // If the image loads successfully, append it to the container
-      img.style.height = '100px'
-      img.style.width = '100%'
-      img.style.objectFit = 'contain'
-      thumbCol.innerHTML = ''
-      thumbCol.appendChild(img)
-    }
-    img.onerror = () => {
-      // If the image fails to load, try loading it as a video
-      const thumb = document.createElement('video')
-      thumb.style.height = '100px'
-      thumb.style.width = '100%'
-      thumb.style.objectFit = 'contain'
-      thumb.setAttribute('autoplay', true)
-      thumb.muted = 'true'
-      thumb.setAttribute('loop', 'true')
-      thumb.setAttribute('playsinline', 'true')
-      thumb.setAttribute('webkit-playsinline', 'true')
-      thumb.setAttribute('disablePictureInPicture', 'true')
-      thumb.src = component.getHelperURL() + exConfig.api + '/definitions/' + uuid + '/thumbnail?' + Date.now()
-      thumbCol.appendChild(thumb)
-    }
-
-    img.src = component.getHelperURL() + exConfig.api + '/definitions/' + uuid + '/thumbnail?' + Date.now()
+    thumbCol.appendChild(exUtilities.getDefinitionThumbnail(component.getHelperURL(), uuid))
 
     const app = document.createElement('div')
     app.classList = 'col-12 bg-secondary text-dark rounded-bottom pb-1'
@@ -2420,4 +2393,79 @@ export function submitWakeOnLANAdditionFromModal () {
     .then((response) => {
       exUtilities.hideModal('#addWakeOnLANModal')
     })
+}
+
+export async function showExhibitionModificationsModal () {
+  // Configure and show the modal for adjusting exhibition modifications.
+
+  const modal = document.getElementById('exhibitModificationsModal')
+  const compareRow = document.getElementById('exhibitModificationsModalRow')
+  compareRow.innerHTML = ''
+
+  const modsReq = await hubTools.makeServerRequest({
+    method: 'GET',
+    endpoint: '/exhibition/modifications'
+  })
+  const mods = modsReq.modifications
+
+  const exhibReq = await hubTools.makeServerRequest({
+    method: 'GET',
+    endpoint: '/exhibition/' + hubConfig.currentExhibit + '/details'
+  })
+  const exhib = exhibReq.exhibit
+
+  modal.querySelector('.modal-title').innerText = 'Modifications to ' + exhib.name
+
+  for (const mod of mods.components) {
+    createExhibitionModificationHTML(mod, exhib)
+  }
+
+  exUtilities.showModal('#exhibitModificationsModal')
+}
+
+async function createExhibitionModificationHTML (mod, exhib) {
+  // Create HTML to represent an exhibition modification as shown in the exhibitModificationsModal.
+  // mod gives the modified definition, while exhib is the current exhibition
+
+  const compareRow = document.getElementById('exhibitModificationsModalRow')
+  const component = getExhibitComponent(mod.uuid)
+
+  const modDefReq = await exUtilities.makeRequest({
+    method: 'GET',
+    url: getExhibitComponent(mod.uuid).getHelperURL(),
+    endpoint: '/definitions/' + mod.definition + '/load'
+  })
+  const modDef = modDefReq.definition
+
+  const exhibDefUUID = exhib.components.find(obj => obj.uuid === mod.uuid)?.definition ?? 'error'
+  const exhibDefReq = await exUtilities.makeRequest({
+    method: 'GET',
+    url: getExhibitComponent(mod.uuid).getHelperURL(),
+    endpoint: '/definitions/' + exhibDefUUID + '/load'
+  })
+  const exhibDef = exhibDefReq.definition
+
+  const col = document.createElement('div')
+  col.classList = 'col'
+  col.innerHTML = `
+  <div class='row'>
+    <div class='col-5 text-center'>
+    <span class='fs-6'>Original</span>
+    <div class='exhib-div py-1'></div>
+    <div class="fs-5">${exhibDef?.name ?? '<i>No definition</i>'}</div>
+    </div>
+    <div class='col-2 fs-1 d-flex justify-content-center align-items-center'>
+    →
+    </div>
+    <div class='col-5 text-center'>
+    <span class='fs-6'>Modified to</span>
+    <div class='mod-div py-1'></div>
+    <div class="fs-5">${modDef.name}</div>
+    </div>
+  </div>
+  `
+
+  compareRow.appendChild(col)
+  col.querySelector('.mod-div').appendChild(exUtilities.getDefinitionThumbnail(component.getHelperURL(), mod.definition))
+  col.querySelector('.exhib-div').appendChild(exUtilities.getDefinitionThumbnail(component.getHelperURL(), exhibDef?.uuid ?? 'error'))
 }

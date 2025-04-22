@@ -92,11 +92,14 @@ def load_exhibition(uuid_str: str) -> tuple[bool, str]:
         logging.error('load_exhibition: exhibition does not exist: ' + uuid_str)
         return False, 'does_not_exist'
 
-    try:
-        hub_config.exhibit_configuration = ex_files.load_json(exhibit_path)
-    except json.JSONDecodeError:
-        logging.error('load_exhibition: bad JSON in ' + uuid_str)
-        return False, 'invalid_json'
+    config_to_load = ex_files.load_json(exhibit_path)
+    if config_to_load is None:
+        return False, "json_error"
+
+    hub_config.exhibit_configuration = config_to_load
+
+    # Clear any exhibition modifications
+    hub_config.exhibit_modifications = {"components": []}
 
     # Update the components that the configuration has changed
     for component in hub_config.componentList:
@@ -111,39 +114,70 @@ def load_exhibition(uuid_str: str) -> tuple[bool, str]:
     return True, ''
 
 
-def update_exhibition(component_uuid: str,
-                      update: dict[str, Any],
-                      exhibit_name: str | None = ""):
-    """Update an exhibition with the given data."""
-
-    if exhibit_name == "" or exhibit_name is None:
-        exhibit_name = hub_config.current_exhibit
-
-    exhibit_path = ex_files.get_path(["exhibits", exhibit_name + ".json"], user_file=True)
-    exhibit_config = ex_files.load_json(exhibit_path)
-    if exhibit_config is None:
-        if ex_config.debug is True:
-            print('update_exhibit_configuration: error: invalid exhibit: ', exhibit_name)
-        return
+def add_exhibition_modification(component_uuid: str, update: dict[str, Any]):
+    """Temporarily change the definition for the given component"""
 
     match_found = False
-    for index, component in enumerate(exhibit_config.get("components", [])):
+    for index, component in enumerate(hub_config.exhibit_modifications.get("components", [])):
         if component.get("uuid") == component_uuid:
-            exhibit_config["components"][index] |= update
-            exhibit_config["components"][index]["uuid"] = component_uuid
+            hub_config.exhibit_modifications["components"][index] |= update
+            hub_config.exhibit_modifications["components"][index]["uuid"] = component_uuid
             match_found = True
     if not match_found:
         new_entry = {}
         if component_uuid != '' and component_uuid is not None:
             new_entry['uuid'] = component_uuid
         new_entry |= update
-        exhibit_config["components"].append(new_entry)
-    hub_config.exhibit_configuration = exhibit_config
+        hub_config.exhibit_modifications["components"].append(new_entry)
 
-    ex_files.write_json(exhibit_config, exhibit_path)
     this_component = hub_components.get_exhibit_component(component_uuid)
     if this_component is not None:
         this_component.update_configuration()
+
+    simplify_modifications()
+
+
+def simplify_modifications():
+    """Remove any exhibition "modifications" that are actually the same as the current exhibition."""
+
+    to_remove = []
+
+    # Cycle through modified components and see if the definition matches the one in the exhibition
+    for mod in hub_config.exhibit_modifications.get("components", []):
+        exhibit_config = next(
+            (x for x in hub_config.exhibit_configuration["components"] if x["uuid"] == mod["uuid"]),
+            None
+        )
+        if exhibit_config is not None:
+            if mod["definition"] == exhibit_config["definition"]:
+                to_remove.append(mod["uuid"])
+
+    hub_config.exhibit_modifications["components"] = [x for x in hub_config.exhibit_modifications["components"] if x["uuid"] not in to_remove]
+
+
+def update_exhibition_from_modifications():
+    """Update the current exhibition with the current modifications."""
+
+    exhibit_path = ex_files.get_path(["exhibits", ex_files.with_extension(hub_config.current_exhibit, 'json')], user_file=True)
+    exhibit_config = ex_files.load_json(exhibit_path)
+    if exhibit_config is None:
+        if ex_config.debug is True:
+            print('update_exhibit_configuration: error: invalid exhibit: ', hub_config.current_exhibit)
+        return
+
+    for mod in hub_config.exhibit_modifications.get('components', []):
+        match_found = False
+        for index, component in enumerate(hub_config.exhibit_configuration.get("components", [])):
+            if component.get("uuid") == mod["uuid"]:
+                hub_config.exhibit_configuration["components"][index] = mod
+                match_found = True
+        if not match_found:
+            hub_config.exhibit_configuration["components"].append(mod)
+
+    hub_config.exhibit_configuration = exhibit_config
+    hub_config.exhibit_modifications = {"components": []}
+
+    ex_files.write_json(exhibit_config, exhibit_path)
 
 
 def execute_action(action: str,
@@ -157,7 +191,7 @@ def execute_action(action: str,
         print(f"Changing definition for {target} to {value}")
 
         logging.info("Changing definition for %s to %s", target, value)
-        update_exhibition(target["uuid"], {"definition": value})
+        add_exhibition_modification(target["uuid"], {"definition": value})
     elif action == 'set_dmx_scene' and target is not None and value is not None:
         if isinstance(value, list):
             value = value[0]

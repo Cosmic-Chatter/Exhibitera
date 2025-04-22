@@ -27,6 +27,7 @@ import requests
 # Exhibitera modules
 import exhibitera.common.config as ex_config
 import exhibitera.common.files as ex_files
+import exhibitera.common.utilities as ex_utilities
 import exhibitera.hub.config as hub_config
 import exhibitera.hub.features.components as hub_components
 import exhibitera.hub.features.exhibitions as hub_exhibitions
@@ -180,65 +181,6 @@ def check_for_outdated_os() -> tuple[bool, str]:
     return False, ""
 
 
-def check_for_software_update() -> None:
-    """Download the version file from GitHub and check if there is an update"""
-
-    print("Checking for update... ", end="")
-    hub_config.software_update_available = False
-
-    local_dict = ex_files.load_json(ex_files.get_path(["_static", "semantic_version.json"]))
-    if local_dict is None:
-        print("error. The semantic version file is corrupt and cannot be read.")
-        return
-
-    remote_dict = None
-    try:
-        version_url = "https://raw.githubusercontent.com/Cosmic-Chatter/Exhibitera/main/exhibitera/hub/_static/semantic_version.json"
-        response = requests.get(version_url, timeout=2)
-        response.raise_for_status()
-        remote_dict = response.json()
-    except requests.RequestException as e:
-        print("cannot connect to update server")
-    except ValueError as e:
-        print("cannot connect to update server")
-
-    if remote_dict is not None:
-        # Compare the local and remote versions to check for an update
-        if remote_dict["version"]["major"] > local_dict["version"]["major"]:
-            hub_config.software_update_available = True
-        elif remote_dict["version"]["major"] < local_dict["version"]["major"]:
-            hub_config.software_update_available = False
-        else:
-            # Major versions equal
-            if remote_dict["version"]["minor"] > local_dict["version"]["minor"]:
-                hub_config.software_update_available = True
-            elif remote_dict["version"]["minor"] < local_dict["version"]["minor"]:
-                hub_config.software_update_available = False
-            else:
-                # Major & minor versions equal
-                if remote_dict["version"]["patch"] > local_dict["version"]["patch"]:
-                    hub_config.software_update_available = True
-                elif remote_dict["version"]["patch"] <= local_dict["version"]["patch"]:
-                    hub_config.software_update_available = False
-
-        if hub_config.software_update_available:
-            print("update available!")
-            hub_config.software_update_available_version = remote_dict["version"]
-        else:
-            print("the server is up to date.")
-
-    # Check to see if the OS is out of date
-    outdated, message = check_for_outdated_os()
-    hub_config.outdated_os = outdated
-
-    # Reset the timer to check for an update tomorrow
-    if hub_config.software_update_timer is not None:
-        hub_config.software_update_timer.cancel()
-    hub_config.software_update_timer = threading.Timer(86400, check_for_software_update)
-    hub_config.software_update_timer.daemon = True
-    hub_config.software_update_timer.start()
-
-
 # Check whether we have packaged with Pyinstaller and set the appropriate root path.
 ex_config.exec_path = os.path.dirname(os.path.abspath(__file__))
 if getattr(sys, 'frozen', False):
@@ -350,7 +292,7 @@ def run():
 
     hub_proj.poll_projectors()
     hub_components.poll_wake_on_lan_devices()
-    check_for_software_update()
+    ex_utilities.check_for_software_update('hub')
 
     log_level = "warning"
     if ex_config.debug:

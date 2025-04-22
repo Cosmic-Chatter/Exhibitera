@@ -1,5 +1,6 @@
 /* global showdown textFit */
 
+import exConfig from '../../common/config.js'
 import * as exFiles from '../../common/files.js'
 import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exMarkdown from '../js/exhibitera_app_markdown.js'
@@ -95,6 +96,7 @@ function loadDefinition (def) {
 
   // Load the CSV file containing the timeline data and use it to build the timeline entries.
   exCommon.makeHelperRequest({
+    api: '',
     method: 'GET',
     endpoint: '/content/' + def.spreadsheet,
     rawResponse: true,
@@ -227,7 +229,7 @@ function createTimelineEntry (entry, langCode) {
     } else {
       thumbRes = Math.round(width * 0.5)
     }
-    image.src = exCommon.config.helperAddress + '/files/' + imageName + '/thumbnail/' + String(thumbRes)
+    image.src = exCommon.config.helperAddress + exConfig.api + '/files/' + imageName + '/thumbnail/' + String(thumbRes)
     flex2.appendChild(image)
   }
 

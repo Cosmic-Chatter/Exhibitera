@@ -538,6 +538,7 @@ function onSpreadsheetFileChange () {
   }
 
   exCommon.makeHelperRequest({
+    api: '',
     method: 'GET',
     endpoint: '/content/' + file,
     rawResponse: true,
@@ -612,6 +613,7 @@ function _checkContentExists (spreadsheet, keys) {
         availableContent = result.content
         // Retrieve the spreadsheet and check the content for each image key against the available content
         exCommon.makeHelperRequest({
+          api: '',
           method: 'GET',
           endpoint: '/content/' + spreadsheet,
           rawResponse: true,

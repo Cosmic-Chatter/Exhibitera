@@ -818,6 +818,27 @@
         </div>
       </div>
 
+      <!-- Exhibition modifications modal -->
+      <div class="modal" tabindex="-1" role="dialog" id="exhibitModificationsModal">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Exhibition modifications</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div id="exhibitModificationsModalRow" class="row gy-2 row-cols-1 row-cols-lg-2"></div>
+            </div>
+            <div class="modal-footer">
+              <button id="exhibitModificationsModalApplyButton" type="button" class="btn btn-info me-auto">Make permanent</button>
+              <button id="exhibitModificationsModalSaveButton" type="button" class="btn btn-primary">Save</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Issue edit modal -->
       <div class="modal" tabindex="-1" role="dialog" id="issueEditModal">
         <div class="modal-dialog modal-dialog-centered" role="document">
@@ -1123,7 +1144,10 @@
       <div class="row mb-2">
         <div class="col-10">
           <div id="galleryNameField"></div>
-          <div id="exhibitNameField"></div>
+          <div class="d-flex align-items-center">
+            <span id="exhibitNameField"></span>
+            <button id="exhibitModifiedButton" class="ms-2 btn btn-sm btn-outline-secondary">Modified</button>  
+          </div>
         </div>
         <div class="col-2">
           <div id="loginMenu">
