@@ -944,7 +944,7 @@ async def get_tracker_data_csv(data: dict[str, Any], tracker_type: str):
 async def get_tracker_template(tracker_type: str, template_uuid: str):
     """Load the requested tracker template and return it as a dictionary."""
 
-    template_path = ex_tools.get_path([tracker_type, "templates", ex_tools.with_extension(template_uuid, "json")])
+    template_path = ex_tools.get_path([tracker_type, "templates", ex_tools.with_extension(template_uuid, "json")], user_file=True)
     template = ex_tools.load_json(template_path)
     if template is None:
         success = False
