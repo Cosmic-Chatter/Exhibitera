@@ -61,7 +61,7 @@ async def delete_tracker_template(request: Request, tracker_uuid: str):
 async def get_tracker_template(template_uuid: str):
     """Load the requested tracker template and return it as a dictionary."""
 
-    template_path = ex_files.get_path(["flexible-tracker", "templates", ex_files.with_extension(template_uuid, "json")])
+    template_path = ex_files.get_path(["flexible-tracker", "templates", ex_files.with_extension(template_uuid, "json")], user_file=True)
     template = ex_files.load_json(template_path)
     if template is None:
         success = False

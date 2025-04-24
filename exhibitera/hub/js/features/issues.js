@@ -133,7 +133,7 @@ export function createIssueHTML (issue, full = true, archived = false) {
   content.style.transition = 'all 1s'
   body.appendChild(content)
 
-  for (const uuid of issue.relatedComponentUUIDs) {
+  for (const uuid of issue?.relatedComponentUUIDs ?? []) {
     const component = exConfig.exhibitComponents.find(obj => {
       return obj.uuid === uuid
     })

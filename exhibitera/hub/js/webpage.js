@@ -434,6 +434,10 @@ async function editExhibitActionConfigureValueSelector (action = null, target = 
     } catch {
       return
     }
+    if (component == null) {
+      console.log('editExhibitActionConfigureValueSelector: component not available: ', target.uuid)
+      return
+    }
     if (component.helperAddress == null || component.helperAddress === '') {
       console.log('editExhibitActionConfigureValueSelector: invalid helper address')
       return
