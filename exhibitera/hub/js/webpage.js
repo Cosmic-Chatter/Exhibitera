@@ -430,7 +430,7 @@ async function editExhibitActionConfigureValueSelector (action = null, target = 
   if (action === 'set_dmx_scene') {
     let component
     try {
-      component = exExhibit.getExhibitComponent(target.uuid)
+      component = exExhibit.getExhibitComponent(target[0].uuid)
     } catch {
       return
     }

@@ -195,7 +195,8 @@ def execute_action(action: str,
     elif action == 'set_dmx_scene' and target is not None and value is not None:
         if isinstance(value, list):
             value = value[0]
-
+        if isinstance(target, list):
+            target = target[0]
         logging.info('Setting DMX scene for %s to %s', target, value)
         component = hub_components.get_exhibit_component(target["uuid"])
         if component is not None:

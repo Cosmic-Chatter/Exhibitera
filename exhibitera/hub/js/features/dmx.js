@@ -19,7 +19,6 @@ export function populateDMXScenesForInfoModal (groups, helperURL) {
         })
           .then((response) => {
             if ('success' in response && response.success === true) {
-              console.log(event.target)
               const nameEl = document.getElementById('DMXEntryName_' + scene.uuid)
               nameEl.classList.add('bg-success')
               nameEl.classList.remove('bg-primary')
