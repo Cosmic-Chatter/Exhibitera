@@ -962,6 +962,8 @@ def execute_action(action: str,
     elif action == 'set_dmx_scene' and target is not None and value is not None:
         if isinstance(value, list):
             value = value[0]
+        if isinstance(target, list):
+            target = target[0]
         target_uuid = None
         target_id = None
         if "uuid" in target:
@@ -971,8 +973,8 @@ def execute_action(action: str,
             target_id = target["id"]
         else:
             if config.debug:
-                print("set_definition scheduled without a target uuid")
-                logging.error("set_definition scheduled without a target uuid")
+                print("set_dmx_scene scheduled without a target uuid")
+                logging.error("set_dmx_scene scheduled without a target uuid")
             return
 
         logging.info('Setting DMX scene for %s to %s', target, value)
@@ -1011,7 +1013,7 @@ def execute_action(action: str,
                 else:
                     if config.debug:
                         print("action scheduled without a target uuid")
-                        logging.error("set_definition scheduled without a target uuid")
+                        logging.error("action scheduled without a target uuid")
                     return
                 component = get_exhibit_component(component_id=target_id, component_uuid=target_uuid)
                 if component is not None:
