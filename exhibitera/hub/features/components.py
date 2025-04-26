@@ -318,7 +318,7 @@ class ExhibitComponent(BaseComponent):
         if not update_made:
             # If there are no modifications, find the component in the regular exhibition config
             component_config = next(
-                (x for x in hub_config.exhibit_configuration["components"] if x["id"] == self.id),
+                (x for x in hub_config.exhibit_configuration["components"] if x["uuid"] == self.uuid),
                 None
             )
             if component_config is not None and component_config.get("definition") is not None:

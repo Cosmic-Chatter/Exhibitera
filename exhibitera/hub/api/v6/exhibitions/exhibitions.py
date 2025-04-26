@@ -79,6 +79,21 @@ async def get_exhibition_modifications(request: Request):
     return {"success": True, "modifications": hub_config.exhibit_modifications}
 
 
+@router.delete("/modifications")
+async def delete_exhibition_modifications(request: Request,
+                                          to_remove: list[str] = Body(description="Component UUIDs of modifications to remove", embed=True)):
+    """Delete the given modifications from the modification list."""
+
+    # Check permission
+    token = request.cookies.get("authToken", "")
+    success, authorizing_user, reason = hub_users.check_user_permission("exhibits", "edit", token=token)
+    if success is False:
+        return {"success": False, "reason": reason}
+
+    hub_exhibitions.remove_modifications(to_remove)
+    return {"success": True}
+
+
 @router.delete("/{uuid_str}")
 async def delete_exhibition(request: Request, uuid_str: str):
     """Delete the specified exhibition."""

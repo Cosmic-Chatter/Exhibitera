@@ -171,11 +171,11 @@
                         <option value="edit">Edit</option>
                       </select>
                     </div>
-                    <!-- Exhibits permission -->
+                    <!-- Exhibitions permission -->
                     <div class="col d-flex flex-column justify-content-end">
                       <label class="form-label" for="editUserPermissionExhibits">
-                        Exhibits
-                        <span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Create, edit, and switch exhibits." style="font-size: 0.55em; color: black">?</span>
+                        Exhibitions
+                        <span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Create, edit, and switch exhibitions." style="font-size: 0.55em; color: black">?</span>
                       </label>
                       <select id="editUserPermissionExhibits" class="form-select editUserField">
                         <option value="none">None</option>
@@ -826,13 +826,16 @@
               <h5 class="modal-title">Exhibition modifications</h5>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body" style="height: 55vh; overflow-y: auto;">
+              <div class="mb-2">
+                The following components have had their definition changed since the exhibition loaded. To make these modifications part of the exhibition, click <i>Make permanent</i>. 
+              </div>
               <div id="exhibitModificationsModalRow" class="row gy-2 row-cols-1 row-cols-lg-2"></div>
             </div>
             <div class="modal-footer">
               <button id="exhibitModificationsModalApplyButton" type="button" class="btn btn-info me-auto">Make permanent</button>
               <button id="exhibitModificationsModalSaveButton" type="button" class="btn btn-primary">Save</button>
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <button id="exhibitModificationsModalCloseButton" type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
           </div>
           </div>
@@ -1198,7 +1201,7 @@
             <a class="nav-link d-block d-sm-block" id="nav-schedule-tab" data-bs-toggle="tab" href="#nav-schedule" role="tab" aria-controls="nav-schedule" aria-selected="false">Schedule</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link d-none d-sm-block" id="nav-exhibits-tab" data-bs-toggle="tab" href="#nav-exhibits" role="tab" aria-controls="nav-exhibits" aria-selected="false">Exhibits</a>
+            <a class="nav-link d-none d-sm-block" id="nav-exhibits-tab" data-bs-toggle="tab" href="#nav-exhibits" role="tab" aria-controls="nav-exhibits" aria-selected="false">Exhibitions</a>
           </li>
           <li class="nav-item">
             <a class="nav-link d-none d-sm-block" id="nav-issues-tab" data-bs-toggle="tab" href="#nav-issues" role="tab" aria-controls="nav-issues" aria-selected="false">Maintenance</a>
@@ -1221,7 +1224,7 @@
             <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">More</a>
             <div class="dropdown-menu">
               <!-- <a class="dropdown-item d-block d-sm-none" id="nav-schedule-dropdown-tab" data-bs-toggle="tab" href="#nav-schedule" role="tab" aria-controls="nav-schedule" aria-selected="false">Schedule</a> -->
-              <a class="dropdown-item d-block d-sm-none" id="nav-exhibits-dropdown-tab" data-bs-toggle="tab" href="#nav-exhibits" role="tab" aria-controls="nav-exhibits" aria-selected="false">Exhibits</a>
+              <a class="dropdown-item d-block d-sm-none" id="nav-exhibits-dropdown-tab" data-bs-toggle="tab" href="#nav-exhibits" role="tab" aria-controls="nav-exhibits" aria-selected="false">Exhibitions</a>
               <a class="dropdown-item d-block d-sm-none" id="nav-issues-dropdown-tab" data-bs-toggle="tab" href="#nav-issues" role="tab" aria-controls="nav-issues" aria-selected="false">Maintenance</a>
               <a class="dropdown-item d-block d-md-none" id="nav-analytics-dropdown-tab" data-bs-toggle="tab" href="#nav-analytics" role="tab" aria-controls="nav-analytics d-block d-md-none" aria-selected="false">Analytics</a>
               <a class="dropdown-item" id="nav-users-dropdown-tab" data-bs-toggle="tab" href="#nav-users" role="tab" aria-controls="nav-users" aria-selected="false">Users</a>
@@ -1575,7 +1578,7 @@
                             <option value="restart">Restart components</option>
                             <option value="set_definition">Set defintion</option>
                             <option value="set_dmx_scene">Set DMX scene</option>
-                            <option value="set_exhibit">Set exhibit</option>
+                            <option value="set_exhibit">Set exhibition</option>
                             <option value="note">Add note</option>
                           </select>
                         </div>
@@ -1708,7 +1711,7 @@
           <!-- Manage exhibit buttons -->
           <div class="row mt-0 gy-2">
             <div class="col-12 fst-italic">
-              Exhibits match each component in your gallery with one of its definitions. Switching exhibits makes it easy to switch the content on many components at once.
+              Exhibitions match each component in your gallery with one of its definitions. Switching exhibitions makes it easy to switch the content on many components at once.
             </div>
             <div class="col-6 col-sm-4 col-md-4 col-lg-3 col-xl-2">
               <select class="form-select" id="exhibitSelect"></select>

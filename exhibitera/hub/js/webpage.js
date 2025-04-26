@@ -1014,7 +1014,6 @@ document.addEventListener('click', (event) => {
 
 // Exhibits tab
 // =========================
-// document.getElementById('manageExhibitsModalSaveButton').addEventListener('click', manageExhibitModalSubmitUpdate)
 document.getElementById('exhibitModifiedButton').addEventListener('click', exExhibit.showExhibitionModificationsModal)
 document.getElementById('exhibitSelect').addEventListener('change', () => {
   updateExhibitButtons()
@@ -1049,6 +1048,8 @@ document.getElementById('editExhibitActionEditDeleteActionButton').addEventListe
   editExhibitActionDeleteAction(uuid)
 })
 document.getElementById('editExhibitActionEditSubmitButton').addEventListener('click', editExhibitActionSubmit)
+document.getElementById('exhibitModificationsModalSaveButton').addEventListener('click', exExhibit.removeExhibitionModifications)
+document.getElementById('exhibitModificationsModalApplyButton').addEventListener('click', exExhibit.applyExhibitionModifications)
 
 // Maintenance tab
 // =========================
