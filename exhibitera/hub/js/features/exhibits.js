@@ -2400,6 +2400,7 @@ export async function showExhibitionModificationsModal () {
 
   const modal = document.getElementById('exhibitModificationsModal')
   const compareRow = document.getElementById('exhibitModificationsModalRow')
+  modal.dataset.toRemove = JSON.stringify([])
   compareRow.innerHTML = ''
 
   const modsReq = await hubTools.makeServerRequest({
@@ -2427,8 +2428,12 @@ async function createExhibitionModificationHTML (mod, exhib) {
   // Create HTML to represent an exhibition modification as shown in the exhibitModificationsModal.
   // mod gives the modified definition, while exhib is the current exhibition
 
+  const modal = document.getElementById('exhibitModificationsModal')
   const compareRow = document.getElementById('exhibitModificationsModalRow')
   const component = getExhibitComponent(mod.uuid)
+
+  document.getElementById('exhibitModificationsModalSaveButton').style.display = 'none'
+  document.getElementById('exhibitModificationsModalCloseButton').innerText = 'Close'
 
   const modDefReq = await exUtilities.makeRequest({
     method: 'GET',
@@ -2446,9 +2451,13 @@ async function createExhibitionModificationHTML (mod, exhib) {
   const exhibDef = exhibDefReq.definition
 
   const col = document.createElement('div')
-  col.classList = 'col'
+  col.classList = 'col py-1'
   col.innerHTML = `
-  <div class='row'>
+  <div class='row border rounded gx-2'>
+    <div class="col-12 position-relative d-flex justify-content-center align-items-center">
+      <span class="text-center fs-4 fw-bold pt-1">${component.id}</span>
+      <button class="btn-close position-absolute end-0 me-2"></button>
+    </div>
     <div class='col-5 text-center'>
     <span class='fs-6'>Original</span>
     <div class='exhib-div py-1'></div>
@@ -2468,4 +2477,44 @@ async function createExhibitionModificationHTML (mod, exhib) {
   compareRow.appendChild(col)
   col.querySelector('.mod-div').appendChild(exUtilities.getDefinitionThumbnail(component.getHelperURL(), mod.definition))
   col.querySelector('.exhib-div').appendChild(exUtilities.getDefinitionThumbnail(component.getHelperURL(), exhibDef?.uuid ?? 'error'))
+  col.querySelector('.btn-close').addEventListener('click', (ev) => {
+    const toRemove = JSON.parse(modal.dataset.toRemove)
+    toRemove.push(component.uuid)
+    modal.dataset.toRemove = JSON.stringify(toRemove)
+
+    // Update the GUI
+    col.remove()
+    document.getElementById('exhibitModificationsModalSaveButton').style.display = 'block'
+    document.getElementById('exhibitModificationsModalCloseButton').innerText = 'Cancel'
+  })
+}
+
+export function removeExhibitionModifications () {
+  // Remove any exhibition modifications chosen by the user from the modal.
+
+  const modal = document.getElementById('exhibitModificationsModal')
+  const toRemove = JSON.parse(modal.dataset.toRemove)
+
+  if (toRemove.length === 0) return
+
+  hubTools.makeServerRequest({
+    method: 'DELETE',
+    endpoint: '/exhibition/modifications',
+    params: { to_remove: toRemove }
+  })
+    .then(() => {
+      exUtilities.hideModal('#exhibitModificationsModal')
+    })
+}
+
+export function applyExhibitionModifications () {
+  // Tell Hub to convert all current modificaitons to be part of the exhibition.
+
+  hubTools.makeServerRequest({
+    method: 'POST',
+    endpoint: '/exhibition/applyModifications'
+  })
+    .then(() => {
+      exUtilities.hideModal('#exhibitModificationsModal')
+    })
 }

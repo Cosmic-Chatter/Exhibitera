@@ -84,6 +84,14 @@ def check_available_exhibitions():
         hub_tools.update_system_configuration({"current_exhibit": hub_config.current_exhibit})
 
 
+def update_components():
+    """Update each component from the current exhibition and modifications"""
+
+    # Update the components that the configuration has changed
+    for component in hub_config.componentList:
+        component.update_configuration()
+
+
 def load_exhibition(uuid_str: str) -> tuple[bool, str]:
     """Load the given exhibit configuration and trigger an update."""
 
@@ -100,10 +108,7 @@ def load_exhibition(uuid_str: str) -> tuple[bool, str]:
 
     # Clear any exhibition modifications
     hub_config.exhibit_modifications = {"components": []}
-
-    # Update the components that the configuration has changed
-    for component in hub_config.componentList:
-        component.update_configuration()
+    update_components()
 
     # Trigger any exhibit actions
     for command in hub_config.exhibit_configuration.get("commands", []):
@@ -155,6 +160,13 @@ def simplify_modifications():
     hub_config.exhibit_modifications["components"] = [x for x in hub_config.exhibit_modifications["components"] if x["uuid"] not in to_remove]
 
 
+def remove_modifications(to_remove: list[str]):
+    """Remove any definitions from the modification list matching the given component UUIDs."""
+
+    hub_config.exhibit_modifications["components"] = [x for x in hub_config.exhibit_modifications["components"] if x["uuid"] not in to_remove]
+    update_components()
+
+
 def update_exhibition_from_modifications():
     """Update the current exhibition with the current modifications."""
 
@@ -162,17 +174,17 @@ def update_exhibition_from_modifications():
     exhibit_config = ex_files.load_json(exhibit_path)
     if exhibit_config is None:
         if ex_config.debug is True:
-            print('update_exhibit_configuration: error: invalid exhibit: ', hub_config.current_exhibit)
+            logging.warning('update_exhibit_configuration: error: invalid exhibit: ', hub_config.current_exhibit)
         return
 
     for mod in hub_config.exhibit_modifications.get('components', []):
         match_found = False
-        for index, component in enumerate(hub_config.exhibit_configuration.get("components", [])):
+        for index, component in enumerate(exhibit_config.get("components", [])):
             if component.get("uuid") == mod["uuid"]:
-                hub_config.exhibit_configuration["components"][index] = mod
+                exhibit_config["components"][index] = mod
                 match_found = True
         if not match_found:
-            hub_config.exhibit_configuration["components"].append(mod)
+            exhibit_config["components"].append(mod)
 
     hub_config.exhibit_configuration = exhibit_config
     hub_config.exhibit_modifications = {"components": []}
