@@ -86,11 +86,15 @@ export function populateSchedule (schedule) {
       scheduleName = day.dayName.toLowerCase()
     }
 
+    const dayCol = document.createElement('div')
+    dayCol.classList = 'col-12 col-sm-6 col-xl-4'
+
     const dayContainer = document.createElement('div')
-    dayContainer.classList = `col-12 col-sm-6 col-xl-4 pb-3 border ${scheduleClass}`
+    dayContainer.classList = `h-100 px-2 pb-3 border border-secondary rounded ${scheduleClass}`
+    dayCol.appendChild(dayContainer)
 
     const row = document.createElement('div')
-    row.classList = 'row'
+    row.classList = 'row px-2'
     dayContainer.appendChild(row)
 
     const dayNameCol = document.createElement('div')
@@ -139,7 +143,7 @@ export function populateSchedule (schedule) {
 
     if (allowEdit) {
       const editButtonCol = document.createElement('div')
-      editButtonCol.classList = 'col-12 col-md-6 mt-2'
+      editButtonCol.classList = 'col-12 col-lg-6 mt-2 px-1'
       row.appendChild(editButtonCol)
 
       const editButton = document.createElement('button')
@@ -152,7 +156,7 @@ export function populateSchedule (schedule) {
       editButtonCol.appendChild(editButton)
 
       const convertButtonCol = document.createElement('div')
-      convertButtonCol.classList = 'col-12 col-md-6 mt-2'
+      convertButtonCol.classList = 'col-12 col-lg-6 mt-2 px-1'
       convertButtonCol.style.display = convertState
       row.appendChild(convertButtonCol)
 
@@ -166,7 +170,7 @@ export function populateSchedule (schedule) {
       convertButtonCol.appendChild(convertButton)
 
       const deleteButtonCol = document.createElement('div')
-      deleteButtonCol.classList = 'col-12 col-md-6 mt-2'
+      deleteButtonCol.classList = 'col-12 col-lg-6 mt-2 px-1'
       deleteButtonCol.style.display = deleteState
       row.appendChild(deleteButtonCol)
 
@@ -185,13 +189,25 @@ export function populateSchedule (schedule) {
       $(deleteButton).popover()
     }
 
-    $('#scheduleContainer').append(dayContainer)
+    const divider = document.createElement('nr')
+    divider.classList = 'mt-2 border-top'
+
+    row.appendChild(divider)
+
+    document.getElementById('scheduleContainer').appendChild(dayCol)
 
     // Loop through the schedule elements and add a row for each
     const scheduleIDs = Object.keys(day.schedule)
 
     for (const scheduleID of scheduleIDs) {
       dayContainer.appendChild(createScheduleEntryHTML(day.schedule[scheduleID], scheduleID, scheduleName, day.source))
+    }
+
+    if (scheduleIDs.length === 0) {
+      const noneContainer = document.createElement('div')
+      noneContainer.classList = 'text-center fst-italic mt-3'
+      noneContainer.innerHTML = 'No scheduled actions'
+      dayContainer.appendChild(noneContainer)
     }
     // Sort the elements by time
     const events = $(dayContainer).children('.eventListing')
