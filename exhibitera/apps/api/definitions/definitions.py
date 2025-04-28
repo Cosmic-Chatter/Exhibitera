@@ -83,7 +83,7 @@ async def get_definition_content_list(this_uuid: str):
     if definition["app"].startswith('word_cloud'):
         field = "appearance"
 
-    if (definition[field]["background"].get("image", "") != ""
+    if (definition.get(field, {}).get("background", {}).get("image", "") != ""
             and definition[field]["background"]["mode"] == "image"):
         content.append(definition[field]["background"]["image"])
 
