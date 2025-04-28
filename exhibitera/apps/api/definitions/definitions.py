@@ -105,10 +105,18 @@ async def get_definition_content_list(this_uuid: str):
             content.append(definition["watermark"]["file"])
         for item_uuid in definition["content"]:
             item = definition["content"][item_uuid]
-            if item["filename"] not in content:
+            if item["filename"] not in content and item["type"] == "file":
                 content.append(item["filename"])
-            if "subtitles" in item and item["subtitles"].get("filename", "") != '':
+            if "subtitles" in item and isinstance(item["subtitles"], dict) and item["subtitles"].get("filename", "") != '':
                 content.append(item["subtitles"]["filename"])
+            if "annotations" in item and isinstance(item["annotations"], dict):
+                for anno_uuid in item["annotations"]:
+                    # Iterate any annotations and copy any needed json files and font files
+                    anno = item["annotations"][anno_uuid]
+                    if anno.get('type', '') == "file":
+                        content.append(anno["file"])
+                    if os.path.basename(os.path.dirname(anno["font"])) == 'content':
+                        content.append(os.path.basename(anno["font"]))
     elif definition["app"] == "timelapse_viewer":
         if "attractor" in definition and "font" in definition["attractor"]:
             if os.path.basename(os.path.dirname(definition["attractor"]["font"])) == 'content':
