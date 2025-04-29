@@ -405,7 +405,7 @@ function editDefinition (uuid = '') {
   })
 
   // Set the appropriate values for the color pickers
-  for (const key of Object.keys(def.style.color)) {
+  for (const key of Object.keys(def?.style?.color ?? {})) {
     const colorEl = document.getElementById('colorPicker_' + key)
     if (colorEl == null) continue
     colorEl.value = def.style.color[key]
@@ -413,45 +413,30 @@ function editDefinition (uuid = '') {
   }
 
   // Set the appropriate values for any advanced color pickers
-  if ('background' in def.style) {
+  if (def?.style?.background) {
     exSetup.updateAdvancedColorPicker('style>background', def.style.background)
   }
 
   // Set the appropriate values for the advanced font pickers
-  if ('font' in def.style) {
-    Object.keys(def.style.font).forEach((key) => {
-      const picker = document.querySelector(`.AFP-select[data-path="style>font>${key}"`)
-      exSetup.setAdvancedFontPicker(picker, def.style.font[key])
-    })
-  }
+  Object.keys(def?.style?.font ?? {}).forEach((key) => {
+    const picker = document.querySelector(`.AFP-select[data-path="style>font>${key}"`)
+    exSetup.setAdvancedFontPicker(picker, def.style.font[key])
+  })
+
 
   // Set the appropriate values for the text size sliders
-  Object.keys(def.style.text_size).forEach((key) => {
+  Object.keys(def?.style?.text_size ?? {}).forEach((key) => {
     document.getElementById(key + 'TextSizeSlider').value = def.style.text_size[key]
   })
 
   // Set the appropriate values for the layout options
-  if ('num_columns' in def.style.layout) {
-    document.getElementById('columnCountSelect').value = def.style.layout.num_columns
-  }
-  if ('top_height' in def.style.layout) {
-    document.getElementById('headerToButtonsSlider').value = def.style.layout.top_height
-  }
-  if ('header_padding' in def.style.layout) {
-    document.getElementById('headerPaddingHeightSlider').value = def.style.layout.header_padding
-  }
-  if ('bottom_height' in def.style.layout) {
-    document.getElementById('buttonsToFooterSlider').value = def.style.layout.bottom_height
-  }
-  if ('footer_padding' in def.style.layout) {
-    document.getElementById('footerPaddingHeightSlider').value = def.style.layout.footer_padding
-  }
-  if ('button_padding' in def.style.layout) {
-    document.getElementById('buttonPaddingHeightSlider').value = def.style.layout.button_padding
-  }
-  if ('image_height' in def.style.layout) {
-    document.getElementById('imageHeightSlider').value = def.style.layout.image_height
-  }
+  document.getElementById('columnCountSelect').value = def?.style?.layout?.num_columns ?? 'auto'
+  document.getElementById('headerToButtonsSlider').value = def?.style?.layout?.top_height ?? 20
+  document.getElementById('headerPaddingHeightSlider').value = def?.style?.layout?.header_padding ?? 5
+  document.getElementById('buttonsToFooterSlider').value = def?.style?.layout?.bottom_height ?? 20
+  document.getElementById('footerPaddingHeightSlider').value = def?.style?.layout?.footer_padding ?? 5
+  document.getElementById('buttonPaddingHeightSlider').value = def?.style?.layout?.button_padding ?? 10
+  document.getElementById('imageHeightSlider').value = def?.style?.layout?.image_height ?? 90
 
   // Configure the preview frame
   document.getElementById('previewFrame').src = '../voting_kiosk.html?standalone=true&definition=' + def.uuid

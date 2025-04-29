@@ -256,31 +256,25 @@ function editDefinition (uuid = '') {
   document.getElementById('textCaseSelect').value = def?.appearance?.text_case ?? 'lowercase'
 
   // Set the appropriate values for the color pickers
-  if ('color' in def.appearance) {
-    for (const key of Object.keys(def.appearance.color)) {
-      const el = document.getElementById('colorPicker_' + key)
-      if (el == null) continue
-      el.value = def.appearance.color[key]
-      el.dispatchEvent(new Event('input', { bubbles: true }))
-    }
+  for (const key of Object.keys(def?.appearance?.color ?? {})) {
+    const el = document.getElementById('colorPicker_' + key)
+    if (el == null) continue
+    el.value = def.appearance.color[key]
+    el.dispatchEvent(new Event('input', { bubbles: true }))
   }
 
   // Set the appropriate values for any advanced color pickers
-  if ('background' in def.appearance) {
+  if (def?.appearance?.background) {
     exSetup.updateAdvancedColorPicker('appearance>background', def.appearance.background)
   }
 
   // Set the appropriate values for the advanced font pickers
-  if ('font' in def.appearance) {
-    Object.keys(def.appearance.font).forEach((key) => {
-      const picker = document.querySelector(`.AFP-select[data-path="appearance>font>${key}"`)
-      exSetup.setAdvancedFontPicker(picker, def.appearance.font[key])
-    })
-  }
+  Object.keys(def?.appearance?.font ?? {}).forEach((key) => {
+    const picker = document.querySelector(`.AFP-select[data-path="appearance>font>${key}"`)
+    exSetup.setAdvancedFontPicker(picker, def.appearance.font[key])
+  })  
 
-  if ('prompt' in def.appearance.text_size) {
-    document.getElementById('promptTextSizeSlider').value = def.appearance.text_size.prompt
-  }
+  document.getElementById('promptTextSizeSlider').value = def?.appearance?.text_size?.prompt ?? 0
 
   // Configure the preview frame
   document.getElementById('previewFrame').src = '../word_cloud_viewer.html?standalone=true&definition=' + def.uuid

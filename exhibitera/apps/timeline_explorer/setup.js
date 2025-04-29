@@ -324,17 +324,15 @@ function editDefinition (uuid = '') {
   }
 
   // Set the appropriate values for any advanced color pickers
-  if ('background' in def.style) {
+  if (def?.style?.background) {
     exSetup.updateAdvancedColorPicker('style>background', def.style.background)
   }
 
   // Set the appropriate values for the advanced font pickers
-  if ('font' in def.style) {
-    Object.keys(def.style.font).forEach((key) => {
+    Object.keys(def?.style?.font ?? {}).forEach((key) => {
       const picker = document.querySelector(`.AFP-select[data-path="style>font>${key}"`)
       exSetup.setAdvancedFontPicker(picker, def.style.font[key])
     })
-  }
 
   // Set the appropriate values for the text size selects
   Object.keys(def.style?.text_size ?? {}).forEach((key) => {

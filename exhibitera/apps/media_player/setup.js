@@ -84,25 +84,19 @@ function editDefinition (uuid = '') {
   }
 
   // Set the appropriate values for any advanced color pickers
-  if ('background' in def.style) {
+  if (def?.style?.background) {
     exSetup.updateAdvancedColorPicker('style>background', def.style.background)
   }
 
   // Set the appropriate values for the watermark
-  if ('watermark' in def && 'file' in def.watermark && def.watermark.file !== '') {
+  if (def?.watermark?.file && def.watermark.file !== '') {
     const watermarkSelect = document.getElementById('watermarkSelect')
     watermarkSelect.innerHTML = def.watermark.file
     watermarkSelect.setAttribute('data-filename', def.watermark.file)
   }
-  if ('watermark' in def && 'x_position' in def.watermark) {
-    document.getElementById('watermarkXPos').value = def.watermark.x_position
-  }
-  if ('watermark' in def && 'y_position' in def.watermark) {
-    document.getElementById('watermarkYPos').value = def.watermark.y_position
-  }
-  if ('watermark' in def && 'size' in def.watermark) {
-    document.getElementById('watermarkSize').value = def.watermark.size
-  }
+  document.getElementById('watermarkXPos').value = def?.watermark?.x_position ?? '80'
+  document.getElementById('watermarkYPos').value = def?.watermark?.y_position ?? '80'
+  document.getElementById('watermarkSize').value = def?.watermark?.size ?? '10'
 
   // Set the appropriate values for the color pickers
   for (const key of Object.keys(def.style.color)) {

@@ -107,7 +107,7 @@ function editDefinition (uuid = '') {
   }
 
   // Set the appropriate values for any advanced color pickers
-  if ('background' in def.style) {
+  if (def?.style?.background) {
     exSetup.updateAdvancedColorPicker('style>background', def.style.background)
   }
 

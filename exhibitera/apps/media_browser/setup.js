@@ -335,7 +335,7 @@ function editDefinition (uuid = '') {
   // Spreadsheet
   const spreadsheetSelect = document.getElementById('spreadsheetSelect')
   spreadsheetSelect.innerHTML = def.spreadsheet
-  spreadsheetSelect.setAttribute('data-filename', def.spreadsheet)
+  spreadsheetSelect.dataset.filename = def.spreadsheet
 
   // Attractor
   const attractorSelect = document.getElementById('attractorSelect')
@@ -344,45 +344,21 @@ function editDefinition (uuid = '') {
   } else {
     attractorSelect.innerHTML = 'Select file'
   }
-  attractorSelect.setAttribute('data-filename', def.attractor)
-  document.getElementById('inactivityTimeoutField').value = def?.inactivity_timeout || 30
+  attractorSelect.dataset.filename = def.attractor
+  document.getElementById('inactivityTimeoutField').value = def?.inactivity_timeout ?? 30
 
   // Page looping
-  if (('behavior' in def) && 'loop_results' in def.behavior) {
-    document.getElementById('loopResultsCheckbox').checked = def.behavior.loop_results
-  }
+  document.getElementById('loopResultsCheckbox').checked = def?.behavior?.loop_results ?? true
 
   // Set the layout options
-  if ('items_per_page' in def.style.layout) {
-    document.getElementById('itemsPerPageInput').value = def.style.layout.items_per_page
-  } else {
-    document.getElementById('itemsPerPageInput').value = 12
-  }
-  if ('num_columns' in def.style.layout) {
-    document.getElementById('numColsSelect').value = def.style.layout.num_columns
-  } else {
-    document.getElementById('numColsSelect').value = 6
-  }
-  if ('image_height' in def.style.layout) {
-    document.getElementById('imageHeightSlider').value = def.style.layout.image_height
-  } else {
-    document.getElementById('imageHeightSlider').value = 70
-  }
-  if ('title_height' in def.style.layout) {
-    document.getElementById('titleHeightSlider').value = def.style.layout.title_height
-  } else {
-    document.getElementById('titleHeightSlider').value = 50
-  }
-  if ('corner_radius' in def.style.layout) {
-    document.getElementById('cornerRadiusSlider').value = def.style.layout.corner_radius
-  } else {
-    document.getElementById('cornerRadiusSlider').value = 0
-  }
-  if ('thumbnail_shape' in def.style.layout) {
-    document.getElementById('imageShapeSelect').value = def.style.layout.thumbnail_shape
-  } else {
-    document.getElementById('imageShapeSelect').value = 'original'
-  }
+  document.getElementById('itemsPerPageInput').value = def?.style?.layout?.items_per_page ?? 12
+  document.getElementById('numColsSelect').value = def?.style?.layout?.num_columns ?? 6
+  document.getElementById('imageHeightSlider').value = def?.style?.layout?.image_height ?? 70
+  document.getElementById('titleHeightSlider').value = def?.style?.layout?.title_height ?? 50
+
+  document.getElementById('cornerRadiusSlider').value = def?.style?.layout?.corner_radius ?? 0
+  document.getElementById('imageShapeSelect').value = def?.style?.layout?.thumbnail_shape ?? 'original'
+
   document.getElementById('lightboxTitleHeightSlider').value = def.style.layout.lightbox_title_height
   document.getElementById('lightboxCaptionHeightSlider').value = def.style.layout.lightbox_caption_height
   document.getElementById('lightboxCreditHeightSlider').value = def.style.layout.lightbox_credit_height
@@ -397,7 +373,7 @@ function editDefinition (uuid = '') {
   }
 
   // Set the appropriate values for any advanced color pickers
-  if ('background' in def.style) {
+  if (def?.style?.background) {
     exSetup.updateAdvancedColorPicker('style>background', def.style.background)
   }
 
@@ -410,16 +386,15 @@ function editDefinition (uuid = '') {
   }
 
   // Set the appropriate values for the advanced font pickers
-  if (def?.style?.font) {
-    Object.keys(def.style.font).forEach((key) => {
+    Object.keys(def?.style?.font ?? {}).forEach((key) => {
       const picker = document.querySelector(`.AFP-select[data-path="style>font>${key}"`)
       exSetup.setAdvancedFontPicker(picker, def.style.font[key])
     })
-  }
 
   // Set the appropriate values for the text size selects
-  Object.keys(def.style.text_size).forEach((key) => {
-    document.getElementById(key + 'TextSizeSlider').value = def.style.text_size[key]
+  Object.keys(def?.style?.text_size ?? {}).forEach((key) => {
+    const el = document.getElementById(key + 'TextSizeSlider')
+    if (el != null) el.value = def.style.text_size[key]
   })
 
   // Set up any existing languages and tabs
