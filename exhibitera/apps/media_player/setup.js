@@ -105,14 +105,15 @@ function editDefinition (uuid = '') {
   }
 
   // Set the appropriate values for the color pickers
-  Object.keys(def.style.color).forEach((key) => {
+  for (const key of Object.keys(def.style.color)) {
     const el = document.getElementById('colorPicker_' + key)
+    if (el == null) continue
     el.value = def.style.color[key]
     el.dispatchEvent(new Event('input', { bubbles: true }))
-  })
+  }
 
   // Set the appropriate values for the advanced font pickers
-  if ('font' in def.style) {
+  if (def?.style?.font) {
     Object.keys(def.style.font).forEach((key) => {
       const picker = document.querySelector(`.AFP-select[data-path="style>font>${key}"`)
       exSetup.setAdvancedFontPicker(picker, def.style.font[key])

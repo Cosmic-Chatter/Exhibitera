@@ -112,10 +112,12 @@ function editDefinition (uuid = '') {
   }
 
   // Set the appropriate values for the color pickers
-  Object.keys(def.style.color).forEach((key) => {
-    $('#colorPicker_' + key).val(def.style.color[key])
-    document.querySelector('#colorPicker_' + key).dispatchEvent(new Event('input', { bubbles: true }))
-  })
+  for (const key of Object.keys(def.style.color)) {
+    const el = document.getElementById('colorPicker_' + key)
+    if (el == null) continue
+    el.value = def.style.color[key]
+    el.dispatchEvent(new Event('input', { bubbles: true }))
+  }
 
   // Set the appropriate values for the advanced font pickers
   if ('font' in def.style) {

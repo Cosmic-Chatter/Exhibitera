@@ -405,10 +405,12 @@ function editDefinition (uuid = '') {
   })
 
   // Set the appropriate values for the color pickers
-  Object.keys(def.style.color).forEach((key) => {
-    $('#colorPicker_' + key).val(def.style.color[key])
-    document.querySelector('#colorPicker_' + key).dispatchEvent(new Event('input', { bubbles: true }))
-  })
+  for (const key of Object.keys(def.style.color)) {
+    const colorEl = document.getElementById('colorPicker_' + key)
+    if (colorEl == null) continue
+    colorEl.value = def.style.color[key]
+    colorEl.dispatchEvent(new Event('input', { bubbles: true }))
+  }
 
   // Set the appropriate values for any advanced color pickers
   if ('background' in def.style) {

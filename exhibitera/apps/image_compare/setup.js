@@ -327,6 +327,7 @@ function editDefinition (uuid = '') {
   // Set the appropriate values for the color pickers
   for (const key of Object.keys(def.style.color)) {
     const el = document.getElementById('colorPicker_' + key)
+    if (el == null) continue
     el.value = def.style.color[key]
     el.dispatchEvent(new Event('input', { bubbles: true }))
   }

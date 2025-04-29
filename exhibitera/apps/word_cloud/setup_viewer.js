@@ -257,10 +257,12 @@ function editDefinition (uuid = '') {
 
   // Set the appropriate values for the color pickers
   if ('color' in def.appearance) {
-    Object.keys(def.appearance.color).forEach((key) => {
-      document.getElementById('colorPicker_' + key).value = def.appearance.color[key]
-      document.querySelector('#colorPicker_' + key).dispatchEvent(new Event('input', { bubbles: true }))
-    })
+    for (const key of Object.keys(def.appearance.color)) {
+      const el = document.getElementById('colorPicker_' + key)
+      if (el == null) continue
+      el.value = def.appearance.color[key]
+      el.dispatchEvent(new Event('input', { bubbles: true }))
+    }
   }
 
   // Set the appropriate values for any advanced color pickers
