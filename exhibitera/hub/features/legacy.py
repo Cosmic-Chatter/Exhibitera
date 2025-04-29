@@ -290,6 +290,8 @@ def migrate_tracker_data():
 
     if not os.path.exists(old_data):
         return
+    if len(os.listdir(old_data)) == 0:
+        return
 
     new_data = ex_files.get_path(["data"], user_file=True)
     shutil.copytree(old_data, new_data, dirs_exist_ok=True)

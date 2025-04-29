@@ -1832,6 +1832,9 @@ async function copyDefinitionModalCreateDestinationHTML (component, group, def, 
   label.innerText = component.id
   checkGroup.appendChild(label)
 
+  label.innerHTML += `<span data-uuid="${component.uuid}" class="ms-2 badge text-bg-success copy-success" style="display:none;">Copied</span>`
+  label.innerHTML += `<span data-uuid="${component.uuid}" class="ms-2 badge text-bg-danger copy-fail" style="display:none;">Error</span>`
+
   // Check if the given definition already exists on the destination
   const defRequest = await exUtilities.makeRequest({
     method: 'GET',
@@ -1917,33 +1920,48 @@ export async function copyDefinitionModalPerformCopy () {
   }
 
   // Cycle the destinations and copy the files
+  const error = false
   for (const destComp of destComponents) {
     const destUrl = destComp.getHelperURL()
     if (destUrl == null) continue
 
-    await exUtilities.makeRequest({
-      method: 'POST',
-      url: destUrl,
-      endpoint: '/files/retrieve',
-      params: {
-        file_url: sourceComponent.getHelperURL() + exConfig.api + '/definitions/' + definitionUUID + '.json',
-        path_list: ['definitions', definitionUUID + '.json']
-      }
-    })
-
-    for (const file of filesToCopy) {
+    try {
       await exUtilities.makeRequest({
         method: 'POST',
         url: destUrl,
         endpoint: '/files/retrieve',
         params: {
-          file_url: sourceComponent.getHelperURL() + '/content/' + file.name,
-          path_list: ['content', file.name]
+          file_url: sourceComponent.getHelperURL() + exConfig.api + '/definitions/' + definitionUUID + '.json',
+          path_list: ['definitions', definitionUUID + '.json']
         }
       })
+
+      for (const file of filesToCopy) {
+        await exUtilities.makeRequest({
+          method: 'POST',
+          url: destUrl,
+          endpoint: '/files/retrieve',
+          params: {
+            file_url: sourceComponent.getHelperURL() + '/content/' + file.name,
+            path_list: ['content', file.name]
+          }
+        })
+      }
+      const successBadge = Array.from(checkedElements).map(node => node.parentElement.querySelector(`span.copy-success[data-uuid="${destComp.uuid}"]`)).find(el => el !== null)
+      successBadge.style.display = 'inline'
+    } catch (e) {
+      // This might happen if the component loses connection
+      error = true
+      const failBadge = Array.from(checkedElements).map(node => node.parentElement.querySelector(`span.copy-fail[data-uuid="${destComp.uuid}"]`)).find(el => el !== null)
+      failBadge.style.display = 'inline'
     }
   }
-  exUtilities.hideModal(modal)
+  if (error === false) {
+    hubTools.hideModal(modal)
+  } else {
+    const button = document.getElementById('copyDefinitionModalSubmitButton')
+    button.style.display = 'none'
+  }
 }
 
 function handleDefinitionItemSelection (uuid) {

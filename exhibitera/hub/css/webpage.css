@@ -74,6 +74,10 @@ tr, td, th {
     height: 35vh;
     overflow-y: scroll;
 }
+#copyDefinitionModalDestinations {
+    height: 93%;
+    overflow-y: auto;
+}
 #editUserGroupsRow {
     max-height: 20vh;
     overflow-y: scroll;
