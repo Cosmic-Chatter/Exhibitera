@@ -90,7 +90,7 @@ async def get_definition_content_list(this_uuid: str):
             and definition[field]["background"]["mode"] == "image"):
         content.append(definition[field]["background"]["image"])
 
-    if "font" in definition.get("field", {}):
+    if "font" in definition.get(field, {}):
         for item in definition[field]["font"]:
             file = definition[field]["font"][item]
             # Check if this file in the content directory vs an Exhibitera source directory like _fonts/
