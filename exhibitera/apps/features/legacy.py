@@ -36,12 +36,12 @@ def migrate_definition_thumbnails():
 
 
 # Added in Ex6
-def fix_appearance_to_style():
-    """Correct an issue from pre-Ex6 in which Word Cloud definitions use 'appearance'
-    rather than 'style' as the key for visual options.
-    """
-
-    def_path = ex_files.get_path(["definitions"], user_file=True)
-    for file in os.listdir(def_path):
-        file_path = ex_files.get_path(["definitions", file], user_file=True)
+# def fix_appearance_to_style():
+#     """Correct an issue from pre-Ex6 in which Word Cloud definitions use 'appearance'
+#     rather than 'style' as the key for visual options.
+#     """
+#
+#     def_path = ex_files.get_path(["definitions"], user_file=True)
+#     for file in os.listdir(def_path):
+#         file_path = ex_files.get_path(["definitions", file], user_file=True)
 

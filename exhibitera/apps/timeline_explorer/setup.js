@@ -300,51 +300,57 @@ function editDefinition (uuid = '') {
   $('#definitionSaveButton').data('initialDefinition', structuredClone(def))
   $('#definitionSaveButton').data('workingDefinition', structuredClone(def))
 
-  $('#definitionNameInput').val(def.name)
+  document.getElementById('definitionNameInput').value = def.name
 
   // Spreadsheet
-  $('#spreadsheetSelect').html(def.spreadsheet)
-  document.getElementById('spreadsheetSelect').setAttribute('data-filename', def.spreadsheet)
+  const spreadsheetSelect = document.getElementById('spreadsheetSelect')
+  spreadsheetSelect.innerText = def.spreadsheet
+  spreadsheetSelect.dataset.filename = def.spreadsheet
 
   // Attractor
-  $('#attractorSelect').html(def.attractor)
-  document.getElementById('attractorSelect').setAttribute('data-filename', def.attractor)
-  if ('inactivity_timeout' in def) {
-    document.getElementById('inactivityTimeoutField').value = def.inactivity_timeout
-  } else {
-    document.getElementById('inactivityTimeoutField').value = 30
-  }
+  const attractorSelect = document.getElementById('attractorSelect')
+  attractorSelect.innerText = def.attractor
+  attractorSelect.dataset.filename = def.attractor
+  document.getElementById('inactivityTimeoutField').value = def?.inactivity_timeout ?? 30
 
   // Set the appropriate values for the color pickers
-  Object.keys(def.style.color).forEach((key) => {
-    $('#colorPicker_' + key).val(def.style.color[key])
-    document.querySelector('#colorPicker_' + key).dispatchEvent(new Event('input', { bubbles: true }))
-  })
+  for (const key of Object.keys(def?.style?.color ?? {})) {
+    const el = document.getElementById('colorPicker_' + key)
+    if (el == null) continue
+    el.value = def.style.color[key]
+    el.dispatchEvent(new Event('input', { bubbles: true }))
+  }
 
   // Set the appropriate values for any advanced color pickers
   if ('background' in def.style) {
     exSetup.updateAdvancedColorPicker('style>background', def.style.background)
+  } else {
+    def.style.background = {
+      mode: 'color',
+      color: '#719abf'
+    }
+    exSetup.updateWorkingDefinition(['style', 'background', 'mode'], 'color')
+    exSetup.updateWorkingDefinition(['style', 'background', 'color'], '#719abf')
   }
 
   // Set the appropriate values for the advanced font pickers
-  if ('font' in def.style) {
-    Object.keys(def.style.font).forEach((key) => {
-      const picker = document.querySelector(`.AFP-select[data-path="style>font>${key}"`)
-      exSetup.setAdvancedFontPicker(picker, def.style.font[key])
-    })
+  for (const key of Object.keys(def?.style?.font ?? {})) {
+    const picker = document.querySelector(`.AFP-select[data-path="style>font>${key}"`)
+    if (picker != null) exSetup.setAdvancedFontPicker(picker, def.style.font[key])
   }
 
-  // Set the appropriate values for the text size selects
-  Object.keys(def.style?.text_size ?? {}).forEach((key) => {
-    document.getElementById(key + 'TextSizeSlider').value = def.style.text_size[key]
-  })
+  // Set the appropriate values for the text size sliders
+  for (const key of Object.keys(def?.style?.text_size ?? {})) {
+    const el = document.getElementById(key + 'TextSizeSlider')
+    if (el != null) el.value = def.style.text_size[key]
+  }
 
   // Set up any existing languages and tabs
   // In Ex5.3, we added the language_order field. If it doesn't exist
   // set it up now
-  if ((def?.language_order || []).length === 0) {
+  if ((def?.language_order ?? []).length === 0) {
     def.language_order = []
-    for (const code of Object.keys(def.languages)) {
+    for (const code of Object.keys(def.languages ?? {})) {
       const lang = def.languages[code]
       if (lang.default === true) {
         def.language_order.unshift(code)

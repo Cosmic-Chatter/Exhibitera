@@ -65,21 +65,22 @@ function editDefinition (uuid = '') {
   $('#definitionSaveButton').data('initialDefinition', structuredClone(def))
   $('#definitionSaveButton').data('workingDefinition', structuredClone(def))
 
-  $('#definitionNameInput').val(def.name)
+  document.getElementById('definitionNameInput').value = def.name
   document.getElementById('filePatternInput').value = def.files
   retrieveMatchingFilesCount()
 
   // Set the appropriate values for the behavior fields
-  Object.keys(def.behavior).forEach((key) => {
-    document.getElementById('behaviorInput_' + key).value = def.behavior[key]
-  })
+  for (const key of Object.keys(def.behavior ?? {})) {
+    const el = document.getElementById('behaviorInput_' + key)
+    if (el != null) el.value = def.behavior[key]
+  }
 
   // Set the appropriate values for the attractor fields
   Object.keys(def.attractor).forEach((key) => {
     let el
     if (['use_attractor', 'use_finger_animation'].includes(key)) {
       el = document.getElementById('attractorCheck_' + key)
-      el.checked = def.attractor[key]
+      if (el != null) el.checked = def.attractor[key]
 
       // If this is the Show Attractor checkbox, set the approprate state for the rest of the options
       if (key === 'use_attractor') {
@@ -91,15 +92,22 @@ function editDefinition (uuid = '') {
       }
     } else if (key === 'font') {
       const picker = document.querySelector('.AFP-select[data-path="attractor>font"')
-      exSetup.setAdvancedFontPicker(picker, def.attractor.font)
+      if (picker != null) exSetup.setAdvancedFontPicker(picker, def.attractor.font)
     } else {
       el = document.getElementById('attractorInput_' + key)
-      el.value = def.attractor[key]
+      if (el != null) el.value = def.attractor[key]
     }
 
     // Set the appropriate values for any advanced color pickers
     if ('background' in def.style) {
       exSetup.updateAdvancedColorPicker('style>background', def.style.background)
+    } else {
+      def.style.background = {
+        mode: 'color',
+        color: '#22222E'
+      }
+      exSetup.updateWorkingDefinition(['style', 'background', 'mode'], 'color')
+      exSetup.updateWorkingDefinition(['style', 'background', 'color'], '#22222E')
     }
 
     if (['attractor_background', 'text_color'].includes(key)) {

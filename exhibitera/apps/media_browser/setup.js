@@ -348,68 +348,41 @@ function editDefinition (uuid = '') {
   document.getElementById('inactivityTimeoutField').value = def?.inactivity_timeout || 30
 
   // Page looping
-  if (('behavior' in def) && 'loop_results' in def.behavior) {
-    document.getElementById('loopResultsCheckbox').checked = def.behavior.loop_results
-  }
+  document.getElementById('loopResultsCheckbox').checked = def?.behavior?.loop_results ?? true
 
   // Set the layout options
-  if ('items_per_page' in def.style.layout) {
-    document.getElementById('itemsPerPageInput').value = def.style.layout.items_per_page
-  } else {
-    document.getElementById('itemsPerPageInput').value = 12
-  }
-  if ('num_columns' in def.style.layout) {
-    document.getElementById('numColsSelect').value = def.style.layout.num_columns
-  } else {
-    document.getElementById('numColsSelect').value = 6
-  }
-  if ('image_height' in def.style.layout) {
-    document.getElementById('imageHeightSlider').value = def.style.layout.image_height
-  } else {
-    document.getElementById('imageHeightSlider').value = 70
-  }
-  if ('title_height' in def.style.layout) {
-    document.getElementById('titleHeightSlider').value = def.style.layout.title_height
-  } else {
-    document.getElementById('titleHeightSlider').value = 50
-  }
-  if ('corner_radius' in def.style.layout) {
-    document.getElementById('cornerRadiusSlider').value = def.style.layout.corner_radius
-  } else {
-    document.getElementById('cornerRadiusSlider').value = 0
-  }
-  if ('thumbnail_shape' in def.style.layout) {
-    document.getElementById('imageShapeSelect').value = def.style.layout.thumbnail_shape
-  } else {
-    document.getElementById('imageShapeSelect').value = 'original'
-  }
+  document.getElementById('itemsPerPageInput').value = def?.style?.layout?.items_per_page ?? 12
+  document.getElementById('numColsSelect').value = def?.style?.layout?.num_columns ?? 6
+  document.getElementById('imageHeightSlider').value = def?.style?.layout?.image_height ?? 70
+  document.getElementById('titleHeightSlider').value = def?.style?.layout?.title_height ?? 50
+  document.getElementById('cornerRadiusSlider').value = def?.style?.layout?.corner_radius ?? 0
+  document.getElementById('imageShapeSelect').value = def?.style?.layout?.thumbnail_shape ?? 'original'
+
   document.getElementById('lightboxTitleHeightSlider').value = def.style.layout.lightbox_title_height
   document.getElementById('lightboxCaptionHeightSlider').value = def.style.layout.lightbox_caption_height
   document.getElementById('lightboxCreditHeightSlider').value = def.style.layout.lightbox_credit_height
 
-  if ('background' in def.style === false) {
+  if ('background' in def.style) {
+    exSetup.updateAdvancedColorPicker('style>background', def.style.background)
+  } else {
     def.style.background = {
       mode: 'color',
-      color: '#000'
+      color: '#fff'
     }
     exSetup.updateWorkingDefinition(['style', 'background', 'mode'], 'color')
     exSetup.updateWorkingDefinition(['style', 'background', 'color'], '#fff')
   }
 
-  // Set the appropriate values for any advanced color pickers
-  if ('background' in def.style) {
-    exSetup.updateAdvancedColorPicker('style>background', def.style.background)
-  }
-
   // Set the appropriate values for the color pickers
-  Object.keys(def.style.color).forEach((key) => {
+  for (const key of Object.keys(def?.style?.color ?? {})) {
     const el = document.getElementById('colorPicker_' + key)
+    if (el == null) continue
     el.value = def.style.color[key]
     el.dispatchEvent(new Event('input', { bubbles: true }))
-  })
+  }
 
   // Set the appropriate values for the advanced font pickers
-  if ('font' in def.style) {
+  if (def?.style?.font) {
     Object.keys(def.style.font).forEach((key) => {
       const picker = document.querySelector(`.AFP-select[data-path="style>font>${key}"`)
       exSetup.setAdvancedFontPicker(picker, def.style.font[key])
@@ -417,16 +390,17 @@ function editDefinition (uuid = '') {
   }
 
   // Set the appropriate values for the text size selects
-  Object.keys(def.style.text_size).forEach((key) => {
-    document.getElementById(key + 'TextSizeSlider').value = def.style.text_size[key]
-  })
+  for (const key of Object.keys(def?.style?.text_size ?? {})) {
+    const el = document.getElementById(key + 'TextSizeSlider')
+    if (el != null) el.value = def.style.text_size[key]
+  }
 
   // Set up any existing languages and tabs
   // In Ex5.3, we added the language_order field. If it doesn't exist
   // set it up now
   if ((def?.language_order ?? []).length === 0) {
     def.language_order = []
-    for (const code of Object.keys(def.languages)) {
+    for (const code of Object.keys(def?.languages ?? {})) {
       const lang = def.languages[code]
       if (lang.default === true) {
         def.language_order.unshift(code)
