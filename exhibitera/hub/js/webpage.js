@@ -422,6 +422,7 @@ async function editExhibitActionConfigureValueSelector (action = null, target = 
 
   if (action == null) action = document.getElementById('editExhibitActionSelector').value
   if (target == null) target = JSON.parse(document.getElementById('editExhibitActionTargetSelector').value)
+  if (Array.isArray(target)) target = target[0]
 
   const valueSelector = document.getElementById('editExhibitActionValueSelector')
   const valueSelectorLabel = document.getElementById('editExhibitActionValueSelectorLabel')
@@ -430,7 +431,7 @@ async function editExhibitActionConfigureValueSelector (action = null, target = 
   if (action === 'set_dmx_scene') {
     let component
     try {
-      component = exExhibit.getExhibitComponent(target[0].uuid)
+      component = exExhibit.getExhibitComponent(target.uuid)
     } catch {
       return
     }

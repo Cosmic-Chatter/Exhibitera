@@ -91,53 +91,56 @@ async def get_definition_content_list(this_uuid: str):
     if definition is None:
         return {"success": False, "reason": f"The definition {this_uuid} does not exist."}
 
+    app = definition.get("app")
+    if app is None:
+        return {"success": False, "reason": f"Missing required 'app' key."}
+
     content = []
 
     # First pull out any shared style elements
     field = "style"
-    if definition["app"].startswith('word_cloud'):
+    if app.startswith('word_cloud'):
         field = "appearance"
 
-    if (definition[field]["background"].get("image", "") != ""
-            and definition[field]["background"]["mode"] == "image"):
+    if (definition.get(field, {}).get("background", {}).get("image", "") != ""
+            and definition.get(field, {}).get("background", {}).get("mode") == "image"):
         content.append(definition[field]["background"]["image"])
 
-    if "font" in definition[field]:
-        for item in definition[field]["font"]:
-            file = definition[field]["font"][item]
-            # Check if this file in the content directory vs an Exhibitera source directory like _fonts/
-            if os.path.basename(os.path.dirname(file)) == 'content':
-                content.append(os.path.basename(file))
+    for item in definition.get(field, {}).get("font", {}):
+        file = definition[field]["font"][item]
+        # Check if this file in the content directory vs an Exhibitera source directory like _fonts/
+        if os.path.basename(os.path.dirname(file)) == 'content':
+            content.append(os.path.basename(file))
 
     # Then add app-specific content fields
-    if definition["app"] == "image_compare":
+    if app == "image_compare":
         for item_uuid in definition["content"]:
             item = definition["content"][item_uuid]
             content.append(item["image1"])
             content.append(item["image2"])
-    elif definition["app"] == 'media_player':
-        if "watermark" in definition and definition["watermark"].get('file', '') != '':
+    elif app == 'media_player':
+        if definition.get("watermark", {}).get('file', '') != '':
             content.append(definition["watermark"]["file"])
-        for item_uuid in definition["content"]:
+        for item_uuid in definition.get("content", {}):
             item = definition["content"][item_uuid]
             if item["filename"] not in content:
                 content.append(item["filename"])
-            if "subtitles" in item and item["subtitles"].get("filename", "") != '':
+            if item.get("subtitles", {}).get("filename", "") != '':
                 content.append(item["subtitles"]["filename"])
-    elif definition["app"] == "timelapse_viewer":
-        if "attractor" in definition and "font" in definition["attractor"]:
+    elif app == "timelapse_viewer":
+        if "font" in definition.get("attractor", {}):
             if os.path.basename(os.path.dirname(definition["attractor"]["font"])) == 'content':
                 content.append(os.path.basename(definition["attractor"]["font"]))
         content += glob.glob(definition["files"], root_dir=ex_files.get_path(["content"], user_file=True))
-    elif definition["app"] == "voting_kiosk":
-        for item_uuid in definition["options"]:
+    elif app == "voting_kiosk":
+        for item_uuid in definition.get("options", {}):
             item = definition["options"][item_uuid]
             if item.get("icon_user_file", "") != "":
                 if item["icon_user_file"] not in content:
                     content.append(item["icon_user_file"])
-    elif definition["app"] == "word_cloud_input":
+    elif app == "word_cloud_input":
         pass
-    elif definition["app"] == "word_cloud_viewer":
+    elif app == "word_cloud_viewer":
         pass
     else:
         return {"success": False, "reason": f"This endpoint is not yet implemented for {definition['app']}"}

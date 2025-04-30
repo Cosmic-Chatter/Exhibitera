@@ -72,57 +72,47 @@ function editDefinition (uuid = '') {
   $('#definitionNameInput').val(def.name)
   rebuildItemList()
 
-  if ('style' in def === false) {
-    def.style = {
-      background: {
-        mode: 'color',
-        color: '#000'
-      }
+  // Set the appropriate values for any advanced color pickers
+  if ('background' in def.style) {
+    exSetup.updateAdvancedColorPicker('style>background', def.style.background)
+  } else {
+    def.style.background = {
+      mode: 'color',
+      color: '#000'
     }
     exSetup.updateWorkingDefinition(['style', 'background', 'mode'], 'color')
     exSetup.updateWorkingDefinition(['style', 'background', 'color'], '#000')
   }
 
-  // Set the appropriate values for any advanced color pickers
-  if ('background' in def.style) {
-    exSetup.updateAdvancedColorPicker('style>background', def.style.background)
-  }
-
   // Set the appropriate values for the watermark
-  if ('watermark' in def && 'file' in def.watermark && def.watermark.file !== '') {
+  if ((def?.watermark?.file ?? '') !== '') {
     const watermarkSelect = document.getElementById('watermarkSelect')
     watermarkSelect.innerHTML = def.watermark.file
     watermarkSelect.setAttribute('data-filename', def.watermark.file)
   }
-  if ('watermark' in def && 'x_position' in def.watermark) {
-    document.getElementById('watermarkXPos').value = def.watermark.x_position
-  }
-  if ('watermark' in def && 'y_position' in def.watermark) {
-    document.getElementById('watermarkYPos').value = def.watermark.y_position
-  }
-  if ('watermark' in def && 'size' in def.watermark) {
-    document.getElementById('watermarkSize').value = def.watermark.size
-  }
+  document.getElementById('watermarkXPos').value = def?.watermark?.x_position ?? '80'
+  document.getElementById('watermarkYPos').value = def?.watermark?.y_position ?? '80'
+  document.getElementById('watermarkSize').value = def?.watermark?.size ?? '10'
 
   // Set the appropriate values for the color pickers
-  Object.keys(def.style.color).forEach((key) => {
+  for (const key of Object.keys(def?.style?.color ?? {})) {
     const el = document.getElementById('colorPicker_' + key)
+    if (el == null) continue
     el.value = def.style.color[key]
     el.dispatchEvent(new Event('input', { bubbles: true }))
-  })
-
-  // Set the appropriate values for the advanced font pickers
-  if ('font' in def.style) {
-    Object.keys(def.style.font).forEach((key) => {
-      const picker = document.querySelector(`.AFP-select[data-path="style>font>${key}"`)
-      exSetup.setAdvancedFontPicker(picker, def.style.font[key])
-    })
   }
 
-  // Set the appropriate values for the text size selects
-  Object.keys(def.style.text_size).forEach((key) => {
-    document.getElementById(key + 'TextSizeSlider').value = def.style.text_size[key]
-  })
+  // Set the appropriate values for the advanced font pickers
+  for (const key of Object.keys(def?.style?.font ?? {})) {
+    const picker = document.querySelector(`.AFP-select[data-path="style>font>${key}"`)
+    if (picker != null) exSetup.setAdvancedFontPicker(picker, def.style.font[key])
+  }
+
+  // Set the appropriate values for the text size sliders
+  for (const key of Object.keys(def?.style?.text_size ?? {})) {
+    const el = document.getElementById(key + 'TextSizeSlider')
+    if (el != null) el.value = def.style.text_size[key]
+  }
 
   // Configure the preview frame
   document.getElementById('previewFrame').src = 'index.html?standalone=true&definition=' + def.uuid
