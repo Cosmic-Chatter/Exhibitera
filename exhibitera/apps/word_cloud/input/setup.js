@@ -169,33 +169,36 @@ function editDefinition (uuid = '') {
     if (property in def.content.localization) el.value = def.content.localization[property]
   })
 
-  // Set the appropriate values for the attractor fields
-
   // Set the appropriate values for the color pickers
-  if ('color' in def.appearance) {
-    Object.keys(def.appearance.color).forEach((key) => {
-      $('#colorPicker_' + key).val(def.appearance.color[key])
-      document.querySelector('#colorPicker_' + key).dispatchEvent(new Event('input', { bubbles: true }))
-    })
+  for (const key of Object.keys(def?.appearance?.color ?? {})) {
+    const el = document.getElementById('colorPicker_' + key)
+    if (el == null) continue
+    el.value = def.appearance.color[key]
+    el.dispatchEvent(new Event('input', { bubbles: true }))
   }
 
   // Set the appropriate values for any advanced color pickers
   if ('background' in def.appearance) {
     exSetup.updateAdvancedColorPicker('appearance>background', def.appearance.background)
+  } else {
+    def.appearance.background = {
+      mode: 'color',
+      color: '#fff'
+    }
+    exSetup.updateWorkingDefinition(['appearance', 'background', 'mode'], 'color')
+    exSetup.updateWorkingDefinition(['appearance', 'background', 'color'], '#fff')
   }
 
   // Set the appropriate values for the advanced font pickers
-  if ('font' in def.appearance) {
-    Object.keys(def.appearance.font).forEach((key) => {
-      const picker = document.querySelector(`.AFP-select[data-path="appearance>font>${key}"`)
-      exSetup.setAdvancedFontPicker(picker, def.appearance.font[key])
-    })
+  for (const key of Object.keys(def?.appearance?.font ?? {})) {
+    const picker = document.querySelector(`.AFP-select[data-path="appearance>font>${key}"`)
+    if (picker != null) exSetup.setAdvancedFontPicker(picker, def.appearance.font[key])
   }
 
-  if ('text_size' in def.appearance) {
-    if ('prompt' in def.appearance.text_size) {
-      document.getElementById('promptTextSizeSlider').value = def.appearance.text_size.prompt
-    }
+  // Set the appropriate values for the text size sliders
+  for (const key of Object.keys(def?.appearance?.text_size ?? {})) {
+    const el = document.getElementById(key + 'TextSizeSlider')
+    if (el != null) el.value = def.appearance.text_size[key]
   }
 
   // Configure the preview frame

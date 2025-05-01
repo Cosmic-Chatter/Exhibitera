@@ -193,7 +193,7 @@ function loadDefinition (definition) {
   // Configure the attractor
   inactivityTimeout = definition?.inactivity_timeout * 1000 || 30000
 
-  if ((definition?.attractor || '') !== '') {
+  if ((definition?.attractor ?? '') !== '') {
     if (exFiles.guessMimetype(definition.attractor) === 'video') {
       attractorType = 'video'
 
@@ -221,7 +221,7 @@ function loadDefinition (definition) {
   }
 
   exCommon.createLanguageSwitcher(definition, localize)
-  currentLang = definition?.language_order[0] || null
+  currentLang = definition?.language_order[0] ?? null
   document.getElementById('homeButton').style.display = 'block'
 
   // Configure the number of columns
@@ -271,12 +271,12 @@ function loadDefinition (definition) {
   root.style.setProperty('--infoBodyColor', 'white')
 
   // Then, apply the definition settings
-  Object.keys(definition.style.color).forEach((key) => {
+  for (const key of Object.keys(definition?.style?.color ?? {})) {
     document.documentElement.style.setProperty('--' + key, definition.style.color[key])
-  })
+  }
 
   // Backgorund settings
-  if ('background' in definition.style) {
+  if (definition?.style?.background) {
     exCommon.setBackground(definition.style.background, root, '#fff', true)
   }
 
@@ -310,11 +310,11 @@ function loadDefinition (definition) {
   root.style.setProperty('--info_pane_body-font', 'Info_pane_body-default')
 
   // Then, apply the definition settings
-  Object.keys(definition.style.font).forEach((key) => {
+  for (const key of Object.keys(definition?.style?.font ?? {})) {
     const font = new FontFace(key, 'url(' + encodeURI(definition.style.font[key]) + ')')
     document.fonts.add(font)
     root.style.setProperty('--' + key + '-font', key)
-  })
+  }
 
   // Text size settings
   // First, reset to defaults (in case a style option doesn't exist in the definition)
@@ -326,10 +326,10 @@ function loadDefinition (definition) {
   root.style.setProperty('--info_pane_body-font-adjust', 0)
 
   // Then, apply the definition settings
-  Object.keys(definition.style.text_size).forEach((key) => {
+  for (const key of Object.keys(definition?.style?.text_size ?? {})) {
     const value = definition.style.text_size[key]
     root.style.setProperty('--' + key + '-font-adjust', value)
-  })
+  }
 
   localize(currentLang)
 

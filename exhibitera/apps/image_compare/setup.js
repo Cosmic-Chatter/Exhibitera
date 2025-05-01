@@ -296,7 +296,7 @@ function editDefinition (uuid = '') {
 
   // Attractor
   const attractorSelect = document.getElementById('attractorSelect')
-  if ('attractor' in def && def.attractor.trim() !== '') {
+  if (def.attractor && def.attractor.trim() !== '') {
     attractorSelect.innerHTML = def.attractor
   } else {
     attractorSelect.innerHTML = 'Select file'
@@ -326,26 +326,28 @@ function editDefinition (uuid = '') {
   // Set the appropriate values for the color pickers
   for (const key of Object.keys(def.style.color)) {
     const el = document.getElementById('colorPicker_' + key)
+    if (el == null) continue
     el.value = def.style.color[key]
     el.dispatchEvent(new Event('input', { bubbles: true }))
   }
 
   // Set the appropriate values for any advanced color pickers
-  if ('background' in def.style) {
+  if (def?.style?.background) {
     exSetup.updateAdvancedColorPicker('style>background', def.style.background)
   }
 
   // Set the appropriate values for the advanced font pickers
-  if ('font' in def.style) {
+  if (def?.style?.font) {
     for (const key of Object.keys(def.style.font)) {
       const picker = document.querySelector(`.AFP-select[data-path="style>font>${key}"`)
-      exSetup.setAdvancedFontPicker(picker, def.style.font[key])
+      if (picker != null) exSetup.setAdvancedFontPicker(picker, def.style.font[key])
     }
   }
 
   // Set the appropriate values for the text size selects
   for (const key of Object.keys(def.style.text_size)) {
-    document.getElementById(key + 'TextSizeSlider').value = def.style.text_size?.[key] ?? 0
+    const el = document.getElementById(key + 'TextSizeSlider')
+    if (el != null) el.value = def.style.text_size?.[key] ?? 0
   }
 
   // Configure the preview frame

@@ -91,12 +91,15 @@ function editDefinition (uuid = '') {
 
   // Layout fields
   const buttonSizeSlider = document.getElementById('buttonSizeSlider')
-  buttonSizeSlider.value = def?.style?.layout?.button_size || buttonSizeSlider.getAttribute('start')
+  buttonSizeSlider.value = def?.style?.layout?.button_size ?? buttonSizeSlider.getAttribute('start')
 
   const headerSizeSlider = document.getElementById('headerSizeSlider')
-  headerSizeSlider.value = def?.style?.layout?.header_height || headerSizeSlider.getAttribute('start')
+  headerSizeSlider.value = def?.style?.layout?.header_height ?? headerSizeSlider.getAttribute('start')
 
-  if ('background' in def.style === false) {
+  // Set the appropriate values for any advanced color pickers
+  if ('background' in def.style) {
+    exSetup.updateAdvancedColorPicker('style>background', def.style.background)
+  } else {
     def.style.background = {
       mode: 'color',
       color: '#719abf'
@@ -105,37 +108,32 @@ function editDefinition (uuid = '') {
     exSetup.updateWorkingDefinition(['style', 'background', 'color'], '#719abf')
   }
 
-  // Set the appropriate values for any advanced color pickers
-  if ('background' in def.style) {
-    exSetup.updateAdvancedColorPicker('style>background', def.style.background)
+  // Set the appropriate values for the color pickers
+  for (const key of Object.keys(def?.style?.color ?? {})) {
+    const el = document.getElementById('colorPicker_' + key)
+    if (el == null) continue
+    el.value = def.style.color[key]
+    el.dispatchEvent(new Event('input', { bubbles: true }))
   }
 
-  // Set the appropriate values for the color pickers
-  Object.keys(def.style.color).forEach((key) => {
-    $('#colorPicker_' + key).val(def.style.color[key])
-    document.querySelector('#colorPicker_' + key).dispatchEvent(new Event('input', { bubbles: true }))
-  })
-
   // Set the appropriate values for the advanced font pickers
-  if ('font' in def.style) {
-    Object.keys(def.style.font).forEach((key) => {
-      const picker = document.querySelector(`.AFP-select[data-path="style>font>${key}"`)
-      exSetup.setAdvancedFontPicker(picker, def.style.font[key])
-    })
+  for (const key of Object.keys(def?.style?.font ?? {})) {
+    const picker = document.querySelector(`.AFP-select[data-path="style>font>${key}"`)
+    if (picker != null) exSetup.setAdvancedFontPicker(picker, def.style.font[key])
   }
 
   // Set the appropriate values for the text size sliders
-  Object.keys(def.style.text_size).forEach((key) => {
-    console.log(key + 'TextSizeSlider')
-    document.getElementById(key + 'TextSizeSlider').value = def.style.text_size[key]
-  })
+  for (const key of Object.keys(def?.style?.text_size ?? {})) {
+    const el = document.getElementById(key + 'TextSizeSlider')
+    if (el != null) el.value = def.style.text_size[key]
+  }
 
   // Set up any existing languages and tabs
   // In Ex5.3, we added the language_order field. If it doesn't exist
   // set it up now
-  if ((def?.language_order || []).length === 0) {
+  if ((def?.language_order ?? []).length === 0) {
     def.language_order = []
-    for (const code of Object.keys(def.languages)) {
+    for (const code of Object.keys(def?.languages ?? {})) {
       const lang = def.languages[code]
       if (lang.default === true) {
         def.language_order.unshift(code)

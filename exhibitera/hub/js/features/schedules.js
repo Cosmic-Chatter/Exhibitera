@@ -86,11 +86,15 @@ export function populateSchedule (schedule) {
       scheduleName = day.dayName.toLowerCase()
     }
 
+    const dayCol = document.createElement('div')
+    dayCol.classList = 'col-12 col-sm-6 col-xl-4'
+
     const dayContainer = document.createElement('div')
-    dayContainer.classList = `col-12 col-sm-6 col-xl-4 pb-3 border ${scheduleClass}`
+    dayContainer.classList = `h-100 px-2 border border-secondary rounded d-flex flex-column ${scheduleClass}`
+    dayCol.appendChild(dayContainer)
 
     const row = document.createElement('div')
-    row.classList = 'row'
+    row.classList = 'row px-2'
     dayContainer.appendChild(row)
 
     const dayNameCol = document.createElement('div')
@@ -139,11 +143,11 @@ export function populateSchedule (schedule) {
 
     if (allowEdit) {
       const editButtonCol = document.createElement('div')
-      editButtonCol.classList = 'col-12 col-md-6 mt-2'
+      editButtonCol.classList = 'col-12 col-lg-6 mt-2 px-1'
       row.appendChild(editButtonCol)
 
       const editButton = document.createElement('button')
-      editButton.classList = 'btn btn-primary w-100'
+      editButton.classList = 'btn btn-primary btn-sm w-100'
       editButton.setAttribute('type', 'button')
       editButton.innerHTML = addItemText
       editButton.addEventListener('click', function () {
@@ -152,12 +156,12 @@ export function populateSchedule (schedule) {
       editButtonCol.appendChild(editButton)
 
       const convertButtonCol = document.createElement('div')
-      convertButtonCol.classList = 'col-12 col-md-6 mt-2'
+      convertButtonCol.classList = 'col-12 col-lg-6 mt-2 px-1'
       convertButtonCol.style.display = convertState
       row.appendChild(convertButtonCol)
 
       const convertButton = document.createElement('button')
-      convertButton.classList = 'btn btn-warning w-100'
+      convertButton.classList = 'btn btn-warning btn-sm w-100'
       convertButton.setAttribute('type', 'button')
       convertButton.innerHTML = 'Convert to date-specific'
       convertButton.addEventListener('click', function () {
@@ -166,12 +170,12 @@ export function populateSchedule (schedule) {
       convertButtonCol.appendChild(convertButton)
 
       const deleteButtonCol = document.createElement('div')
-      deleteButtonCol.classList = 'col-12 col-md-6 mt-2'
+      deleteButtonCol.classList = 'col-12 col-lg-6 mt-2 px-1'
       deleteButtonCol.style.display = deleteState
       row.appendChild(deleteButtonCol)
 
       const deleteButton = document.createElement('button')
-      deleteButton.classList = 'btn btn-danger w-100'
+      deleteButton.classList = 'btn btn-danger btn-sm w-100'
       deleteButton.setAttribute('type', 'button')
       deleteButton.innerHTML = 'Delete date-specific'
       deleteButton.setAttribute('data-bs-toggle', 'popover')
@@ -185,13 +189,29 @@ export function populateSchedule (schedule) {
       $(deleteButton).popover()
     }
 
-    $('#scheduleContainer').append(dayContainer)
+    const divider = document.createElement('div')
+    divider.classList = 'mt-2 border-top'
+
+    row.appendChild(divider)
+
+    document.getElementById('scheduleContainer').appendChild(dayCol)
 
     // Loop through the schedule elements and add a row for each
     const scheduleIDs = Object.keys(day.schedule)
 
-    for (const scheduleID of scheduleIDs) {
-      dayContainer.appendChild(createScheduleEntryHTML(day.schedule[scheduleID], scheduleID, scheduleName, day.source))
+    if (scheduleIDs.length === 0) {
+      const noneContainer = document.createElement('div')
+      noneContainer.classList = 'flex-grow-1 d-flex align-items-center justify-content-center fst-italic py-3'
+      noneContainer.innerHTML = 'No scheduled actions'
+      dayContainer.appendChild(noneContainer)
+    } else {
+      const entriesDiv = document.createElement('div')
+      entriesDiv.classList = 'pb-2'
+      dayContainer.appendChild(entriesDiv)
+
+      for (const scheduleID of scheduleIDs) {
+        entriesDiv.appendChild(createScheduleEntryHTML(day.schedule[scheduleID], scheduleID, scheduleName, day.source))
+      }
     }
     // Sort the elements by time
     const events = $(dayContainer).children('.eventListing')
