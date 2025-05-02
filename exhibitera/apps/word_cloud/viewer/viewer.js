@@ -38,7 +38,7 @@ function countText (text) {
 
   const result = {}
 
-  text.split(' ').forEach((item) => {
+  for (const item of text.split(' ')) {
     if (item !== '') {
       // Make sure we have a singular form
       const word = pluralize.singular(item)
@@ -50,7 +50,7 @@ function countText (text) {
         }
       }
     }
-  })
+  }
 
   return result
 }
@@ -63,17 +63,18 @@ function createWordList (textDict) {
   // Take a dictionary of the form {"word": num_occurances} and convert it
   // into the nested list required by the wordcloud
 
+  const textKeys = Object.keys(textDict)
   let maxValue = 0
-  Object.keys(textDict).forEach((item) => {
+  for (const item of textKeys) {
     if (textDict[item] > maxValue) {
       maxValue = textDict[item]
     }
-  })
+  }
   // Then, format the list, scaling each value to the range [3, 9]
   const wordList = []
-  Object.keys(textDict).forEach((item) => {
+  for (const item of textKeys) {
     wordList.push([item, 6 * textDict[item] / maxValue + 3])
-  })
+  }
   return (wordList)
 }
 
@@ -87,9 +88,9 @@ function getTextUpdateFromServer () {
     if (exCommon.config.serverAddress === '') {
       let wordDict = {}
       if (textCase === 'uppercase') {
-        Object.keys(animalDict).forEach((key) => {
+        for (const key of Object.keys(animalDict)) {
           wordDict[key.toUpperCase()] = animalDict[key]
-        })
+        }
       } else {
         wordDict = structuredClone(animalDict)
       }
@@ -104,8 +105,8 @@ function getTextUpdateFromServer () {
         endpoint: '/data/Word_Cloud_' + collectionName + '/rawText'
       })
       .then((result) => {
-        if ('success' in result && result.success === true) {
-          if ('text' in result && result.text !== '') {
+        if (result?.success === true) {
+          if (result.text && result.text !== '') {
             WordCloudOptions.list = createWordList(countText(cleanText(result.text)))
           }
         }
@@ -131,7 +132,7 @@ function getTextUpdateFromServer () {
 function updateFunc (update) {
   // Read updates for word cloud-specific actions and act on them
 
-  if ('definition' in update && update.definition !== currentDefinition) {
+  if (update.definition && update.definition !== currentDefinition) {
     currentDefinition = update.definition
     exCommon.loadDefinition(currentDefinition)
       .then((result) => {
@@ -147,7 +148,7 @@ function loadDefinition (definition) {
   const promptText = document.getElementById('promptText')
   const wordCloudContainer = document.getElementById('wordCloudContainer')
 
-  if ('prompt' in definition.content) {
+  if (definition.content.prompt) {
     promptText.innerHTML = exMarkdown.formatText(definition.content.prompt, { removeParagraph: true, string: true })
     promptText.classList.replace('promptText-none', 'promptText-full')
     wordCloudContainer.classList.add('wordCloudContainer-small')
@@ -162,7 +163,7 @@ function loadDefinition (definition) {
   collectionName = definition?.behavior?.collection_name ?? 'default'
   excludedWordList = definition?.behavior?.excluded_words ?? []
 
-  if ('refresh_rate' in definition.behavior) {
+  if (definition.behavior.refresh_rate) {
     const newRate = parseFloat(definition.behavior.refresh_rate)
     if (newRate !== textUpdateRate) {
       textUpdateRate = newRate
@@ -176,11 +177,11 @@ function loadDefinition (definition) {
     }
   }
 
-  if ('rotation' in definition.appearance) {
-    if (definition.appearance.rotation === 'horizontal') {
+  if (definition.style.rotation) {
+    if (definition.style.rotation === 'horizontal') {
       WordCloudOptions.minRotation = 0
       WordCloudOptions.maxRotation = 0
-    } else if (definition.appearance.rotation === 'right_angles') {
+    } else if (definition.style.rotation === 'right_angles') {
       WordCloudOptions.minRotation = 1.5708
       WordCloudOptions.maxRotation = 1.5708
       WordCloudOptions.rotationSteps = 2
@@ -196,8 +197,8 @@ function loadDefinition (definition) {
     WordCloudOptions.maxRotation = 0
   }
 
-  WordCloudOptions.shape = definition?.appearance?.cloud_shape ?? 'circle'
-  textCase = definition?.appearance?.text_case ?? 'lowercase'
+  WordCloudOptions.shape = definition?.style?.cloud_shape ?? 'circle'
+  textCase = definition?.style?.text_case ?? 'lowercase'
 
   const root = document.querySelector(':root')
 
@@ -205,23 +206,14 @@ function loadDefinition (definition) {
   // First, reset to defaults (in case a style option doesn't exist in the definition)
   root.style.setProperty('--background-color', '#ffffff')
   WordCloudOptions.backgroundColor = '#ffffff'
-  root.style.setProperty('--prompt-color', '#000')
 
   // Then, apply the definition settings
-  if ('color' in definition.appearance) {
-    if ('prompt' in definition.appearance.color) {
-      root.style.setProperty('--prompt-color', definition.appearance.color.prompt)
-    }
-    if ('words' in definition.appearance.color) {
-      WordCloudOptions.color = definition.appearance.color.words
-    } else {
-      WordCloudOptions.color = 'random-dark'
-    }
-  }
+  root.style.setProperty('--prompt-color', definition?.style?.color?.prompt ?? '#000')
+  WordCloudOptions.color = definition?.style?.color?.words ?? 'random-dark'
 
   // Backgorund settings
-  if ('background' in definition.appearance) {
-    exCommon.setBackground(definition.appearance.background, root, '#fff', true)
+  if ('background' in definition.style) {
+    exCommon.setBackground(definition.style.background, root, '#fff', true)
     WordCloudOptions.backgroundColor = 'transparent'
   }
 
@@ -231,25 +223,19 @@ function loadDefinition (definition) {
   WordCloudOptions.fontFamily = 'words-default'
 
   // Then, apply the definition settings
-  if ('font' in definition.appearance) {
-    if ('prompt' in definition.appearance.font) {
-      console.log(definition.appearance.font.prompt)
-      const font = new FontFace('prompt', 'url(' + encodeURI(definition.appearance.font.prompt) + ')')
+  if ('font' in definition.style) {
+    if (definition.style?.font?.prompt) {
+      const font = new FontFace('prompt', 'url(' + encodeURI(definition.style.font.prompt) + ')')
       document.fonts.add(font)
       root.style.setProperty('--prompt-font', 'prompt')
     }
-    if ('words' in definition.appearance.font) {
-      const font = new FontFace('words', 'url(' + encodeURI(definition.appearance.font.words) + ')')
+    if (definition.style?.font?.words) {
+      const font = new FontFace('words', 'url(' + encodeURI(definition.style.font.words) + ')')
       document.fonts.add(font)
       WordCloudOptions.fontFamily = 'words'
     }
   }
-
-  if ('text_size' in definition.appearance && 'prompt' in definition.appearance.text_size) {
-    root.style.setProperty('--prompt-font-adjust', definition.appearance.text_size.prompt)
-  } else {
-    root.style.setProperty('--prompt-font-adjust', 0)
-  }
+  root.style.setProperty('--prompt-font-adjust', definition?.style?.text_size?.prompt ?? 0)
 
   getTextUpdateFromServer()
 

@@ -127,8 +127,6 @@ async def get_definition_content_list(this_uuid: str):
                 content.append(item["filename"])
             if item.get("subtitles", {}).get("filename", "") != '':
                 content.append(item["subtitles"]["filename"])
-    elif app == "timelapse_viewer":
-        if "font" in definition.get("attractor", {}):
             if "annotations" in item and isinstance(item["annotations"], dict):
                 for anno_uuid in item["annotations"]:
                     # Iterate any annotations and copy any needed json files and font files
@@ -137,8 +135,8 @@ async def get_definition_content_list(this_uuid: str):
                         content.append(anno["file"])
                     if os.path.basename(os.path.dirname(anno["font"])) == 'content':
                         content.append(os.path.basename(anno["font"]))
-    elif definition["app"] == "timelapse_viewer":
-        if "attractor" in definition and "font" in definition["attractor"]:
+    elif app == "timelapse_viewer":
+        if "font" in definition.get("attractor", {}):
             if os.path.basename(os.path.dirname(definition["attractor"]["font"])) == 'content':
                 content.append(os.path.basename(definition["attractor"]["font"]))
         content += glob.glob(definition["files"], root_dir=ex_files.get_path(["content"], user_file=True))

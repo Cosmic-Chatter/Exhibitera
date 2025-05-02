@@ -229,7 +229,7 @@ def load_json(path: str) -> dict[str, Any] | list | None:
         try:
             with open(path, 'r', encoding='UTF-8') as f:
                 result = json.load(f)
-        except (OSError, IOError) as e:
+        except (OSError, IOError, UnicodeDecodeError) as e:
             logging.error(f"load_json: Failed to read file {path}: {e}")
             result = None
         except json.decoder.JSONDecodeError as e:

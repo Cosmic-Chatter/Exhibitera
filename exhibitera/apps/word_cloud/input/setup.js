@@ -126,7 +126,7 @@ async function clearDefinitionInput (full = true) {
     el.val(el.data('default'))
     document.querySelector('#colorPicker_' + input).dispatchEvent(new Event('input', { bubbles: true }))
   })
-  exSetup.updateAdvancedColorPicker('appearance>background', {
+  exSetup.updateAdvancedColorPicker('style>background', {
     mode: 'color',
     color: '#fff',
     gradient_color_1: '#fff',
@@ -170,35 +170,35 @@ function editDefinition (uuid = '') {
   })
 
   // Set the appropriate values for the color pickers
-  for (const key of Object.keys(def?.appearance?.color ?? {})) {
+  for (const key of Object.keys(def?.style?.color ?? {})) {
     const el = document.getElementById('colorPicker_' + key)
     if (el == null) continue
-    el.value = def.appearance.color[key]
+    el.value = def.style.color[key]
     el.dispatchEvent(new Event('input', { bubbles: true }))
   }
 
   // Set the appropriate values for any advanced color pickers
-  if ('background' in def.appearance) {
-    exSetup.updateAdvancedColorPicker('appearance>background', def.appearance.background)
+  if ('background' in def.style) {
+    exSetup.updateAdvancedColorPicker('style>background', def.style.background)
   } else {
-    def.appearance.background = {
+    def.style.background = {
       mode: 'color',
       color: '#fff'
     }
-    exSetup.updateWorkingDefinition(['appearance', 'background', 'mode'], 'color')
-    exSetup.updateWorkingDefinition(['appearance', 'background', 'color'], '#fff')
+    exSetup.updateWorkingDefinition(['style', 'background', 'mode'], 'color')
+    exSetup.updateWorkingDefinition(['style', 'background', 'color'], '#fff')
   }
 
   // Set the appropriate values for the advanced font pickers
-  for (const key of Object.keys(def?.appearance?.font ?? {})) {
-    const picker = document.querySelector(`.AFP-select[data-path="appearance>font>${key}"`)
-    if (picker != null) exSetup.setAdvancedFontPicker(picker, def.appearance.font[key])
+  for (const key of Object.keys(def?.style?.font ?? {})) {
+    const picker = document.querySelector(`.AFP-select[data-path="style>font>${key}"`)
+    if (picker != null) exSetup.setAdvancedFontPicker(picker, def.style.font[key])
   }
 
   // Set the appropriate values for the text size sliders
-  for (const key of Object.keys(def?.appearance?.text_size ?? {})) {
+  for (const key of Object.keys(def?.style?.text_size ?? {})) {
     const el = document.getElementById(key + 'TextSizeSlider')
-    if (el != null) el.value = def.appearance.text_size[key]
+    if (el != null) el.value = def.style.text_size[key]
   }
 
   // Configure the preview frame
@@ -288,7 +288,7 @@ document.getElementById('manageFontsButton').addEventListener('click', (event) =
 // Color
 $('.coloris').change(function () {
   const value = $(this).val().trim()
-  exSetup.updateWorkingDefinition(['appearance', 'color', $(this).data('property')], value)
+  exSetup.updateWorkingDefinition(['style', 'color', $(this).data('property')], value)
   exSetup.previewDefinition(true)
 })
 
@@ -296,7 +296,7 @@ $('.coloris').change(function () {
 Array.from(document.querySelectorAll('.realtime-slider')).forEach((el) => {
   el.addEventListener('input', (event) => {
     const property = event.target.getAttribute('data-property')
-    exSetup.updateWorkingDefinition(['appearance', 'text_size', property], event.target.value)
+    exSetup.updateWorkingDefinition(['style', 'text_size', property], event.target.value)
     exSetup.previewDefinition(true)
   })
 })
@@ -314,7 +314,7 @@ exSetup.configure({
   initializeWizard,
   loadDefinition: editDefinition,
   blankDefinition: {
-    appearance: {
+    style: {
       background: {
         mode: 'color',
         color: '#fff'

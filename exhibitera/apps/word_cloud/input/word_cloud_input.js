@@ -65,7 +65,6 @@ function getCleanText () {
   $(profanityCheckingDiv).html(input).profanityFilter({ customSwears: swearList, replaceWith: '#' })
   $(profanityCheckingDiv).html($(profanityCheckingDiv).html().replace(/#/g, ''))
 
-  console.log(profanityCheckingDiv.innerHTML.trim())
   return profanityCheckingDiv.innerHTML.trim()
 }
 
@@ -81,7 +80,7 @@ function sendTextToServer () {
         params: { text }
       })
       .then((result) => {
-        if ('success' in result && result.success === true) {
+        if (result?.success === true) {
           clear()
         }
       })
@@ -92,7 +91,7 @@ function sendTextToServer () {
       params: { text }
     })
       .then((result) => {
-        if ('success' in result && result.success === true) {
+        if (result?.success === true) {
           clear()
         }
       })
@@ -103,7 +102,7 @@ function updateFunc (update) {
   // Read updates for word cloud-specific actions and act on them
 
   // This should be last to make sure the path has been updated
-  if ('definition' in update && update.definition !== currentDefintion) {
+  if (update?.definition !== currentDefintion) {
     currentDefintion = update.definition
     exCommon.loadDefinition(currentDefintion)
       .then((result) => {
@@ -121,11 +120,9 @@ function loadDefinition (definition) {
   maxCharacterCount = definition?.behavior?.max_character_count ?? -1
   let showKeyboard = true
 
-  if ('enable_keyboard_input' in definition.behavior) {
-    if (definition.behavior.enable_keyboard_input) {
-      AddKeyboardListeners(maxCharacterCount)
-      showKeyboard = false
-    }
+  if (definition?.behavior?.enable_keyboard_input === true) {
+    AddKeyboardListeners(maxCharacterCount)
+    showKeyboard = false
   }
   if (showKeyboard || exCommon.config.hideKeyboard) {
     // Enable keyboard
@@ -148,22 +145,22 @@ function loadDefinition (definition) {
     })
 
     // Localization options
-    if ('placeholder' in definition.content.localization && definition.content.localization.placeholder.trim() !== '') {
+    if (definition?.content?.localization?.placeholder && definition.content.localization.placeholder.trim() !== '') {
       document.getElementById('inputField').placeholder = definition.content.localization.placeholder
     } else {
       document.getElementById('inputField').placeholder = 'Type to enter response'
     }
-    if ('clear' in definition.content.localization && definition.content.localization.clear.trim() !== '') {
+    if (definition?.content?.localization?.clear && definition.content.localization.clear.trim() !== '') {
       document.getElementById('clearButton').innerHTML = definition.content.localization.clear
     } else {
       document.getElementById('clearButton').innerHTML = 'Clear'
     }
-    if ('submit' in definition.content.localization && definition.content.localization.submit.trim() !== '') {
+    if (definition?.content?.localization?.submit && definition.content.localization.submit.trim() !== '') {
       document.getElementById('submitButton').innerHTML = definition.content.localization.submit
     } else {
       document.getElementById('submitButton').innerHTML = 'Submit'
     }
-    if ('backspace' in definition.content.localization && definition.content.localization.backspace.trim() !== '') {
+    if (definition?.content?.localization?.backspace && definition.content.localization.backspace.trim() !== '') {
       document.querySelector('.hg-button-bksp').querySelector('span').innerHTML = definition.content.localization.backspace
     } else {
       document.querySelector('.hg-button-bksp').querySelector('span').innerHTML = 'backspace'
@@ -186,16 +183,14 @@ function loadDefinition (definition) {
   root.style.setProperty('--keyboard-background-color', '#ececec')
 
   // Then, apply the definition settings
-  if ('color' in definition.appearance) {
-    Object.keys(definition.appearance.color).forEach((key) => {
-      const value = definition.appearance.color[key]
-      root.style.setProperty('--' + key + '-color', value)
-    })
+  for (const key of Object.keys(definition?.style?.color ?? {})) {
+    const value = definition.style.color[key]
+    root.style.setProperty('--' + key + '-color', value)
   }
 
   // Background settings
-  if ('background' in definition.appearance) {
-    exCommon.setBackground(definition.appearance.background, root, '#fff', true)
+  if (definition?.style?.background) {
+    exCommon.setBackground(definition.style.background, root, '#fff', true)
   }
 
   // Font settings
@@ -206,12 +201,11 @@ function loadDefinition (definition) {
   root.style.setProperty('--clear-font', 'clear-default')
 
   // Then, apply the definition settings
-  if ('font' in definition.appearance) {
-    Object.keys(definition.appearance.font).forEach((key) => {
-      const font = new FontFace(key, 'url(' + encodeURI(definition.appearance.font[key]) + ')')
-      document.fonts.add(font)
-      root.style.setProperty('--' + key + '-font', key)
-    })
+
+  for (const key of Object.keys(definition?.style?.font ?? {})) {
+    const font = new FontFace(key, 'url(' + encodeURI(definition.style.font[key]) + ')')
+    document.fonts.add(font)
+    root.style.setProperty('--' + key + '-font', key)
   }
 
   // Text size settings
@@ -220,11 +214,9 @@ function loadDefinition (definition) {
   root.style.setProperty('--prompt-font-adjust', 0)
 
   // Then, apply the definition settings
-  if ('text_size' in definition.appearance) {
-    Object.keys(definition.appearance.text_size).forEach((key) => {
-      const value = definition.appearance.text_size[key]
-      root.style.setProperty('--' + key + '-font-adjust', value)
-    })
+  for (const key of Object.keys(definition?.style?.text_size ?? {})) {
+    const value = definition.style.text_size[key]
+    root.style.setProperty('--' + key + '-font-adjust', value)
   }
   // Send a thumbnail to the helper
   setTimeout(() => exCommon.saveScreenshotAsThumbnail(definition.uuid + '.png'), 100)
