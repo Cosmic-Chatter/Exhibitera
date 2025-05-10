@@ -13,14 +13,7 @@ const markdownConverter = new showdown.Converter({ parseImgDimensions: true })
 async function initializeWizard () {
   // Set up the wizard
 
-  exSetup.initializeDefinition()
-
-  // Hide all but the welcome screen
-  for (const el of document.querySelectorAll('.wizard-pane')) {
-    el.style.display = 'none'
-  }
-  document.getElementById('wizardPane_Welcome').style.display = 'block'
-
+  exSetup.prepareWizard()
   resetWizardFields()
 }
 

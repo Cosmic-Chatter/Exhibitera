@@ -281,6 +281,18 @@ export function getDefinitionByUUID (uuid = '') {
   return matchedDef
 }
 
+export function prepareWizard () {
+  // Perform some common setup actions to prepare the wizard
+
+  initializeDefinition()
+
+  // Hide all but the welcome screen
+  for (const el of document.querySelectorAll('.wizard-pane') ?? []) {
+    el.style.display = 'none'
+  }
+  document.getElementById('wizardPane_Welcome').style.display = 'block'
+}
+
 async function showSetupWizard () {
   // Show the modal for the setup wizard
 

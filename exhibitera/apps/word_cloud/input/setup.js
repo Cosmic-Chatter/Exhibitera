@@ -9,13 +9,7 @@ import * as exMarkdown from '../../js/exhibitera_setup_markdown.js'
 async function initializeWizard () {
   // Setup the wizard
 
-  exSetup.initializeDefinition()
-
-  // Hide all but the welcome screen
-  Array.from(document.querySelectorAll('.wizard-pane')).forEach((el) => {
-    el.style.display = 'none'
-  })
-  document.getElementById('wizardPane_Welcome').style.display = 'block'
+  exSetup.prepareWizard()
 
   // Reset fields
   document.getElementById('wizardDefinitionNameInput').value = ''

@@ -13,13 +13,7 @@ const wizardHeaders = {} // Holds the markdown-formatted header text in each lan
 async function initializeWizard () {
   // Setup the wizard
 
-  exSetup.initializeDefinition()
-
-  // Hide all but the welcome screen
-  for (const el of document.querySelectorAll('.wizard-pane')) {
-    el.style.display = 'none'
-  }
-  document.getElementById('wizardPane_Welcome').style.display = 'block'
+  exSetup.prepareWizard()
 
   // Reset fields
   document.getElementById('wizardDefinitionNameInput').value = ''

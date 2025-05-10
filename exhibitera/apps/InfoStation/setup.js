@@ -1,4 +1,4 @@
-/* global Coloris */
+/* global Coloris, bootstrap */
 
 import * as exUtilities from '../../common/utilities.js'
 import * as exCommon from '../js/exhibitera_app_common.js'
@@ -10,13 +10,7 @@ import * as exMarkdown from '../js/exhibitera_setup_markdown.js'
 async function initializeWizard () {
   // Set up the wizard
 
-  exSetup.initializeDefinition()
-
-  // Hide all but the welcome screen
-  Array.from(document.querySelectorAll('.wizard-pane')).forEach((el) => {
-    el.style.display = 'none'
-  })
-  document.getElementById('wizardPane_Welcome').style.display = 'block'
+  exSetup.prepareWizard()
 
   // Reset fields
   document.getElementById('wizardDefinitionNameInput').value = ''
@@ -76,18 +70,17 @@ function editDefinition (uuid = '') {
   $('#definitionSaveButton').data('initialDefinition', structuredClone(def))
   $('#definitionSaveButton').data('workingDefinition', structuredClone(def))
 
-  $('#definitionNameInput').val(def.name)
+  document.getElementById('definitionNameInput').value = def.name
 
   // Attractor
-  if ('attractor' in def && def.attractor.trim() !== '') {
-    document.getElementById('attractorSelect').innerHTML = def.attractor
+  const attractorSelect = document.getElementById('attractorSelect')
+  if (def.attractor && def.attractor.trim() !== '') {
+    attractorSelect.innerText = def.attractor
   } else {
-    document.getElementById('attractorSelect').innerHTML = 'Select file'
+    attractorSelect.innerText = 'Select file'
   }
-  document.getElementById('attractorSelect').setAttribute('data-filename', def.attractor)
-  if ('inactivity_timeout' in def) {
-    document.getElementById('inactivityTimeoutField').value = def.inactivity_timeout
-  }
+  attractorSelect.dataset.filename = def.attractor
+  document.getElementById('inactivityTimeoutField').value = def?.inactivity_timeout ?? 30
 
   // Layout fields
   const buttonSizeSlider = document.getElementById('buttonSizeSlider')
@@ -96,37 +89,15 @@ function editDefinition (uuid = '') {
   const headerSizeSlider = document.getElementById('headerSizeSlider')
   headerSizeSlider.value = def?.style?.layout?.header_height ?? headerSizeSlider.getAttribute('start')
 
-  // Set the appropriate values for any advanced color pickers
-  if ('background' in def.style) {
-    exSetup.updateAdvancedColorPicker('style>background', def.style.background)
-  } else {
-    def.style.background = {
+  exSetup.updateAdvancedColorPicker('style>background',
+    def?.style?.background,
+    {
       mode: 'color',
       color: '#719abf'
-    }
-    exSetup.updateWorkingDefinition(['style', 'background', 'mode'], 'color')
-    exSetup.updateWorkingDefinition(['style', 'background', 'color'], '#719abf')
-  }
-
-  // Set the appropriate values for the color pickers
-  for (const key of Object.keys(def?.style?.color ?? {})) {
-    const el = document.getElementById('colorPicker_' + key)
-    if (el == null) continue
-    el.value = def.style.color[key]
-    el.dispatchEvent(new Event('input', { bubbles: true }))
-  }
-
-  // Set the appropriate values for the advanced font pickers
-  for (const key of Object.keys(def?.style?.font ?? {})) {
-    const picker = document.querySelector(`.AFP-select[data-path="style>font>${key}"`)
-    if (picker != null) exSetup.setAdvancedFontPicker(picker, def.style.font[key])
-  }
-
-  // Set the appropriate values for the text size sliders
-  for (const key of Object.keys(def?.style?.text_size ?? {})) {
-    const el = document.getElementById(key + 'TextSizeSlider')
-    if (el != null) el.value = def.style.text_size[key]
-  }
+    })
+  exSetup.updateColorPickers(def?.style?.color ?? {})
+  exSetup.updateAdvancedFontPickers(def?.style?.font ?? {})
+  exSetup.updateTextSizeSliders(def?.style?.text_size ?? {})
 
   // Set up any existing languages and tabs
   // In Ex5.3, we added the language_order field. If it doesn't exist
@@ -154,8 +125,8 @@ function editDefinition (uuid = '') {
 function rebuildLanguageElements (langOrder) {
   // Called whenever we modify the languages to rebuild the GUI representation.
 
-  document.getElementById('languageNav').innerHTML = ''
-  document.getElementById('languageNavContent').innerHTML = ''
+  document.getElementById('languageNav').innerText = ''
+  document.getElementById('languageNavContent').innerText = ''
 
   let first = null
   for (const lang of langOrder) {
@@ -170,43 +141,6 @@ function rebuildLanguageElements (langOrder) {
     document.getElementById('languageTab_' + first).click()
     document.getElementById('languagePane_' + first).classList.add('active')
   }
-}
-
-function addLanguage (code, displayName, englishName) {
-  // Add a new supported language to the definition.
-
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
-
-  // Check if language already exists
-  let error = false
-  Object.keys(workingDefinition.languages).forEach((key) => {
-    if (key === code) {
-      $('#languageAddExistsWarning').show()
-      error = true
-    } else {
-      $('#languageAddExistsWarning').hide()
-    }
-  })
-  if (error) return
-
-  if ((workingDefinition?.language_order || []).length === 0) {
-    workingDefinition.language_order = [code]
-  } else {
-    workingDefinition.language_order.push(code)
-  }
-
-  workingDefinition.languages[code] = {
-    display_name: displayName,
-    english_name: englishName,
-    code,
-    tabs: {},
-    tab_order: []
-  }
-
-  createLanguageTab(code)
-
-  $('#definitionSaveButton').data('workingDefinition', structuredClone(workingDefinition))
-  exSetup.previewDefinition(true)
 }
 
 function createLanguageTab (code) {

@@ -1,5 +1,3 @@
-/* global textFit */
-
 import * as exFiles from '../../common/files.js'
 import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exMarkdown from '../js/exhibitera_app_markdown.js'
@@ -125,7 +123,7 @@ function localize (lang) {
   }
 
   // Create the tabs
-  (definition?.tab_order || []).forEach((uuid, i) => {
+  (definition?.tab_order ?? []).forEach((uuid, i) => {
     const tabDef = definition.tabs[uuid]
     const tabId = createTextTab(tabDef, i === 0)
     if (i === 0) {
@@ -136,7 +134,7 @@ function localize (lang) {
 
   // Hide tab row if we only have one tab
   const root = document.querySelector(':root')
-  if (definition.tab_order.length === 1) {
+  if (definition?.tab_order.length === 1) {
     root.style.setProperty('--button-rows', 0)
   } else {
     root.style.setProperty('--button-rows', 1)
@@ -214,15 +212,13 @@ function _createTextTabContent (tabId, content) {
   // Helper function that actually creates and formats the tab content.
 
   const col = document.getElementById(tabId + 'Content')
-
   const text = exMarkdown.formatText(content)
-
   const el = exMarkdown.formatMarkdownImages(text)
 
   // Group the elements by H1 elements. We will enclose each set in a box
   const boxes = []
   let curBox = []
-  Array.from(el.children).forEach(function (tag, i) {
+  for (const tag of el.children) {
     if (tag.tagName === 'H1') {
       if (curBox.length > 0) {
         boxes.push(curBox)
@@ -232,18 +228,18 @@ function _createTextTabContent (tabId, content) {
     } else {
       curBox.push(tag)
     }
-  })
+  }
   if (curBox.length > 0) {
     boxes.push(curBox)
   }
-  boxes.forEach(function (divList) {
+  for (const divList of boxes) {
     const box = document.createElement('div')
     box.setAttribute('class', 'box')
-    divList.forEach(function (div) {
+    for (const div of divList) {
       box.append(div)
-    })
+    }
     col.append(box)
-  })
+  }
 }
 
 function fontSizeDecrease () {
@@ -278,10 +274,10 @@ function gotoTab (id) {
   document.getElementById(id).classList.add('active')
 
   // Chance button color
-  document.querySelectorAll('.tabButton').forEach(el => {
+  for (const el of document.querySelectorAll('.tabButton')) {
     el.classList.remove('btn-primary')
     el.classList.add('btn-secondary')
-  })
+  }
   const activeBUtton = document.getElementById(id + 'Button')
   activeBUtton.classList.remove('btn-secondary')
   activeBUtton.classList.add('btn-primary')
@@ -307,7 +303,7 @@ function updateFunc (update) {
   // Function to read a message from the server and take action based
   // on the contents
 
-  if ('definition' in update && update.definition !== currentDefintion) {
+  if (update.definition && update.definition !== currentDefintion) {
     currentDefintion = update.definition
     exCommon.loadDefinition(currentDefintion)
       .then((result) => {
@@ -325,15 +321,20 @@ function resetActivityTimer () {
 }
 
 function setAttractor (filename, fileType) {
+  // Configure the attractor for later use
+
+  const attractorVideo = document.getElementById('attractorVideo')
+  const attractorImage = document.getElementById('attractorImage')
+
   attractorAvailable = true
   if (fileType === 'video') {
-    document.getElementById('attractorVideo').src = 'content/' + filename
-    document.getElementById('attractorImage').style.display = 'none'
-    document.getElementById('attractorVideo').style.display = 'block'
+    attractorVideo.src = 'content/' + filename
+    attractorImage.style.display = 'none'
+    attractorVideo.style.display = 'block'
   } else if (fileType === 'image') {
-    document.getElementById('attractorImage').src = 'content/' + filename
-    document.getElementById('attractorImage').style.display = 'block'
-    document.getElementById('attractorVideo').style.display = 'none'
+    attractorImage.src = 'content/' + filename
+    attractorImage.style.display = 'block'
+    attractorVideo.style.display = 'none'
   } else {
     attractorAvailable = false
   }
