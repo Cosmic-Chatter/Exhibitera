@@ -992,26 +992,6 @@ const inputFields = {
   }
 }
 
-// Set up the color pickers
-function setUpColorPickers () {
-  Coloris({
-    el: '.coloris',
-    theme: 'pill',
-    themeMode: 'dark',
-    formatToggle: false,
-    clearButton: false,
-    swatches: [
-      '#000',
-      '#22222E',
-      '#393A5A',
-      '#719abf',
-      '#fff'
-    ]
-  })
-}
-// Call with a slight delay to make sure the elements are loaded
-setTimeout(setUpColorPickers, 100)
-
 // Add event listeners
 // -------------------------------------------------------------
 
@@ -1165,13 +1145,6 @@ Array.from(document.querySelectorAll('.text-size-slider')).forEach((el) => {
     exSetup.previewDefinition(true)
   })
 })
-
-// Set color mode
-if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-  document.querySelector('html').setAttribute('data-bs-theme', 'dark')
-} else {
-  document.querySelector('html').setAttribute('data-bs-theme', 'light')
-}
 
 // Populate available languages
 exLang.createLanguagePicker(document.getElementById('language-picker'), { onLanguageRebuild: rebuildLanguageElements })

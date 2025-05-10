@@ -1,4 +1,4 @@
-/* global bootstrap, showdown */
+/* global bootstrap, Coloris, showdown */
 
 import * as exFiles from '../../common/files.js'
 import * as exUtilities from '../../common/utilities.js'
@@ -94,6 +94,13 @@ export const config = {
 export async function configure (options) {
   // Set up the common fields for the setup app.
 
+  // Set color mode ASAP to minimize any flash
+  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    document.querySelector('html').setAttribute('data-bs-theme', 'dark')
+  } else {
+    document.querySelector('html').setAttribute('data-bs-theme', 'light')
+  }
+
   const defaults = {
     app: null,
     blankDefinition: {},
@@ -137,6 +144,26 @@ export async function configure (options) {
     .then(() => {
       configureFromQueryString()
     })
+
+  // Set up the color pickers
+  function setUpColorPickers () {
+    Coloris({
+      el: '.coloris',
+      theme: 'pill',
+      themeMode: 'dark',
+      formatToggle: false,
+      clearButton: false,
+      swatches: [
+        '#000',
+        '#22222E',
+        '#393A5A',
+        '#719abf',
+        '#fff'
+      ]
+    })
+  }
+  // Call with a slight delay to make sure the elements are loaded
+  setTimeout(setUpColorPickers, 100)
 }
 
 function configureGUIForUser (user) {

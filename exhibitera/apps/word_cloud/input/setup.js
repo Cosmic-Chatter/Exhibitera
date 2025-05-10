@@ -173,29 +173,8 @@ function editDefinition (uuid = '') {
   exSetup.previewDefinition()
 }
 
-// Set up the color pickers
-function setUpColorPickers () {
-  Coloris({
-    el: '.coloris',
-    theme: 'pill',
-    themeMode: 'dark',
-    formatToggle: false,
-    clearButton: false,
-    swatches: [
-      '#000',
-      '#22222E',
-      '#393A5A',
-      '#719abf',
-      '#fff'
-    ]
-  })
-}
-
 // Set helperAddress for calls to exCommon.makeHelperRequest
 exCommon.config.helperAddress = window.location.origin
-
-// Call with a slight delay to make sure the elements are loaded
-setTimeout(setUpColorPickers, 100)
 
 // Add event listeners
 // -------------------------------------------------------------
@@ -267,13 +246,6 @@ Array.from(document.querySelectorAll('.realtime-slider')).forEach((el) => {
     exSetup.previewDefinition(true)
   })
 })
-
-// Set color mode
-if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-  document.querySelector('html').setAttribute('data-bs-theme', 'dark')
-} else {
-  document.querySelector('html').setAttribute('data-bs-theme', 'light')
-}
 
 exSetup.configure({
   app: 'word_cloud_input',

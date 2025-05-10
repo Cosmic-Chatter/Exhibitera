@@ -648,26 +648,6 @@ function setIconUserFile (file = '') {
 // Set helper address for use with exCommon.makeHelperRequest
 exCommon.config.helperAddress = window.location.origin
 
-// Set up the color pickers
-function setUpColorPickers () {
-  Coloris({
-    el: '.coloris',
-    theme: 'pill',
-    themeMode: 'dark',
-    formatToggle: false,
-    clearButton: false,
-    swatches: [
-      '#000',
-      '#22222E',
-      '#393A5A',
-      '#719abf',
-      '#fff'
-    ]
-  })
-}
-// Call with a slight delay to make sure the elements are loaded
-setTimeout(setUpColorPickers, 100)
-
 // Add event listeners
 // -------------------------------------------------------------
 
@@ -793,13 +773,6 @@ for (const el of document.querySelectorAll('.padding-slider')) {
     exSetup.updateWorkingDefinition(['style', 'layout', property], parseInt(event.target.value))
     exSetup.previewDefinition(true)
   })
-}
-
-// Set color mode
-if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-  document.querySelector('html').setAttribute('data-bs-theme', 'dark')
-} else {
-  document.querySelector('html').setAttribute('data-bs-theme', 'light')
 }
 
 exSetup.configure({
