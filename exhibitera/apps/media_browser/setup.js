@@ -344,7 +344,7 @@ function editDefinition (uuid = '') {
   } else {
     attractorSelect.innerHTML = 'Select file'
   }
-  attractorSelect.setAttribute('data-filename', def.attractor)
+  attractorSelect.dataset.filename = def.attractor
   document.getElementById('inactivityTimeoutField').value = def?.inactivity_timeout || 30
 
   // Page looping
@@ -362,38 +362,10 @@ function editDefinition (uuid = '') {
   document.getElementById('lightboxCaptionHeightSlider').value = def.style.layout.lightbox_caption_height
   document.getElementById('lightboxCreditHeightSlider').value = def.style.layout.lightbox_credit_height
 
-  if ('background' in def.style) {
-    exSetup.updateAdvancedColorPicker('style>background', def.style.background)
-  } else {
-    def.style.background = {
-      mode: 'color',
-      color: '#fff'
-    }
-    exSetup.updateWorkingDefinition(['style', 'background', 'mode'], 'color')
-    exSetup.updateWorkingDefinition(['style', 'background', 'color'], '#fff')
-  }
-
-  // Set the appropriate values for the color pickers
-  for (const key of Object.keys(def?.style?.color ?? {})) {
-    const el = document.getElementById('colorPicker_' + key)
-    if (el == null) continue
-    el.value = def.style.color[key]
-    el.dispatchEvent(new Event('input', { bubbles: true }))
-  }
-
-  // Set the appropriate values for the advanced font pickers
-  if (def?.style?.font) {
-    Object.keys(def.style.font).forEach((key) => {
-      const picker = document.querySelector(`.AFP-select[data-path="style>font>${key}"`)
-      exSetup.setAdvancedFontPicker(picker, def.style.font[key])
-    })
-  }
-
-  // Set the appropriate values for the text size selects
-  for (const key of Object.keys(def?.style?.text_size ?? {})) {
-    const el = document.getElementById(key + 'TextSizeSlider')
-    if (el != null) el.value = def.style.text_size[key]
-  }
+  exSetup.updateAdvancedColorPicker('style>background', def?.style?.background)
+  exSetup.updateColorPickers(def?.style?.color ?? {})
+  exSetup.updateAdvancedFontPickers(def?.style?.font ?? {})
+  exSetup.updateTextSizeSliders(def?.style?.text_size ?? {})
 
   // Set up any existing languages and tabs
   // In Ex5.3, we added the language_order field. If it doesn't exist

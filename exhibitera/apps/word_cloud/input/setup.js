@@ -169,37 +169,10 @@ function editDefinition (uuid = '') {
     if (property in def.content.localization) el.value = def.content.localization[property]
   })
 
-  // Set the appropriate values for the color pickers
-  for (const key of Object.keys(def?.style?.color ?? {})) {
-    const el = document.getElementById('colorPicker_' + key)
-    if (el == null) continue
-    el.value = def.style.color[key]
-    el.dispatchEvent(new Event('input', { bubbles: true }))
-  }
-
-  // Set the appropriate values for any advanced color pickers
-  if ('background' in def.style) {
-    exSetup.updateAdvancedColorPicker('style>background', def.style.background)
-  } else {
-    def.style.background = {
-      mode: 'color',
-      color: '#fff'
-    }
-    exSetup.updateWorkingDefinition(['style', 'background', 'mode'], 'color')
-    exSetup.updateWorkingDefinition(['style', 'background', 'color'], '#fff')
-  }
-
-  // Set the appropriate values for the advanced font pickers
-  for (const key of Object.keys(def?.style?.font ?? {})) {
-    const picker = document.querySelector(`.AFP-select[data-path="style>font>${key}"`)
-    if (picker != null) exSetup.setAdvancedFontPicker(picker, def.style.font[key])
-  }
-
-  // Set the appropriate values for the text size sliders
-  for (const key of Object.keys(def?.style?.text_size ?? {})) {
-    const el = document.getElementById(key + 'TextSizeSlider')
-    if (el != null) el.value = def.style.text_size[key]
-  }
+  exSetup.updateAdvancedColorPicker('style>background', def?.style?.background)
+  exSetup.updateColorPickers(def?.style?.color ?? {})
+  exSetup.updateAdvancedFontPickers(def?.style?.font ?? {})
+  exSetup.updateTextSizeSliders(def?.style?.text_size ?? {})
 
   // Configure the preview frame
   document.getElementById('previewFrame').src = 'index.html?standalone=true&definition=' + def.uuid

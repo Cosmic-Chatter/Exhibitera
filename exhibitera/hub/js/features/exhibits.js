@@ -1256,9 +1256,9 @@ function configureNewDefinitionOptions (obj) {
   for (const el of document.querySelectorAll('.defintion-new-option')) {
     const app = el.getAttribute('data-app')
     if (app === 'word_cloud_input') {
-      el.href = obj.getHelperURL() + '/word_cloud/setup_input.html'
+      el.href = obj.getHelperURL() + '/word_cloud/input/setup.html'
     } else if (app === 'word_cloud_viewer') {
-      el.href = obj.getHelperURL() + '/word_cloud/setup_viewer.html'
+      el.href = obj.getHelperURL() + '/word_cloud/viewer/setup.html'
     } else {
       el.href = obj.getHelperURL() + '/' + app + '/setup.html'
     }
@@ -1663,10 +1663,10 @@ async function populateComponentDefinitionList (definitions, permission) {
       let page = 'setup.html'
       if (app === 'word_cloud_input') {
         app = 'word_cloud'
-        page = 'setup_input.html'
+        page = 'input/setup.html'
       } else if (app === 'word_cloud_viewer') {
         app = 'word_cloud'
-        page = 'setup_viewer.html'
+        page = 'viewer/setup.html'
       }
 
       const editOption = document.createElement('a')
@@ -1920,7 +1920,7 @@ export async function copyDefinitionModalPerformCopy () {
   }
 
   // Cycle the destinations and copy the files
-  const error = false
+  let error = false
   for (const destComp of destComponents) {
     const destUrl = destComp.getHelperURL()
     if (destUrl == null) continue

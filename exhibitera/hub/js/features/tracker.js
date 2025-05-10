@@ -2,7 +2,6 @@
 
 import * as exUtilities from '../../../common/utilities.js'
 import * as exTools from '../tools.js'
-import * as exConfig from '../../config.js'
 
 export async function getAvailableTemplates () {
   // Ask Hub to send a list of availble definition files

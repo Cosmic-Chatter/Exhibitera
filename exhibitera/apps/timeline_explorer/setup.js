@@ -16,9 +16,9 @@ async function initializeWizard () {
   exSetup.initializeDefinition()
 
   // Hide all but the welcome screen
-  Array.from(document.querySelectorAll('.wizard-pane')).forEach((el) => {
+  for (const el of document.querySelectorAll('.wizard-pane')) {
     el.style.display = 'none'
-  })
+  }
   document.getElementById('wizardPane_Welcome').style.display = 'block'
 
   // Reset fields
@@ -96,7 +96,7 @@ async function wizardForward (currentPage) {
     }
   } else if (currentPage === 'MediaUpload') {
     // Check that each file listed in the spreadsheet has an uploaded copy.
-    const spreadsheet = document.getElementById('wizardUploadTemplateButton').getAttribute('data-spreadsheet')
+    const spreadsheet = document.getElementById('wizardUploadTemplateButton').dataset.spreadsheet
     let missing = []
     try {
       missing = await _checkContentExists(spreadsheet, ['Image'])
@@ -252,8 +252,8 @@ async function clearDefinitionInput (full = true) {
 
   // Spreadsheet
   const spreadsheetSelect = document.getElementById('spreadsheetSelect')
-  spreadsheetSelect.innerHTML = 'Select file'
-  spreadsheetSelect.setAttribute('data-filename', '')
+  spreadsheetSelect.innerText = 'Select file'
+  spreadsheetSelect.dataset.filename = ''
   $(spreadsheetSelect).data('availableKeys', [])
 
   // Language
@@ -313,37 +313,10 @@ function editDefinition (uuid = '') {
   attractorSelect.dataset.filename = def.attractor
   document.getElementById('inactivityTimeoutField').value = def?.inactivity_timeout ?? 30
 
-  // Set the appropriate values for the color pickers
-  for (const key of Object.keys(def?.style?.color ?? {})) {
-    const el = document.getElementById('colorPicker_' + key)
-    if (el == null) continue
-    el.value = def.style.color[key]
-    el.dispatchEvent(new Event('input', { bubbles: true }))
-  }
-
-  // Set the appropriate values for any advanced color pickers
-  if ('background' in def.style) {
-    exSetup.updateAdvancedColorPicker('style>background', def.style.background)
-  } else {
-    def.style.background = {
-      mode: 'color',
-      color: '#719abf'
-    }
-    exSetup.updateWorkingDefinition(['style', 'background', 'mode'], 'color')
-    exSetup.updateWorkingDefinition(['style', 'background', 'color'], '#719abf')
-  }
-
-  // Set the appropriate values for the advanced font pickers
-  for (const key of Object.keys(def?.style?.font ?? {})) {
-    const picker = document.querySelector(`.AFP-select[data-path="style>font>${key}"`)
-    if (picker != null) exSetup.setAdvancedFontPicker(picker, def.style.font[key])
-  }
-
-  // Set the appropriate values for the text size sliders
-  for (const key of Object.keys(def?.style?.text_size ?? {})) {
-    const el = document.getElementById(key + 'TextSizeSlider')
-    if (el != null) el.value = def.style.text_size[key]
-  }
+  exSetup.updateAdvancedColorPicker('style>background', def?.style?.background, { mode: 'color', color: '#719abf' })
+  exSetup.updateColorPickers(def?.style?.color ?? {})
+  exSetup.updateAdvancedFontPickers(def?.style?.font ?? {})
+  exSetup.updateTextSizeSliders(def?.style?.text_size ?? {})
 
   // Set up any existing languages and tabs
   // In Ex5.3, we added the language_order field. If it doesn't exist
@@ -361,27 +334,8 @@ function editDefinition (uuid = '') {
 
   const langSelect = document.getElementById('language-picker')
   exLang.createLanguagePicker(langSelect,
-    {
-      onLanguageRebuild: rebuildLanguageElements
-    }
+    { onLanguageRebuild: rebuildLanguageElements }
   )
-
-  // Build out the key input interface
-  // let first = null
-  // Object.keys(def.languages).forEach((lang) => {
-  //   const langDef = def.languages[lang]
-  //   if (first == null) {
-  //     createLanguageTab(lang, langDef.display_name)
-  //     first = lang
-  //   } else {
-  //     createLanguageTab(lang, langDef.display_name)
-  //   }
-  //   $('#languagePane_' + lang).removeClass('active').removeClass('show')
-
-  //   $('#headerText' + '_' + lang).val(langDef.header_text)
-  // })
-  // $('#languageTab_' + first).click()
-  // $('#languagePane_' + first).addClass('active')
 
   // Load the spreadsheet to populate the existing keys
   onSpreadsheetFileChange()
@@ -393,15 +347,13 @@ function editDefinition (uuid = '') {
 function rebuildLanguageElements (langOrder) {
   // Clear and rebuild GUI elements when the languages have been modified
 
-  document.getElementById('languageNav').innerHTML = ''
-  document.getElementById('languageNavContent').innerHTML = ''
+  document.getElementById('languageNav').innerText = ''
+  document.getElementById('languageNavContent').innerText = ''
 
   let first = null
   for (const lang of langOrder) {
     const tabButton = createLanguageTab(lang)
-    if (first == null) {
-      first = tabButton
-    }
+    if (first == null) first = tabButton
   }
   if (first) first.click()
 }
@@ -514,7 +466,7 @@ function createLanguageTab (code) {
   })
 
   // Switch to this new tab
-  $(tabButton).click()
+  tabButton.click()
   return tabButton
 }
 
@@ -576,11 +528,11 @@ async function checkContentExists () {
   missingContentField.innerHTML = ''
 
   // Loop through the defintion and collect any unique media keys
-  Object.keys(workingDefinition.languages).forEach((lang) => {
+  for (const lang of Object.keys(workingDefinition.languages)) {
     if (imageKeys.includes(workingDefinition.languages[lang].image_key) === false) {
       imageKeys.push(workingDefinition.languages[lang].image_key)
     }
-  })
+  }
 
   const missingContent = await _checkContentExists(workingDefinition.spreadsheet, imageKeys)
 
@@ -628,14 +580,14 @@ function _checkContentExists (spreadsheet, keys) {
           .then((raw) => {
             const spreadsheet = exFiles.csvToJSON(raw).json
             spreadsheet.forEach((row) => {
-              keys.forEach((key) => {
+              for (const key of keys) {
                 if ((key in row) === false) {
                   reject(new Error('bad_key: ' + key))
-                  return
+                  continue
                 }
-                if (row[key].trim() === '') return
+                if (row[key].trim() === '') continue
                 if (availableContent.includes(row[key]) === false) missingContent.push(row[key])
-              })
+              }
             })
             resolve(missingContent)
           })
@@ -649,29 +601,26 @@ function populateKeySelects (keyList) {
   const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
   if (('languages' in workingDefinition) === false) return
 
-  Object.keys(workingDefinition.languages).forEach((lang) => {
+  for (const lang of Object.keys(workingDefinition.languages)) {
     const langDict = workingDefinition.languages[lang]
-    Object.keys(inputFields).forEach((input) => {
+    for (const input of Object.keys(inputFields)) {
       const inputDict = inputFields[input]
       if (inputDict.kind === 'select') {
-        $('#' + input + '_' + lang).empty()
+        const thisInput = document.getElementById(input + '_' + lang)
+        thisInput.innerText = ''
 
-        keyList.forEach((key) => {
+        for (const key of keyList) {
           const option = document.createElement('option')
           option.value = key
           option.innerHTML = key
-          $('#' + input + '_' + lang).append(option)
-        })
+          thisInput.appendChild(option)
+        }
 
         // If we already have a value for this select, set it
-        if (inputDict.property in langDict) {
-          $('#' + input + '_' + lang).val(langDict[inputDict.property])
-        } else {
-          $('#' + input + '_' + lang).val(null)
-        }
+        thisInput.value = langDict?.[inputDict?.property]
       }
-    })
-  })
+    }
+  }
 }
 
 // Set helper address for use with exCommon.makeHelperRequest
@@ -773,12 +722,10 @@ document.getElementById('manageContentButton').addEventListener('click', (event)
   exFileSelect.createFileSelectionModal({ manage: true })
 })
 document.getElementById('showCheckContentButton').addEventListener('click', () => {
-  document.getElementById('missingContentWarningField').innerHTML = ''
-  $('#checkContentModal').modal('show')
+  document.getElementById('missingContentWarningField').innerText = ''
+  exUtilities.showModal('#checkContentModal')
 })
 document.getElementById('checkContentButton').addEventListener('click', checkContentExists)
-// document.getElementById('optimizeContentButton').addEventListener('click', showOptimizeContentModal)
-// document.getElementById('optimizeContentBeginButton').addEventListener('click', optimizeMediaFromModal)
 
 // Definition fields
 document.getElementById('spreadsheetSelect').addEventListener('click', (event) => {
@@ -796,16 +743,16 @@ document.getElementById('attractorSelect').addEventListener('click', (event) => 
   exFileSelect.createFileSelectionModal({ filetypes: ['image', 'video'], multiple: false })
     .then((files) => {
       if (files.length === 1) {
-        event.target.innerHTML = files[0]
-        event.target.setAttribute('data-filename', files[0])
+        event.target.innerText = files[0]
+        event.target.dataset.filename = files[0]
         onAttractorFileChange()
       }
     })
 })
 document.getElementById('attractorSelectClear').addEventListener('click', (event) => {
   const attractorSelect = document.getElementById('attractorSelect')
-  attractorSelect.innerHTML = 'Select file'
-  attractorSelect.setAttribute('data-filename', '')
+  attractorSelect.innerText = 'Select file'
+  attractorSelect.dataset.filename = ''
   onAttractorFileChange()
 })
 
@@ -815,11 +762,17 @@ document.getElementById('inactivityTimeoutField').addEventListener('change', (ev
 })
 
 // Style fields
-$('.coloris').change(function () {
-  const value = $(this).val().trim()
-  exSetup.updateWorkingDefinition(['style', 'color', $(this).data('property')], value)
-  exSetup.previewDefinition(true)
-})
+const colorInputs = document.querySelectorAll('.coloris')
+
+for (const input of colorInputs) {
+  input.addEventListener('change', function () {
+    const value = this.value.trim()
+    const property = this.dataset.property
+    exSetup.updateWorkingDefinition(['style', 'color', property], value)
+    exSetup.previewDefinition(true)
+  })
+}
+
 document.getElementById('manageFontsButton').addEventListener('click', (event) => {
   exFileSelect.createFileSelectionModal({ filetypes: ['otf', 'ttf', 'woff', 'woff2'], manage: true })
     .then(exSetup.refreshAdvancedFontPickers)

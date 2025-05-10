@@ -1,5 +1,6 @@
 /* global bootstrap, Coloris, showdown */
 
+import exConfig from '../../common/config.js'
 import * as exUtilities from '../../common/utilities.js'
 import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exFileSelect from '../js/exhibitera_file_select_modal.js'
@@ -252,7 +253,7 @@ async function clearDefinitionInput (full = true) {
   // Attractor
   document.getElementById('inactivityTimeoutField').value = 30
   const attractorSelect = document.getElementById('attractorSelect')
-  attractorSelect.innerHTML = 'Select file'
+  attractorSelect.innerText = 'Select file'
   attractorSelect.dataset.filename = ''
 
   // Language
@@ -302,7 +303,7 @@ function editDefinition (uuid = '') {
     attractorSelect.innerHTML = 'Select file'
   }
   attractorSelect.dataset.filename = def.attractor
-  document.getElementById('inactivityTimeoutField').value = def?.inactivity_timeout || 30
+  document.getElementById('inactivityTimeoutField').value = def?.inactivity_timeout ?? 30
 
   rebuildItemList()
   const langSelect = document.getElementById('language-select')
@@ -312,43 +313,15 @@ function editDefinition (uuid = '') {
     }
   )
 
-  if ('style' in def === false) {
-    def.style = {
-      background: {
-        mode: 'color',
-        color: '#000'
-      }
-    }
-    exSetup.updateWorkingDefinition(['style', 'background', 'mode'], 'color')
-    exSetup.updateWorkingDefinition(['style', 'background', 'color'], '#000')
-  }
-
-  // Set the appropriate values for the color pickers
-  for (const key of Object.keys(def.style.color)) {
-    const el = document.getElementById('colorPicker_' + key)
-    if (el == null) continue
-    el.value = def.style.color[key]
-    el.dispatchEvent(new Event('input', { bubbles: true }))
-  }
-
-  // Set the appropriate values for any advanced color pickers
-  if (def?.style?.background) {
-    exSetup.updateAdvancedColorPicker('style>background', def.style.background)
-  }
-
-  // Set the appropriate values for the advanced font pickers
-  if (def?.style?.font) {
-    for (const key of Object.keys(def.style.font)) {
-      const picker = document.querySelector(`.AFP-select[data-path="style>font>${key}"`)
-      if (picker != null) exSetup.setAdvancedFontPicker(picker, def.style.font[key])
-    }
-  }
-
-  // Set the appropriate values for the text size selects
-  for (const key of Object.keys(def.style.text_size)) {
-    const el = document.getElementById(key + 'TextSizeSlider')
-    if (el != null) el.value = def.style.text_size?.[key] ?? 0
-  }
+  exSetup.updateAdvancedColorPicker('style>background',
+    def?.style?.background,
+    {
+      mode: 'color',
+      color: '#000'
+    })
+  exSetup.updateColorPickers(def?.style?.color ?? {})
+  exSetup.updateAdvancedFontPickers(def?.style?.font ?? {})
+  exSetup.updateTextSizeSliders(def?.style?.text_size ?? {})
 
   // Configure the preview frame
   document.getElementById('previewFrame').src = 'index.html?standalone=true&definition=' + def.uuid
@@ -402,7 +375,7 @@ function createItemHTML (item, num, show = false, wizard = false) {
   tabButton.setAttribute('role', 'tab')
   // Convert possible Markdown-formatted name
   const temp = document.createElement('div')
-  temp.innerHTML = markdownConverter.makeHtml(item?.localization?.[def?.language_order?.[0] || null]?.name || String(num))
+  temp.innerHTML = markdownConverter.makeHtml(item?.localization?.[def?.language_order?.[0] ?? null]?.name || String(num))
   tabButton.innerHTML = temp.firstElementChild.innerHTML
 
   if (wizard === false) {

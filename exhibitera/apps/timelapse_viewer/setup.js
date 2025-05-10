@@ -11,9 +11,9 @@ async function initializeWizard () {
   exSetup.initializeDefinition()
 
   // Hide all but the welcome screen
-  Array.from(document.querySelectorAll('.wizard-pane')).forEach((el) => {
+  for (const el of document.querySelectorAll('.wizard-pane')) {
     el.style.display = 'none'
-  })
+  }
   document.getElementById('wizardPane_Welcome').style.display = 'block'
 
   // Reset fields
@@ -76,7 +76,7 @@ function editDefinition (uuid = '') {
   }
 
   // Set the appropriate values for the attractor fields
-  Object.keys(def.attractor).forEach((key) => {
+  for (const key of Object.keys(def.attractor)) {
     let el
     if (['use_attractor', 'use_finger_animation'].includes(key)) {
       el = document.getElementById('attractorCheck_' + key)
@@ -98,23 +98,13 @@ function editDefinition (uuid = '') {
       if (el != null) el.value = def.attractor[key]
     }
 
-    // Set the appropriate values for any advanced color pickers
-    if ('background' in def.style) {
-      exSetup.updateAdvancedColorPicker('style>background', def.style.background)
-    } else {
-      def.style.background = {
-        mode: 'color',
-        color: '#22222E'
-      }
-      exSetup.updateWorkingDefinition(['style', 'background', 'mode'], 'color')
-      exSetup.updateWorkingDefinition(['style', 'background', 'color'], '#22222E')
-    }
-
-    if (['attractor_background', 'text_color'].includes(key)) {
+    if (['text_color'].includes(key)) {
       // Send a special event to the color picker to trigger the change
       el.dispatchEvent(new Event('input', { bubbles: true }))
     }
-  })
+  }
+
+  exSetup.updateAdvancedColorPicker('style>background', def?.style?.background, { mode: 'color', color: '#22222E' })
 
   // Configure the preview frame
   document.getElementById('previewFrame').src = 'index.html?standalone=true&definition=' + def.uuid
@@ -123,14 +113,9 @@ function editDefinition (uuid = '') {
 
 function disableAttractorOptions (disable) {
   // Set the disabled property for the attractor options
-  if (disable) {
-    Array.from(document.getElementsByClassName('attractor-input')).forEach((match) => {
-      match.disabled = true
-    })
-  } else {
-    Array.from(document.getElementsByClassName('attractor-input')).forEach((match) => {
-      match.disabled = false
-    })
+
+  for (const match of document.getElementsByClassName('attractor-input')) {
+    match.disabled = disable
   }
 }
 

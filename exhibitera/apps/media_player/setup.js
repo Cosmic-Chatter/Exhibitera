@@ -1,5 +1,6 @@
 /* global bootstrap, Coloris */
 
+import exConfig from '../../common/config.js'
 import * as exFiles from '../../common/files.js'
 import * as exUtilities from '../../common/utilities.js'
 import * as exCommon from '../js/exhibitera_app_common.js'
@@ -69,20 +70,13 @@ function editDefinition (uuid = '') {
   $('#definitionSaveButton').data('initialDefinition', structuredClone(def))
   $('#definitionSaveButton').data('workingDefinition', structuredClone(def))
 
-  $('#definitionNameInput').val(def.name)
+  document.getElementById('definitionNameInput').value = def.name
   rebuildItemList()
 
-  // Set the appropriate values for any advanced color pickers
-  if ('background' in def.style) {
-    exSetup.updateAdvancedColorPicker('style>background', def.style.background)
-  } else {
-    def.style.background = {
-      mode: 'color',
-      color: '#000'
-    }
-    exSetup.updateWorkingDefinition(['style', 'background', 'mode'], 'color')
-    exSetup.updateWorkingDefinition(['style', 'background', 'color'], '#000')
-  }
+  exSetup.updateAdvancedColorPicker('style>background', def?.style?.background)
+  exSetup.updateColorPickers(def?.style?.color ?? {})
+  exSetup.updateAdvancedFontPickers(def?.style?.font ?? {})
+  exSetup.updateTextSizeSliders(def?.style?.text_size ?? {}, { mode: 'color', color: '#000' })
 
   // Set the appropriate values for the watermark
   if ((def?.watermark?.file ?? '') !== '') {
@@ -94,26 +88,6 @@ function editDefinition (uuid = '') {
   document.getElementById('watermarkYPos').value = def?.watermark?.y_position ?? '80'
   document.getElementById('watermarkSize').value = def?.watermark?.size ?? '10'
 
-  // Set the appropriate values for the color pickers
-  for (const key of Object.keys(def?.style?.color ?? {})) {
-    const el = document.getElementById('colorPicker_' + key)
-    if (el == null) continue
-    el.value = def.style.color[key]
-    el.dispatchEvent(new Event('input', { bubbles: true }))
-  }
-
-  // Set the appropriate values for the advanced font pickers
-  for (const key of Object.keys(def?.style?.font ?? {})) {
-    const picker = document.querySelector(`.AFP-select[data-path="style>font>${key}"`)
-    if (picker != null) exSetup.setAdvancedFontPicker(picker, def.style.font[key])
-  }
-
-  // Set the appropriate values for the text size sliders
-  for (const key of Object.keys(def?.style?.text_size ?? {})) {
-    const el = document.getElementById(key + 'TextSizeSlider')
-    if (el != null) el.value = def.style.text_size[key]
-  }
-
   // Configure the preview frame
   document.getElementById('previewFrame').src = 'index.html?standalone=true&definition=' + def.uuid
 }
@@ -123,7 +97,7 @@ function createThumbnail () {
 
   const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
   const files = []
-  workingDefinition.content_order.forEach((uuid) => {
+  for (const uuid of workingDefinition?.content_order ?? []) {
     if (exFiles.guessMimetype(workingDefinition.content[uuid].filename) === 'audio') {
       // Pass
     } else if (exFiles.guessMimetype(workingDefinition.content[uuid].filename) === 'model') {
@@ -131,7 +105,7 @@ function createThumbnail () {
     } else {
       files.push(workingDefinition.content[uuid].filename)
     }
-  })
+  }
 
   exCommon.makeHelperRequest({
     method: 'POST',
@@ -553,13 +527,13 @@ function showConfigureSubtitlesModal (itemUUID) {
   modal.setAttribute('data-uuid', itemUUID)
 
   // Add any existing subtitles
-  if (workingDefinition.content[itemUUID]?.subtitles?.filename != null) {
+  if (workingDefinition?.content?.[itemUUID]?.subtitles?.filename) {
     selectButton.innerHTML = workingDefinition.content[itemUUID].subtitles.filename
   } else {
     selectButton.innerHTML = 'Select subtitles file'
   }
 
-  $(modal).modal('show')
+  exUtilities.showModal(modal)
 }
 
 function selectSubtitlesFile () {
@@ -570,8 +544,8 @@ function selectSubtitlesFile () {
   exFileSelect.createFileSelectionModal({ multiple: false, filetypes: ['vtt'] })
     .then((files) => {
       if (files.length === 0) return
-      document.getElementById('configureSubtitlesModalSelectButton').innerHTML = files[0]
-      modal.setAttribute('data-filename', files[0])
+      document.getElementById('configureSubtitlesModalSelectButton').innerText = files[0]
+      modal.dataset.filehame = files[0]
     })
 }
 
@@ -579,12 +553,12 @@ function submitSubtitlesFromModal () {
   // Gather subtitle information and update the definition.
 
   const modal = document.getElementById('configureSubtitlesModal')
-  const itemUUID = modal.getAttribute('data-uuid')
-  const filename = modal.getAttribute('data-filename')
+  const itemUUID = modal.dataset.uuid
+  const filename = modal.dataset.filename
 
   exSetup.updateWorkingDefinition(['content', itemUUID, 'subtitles', 'filename'], filename)
   exSetup.previewDefinition(true)
-  $(modal).modal('hide')
+  exUtilities.hideModal(modal)
 }
 
 function showAnnotateFromJSONModal (itemUUID, annotationUUID = null) {
@@ -596,15 +570,15 @@ function showAnnotateFromJSONModal (itemUUID, annotationUUID = null) {
   const path = document.getElementById('annotateFromJSONModalPath')
   const title = document.getElementById('annotateFromJSONModalTitle')
   const button = document.getElementById('annotateFromJSONModalSubmitButton')
-  document.getElementById('annotateFromJSONModalTreeView').innerHTML = ''
+  document.getElementById('annotateFromJSONModalTreeView').innerText = ''
   path.setAttribute('data-itemUUID', itemUUID)
 
   if (annotationUUID != null) {
     // We are editing rather than creating new
 
     const details = workingDefinition.content[itemUUID].annotations[annotationUUID]
-    title.innerHTML = 'Update a JSON annotation'
-    button.innerHTML = 'Update'
+    title.innerText = 'Update a JSON annotation'
+    button.innerText = 'Update'
     path.value = details.path.join(' > ')
     if (details.type === 'url') {
       urlInput.value = details.file
@@ -621,7 +595,7 @@ function showAnnotateFromJSONModal (itemUUID, annotationUUID = null) {
     path.setAttribute('data-annotationUUID', '')
   }
 
-  $('#annotateFromJSONModal').modal('show')
+  exUtilities.showModal('#annotateFromJSONModal')
 }
 
 function populateAnnotateFromJSONModal (file, type = 'file') {
@@ -630,8 +604,8 @@ function populateAnnotateFromJSONModal (file, type = 'file') {
 
   // Store the file for later use.
   const el = document.getElementById('annotateFromJSONModalPath')
-  el.setAttribute('data-file', file)
-  el.setAttribute('data-type', type)
+  el.dataset.file = file
+  el.dataset.type = type
 
   const parent = document.getElementById('annotateFromJSONModalTreeView')
   parent.innerHTML = ''
@@ -701,7 +675,7 @@ function selectAnnotationJSONPath (path) {
 
   const el = document.getElementById('annotateFromJSONModalPath')
   el.value = path.join(' > ')
-  el.setAttribute('data-path', JSON.stringify(path))
+  el.dataset.path = JSON.stringify(path)
 }
 
 function addAnnotationFromModal () {
@@ -712,8 +686,8 @@ function addAnnotationFromModal () {
   const el = document.getElementById('annotateFromJSONModalPath')
   const itemUUID = el.getAttribute('data-itemUUID')
   const path = JSON.parse(el.getAttribute('data-path'))
-  const file = el.getAttribute('data-file')
-  const type = el.getAttribute('data-type')
+  const file = el.dataset.file
+  const type = el.dataset.type
   let annotationUUID = el.getAttribute('data-annotationUUID')
   let annotation
 
@@ -736,18 +710,13 @@ function addAnnotationFromModal () {
     document.getElementById('Annotation' + annotation.uuid + 'Title').innerHTML = '<b>Annotation: </b>' + path.slice(-1)
   }
 
-  let annotations
-  if ('annotations' in workingDefinition.content[itemUUID]) {
-    annotations = workingDefinition.content[itemUUID].annotations
-    annotations[annotationUUID] = annotation
-  } else {
-    annotations = {}
-    annotations[annotationUUID] = annotation
-  }
+  const annotations = workingDefinition?.content?.[itemUUID]?.annotations ?? {}
+  annotations[annotationUUID] = annotation
+
   exSetup.updateWorkingDefinition(['content', itemUUID, 'annotations'], annotations)
   exSetup.previewDefinition(true)
-  document.getElementById('annotateFromJSONModalTreeView').innerHTML = ''
-  $('#annotateFromJSONModal').modal('hide')
+  document.getElementById('annotateFromJSONModalTreeView').innerText = ''
+  exUtilities.hideModal('#annotateFromJSONModal')
 }
 
 function createAnnoationHTML (itemUUID, details) {
@@ -777,7 +746,7 @@ function createAnnoationHTML (itemUUID, details) {
 
   const xPosLabel = document.createElement('label')
   xPosLabel.classList = 'form-label'
-  xPosLabel.innerHTML = 'Horizontal position'
+  xPosLabel.innerText = 'Horizontal position'
   xPosLabel.setAttribute('for', 'xPosInput' + details.uuid)
   xPosDiv.appendChild(xPosLabel)
 
@@ -809,7 +778,7 @@ function createAnnoationHTML (itemUUID, details) {
 
   const yPosLabel = document.createElement('label')
   yPosLabel.classList = 'form-label'
-  yPosLabel.innerHTML = 'Vertical position'
+  yPosLabel.innerText = 'Vertical position'
   yPosLabel.setAttribute('for', 'yPosInput' + details.uuid)
   yPosDiv.appendChild(yPosLabel)
 
@@ -841,7 +810,7 @@ function createAnnoationHTML (itemUUID, details) {
 
   const alignLabel = document.createElement('label')
   alignLabel.classList = 'form-label'
-  alignLabel.innerHTML = 'Text alignment'
+  alignLabel.innerText = 'Text alignment'
   alignLabel.setAttribute('for', 'alignSelect' + details.uuid)
   alignDiv.appendChild(alignLabel)
 
@@ -868,7 +837,7 @@ function createAnnoationHTML (itemUUID, details) {
 
   const fontSizeLabel = document.createElement('label')
   fontSizeLabel.classList = 'form-label'
-  fontSizeLabel.innerHTML = 'Text size'
+  fontSizeLabel.innerText = 'Text size'
   fontSizeLabel.setAttribute('for', 'fontSizeInput' + details.uuid)
   fontSizeDiv.appendChild(fontSizeLabel)
 
@@ -898,7 +867,7 @@ function createAnnoationHTML (itemUUID, details) {
 
   const fontColorLabel = document.createElement('label')
   fontColorLabel.classList = 'form-label'
-  fontColorLabel.innerHTML = 'Text color'
+  fontColorLabel.innerText = 'Text color'
   fontColorLabel.setAttribute('for', 'fontColorInput' + details.uuid)
   fontColorDiv.appendChild(fontColorLabel)
 
@@ -935,7 +904,7 @@ function createAnnoationHTML (itemUUID, details) {
   actionButton.setAttribute('type', 'button')
   actionButton.setAttribute('data-bs-toggle', 'dropdown')
   actionButton.setAttribute('aria-expanded', false)
-  actionButton.innerHTML = 'Action'
+  actionButton.innerText = 'Action'
   actionDropdown.appendChild(actionButton)
 
   const actionMenu = document.createElement('ul')
@@ -958,7 +927,7 @@ function createAnnoationHTML (itemUUID, details) {
 
   const deleteAction = document.createElement('a')
   deleteAction.classList = 'dropdown-item text-danger'
-  deleteAction.innerHTML = 'Delete'
+  deleteAction.innerText = 'Delete'
   deleteAction.style.cursor = 'pointer'
   deleteAction.addEventListener('click', () => {
     document.getElementById('deleteAnnotationModal').setAttribute('data-annotationUUID', details.uuid)
@@ -970,7 +939,6 @@ function createAnnoationHTML (itemUUID, details) {
   document.getElementById('annotationRow_' + itemUUID).appendChild(col)
 
   // Must be after we had the main element to the DOM
-
   exSetup.createAdvancedFontPicker({
     parent: fontFaceCol,
     name: 'Font',
@@ -990,7 +958,7 @@ function showChooseURLModal (uuid) {
   document.getElementById('chooseURLModalPreviewAudio').style.display = 'none'
   document.getElementById('chooseURLModalError').style.display = 'none'
 
-  $('#chooseURLModal').modal('show')
+  exUtilities.showModal('#chooseURLModal')
 }
 
 async function fetchContentFromURL () {
@@ -1004,8 +972,8 @@ async function fetchContentFromURL () {
   const error = document.getElementById('chooseURLModalError')
 
   const mimetype = exFiles.guessMimetype(url)
-  modal.setAttribute('data-mimetype', mimetype)
-  console.log(mimetype)
+  modal.dataset.mimetype = mimetype
+
   if (mimetype === 'video') {
     video.src = url
     error.style.display = 'none'
@@ -1043,11 +1011,11 @@ function setContentFromURLModal () {
   // Set the currently selected file as the item's content.
 
   const url = document.getElementById('chooseURLModalInput').value.trim()
-  const uuid = document.getElementById('chooseURLModal').getAttribute('data-uuid')
+  const uuid = document.getElementById('chooseURLModal').dataset.uuid
   const itemEl = document.getElementById('Item_' + uuid)
   setItemContent(uuid, itemEl, url, 'url')
 
-  $('#chooseURLModal').modal('hide')
+  exUtilities.hideModal('#chooseURLModal')
 }
 
 function setItemContent (uuid, itemEl, file, type = 'file') {
@@ -1082,7 +1050,7 @@ function setItemContent (uuid, itemEl, file, type = 'file') {
     exSetup.updateWorkingDefinition(['content', uuid, 'subtitles'], null)
   } else if (mimetype === 'image') {
     if (type === 'file') {
-      image.src = '/thumbnails/' + exFiles.withExtension(file, 'jpg')
+      image.src = exCommon.config.helperAddress + exConfig.api + '/files/' + file + '/thumbnail'
     } else if (type === 'url') {
       image.src = file
     }
@@ -1113,7 +1081,7 @@ function setItemContent (uuid, itemEl, file, type = 'file') {
     } else itemEl.querySelector('.material-col').style.display = 'none'
   } else if (mimetype === 'video') {
     if (type === 'file') {
-      video.src = '/thumbnails/' + exFiles.withExtension(file, 'mp4')
+      video.src = exCommon.config.helperAddress + exConfig.api + '/files/' + file + '/thumbnail'
     } else if (type === 'url') {
       video.src = file
     }

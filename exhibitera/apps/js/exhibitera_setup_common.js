@@ -759,39 +759,46 @@ function _onAdvancedColorPickerModeChange (id, path, value) {
   previewDefinition(true)
 }
 
-export function updateAdvancedColorPicker (path, details) {
+export function updateAdvancedColorPicker (path,
+  details,
+  defaults = { mode: 'color', color: '#fff' }) {
   // Update the color picker defined by path using the values in details.
 
   const el = document.querySelector(`.advanced-color-picker[data-constACP-path="${path}"]`)
+  if (el == null) return
   if (el.childNodes.length === 0) return
 
-  if ('mode' in details) {
-    el.querySelector('.constACP-mode').value = details.mode
-  }
-  if ('color' in details) {
-    const solidColorPicker = el.querySelector('.constACP-color')
-    solidColorPicker.value = details.color
-    solidColorPicker.dispatchEvent(new Event('input', { bubbles: true }))
-  }
-  if ('gradient_color_1' in details) {
-    const gradientPicker1 = el.querySelector('.constACP-gradient1')
-    gradientPicker1.value = details.gradient_color_1
-    gradientPicker1.dispatchEvent(new Event('input', { bubbles: true }))
-  }
-  if ('gradient_color_2' in details) {
-    const gradientPicker2 = el.querySelector('.constACP-gradient2')
-    gradientPicker2.value = details.gradient_color_2
-    gradientPicker2.dispatchEvent(new Event('input', { bubbles: true }))
-  }
-  if ('gradient_angle' in details) {
-    el.querySelector('.constACP-angle').value = details.gradient_angle
-  }
-  if ('image' in details) {
-    el.querySelector('.constACP-image').innerHTML = details.image
-  }
+  el.querySelector('.constACP-mode').value = details?.mode ?? defaults?.mode
+
+  const solidColorPicker = el.querySelector('.constACP-color')
+  solidColorPicker.value = details?.color ?? defaults?.color
+  solidColorPicker.dispatchEvent(new Event('input', { bubbles: true }))
+
+  const gradientPicker1 = el.querySelector('.constACP-gradient1')
+  gradientPicker1.value = details?.gradient_color_1 ?? defaults?.gradient_color_1
+  gradientPicker1.dispatchEvent(new Event('input', { bubbles: true }))
+
+  const gradientPicker2 = el.querySelector('.constACP-gradient2')
+  gradientPicker2.value = details?.gradient_color_2 ?? defaults?.gradient_color_2
+  gradientPicker2.dispatchEvent(new Event('input', { bubbles: true }))
+
+  el.querySelector('.constACP-angle').value = details?.gradient_angle ?? defaults?.gradient_angle
+
+  el.querySelector('.constACP-image').innerHTML = details?.image ?? defaults?.image
 
   const id = el.getAttribute('data-constACP-id')
-  _onAdvancedColorPickerModeChange(id, path, details.mode)
+  _onAdvancedColorPickerModeChange(id, path, details?.mode ?? defaults.mode)
+}
+
+export function updateColorPickers (colors) {
+  // Take a dictionary of colors and update the corresponding color pickers
+
+  for (const key of Object.keys(colors)) {
+    const el = document.getElementById('colorPicker_' + key)
+    if (el == null) continue
+    el.value = colors[key]
+    el.dispatchEvent(new Event('input', { bubbles: true }))
+  }
 }
 
 function createAdvancedFontPickers (userFonts) {
@@ -942,6 +949,8 @@ function _onAdvancedFontPickerChange (el, saveChange = true) {
   // Respond to a change in an advanced font select.
   // Set writeChange = false when first setting up the element
 
+  if (el.selectedIndex < 0) return
+
   const path = el.getAttribute('data-path').split('>')
 
   if (saveChange) {
@@ -958,11 +967,29 @@ function _onAdvancedFontPickerChange (el, saveChange = true) {
   el.style.fontFamily = safeName
 }
 
+export function updateAdvancedFontPickers (fonts) {
+  // Take a dictionary of fonts and update the corresponding font pickers
+
+  for (const key of Object.keys(fonts)) {
+    const picker = document.querySelector(`.AFP-select[data-path="style>font>${key}"`)
+    if (picker != null) setAdvancedFontPicker(picker, fonts[key])
+  }
+}
+
 export function setAdvancedFontPicker (el, value) {
   // Set the given advanced font picker to the specified font.
 
   el.value = value
   _onAdvancedFontPickerChange(el)
+}
+
+export function updateTextSizeSliders (sizes) {
+  // Take a dictionary of text sizes and update the matching sliders
+
+  for (const key of Object.keys(sizes)) {
+    const el = document.getElementById(key + 'TextSizeSlider')
+    if (el != null) el.value = sizes[key]
+  }
 }
 
 export function resetAdvancedFontPickers () {

@@ -214,9 +214,9 @@ function wizardCreateAnswerOption (userDetails) {
   if (optionOrder.includes(details.uuid) === false) {
     optionOrder.push(details.uuid)
     exSetup.updateWorkingDefinition(['option_order', optionOrder])
-    Object.keys(defaults).forEach((key) => {
+    for (const key of Object.keys(defaults)) {
       exSetup.updateWorkingDefinition(['options', details.uuid, key], details[key])
-    })
+    }
   }
 
   const col = document.createElement('div')
@@ -275,7 +275,7 @@ async function clearDefinitionInput (full = true) {
   if (full === true) exSetup.initializeDefinition()
 
   // Definition details
-  $('#definitionNameInput').val('')
+  document.getElementById('definitionNameInput').value = ''
   document.getElementById('behaviorInput_recording_interval').value = 60
   document.getElementById('behaviorInput_touch_cooldown').value = 2
 
@@ -398,37 +398,10 @@ function editDefinition (uuid = '') {
     createSurveyOption(option)
   }
 
-  // Set the appropriate values for the color pickers
-  for (const key of Object.keys(def?.style?.color ?? {})) {
-    const el = document.getElementById('colorPicker_' + key)
-    if (el == null) continue
-    el.value = def.style.color[key]
-    el.dispatchEvent(new Event('input', { bubbles: true }))
-  }
-
-  // Set the appropriate values for any advanced color pickers
-  if ('background' in def.style) {
-    exSetup.updateAdvancedColorPicker('style>background', def.style.background)
-  } else {
-    def.style.background = {
-      mode: 'color',
-      color: '#22222E'
-    }
-    exSetup.updateWorkingDefinition(['style', 'background', 'mode'], 'color')
-    exSetup.updateWorkingDefinition(['style', 'background', 'color'], '#22222E')
-  }
-
-  // Set the appropriate values for the advanced font pickers
-  for (const key of Object.keys(def?.style?.font ?? {})) {
-    const picker = document.querySelector(`.AFP-select[data-path="style>font>${key}"`)
-    if (picker != null) exSetup.setAdvancedFontPicker(picker, def.style.font[key])
-  }
-
-  // Set the appropriate values for the text size sliders
-  for (const key of Object.keys(def?.style?.text_size ?? {})) {
-    const el = document.getElementById(key + 'TextSizeSlider')
-    if (el != null) el.value = def.style.text_size[key]
-  }
+  exSetup.updateAdvancedColorPicker('style>background', def?.style?.background, { mode: 'color', color: '#22222E' })
+  exSetup.updateColorPickers(def?.style?.color ?? {})
+  exSetup.updateAdvancedFontPickers(def?.style?.font ?? {})
+  exSetup.updateTextSizeSliders(def?.style?.text_size ?? {})
 
   // Set the appropriate values for the layout options
   document.getElementById('columnCountSelect').value = def?.style?.layout?.num_columns ?? 'auto'
@@ -473,9 +446,9 @@ function createSurveyOption (userDetails, populateEditor = false) {
   if (optionOrder.includes(details.uuid) === false) {
     optionOrder.push(details.uuid)
     exSetup.updateWorkingDefinition(['option_order', optionOrder])
-    Object.keys(defaults).forEach((key) => {
+    for (const key of Object.keys(defaults)) {
       exSetup.updateWorkingDefinition(['options', details.uuid, key], details[key])
-    })
+    }
   }
 
   const col = document.createElement('div')
@@ -593,16 +566,16 @@ function deleteOption (uuid, wizard = false) {
   // Rebuild the options GUI
   if (wizard) {
     document.getElementById('wizardCustomAnswersRow').innerHTML = ''
-    def.option_order.forEach((optionUUID) => {
+    for (const optionUUID of def?.option_order ?? []) {
       const option = def.options[optionUUID]
       wizardCreateAnswerOption(option)
-    })
+    }
   } else {
     document.getElementById('optionRow').innerHTML = ''
-    def.option_order.forEach((optionUUID) => {
+    for (const optionUUID of def?.option_order ?? []) {
       const option = def.options[optionUUID]
       createSurveyOption(option)
-    })
+    }
     exSetup.previewDefinition(true)
   }
 }
@@ -628,16 +601,16 @@ function changeOptionOrder (uuid, direction, wizard = false) {
   // Rebuild the options GUI
   if (wizard) {
     document.getElementById('wizardCustomAnswersRow').innerHTML = ''
-    def.option_order.forEach((optionUUID) => {
+    for (const optionUUID of def?.option_order ?? []) {
       const option = def.options[optionUUID]
       wizardCreateAnswerOption(option)
-    })
+    }
   } else {
     document.getElementById('optionRow').innerHTML = ''
-    def.option_order.forEach((optionUUID) => {
+    for (const optionUUID of def?.option_order ?? []) {
       const option = def.options[optionUUID]
       createSurveyOption(option)
-    })
+    }
     exSetup.previewDefinition(true)
   }
 }
@@ -772,7 +745,7 @@ document.getElementById('optionInput_icon_user_file_DeleteButton').addEventListe
   exSetup.updateWorkingDefinition(['options', id, 'icon'], '')
   exSetup.previewDefinition(true)
 })
-Array.from(document.getElementsByClassName('option-input')).forEach((el) => {
+for (const el of document.getElementsByClassName('option-input')) {
   el.addEventListener('change', (event) => {
     const id = document.getElementById('optionEditor').getAttribute('data-option-id')
     const field = event.target.getAttribute('data-field')
@@ -781,7 +754,7 @@ Array.from(document.getElementsByClassName('option-input')).forEach((el) => {
     document.getElementById('OptionHeaderText_' + id).innerHTML = formatOptionHeader($('#definitionSaveButton').data('workingDefinition').options[id])
     exSetup.previewDefinition(true)
   })
-})
+}
 
 // Style fields
 $('.color-picker').change(function () {
@@ -809,7 +782,7 @@ document.getElementById('columnCountSelect').addEventListener('change', (event) 
   exSetup.updateWorkingDefinition(['style', 'layout', 'num_columns'], event.target.value)
   exSetup.previewDefinition(true)
 })
-Array.from(document.querySelectorAll('.height-slider')).forEach((el) => {
+for (const el of document.querySelectorAll('.height-slider')) {
   el.addEventListener('input', () => {
     const headerHeight = parseInt(document.getElementById('headerToButtonsSlider').value)
     const footerHeight = parseInt(document.getElementById('buttonsToFooterSlider').value)
@@ -819,14 +792,14 @@ Array.from(document.querySelectorAll('.height-slider')).forEach((el) => {
     exSetup.updateWorkingDefinition(['style', 'layout', 'bottom_height'], footerHeight)
     exSetup.previewDefinition(true)
   })
-})
-Array.from(document.querySelectorAll('.padding-slider')).forEach((el) => {
+}
+for (const el of document.querySelectorAll('.padding-slider')) {
   el.addEventListener('input', (event) => {
     const property = event.target.getAttribute('data-property')
     exSetup.updateWorkingDefinition(['style', 'layout', property], parseInt(event.target.value))
     exSetup.previewDefinition(true)
   })
-})
+}
 
 // Set color mode
 if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {

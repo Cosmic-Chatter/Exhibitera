@@ -109,16 +109,16 @@ function createWordList (textDict) {
   // into the nested list required by the wordcloud
 
   let maxValue = 0
-  Object.keys(textDict).forEach((item) => {
+  for (const item of Object.keys(textDict)) {
     if (textDict[item] > maxValue) {
       maxValue = textDict[item]
     }
-  })
+  }
   // Then, format the list, scaling each value to the range [3, 9]
   const wordList = []
-  Object.keys(textDict).forEach((item) => {
+  for (const item of Object.keys(textDict)) {
     wordList.push([item, 6 * textDict[item] / maxValue + 3])
-  })
+  }
   return (wordList)
 }
 
@@ -143,9 +143,9 @@ function createWordCloud () {
 
   let wordDict = {}
   if (document.getElementById('wizard_textCaseSelect').value === 'uppercase') {
-    Object.keys(animalDict).forEach((key) => {
+    for (const key of Object.keys(animalDict)) {
       wordDict[key.toUpperCase()] = animalDict[key]
-    })
+    }
   } else {
     wordDict = structuredClone(animalDict)
   }
@@ -244,47 +244,20 @@ function editDefinition (uuid = '') {
     }
   })
 
-  Array.from(document.querySelectorAll('.localization-input')).forEach((el) => {
-    const property = el.getAttribute('data-property')
+  for (const el of document.querySelectorAll('.localization-input') ?? []) {
+    const property = el.dataset.property
     if (property in def.content.localization) el.value = def.content.localization[property]
-  })
+  }
 
   // Set values for the word cloud shape
   document.getElementById('wordRotationSelect').value = def?.style?.rotation ?? 'horizontal'
   document.getElementById('cloudShapeSelect').value = def?.style?.cloud_shape ?? 'circle'
   document.getElementById('textCaseSelect').value = def?.style?.text_case ?? 'lowercase'
 
-  // Set the appropriate values for the color pickers
-  for (const key of Object.keys(def?.style?.color ?? {})) {
-    const el = document.getElementById('colorPicker_' + key)
-    if (el == null) continue
-    el.value = def.style.color[key]
-    el.dispatchEvent(new Event('input', { bubbles: true }))
-  }
-
-  // Set the appropriate values for any advanced color pickers
-  if ('background' in def.style) {
-    exSetup.updateAdvancedColorPicker('style>background', def.style.background)
-  } else {
-    def.style.background = {
-      mode: 'color',
-      color: '#fff'
-    }
-    exSetup.updateWorkingDefinition(['style', 'background', 'mode'], 'color')
-    exSetup.updateWorkingDefinition(['style', 'background', 'color'], '#fff')
-  }
-
-  // Set the appropriate values for the advanced font pickers
-  for (const key of Object.keys(def?.style?.font ?? {})) {
-    const picker = document.querySelector(`.AFP-select[data-path="style>font>${key}"`)
-    if (picker != null) exSetup.setAdvancedFontPicker(picker, def.style.font[key])
-  }
-
-  // Set the appropriate values for the text size sliders
-  for (const key of Object.keys(def?.style?.text_size ?? {})) {
-    const el = document.getElementById(key + 'TextSizeSlider')
-    if (el != null) el.value = def.style.text_size[key]
-  }
+  exSetup.updateAdvancedColorPicker('style>background', def?.style?.background)
+  exSetup.updateColorPickers(def?.style?.color ?? {})
+  exSetup.updateAdvancedFontPickers(def?.style?.font ?? {})
+  exSetup.updateTextSizeSliders(def?.style?.text_size ?? {})
 
   // Configure the preview frame
   document.getElementById('previewFrame').src = 'index.html?standalone=true&definition=' + def.uuid
@@ -297,7 +270,7 @@ function showExcludedWordsModal () {
   const el = document.getElementById('excludedWordsInput')
   el.value = workingDefinition?.behavior?.excluded_words_raw ?? ''
 
-  $('#excludedWordsModal').modal('show')
+  exUtilities.showModal('#excludedWordsModal')
 }
 
 function updateExcludedWordsList () {
@@ -308,15 +281,15 @@ function updateExcludedWordsList () {
 
   const lines = text.split('\n')
   const words = []
-  lines.forEach((line) => {
+  for (const line of lines) {
     const wordSplit = line.split(',')
-    wordSplit.forEach((word) => {
+    for (const word of wordSplit) {
       words.push(word.trim().toLowerCase())
-    })
-  })
+    }
+  }
   exSetup.updateWorkingDefinition(['behavior', 'excluded_words'], words)
 
-  $('#excludedWordsModal').modal('hide')
+  exUtilities.hideModal('#excludedWordsModal')
 }
 
 // Set up the color pickers
