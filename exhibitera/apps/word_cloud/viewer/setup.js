@@ -88,7 +88,7 @@ async function wizardCreateDefinition () {
   exSetup.updateWorkingDefinition(['style', 'rotation'], document.getElementById('wizard_wordRotationSelect').value)
   exSetup.updateWorkingDefinition(['style', 'cloud_shape'], document.getElementById('wizard_cloudShapeSelect').value)
 
-  const uuid = $('#definitionSaveButton').data('workingDefinition').uuid
+  const uuid = exSetup.config.workingDefinition.uuid
 
   await exSetup.saveDefinition(defName)
   const result = await exCommon.getAvailableDefinitions('word_cloud_viewer')
@@ -123,9 +123,9 @@ function createWordCloud () {
 
   const WordCloudOptions = {
     color: 'random-dark',
-    gridSize: Math.round(16 * $(divForWC).width() / 1024),
+    gridSize: Math.round(16 * divForWC.offsetWidth / 1024),
     weightFactor: function (size) {
-      return Math.pow(size, 2.3) * $(divForWC).width() / 1024
+      return Math.pow(size, 2.3) * divForWC.offsetWidth / 1024
     },
     drawOutOfBound: false,
     rotateRatio: 0.125,
@@ -196,9 +196,9 @@ async function clearDefinitionInput (full = true) {
   // Reset color options
   const colorInputs = ['prompt']
   colorInputs.forEach((input) => {
-    const el = $('#colorPicker_' + input)
-    el.val(el.data('default'))
-    document.querySelector('#colorPicker_' + input).dispatchEvent(new Event('input', { bubbles: true }))
+    const el = document.getElementById('colorPicker_' + input)
+    el.value = el.dataset.default
+    el.dispatchEvent(new Event('input', { bubbles: true }))
   })
 
   exSetup.updateAdvancedColorPicker('style>background', {
@@ -219,8 +219,8 @@ function editDefinition (uuid = '') {
 
   clearDefinitionInput(false)
   const def = exSetup.getDefinitionByUUID(uuid)
-  $('#definitionSaveButton').data('initialDefinition', structuredClone(def))
-  $('#definitionSaveButton').data('workingDefinition', structuredClone(def))
+  exSetup.config.initialDefinition = structuredClone(def)
+  exSetup.config.workingDefinition = structuredClone(def)
 
   document.getElementById('definitionNameInput').value = def.name
   document.getElementById('collectionNameInput').value = def?.behavior?.collection_name ?? ''
@@ -259,10 +259,8 @@ function editDefinition (uuid = '') {
 }
 
 function showExcludedWordsModal () {
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
-
   const el = document.getElementById('excludedWordsInput')
-  el.value = workingDefinition?.behavior?.excluded_words_raw ?? ''
+  el.value = exSetup.config.workingDefinition?.behavior?.excluded_words_raw ?? ''
 
   exUtilities.showModal('#excludedWordsModal')
 }
@@ -355,11 +353,14 @@ document.getElementById('manageFontsButton').addEventListener('click', (event) =
 })
 
 // Color
-$('.coloris').change(function () {
-  const value = $(this).val().trim()
-  exSetup.updateWorkingDefinition(['style', 'color', $(this).data('property')], value)
-  exSetup.previewDefinition(true)
-})
+for (const el of document.querySelectorAll('.coloris')) {
+  el.addEventListener('change', function () {
+    const value = this.value.trim()
+    const property = this.dataset.property
+    exSetup.updateWorkingDefinition(['style', 'color', property], value)
+    exSetup.previewDefinition(true)
+  })
+}
 
 // Realtime-sliders should adjust as we drag them
 Array.from(document.querySelectorAll('.realtime-slider')).forEach((el) => {

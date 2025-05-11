@@ -27,10 +27,10 @@ function editDefinition (uuid = '') {
 
   clearDefinitionInput(false)
   const def = exSetup.getDefinitionByUUID(uuid)
-  $('#definitionSaveButton').data('initialDefinition', structuredClone(def))
-  $('#definitionSaveButton').data('workingDefinition', structuredClone(def))
+  exSetup.config.initialDefinition = structuredClone(def)
+  exSetup.config.workingDefinition = structuredClone(def)
 
-  $('#definitionNameInput').val(def.name)
+  document.getElementById('definitionNameInput').value = def.name
 
   document.getElementById('pathInput').value = def.path
   Object.keys(def.properties).forEach((key) => {

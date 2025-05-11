@@ -345,11 +345,15 @@ function _populateResultsRow (currentKey) {
   if (titles.length > 0) {
     const fontSize = parseFloat(window.getComputedStyle(titles[0], null).getPropertyValue('font-size'))
     resultsRow.style.opacity = 1
-    textFit(titles, { maxFontSize: fontSize })
-    // Sometimes need to run twice on first load
-    setTimeout(() => {
+    try {
       textFit(titles, { maxFontSize: fontSize })
-    }, 10)
+      // Sometimes need to run twice on first load
+      setTimeout(() => {
+        textFit(titles, { maxFontSize: fontSize })
+      }, 10)
+    } catch {
+
+    }
   } else {
     resultsRow.style.opacity = 1
   }

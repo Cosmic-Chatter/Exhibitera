@@ -192,13 +192,13 @@ async function wizardCreateDefinition () {
   }
 
   exSetup.updateWorkingDefinition(['style', 'layout'], layoutDef)
-  $('#setupWizardModal').modal('hide')
+  exUtilities.hideModal('#setupWizardModal')
 
   if (orientation === 'horizontal') {
     exSetup.configurePreview('16x9', true)
   } else exSetup.configurePreview('9x16', true)
 
-  const uuid = $('#definitionSaveButton').data('workingDefinition').uuid
+  const uuid = exSetup.config.workingDefinition.uuid
 
   await exSetup.saveDefinition(defName)
   const result = await exCommon.getAvailableDefinitions('media_browser')
@@ -318,8 +318,8 @@ function editDefinition (uuid = '') {
   clearDefinitionInput(false)
   const def = exSetup.getDefinitionByUUID(uuid)
 
-  $('#definitionSaveButton').data('initialDefinition', structuredClone(def))
-  $('#definitionSaveButton').data('workingDefinition', structuredClone(def))
+  exSetup.config.initialDefinition = structuredClone(def)
+  exSetup.config.workingDefinition = structuredClone(def)
 
   // Configure preview behavior
   exSetup.configurePreviewFromDefinition(def)
@@ -409,7 +409,7 @@ function createLanguageTab (code) {
   // Create a new language tab for the given details.
   // first = true means this is the first tab to be built on this cycle, so show it.
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+  const workingDefinition = exSetup.config.workingDefinition
 
   // Create the tab button
   const tabButton = document.createElement('button')
@@ -433,109 +433,6 @@ function createLanguageTab (code) {
   const row = document.createElement('div')
   row.classList = 'row gy-2 mt-2 mb-3'
   tabPane.appendChild(row)
-
-  // Create default language checkbox
-  // const defaultCol = document.createElement('div')
-  // defaultCol.classList = 'col-12'
-  // row.appendChild(defaultCol)
-
-  // const checkContainer = document.createElement('div')
-  // checkContainer.classList = 'form-check'
-  // defaultCol.appendChild(checkContainer)
-
-  // const defaultCheckbox = document.createElement('input')
-  // defaultCheckbox.classList = 'form-check-input default-lang-checkbox'
-  // defaultCheckbox.setAttribute('id', 'defaultCheckbox_' + code)
-  // defaultCheckbox.setAttribute('data-lang', code)
-  // defaultCheckbox.setAttribute('type', 'radio')
-  // defaultCheckbox.checked = workingDefinition.languages[code].default
-  // defaultCheckbox.addEventListener('change', (event) => {
-  //   // If the checkbox is checked, uncheck all the others and save to the working definition.
-  //   Array.from(document.querySelectorAll('.default-lang-checkbox')).forEach((el) => {
-  //     el.checked = false
-  //     exSetup.updateWorkingDefinition(['languages', el.getAttribute('data-lang'), 'default'], false)
-  //   })
-  //   event.target.checked = true
-  //   exSetup.updateWorkingDefinition(['languages', code, 'default'], true)
-  //   exSetup.previewDefinition(true)
-  // })
-  // checkContainer.appendChild(defaultCheckbox)
-
-  // const defaultCheckboxLabel = document.createElement('label')
-  // defaultCheckboxLabel.classList = 'form-check-label'
-  // defaultCheckboxLabel.setAttribute('for', 'defaultCheckbox_' + code)
-  // defaultCheckboxLabel.innerHTML = 'Default language'
-  // checkContainer.appendChild(defaultCheckboxLabel)
-
-  // // Create the flag input
-  // const flagImgCol = document.createElement('div')
-  // flagImgCol.classList = 'col-3 col-lg-2 d-flex'
-  // row.append(flagImgCol)
-
-  // const flagImg = document.createElement('img')
-  // flagImg.setAttribute('id', 'flagImg_' + code)
-  // const customFlag = $('#definitionSaveButton').data('workingDefinition').languages[code].custom_flag
-  // if (customFlag != null) {
-  //   flagImg.src = '../content/' + customFlag
-  // } else {
-  //   flagImg.src = '../_static/flags/' + code + '.svg'
-  // }
-  // flagImg.classList = 'align-self-center'
-  // flagImg.style.width = '100%'
-  // flagImg.addEventListener('error', function () {
-  //   this.src = '../_static/icons/translation-icon_black.svg'
-  // })
-  // flagImgCol.appendChild(flagImg)
-
-  // const clearFlagCol = document.createElement('div')
-  // clearFlagCol.classList = 'col-2 col-lg-1 d-flex mx-0 px-0 text-center4'
-  // row.appendChild(clearFlagCol)
-
-  // const clearFlagButton = document.createElement('button')
-  // clearFlagButton.classList = 'btn btn-danger align-self-center'
-  // clearFlagButton.innerHTML = '✕'
-  // clearFlagButton.addEventListener('click', function () {
-  //   deleteLanguageFlag(code)
-  // })
-  // clearFlagCol.append(clearFlagButton)
-
-  // const uploadFlagCol = document.createElement('div')
-  // uploadFlagCol.classList = 'col-7 col-lg-3 d-flex'
-  // row.append(uploadFlagCol)
-
-  // const uploadFlagBox = document.createElement('label')
-  // uploadFlagBox.classList = 'btn btn-outline-primary w-100 align-self-center d-flex'
-  // uploadFlagCol.appendChild(uploadFlagBox)
-
-  // const uploadFlagFileName = document.createElement('span')
-  // uploadFlagFileName.setAttribute('id', 'uploadFlagFilename_' + code)
-  // uploadFlagFileName.classList = 'w-100 align-self-center'
-  // uploadFlagFileName.innerHTML = 'Upload flag'
-  // uploadFlagBox.appendChild(uploadFlagFileName)
-
-  // const uploadFlagInput = document.createElement('input')
-  // uploadFlagInput.setAttribute('id', 'uploadFlagInput_' + code)
-  // uploadFlagInput.classList = 'form-control-file w-100 align-self-center'
-  // uploadFlagInput.setAttribute('type', 'file')
-  // uploadFlagInput.setAttribute('hidden', true)
-  // uploadFlagInput.setAttribute('accept', 'image/*')
-  // uploadFlagInput.addEventListener('change', function () {
-  //   onFlagUploadChange(code)
-  // })
-  // uploadFlagBox.appendChild(uploadFlagInput)
-
-  // // Create the delete button
-  // const deleteCol = document.createElement('div')
-  // deleteCol.classList = 'col col-12 col-lg-6 col-xl-4 d-flex'
-  // row.appendChild(deleteCol)
-
-  // const deleteButton = document.createElement('button')
-  // deleteButton.classList = 'btn btn-danger w-100 align-self-center'
-  // deleteButton.innerHTML = 'Delete language'
-  // deleteButton.addEventListener('click', () => {
-  //   deleteLanguageTab(code)
-  // })
-  // deleteCol.appendChild(deleteButton)
 
   // Create the various inputs
   Object.keys(inputFields).forEach((key) => {
@@ -634,7 +531,7 @@ function createLanguageTab (code) {
 function addFilter (lang, details = {}, addition = true) {
   // Add a new filter element to the current language
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+  const workingDefinition = exSetup.config.workingDefinition
 
   if (('uuid' in details) === false) details.uuid = exUtilities.uuid()
   if (('display_name' in details) === false) details.display_name = ''
@@ -709,7 +606,7 @@ function addFilter (lang, details = {}, addition = true) {
 function deleteFilter (lang, uuid) {
   // Remove the given filter and rebuild the GUI
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+  const workingDefinition = exSetup.config.workingDefinition
   const index = workingDefinition.languages[lang].filter_order.indexOf(uuid)
   if (index > -1) { // only splice array when item is found
     workingDefinition.languages[lang].filter_order.splice(index, 1)
@@ -737,7 +634,7 @@ function onFilterValueChange (lang, uuid) {
 function changeFilterOrder (lang, uuid, direction) {
   // Move the given filter in the given direction
 
-  const def = $('#definitionSaveButton').data('workingDefinition')
+  const def = exSetup.config.workingDefinition
   const searchFunc = (el) => el === uuid
   const currentIndex = def.languages[lang].filter_order.findIndex(searchFunc)
 
@@ -763,11 +660,8 @@ function changeFilterOrder (lang, uuid, direction) {
 function onAttractorFileChange () {
   // Called when a new image or video is selected.
 
-  const file = document.getElementById('attractorSelect').getAttribute('data-filename')
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
-
-  workingDefinition.attractor = file
-  $('#definitionSaveButton').data('workingDefinition', structuredClone(workingDefinition))
+  const file = document.getElementById('attractorSelect').dataset.filename
+  exSetup.config.workingDefinition.attractor = file
 
   exSetup.previewDefinition(true)
 }
@@ -775,15 +669,9 @@ function onAttractorFileChange () {
 function onSpreadsheetFileChange () {
   // Called when a new spreadsheet is selected. Get the csv file and populate the options.
 
-  const file = document.getElementById('spreadsheetSelect').getAttribute('data-filename')
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
-
-  if (file == null) {
-    return
-  } else {
-    workingDefinition.spreadsheet = file
-    $('#definitionSaveButton').data('workingDefinition', structuredClone(workingDefinition))
-  }
+  const file = document.getElementById('spreadsheetSelect').dataset.filename
+  if (file == null) return
+  exSetup.config.workingDefinition.spreadsheet = file
 
   exCommon.makeHelperRequest({
     api: '',
@@ -812,7 +700,7 @@ function onSpreadsheetFileChange () {
 async function checkContentExists () {
   // Cross-check content from the spreadsheet with files in the content directory.
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+  const workingDefinition = exSetup.config.workingDefinition
   const mediaKeys = []
   const missingContentField = document.getElementById('missingContentWarningField')
 
@@ -889,7 +777,7 @@ function _checkContentExists (spreadsheet, keys) {
 function populateKeySelects (keyList, langToPopulate = null) {
   // Take a list of keys and use it to populate all the selects used to match keys to parameters.
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+  const workingDefinition = exSetup.config.workingDefinition
   if (('languages' in workingDefinition) === false) return
 
   // Add a blank entry for no selection
@@ -899,64 +787,56 @@ function populateKeySelects (keyList, langToPopulate = null) {
   if (langToPopulate == null) {
     langs = workingDefinition.language_order
   } else langs = [langToPopulate]
-  langs.forEach((lang) => {
-    console.log(lang)
+
+  for (const lang of langs) {
     const langDict = workingDefinition.languages[lang]
 
-    Object.keys(inputFields).forEach((input) => {
+    for (const input of Object.keys(inputFields)) {
       const inputDict = inputFields[input]
       const inputEl = document.getElementById(input + '_' + lang)
 
       if (inputDict.kind === 'select') {
-        inputEl.innerHTML = ''
+        inputEl.innerText = ''
 
-        keyList.forEach((key) => {
+        for (const key of keyList) {
           const option = document.createElement('option')
           option.value = key || ''
-          option.innerHTML = key || '-'
+          option.innerText = key || '-'
           inputEl.appendChild(option)
-        })
+        }
 
         // If we already have a value for this select, set it
-        if (inputDict.property in langDict) {
-          inputEl.value = langDict[inputDict.property]
-        } else {
-          inputEl.valule = null
-        }
+        inputEl.value = langDict?.[inputDict?.property]
       }
-    })
-  })
+    }
+  }
 }
 
 function populateFilterSelects (keyList) {
   // Populate all the selects used for choosing filter columns.
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+  const workingDefinition = exSetup.config.workingDefinition
   if (('languages' in workingDefinition) === false) return
 
-  Object.keys(workingDefinition.languages).forEach((lang) => {
+  for (const lang of Object.keys(workingDefinition.languages)) {
     if (('filters' in workingDefinition.languages[lang]) === false) return
     const filterDict = workingDefinition.languages[lang].filters
-    Object.keys(filterDict).forEach((uuid) => {
+    for (const uuid of Object.keys(filterDict)) {
       const details = filterDict[uuid]
       const el = document.getElementById('filterSelect_' + uuid)
       if (el == null) return // No GUI for this entry yet
-      el.innerHTML = ''
+      el.innerText = ''
 
-      keyList.forEach((key) => {
+      for (const key of keyList) {
         const option = document.createElement('option')
         option.value = key
-        option.innerHTML = key
+        option.innerText = key
         el.appendChild(option)
-      })
-
-      if ('key' in details) {
-        el.value = details.key
-      } else {
-        el.value = null
       }
-    })
-  })
+
+      el.value = details?.key
+    }
+  }
 }
 
 // Set helper address for use with exCommon.makeHelperRequest
@@ -1034,7 +914,7 @@ document.getElementById('manageContentButton').addEventListener('click', (event)
 })
 document.getElementById('showCheckContentButton').addEventListener('click', () => {
   document.getElementById('missingContentWarningField').innerHTML = ''
-  $('#checkContentModal').modal('show')
+  exUtilities.showModal('#checkContentModal')
 })
 document.getElementById('checkContentButton').addEventListener('click', checkContentExists)
 // document.getElementById('optimizeContentButton').addEventListener('click', showOptimizeContentModal)

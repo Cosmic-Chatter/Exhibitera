@@ -84,7 +84,7 @@ export function createLanguagePicker (parent, callbacks = {}) {
   //              onLanguageRebuild: function(languageOrder),
   //             }
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+  const workingDefinition = exSetup.config.workingDefinition
   const uuid = exUtilities.uuid()
   parent.innerHTML = ''
 
@@ -356,8 +356,8 @@ function changeLanguageOrder (languageList, code, dir, callbacks = {}) {
   // dir = 1 means move down the list by one place; dir = -1 is moves up the list.
   // callback should take one parameter, language_order
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
-  const arr = workingDefinition?.language_order || []
+  const workingDefinition = exSetup.config.workingDefinition
+  const arr = workingDefinition?.language_order ?? []
 
   const index = arr.indexOf(code)
 
@@ -382,7 +382,7 @@ function changeLanguageOrder (languageList, code, dir, callbacks = {}) {
 function addLanguage (languageList, code, displayName, englishName, callbacks) {
   // Add a new language to the definition
 
-  const definition = $('#definitionSaveButton').data('workingDefinition')
+  const definition = exSetup.config.workingDefinition
 
   exSetup.updateWorkingDefinition(['languages', code], {
     code,
@@ -401,7 +401,7 @@ function deleteLanguage (languageList, code, callbacks = {}) {
   // Remove this language from the working defintion and destroy its GUI representation.
   // Callback should take one parameter, language_order
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+  const workingDefinition = exSetup.config.workingDefinition
 
   delete workingDefinition.languages[code]
   workingDefinition.language_order = workingDefinition.language_order.filter(lang => lang !== code)
@@ -415,11 +415,12 @@ function rebuildLanguageList (languageList, callbacks = {}) {
   // Use the definition to rebuild the GUI representation for each language
   // and add it to the specified div, which should be a DOM element
 
-  const def = $('#definitionSaveButton').data('workingDefinition')
+  const def = exSetup.config.workingDefinition
+
   if (def == null) return
-  languageList.innerHTML = ''
+  languageList.innerText = ''
   let i = 0
-  for (const code of (def?.language_order || [])) {
+  for (const code of (def?.language_order ?? [])) {
     const lang = def.languages[code]
     createLanguageHTML(languageList, code, lang.display_name, lang.english_name, i === 0, callbacks)
     i++

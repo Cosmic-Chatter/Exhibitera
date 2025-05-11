@@ -56,8 +56,8 @@ function editDefinition (uuid = '') {
 
   clearDefinitionInput(false)
   const def = exSetup.getDefinitionByUUID(uuid)
-  $('#definitionSaveButton').data('initialDefinition', structuredClone(def))
-  $('#definitionSaveButton').data('workingDefinition', structuredClone(def))
+  exSetup.config.initialDefinition = structuredClone(def)
+  exSetup.config.workingDefinition = structuredClone(def)
 
   document.getElementById('definitionNameInput').value = def.name
   document.getElementById('filePatternInput').value = def.files

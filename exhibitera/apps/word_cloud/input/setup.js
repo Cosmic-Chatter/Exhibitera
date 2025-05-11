@@ -75,7 +75,7 @@ async function wizardCreateDefinition () {
   const collection = document.getElementById('wizardCollection').value.trim()
   exSetup.updateWorkingDefinition(['behavior', 'collection_name'], collection)
 
-  const uuid = $('#definitionSaveButton').data('workingDefinition').uuid
+  const uuid = exSetup.config.workingDefinition.uuid
 
   await exSetup.saveDefinition(defName)
   const result = await exCommon.getAvailableDefinitions('word_cloud_input')
@@ -138,8 +138,8 @@ function editDefinition (uuid = '') {
 
   clearDefinitionInput(false)
   const def = exSetup.getDefinitionByUUID(uuid)
-  $('#definitionSaveButton').data('initialDefinition', structuredClone(def))
-  $('#definitionSaveButton').data('workingDefinition', structuredClone(def))
+  exSetup.config.initialDefinition = structuredClone(def)
+  exSetup.config.workingDefinition = structuredClone(def)
 
   document.getElementById('definitionNameInput').value = def.name
   document.getElementById('collectionNameInput').value = def?.behavior?.collection_name ?? ''

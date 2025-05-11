@@ -179,7 +179,7 @@ async function wizardCreateDefinition () {
       value: '5_star'
     })
   }
-  const uuid = $('#definitionSaveButton').data('workingDefinition').uuid
+  const uuid = exSetup.config.workingDefinition.uuid
 
   await exSetup.saveDefinition(defName)
   const result = await exCommon.getAvailableDefinitions('voting_kiosk')
@@ -193,7 +193,7 @@ async function wizardCreateDefinition () {
 function wizardCreateAnswerOption (userDetails) {
   // Create the GUI representation of a new answer option in the wizard
 
-  const optionOrder = $('#definitionSaveButton').data('workingDefinition').option_order
+  const optionOrder = exSetup.config.workingDefinition.option_order
 
   const defaults = {
     uuid: exUtilities.uuid(),
@@ -315,9 +315,9 @@ async function clearDefinitionInput (full = true) {
   // Reset color options
   const colorInputs = ['button-color', 'button-touched-color', 'success-message-color', 'header-color', 'subheader-color', 'footer-color', 'subfooter-color', 'button-text-color']
   colorInputs.forEach((input) => {
-    const el = $('#colorPicker_' + input)
-    el.val(el.data('default'))
-    document.querySelector('#colorPicker_' + input).dispatchEvent(new Event('input', { bubbles: true }))
+    const el = document.getElementById('colorPicker_' + input)
+    el.value = el.dataset.default
+    el.dispatchEvent(new Event('input', { bubbles: true }))
   })
   exSetup.updateAdvancedColorPicker('style>background', {
     mode: 'color',
@@ -349,8 +349,8 @@ function editDefinition (uuid = '') {
 
   clearDefinitionInput(false)
   const def = exSetup.getDefinitionByUUID(uuid)
-  $('#definitionSaveButton').data('initialDefinition', structuredClone(def))
-  $('#definitionSaveButton').data('workingDefinition', structuredClone(def))
+  exSetup.config.initialDefinition = structuredClone(def)
+  exSetup.config.workingDefinition = structuredClone(def)
 
   document.getElementById('definitionNameInput').value = def.name
 
@@ -425,7 +425,7 @@ function formatOptionHeader (details) {
 function createSurveyOption (userDetails, populateEditor = false) {
   // Create the HTML representation of a survey question and add it to the row.
 
-  const optionOrder = $('#definitionSaveButton').data('workingDefinition').option_order
+  const optionOrder = exSetup.config.workingDefinition.option_order
 
   const defaults = {
     uuid: exUtilities.uuid(),
@@ -497,8 +497,10 @@ function createSurveyOption (userDetails, populateEditor = false) {
   deleteButton.setAttribute('data-bs-content', `<a id="DeleteOptionPopover_${details.uuid}" class="btn btn-danger w-100">Confirm</a>`)
   deleteButton.setAttribute('data-bs-trigger', 'focus')
   deleteButton.setAttribute('data-bs-html', 'true')
-  $(document).on('click', '#DeleteOptionPopover_' + details.uuid, function () {
-    deleteOption(details.uuid)
+  document.addEventListener('click', (event) => {
+    if (event?.target?.id === 'DeleteOptionPopover_' + details.uuid) {
+      deleteOption(details.uuid)
+    }
   })
   deleteButton.addEventListener('click', function () { deleteButton.focus() })
   deleteCol.appendChild(deleteButton)
@@ -545,7 +547,7 @@ function createSurveyOption (userDetails, populateEditor = false) {
 function deleteOption (uuid, wizard = false) {
   // Delete an option and rebuild the GUI
 
-  const def = $('#definitionSaveButton').data('workingDefinition')
+  const def = exSetup.config.workingDefinition
 
   // Delete from the options dictionary
   delete def.options[uuid]
@@ -578,7 +580,7 @@ function changeOptionOrder (uuid, direction, wizard = false) {
   // Move the option given by uuid in the direction specified
   // direction should be -1 or 1
 
-  const def = $('#definitionSaveButton').data('workingDefinition')
+  const def = exSetup.config.workingDefinition
   const searchFunc = (el) => el === uuid
   const currentIndex = def.option_order.findIndex(searchFunc)
 
@@ -612,7 +614,7 @@ function changeOptionOrder (uuid, direction, wizard = false) {
 function populateOptionEditor (id) {
   // Take the details from an option and fill in the editor GUI
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+  const workingDefinition = exSetup.config.workingDefinition
   const details = workingDefinition.options[id]
   document.getElementById('optionEditor').setAttribute('data-option-id', id)
 
@@ -725,17 +727,20 @@ for (const el of document.getElementsByClassName('option-input')) {
     const field = event.target.getAttribute('data-field')
     if (id == null) return
     exSetup.updateWorkingDefinition(['options', id, field], event.target.value)
-    document.getElementById('OptionHeaderText_' + id).innerHTML = formatOptionHeader($('#definitionSaveButton').data('workingDefinition').options[id])
+    document.getElementById('OptionHeaderText_' + id).innerHTML = formatOptionHeader(exSetup.config.workingDefinition.options[id])
     exSetup.previewDefinition(true)
   })
 }
 
 // Style fields
-$('.color-picker').change(function () {
-  const value = $(this).val().trim()
-  exSetup.updateWorkingDefinition(['style', 'color', $(this).data('property')], value)
-  exSetup.previewDefinition(true)
-})
+for (const el of document.querySelectorAll('.color-picker')) {
+  el.addEventListener('change', function () {
+    const value = this.value.trim()
+    const property = this.dataset.property
+    exSetup.updateWorkingDefinition(['style', 'color', property], value)
+    exSetup.previewDefinition(true)
+  })
+}
 
 document.getElementById('manageFontsButton').addEventListener('click', (event) => {
   exFileSelect.createFileSelectionModal({ filetypes: ['otf', 'ttf', 'woff', 'woff2'], manage: true })

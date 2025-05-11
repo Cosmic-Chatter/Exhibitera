@@ -67,8 +67,8 @@ function editDefinition (uuid = '') {
   clearDefinitionInput(false)
   const def = exSetup.getDefinitionByUUID(uuid)
 
-  $('#definitionSaveButton').data('initialDefinition', structuredClone(def))
-  $('#definitionSaveButton').data('workingDefinition', structuredClone(def))
+  exSetup.config.initialDefinition = structuredClone(def)
+  exSetup.config.workingDefinition = structuredClone(def)
 
   document.getElementById('definitionNameInput').value = def.name
 
@@ -132,9 +132,6 @@ function rebuildLanguageElements (langOrder) {
   for (const lang of langOrder) {
     if (first == null) first = lang
     createLanguageTab(lang)
-
-    // document.getElementById('languagePane_' + lang).classList.remove('active', 'show')
-    // $('#headerText' + '_' + lang).val(langDef.header_text)
   }
 
   if (first != null) {
@@ -146,7 +143,7 @@ function rebuildLanguageElements (langOrder) {
 function createLanguageTab (code) {
   // Create a new language tab for the given details.
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+  const workingDefinition = exSetup.config.workingDefinition
 
   // Create the tab button
   const tabButton = document.createElement('button')
@@ -157,7 +154,7 @@ function createLanguageTab (code) {
   tabButton.setAttribute('type', 'button')
   tabButton.setAttribute('role', 'tab')
   tabButton.innerHTML = exLang.getLanguageDisplayName(code, true)
-  $('#languageNav').append(tabButton)
+  document.getElementById('languageNav').appendChild(tabButton)
 
   // Create corresponding pane
   const tabPane = document.createElement('div')
@@ -165,7 +162,7 @@ function createLanguageTab (code) {
   tabPane.setAttribute('id', 'languagePane_' + code)
   tabPane.setAttribute('role', 'tabpanel')
   tabPane.setAttribute('aria-labelledby', 'languageTab_' + code)
-  $('#languageNavContent').append(tabPane)
+  document.getElementById('languageNavContent').appendChild(tabPane)
 
   const row = document.createElement('div')
   row.classList = 'row gy-2 mt-2 mb-3'
@@ -238,40 +235,42 @@ function createLanguageTab (code) {
   }
 
   // Switch to this new tab
-  $(tabButton).click()
+  tabButton.click()
 }
 
 function deleteLanguageTab (lang) {
   // Delete the given language tab.
 
-  delete $('#definitionSaveButton').data('workingDefinition').languages[lang]
-  $('#languageTab_' + lang).remove()
-  $('#languagePane_' + lang).remove()
-  $('.language-tab').click()
+  delete exSetup.config.workingDefinition.languages[lang]
+
+  const tab = document.getElementById('languageTab_' + lang)
+  if (tab) tab.remove()
+
+  const pane = document.getElementById('languagePane_' + lang)
+  if (pane) pane.remove()
+
+  const languageTabs = document.querySelectorAll('.language-tab')
+  if (languageTabs.length > 0) languageTabs[0].click()
 }
 
 function createInfoStationTab (lang, uuid = '') {
   // Create a new InfoStation tab and attach it to the given language.
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
-
-  if (('tabs' in workingDefinition.languages[lang]) === false) {
-    workingDefinition.languages[lang].tabs = {}
+  if (('tabs' in exSetup.config.workingDefinition.languages[lang]) === false) {
+    exSetup.config.workingDefinition.languages[lang].tabs = {}
   }
-  if (('tab_order' in workingDefinition.languages[lang]) === false) {
-    workingDefinition.languages[lang].tab_order = []
+  if (('tab_order' in exSetup.config.workingDefinition.languages[lang]) === false) {
+    exSetup.config.workingDefinition.languages[lang].tab_order = []
   }
   if (uuid === '') {
     uuid = exUtilities.uuid()
-    workingDefinition.languages[lang].tabs[uuid] = {
+    exSetup.config.workingDefinition.languages[lang].tabs[uuid] = {
       button_text: '',
       type: 'text',
       text: '',
       uuid
     }
-    workingDefinition.languages[lang].tab_order.push(uuid)
-
-    $('#definitionSaveButton').data('workingDefinition', structuredClone(workingDefinition))
+    exSetup.config.workingDefinition.languages[lang].tab_order.push(uuid)
   }
 
   // Build the GUI
@@ -283,10 +282,10 @@ function createInfoStationTab (lang, uuid = '') {
   tabButton.setAttribute('data-bs-target', '#infostationPane_' + lang + '_' + uuid)
   tabButton.setAttribute('type', 'button')
   tabButton.setAttribute('role', 'tab')
-  if (workingDefinition.languages[lang].tabs[uuid].button_text === '') {
-    tabButton.innerHTML = 'New tab'
+  if (exSetup.config.workingDefinition.languages[lang].tabs[uuid].button_text === '') {
+    tabButton.innerText = 'New tab'
   } else {
-    tabButton.innerHTML = workingDefinition.languages[lang].tabs[uuid].button_text
+    tabButton.innerText = exSetup.config.workingDefinition.languages[lang].tabs[uuid].button_text
   }
 
   document.getElementById('subTabNav_' + lang).appendChild(tabButton)
@@ -320,7 +319,7 @@ function createInfoStationTab (lang, uuid = '') {
   deleteButton.innerHTML = 'Delete tab'
 
   deleteCol.appendChild(deleteButton)
-  $(deleteButton).popover()
+  const popover = new bootstrap.Popover(deleteButton)
 
   const buttonTextCol = document.createElement('div')
   buttonTextCol.classList = 'col-12 col-md-6'
@@ -339,7 +338,7 @@ function createInfoStationTab (lang, uuid = '') {
   buttonTextCol.appendChild(buttonTextInput)
 
   const titleEditor = new exMarkdown.ExhibiteraMarkdownEditor({
-    content: workingDefinition.languages[lang].tabs[uuid].button_text ?? '',
+    content: exSetup.config.workingDefinition.languages[lang].tabs[uuid].button_text ?? '',
     editorDiv: buttonTextInput,
     commandDiv: buttonTextCommandBar,
     commands: ['basic'],
@@ -373,7 +372,7 @@ function createInfoStationTab (lang, uuid = '') {
   textCol.appendChild(textInput)
 
   const textEditor = new exMarkdown.ExhibiteraMarkdownEditor({
-    content: workingDefinition.languages[lang].tabs[uuid].text,
+    content: exSetup.config.workingDefinition.languages[lang].tabs[uuid].text,
     editorDiv: textInput,
     commandDiv: textInputCMD,
     callback: (content) => {
@@ -382,7 +381,7 @@ function createInfoStationTab (lang, uuid = '') {
     }
   })
 
-  $(tabButton).click()
+  tabButton.click()
   exSetup.previewDefinition(true)
 
   // Activate tooltips
@@ -395,49 +394,31 @@ function createInfoStationTab (lang, uuid = '') {
 function deleteInfoStationTab (lang, uuid) {
   // Delete the given InfoStation tab
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
-  delete workingDefinition.languages[lang].tabs[uuid]
-  const index = workingDefinition.languages[lang].tab_order.indexOf(parseInt(uuid))
-  workingDefinition.languages[lang].tab_order.splice(index, 1)
-  $('#infostationTab_' + lang + '_' + uuid).remove()
-  $('#infostationPane_' + lang + '_' + uuid).remove()
-  $('.infostation-tab').click()
+  delete exSetup.config.workingDefinition.languages[lang].tabs[uuid]
+  const index = exSetup.config.workingDefinition.languages[lang].tab_order.indexOf(parseInt(uuid))
+  exSetup.config.workingDefinition.languages[lang].tab_order.splice(index, 1)
+
+  const tabElement = document.getElementById(`infostationTab_${lang}_${uuid}`)
+  if (tabElement) tabElement.remove()
+
+  const paneElement = document.getElementById(`infostationPane_${lang}_${uuid}`)
+  if (paneElement) paneElement.remove()
+
+  const tabButtons = document.querySelectorAll('.infostation-tab')
+  if (tabButtons.length > 0) tabButtons[0].click()
 }
 
 function onAttractorFileChange () {
   // Called when a new image or video is selected.
 
-  const file = document.getElementById('attractorSelect').getAttribute('data-filename')
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
-
-  workingDefinition.attractor = file
-  $('#definitionSaveButton').data('workingDefinition', structuredClone(workingDefinition))
+  const file = document.getElementById('attractorSelect').dataset.filename
+  exSetup.config.workingDefinition.attractor = file
 
   exSetup.previewDefinition(true)
 }
 
 // Set helper address for use with exCommon.makeHelperRequest
 exCommon.config.helperAddress = window.location.origin
-
-// Set up the color pickers
-function setUpColorPickers () {
-  Coloris({
-    el: '.coloris',
-    theme: 'pill',
-    themeMode: 'dark',
-    formatToggle: false,
-    clearButton: false,
-    swatches: [
-      '#000',
-      '#22222E',
-      '#393A5A',
-      '#719abf',
-      '#fff'
-    ]
-  })
-}
-// Call with a slight delay to make sure the elements are loaded
-setTimeout(setUpColorPickers, 100)
 
 // Add event listeners
 // -------------------------------------------------------------
@@ -481,11 +462,15 @@ document.getElementById('headerSizeSlider').addEventListener('change', (event) =
   exSetup.previewDefinition(true)
 })
 
-$('.coloris').change(function () {
-  const value = $(this).val().trim()
-  exSetup.updateWorkingDefinition(['style', 'color', $(this).data('property')], value)
-  exSetup.previewDefinition(true)
-})
+const colorInputs = document.querySelectorAll('.coloris')
+for (const input of colorInputs) {
+  input.addEventListener('change', function () {
+    const value = this.value.trim()
+    exSetup.updateWorkingDefinition(['style', 'color', this.dataset.property], value)
+    exSetup.previewDefinition(true)
+  })
+}
+
 document.getElementById('manageFontsButton').addEventListener('click', (event) => {
   exFileSelect.createFileSelectionModal({ filetypes: ['otf', 'ttf', 'woff', 'woff2'], manage: true })
     .then(exSetup.refreshAdvancedFontPickers)
@@ -519,13 +504,6 @@ document.addEventListener('click', (event) => {
     exSetup.previewDefinition(true)
   }
 })
-
-// Set color mode
-if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-  document.querySelector('html').setAttribute('data-bs-theme', 'dark')
-} else {
-  document.querySelector('html').setAttribute('data-bs-theme', 'light')
-}
 
 // Set helper address for use with exCommon.makeHelperRequest
 exCommon.config.helperAddress = window.location.origin

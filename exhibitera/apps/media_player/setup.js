@@ -23,7 +23,7 @@ async function clearDefinitionInput (full = true) {
   if (full === true) exSetup.initializeDefinition()
 
   // Definition details
-  $('#definitionNameInput').val('')
+  document.getElementById('definitionNameInput').value = ''
 
   // Reset style options
   const colorInputs = ['subtitleColor']
@@ -61,8 +61,8 @@ function editDefinition (uuid = '') {
   clearDefinitionInput(false)
   const def = exSetup.getDefinitionByUUID(uuid)
 
-  $('#definitionSaveButton').data('initialDefinition', structuredClone(def))
-  $('#definitionSaveButton').data('workingDefinition', structuredClone(def))
+  exSetup.config.initialDefinition = structuredClone(def)
+  exSetup.config.workingDefinition = structuredClone(def)
 
   document.getElementById('definitionNameInput').value = def.name
   rebuildItemList()
@@ -89,7 +89,7 @@ function editDefinition (uuid = '') {
 function createThumbnail () {
   // Ask the helper to createa video thumbnail based on the thumbnails of all the selected media.
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+  const workingDefinition = exSetup.config.workingDefinition
   const files = []
   for (const uuid of workingDefinition?.content_order ?? []) {
     if (exFiles.guessMimetype(workingDefinition.content[uuid].filename) === 'audio') {
@@ -114,7 +114,7 @@ function createThumbnail () {
 function addItem () {
   // Add an item to the working defintiion
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+  const workingDefinition = exSetup.config.workingDefinition
 
   const item = {
     uuid: exUtilities.uuid(),
@@ -125,7 +125,6 @@ function addItem () {
   workingDefinition.content_order.push(item.uuid)
 
   createItemHTML(item, workingDefinition.content_order.length)
-  console.log($('#definitionSaveButton').data('workingDefinition'))
 }
 
 function createItemHTML (item, num) {
@@ -514,15 +513,14 @@ function createItemHTML (item, num) {
 function showConfigureSubtitlesModal (itemUUID) {
   // Prepare and show the modal for setting up video subtitles.
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
   const modal = document.getElementById('configureSubtitlesModal')
   const selectButton = document.getElementById('configureSubtitlesModalSelectButton')
 
   modal.setAttribute('data-uuid', itemUUID)
 
   // Add any existing subtitles
-  if (workingDefinition?.content?.[itemUUID]?.subtitles?.filename) {
-    selectButton.innerHTML = workingDefinition.content[itemUUID].subtitles.filename
+  if (exSetup.config.workingDefinition?.content?.[itemUUID]?.subtitles?.filename) {
+    selectButton.innerHTML = exSetup.config.workingDefinition.content[itemUUID].subtitles.filename
   } else {
     selectButton.innerHTML = 'Select subtitles file'
   }
@@ -558,8 +556,6 @@ function submitSubtitlesFromModal () {
 function showAnnotateFromJSONModal (itemUUID, annotationUUID = null) {
   // Prepare and show the modal for creating an annotation from JSON.
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
-
   const urlInput = document.getElementById('annotateFromJSONModalURLInput')
   const path = document.getElementById('annotateFromJSONModalPath')
   const title = document.getElementById('annotateFromJSONModalTitle')
@@ -570,7 +566,7 @@ function showAnnotateFromJSONModal (itemUUID, annotationUUID = null) {
   if (annotationUUID != null) {
     // We are editing rather than creating new
 
-    const details = workingDefinition.content[itemUUID].annotations[annotationUUID]
+    const details = exSetup.config.workingDefinition.content[itemUUID].annotations[annotationUUID]
     title.innerText = 'Update a JSON annotation'
     button.innerText = 'Update'
     path.value = details.path.join(' > ')
@@ -607,6 +603,7 @@ function populateAnnotateFromJSONModal (file, type = 'file') {
   if (type === 'file') {
     exCommon.makeHelperRequest({
       method: 'GET',
+      api: '',
       endpoint: '/content/' + file,
       noCache: true
     })
@@ -614,14 +611,21 @@ function populateAnnotateFromJSONModal (file, type = 'file') {
         createTreeSubEntries(parent, text)
       })
   } else if (type === 'url') {
-    $.getJSON(file, function (text) {
-      createTreeSubEntries(parent, text)
-    })
-      .fail((error) => {
+    fetch(file)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(response.statusText || 'Fetch error')
+        }
+        return response.json()
+      })
+      .then(text => {
+        createTreeSubEntries(parent, text)
+      })
+      .catch(error => {
         console.log(error)
-        if (error.statusText === 'Not Found') {
+        if (error.message === 'Not Found') {
           parent.innerHTML = 'The entered URL is unreachable.'
-        } else if (error.statusText === 'parsererror') {
+        } else if (error.message === 'Unexpected token' || error instanceof SyntaxError) {
           parent.innerHTML = 'The entered URL does not return valid JSON.'
         } else {
           parent.innerHTML = 'An unknown error has occurred. This often occurs because a CORS request has been blocked. Make sure the server you are accessing allows cross-origin requests.'
@@ -675,7 +679,7 @@ function selectAnnotationJSONPath (path) {
 function addAnnotationFromModal () {
   // Collect the needed information and add the annotation.
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+  const workingDefinition = exSetup.config.workingDefinition
 
   const el = document.getElementById('annotateFromJSONModalPath')
   const itemUUID = el.getAttribute('data-itemUUID')
@@ -926,7 +930,7 @@ function createAnnoationHTML (itemUUID, details) {
   deleteAction.addEventListener('click', () => {
     document.getElementById('deleteAnnotationModal').setAttribute('data-annotationUUID', details.uuid)
     document.getElementById('deleteAnnotationModal').setAttribute('data-itemUUID', itemUUID)
-    $('#deleteAnnotationModal').modal('show')
+    exUtilities.showModal('#deleteAnnotationModal')
   })
   li1.appendChild(deleteAction)
 
@@ -1095,18 +1099,17 @@ function setItemContent (uuid, itemEl, file, type = 'file') {
 function deleteitem (uuid) {
   // Remove this item from the working defintion and destroy its GUI representation.
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+  const workingDefinition = exSetup.config.workingDefinition
 
   delete workingDefinition.content[uuid]
   workingDefinition.content_order = workingDefinition.content_order.filter(item => item !== uuid)
   rebuildItemList()
-  console.log(workingDefinition)
 }
 
 function changeItemOrder (uuid, dir) {
   // Move the location of the given item.
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+  const workingDefinition = exSetup.config.workingDefinition
 
   const uuidIndex = workingDefinition.content_order.indexOf(uuid)
   if (dir === -1 && uuidIndex === 0) return
@@ -1122,7 +1125,7 @@ function changeItemOrder (uuid, dir) {
 function rebuildItemList () {
   // Use the definition to rebuild the GUI representations of each item
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+  const workingDefinition = exSetup.config.workingDefinition
 
   // Clear any existing items
   document.getElementById('itemList').innerHTML = ''
@@ -1179,7 +1182,7 @@ document.getElementById('configureSubtitlesModalDeleteButton').addEventListener(
   const itemUUID = modal.getAttribute('data-uuid')
   document.getElementById('subttileButton_' + itemUUID).innerHTML = 'Add subtitles'
   exSetup.updateWorkingDefinition(['content', itemUUID, 'subtitles'], null)
-  $(modal).modal('hide')
+  exUtilities.hideModal(modal)
   exSetup.previewDefinition(true)
 })
 
@@ -1199,16 +1202,15 @@ document.getElementById('annotateFromJSONModalFetchURLButton').addEventListener(
 })
 document.getElementById('deleteAnnotationModalSubmitButton').addEventListener('click', () => {
   const modal = document.getElementById('deleteAnnotationModal')
-  const definition = $('#definitionSaveButton').data('workingDefinition')
   const itemUUID = modal.getAttribute('data-itemUUID')
   const annotationUUID = modal.getAttribute('data-annotationUUID')
-  const annotations = definition.content[itemUUID].annotations
+  const annotations = exSetup.config.workingDefinition.content[itemUUID].annotations
   delete annotations[annotationUUID]
 
   exSetup.updateWorkingDefinition(['content', itemUUID, 'annotations'], annotations)
   exSetup.previewDefinition(true)
   document.getElementById('Annotation' + annotationUUID).remove()
-  $(modal).modal('hide')
+  exUtilities.hideModal(modal)
 })
 document.getElementById('annotateFromJSONModalCloseButton').addEventListener('click', () => {
   // When we close the annotate from JSON modal, clear the tree, as complex JSON structures can limit performance.

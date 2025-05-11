@@ -37,7 +37,7 @@ function resetWizardFields () {
 async function wizardForward (currentPage) {
   // Check if the wizard is ready to advance and perform the move
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+  const workingDefinition = exSetup.config.workingDefinition
 
   if (currentPage === 'Welcome') {
     const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
@@ -128,7 +128,7 @@ function wizardGoTo (page) {
 async function wizardCreateDefinition () {
   // Use the provided details to build a definition file.
 
-  const uuid = $('#definitionSaveButton').data('workingDefinition').uuid
+  const uuid = exSetup.config.workingDefinition.uuid
 
   // Definition name
   const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
@@ -149,7 +149,7 @@ function wizardBuildPairDetailsPage () {
   // Take the working definition and build a nested set of tabs for the user
   // to add details for each language.
 
-  const workingDef = $('#definitionSaveButton').data('workingDefinition')
+  const workingDef = exSetup.config.workingDefinition
 
   const nav = document.getElementById('wizardPairDetailsNav')
   nav.innerHTML = ''
@@ -282,9 +282,9 @@ function editDefinition (uuid = '') {
 
   clearDefinitionInput(false)
   const def = exSetup.getDefinitionByUUID(uuid)
-  console.log(def)
-  $('#definitionSaveButton').data('initialDefinition', structuredClone(def))
-  $('#definitionSaveButton').data('workingDefinition', structuredClone(def))
+
+  exSetup.config.initialDefinition = structuredClone(def)
+  exSetup.config.workingDefinition = structuredClone(def)
 
   document.getElementById('definitionNameInput').value = def.name
 
@@ -330,7 +330,7 @@ function rebuildLanguageElements () {
 function addItem (wizard = false) {
   // Add an item to the working defintiion
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+  const workingDefinition = exSetup.config.workingDefinition
 
   if (workingDefinition.content_order.length > 7) {
     // We've reached the max number of items
@@ -356,7 +356,7 @@ function addItem (wizard = false) {
 function createItemHTML (item, num, show = false, wizard = false) {
   // Create an item tab and pane
 
-  const def = $('#definitionSaveButton').data('workingDefinition')
+  const def = exSetup.config.workingDefinition
 
   // Create the tab button
   const tabButton = document.createElement('button')
@@ -611,7 +611,7 @@ function createItemHTML (item, num, show = false, wizard = false) {
 function createItemLocalizationHTML (item, pane, itemNum) {
   // Create the GUI for editing the localization of an item.
 
-  const def = $('#definitionSaveButton').data('workingDefinition')
+  const def = exSetup.config.workingDefinition
 
   // Make sure we have at least one language
   if (def.language_order.length === 0) {
@@ -825,7 +825,7 @@ function createItemLocalizationHTML (item, pane, itemNum) {
 function createHomeTextLocalizationHTML (tabList = null, navContent = null) {
   // Create the GUI for editing the localization of the home screen text.
 
-  const def = $('#definitionSaveButton').data('workingDefinition')
+  const def = exSetup.config.workingDefinition
 
   // Get the basic elements
   if (tabList == null) tabList = document.getElementById('homeTextNav')
@@ -923,7 +923,7 @@ function createHomeTextLocalizationHTML (tabList = null, navContent = null) {
 function deleteItem (uuid, wizard = false) {
   // Remove this item from the working defintion and destroy its GUI representation.
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+  const workingDefinition = exSetup.config.workingDefinition
 
   delete workingDefinition.content[uuid]
   workingDefinition.content_order = workingDefinition.content_order.filter(item => item !== uuid)
@@ -936,7 +936,7 @@ function deleteItem (uuid, wizard = false) {
 function changeItemOrder (uuid, dir) {
   // Move the location of the given item.
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+  const workingDefinition = exSetup.config.workingDefinition
 
   const uuidIndex = workingDefinition.content_order.indexOf(uuid)
   if (dir === -1 && uuidIndex === 0) return
@@ -952,7 +952,7 @@ function changeItemOrder (uuid, dir) {
 function rebuildItemList () {
   // Use the definition to rebuild the GUI representations of each item
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+  const workingDefinition = exSetup.config.workingDefinition
 
   // Clear any existing items
   document.getElementById('contentNav').innerHTML = ''
@@ -970,10 +970,7 @@ function onAttractorFileChange () {
   // Called when a new image or video is selected.
 
   const file = document.getElementById('attractorSelect').dataset.filename
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
-
-  workingDefinition.attractor = file
-  $('#definitionSaveButton').data('workingDefinition', structuredClone(workingDefinition))
+  exSetup.config.workingDefinition.attractor = file
 
   exSetup.previewDefinition(true)
 }

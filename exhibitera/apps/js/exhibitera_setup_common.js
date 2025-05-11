@@ -21,9 +21,11 @@ HTMLElement.prototype.visibleHeight = function () {
 export const config = {
   availableDefinitions: {},
   clearDefinition: null,
+  initialDefinition: null,
   loadDefinition: null,
   onDefinitionSave: null,
   fontCache: {}, // Keys with any value indicate that font has already been made
+  workingDefinition: null,
   languages: [
     { code: 'af', name: 'Afrikaans', name_en: 'Afrikaans' },
     { code: 'sq', name: 'Shqip', name_en: 'Albanian' },
@@ -147,20 +149,24 @@ export async function configure (options) {
 
   // Set up the color pickers
   function setUpColorPickers () {
-    Coloris({
-      el: '.coloris',
-      theme: 'pill',
-      themeMode: 'dark',
-      formatToggle: false,
-      clearButton: false,
-      swatches: [
-        '#000',
-        '#22222E',
-        '#393A5A',
-        '#719abf',
-        '#fff'
-      ]
-    })
+    try {
+      Coloris({
+        el: '.coloris',
+        theme: 'pill',
+        themeMode: 'dark',
+        formatToggle: false,
+        clearButton: false,
+        swatches: [
+          '#000',
+          '#22222E',
+          '#393A5A',
+          '#719abf',
+          '#fff'
+        ]
+      })
+    } catch {
+    // Will fail if we aren't using any color pickers
+    }
   }
   // Call with a slight delay to make sure the elements are loaded
   setTimeout(setUpColorPickers, 100)
@@ -287,7 +293,8 @@ export function configureFromQueryString () {
   } else {
     if (config.clearDefinition != null) config.clearDefinition()
     if (config.loggedIn) {
-      exUtilities.showModal('#appWelcomeModal')
+      const modal = document.getElementById('appWelcomeModal')
+      if (modal) exUtilities.showModal()
     }
   }
 }
@@ -373,8 +380,8 @@ export function initializeDefinition () {
   const temp = structuredClone(config.blankDefinition)
   if (temp == null) return
   temp.uuid = exUtilities.uuid()
-  $('#definitionSaveButton').data('initialDefinition', temp)
-  $('#definitionSaveButton').data('workingDefinition', temp)
+  config.initialDefinition = temp
+  config.workingDefinition = temp
   previewDefinition(false)
 }
 
@@ -425,35 +432,34 @@ function cloneDefinition () {
 
 export function updateWorkingDefinition (property, value) {
   // Update a field in the working defintion.
-  // 'property' should be an array of subproperties, e.g., ["style", "color", 'headerColor']
-  // for definition.style.color.headerColor
+  // 'property' should be an array of subproperties, e.g., ["style", "color", 'header']
+  // for definition.style.color.header
 
   if (property && property[0].length <= 1) {
-    // occasionally the color library is providing a poperty with a large amount of single entries that clog up the definition json
+    // occasionally the color library is providing a property with a large amount of single entries that clog up the definition json
     console.log(`skipping ${property}`)
     return
   }
-  exUtilities.setObjectProperty($('#definitionSaveButton').data('workingDefinition'), property, value)
+  exUtilities.setObjectProperty(config.workingDefinition, property, value)
 }
 
 export async function saveDefinition (name = '') {
   // Collect inputted information to save the definition
 
-  const definition = $('#definitionSaveButton').data('workingDefinition')
-  const initialDefinition = $('#definitionSaveButton').data('initialDefinition')
+  const definition = config.workingDefinition
+  const initialDefinition = config.initialDefinition
   definition.app = config.app
   if (name === '') definition.name = document.getElementById('definitionNameInput').value
   definition.uuid = initialDefinition.uuid
-  console.log(name, definition)
 
   return exCommon.writeDefinition(definition)
     .then((result) => {
-      if ('success' in result && result.success === true) {
+      if (result?.success === true) {
         // Update the UUID in case we have created a new definition
-        $('#definitionSaveButton').data('initialDefinition', structuredClone(definition))
+        config.initialDefinition = structuredClone(definition)
 
         // If we have a completion handler, call it with the definition
-        if (config.onDefinitionSave != null) config.onDefinitionSave($('#definitionSaveButton').data('workingDefinition'))
+        if (config.onDefinitionSave != null) config.onDefinitionSave(config.workingDefinition)
         exCommon.getAvailableDefinitions(config.app)
           .then((response) => {
             if ('success' in response && response.success === true) {
@@ -539,10 +545,9 @@ function createEventListeners () {
   })
 
   document.getElementById('refreshOnChangeCheckbox').addEventListener('change', () => {
-    const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
     let previewRatio = '16x9'
     const autoRefresh = refreshOnChangeCheckbox.checked
-    if ('setup' in workingDefinition) previewRatio = workingDefinition.setup.preview_ratio
+    if (config.workingDefinition?.setup) previewRatio = config.workingDefinition.setup.preview_ratio
     if (autoRefresh === true) configurePreview(previewRatio, autoRefresh)
   })
 
@@ -666,7 +671,7 @@ export function previewDefinition (automatic = false) {
     return
   }
 
-  const def = structuredClone($('#definitionSaveButton').data('workingDefinition'))
+  const def = structuredClone(config.workingDefinition)
 
   // Set the uuid to a temp one
   def.uuid = '__preview_' + config.app

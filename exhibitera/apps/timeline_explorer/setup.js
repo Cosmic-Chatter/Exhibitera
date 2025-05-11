@@ -187,13 +187,13 @@ async function wizardCreateDefinition () {
   //   exSetup.updateWorkingDefinition(['setup'], { auto_refresh: true, preview_ratio: '9x16' })
   // }
 
-  $('#setupWizardModal').modal('hide')
+  exUtilities.hideModal('#setupWizardModal')
 
   if (orientation === 'horizontal') {
     exSetup.configurePreview('16x9', true)
   } else exSetup.configurePreview('9x16', true)
 
-  const uuid = $('#definitionSaveButton').data('workingDefinition').uuid
+  const uuid = exSetup.config.workingDefinition.uuid
 
   await exSetup.saveDefinition(defName)
   const result = await exCommon.getAvailableDefinitions('timeline_explorer')
@@ -248,7 +248,7 @@ async function clearDefinitionInput (full = true) {
   const spreadsheetSelect = document.getElementById('spreadsheetSelect')
   spreadsheetSelect.innerText = 'Select file'
   spreadsheetSelect.dataset.filename = ''
-  $(spreadsheetSelect).data('availableKeys', [])
+  spreadsheetSelect.dataset.availableKeys = []
 
   // Language
   exLang.clearLanguagePicker(document.getElementById('language-picker'))
@@ -263,9 +263,10 @@ async function clearDefinitionInput (full = true) {
   // Reset style options
   const colorInputs = ['textColor', 'headerColor', 'footerColor', 'itemColor', 'lineColor']
   colorInputs.forEach((input) => {
-    const el = $('#colorPicker_' + input)
-    el.val(el.data('default'))
-    document.querySelector('#colorPicker_' + input).dispatchEvent(new Event('input', { bubbles: true }))
+    console.log(input)
+    const el = document.getElementById('colorPicker_' + input)
+    el.value = el.dataset.default
+    el.dispatchEvent(new Event('input', { bubbles: true }))
   })
 
   exSetup.updateAdvancedColorPicker('style>background', {
@@ -291,8 +292,8 @@ function editDefinition (uuid = '') {
 
   const def = exSetup.getDefinitionByUUID(uuid)
 
-  $('#definitionSaveButton').data('initialDefinition', structuredClone(def))
-  $('#definitionSaveButton').data('workingDefinition', structuredClone(def))
+  exSetup.config.initialDefinition = structuredClone(def)
+  exSetup.config.workingDefinition = structuredClone(def)
 
   document.getElementById('definitionNameInput').value = def.name
 
@@ -356,7 +357,7 @@ function createLanguageTab (code) {
   // Create a new language tab for the given details.
   // Set first=true when creating the first tab
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+  const workingDefinition = exSetup.config.workingDefinition
 
   // Create the tab button
   const tabButton = document.createElement('button')
@@ -367,7 +368,7 @@ function createLanguageTab (code) {
   tabButton.setAttribute('type', 'button')
   tabButton.setAttribute('role', 'tab')
   tabButton.innerHTML = exLang.getLanguageDisplayName(code, true)
-  $('#languageNav').append(tabButton)
+  document.getElementById('languageNav').appendChild(tabButton)
 
   // Create corresponding pane
   const tabPane = document.createElement('div')
@@ -375,7 +376,7 @@ function createLanguageTab (code) {
   tabPane.setAttribute('id', 'languagePane_' + code)
   tabPane.setAttribute('role', 'tabpanel')
   tabPane.setAttribute('aria-labelledby', 'languageTab_' + code)
-  $('#languageNavContent').append(tabPane)
+  document.getElementById('languageNavContent').appendChild(tabPane)
 
   const row = document.createElement('div')
   row.classList = 'row gy-2 mt-2 mb-3'
@@ -440,7 +441,7 @@ function createLanguageTab (code) {
     }
     input.setAttribute('id', langKey)
     input.addEventListener('change', function () {
-      const value = $(this).val().trim()
+      const value = this.value.trim()
       exSetup.updateWorkingDefinition(['languages', code, inputFields[key].property], value)
       exSetup.previewDefinition(true)
     })
@@ -448,10 +449,8 @@ function createLanguageTab (code) {
   })
 
   // If we have already loaded a spreadhseet, populate the key options
-  const keyList = $('#spreadsheetSelect').data('availableKeys')
-  if (keyList != null) {
-    populateKeySelects(keyList)
-  }
+  const keyList = document.getElementById('spreadsheetSelect').dataset.availableKeys
+  if (keyList != null) populateKeySelects(keyList)
 
   // Activate tooltips
   const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
@@ -467,11 +466,8 @@ function createLanguageTab (code) {
 function onAttractorFileChange () {
   // Called when a new image or video is selected.
 
-  const file = document.getElementById('attractorSelect').getAttribute('data-filename')
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
-
-  workingDefinition.attractor = file
-  $('#definitionSaveButton').data('workingDefinition', structuredClone(workingDefinition))
+  const file = document.getElementById('attractorSelect').dataset.filename
+  exSetup.config.workingDefinition.attractor = file
 
   exSetup.previewDefinition(true)
 }
@@ -479,15 +475,9 @@ function onAttractorFileChange () {
 function onSpreadsheetFileChange () {
   // Called when a new spreadsheet is selected. Get the csv file and populate the options.
 
-  const file = document.getElementById('spreadsheetSelect').getAttribute('data-filename')
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
-
-  if (file == null) {
-    return
-  } else {
-    workingDefinition.spreadsheet = file
-    $('#definitionSaveButton').data('workingDefinition', structuredClone(workingDefinition))
-  }
+  const file = document.getElementById('spreadsheetSelect').dataset.filename
+  if (file == null) return
+  exSetup.config.workingDefinition.spreadsheet = file
 
   exCommon.makeHelperRequest({
     api: '',
@@ -506,7 +496,7 @@ function onSpreadsheetFileChange () {
       }
       const spreadsheet = csvAsJSON.json
       const keys = Object.keys(spreadsheet[0])
-      $('#spreadsheetSelect').data('availableKeys', keys)
+      document.getElementById('spreadsheetSelect').dataset.availableKeys = keys
       populateKeySelects(keys)
       exSetup.previewDefinition(true)
     })
@@ -515,7 +505,7 @@ function onSpreadsheetFileChange () {
 async function checkContentExists () {
   // Cross-check content from the spreadsheet with files in the content directory.
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+  const workingDefinition = exSetup.config.workingDefinition
   const imageKeys = []
   const missingContentField = document.getElementById('missingContentWarningField')
 
@@ -592,7 +582,7 @@ function _checkContentExists (spreadsheet, keys) {
 function populateKeySelects (keyList) {
   // Take a list of keys and use it to populate all the selects used to match keys to parameters.
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+  const workingDefinition = exSetup.config.workingDefinition
   if (('languages' in workingDefinition) === false) return
 
   for (const lang of Object.keys(workingDefinition.languages)) {
