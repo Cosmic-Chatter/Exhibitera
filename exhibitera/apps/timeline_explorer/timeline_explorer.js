@@ -21,7 +21,7 @@ function loadDefinition (def) {
   // Helper function to manage setting up the interface.
 
   // Tag the document with the defintion for later reference
-  $(document).data('timelineDefinition', def)
+  document.body.dataset.timelineDefinition = JSON.stringify(def)
 
   const root = document.querySelector(':root')
 
@@ -103,9 +103,9 @@ function loadDefinition (def) {
     noCache: true
   })
     .then((response) => {
-      $('#timelineContainer').empty()
+      document.getElementById('timelineContainer').innerText = ''
       const csvAsJSON = exFiles.csvToJSON(response).json
-      $(document).data('spreadsheet', csvAsJSON)
+      document.body.dataset.spreadsheet = JSON.stringify(csvAsJSON)
       localize(defaultLang)
     })
 
@@ -145,17 +145,21 @@ function adjustFontSize (increment) {
 function localize (lang) {
   // Use the spreadhseet and defintion to set the content to the given language
 
-  const spreadsheet = $(document).data('spreadsheet')
-  const definition = $(document).data('timelineDefinition')
+  let spreadsheet, definition
+  try {
+    spreadsheet = JSON.parse(document.body.dataset.spreadsheet)
+    definition = JSON.parse(document.body.dataset.timelineDefinition)
+  } catch {
+    // These might load undefined if we don't have a definition yet in the setup screen.
+    return
+  }
   const header = document.getElementById('headerText')
   const root = document.querySelector(':root')
 
   document.getElementById('timelineContainer').innerHTML = ''
-  if (spreadsheet != null) {
-    spreadsheet.forEach((entry) => {
-      createTimelineEntry(entry, lang)
-    })
-  }
+  spreadsheet.forEach((entry) => {
+    createTimelineEntry(entry, lang)
+  })
 
   const headerText = exMarkdown.formatText(definition?.languages?.[lang]?.header_text ?? '', { string: true, removeParagraph: true })
 
@@ -171,7 +175,7 @@ function localize (lang) {
 function createTimelineEntry (entry, langCode) {
   // Take the provided object and turn it into a set of HTML elements representing the entry.
 
-  const langDef = $(document).data('timelineDefinition').languages[langCode]
+  const langDef = JSON.parse(document.body.dataset.timelineDefinition).languages[langCode]
 
   const li = document.createElement('li')
 
@@ -315,12 +319,13 @@ function showAttractor () {
 window.addEventListener('load', configureVisibleElements)
 window.addEventListener('resize', configureVisibleElements)
 document.getElementById('timeline-pane').addEventListener('scroll', configureVisibleElements)
-$('#fontSizeDecreaseButton').click(function () {
+document.getElementById('fontSizeDecreaseButton').addEventListener('click', () => {
   adjustFontSize(-0.1)
 })
-$('#fontSizeIncreaseButton').click(function () {
-  adjustFontSize(0.1)
+document.getElementById('fontSizeIncreaseButton').addEventListener('click', () => {
+  adjustFontSize(-0.1)
 })
+
 document.getElementById('attractorOverlay').addEventListener('click', hideAttractor)
 document.addEventListener('touchstart', resetInactivityTimer)
 document.addEventListener('click', resetInactivityTimer)

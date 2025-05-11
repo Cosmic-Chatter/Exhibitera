@@ -511,7 +511,6 @@ export function loadDefinition (defName) {
   // Ask the helper for the given definition and return a promise containing it.
 
   config.currentDefinition = defName
-
   return makeHelperRequest({
     method: 'GET',
     endpoint: '/definitions/' + defName + '/load'

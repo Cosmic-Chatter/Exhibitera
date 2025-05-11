@@ -432,12 +432,13 @@ exCommon.configureApp({
 })
 
 // Create event listeners
-$('body')
-  .on('touchstart', handleTouchStart)
-  .on('touchmove', handleTouchMove)
-  .on('touchend', handleTouchEnd)
-  .on('wheel', handleScroll)
-  .on('keydown', handleKeyDown)
-  .on('mousedown', function (event) { handleTouchStart(event, false) })
-  .on('mousemove', function (event) { handleTouchMove(event, false) })
-  .on('mouseup', handleTouchEnd)
+const body = document.body
+
+body.addEventListener('touchstart', handleTouchStart)
+body.addEventListener('touchmove', handleTouchMove)
+body.addEventListener('touchend', handleTouchEnd)
+body.addEventListener('wheel', handleScroll)
+body.addEventListener('keydown', handleKeyDown)
+body.addEventListener('mousedown', (event) => handleTouchStart(event, false))
+body.addEventListener('mousemove', (event) => handleTouchMove(event, false))
+body.addEventListener('mouseup', handleTouchEnd)

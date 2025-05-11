@@ -349,13 +349,21 @@ function fetchAnnotation (details) {
           reject(new Error('Bad file fetch'))
         })
     } else {
-      $.getJSON(details.file, function (text) {
-        let subset = text
-        for (const key of details.path) {
-          subset = subset[key]
-        }
-        resolve(subset)
-      })
+      fetch(details.file)
+        .then(response => {
+          if (!response.ok) throw new Error('Network response was not ok')
+          return response.json()
+        })
+        .then(text => {
+          let subset = text
+          for (const key of details.path) {
+            subset = subset[key]
+          }
+          resolve(subset)
+        })
+        .catch(error => {
+          console.error('Error fetching JSON:', error)
+        })
     }
   })
 }

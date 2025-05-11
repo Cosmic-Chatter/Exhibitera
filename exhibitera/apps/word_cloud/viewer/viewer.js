@@ -1,4 +1,4 @@
-/* global swearList, pluralize, WordCloud */
+/* global profanityCleaner, pluralize, swearList, WordCloud */
 
 import * as exCommon from '../../js/exhibitera_app_common.js'
 import * as exMarkdown from '../../js/exhibitera_app_markdown.js'
@@ -8,13 +8,8 @@ function cleanText (text) {
   // to retain apostrophes that are part of names. E.g., ja'mar
   // Then, check the text for profanity
 
-  const profanityCheckingDiv = document.getElementById('profanityCheckingDiv')
-
   const simpleText = text.toLowerCase().replace(/'\B|[^a-z'? ]/g, ' ')
-  $(profanityCheckingDiv).html(simpleText).profanityFilter({ customSwears: swearList, replaceWith: '#' })
-  $(profanityCheckingDiv).html($('#profanityCheckingDiv').html().replace(/#/g, ''))
-
-  let cleanText = profanityCheckingDiv.innerHTML.trim()
+  let cleanText = profanityCleaner.clean(simpleText, { customBadWords: swearList, placeholder: '' }).trim()
   if (textCase === 'uppercase') cleanText = cleanText.toUpperCase()
 
   return cleanText
@@ -246,10 +241,10 @@ function loadDefinition (definition) {
 const divForWC = document.getElementById('wordCloudContainer')
 const WordCloudOptions = {
   color: 'random-dark',
-  gridSize: Math.round(16 * $(divForWC).width() / 1024),
+  gridSize: Math.round(16 * divForWC.offsetWidth / 1024),
   list: createWordList({ test: 1 }),
   weightFactor: function (size) {
-    return Math.pow(size, 2.3) * $(divForWC).width() / 1024
+    return Math.pow(size, 2.3) * divForWC.offsetWidth / 1024
   },
   drawOutOfBound: false,
   minRotation: 1.5708,

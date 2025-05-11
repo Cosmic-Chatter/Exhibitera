@@ -1,5 +1,5 @@
-/* global showdown */
 import exConfig from '../../common/config.js'
+import * as exUtilities from '../../common/utilities.js'
 import * as exFiles from '../../common/files.js'
 import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exMarkdown from '../js/exhibitera_app_markdown.js'
@@ -446,7 +446,7 @@ function resetActivityTimer () {
 
 function resetView () {
   localize(exCommon.config.definition?.language_order[0] || 'en-uk')
-  $('#aboutModal').modal('hide')
+  exUtilities.hideModal('#aboutModal')
   document.getElementById('slidingHandContainer').style.display = 'block'
 
   if (homeScreenDisabled === false) {

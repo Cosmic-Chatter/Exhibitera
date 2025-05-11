@@ -263,7 +263,6 @@ async function clearDefinitionInput (full = true) {
   // Reset style options
   const colorInputs = ['textColor', 'headerColor', 'footerColor', 'itemColor', 'lineColor']
   colorInputs.forEach((input) => {
-    console.log(input)
     const el = document.getElementById('colorPicker_' + input)
     el.value = el.dataset.default
     el.dispatchEvent(new Event('input', { bubbles: true }))

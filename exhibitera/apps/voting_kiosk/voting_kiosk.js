@@ -4,7 +4,6 @@ import * as exMarkdown from '../js/exhibitera_app_markdown.js'
 function buildLayout (definition) {
   // Take a layout defition in the form of a dictionary of dictionaries and
   // create cards for each element
-
   const buttons = definition.option_order
   const cardRow = document.getElementById('cardRow')
 
@@ -78,9 +77,10 @@ function buildLayout (definition) {
 
   // Make sure all the buttons are the same height
   const height = Math.floor((100 - nRows) / nRows)
-  $('.button-col').each(function () {
-    $(this).height(String(height) + '%')
-  })
+  const buttonCols = document.querySelectorAll('.button-col')
+  for (const el of buttonCols) {
+    el.style.height = `${height}%`
+  }
 }
 
 function getIcon (name) {
@@ -119,10 +119,19 @@ function buttonTouched (button, name) {
 
   setActive()
 
-  $(button).find('.card').removeClass('card-inactive').addClass('card-active')
-  setTimeout(function () {
-    $(button).find('.card').removeClass('card-active').addClass('card-inactive')
+  const cards = button.querySelectorAll('.card')
+  for (const card of cards) {
+    card.classList.remove('card-inactive')
+    card.classList.add('card-active')
+  }
+
+  setTimeout(() => {
+    for (const card of cards) {
+      card.classList.remove('card-active')
+      card.classList.add('card-inactive')
+    }
   }, 500)
+
   showSuccessMessage()
   logVote(name, 1)
 }
@@ -154,18 +163,20 @@ function checkConnection () {
     return
   }
 
+  const connectionWarning = document.getElementById('connectionWarning')
+
   exCommon.makeServerRequest(
     {
       method: 'GET',
       endpoint: '/system/checkConnection'
     })
     .then(() => {
-      $('#connectionWarning').hide()
+      connectionWarning.style.display = 'none'
       badConnection = false
     })
     .catch(() => {
       if (exCommon.config.debug) {
-        $('#connectionWarning').show()
+        connectionWarning.style.display = 'flex'
       }
       badConnection = true
     })
@@ -188,7 +199,7 @@ function loadDefinition (definition) {
 
   // If there are votes left for the old survey, make sure they are recorded
   sendData()
-
+  console.log(definition)
   configurationName = definition.name
 
   // Clear the vote categories
@@ -393,10 +404,28 @@ function sendData () {
 function showSuccessMessage () {
   // Animate the success message to briefly appear
 
-  $('#successMessage').css({ display: 'flex' })
-    .animate({ opacity: 1 }, 100)
-    .delay(100)
-    .animate({ opacity: 0 }, { duration: 1000, complete: function () { $('#successMessage').css({ display: 'none' }) } })
+  const successMessage = document.getElementById('successMessage')
+
+  // Show the element and set initial opacity
+  successMessage.style.display = 'flex'
+  successMessage.style.opacity = 0
+
+  // Fade in
+  requestAnimationFrame(() => {
+    successMessage.style.transition = 'opacity 100ms'
+    successMessage.style.opacity = 1
+
+    // Delay before fade out
+    setTimeout(() => {
+      successMessage.style.transition = 'opacity 1000ms'
+      successMessage.style.opacity = 0
+
+      // After fade out, hide the element
+      setTimeout(() => {
+        successMessage.style.display = 'none'
+      }, 1000) // match fade-out duration
+    }, 500) // initial delay after fade-in
+  })
 }
 
 // Disable pinch-to-zoom for browsers the ignore the viewport setting
