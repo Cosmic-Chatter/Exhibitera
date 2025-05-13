@@ -267,7 +267,7 @@ class BaseComponent {
     }
     // Remove the component from the exhibitComponents list
     const thisInstance = this
-    hubConfig.exhibitComponents = $.grep(hubConfig.exhibitComponents, function (el, idx) { return el.uuid === thisInstance.uuid }, true)
+    hubConfig.exhibitComponents = hubConfig.exhibitComponents.filter(el => el.uuid === thisInstance.uuid)
 
     // Cancel the pollingFunction
     clearInterval(this.pollingFunction)
@@ -530,7 +530,7 @@ class ExhibitComponentGroup {
   removeComponent (uuid) {
     // Remove a component based on its id
 
-    this.components = $.grep(this.components, function (el, idx) { return el.uuid === uuid }, true)
+    this.components = this.components.filter(el => el.uuid !== uuid)
   }
 
   getStatus () {
@@ -845,9 +845,10 @@ function componentCannotConnect (type = 'component') {
   // Hide things that can't be accessed when offline
   document.getElementById('componentSettings').style.display = 'none'
   document.getElementById('componentInfoModalDefinitionsTabButton').style.display = 'none'
-  $('#componentInfoModalMaintenanceTabButton').tab('show')
-  // document.getElementById('componentInfoModalTabList').style.display = 'none'
-  // document.getElementById('componentInfoModalTabContainer').style.display = 'none'
+  const tabTriggerEl = document.querySelector('#componentInfoModalMaintenanceTabButton')
+  const tab = new bootstrap.Tab(tabTriggerEl)
+  tab.show()
+
   document.getElementById('componentInfoModalViewScreenshot').style.display = 'none'
 }
 
@@ -976,7 +977,7 @@ function showExhibitComponentInfo (uuid, groupUUID) {
   document.getElementById('componentInfoModalStaticSettings').style.display = 'none'
   document.getElementById('componentInfoModalWakeOnLANSettings').style.display = 'none'
 
-  $('#componentInfoModaProejctorTabButton').hide()
+  document.getElementById('componentInfoModaProejctorTabButton').style.display = 'none'
   document.getElementById('componentInfoModalModelGroup').style.display = 'none'
 
   document.getElementById('componentInfoModalProjectorSettings').style.display = 'none'
@@ -998,7 +999,7 @@ function showExhibitComponentInfo (uuid, groupUUID) {
   document.getElementById('componentInfoModalFullSettingsButton').style.display = 'none'
   document.getElementById('componentInfoModalDefinitionsTabButton').style.display = 'none'
 
-  $('#componentInfoModalDMXTabButton').hide()
+  document.getElementById('componentInfoModalDMXTabButton').style.display = 'none'
   document.getElementById('contentUploadSystemStatsView').style.display = 'none'
 
   // Based on the component type, configure the various tabs and panes
@@ -1022,8 +1023,12 @@ function showExhibitComponentInfo (uuid, groupUUID) {
   }
 
   // Must be after all the settings are configured
-  $('[data-bs-toggle="tooltip"]').tooltip()
-  $('#componentInfoModalSettingsSaveButton').hide()
+  const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+  for (const triggerEl of tooltipTriggerList) {
+    const tt = new bootstrap.Tooltip(triggerEl)
+  }
+
+  document.getElementById('componentInfoModalSettingsSaveButton').style.display = 'none'
   document.getElementById('componentInfoModalBasicSettingsSaveButton').style.display = 'none'
 
   // Make the modal visible
@@ -1049,7 +1054,7 @@ function configureComponentInfoModalForExhibitComponent (obj, permission) {
     groupSelect.appendChild(option)
   }
 
-  $('#componentInfoModalFullSettingsButton').prop('href', obj.helperAddress + '?showSettings=true')
+  document.getElementById('componentInfoModalFullSettingsButton').setAttribute('href', obj.helperAddress + '?showSettings=true')
   document.getElementById('componentInfoModalSettingsAutoplayAudio').value = String(obj.permissions.audio)
   document.getElementById('componentInfoModalSettingsAllowRefresh').value = String(obj.permissions.refresh)
   document.getElementById('componentInfoModalSettingsAllowRestart').value = String(obj.permissions.restart)
@@ -1067,7 +1072,9 @@ function configureComponentInfoModalForExhibitComponent (obj, permission) {
   document.getElementById('componentInfoModalBasicSettingsIDWarning').style.display = 'none'
   document.getElementById('componentInfoModalBasicSettingsGroupWarning').style.display = 'none'
 
-  $('#componentInfoModalDefinitionsTabButton').tab('show')
+  const tabEl = document.querySelector('#componentInfoModalDefinitionsTabButton')
+  const tab = new bootstrap.Tab(tabEl)
+  tab.show()
 
   // This component may be accessible over the network.
   updateComponentInfoModalFromHelper(obj.uuid, permission)
@@ -1095,8 +1102,10 @@ function configureComponentInfoModalForProjector (obj) {
   // Set up the projector status pane of the componentInfoModal with the info
   // from the selected projector
 
-  $('#componentInfoModaProejctorTabButton').show()
-  $('#componentInfoModaProejctorTabButton').tab('show')
+  const tabButton = document.getElementById('componentInfoModaProejctorTabButton')
+  tabButton.style.display = 'block'
+  const bsTab = new bootstrap.Tab(tabButton)
+  bsTab.show()
 
   // // Projector status pane
   document.getElementById('componentInfoModalProjectorWarningList').innerHTML = ''
@@ -1175,11 +1184,14 @@ function configureComponentInfoModalForStatic (obj, componentPermission, mainten
     document.getElementById('componentInfoModalTabContainer').style.display = 'block'
     clearComponentInfoStatusMessage()
 
+    let tabEl
     if (maintenancePermission !== 'none') {
-      $('#componentInfoModalMaintenanceTabButton').tab('show')
+      tabEl = document.querySelector('#componentInfoModalMaintenanceTabButton')
     } else {
-      $('#componentInfoModalSettingsTabButton').tab('show')
+      tabEl = document.querySelector('#componentInfoModalSettingsTabButton')
     }
+    const tab = new bootstrap.Tab(tabEl)
+    tab.show()
   }
 
   document.getElementById('componentInfoModalStaticSettings').style.display = 'block'
@@ -1218,11 +1230,14 @@ function configureComponentInfoModalForWakeOnLAN (obj, componentPermission, main
     document.getElementById('componentInfoModalTabContainer').style.display = 'block'
     clearComponentInfoStatusMessage()
 
+    let tabEl
     if (maintenancePermission !== 'none') {
-      $('#componentInfoModalMaintenanceTabButton').tab('show')
+      tabEl = document.querySelector('#componentInfoModalMaintenanceTabButton')
     } else {
-      $('#componentInfoModalSettingsTabButton').tab('show')
+      tabEl = document.querySelector('#componentInfoModalSettingsTabButton')
     }
+    const tab = new bootstrap.Tab(tabEl)
+    tab.show()
   }
 
   document.getElementById('componentInfoModalWakeOnLANSettings').style.display = 'block'
@@ -1439,7 +1454,7 @@ function createProjectorLampStatusEntry (entry, number) {
 
   const containerCol = document.createElement('div')
   containerCol.classList = 'col-6 col-sm-4 mb-3'
-  $(containerCol).data('config', entry)
+  containerCol.dataset.config = entry
   document.getElementById('componentInfoModalProjectorLampList').appendChild(containerCol)
 
   const containerRow = document.createElement('div')
@@ -1495,7 +1510,7 @@ function createProjectorWarningEntry (entry, error, details = '') {
 
   const containerCol = document.createElement('div')
   containerCol.classList = 'col-6 col-sm-4 mb-3'
-  $(containerCol).data('config', entry)
+  containerCol.dataset.config = entry
   document.getElementById('componentInfoModalProjectorWarningList').appendChild(containerCol)
 
   const containerRow = document.createElement('div')
@@ -1600,7 +1615,7 @@ async function populateComponentDefinitionList (definitions, permission) {
     const col = document.createElement('div')
     col.setAttribute('id', 'definitionButton_' + uuid)
     col.classList = 'col-6 col-sm-4 mt-2 handCursor definition-entry'
-    $(col).data('definition', definition)
+    col.dataset.definition = definition
     col.setAttribute('data-app', definition.app)
 
     const row = document.createElement('div')
@@ -2009,7 +2024,7 @@ function handleDefinitionItemSelection (uuid) {
 export function submitDefinitionSelectionFromModal () {
   // Called when the "Save changes" button is pressed on the definitions pane of the componentInfoModal.
 
-  const definition = $('.definition-selected').data('definition')
+  const definition = document.querySelector('.definition-selected')?.dataset.definition
   const componentUUID = document.getElementById('componentInfoModal').getAttribute('data-uuid')
 
   hubTools.makeServerRequest({
@@ -2232,7 +2247,7 @@ export function submitComponentSettingsChange () {
       .then((response) => {
         if ('success' in response) {
           if (response.success === true) {
-            $('#componentInfoModalSettingsSaveButton').hide()
+            document.getElementById('componentInfoModalSettingsSaveButton').style.display = 'none'
           }
         }
       })

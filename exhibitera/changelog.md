@@ -8,6 +8,9 @@ _Exhibitera Hub and Apps must all be upgraded to version 6 at the same time._
 
 ## Apps
 
+### Word Cloud
+- Switched profanity filtering library, so please check your word clouds
+
 # **Exhibitera 5.3**
 
 ## Hub

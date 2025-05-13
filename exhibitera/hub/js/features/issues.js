@@ -1,7 +1,8 @@
+import exConfig from '../../../common/config.js'
 import * as exFiles from '../../../common/files.js'
 import * as exUtilities from '../../../common/utilities.js'
-import exConfig from '../../config.js'
-import * as exTools from '../tools.js'
+import hubConfig from '../../config.js'
+import * as hubTools from '../tools.js'
 
 export function rebuildIssueList () {
   // Take an array of issue dictionaries and build the GUI representation.
@@ -13,7 +14,7 @@ export function rebuildIssueList () {
   const issueList = document.getElementById('issuesRow')
   issueList.innerHTML = ''
 
-  for (const issue of exConfig.issueList) {
+  for (const issue of hubConfig.issueList) {
     // Check against the filters
     if (filterPriority !== 'all' && filterPriority !== issue.priority && filterPriority != null) {
       continue
@@ -45,7 +46,7 @@ export function upateIssueList () {
     }
   }
 
-  for (const issue of exConfig.issueList) {
+  for (const issue of hubConfig.issueList) {
     if (issue.id in issueColMap) {
       const details = issueColMap[issue.id]
       if (issue.lastUpdateDate > details.lastUpdateDate) {
@@ -78,11 +79,11 @@ export async function rebuildIssueFilters () {
   // First, aggregate the various options needed
   const assignableUserList = []
   const optionList = []
-  for (const issue of exConfig.issueList) {
+  for (const issue of hubConfig.issueList) {
     for (const uuid of issue.assignedTo) {
       if (assignableUserList.includes(uuid) === false) {
         assignableUserList.push(uuid)
-        const displayName = await exTools.getUserDisplayName(uuid)
+        const displayName = await hubTools.getUserDisplayName(uuid)
         optionList.push(new Option(displayName, uuid))
       }
     }
@@ -100,7 +101,7 @@ export async function rebuildIssueFilters () {
 export function createIssueHTML (issue, full = true, archived = false) {
   // Create an HTML representation of an issue
 
-  const allowEdit = exTools.checkPermission('maintenance', 'edit')
+  const allowEdit = hubTools.checkPermission('maintenance', 'edit')
 
   const col = document.createElement('div')
   col.classList = 'col mt-2 issue-col'
@@ -134,7 +135,7 @@ export function createIssueHTML (issue, full = true, archived = false) {
   body.appendChild(content)
 
   for (const uuid of issue?.relatedComponentUUIDs ?? []) {
-    const component = exConfig.exhibitComponents.find(obj => {
+    const component = hubConfig.exhibitComponents.find(obj => {
       return obj.uuid === uuid
     })
     if (component == null) continue
@@ -147,7 +148,7 @@ export function createIssueHTML (issue, full = true, archived = false) {
   for (const uuid of issue.assignedTo) {
     const tag = document.createElement('span')
     tag.setAttribute('class', 'badge bg-success me-1')
-    exTools.getUserDisplayName(uuid)
+    hubTools.getUserDisplayName(uuid)
       .then((displayName) => {
         tag.innerHTML = displayName
       })
@@ -249,7 +250,7 @@ export function createIssueHTML (issue, full = true, archived = false) {
       mediaFiles.push('issues/media/' + file)
     }
     mediaBut.addEventListener('click', function () {
-      exTools.openMediaInNewTab(mediaFiles)
+      hubTools.openMediaInNewTab(mediaFiles)
     }, false)
     mediaCol.appendChild(mediaBut)
   }
@@ -266,7 +267,7 @@ export function createIssueHTML (issue, full = true, archived = false) {
       archivedDateCol.innerHTML = `Archived ${archivedDate.toLocaleDateString(undefined, dateOptions)}`
       row2.appendChild(archivedDateCol)
 
-      exTools.getUserDisplayName(issue.archivedUsername)
+      hubTools.getUserDisplayName(issue.archivedUsername)
         .then((displayName) => {
           archivedDateCol.innerHTML = `Archived ${archivedDate.toLocaleDateString(undefined, dateOptions)} by ${displayName}`
         })
@@ -282,7 +283,7 @@ export function createIssueHTML (issue, full = true, archived = false) {
     row2.appendChild(createdDateCol)
 
     if ('createdUsername' in issue && issue.createdUsername !== '') {
-      exTools.getUserDisplayName(issue.createdUsername)
+      hubTools.getUserDisplayName(issue.createdUsername)
         .then((displayName) => {
           createdDateCol.innerHTML = `Created ${createdDate.toLocaleDateString(undefined, dateOptions)} by ${displayName}`
         })
@@ -299,7 +300,7 @@ export function createIssueHTML (issue, full = true, archived = false) {
       row2.appendChild(updatedDateCol)
 
       if ('lastUpdateUsername' in issue && issue.lastUpdateUsername !== '') {
-        exTools.getUserDisplayName(issue.lastUpdateUsername)
+        hubTools.getUserDisplayName(issue.lastUpdateUsername)
           .then((displayName) => {
             updatedDateCol.innerHTML = `Updated ${updatedDate.toLocaleDateString(undefined, dateOptions)} by ${displayName}`
           })
@@ -380,7 +381,7 @@ function showModifyIssueModal (id, mode) {
 export function showArchivedIssuesModal () {
   // Retrieve a list of archived issues, configure the modal, and display it.
 
-  exTools.makeServerRequest({
+  hubTools.makeServerRequest({
     method: 'GET',
     endpoint: '/issue/archive/list/__all'
   })
@@ -398,7 +399,7 @@ export function modifyIssue (id, mode) {
   // Ask Hub to remove or archive the specified issue
   // mode is one of 'archive' or 'delete'
 
-  return exTools.makeServerRequest({
+  return hubTools.makeServerRequest({
     method: 'GET',
     endpoint: '/issue/' + id + '/' + mode
   })
@@ -406,7 +407,7 @@ export function modifyIssue (id, mode) {
       if ('success' in result && result.success === true) {
         getIssueList()
           .then((issueList) => {
-            exConfig.issueList = issueList
+            hubConfig.issueList = issueList
             rebuildIssueList()
           })
       }
@@ -416,7 +417,7 @@ export function modifyIssue (id, mode) {
 function getIssueList (id = '__all') {
   // Get a list of all the current issues and rebuild the issue GUI
 
-  return exTools.makeServerRequest({
+  return hubTools.makeServerRequest({
     method: 'GET',
     endpoint: '/issue/list/' + id
   }).then((response) => response.issueList)
@@ -425,7 +426,7 @@ function getIssueList (id = '__all') {
 function getIssue (id) {
   // Function to search the issueList for a given id
 
-  const result = exConfig.issueList.find(obj => {
+  const result = hubConfig.issueList.find(obj => {
     return obj.id === id
   })
 
@@ -438,12 +439,12 @@ export async function showIssueEditModal (issueType, target) {
   // Make sure we have all the current components listed as objections for
   // the issueRelatedComponentsSelector
   const issueRelatedComponentsSelector = document.getElementById('issueRelatedComponentsSelector')
-  issueRelatedComponentsSelector.innerHTML = ''
+  issueRelatedComponentsSelector.innerText = ''
 
-  const components = exTools.sortComponentsByGroup()
+  const components = hubTools.sortComponentsByGroup()
 
   for (const group of Object.keys(components).sort()) {
-    const header = new Option(exTools.getGroupName(group))
+    const header = new Option(hubTools.getGroupName(group))
     header.setAttribute('disabled', true)
     issueRelatedComponentsSelector.appendChild(header)
     const sortedGroup = components[group].sort((a, b) => {
@@ -459,17 +460,10 @@ export async function showIssueEditModal (issueType, target) {
     }
   }
 
-  for (let i = 0; i < exConfig.exhibitComponents.length; i++) {
-    // Check if component already exists as an option. If not, add it
-    if ($(`#issueRelatedComponentsSelector option[value='${exConfig.exhibitComponents[i].uuid}']`).length === 0) {
-      $('#issueRelatedComponentsSelector').append()
-    }
-  }
-
   // Make sure we have all the assignable staff listed as options for
   // issueAssignedToSelector
   document.getElementById('issueAssignedToSelector').innerHTML = ''
-  await exTools.makeServerRequest({
+  await hubTools.makeServerRequest({
     method: 'POST',
     endpoint: '/users/list',
     params: {
@@ -487,11 +481,12 @@ export async function showIssueEditModal (issueType, target) {
     })
 
   // Clear file upload interface elements
-  $('#issueMediaUploadFilename').html('Choose files')
-  $('#issueMediaUploadHEICWarning').hide()
-  $('#issueMediaUploadSubmitButton').hide()
-  $('#issueMediaUploadProgressBarContainer').hide()
-  $('#issueMediaUpload').val(null)
+  document.getElementById('issueMediaUploadFilename').innerText = 'Choose files'
+
+  document.getElementById('issueMediaUploadHEICWarning').style.display = 'none'
+  document.getElementById('issueMediaUploadSubmitButton').style.display = 'none'
+  document.getElementById('issueMediaUploadProgressBarContainer').style.display = 'none'
+  document.getElementById('issueMediaUpload').value = null
 
   // Clone the cancel button to remove any lingering event listeners
   const oldElement = document.getElementById('issueEditCancelButton')
@@ -500,24 +495,27 @@ export async function showIssueEditModal (issueType, target) {
 
   if (issueType === 'new') {
     // Clear inputs
-    $('#issueTitleInput').val('')
-    $('#issueDescriptionInput').val('')
-    $('#issueAssignedToSelector').val(null)
-    $('#issueRelatedComponentsSelector').val(null)
+    document.getElementById('issueTitleInput').value = ''
+    document.getElementById('issueDescriptionInput').value = ''
+    document.getElementById('issueAssignedToSelector').value = null
+    document.getElementById('issueRelatedComponentsSelector').value = null
 
-    $('#issueEditModal').data('type', 'new')
-    $('#issueEditModalTitle').html('Create Issue')
+    document.getElementById('issueEditModal').dataset.type = 'new'
+    document.getElementById('issueEditModalTitle').innerText = 'Create Issue'
     rebuildIssueMediaUploadedList()
   } else if (target != null) {
-    $('#issueEditModal').data('type', 'edit')
-    $('#issueEditModal').data('target', target)
-    $('#issueEditModalTitle').html('Edit Issue')
+    const modal = document.getElementById('issueEditModal')
+    modal.dataset.type = 'edit'
+    modal.dataset.target = target
+
+    document.getElementById('issueEditModalTitle').innerHTML = 'Edit Issue'
 
     const targetIssue = getIssue(target)
-    $('#issueTitleInput').val(targetIssue.issueName)
-    $('#issueDescriptionInput').val(targetIssue.issueDescription)
-    $('#issueAssignedToSelector').val(targetIssue.assignedTo)
-    $('#issueRelatedComponentsSelector').val(targetIssue.relatedComponentUUIDs)
+    document.getElementById('issueTitleInput').value = targetIssue.issueName
+    document.getElementById('issueDescriptionInput').value = targetIssue.issueDescription
+    document.getElementById('issueAssignedToSelector').value = targetIssue.assignedTo
+    document.getElementById('issueRelatedComponentsSelector').value = targetIssue.relatedComponentUUIDs
+
     if (targetIssue.media.length > 0) {
       rebuildIssueMediaUploadedList(target)
     } else {
@@ -532,25 +530,31 @@ export function onIssueMediaUploadChange () {
   // When a file is selected, check if it contains an equal sign (not allowed).
   // If not, display it
 
-  $('#issueMediaUploadSubmitButton').show()
   // Show the upload button (we may hide it later)
-  const fileInput = $('#issueMediaUpload')[0]
-  $('#issueMediaUploadFilename').html('File: ' + fileInput.files[0].name)
+  document.getElementById('issueMediaUploadSubmitButton').style.display = 'inline-block'
+
+  const fileInput = document.getElementById('issueMediaUpload')
+  const file = fileInput.files[0]
+  document.getElementById('issueMediaUploadFilename').innerHTML = 'File: ' + file.name
 
   // Check for HEIC file
-  if (fileInput.files[0].type === 'image/heic') {
-    $('#issueMediaUploadHEICWarning').show()
-    $('#issueMediaUploadSubmitButton').hide()
+  if (file.type === 'image/heic') {
+    document.getElementById('issueMediaUploadHEICWarning').style.display = 'block'
+    document.getElementById('issueMediaUploadSubmitButton').style.display = 'none'
   } else {
-    $('#issueMediaUploadHEICWarning').hide()
+    document.getElementById('issueMediaUploadHEICWarning').style.display = 'none'
   }
 }
 
 export function uploadIssueMediaFile () {
-  const fileInput = $('#issueMediaUpload')[0]
+  // Send an issue media file to Hub for storage
+
+  const fileInput = document.getElementById('issueMediaUpload')
+  console.log(fileInput)
   if (fileInput.files[0] != null) {
-    $('#issueMediaUploadSubmitButton').prop('disabled', true)
-    $('#issueMediaUploadSubmitButton').html('Working...')
+    const submitButton = document.getElementById('issueMediaUploadSubmitButton')
+    submitButton.disabled = true
+    submitButton.innerHTML = 'Working...'
 
     const formData = new FormData()
 
@@ -560,7 +564,7 @@ export function uploadIssueMediaFile () {
     }
 
     const xhr = new XMLHttpRequest()
-    xhr.open('POST', exConfig.serverAddress + '/issue/uploadMedia', true)
+    xhr.open('POST', hubConfig.serverAddress + exConfig.api + '/issue/uploadMedia', true)
     xhr.onreadystatechange = function () {
       if (this.readyState !== 4) return
       if (this.status === 200) {
@@ -575,11 +579,14 @@ export function uploadIssueMediaFile () {
             })
           }
         }
-        $('#issueMediaUploadSubmitButton').prop('disabled', false)
-        $('#issueMediaUploadSubmitButton').html('Upload')
-        $('#issueMediaUploadProgressBarContainer').hide()
-        $('#issueMediaUploadSubmitButton').hide()
-        $('#issueMediaUploadFilename').html('Choose file')
+        const progressBarContainer = document.getElementById('issueMediaUploadProgressBarContainer')
+        const filenameDisplay = document.getElementById('issueMediaUploadFilename')
+
+        submitButton.disabled = false
+        submitButton.innerText = 'Upload'
+        progressBarContainer.style.display = 'none'
+        submitButton.style.display = 'none'
+        filenameDisplay.innerText = 'Choose file'
       }
     }
 
@@ -587,11 +594,14 @@ export function uploadIssueMediaFile () {
       if (evt.lengthComputable) {
         let percentComplete = evt.loaded / evt.total
         percentComplete = parseInt(percentComplete * 100)
-        $('#issueMediaUploadProgressBar').width(String(percentComplete) + '%')
+        const progressBar = document.getElementById('issueMediaUploadProgressBar')
+        const progressBarContainer = document.getElementById('issueMediaUploadProgressBarContainer')
+
+        progressBar.style.width = `${percentComplete}%`
         if (percentComplete > 0) {
-          $('#issueMediaUploadProgressBarContainer').show()
+          progressBarContainer.style.display = 'block'
         } else if (percentComplete === 100) {
-          $('#issueMediaUploadProgressBarContainer').hide()
+          progressBarContainer.style.display = 'none'
         }
       }
     }, false)
@@ -608,7 +618,7 @@ function rebuildIssueMediaUploadedList (id = '') {
   if (id === '') {
     _rebuildIssueMediaUploadedList([])
   } else {
-    exTools.makeServerRequest({
+    hubTools.makeServerRequest({
       method: 'GET',
       endpoint: '/issue/' + id + '/media'
     })
@@ -628,17 +638,19 @@ function _rebuildIssueMediaUploadedList (filenames, append = false) {
   // Set append = true to add the given files to the existing ones, rather than
   // overwriting.
 
+  const modal = document.getElementById('issueMediaViewFromModal')
   let current
   if (append === true) {
-    current = $('#issueMediaViewFromModal').data('filenames')
+    current = JSON.parse(modal.dataset.filenames)
     current = [...current, ...filenames]
   } else {
     current = filenames
   }
-  $('#issueMediaViewFromModal').data('filenames', current)
+
+  modal.dataset.filenames = JSON.stringify(current)
   if (current.length > 0) {
-    $('#issueMediaViewCol').show()
-    $('#issueMediaModalLabel').html('Uploaded media')
+    document.getElementById('issueMediaViewCol').style.display = 'block'
+    document.getElementById('issueMediaModalLabel').innerText = 'Uploaded media'
 
     // Build select entries for each file
     const mediaSelect = document.getElementById('issueMediaViewFromModalSelect')
@@ -675,8 +687,8 @@ function _rebuildIssueMediaUploadedList (filenames, append = false) {
       }
     }
   } else {
-    $('#issueMediaModalLabel').html('Add media')
-    $('#issueMediaViewCol').hide()
+    document.getElementById('issueMediaModalLabel').innerText = 'Add media'
+    document.getElementById('issueMediaViewCol').style.display = 'none'
   }
 }
 
@@ -684,15 +696,17 @@ export function issueMediaDelete (filenames) {
   // Send a message to Hub, asking for the files to be deleted.
   // filenames is an array of strings
 
+  const modal = document.getElementById('issueEditModal')
   const requestDict = { filenames }
 
   // If this is an existing issue, we need to say what the issue id is
-  const issueType = $('#issueEditModal').data('type')
+
+  const issueType = modal.dataset.type
   if (issueType === 'edit') {
-    requestDict.owner = $('#issueEditModal').data('target')
+    requestDict.owner = modal.dataset.target
   }
 
-  exTools.makeServerRequest({
+  hubTools.makeServerRequest({
     method: 'POST',
     endpoint: '/issue/deleteMedia',
     params: requestDict
@@ -700,7 +714,7 @@ export function issueMediaDelete (filenames) {
     .then((response) => {
       if ('success' in response) {
         if (response.success === true) {
-          let current = $('#issueMediaViewFromModal').data('filenames')
+          let current = JSON.parse(document.getElementById('issueMediaViewFromModal').dataset.filenames)
           current = current.filter(e => !filenames.includes(e))
           _rebuildIssueMediaUploadedList(current)
         }
@@ -712,34 +726,39 @@ export function submitIssueFromModal () {
   // Take the inputs from the modal, check that we have everything we need,
   // and submit it to the server.
 
-  const issueDict = {}
-  issueDict.issueName = $('#issueTitleInput').val()
-  issueDict.issueDescription = $('#issueDescriptionInput').val()
-  issueDict.relatedComponentUUIDs = $('#issueRelatedComponentsSelector').val()
-  issueDict.assignedTo = $('#issueAssignedToSelector').val()
-  issueDict.priority = $('#issuePrioritySelector').val()
-  if ($('#issueMediaViewFromModal').data('filenames').length > 0) {
-    issueDict.media = $('#issueMediaViewFromModal').data('filenames')
+  const modal = document.getElementById('issueEditModal')
+  const issueDict = {
+    issueName: document.getElementById('issueTitleInput').value,
+    issueDescription: document.getElementById('issueDescriptionInput').value,
+    relatedComponentUUIDs: Array.from(document.getElementById('issueRelatedComponentsSelector').selectedOptions).map(option => option.value),
+    assignedTo: Array.from(document.getElementById('issueAssignedToSelector').selectedOptions).map(option => option.value),
+    priority: document.getElementById('issuePrioritySelector').value
+  }
+
+  const mediaElement = document.getElementById('issueMediaViewFromModal')
+  const filenames = mediaElement.dataset.filenames ? JSON.parse(mediaElement.dataset.filenames) : []
+
+  if (filenames.length > 0) {
+    issueDict.media = filenames
   }
 
   let error = false
   if (issueDict.issueName === '') {
-    console.log('Need issue name')
     error = true
   }
 
   if (error === false) {
-    const issueType = $('#issueEditModal').data('type')
+    const issueType = modal.dataset.type
     let endpoint
     if (issueType === 'new') {
       endpoint = '/issue/create'
     } else {
-      issueDict.id = $('#issueEditModal').data('target')
+      issueDict.id = modal.dataset.target
       endpoint = '/issue/edit'
     }
-    exTools.hideModal('#issueEditModal')
+    exUtilities.hideModal(modal)
 
-    exTools.makeServerRequest({
+    hubTools.makeServerRequest({
       method: 'POST',
       endpoint,
       params: { details: issueDict }
