@@ -2,7 +2,6 @@
 
 # Standard imports
 import logging
-import os
 import threading
 from typing import Any
 

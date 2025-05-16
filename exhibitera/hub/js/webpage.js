@@ -919,7 +919,7 @@ document.getElementById('addWakeOnLANModalAddButton').addEventListener('click', 
 // Component info modal
 $('#componentInfoModalRemoveComponentButton').click(exExhibit.removeExhibitComponentFromModal)
 $('#componentInfoModalMaintenanceSaveButton').click(function () {
-  exMaintenance.submitComponentMaintenanceStatusChange('component')
+  exMaintenance.submitComponentMaintenanceStatusChange()
 })
 $('#componentInfoModalMaintenanceStatusSelector').change(function () {
   $('#componentInfoModalMaintenanceSaveButton').show()

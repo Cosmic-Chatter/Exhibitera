@@ -1,3 +1,5 @@
+/* global bootstrap */
+
 import * as exUtilities from '../../../common/utilities.js'
 import exConfig from '../../config.js'
 import * as exExhibit from './exhibits.js'
@@ -186,7 +188,7 @@ export function populateSchedule (schedule) {
       // Note: The event listener to detect is the delete button is clicked is defined in webpage.js
       deleteButton.addEventListener('click', function () { deleteButton.focus() })
       deleteButtonCol.appendChild(deleteButton)
-      $(deleteButton).popover()
+      new bootstrap.Popover(deleteButton)
     }
 
     const divider = document.createElement('div')
@@ -214,11 +216,16 @@ export function populateSchedule (schedule) {
       }
     }
     // Sort the elements by time
-    const events = $(dayContainer).children('.eventListing')
-    events.sort(function (a, b) {
-      return $(a).data('time_in_seconds') - $(b).data('time_in_seconds')
+    const events = Array.from(dayContainer.querySelectorAll('.eventListing'))
+
+    events.sort((a, b) => {
+      return parseInt(a.dataset.time_in_seconds) - parseInt(b.dataset.time_in_seconds)
     })
-    $(dayContainer).append(events)
+
+    // Append sorted elements back to the container
+    for (const event of events) {
+      dayContainer.appendChild(event)
+    }
   }
 
   document.getElementById('Schedule_next_event').innerHTML = populateScheduleDescriptionHelper(schedule.nextEvent, true)
@@ -241,11 +248,9 @@ function createScheduleEntryHTML (item, scheduleID, scheduleName, scheduleType, 
     description = item.value
   }
 
-  if (description == null) return
-
   const eventRow = document.createElement('div')
   eventRow.classList = 'row mt-2 eventListing'
-  $(eventRow).data('time_in_seconds', item.time_in_seconds)
+  eventRow.dataset.time_in_seconds = item.time_in_seconds
 
   let eventDescriptionOuterContainer
   if (action === 'note') {
@@ -335,7 +340,9 @@ export function populateScheduleDescriptionHelper (eventList, includeTime) {
   } else if (eventList.length === 1) {
     const event = eventList[0]
     description += scheduleActionToDescription(event.action) + ' '
-    description += scheduleTargetToDescription(event.target, event.action)
+    if (description.trim() !== 'No action') {
+      description += scheduleTargetToDescription(event.target, event.action)
+    }
   } else {
     const action = eventList[0].action
     let allSame = true
@@ -350,6 +357,7 @@ export function populateScheduleDescriptionHelper (eventList, includeTime) {
       description = 'Multiple actions'
     }
   }
+
   if (includeTime) {
     description += ' at ' + eventList[0].time
   }
@@ -374,6 +382,8 @@ function scheduleActionToDescription (action) {
       return 'Set DMX scene for'
     case 'set_exhibit':
       return 'Set exhibit'
+    case '':
+      return 'No action'
     default:
       return action
   }
@@ -436,12 +446,12 @@ export function actionTargetSelectorPopulateOptions (targetSelector, optionsToAd
   // Helper function for setScheduleActionTargetSelector that populates the target selector with the right options.
 
   if (optionsToAdd.includes('All')) {
-    targetSelector.append(new Option('All', JSON.stringify({ type: 'all' })))
+    targetSelector.appendChild(new Option('All', JSON.stringify({ type: 'all' })))
   }
   if (optionsToAdd.includes('Groups')) {
     const sep = new Option('Groups', null)
-    sep.setAttribute('disabled', true)
-    targetSelector.append(sep)
+    sep.disabled = true
+    targetSelector.appendChild(sep)
     for (const item of exConfig.componentGroups) {
       let groupName
       try {
@@ -453,7 +463,7 @@ export function actionTargetSelectorPopulateOptions (targetSelector, optionsToAd
       } catch {
         groupName = 'Unknown group'
       }
-      targetSelector.append(new Option(groupName, JSON.stringify(
+      targetSelector.appendChild(new Option(groupName, JSON.stringify(
         {
           type: 'group',
           uuid: item.group
@@ -463,15 +473,15 @@ export function actionTargetSelectorPopulateOptions (targetSelector, optionsToAd
   }
   if (optionsToAdd.includes('ExhibitComponents') || optionsToAdd.includes('Projectors')) {
     const sep = new Option('Components', null)
-    sep.setAttribute('disabled', true)
-    targetSelector.append(sep)
+    sep.disabled = true
+    targetSelector.appendChild(sep)
 
     const sortedComponents = exTools.sortExhibitComponentsByID()
 
     if (optionsToAdd.includes('ExhibitComponents')) {
       for (const item of sortedComponents) {
         if (item.type === 'exhibit_component' && item.status !== exConfig.STATUS.STATIC) {
-          targetSelector.append(new Option(item.id, JSON.stringify(
+          targetSelector.appendChild(new Option(item.id, JSON.stringify(
             {
               type: 'component',
               uuid: item.uuid
@@ -483,7 +493,7 @@ export function actionTargetSelectorPopulateOptions (targetSelector, optionsToAd
     if (optionsToAdd.includes('Projectors')) {
       for (const item of sortedComponents) {
         if (item.type === 'projector') {
-          targetSelector.append(new Option(item.id, JSON.stringify(
+          targetSelector.appendChild(new Option(item.id, JSON.stringify(
             {
               type: 'component',
               uuid: item.uuid
@@ -501,61 +511,66 @@ export function setScheduleActionTargetSelector (action = null, target = null) {
 
   if (action == null) action = document.getElementById('scheduleActionSelector').value
 
-  const targetSelector = $('#scheduleTargetSelector')
+  const targetSelector = document.getElementById('scheduleTargetSelector')
+  const targetSelectorLabel = document.getElementById('scheduleTargetSelectorLabel')
+  const valueSelector = document.getElementById('scheduleValueSelector')
+  const valueSelectorLabel = document.getElementById('scheduleValueSelectorLabel')
+  const noteInput = document.getElementById('scheduleNoteInput')
 
   if (action === 'set_exhibit') {
     // Fill the target selector with a list of available exhiits
-    targetSelector.attr('multiple', false)
-    targetSelector.empty()
-    const availableExhibits = $.makeArray($('#exhibitSelect option'))
+    targetSelector.multiple = false
+    targetSelector.innerText = ''
+    const availableExhibits = Array.from(document.querySelectorAll('#exhibitSelect option'))
+
     for (const item of availableExhibits) {
-      targetSelector.append(new Option(exTools.getExhibitName(item.value), JSON.stringify({
+      targetSelector.appendChild(new Option(exTools.getExhibitName(item.value), JSON.stringify({
         type: 'value',
         value: item.value
       })))
     }
-    targetSelector.show()
-    $('#scheduleTargetSelectorLabel').show()
-    $('#scheduleNoteInput').hide()
+    targetSelector.style.display = 'block'
+    targetSelectorLabel.style.display = 'block'
+    noteInput.style.display = 'none'
   } else if (['power_on', 'power_off', 'refresh_page', 'restart', 'set_definition', 'set_dmx_scene'].includes(action)) {
     // Fill the target selector with the list of groups and components, plus an option for all.
-    targetSelector.empty()
+    targetSelector.innerText = ''
 
     if (['power_on', 'power_off'].includes(action)) {
-      targetSelector.attr('multiple', true)
+      targetSelector.multiple = true
       actionTargetSelectorPopulateOptions(targetSelector, ['All', 'Groups', 'ExhibitComponents', 'Projectors'])
     } else if (['refresh_page', 'restart'].includes(action)) {
-      targetSelector.attr('multiple', true)
+      targetSelector.multiple = true
       actionTargetSelectorPopulateOptions(targetSelector, ['All', 'Groups', 'ExhibitComponents'])
     } else if (['set_definition', 'set_dmx_scene'].includes(action)) {
-      targetSelector.attr('multiple', false)
+      targetSelector.multiple = false
       actionTargetSelectorPopulateOptions(targetSelector, ['ExhibitComponents'])
     }
-    targetSelector.show()
-    $('#scheduleTargetSelectorLabel').show()
+    targetSelector.style.display = 'block'
+    targetSelectorLabel.style.display = 'block'
 
     // For certain actions, we want to then populare the value selector
     if (['set_definition', 'set_dmx_scene'].includes(action)) {
       setScheduleActionValueSelector(action, target)
     } else {
-      $('#scheduleValueSelector').hide()
-      $('#scheduleValueSelectorLabel').hide()
+      valueSelector.style.display = 'none'
+      valueSelectorLabel.style.display = 'none'
     }
-    $('#scheduleNoteInput').hide()
+    noteInput.style.display = 'none'
   } else if (action === 'note') {
-    targetSelector.hide()
-    $('#scheduleTargetSelectorLabel').hide()
-    targetSelector.val(null)
-    $('#scheduleValueSelector').hide()
-    $('#scheduleValueSelectorLabel').hide()
-    $('#scheduleNoteInput').show()
+    targetSelector.style.display = 'none'
+    targetSelectorLabel.style.display = 'none'
+    targetSelector.value = null
+    valueSelector.style.display = 'none'
+    valueSelectorLabel.style.display = 'none'
+    noteInput.style.display = 'block'
   } else {
-    targetSelector.hide()
-    $('#scheduleTargetSelectorLabel').hide()
-    targetSelector.val(null)
-    $('#scheduleValueSelector').hide()
-    $('#scheduleValueSelectorLabel').hide()
-    $('#scheduleNoteInput').hide()
+    targetSelector.style.display = 'none'
+    targetSelectorLabel.style.display = 'none'
+    targetSelector.value = null
+    valueSelector.style.display = 'none'
+    valueSelectorLabel.style.display = 'none'
+    noteInput.style.display = 'none'
   }
 }
 
@@ -566,8 +581,9 @@ export function setScheduleActionValueSelector (action = null, target = null) {
   if (action == null) action = document.getElementById('scheduleActionSelector').value
   if (target == null) target = JSON.parse(document.getElementById('scheduleTargetSelector').value)
 
-  const valueSelector = $('#scheduleValueSelector')
-  valueSelector.empty()
+  const valueSelector = document.getElementById('scheduleValueSelector')
+  const valueSelectorLabel = document.getElementById('scheduleValueSelector')
+  valueSelector.innerText = ''
 
   if (['set_definition'].includes(action)) {
     let component
@@ -582,8 +598,8 @@ export function setScheduleActionValueSelector (action = null, target = null) {
     if (component.helperAddress === '') {
       errorAlert.innerHTML = 'This component is not responding'
       errorAlert.style.display = 'block'
-      valueSelector.hide()
-      $('#scheduleValueSelectorLabel').hide()
+      valueSelector.style.display = 'none'
+      valueSelectorLabel.style.display = 'none'
       return
     } else {
       errorAlert.style.display = 'none'
@@ -600,20 +616,20 @@ export function setScheduleActionValueSelector (action = null, target = null) {
           const appDict = exTools.sortDefinitionsByApp(response.definitions)
           for (const app of Object.keys(appDict).sort()) {
             const header = new Option(exUtilities.appNameToDisplayName(app))
-            header.setAttribute('disabled', true)
-            valueSelector.append(header)
+            header.disabled = true
+            valueSelector.appendChild(header)
 
             for (const def of appDict[app]) {
               const option = new Option(def.name, def.uuid)
-              valueSelector.append(option)
+              valueSelector.appendChild(option)
             }
           }
         }
 
         // In the case of editing an action, preselect any existing values
         valueSelector.value = document.getElementById('scheduleEditModal').dataset.currentValue
-        valueSelector.show()
-        $('#scheduleValueSelectorLabel').show()
+        valueSelector.style.display = 'block'
+        valueSelectorLabel.style.display = 'block'
       })
   } else if (action === 'set_dmx_scene') {
     let component
@@ -629,26 +645,26 @@ export function setScheduleActionValueSelector (action = null, target = null) {
       endpoint: '/DMX/getScenes'
     })
       .then((response) => {
-        if ('success' in response && response.success === true) {
+        if (response.success && response.success === true) {
           for (const group of response.groups) {
             const groupName = new Option(group.name, null)
-            groupName.setAttribute('disabled', true)
-            valueSelector.append(groupName)
+            groupName.disabled = true
+            valueSelector.appendChild(groupName)
 
             for (const scene of group.scenes) {
-              valueSelector.append(new Option(scene.name, scene.uuid))
+              valueSelector.appendChild(new Option(scene.name, scene.uuid))
             }
           }
         }
 
         // In the case of editing an action, preselect any existing values
         valueSelector.value = document.getElementById('scheduleEditModal').dataset.currentValue
-        valueSelector.show()
-        $('#scheduleValueSelectorLabel').show()
+        valueSelector.style.display = 'block'
+        valueSelectorLabel.style.display = 'block'
       })
   } else {
-    valueSelector.hide()
-    $('#scheduleValueSelectorLabel').hide()
+    valueSelector.style.display = 'none'
+    valueSelectorLabel.style.display = 'none'
   }
 }
 
@@ -671,13 +687,17 @@ export function scheduleConfigureEditModal (scheduleName,
   }
 
   // Hide elements that aren't always visible
-  $('#scheduleTargetSelector').hide()
-  $('#scheduleTargetSelectorLabel').hide()
-  $('#scheduleValueSelector').hide()
-  $('#scheduleValueSelectorLabel').hide()
-  $('#scheduleEditErrorAlert').hide()
-  $('#scheduleNoteInput').hide()
-  $('#scheduleNoteInput').val('')
+  const targetSelector = document.getElementById('scheduleTargetSelector')
+  targetSelector.style.display = 'none'
+  const targetSelectorLabel = document.getElementById('scheduleTargetSelectorLabel')
+  targetSelectorLabel.style.display = 'none'
+  document.getElementById('scheduleValueSelector').style.display = 'none'
+  document.getElementById('scheduleValueSelectorLabel').style.display = 'none'
+  document.getElementById('scheduleEditErrorAlert').style.display = 'none'
+
+  const noteInput = document.getElementById('scheduleNoteInput')
+  noteInput.style.display = 'none'
+  noteInput.value = ''
 
   // Tag the modal with a bunch of data that we can read if needed when
   // submitting the change
@@ -720,28 +740,31 @@ export function scheduleConfigureEditModal (scheduleName,
 
     if (currentAction === 'note') {
       document.getElementById('scheduleNoteInput').value = currentValue
-      $('#scheduleNoteInput').show()
+      noteInput.style.display = 'block'
     } else {
       if (currentTarget != null) {
         setScheduleActionTargetSelector(currentAction, currentTarget)
 
         if (Array.isArray(currentTarget)) {
           // We need to stringify each of the items in the list
-          const tempArray = []
-          for (const target of currentTarget) tempArray.push(JSON.stringify(target))
-          $('#scheduleTargetSelector').val(tempArray) // jQuery used to set multiple options
+          const tempArray = currentTarget.map(target => JSON.stringify(target))
+
+          for (const option of targetSelector.options) {
+            option.selected = tempArray.includes(option.value)
+          }
         } else {
-          document.getElementById('scheduleTargetSelector').value = JSON.stringify(currentTarget)
+          targetSelector.value = JSON.stringify(currentTarget)
         }
 
-        $('#scheduleTargetSelector').show()
-        $('#scheduleTargetSelectorLabel').show()
+        // Show the target selector and its label
+        targetSelector.style.display = 'block'
+        targetSelectorLabel.style.display = 'block'
       }
     }
   } else {
-    $('#scheduleActionTimeInput').val(null)
-    $('#scheduleActionSelector').val(null)
-    $('#scheduleTargetSelector').val(null)
+    document.getElementById('scheduleActionTimeInput').value = null
+    document.getElementById('scheduleActionSelector').value = null
+    targetSelector.value = null
   }
 
   exUtilities.showModal('#scheduleEditModal')
@@ -754,11 +777,11 @@ export function sendScheduleUpdateFromModal () {
   const scheduleName = document.getElementById('scheduleEditModal').dataset.scheduleName
   const time = document.getElementById('scheduleActionTimeInput').value.trim()
   const action = document.getElementById('scheduleActionSelector').value
-  let target = $('#scheduleTargetSelector').val() // Gets all selected options
+  const targetSelector = document.getElementById('scheduleTargetSelector')
+  let target = Array.from(targetSelector.selectedOptions).map(option => option.value)
+
   if (Array.isArray(target)) {
-    const tempArray = []
-    for (const targetI of target) tempArray.push(JSON.parse(targetI))
-    target = tempArray
+    target = target.map(item => JSON.parse(item))
   } else {
     target = JSON.parse(target)
   }
@@ -767,26 +790,31 @@ export function sendScheduleUpdateFromModal () {
   if (action === 'note') {
     value = document.getElementById('scheduleNoteInput').value
     target = null
-    console.log(time, action, target)
   } else {
     value = document.getElementById('scheduleValueSelector').value
   }
   const scheduleID = document.getElementById('scheduleEditModal').dataset.scheduleID
 
+  const editErrorAlert = document.getElementById('scheduleEditErrorAlert')
   if (time === '' || time == null) {
-    $('#scheduleEditErrorAlert').html('You must specifiy a time for the action').show()
+    editErrorAlert.innerText = 'You must specifiy a time for the action'
+    editErrorAlert.style.display = 'block'
     return
   } else if (action == null) {
-    $('#scheduleEditErrorAlert').html('You must specifiy an action').show()
+    editErrorAlert.innerText = 'You must specifiy an action'
+    editErrorAlert.style.display = 'block'
     return
   } else if (action === 'set_exhibit' && target == null) {
-    $('#scheduleEditErrorAlert').html('You must specifiy an exhibit to set').show()
+    editErrorAlert.innerText = 'You must specifiy an exhibition to set'
+    editErrorAlert.style.display = 'block'
     return
   } else if (['power_on', 'power_off', 'refresh_page', 'restart'].includes(action) && target == null) {
-    $('#scheduleEditErrorAlert').html('You must specifiy a target for this action').show()
+    editErrorAlert.innerText = 'You must specifiy a target for this action'
+    editErrorAlert.style.display = 'block'
     return
   } else if (['set_deinition', 'set_dmx_scene'].includes(value) && value == null) {
-    $('#scheduleEditErrorAlert').html('You must specifiy a value for this action').show()
+    editErrorAlert.innerText = 'You must specifiy a value for this action'
+    editErrorAlert.style.display = 'block'
     return
   }
 
@@ -959,7 +987,7 @@ export function populateFutureDateCalendarInput () {
         // Sort the elements by time
         const events = $(scheduleList).children('.eventListing')
         events.sort(function (a, b) {
-          return $(a).data('time_in_seconds') - $(b).data('time_in_seconds')
+          return parseInt(a.dataset.time_in_seconds) - parseInt(b.dataset.time_in_seconds)
         })
         $(scheduleList).append(events)
       }
@@ -1166,7 +1194,7 @@ function _scheduleFromFilePreviewCurrentSchedule (name, kind, retry = false) {
           // Sort the elements by time
           const events = $(currentScheduleEl).children('.eventListing')
           events.sort(function (a, b) {
-            return $(a).data('time_in_seconds') - $(b).data('time_in_seconds')
+            return parseInt(a.dataset.time_in_seconds) - parseInt(b.dataset.time_in_seconds)
           })
           $(currentScheduleEl).append(events)
         }

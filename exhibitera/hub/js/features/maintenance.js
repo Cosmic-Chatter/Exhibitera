@@ -10,17 +10,22 @@ export function setComponentInfoModalMaintenanceStatus (uuid, id) {
     endpoint: '/maintenance/' + uuid
   })
     .then((result) => {
-      if ('success' in result && result.success === false) return
+      if (result.success && result.success === false) return
 
-      $('#componentInfoModalMaintenanceStatusSelector').val(result.status.status)
-      $('#componentInfoModalMaintenanceNote').val(result.status.notes)
-      $('#maintenanceHistoryWorkingBar').attr('ariaValueNow', result.status.working_pct)
-      $('#maintenanceHistoryWorkingBar').width(String(result.status.working_pct) + '%')
-      $('#maintenanceHistoryWorkingBar').attr('title', 'Working: ' + String(result.status.working_pct) + '%')
-      $('#maintenanceHistoryNotWorkingBar').attr('ariaValueNow', result.status.not_working_pct)
-      $('#maintenanceHistoryNotWorkingBar').width(String(result.status.not_working_pct) + '%')
-      $('#maintenanceHistoryNotWorkingBar').attr('title', 'Not working: ' + String(result.status.not_working_pct) + '%')
-      $('#componentInfoModalMaintenanceSaveButton').hide()
+      document.getElementById('componentInfoModalMaintenanceStatusSelector').value = result.status.status
+      document.getElementById('componentInfoModalMaintenanceNote').value = result.status.notes
+
+      const workingBar = document.getElementById('maintenanceHistoryWorkingBar')
+      workingBar.setAttribute('aria-valuenow', result.status.working_pct)
+      workingBar.style.width = `${result.status.working_pct}%`
+      workingBar.setAttribute('title', `Working: ${result.status.working_pct}%`)
+
+      const notWorkingBar = document.getElementById('maintenanceHistoryNotWorkingBar')
+      notWorkingBar.setAttribute('aria-valuenow', result.status.not_working_pct)
+      notWorkingBar.style.width = `${result.status.not_working_pct}%`
+      notWorkingBar.setAttribute('title', `Not working: ${result.status.not_working_pct}%`)
+
+      document.getElementById('componentInfoModalMaintenanceSaveButton').style.display = 'none'
     })
 
   // Clear the related issues list and update with any issues
@@ -39,20 +44,15 @@ export function setComponentInfoModalMaintenanceStatus (uuid, id) {
   })
 }
 
-export function submitComponentMaintenanceStatusChange (type = 'component') {
+export function submitComponentMaintenanceStatusChange () {
   // Take details from the maintenance tab of the componentInfoModal and send
   // a message to the server updating the given component.
 
-  let uuid, status, notes
-  if (type === 'component') {
-    uuid = document.getElementById('componentInfoModal').getAttribute('data-uuid')
-    status = $('#componentInfoModalMaintenanceStatusSelector').val()
-    notes = $('#componentInfoModalMaintenanceNote').val()
-  }
+  const uuid = document.getElementById('componentInfoModal').dataset.uuid
 
   const requestDict = {
-    status,
-    notes
+    status: document.getElementById('componentInfoModalMaintenanceStatusSelector').value,
+    notes: document.getElementById('componentInfoModalMaintenanceNote').value
   }
 
   exTools.makeServerRequest({
@@ -61,8 +61,8 @@ export function submitComponentMaintenanceStatusChange (type = 'component') {
     params: requestDict
   })
     .then((result) => {
-      if ('success' in result && result.success === true) {
-        $('#componentInfoModalMaintenanceSaveButton').hide()
+      if (result.success && result.success === true) {
+        document.getElementById('componentInfoModalMaintenanceSaveButton').style.display = 'none'
       }
     })
 }
