@@ -169,7 +169,7 @@ async def delete_schedule_action(request: Request, schedule_name: str, action_id
     return response_dict
 
 
-@router.get("/availableDateSpecificSchedules")
+@router.get("/date_specific/list")
 async def get_date_specific_schedules(request: Request):
     """Retrieve a list of available date-specific schedules"""
 

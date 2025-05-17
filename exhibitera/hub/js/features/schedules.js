@@ -16,7 +16,7 @@ export function deleteSchedule (name) {
     .then((response) => {
       if ('success' in response && response.success === true) {
         populateSchedule(response)
-        if ($('#manageFutureDateModal').hasClass('show')) {
+        if (document.getElementById('manageFutureDateModal').classList.contains('show')) {
           populateFutureDatesList()
           document.getElementById('manageFutureDateCalendarInput').value = ''
           populateFutureDateCalendarInput()
@@ -50,7 +50,7 @@ export function populateSchedule (schedule) {
   // Take a provided schedule and build the interface to show it.
 
   document.getElementById('scheduleContainer').innerHTML = ''
-  $('#dateSpecificScheduleAlert').hide()
+  document.getElementById('dateSpecificScheduleAlert').style.display = 'none'
 
   const allowEdit = exTools.checkPermission('schedule', 'edit')
 
@@ -76,7 +76,7 @@ export function populateSchedule (schedule) {
     if (day.source === 'date-specific') {
       scheduleClass = 'schedule-date-specific'
       addItemText = 'Add date-specific action'
-      $('#dateSpecificScheduleAlert').show()
+      document.getElementById('dateSpecificScheduleAlert').style.display = 'block'
       convertState = 'none'
       deleteState = 'block'
       scheduleName = day.date
@@ -822,11 +822,13 @@ export function sendScheduleUpdateFromModal () {
         if (update.success === true) {
           exUtilities.hideModal('#scheduleEditModal')
           populateSchedule(update)
-          if ($('#manageFutureDateModal').hasClass('show')) {
+          if (document.getElementById('manageFutureDateModal').classList.contains('show')) {
             populateFutureDateCalendarInput()
           }
         } else {
-          $('#scheduleEditErrorAlert').html(update.reason).show()
+          const alertEl = document.getElementById('scheduleEditErrorAlert')
+          alertEl.innerText = update.reason
+          alertEl.style.display = 'block'
         }
       }
     })
@@ -848,7 +850,7 @@ export function scheduleDeleteActionFromModal () {
       if ('success' in update && update.success === true) {
         exUtilities.hideModal('#scheduleEditModal')
         populateSchedule(update)
-        if ($('#manageFutureDateModal').hasClass('show')) {
+        if (document.getElementById('manageFutureDateModal').classList.contains('show')) {
           populateFutureDateCalendarInput()
         }
       }
@@ -886,7 +888,7 @@ function populateFutureDatesList () {
 
   exTools.makeServerRequest({
     method: 'GET',
-    endpoint: '/schedule/availableDateSpecificSchedules'
+    endpoint: '/schedule/date_specific/list'
   })
     .then((result) => {
       if (result.success === true) {
@@ -972,11 +974,11 @@ export function populateFutureDateCalendarInput () {
         scheduleList.appendChild(createScheduleEntryHTML(day.schedule[scheduleID], scheduleID, date, 'date-specific'))
 
         // Sort the elements by time
-        const events = $(scheduleList).children('.eventListing')
+        const events = Array.from(scheduleList.querySelectorAll(':scope > .eventListing'))
         events.sort(function (a, b) {
           return parseInt(a.dataset.time_in_seconds) - parseInt(b.dataset.time_in_seconds)
         })
-        $(scheduleList).append(events)
+        events.forEach(event => scheduleList.appendChild(event))
       }
     })
 }
@@ -1179,11 +1181,11 @@ function _scheduleFromFilePreviewCurrentSchedule (name, kind, retry = false) {
           currentScheduleEl.appendChild(createScheduleEntryHTML(response.schedule[scheduleID], scheduleID, kind, 'day-specific', false))
 
           // Sort the elements by time
-          const events = $(currentScheduleEl).children('.eventListing')
+          const events = Array.from(currentScheduleEl.querySelectorAll(':scope > .eventListing'))
           events.sort(function (a, b) {
             return parseInt(a.dataset.time_in_seconds) - parseInt(b.dataset.time_in_seconds)
           })
-          $(currentScheduleEl).append(events)
+          events.forEach(event => currentScheduleEl.appendChild(event))
         }
       } else if (kind === 'date-specific' && retry === false) {
         // A fail probably means there isn't a date-specific scheudle,
