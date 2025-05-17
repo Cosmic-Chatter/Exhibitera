@@ -574,98 +574,85 @@ export function setScheduleActionTargetSelector (action = null, target = null) {
   }
 }
 
-export function setScheduleActionValueSelector (action = null, target = null) {
+export async function setScheduleActionValueSelector (action = null, target = null) {
   // Helper function to show/hide the select element for picking the value
   // of an action when appropriate
 
+  if (['set_definition', 'set_dmx_scene'].includes(action) === false) {
+    console.log('setScheduleActionValueSelector: invalid action type!')
+  }
+
   if (action == null) action = document.getElementById('scheduleActionSelector').value
   if (target == null) target = JSON.parse(document.getElementById('scheduleTargetSelector').value)
+  if (Array.isArray(target)) target = target[0]
 
   const valueSelector = document.getElementById('scheduleValueSelector')
   const valueSelectorLabel = document.getElementById('scheduleValueSelector')
   valueSelector.innerText = ''
 
-  if (['set_definition'].includes(action)) {
-    let component
-    try {
-      component = exExhibit.getExhibitComponent(target.uuid)
-    } catch {
-      console.log('error')
-      return
-    }
+  let component
 
-    const errorAlert = document.getElementById('scheduleEditErrorAlert')
-    if (component.helperAddress === '') {
-      errorAlert.innerHTML = 'This component is not responding'
-      errorAlert.style.display = 'block'
-      valueSelector.style.display = 'none'
-      valueSelectorLabel.style.display = 'none'
-      return
-    } else {
-      errorAlert.style.display = 'none'
-    }
-    exUtilities.makeRequest({
+  try {
+    component = exExhibit.getExhibitComponent(target.uuid)
+  } catch {
+    console.log('Cannot connect to component:', target)
+    return
+  }
+
+  const errorAlert = document.getElementById('scheduleEditErrorAlert')
+  if (component == null || (component?.helperAddress ?? '') === '') {
+    errorAlert.innerHTML = 'This component is not responding'
+    errorAlert.style.display = 'block'
+    valueSelector.style.display = 'none'
+    valueSelectorLabel.style.display = 'none'
+    return
+  } else {
+    errorAlert.style.display = 'none'
+  }
+
+  if (action === 'set_definition') {
+    const response = await exUtilities.makeRequest({
       method: 'GET',
       url: component.helperAddress,
       endpoint: '/definitions'
     })
-      .then((response) => {
-        if (action === 'set_definition') {
-          // Convert the dictionary to an array, sorted by app ID
+    if (response.success && response.success === true) {
+      // Convert the dictionary to an array, sorted by app ID
+      const appDict = exTools.sortDefinitionsByApp(response.definitions)
+      for (const app of Object.keys(appDict).sort()) {
+        const header = new Option(exUtilities.appNameToDisplayName(app))
+        header.disabled = true
+        valueSelector.appendChild(header)
 
-          const appDict = exTools.sortDefinitionsByApp(response.definitions)
-          for (const app of Object.keys(appDict).sort()) {
-            const header = new Option(exUtilities.appNameToDisplayName(app))
-            header.disabled = true
-            valueSelector.appendChild(header)
-
-            for (const def of appDict[app]) {
-              const option = new Option(def.name, def.uuid)
-              valueSelector.appendChild(option)
-            }
-          }
+        for (const def of appDict[app]) {
+          const option = new Option(def.name, def.uuid)
+          valueSelector.appendChild(option)
         }
-
-        // In the case of editing an action, preselect any existing values
-        valueSelector.value = document.getElementById('scheduleEditModal').dataset.currentValue
-        valueSelector.style.display = 'block'
-        valueSelectorLabel.style.display = 'block'
-      })
-  } else if (action === 'set_dmx_scene') {
-    let component
-    try {
-      component = exExhibit.getExhibitComponent(target.uuid)
-    } catch {
-      return
+      }
     }
-
-    exUtilities.makeRequest({
+  } else if (action === 'set_dmx_scene') {
+    const response = await exUtilities.makeRequest({
       method: 'GET',
       url: component.helperAddress,
       endpoint: '/DMX/getScenes'
     })
-      .then((response) => {
-        if (response.success && response.success === true) {
-          for (const group of response.groups) {
-            const groupName = new Option(group.name, null)
-            groupName.disabled = true
-            valueSelector.appendChild(groupName)
+    if (response.success && response.success === true) {
+      for (const group of response.groups) {
+        const groupName = new Option(group.name, null)
+        groupName.disabled = true
+        valueSelector.appendChild(groupName)
 
-            for (const scene of group.scenes) {
-              valueSelector.appendChild(new Option(scene.name, scene.uuid))
-            }
-          }
+        for (const scene of group.scenes) {
+          valueSelector.appendChild(new Option(scene.name, scene.uuid))
         }
-
-        // In the case of editing an action, preselect any existing values
-        valueSelector.value = document.getElementById('scheduleEditModal').dataset.currentValue
-        valueSelector.style.display = 'block'
-        valueSelectorLabel.style.display = 'block'
-      })
-  } else {
-    valueSelector.style.display = 'none'
-    valueSelectorLabel.style.display = 'none'
+      }
+    }
   }
+
+  // In the case of editing an action, preselect any existing values
+  valueSelector.value = document.getElementById('scheduleEditModal').dataset.currentValue
+  valueSelector.style.display = 'block'
+  valueSelectorLabel.style.display = 'block'
 }
 
 export function scheduleConfigureEditModal (scheduleName,
