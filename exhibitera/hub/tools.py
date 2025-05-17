@@ -1,18 +1,21 @@
 """Helper functions for Hub."""
 
 # Standard imports
+import gc
 import logging
 import threading
 from typing import Any
 
 # Non-standard imports
 import psutil
+from pympler import tracker
 
 # Exhibitera imports
 import exhibitera.common.config as ex_config
 import exhibitera.common.files as ex_files
 import exhibitera.hub.config as hub_config
 
+# tr = tracker.SummaryTracker()
 
 def path_safe(path: list[str]) -> bool:
     """Ensure the given path doesn't escape the Exhibitera Apps directory.
@@ -87,9 +90,11 @@ def print_debug_details() -> None:
         return
 
     print("================= Debug details =================")
-    print(f"Active threads: {threading.active_count()}")
-    print([x.name for x in threading.enumerate()])
+    # print(f"Active threads: {threading.active_count()}")
+    # print([x.name for x in threading.enumerate()])
+    gc.collect()
     print(f"Memory used: {psutil.Process().memory_info().rss/1024/1024} Mb")
+    # tr.print_diff()
     print("=================================================", flush=True)
 
     timer = threading.Timer(10, print_debug_details)

@@ -91,7 +91,7 @@ class BaseComponent:
                  mac_address: str | None = None,
                  maintenance_log: dict[str, Any] | None = None,
                  uuid_str: str = ""):
-
+        print("BaseComponent.init()")
         now_date = datetime.datetime.now()
 
         if uuid_str == "":
@@ -142,6 +142,7 @@ class BaseComponent:
     def clean_up(self):
         """Stop any timers so the class instance can be safely removed."""
 
+        print("BaseComponent.cleanup()")
         if self.latency_timer is not None:
             self.latency_timer.cancel()
 
@@ -150,7 +151,7 @@ class BaseComponent:
 
         If another ping is received, the component will be re-added.
         """
-
+        print("BaseComponent.remove()")
         self.clean_up()
         if isinstance(self, ExhibitComponent):
             hub_config.componentList = [x for x in hub_config.componentList if x.uuid != self.uuid]
@@ -163,18 +164,36 @@ class BaseComponent:
 
     def seconds_since_last_contact(self) -> float:
         """The number of seconds since the last successful contact with the component."""
-
+        print("BaseComponent.seconds_since_last_contact()")
         diff = datetime.datetime.now() - self.last_contact_datetime
         return diff.total_seconds()
 
     def update_last_contact_datetime(self):
-
+        print("BaseComponent.update_last_contact_datetime()")
         self.last_contact_datetime = datetime.datetime.now()
         hub_config.last_update_time = time.time()
 
     def poll_latency(self):
         """If we have an IP address, ping the host to measure its latency."""
+        print("BaseComponent.poll_latency()")
 
+        if hasattr(self, '_latency_thread') and self._latency_thread and self._latency_thread.is_alive():
+            # Already running
+            return
+
+        def latency_loop():
+            while True:
+                self._poll_latency_once()
+                time.sleep(10)
+
+        self._latency_thread = threading.Thread(target=latency_loop)
+        self._latency_thread.daemon = True
+        self._latency_thread.start()
+
+    def _poll_latency_once(self) -> None:
+        """Helper function to poll latency of the component."""
+
+        print("BaseComponent._poll_latency_once()")
         if self.ip_address is not None:
             try:
                 ping = icmplib.ping(self.ip_address, privileged=False, count=1, timeout=1)
@@ -192,14 +211,9 @@ class BaseComponent:
                 print(f"poll_latency: {self.id}: an unknown exception occurred", e)
                 self.latency = None
 
-        self.latency_timer = threading.Timer(10, self.poll_latency)
-        self.latency_timer.name = f"{self.id} latency timer"
-        self.latency_timer.daemon = True
-        self.latency_timer.start()
-
     def get_maintenance_report(self) -> dict[str, Any]:
         """Return a summary of this component's maintenance status."""
-
+        print("BaseComponent.get_maintenance_report()")
         segments = ex_maintenance.segment_entries(self.maintenance_log["history"])
         summary = ex_maintenance.summarize_segments(segments)
 
@@ -216,7 +230,7 @@ class BaseComponent:
 
         Include only attributes that are likely to be the same if this component is restored at a later date.
         """
-
+        print("BaseComponent.get_dict()")
         return {
             "uuid": self.uuid,
             "id": self.id,
@@ -229,6 +243,7 @@ class BaseComponent:
 
     def save(self):
         """Write the component to disk"""
+        print("BaseComponent.save()")
         if ex_config.debug:
             print("Saving component to disk: ", self.id, self.uuid)
         path = ex_files.get_path(["components", self.uuid + '.json'], user_file=True)
@@ -248,7 +263,7 @@ class ExhibitComponent(BaseComponent):
 
         # category='dynamic' for components that are connected over the network
         # category='static' for components added manually
-
+        print("ExhibitComponent.init()")
         super().__init__(id_, groups,
                          description=description,
                          last_contact_datetime=last_contact_datetime,
@@ -274,13 +289,13 @@ class ExhibitComponent(BaseComponent):
         return repr(f"[ExhibitComponent ID: {self.id} Group: {self.groups} UUID: {self.uuid}]")
 
     def update_last_contact_datetime(self, interaction: bool = False):
-
+        print("ExhibitComponent.update_last_contact_datetime()")
         super().update_last_contact_datetime()
         self.status_manager.update_last_contact_datetime(interaction=interaction)
 
     def set_helper_address(self, address: str):
         """Set the helper IP address, modifying it first, if necessary"""
-
+        print("ExhibitComponent.set_helper_address()")
         # If address includes 'localhost', '127.0.0.1', etc., replace it with the actual IP address
         # so that we can reach it.
         address = address.replace('localhost', self.ip_address)
@@ -294,12 +309,12 @@ class ExhibitComponent(BaseComponent):
 
         Options: [OFFLINE, SYSTEM ON, ONLINE, ACTIVE, WAITING, STATIC]
         """
-
+        print("ExhibitComponent.current_status()")
         return self.status_manager.status
 
     def update_configuration(self):
         """Update the component's configuration based on current exhibit configuration."""
-
+        print("ExhibitComponent.update_configuration()")
         if hub_config.exhibit_configuration is None or self.category == 'static':
             return
         self.config["current_exhibit"] = hub_config.current_exhibit
@@ -331,7 +346,7 @@ class ExhibitComponent(BaseComponent):
 
     def queue_command(self, command: str):
         """Queue a command to be sent to the component on the next ping"""
-
+        print("ExhibitComponent.queue_command()")
         if self.category == "static":
             return
 
@@ -363,7 +378,7 @@ class ExhibitComponent(BaseComponent):
 
     def wake_with_lan(self):
         """Send a magic packet waking the device."""
-
+        print("ExhibitComponent.wake_with_lan()")
         if self.mac_address is not None:
             print(f"Sending wake on LAN packet to {self.id}")
             with hub_config.logLock:
@@ -382,7 +397,7 @@ class ExhibitComponent(BaseComponent):
 
         Include only attributes that are likely to be the same if this component is restored at a later date.
         """
-
+        print("ExhibitComponent.get_dict()")
         the_dict = super().get_dict()
         the_dict["class"] = "ExhibitComponent"
         the_dict["category"] = self.category

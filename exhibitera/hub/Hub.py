@@ -224,18 +224,18 @@ app.add_middleware(
 app.openapi = exhibitera_schema
 
 # Link API routers
-app.include_router(analytics_v6.router, prefix='/v6')
-app.include_router(components_v6.router, prefix='/v6')
-app.include_router(data_v6.router, prefix='/v6')
-app.include_router(exhibitions_v6.router, prefix='/v6')
-app.include_router(groups_v6.router, prefix='/v6')
-app.include_router(issues_v6.router, prefix='/v6')
-app.include_router(maintenance_v6.router, prefix='/v6')
-app.include_router(projectors_v6.router, prefix='/v6')
-app.include_router(schedule_v6.router, prefix='/v6')
-app.include_router(system_v6.router, prefix='/v6')
-app.include_router(tracker_v6.router, prefix='/v6')
-app.include_router(users_v6.router, prefix='/v6')
+# app.include_router(analytics_v6.router, prefix='/v6')
+# app.include_router(components_v6.router, prefix='/v6')
+# app.include_router(data_v6.router, prefix='/v6')
+# app.include_router(exhibitions_v6.router, prefix='/v6')
+# app.include_router(groups_v6.router, prefix='/v6')
+# app.include_router(issues_v6.router, prefix='/v6')
+# app.include_router(maintenance_v6.router, prefix='/v6')
+# app.include_router(projectors_v6.router, prefix='/v6')
+# app.include_router(schedule_v6.router, prefix='/v6')
+# app.include_router(system_v6.router, prefix='/v6')
+# app.include_router(tracker_v6.router, prefix='/v6')
+# app.include_router(users_v6.router, prefix='/v6')
 
 
 @lru_cache()
@@ -275,24 +275,43 @@ app.mount("/",
           StaticFiles(directory=ex_files.get_path([""]), html=True),
           name="root")
 
+
+MY_CODE_DIR = "/Users/morgan/PycharmProjects/Exhibitera/exhibitera"
+print(MY_CODE_DIR)
+def trace_calls(frame, event, arg):
+    if event == "call":
+        code = frame.f_code
+        filename = code.co_filename
+
+        # Filter to only include files in your current directory
+        if filename.startswith(MY_CODE_DIR):
+            func_name = code.co_name
+            lineno = frame.f_lineno
+            print(f"Calling {func_name} in {filename}:{lineno}")
+    return trace_calls
+
+
 def run():
+    # sys.settrace(trace_calls)
+    ex_config.debug = True
+    hub_tools.start_debug_loop()
     print("Checking file structure...")
     hub_system.check_file_structure()
     hub_legacy.convert_exhibit_files() # Run early before any exhibits are loaded
     print("Loading components...")
     hub_components.load_components()
     print("Loading exhibits...")
-    hub_exhibitions.check_available_exhibitions()
+    # hub_exhibitions.check_available_exhibitions()
     print("Loading configuration...")
-    load_default_configuration()
+    # load_default_configuration()
     print("Loading users...")
-    hub_users.load_users()
+    # hub_users.load_users()
     print("Loading groups...")
-    hub_group.load_groups()
+    # hub_group.load_groups()
 
-    hub_proj.poll_projectors()
-    hub_components.poll_wake_on_lan_devices()
-    ex_utilities.check_for_software_update('hub')
+    # hub_proj.poll_projectors()
+    # hub_components.poll_wake_on_lan_devices()
+    # ex_utilities.check_for_software_update('hub')
 
     log_level = "warning"
     if ex_config.debug:
