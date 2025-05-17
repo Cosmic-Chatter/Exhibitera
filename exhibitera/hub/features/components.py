@@ -175,27 +175,45 @@ class BaseComponent:
     def poll_latency(self):
         """If we have an IP address, ping the host to measure its latency."""
 
-        if self.ip_address is not None:
-            try:
-                ping = icmplib.ping(self.ip_address, privileged=False, count=1, timeout=1)
-                if ping.is_alive:
-                    self.latency = ping.avg_rtt
-                else:
-                    self.latency = None
-            except icmplib.exceptions.SocketPermissionError:
-                if "wakeOnLANPrivilege" not in hub_config.serverWarningDict:
-                    hub_config.serverWarningDict["wakeOnLANPrivilege"] = True
-                self.latency = None
-            except icmplib.exceptions.NameLookupError:
-                self.latency = None
-            except Exception as e:
-                print(f"poll_latency: {self.id}: an unknown exception occurred", e)
-                self.latency = None
+        if hasattr(self, '_latency_thread') and self._latency_thread and self._latency_thread.is_alive():
+            # Already running
+            return
+
+        def latency_loop():
+            while True:
+                self._poll_latency_once()
+                time.sleep(10)
+
+        self._latency_thread = threading.Thread(target=latency_loop)
+        self._latency_thread.daemon = True
+        self._latency_thread.start()
 
         self.latency_timer = threading.Timer(10, self.poll_latency)
         self.latency_timer.name = f"{self.id} latency timer"
         self.latency_timer.daemon = True
         self.latency_timer.start()
+
+    def _poll_latency_once(self) -> None:
+        """Helper function for poll_latency()"""
+
+        if self.ip_address is None:
+            return
+
+        try:
+            ping = icmplib.ping(self.ip_address, privileged=False, count=1, timeout=1)
+            if ping.is_alive:
+                self.latency = ping.avg_rtt
+            else:
+                self.latency = None
+        except icmplib.exceptions.SocketPermissionError:
+            if "wakeOnLANPrivilege" not in hub_config.serverWarningDict:
+                hub_config.serverWarningDict["wakeOnLANPrivilege"] = True
+            self.latency = None
+        except icmplib.exceptions.NameLookupError:
+            self.latency = None
+        except Exception as e:
+            print(f"poll_latency: {self.id}: an unknown exception occurred", e)
+            self.latency = None
 
     def get_maintenance_report(self) -> dict[str, Any]:
         """Return a summary of this component's maintenance status."""
