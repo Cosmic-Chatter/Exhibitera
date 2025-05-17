@@ -1,10 +1,9 @@
 distro
 fastapi
-flask==2.2.4
 libusb
 pillow
 psutil
-pydantic==1.10.17
+pydantic
 PyDMXControl
 pyffmpeg; platform_machine != 'aarch64' # We need to bundle ffmpeg sepaartely for Raspberry Pi
 pyftdi

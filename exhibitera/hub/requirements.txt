@@ -5,7 +5,7 @@ distro
 fastapi
 icmplib
 psutil
-pydantic==1.10.17
+pydantic
 pypjlink2
 python-dateutil
 python-multipart
