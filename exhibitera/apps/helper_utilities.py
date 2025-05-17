@@ -63,13 +63,13 @@ def get_local_address() -> str:
     try:
         # Doesn't even have to be reachable
         s.connect(('10.255.255.255', 1))
-        IP = s.getsockname()[0]
+        ip_address = s.getsockname()[0]
     except:
-        IP = '127.0.0.1'
+        ip_address = '127.0.0.1'
     finally:
         s.close()
 
-    return "http://" + IP + ":" + str(config.defaults["system"]["port"])
+    return "http://" + ip_address + ":" + str(config.defaults["system"]["port"])
 
 
 def get_system_stats() -> dict[str, Union[int, float]]:
@@ -349,7 +349,7 @@ def str_to_bool(val: str) -> bool:
     """Take a string value like "false" and convert it to a bool"""
 
     if isinstance(val, bool):
-        val_to_return = val
+        return val
     else:
         val = str(val).strip()
         if val in ["false", "False", 'FALSE']:

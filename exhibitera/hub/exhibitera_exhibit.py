@@ -17,7 +17,7 @@ import wakeonlan
 # Exhibitera imports
 import component_helpers
 import config
-import exhibitera_maintenance as c_maint
+import exhibitera_maintenance as ex_maint
 import exhibitera_tools as c_tools
 import projector_control
 
@@ -138,6 +138,20 @@ class BaseComponent:
         self.latency_timer.daemon = True
         self.latency_timer.start()
 
+    def get_maintenance_report(self) -> dict[str, Any]:
+        """Return a summary of this component's maintenance status."""
+
+        segments = ex_maint.segment_entries(self.maintenance_log["history"])
+        summary = ex_maint.summarize_segments(segments)
+
+        return {"date": self.maintenance_log["current"]["date"],
+                "status": self.maintenance_log["current"]["status"],
+                "notes": self.maintenance_log["current"]["notes"],
+                "working_pct": summary["working"],
+                "not_working_pct": summary["not_working"],
+                "on_floor_pct": summary["on_floor"],
+                "off_floor_pct": summary["off_floor"]}
+
     def get_dict(self) -> dict[str, Any]:
         """Return a dictionary representation of this component.
 
@@ -240,7 +254,7 @@ class ExhibitComponent(BaseComponent):
 
         update_made = False
         try:
-            component_config = ([x for x in config.exhibit_configuration if x["id"] == self.id])[0]
+            component_config = ([x for x in config.exhibit_configuration["components"] if x["id"] == self.id])[0]
 
             if "definition" in component_config and self.config["definition"] != component_config["definition"]:
                 self.config["definition"] = component_config["definition"]
@@ -283,9 +297,11 @@ class ExhibitComponent(BaseComponent):
             requests.get(address)
         else:
             # Queue all other commands for the next ping
-            print(f"{self.id}: command queued: {command}")
+            if config.debug:
+                print(f"{self.id}: command queued: {command}")
             self.config["commands"].append(command)
-            print(f"{self.id}: pending commands: {self.config['commands']}")
+            if config.debug:
+                print(f"{self.id}: pending commands: {self.config['commands']}")
 
     def wake_with_LAN(self):
         """Send a magic packet waking the device."""
@@ -368,6 +384,10 @@ class WakeOnLANDevice(BaseComponent):
                                         ip_address=self.WOL_broadcast_address,
                                         port=self.WOL_port)
         except ValueError as e:
+            print(f"Wake on LAN error for component {self.id}: {str(e)}")
+            with config.logLock:
+                logging.error(f"Wake on LAN error for component {self.id}: {str(e)}")
+        except OSError as e:
             print(f"Wake on LAN error for component {self.id}: {str(e)}")
             with config.logLock:
                 logging.error(f"Wake on LAN error for component {self.id}: {str(e)}")
@@ -592,23 +612,23 @@ def add_exhibit_component(this_id: str,
     Set from_disk=True when loading a previously-created component to skip some steps.
     """
 
-    if not from_disk:
-        # Check if component has a legacy maintenance status.
-        maintenance_log = c_maint.convert_legacy_maintenance_log(this_id)
-        if maintenance_log is not None:
-            maint_path = c_tools.get_path(["maintenance-logs", this_id + '.txt'], user_file=True)
-            maint_path_new = c_tools.get_path(["maintenance-logs", this_id + '.txt'], user_file=True)
-            try:
-                os.rename(maint_path, maint_path_new)
-            except FileNotFoundError:
-                pass
+    # Check if component has a legacy maintenance status.
+    old_maintenance_log = ex_maint.convert_legacy_maintenance_log(this_id)
+    if old_maintenance_log is not None:
+        maintenance_log = old_maintenance_log
+        maint_path = c_tools.get_path(["maintenance-logs", this_id + '.txt'], user_file=True)
+        maint_path_new = c_tools.get_path(["maintenance-logs", this_id + '.txt.old'], user_file=True)
+        try:
+            os.rename(maint_path, maint_path_new)
+        except FileNotFoundError:
+            pass
 
     component = ExhibitComponent(this_id, groups, category,
                                  description=description,
                                  last_contact_datetime=last_contact_datetime,
                                  maintenance_log=maintenance_log,
                                  uuid_str=uuid_str)
-    if not from_disk:
+    if not from_disk or old_maintenance_log is not None:
         component.save()
 
     config.componentList.append(component)
@@ -683,10 +703,17 @@ def check_available_exhibits():
     config.exhibit_list = []
     exhibits_path = c_tools.get_path(["exhibits"], user_file=True)
 
-    with config.exhibitsLock:
-        for file in os.listdir(exhibits_path):
-            if file.lower().endswith(".json"):
-                config.exhibit_list.append(os.path.splitext(file)[0])
+    for file in os.listdir(exhibits_path):
+        if file.lower().endswith(".json"):
+            config.exhibit_list.append(c_tools.load_json(c_tools.get_path(["exhibits", file], user_file=True)))
+
+    # Make sure we have something usable loaded
+    if len(config.exhibit_list) == 0:
+        create_new_exhibit("Default", None)
+
+    if config.current_exhibit not in [x["uuid"] for x in config.exhibit_list]:
+        config.current_exhibit = config.exhibit_list[0]["uuid"]
+        c_tools.update_system_configuration({"current_exhibit": config.current_exhibit})
 
 
 def command_all_exhibit_components(cmd: str):
@@ -706,17 +733,18 @@ def command_all_exhibit_components(cmd: str):
         device.queue_command(cmd)
 
 
-def create_new_exhibit(name: str, clone: Union[str, None]):
+def create_new_exhibit(name: str, clone: str | None) -> str:
     """Create a new exhibit file
 
     Set clone=None to create a new file, or set it equal to the name of an
     existing exhibit to clone that exhibit."""
 
-    # Make sure we have the proper extension
-    if not name.lower().endswith(".json"):
-        name += ".json"
+    if name == 'Default':
+        uuid_str = 'Default'
+    else:
+        uuid_str = str(uuid.uuid4())
 
-    new_file = c_tools.get_path(["exhibits", name], user_file=True)
+    new_file = c_tools.get_path(["exhibits", c_tools.with_extension(uuid_str, '.json')], user_file=True)
 
     if clone is not None:
         # Copy an existing file
@@ -725,14 +753,23 @@ def create_new_exhibit(name: str, clone: Union[str, None]):
         if not clone.lower().endswith(".json"):
             clone += ".json"
         existing_file = c_tools.get_path(["exhibits", clone], user_file=True)
-        shutil.copyfile(existing_file, new_file)
+        cloned = c_tools.load_json(existing_file)
+        if cloned is not None:
+            cloned["name"] = name
+            cloned["uuid"] = uuid_str
+            c_tools.write_json(cloned, new_file)
+        else:
+            # Make a new file
+            c_tools.write_json({"name": name, "uuid": uuid_str, "components": [], "commands": []}, new_file)
 
     else:
         # Make a new file
-        c_tools.write_json([], new_file)
+        c_tools.write_json({"name": name, "uuid": uuid_str, "components": [], "commands": []}, new_file)
 
     config.last_update_time = time.time()
     check_available_exhibits()
+
+    return uuid_str
 
 
 def delete_exhibit(name: str):
@@ -820,33 +857,31 @@ def poll_wake_on_LAN_devices():
     config.polling_thread_dict["poll_wake_on_LAN_devices"].start()
 
 
-def read_exhibit_configuration(name: str):
-    # We want the format of name to be "XXXX.json", but it might be
-    # "exhibits/XXXX.json"
-    error = False
-    split_path = os.path.split(name)
-    if len(split_path) == 2:
-        if split_path[0] == "exhibits":
-            name = split_path[1]
-        elif split_path[0] == "":
-            pass
-        else:
-            error = True
-    else:
-        error = True
+def read_exhibit_configuration(uuid_str: str) -> tuple[bool, str]:
+    """Load the given exhibit configuration and trigger an update."""
 
-    if error:
-        # Something bad has happened. Display an error and bail out
-        print(
-            f"Error: exhibit definition with name {name} does not appear to be properly formatted. This file should be located in the exhibits directory.")
-        with config.logLock:
-            logging.error('Bad exhibit definition filename: %s', name)
-        return
+    exhibit_path = c_tools.get_path(["exhibits", c_tools.with_extension(uuid_str, 'json')], user_file=True)
+    if not os.path.exists(exhibit_path):
+        logging.error('read_exhibit_configuration: exhibit does not exist: ' + uuid_str)
+        return False, 'does_not_exist'
 
-    exhibit_path = c_tools.get_path(["exhibits", name + ".json"], user_file=True)
-    config.current_exhibit = os.path.splitext(name)[0]
-    config.exhibit_configuration = c_tools.load_json(exhibit_path)
+    try:
+        config.exhibit_configuration = c_tools.load_json(exhibit_path)
+    except json.JSONDecodeError:
+        logging.error('read_exhibit_configuration: bad JSON in ' + uuid_str)
+        return False, 'invalid_json'
+
+    # Update the components that the configuration has changed
+    for component in config.componentList:
+        component.update_configuration()
+
+    # Trigger any exhibit actions
+    for command in config.exhibit_configuration.get("commands", []):
+        execute_action(command["action"], command["target"], command["value"])
+
+    config.current_exhibit = uuid_str
     config.last_update_time = time.time()
+    return True, ''
 
 
 def update_exhibit_configuration(update: dict[str, Any],
@@ -860,20 +895,24 @@ def update_exhibit_configuration(update: dict[str, Any],
 
     exhibit_path = c_tools.get_path(["exhibits", exhibit_name + ".json"], user_file=True)
     exhibit_config = c_tools.load_json(exhibit_path)
+    if exhibit_config is None:
+        if config.debug is True:
+            print('update_exhibit_configuration: error: invalid exhibit: ', exhibit_name)
+        return
 
     match_found = False
-    for index, component in enumerate(exhibit_config):
+    for index, component in enumerate(exhibit_config.get("components", [])):
         # Prefer UUID to ID from Exhibitera 5
         if component_uuid != '' and component_uuid is not None and 'uuid' in component:
             if component["uuid"] == component_uuid:
-                exhibit_config[index] |= update
-                exhibit_config[index]["uuid"] = component_uuid
+                exhibit_config["components"][index] |= update
+                exhibit_config["components"][index]["uuid"] = component_uuid
                 match_found = True
         elif component_id != '' and component_id is not None and 'id' in component:
             if component["id"] == component_id:
-                exhibit_config[index] |= update
+                exhibit_config["components"][index] |= update
                 if component_uuid != '' and component_uuid is not None:
-                    exhibit_config[index]["uuid"] = component_uuid
+                    exhibit_config["components"][index]["uuid"] = component_uuid
                 match_found = True
     if not match_found:
         new_entry = {}
@@ -882,7 +921,7 @@ def update_exhibit_configuration(update: dict[str, Any],
         if component_uuid != '' and component_uuid is not None:
             new_entry['uuid'] = component_uuid
         new_entry |= update
-        exhibit_config.append(new_entry)
+        exhibit_config["components"].append(new_entry)
     config.exhibit_configuration = exhibit_config
 
     c_tools.write_json(exhibit_config, exhibit_path)
@@ -892,6 +931,97 @@ def update_exhibit_configuration(update: dict[str, Any],
         this_component = get_exhibit_component(component_id=component_id)
     if this_component is not None:
         this_component.update_configuration()
+
+
+def execute_action(action: str,
+                   target: list[dict[str, str]] | dict[str, str] | None,
+                   value: list | str | None):
+    """Execute the given action."""
+
+    if action == 'set_definition' and target is not None and value is not None:
+        if isinstance(value, list):
+            value = value[0]
+        target_uuid = None
+        target_id = None
+        if "uuid" in target:
+            target_uuid = target["uuid"]
+        elif "id" in target:
+            # Depreciated in Ex5.2 - UUID should be the default
+            target_id = target["id"]
+        else:
+            if config.debug:
+                print("set_definition scheduled without a target uuid")
+            logging.error("set_definition scheduled without a target uuid")
+            return
+        print(f"Changing definition for {target} to {value}")
+
+        logging.info("Changing definition for %s to %s", target, value)
+        update_exhibit_configuration({"definition": value},
+                                     component_id=target_id,
+                                     component_uuid=target_uuid)
+    elif action == 'set_dmx_scene' and target is not None and value is not None:
+        if isinstance(value, list):
+            value = value[0]
+        if isinstance(target, list):
+            target = target[0]
+        target_uuid = None
+        target_id = None
+        if "uuid" in target:
+            target_uuid = target["uuid"]
+        elif "id" in target:
+            # Depreciated in Ex5.2 - UUID should be the default
+            target_id = target["id"]
+        else:
+            if config.debug:
+                print("set_dmx_scene scheduled without a target uuid")
+                logging.error("set_dmx_scene scheduled without a target uuid")
+            return
+
+        logging.info('Setting DMX scene for %s to %s', target, value)
+        component = get_exhibit_component(component_id=target_id, component_uuid=target_uuid)
+        if component is not None:
+            component.queue_command("set_dmx_scene__" + value)
+    elif action == 'set_exhibit' and target is not None:
+        print("Changing exhibit to:", target["value"])
+        logging.info("Changing exhibit to %s", target["value"])
+        read_exhibit_configuration(target["value"])
+    elif target is not None:
+        if isinstance(target, dict):
+            target = [target]
+        for target_i in target:
+            if target_i["type"] == 'all':
+                command_all_exhibit_components(action)
+            elif target_i["type"] == "group":
+                group = target_i["uuid"]
+                for component in config.componentList:
+                    if group in component.groups:
+                        component.queue_command(action)
+                for component in config.projectorList:
+                    if group in component.groups:
+                        component.queue_command(action)
+                for component in config.wakeOnLANList:
+                    if group in component.groups:
+                        component.queue_command(action)
+            elif target_i["type"] == "component":
+                target_uuid = None
+                target_id = None
+                if "uuid" in target_i:
+                    target_uuid = target_i["uuid"]
+                elif "id" in target_i:
+                    # Depreciated in Ex5.2 - UUID should be the default
+                    target_id = target_i["id"]
+                else:
+                    if config.debug:
+                        print("action scheduled without a target uuid")
+                        logging.error("action scheduled without a target uuid")
+                    return
+                component = get_exhibit_component(component_id=target_id, component_uuid=target_uuid)
+                if component is not None:
+                    component.queue_command(action)
+    else:
+        command_all_exhibit_components(action)
+
+    config.last_update_time = time.time()
 
 
 def update_exhibit_component_status(data: dict[str, Any], ip: str):

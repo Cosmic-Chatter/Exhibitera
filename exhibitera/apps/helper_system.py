@@ -2,11 +2,14 @@
 import datetime
 import logging
 import os
+import platform
 import sys
 import threading
+from typing import Any
 
 # Non-standard imports
 import dateutil.parser
+import distro
 import requests
 
 # Exhibitera imports
@@ -147,3 +150,59 @@ def wake_display():
         # os.system("nircmd.exe monitor async_on")
         nircmd_path = helper_files.get_path(["nircmd.exe"])
         os.system(nircmd_path + " sendkeypress ctrl")
+
+
+def get_platform_details() -> dict[str, Any]:
+    """Retrieve basic information about the platform."""
+
+    details = {
+        "architecture": platform.architecture()[0],
+        "os_version": platform.release()
+    }
+
+    os_name = sys.platform
+    if os_name == "darwin":
+        os_name = 'macOS'
+    elif os_name == "win32":
+        os_name = "Windows"
+    details["os"] = os_name
+
+    outdated, message = check_for_outdated_os()
+    if outdated:
+        details["outdated"] = True
+        details["outdated_message"] = message
+
+    return details
+
+
+def check_for_outdated_os() -> tuple[bool, str]:
+    """Check if the OS release is out of date.
+    
+    This is a very limited check based on Ubuntu and Windows
+    """
+
+    message = "This OS version may be unsupported in the next version of Exhibitera."
+
+    if sys.platform == 'linux':
+        # Check for outdated Ubuntu
+        if distro.id() != 'ubuntu':
+            # We are only checking for Ubuntu right now
+            return False, ""
+
+        # Ubuntu LTS versions are supported for 5 years
+        version_parts = distro.version_parts(best=True)
+        major = int(version_parts[0])
+        minor = int(version_parts[1])
+        if major % 2 != 0 or minor != 4:
+            # LTS releases are always even year + 04, such as 22.04
+            return True, message
+        now = datetime.datetime.now()
+        now_year = int(now.strftime("%y"))
+        if now_year - major >= 5:
+            # LTS releases are supported for 5 years
+            return True, message
+
+    if sys.platform == 'win32':
+        return False, ""
+
+    return False, ""

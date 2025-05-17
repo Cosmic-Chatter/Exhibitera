@@ -1,6 +1,44 @@
-/* Language switcher */
 .langSwitch-entry {
     font-size: 2.5vmax;
+}
+.markdown-image {
+    max-width: 100%;
+    padding-bottom: 2%;
+    padding-top: 2%;
+    text-align: center;
+}
+.markdown-image-caption {
+    text-align: center;
+}
+.markdown-image-middle {
+    margin-left: auto;
+    margin-right: auto;
+}
+.markdown-image-left {
+    float: left;
+    padding-right: 2%;
+}
+.markdown-image-right {
+    float: right;
+    padding-left: 2%;
+}
+.markdown-image-25 {
+    max-width: 25%!important;
+}
+.markdown-image-33 {
+    max-width: 33%!important;
+}
+.markdown-image-50 {
+    max-width: 50%!important;
+}
+.markdown-image-67 {
+    max-width: 67%!important;
+}
+.markdown-image-75 {
+    max-width: 75%!important;
+}
+.markdown-image-100 {
+    max-width: 100%!important;
 }
 #langSwitchOptions {
     width: 20vmax;

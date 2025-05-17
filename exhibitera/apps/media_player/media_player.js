@@ -20,17 +20,14 @@ function updateParser (update) {
 
 function loadDefinition (def) {
   // Take the definition and use it to load a new set of contet
+
+  const root = document.querySelector(':root')
+
   exCommon.config.definition = def
   exCommon.config.sourceList = []
   def.content_order.forEach((uuid) => {
     exCommon.config.sourceList.push(def.content[uuid])
   })
-
-  // Backgorund settings
-  const root = document.querySelector(':root')
-  if ('style' in def && 'background' in def.style) {
-    exCommon.setBackground(def.style.background, root, '#000', true)
-  }
 
   // Watermark settings
   const watermarkEl = document.getElementById('watermark')
@@ -56,6 +53,44 @@ function loadDefinition (def) {
   } else {
     watermarkEl.style.display = 'none'
   }
+
+  // Appearance settings
+
+  // Color
+  // First, reset to defaults (in case a style option doesn't exist in the definition)
+  root.style.setProperty('--subtitle-color', 'white')
+
+  // Then, apply the definition settings
+  Object.keys(def?.style?.color ?? []).forEach((key) => {
+    console.log(def.style.color[key])
+    document.documentElement.style.setProperty('--' + key, def.style.color[key])
+  })
+
+  if ('style' in def && 'background' in def.style) {
+    exCommon.setBackground(def.style.background, root, '#000', true)
+  }
+
+  // Font
+
+  // First, reset to defaults (in case a style option doesn't exist in the definition)
+  root.style.setProperty('--subtitle-font', 'subtitles-default')
+
+  // Then, apply the definition settings
+  Object.keys(def?.style?.font ?? []).forEach((key) => {
+    const font = new FontFace(key, 'url(' + encodeURI(def.style.font[key]) + ')')
+    document.fonts.add(font)
+    root.style.setProperty('--' + key + '-font', key)
+  })
+
+  // Text size
+  // First, reset to defaults (in case a style option doesn't exist in the definition)
+  root.style.setProperty('--subtitle-font-adjust', 0)
+
+  // Then, apply the definition settings
+  Object.keys(def?.style?.text_size ?? []).forEach((key) => {
+    const value = def.style.text_size[key]
+    root.style.setProperty('--' + key + '-font-adjust', value)
+  })
 
   gotoSource(0)
 }
@@ -107,7 +142,7 @@ async function changeMedia (source) {
 
   let filename
   if (('type' in source) === false || source.type === 'file') {
-    filename = 'content/' + source.filename
+    filename = exCommon.config.helperAddress + '/content/' + source.filename
   } else if (source.type === 'url') {
     filename = source.filename
   }
@@ -132,6 +167,14 @@ async function changeMedia (source) {
       video.src = filename
       video.load()
       video.play()
+    }
+    // Subtitles
+    if (subtitleEl != null) subtitleEl.remove()
+    if (source?.subtitles?.filename != null) {
+      subtitleEl = document.createElement('track')
+      subtitleEl.src = exCommon.config.helperAddress + '/content/' + source.subtitles.filename
+      video.appendChild(subtitleEl)
+      video.textTracks[0].mode = 'showing'
     }
     if (exCommon.config.sourceList.length > 1) { // Don't loop or onended will never fire
       video.loop = false
@@ -320,7 +363,7 @@ function fetchAnnotation (details) {
 exCommon.config.activeIndex = 0 // Index of the file from the source list currently showing
 exCommon.config.sourceList = []
 exCommon.config.autoplayEnabled = true
-exCommon.config.allowAudio = false
+let subtitleEl = null
 
 exCommon.configureApp({
   name: 'media_player',

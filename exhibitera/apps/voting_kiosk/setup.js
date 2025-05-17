@@ -3,6 +3,7 @@
 import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exFileSelect from '../js/exhibitera_file_select_modal.js'
 import * as exSetup from '../js/exhibitera_setup_common.js'
+import * as exMarkdown from '../js/exhibitera_setup_markdown.js'
 
 async function initializeWizard () {
   // Setup the wizard
@@ -183,10 +184,15 @@ async function wizardCreateDefinition () {
       value: '5_star'
     })
   }
+  const uuid = $('#definitionSaveButton').data('workingDefinition').uuid
+
   await exSetup.saveDefinition(defName)
-  await exCommon.getAvailableDefinitions(exCommon.config.app)
-  editDefinition($('#definitionSaveButton').data('workingDefinition').uuid)
-  $('#setupWizardModal').modal('hide')
+  const result = await exCommon.getAvailableDefinitions('voting_kiosk')
+  exSetup.populateAvailableDefinitions(result.definitions)
+  document.getElementById('availableDefinitionSelect').value = uuid
+
+  editDefinition(uuid)
+  exSetup.hideModal('#setupWizardModal')
 }
 
 function wizardCreateAnswerOption (userDetails) {
@@ -274,16 +280,41 @@ async function clearDefinitionInput (full = true) {
   document.getElementById('behaviorInput_recording_interval').value = 60
   document.getElementById('behaviorInput_touch_cooldown').value = 2
 
-  // Reset text inputs
-  document.getElementById('headerInput').value = ''
-  document.getElementById('subheaderInput').value = ''
-  document.getElementById('footerInput').value = ''
-  document.getElementById('subfooterInput').value = ''
-  document.getElementById('success_messageInput').value = ''
+  // Markdown fields
+  for (const item of ['header', 'subheader', 'footer', 'subfooter']) {
+    const editor = new exMarkdown.ExhibiteraMarkdownEditor({
+      content: '',
+      editorDiv: document.getElementById(item + 'Input'),
+      commandDiv: document.getElementById(item + 'InputCommandBar'),
+      commands: ['basic'],
+      callback: (content) => {
+        exSetup.updateWorkingDefinition(['text', item], content)
+        exSetup.previewDefinition(true)
+      }
+    })
+  }
+
+  const successEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+    content: 'Thank you!',
+    editorDiv: document.getElementById('success_messageInput'),
+    commandDiv: document.getElementById('success_messageInputCommandBar'),
+    commands: ['basic'],
+    callback: (content) => {
+      exSetup.updateWorkingDefinition(['text', 'success_message'], content)
+      exSetup.previewDefinition(true)
+    }
+  })
 
   // Reset option edit fields
   document.getElementById('optionRow').innerHTML = ''
-  document.getElementById('optionInput_label').value = ''
+  const editor = new exMarkdown.ExhibiteraMarkdownEditor({
+    content: '',
+    editorDiv: document.getElementById('optionInput_label'),
+    commandDiv: document.getElementById('optionInputCommandBar_label'),
+    commands: ['basic'],
+    callback: (content) => {
+    }
+  })
   document.getElementById('optionInput_value').value = ''
   document.getElementById('optionInput_icon').value = ''
   setIconUserFile('')
@@ -325,6 +356,7 @@ function editDefinition (uuid = '') {
 
   clearDefinitionInput(false)
   const def = exSetup.getDefinitionByUUID(uuid)
+
   $('#definitionSaveButton').data('initialDefinition', structuredClone(def))
   $('#definitionSaveButton').data('workingDefinition', structuredClone(def))
 
@@ -336,8 +368,33 @@ function editDefinition (uuid = '') {
   })
 
   // Set the appropriate values for the text fields
-  Object.keys(def.text).forEach((key) => {
-    document.getElementById(key + 'Input').value = def.text[key]
+  // Object.keys(def.text).forEach((key) => {
+  //   document.getElementById(key + 'Input').value = def.text[key]
+  // })
+
+  // Markdown fields
+  for (const item of ['header', 'subheader', 'footer', 'subfooter']) {
+    const editor = new exMarkdown.ExhibiteraMarkdownEditor({
+      content: def?.text?.[item] ?? '',
+      editorDiv: document.getElementById(item + 'Input'),
+      commandDiv: document.getElementById(item + 'InputCommandBar'),
+      commands: ['basic'],
+      callback: (content) => {
+        exSetup.updateWorkingDefinition(['text', item], content)
+        exSetup.previewDefinition(true)
+      }
+    })
+  }
+
+  const successEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+    content: def?.text?.success_message ?? 'Thank you!',
+    editorDiv: document.getElementById('success_messageInput'),
+    commandDiv: document.getElementById('success_messageInputCommandBar'),
+    commands: ['basic'],
+    callback: (content) => {
+      exSetup.updateWorkingDefinition(['text', 'success_message'], content)
+      exSetup.previewDefinition(true)
+    }
   })
 
   // Create any existing options
@@ -348,51 +405,38 @@ function editDefinition (uuid = '') {
   })
 
   // Set the appropriate values for the color pickers
-  Object.keys(def.style.color).forEach((key) => {
-    $('#colorPicker_' + key).val(def.style.color[key])
-    document.querySelector('#colorPicker_' + key).dispatchEvent(new Event('input', { bubbles: true }))
-  })
+  for (const key of Object.keys(def?.style?.color ?? {})) {
+    const colorEl = document.getElementById('colorPicker_' + key)
+    if (colorEl == null) continue
+    colorEl.value = def.style.color[key]
+    colorEl.dispatchEvent(new Event('input', { bubbles: true }))
+  }
 
   // Set the appropriate values for any advanced color pickers
-  if ('background' in def.style) {
+  if (def?.style?.background) {
     exSetup.updateAdvancedColorPicker('style>background', def.style.background)
   }
 
   // Set the appropriate values for the advanced font pickers
-  if ('font' in def.style) {
-    Object.keys(def.style.font).forEach((key) => {
-      const picker = document.querySelector(`.AFP-select[data-path="style>font>${key}"`)
-      exSetup.setAdvancedFontPicker(picker, def.style.font[key])
-    })
-  }
+  Object.keys(def?.style?.font ?? {}).forEach((key) => {
+    const picker = document.querySelector(`.AFP-select[data-path="style>font>${key}"`)
+    exSetup.setAdvancedFontPicker(picker, def.style.font[key])
+  })
+
 
   // Set the appropriate values for the text size sliders
-  Object.keys(def.style.text_size).forEach((key) => {
+  Object.keys(def?.style?.text_size ?? {}).forEach((key) => {
     document.getElementById(key + 'TextSizeSlider').value = def.style.text_size[key]
   })
 
   // Set the appropriate values for the layout options
-  if ('num_columns' in def.style.layout) {
-    document.getElementById('columnCountSelect').value = def.style.layout.num_columns
-  }
-  if ('top_height' in def.style.layout) {
-    document.getElementById('headerToButtonsSlider').value = def.style.layout.top_height
-  }
-  if ('header_padding' in def.style.layout) {
-    document.getElementById('headerPaddingHeightSlider').value = def.style.layout.header_padding
-  }
-  if ('bottom_height' in def.style.layout) {
-    document.getElementById('buttonsToFooterSlider').value = def.style.layout.bottom_height
-  }
-  if ('footer_padding' in def.style.layout) {
-    document.getElementById('footerPaddingHeightSlider').value = def.style.layout.footer_padding
-  }
-  if ('button_padding' in def.style.layout) {
-    document.getElementById('buttonPaddingHeightSlider').value = def.style.layout.button_padding
-  }
-  if ('image_height' in def.style.layout) {
-    document.getElementById('imageHeightSlider').value = def.style.layout.image_height
-  }
+  document.getElementById('columnCountSelect').value = def?.style?.layout?.num_columns ?? 'auto'
+  document.getElementById('headerToButtonsSlider').value = def?.style?.layout?.top_height ?? 20
+  document.getElementById('headerPaddingHeightSlider').value = def?.style?.layout?.header_padding ?? 5
+  document.getElementById('buttonsToFooterSlider').value = def?.style?.layout?.bottom_height ?? 20
+  document.getElementById('footerPaddingHeightSlider').value = def?.style?.layout?.footer_padding ?? 5
+  document.getElementById('buttonPaddingHeightSlider').value = def?.style?.layout?.button_padding ?? 10
+  document.getElementById('imageHeightSlider').value = def?.style?.layout?.image_height ?? 90
 
   // Configure the preview frame
   document.getElementById('previewFrame').src = '../voting_kiosk.html?standalone=true&definition=' + def.uuid
@@ -605,7 +649,16 @@ function populateOptionEditor (id) {
   document.getElementById('optionEditor').setAttribute('data-option-id', id)
 
   // Fill in the input fields
-  document.getElementById('optionInput_label').value = details.label
+  const editor = new exMarkdown.ExhibiteraMarkdownEditor({
+    content: details?.label ?? '',
+    editorDiv: document.getElementById('optionInput_label'),
+    commandDiv: document.getElementById('optionInputCommandBar_label'),
+    commands: ['basic'],
+    callback: (content) => {
+      exSetup.updateWorkingDefinition(['options', id, 'label'], content)
+      exSetup.previewDefinition(true)
+    }
+  })
   document.getElementById('optionInput_value').value = details.value
   document.getElementById('optionInput_icon').value = details.icon
   setIconUserFile(details.icon_user_file)

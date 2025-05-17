@@ -11,6 +11,7 @@ from typing import Union
 
 # Exhibitera modules
 import config
+import exhibitera_tools
 import exhibitera_tools as c_tools
 
 
@@ -31,36 +32,19 @@ def create_CSV(file_path: Union[str, os.PathLike], filename: str = "") -> str:
     return JSON_list_to_CSV(dict_list, filename=filename)
 
 
-def create_template(file_path: Union[str, os.PathLike], template: dict) -> bool:
-    """Given a template dictionary, write it to file"""
+def get_layout_definition(template_uuid: str, kind: str = "flexible-tracker") -> tuple[dict, bool, str]:
+    """Load a given JSON file and return a dictionary defining a tracker template."""
 
-    parser = configparser.ConfigParser()
-    parser.read_dict(template)
-    with config.trackerTemplateWriteLock:
-        try:
-            with open(file_path, "w", encoding="UTF-8") as f:
-                parser.write(f)
-            return True
-        except PermissionError:
-            return False
+    template_path = c_tools.get_path(
+        [kind, "templates", exhibitera_tools.with_extension(template_uuid, 'json')],
+        user_file=True)
 
+    if not os.path.exists(template_path):
+        return {}, False, 'does_not_exist'
 
-def get_layout_definition(name: str, kind: str = "flexible-tracker") -> tuple[dict, bool, str]:
-    """Load a given INI file and return a dictionary defining a tracker template."""
+    layout_definition = exhibitera_tools.load_json(template_path)
 
-    layout = configparser.ConfigParser(delimiters="=")
-    layout_definition = {}
-    success = True
-    reason = ""
-    try:
-        template_path = c_tools.get_path([kind, "templates", name], user_file=True)
-        layout.read(template_path)
-        layout_definition = {s: dict(layout.items(s)) for s in layout.sections()}
-    except configparser.DuplicateSectionError:
-        success = False
-        reason = "There are two sections with the same name!"
-
-    return layout_definition, success, reason
+    return layout_definition, True, ''
 
 
 def get_raw_text(name: str, kind: str = 'flexible-tracker') -> tuple[str, bool, str]:
@@ -146,34 +130,12 @@ def JSON_list_to_CSV(dict_list: list, filename: str = "") -> str:
         print("JSON_list_to_CSV: Error: Nothing to write")
         result = ""
 
+    result = result.strip()
+
     if filename != "":
         with open(filename, 'w', encoding="UTF-8", newline="") as f:
             f.write(result)
     return result
-
-
-def write_JSON(data: dict, file_path: Union[str, os.PathLike]) -> tuple[bool, str]:
-    """Take a dictionary, convert it to JSON and append it to the appropriate file."""
-
-    success = True
-    reason = ""
-
-    try:
-        with config.trackingDataWriteLock:
-            with open(file_path, "a", encoding='UTF-8') as f:
-                json_str = json.dumps(data)
-                f.write(json_str + "\n")
-    except TypeError:
-        success = False
-        reason = "Data is not JSON serializable"
-    except FileNotFoundError:
-        success = False
-        reason = f"File {file_path} does not exist"
-    except PermissionError:
-        success = False
-        reason = f"You do not have write permission for the file {file_path}"
-
-    return success, reason
 
 
 def write_raw_text(data: str, name: str, kind: str = "flexible-tracker", mode: str = "a") -> tuple[bool, str]:

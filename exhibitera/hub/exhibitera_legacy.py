@@ -5,9 +5,11 @@ to aid in deprecating them.
 """
 
 # Standard imports
-import json
+from collections import OrderedDict
+import configparser
 import os
 import shutil
+import uuid
 
 # Exhibitera imports
 import config
@@ -154,3 +156,127 @@ def _convert_schedule_targets_to_json(target: str | None):
     if target.startswith("__all"):
         return {"type": "all"}
     return {"type": "value", "value": target}
+
+
+# Added in Ex5.3 to convert from list-based exhibit files to dict-based.
+def convert_exhibit_files():
+    """Convert from list-based exhibits to dict-based."""
+
+    for file in os.listdir(ex_tools.get_path(["exhibits"], user_file=True)):
+        if file.startswith('.'):
+            continue
+        if not file.endswith('.json'):
+            continue
+
+        current_path = ex_tools.get_path(["exhibits", file], user_file=True)
+        exhibit = ex_tools.load_json(current_path)
+        if exhibit is None or isinstance(exhibit, dict):
+            continue
+
+        uuid_str = str(uuid.uuid4())
+        name = os.path.splitext(file)[0]
+        new_exhibit = {
+            "commands": [],
+            "components": exhibit,
+            "name": name,
+            "uuid": uuid_str,
+        }
+
+        # Fix any references in the schedule
+        _convert_schedule_set_exhibit(name, uuid_str)
+
+        # Make a backup
+        backup_path = ex_tools.get_path(["exhibits", file + '.backup'], user_file=True)
+        shutil.move(current_path, backup_path)
+
+        # Write the new file
+        new_path = ex_tools.get_path(["exhibits", uuid_str + '.json'], user_file=True)
+        ex_tools.write_json(new_exhibit, new_path)
+
+    ex_exhibit.check_available_exhibits()
+
+# Helper function for convert_exhibit_files()
+def _convert_schedule_set_exhibit(name, uuid_str):
+    """Iterate the schedules and replace instances of name with uuid_str for set_exhibit events,"""
+
+    schedule_dir = ex_tools.get_path(["schedules"], user_file=True)
+    for file in os.listdir(schedule_dir):
+        if file.startswith('.'):
+            continue
+        if not file.endswith('.json'):
+            continue
+
+        _, schedule = ex_sched.load_json_schedule(file)
+        convert = False
+        for event_uuid in schedule:
+            event = schedule[event_uuid]
+            if event["action"] == "set_exhibit" and event.get("target", {}).get("value", "") == name:
+                event["target"] = {"value": uuid_str, "type": "value"}
+                convert = True
+        if convert is True:
+            shutil.copy(ex_tools.get_path(["schedules", file], user_file=True),
+                        ex_tools.get_path(["schedules", file + ".backup"], user_file=True))
+            ex_sched.write_json_schedule(file, schedule)
+
+
+
+# Added in Ex5.3 to convert tracker templates from INI to JSON
+def convert_legacy_tracker_templates_to_json():
+    """Convert tracker templates from INI to JSON"""
+
+    config_parser = configparser.ConfigParser(dict_type=OrderedDict)
+    config_parser.optionxform = str  # preserve case for keys
+
+    template_dir = ex_tools.get_path(["flexible-tracker", "templates"], user_file=True)
+
+    for file in os.listdir(template_dir):
+        if file.startswith('.'):
+            continue
+        if not file.lower().endswith('.ini'):
+            continue
+
+        this_name = os.path.splitext(file)[0]
+        this_uuid = str(uuid.uuid4())
+        ini_filepath = ex_tools.get_path(["flexible-tracker", "templates", file], user_file=True)
+        json_filepath = ex_tools.get_path(
+            ["flexible-tracker", "templates", ex_tools.with_extension(this_uuid, 'json')],
+            user_file=True)
+        config_parser.read(ini_filepath)
+
+        widgets = {}
+        widget_order = []
+
+        for section in config_parser.sections():
+            # Each section becomes an object with a "name" field
+            section_uuid = str(uuid.uuid4())
+            section_obj = {"name": section, "uuid": section_uuid}
+            for key, value in config_parser.items(section):
+                value = value.strip()
+                # Convert booleans
+                if value.lower() in ('true', 'false'):
+                    converted = value.lower() == 'true'
+                else:
+                    # Attempt to convert to a number if possible
+                    try:
+                        if '.' in value:
+                            converted = float(value)
+                        else:
+                            converted = int(value)
+                    except ValueError:
+                        # Convert comma-separated values to a list if applicable
+                        if ',' in value:
+                            converted = [item.strip() for item in value.split(',')]
+                        else:
+                            converted = value
+                section_obj[key] = converted
+            widgets[section_uuid] = section_obj
+            widget_order.append(section_uuid)
+
+        output = {"name": this_name,
+                  "uuid": this_uuid,
+                  "widgets": widgets,
+                  "widget_order":widget_order}
+        ex_tools.write_json(output, json_filepath)
+
+        # Rename the INI file, so we don't convert it again
+        os.rename(ini_filepath, ini_filepath+'.old')

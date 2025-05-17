@@ -8,6 +8,7 @@ from fastapi import APIRouter
 from fastapi.responses import Response
 
 # Exhibitera modules
+import helper_system
 import helper_utilities
 
 router = APIRouter()
@@ -17,19 +18,7 @@ router = APIRouter()
 async def get_platform_details():
     """Return details on the current operating system."""
 
-    details = {
-        "architecture": platform.architecture()[0],
-        "os_version": platform.release()
-    }
-
-    plat = sys.platform
-    if plat == "darwin":
-        plat = 'macOS'
-    elif plat == "win32":
-        plat = "Windows"
-    details["os"] = plat
-
-    return details
+    return helper_system.get_platform_details()
 
 
 @router.get('/system/getScreenshot', responses={200: {"content": {"image/png": {}}}}, response_class=Response)

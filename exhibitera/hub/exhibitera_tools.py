@@ -33,6 +33,21 @@ def clear_terminal() -> None:
     os.system('cls' if os.name == 'nt' else 'clear')
 
 
+def deep_merge(source: dict, destination: dict):
+    """ Merge  a series of nested dictionaries. Merge source INTO destination
+
+    From https://stackoverflow.com/questions/20656135/python-deep-merge-dictionary-data/20666342#20666342
+    """
+
+    for key, value in source.items():
+        if isinstance(value, dict):
+            # get node or create one
+            node = destination.setdefault(key, {})
+            deep_merge(value, node)
+        else:
+            destination[key] = value
+    return destination
+
 def load_json(path: str):
     """Load the requested JSON file from disk and return it as a dictionary."""
 
@@ -50,17 +65,38 @@ def load_json(path: str):
             return result
 
 
-def write_json(data, path: str, append: bool = False) -> None:
-    """Take the given object and try to write it to a JSON file."""
+def write_json(data,
+               path: str,
+               append: bool = False,
+               indent: int | str | None = 2,
+               newline: bool = False) -> tuple[bool, str]:
+    """Take the given object and try to write it to a JSON file.
+
+    Setting newline=True adds a newline character before the JSON is written
+    """
 
     if append:
         mode = 'a'
     else:
         mode = 'w'
 
-    with config.galleryConfigurationLock:
-        with open(path, mode, encoding='UTF-8') as f:
-            json.dump(data, f, indent=2, sort_keys=True)
+    success = True
+    reason = ""
+
+    try:
+        with config.galleryConfigurationLock:
+            with open(path, mode, encoding='UTF-8') as f:
+                if newline is True:
+                    f.write('\n')
+                json.dump(data, f, indent=indent, sort_keys=True)
+    except TypeError:
+        success = False
+        reason = "Data is not JSON serializable"
+    except PermissionError:
+        success = False
+        reason = f"You do not have write permission for the file {path}"
+
+    return success, reason
 
 
 def load_system_configuration(from_dict: Union[dict[str, Any], None] = None) -> None:
@@ -72,7 +108,7 @@ def load_system_configuration(from_dict: Union[dict[str, Any], None] = None) -> 
     else:
         system = from_dict
 
-    config.current_exhibit = system.get("current_exhibit", "default.exhibit")
+    config.current_exhibit = system.get("current_exhibit", "Default")
     config.port = system.get("port", 8082)
     config.ip_address = system.get("ip_address", "localhost")
     config.gallery_name = system.get("gallery_name", "")
@@ -150,7 +186,6 @@ def check_file_structure() -> None:
                  "flexible-tracker/templates": get_path(["flexible-tracker", "templates"], user_file=True),
                  "issues": get_path(["issues"], user_file=True),
                  "issues/media": get_path(["issues", "media"], user_file=True),
-                 "maintenance-logs": get_path(["maintenance-logs"], user_file=True),
                  "static": get_path(["static"], user_file=True)}
 
     try:
@@ -181,8 +216,7 @@ def check_file_structure() -> None:
         print("Missing exhibits directory. Creating now...")
         try:
             os.mkdir(exhibits_dir)
-            with open(os.path.join(exhibits_dir, "Default.json"), 'w', encoding="UTF-8") as f:
-                f.write("[]")
+            write_json({"name": "Default", "uuid": "Default", "components": [], "commands": []}, get_path(["exhibits", "Default.json"], user_file=True))
         except PermissionError:
             print("Error: unable to create 'exhibits' directory. Do you have write permission?")
 

@@ -1,4 +1,4 @@
-/* global platform, html2canvas, $ */
+/* global platform, html2canvas */
 
 export const config = {
   permissions: {
@@ -21,17 +21,36 @@ export const config = {
   group: 'Default',
   helperAddress: 'http://localhost:8000',
   id: 'TEMP ' + String(new Date().getTime()),
-  platformDetails: {
-    operating_system: String(platform.os),
-    browser: platform.name + ' ' + platform.version
-  },
   remoteDisplay: false, // false == we are using the webview app, true == browser
   serverAddress: '',
-  softwareVersion: 5.2,
+  softwareVersion: 5.3,
   standalone: false, // false == we are using Hub
   updateParser: null, // Function used by readUpdate() to parse app-specific updates
   uuid: ''
 }
+
+// platform.js might not be included in 3rd-party apps
+try {
+  config.platformDetails = {
+    operating_system: String(platform.os),
+    browser: platform.name + ' ' + platform.version
+  }
+} catch {
+  console.log('script platform.js not found. Include this script to send additional details to Hub.')
+}
+
+makeHelperRequest({
+  method: 'GET',
+  endpoint: '/system/getPlatformDetails'
+})
+  .then((result) => {
+    config.platformDetails.outdated = result?.outdated ?? false
+  })
+
+// Fix bootstrap modal accessibility issue
+document.addEventListener('hidden.bs.modal', function (event) {
+  if (document.activeElement) document.activeElement.blur()
+})
 
 export function configureApp (opt = {}) {
   // Perform basic app setup
@@ -223,34 +242,31 @@ function readServerUpdate (update) {
 
   let sendUpdate = false
 
-  if ('commands' in update) {
-    for (let i = 0; i < update.commands.length; i++) {
-      const cmd = (update.commands)[i]
-
-      if (cmd === 'restart') {
-        askForRestart()
-      } else if (cmd === 'shutdown' || cmd === 'power_off') {
-        askForShutdown()
-      } else if (cmd === 'sleepDisplay') {
-        sleepDisplay()
-      } else if (cmd === 'wakeDisplay' || cmd === 'power_on') {
-        wakeDisplay()
-      } else if (cmd === 'refresh_page') {
-        if ('refresh' in config.permissions && config.permissions.refresh === true) {
-          location.reload()
-        }
-      } else if (cmd === 'reloadDefaults') {
-        askForDefaults()
-      } else if (cmd.slice(0, 15) === 'set_dmx_scene__') {
-        makeHelperRequest({
-          method: 'GET',
-          endpoint: '/DMX/setScene/' + cmd.slice(15)
-        })
-      } else {
-        console.log(`Command not recognized: ${cmd}`)
+  for (const cmd of update?.commands ?? []) {
+    if (cmd === 'restart') {
+      askForRestart()
+    } else if (cmd === 'shutdown' || cmd === 'power_off') {
+      askForShutdown()
+    } else if (cmd === 'sleepDisplay') {
+      sleepDisplay()
+    } else if (cmd === 'wakeDisplay' || cmd === 'power_on') {
+      wakeDisplay()
+    } else if (cmd === 'refresh_page') {
+      if ('refresh' in config.permissions && config.permissions.refresh === true) {
+        location.reload()
       }
+    } else if (cmd === 'reloadDefaults') {
+      askForDefaults()
+    } else if (cmd.slice(0, 15) === 'set_dmx_scene__') {
+      makeHelperRequest({
+        method: 'GET',
+        endpoint: '/DMX/setScene/' + cmd.slice(15)
+      })
+    } else {
+      console.log(`Command not recognized: ${cmd}`)
     }
   }
+
   if ('id' in update) {
     config.id = update.id
   }
@@ -276,8 +292,8 @@ function readServerUpdate (update) {
   if ('permissions' in update) {
     config.permissions = update.permissions
   }
-  if ('software_update' in update) {
-    if (update.software_update.update_available === true) { config.errorDict.software_update = update.software_update }
+  if (update?.software_update?.update_available) {
+    config.errorDict.software_update = update.software_update
   }
   if (sendUpdate) {
     sendConfigUpdate(update)
@@ -320,45 +336,38 @@ function readHelperUpdate (update, changeApp = true) {
 
   const sendUpdate = false
 
-  if ('commands' in update) {
-    for (let i = 0; i < update.commands.length; i++) {
-      const cmd = (update.commands)[i]
-
-      if (cmd === 'restart') {
-        askForRestart()
-      } else if (cmd === 'shutdown' || cmd === 'power_off') {
-        askForShutdown()
-      } else if (cmd === 'sleepDisplay') {
-        sleepDisplay()
-      } else if (cmd === 'wakeDisplay' || cmd === 'power_on') {
-        wakeDisplay()
-      } else if (cmd === 'refresh_page') {
-        if ('refresh' in config.permissions && config.permissions.refresh === true) {
-          location.reload()
-        }
-      } else if (cmd === 'reloadDefaults') {
-        askForDefaults()
-      } else if (cmd.slice(0, 15) === 'set_dmx_scene__') {
-        makeHelperRequest({
-          method: 'GET',
-          endpoint: '/DMX/setScene/' + cmd.slice(15)
-        })
-      } else {
-        console.log(`Command not recognized: ${cmd}`)
+  for (const cmd of update?.commands ?? []) {
+    if (cmd === 'restart') {
+      askForRestart()
+    } else if (cmd === 'shutdown' || cmd === 'power_off') {
+      askForShutdown()
+    } else if (cmd === 'sleepDisplay') {
+      sleepDisplay()
+    } else if (cmd === 'wakeDisplay' || cmd === 'power_on') {
+      wakeDisplay()
+    } else if (cmd === 'refresh_page') {
+      if ('refresh' in config.permissions && config.permissions.refresh === true) {
+        location.reload()
       }
+    } else if (cmd === 'reloadDefaults') {
+      askForDefaults()
+    } else if (cmd.slice(0, 15) === 'set_dmx_scene__') {
+      makeHelperRequest({
+        method: 'GET',
+        endpoint: '/DMX/setScene/' + cmd.slice(15)
+      })
+    } else {
+      console.log(`Command not recognized: ${cmd}`)
     }
   }
 
   // App settings
-  if ('app' in update) {
-    if ('id' in update.app) config.id = update.app.id
-    if ('definition' in update.app) config.definition = update.app.definition
-    if ('uuid' in update.app) config.uuid = update.app.uuid
-  }
-  if ('control_server' in update) {
-    if (('ip_address' in update.control_server) && ('port' in update.control_server)) {
-      config.serverAddress = 'http://' + update.control_server.ip_address + ':' + update.control_server.port
-    }
+  if (update?.app?.id) config.id = update.app.id
+  if (update?.app?.definition) config.definition = update.app.definition
+  if (update?.app?.uuid) config.uuid = update.app.uuid
+
+  if ((update?.control_server?.ip_address) && (update?.control_server?.port)) {
+    config.serverAddress = 'http://' + update.control_server.ip_address + ':' + update.control_server.port
   }
   if ('permissions' in update) {
     config.permissions = update.permissions
@@ -366,14 +375,13 @@ function readHelperUpdate (update, changeApp = true) {
   if ('software_update' in update) {
     if (update.software_update.update_available === true) { config.errorDict.software_update = update.software_update }
   }
-  if ('system' in update) {
-    if ('remote_display' in update.system) {
-      config.remoteDisplay = update.system.remote_display
-    }
-    if ('standalone' in update.system) {
-      config.standalone = update.system.standalone
-    }
+  if (update?.system?.remote_display) {
+    config.remoteDisplay = update.system.remote_display
   }
+  if (update?.system?.standalone) {
+    config.standalone = update.system.standalone
+  }
+
   if (sendUpdate) {
     sendConfigUpdate(update)
   }
@@ -414,17 +422,22 @@ function readHelperUpdate (update, changeApp = true) {
   }
 }
 
+function checkAgain () {
+  try {
+    document.getElementById('helperConnectionWarningAddress').innerHTML = config.helperAddress
+    document.getElementById('helperConnectionWarning').style.display = 'block'
+  } catch {
+    // Will fail if these elements don't exist
+  }
+  console.log('Could not get defaults... checking again')
+  setTimeout(askForDefaults, 500)
+}
+
 export function askForDefaults (changeApp = true) {
   // Send a message to the local helper and ask for the latest configuration
   // defaults, then use them.
   // Set changeApp === false to supress changing the app based on the current definition
 
-  const checkAgain = function () {
-    $('#helperConnectionWarningAddress').text(config.helperAddress)
-    $('#helperConnectionWarning').show()
-    console.log('Could not get defaults... checking again')
-    setTimeout(askForDefaults, 500)
-  }
   return makeHelperRequest({
     method: 'GET',
     endpoint: '/getDefaults'
@@ -601,6 +614,7 @@ export function gotoApp (app, other = '') {
   console.log(app)
   const appLocations = {
     dmx_control: '/dmx_control.html',
+    image_compare: '/image_compare.html',
     infostation: '/infostation.html',
     media_browser: '/media_browser.html',
     media_player: '/media_player.html',
@@ -624,6 +638,7 @@ export function gotoApp (app, other = '') {
 export function appNameToDisplayName (appName) {
   const displayNames = {
     dmx_control: 'DMX Control',
+    image_compare: 'Image Compare',
     infostation: 'InfoStation',
     media_browser: 'Media Browser',
     media_player: 'Media Player',
@@ -736,16 +751,22 @@ export function createLanguageSwitcher (def, localize) {
 
   const langs = Object.keys(def.languages)
 
-  if (langs.length === 1) {
+  const langSwitchDropdown = document.getElementById('langSwitchDropdown')
+  const langSwitchOptions = document.getElementById('langSwitchOptions')
+
+  if (langs.length < 2) {
     // No switcher necessary
-    $('#langSwitchDropdown').hide()
+    langSwitchDropdown.style.display = 'none'
     return
   }
 
-  $('#langSwitchDropdown').show()
+  langSwitchDropdown.style.display = 'flex'
+
   // Cycle the languages and build an entry for each
-  $('#langSwitchOptions').empty()
-  langs.forEach((code) => {
+  const langOrder = def?.language_order || langs
+  langSwitchOptions.innerHTML = ''
+
+  langOrder.forEach((code) => {
     const name = def.languages[code].display_name
 
     const li = document.createElement('li')
@@ -776,16 +797,21 @@ export function createLanguageSwitcher (def, localize) {
     span.innerHTML = name
     button.appendChild(span)
 
-    $('#langSwitchOptions').append(li)
+    langSwitchOptions.appendChild(li)
   })
 }
 
 export function getColorAsRGBA (el, prop) {
   // Look up the given CSS property on the given element and return an object with the RGBA values.
 
-  if ((typeof el === 'string') && (el[0] !== '#')) el = '#' + el
+  // Get the element (assumes el is a DOM element or a selector string)
+  const element = typeof el === 'string' ? document.querySelector(el) : el
+  if (!element) {
+    throw new Error(`Element ${el} not found.`)
+  }
 
-  const color = $(el).css(prop) // Should be string of form RGBA(R,G,B,A) or RGB(R,G,B)
+  // Get the computed style for the given property
+  const color = window.getComputedStyle(element).getPropertyValue(prop)
   const colorSplit = color.split(', ')
   const result = {
     r: parseInt(colorSplit[0].split('(')[1]),
@@ -793,18 +819,22 @@ export function getColorAsRGBA (el, prop) {
     b: parseInt(colorSplit[2].split(')')[0].trim())
   }
 
-  if (color.slice(0, 4) === 'RGBA') {
-    result.a = parseFloat(colorSplit.split(',')[3].split(')')[0].trim())
+  if (color.slice(0, 4).toLowerCase() === 'rgba') {
+    try {
+      result.a = parseFloat(colorSplit[3].split(')')[0].trim())
+    } catch {
+      console.log('getColorAsRGBA: error getting opacity')
+    }
   }
   return result
 }
 
 export function classifyColor (color) {
-  // Take an object of the form {r: 134, g: 234, b: 324} and return 'light' or 'dark'
+  // Take an object of the form {r: 134, g: 234, b: 224} and return 'light' or 'dark'
   // Depending on the luminance
   // From https://stackoverflow.com/questions/3942878/how-to-decide-font-color-in-white-or-black-depending-on-background-color
 
-  if ((color.r * 0.299 + color.g * 0.587 + color.b * 0.114) > 186) {
+  if ((color.r * 0.299 + color.g * 0.587 + color.b * 0.114) > 125) {
     return 'light'
   }
   return 'dark'

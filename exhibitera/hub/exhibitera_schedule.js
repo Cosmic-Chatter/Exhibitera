@@ -62,7 +62,7 @@ export function populateSchedule (schedule) {
     day: 'numeric'
   }
 
-  sched.forEach((day) => {
+  for (const day of sched) {
     // Apply a background color to date-specific schedules so that we
     // know that they are special
 
@@ -125,17 +125,6 @@ export function populateSchedule (schedule) {
     const dropdownMenu = document.createElement('ul')
     dropdownMenu.classList = 'dropdown-menu'
     dropdownDiv.appendChild(dropdownMenu)
-
-    const csvLi = document.createElement('li')
-    dropdownMenu.appendChild(csvLi)
-
-    const csv = document.createElement('button')
-    csv.classList = 'dropdown-item'
-    csv.innerHTML = 'Download as CSV'
-    csv.addEventListener('click', () => {
-      downloadScheduleAsCSV(scheduleName)
-    })
-    csvLi.appendChild(csv)
 
     const jsonLi = document.createElement('li')
     dropdownMenu.appendChild(jsonLi)
@@ -201,16 +190,16 @@ export function populateSchedule (schedule) {
     // Loop through the schedule elements and add a row for each
     const scheduleIDs = Object.keys(day.schedule)
 
-    scheduleIDs.forEach((scheduleID) => {
+    for (const scheduleID of scheduleIDs) {
       dayContainer.appendChild(createScheduleEntryHTML(day.schedule[scheduleID], scheduleID, scheduleName, day.source))
-    })
+    }
     // Sort the elements by time
     const events = $(dayContainer).children('.eventListing')
     events.sort(function (a, b) {
       return $(a).data('time_in_seconds') - $(b).data('time_in_seconds')
     })
     $(dayContainer).append(events)
-  })
+  }
 
   document.getElementById('Schedule_next_event').innerHTML = populateScheduleDescriptionHelper(schedule.nextEvent, true)
 }
@@ -227,7 +216,7 @@ function createScheduleEntryHTML (item, scheduleID, scheduleName, scheduleType, 
   if (['power_off', 'power_on', 'refresh_page', 'restart', 'set_definition', 'set_dmx_scene'].includes(action)) {
     description = populateScheduleDescriptionHelper([item], false)
   } else if (action === 'set_exhibit') {
-    description = `Set exhibit: ${target.value}`
+    description = `Set exhibit: ${exTools.getExhibitName(target.value)}`
   } else if (action === 'note') {
     description = item.value
   }
@@ -316,7 +305,7 @@ function createScheduleEntryHTML (item, scheduleID, scheduleName, scheduleType, 
   return eventRow
 }
 
-function populateScheduleDescriptionHelper (eventList, includeTime) {
+export function populateScheduleDescriptionHelper (eventList, includeTime) {
   // Helper function to create text strings that describe the upcoming action(s)
 
   let description = ''
@@ -326,15 +315,15 @@ function populateScheduleDescriptionHelper (eventList, includeTime) {
   } else if (eventList.length === 1) {
     const event = eventList[0]
     description += scheduleActionToDescription(event.action) + ' '
-    description += scheduleTargetToDescription(event.target)
+    description += scheduleTargetToDescription(event.target, event.action)
   } else {
     const action = eventList[0].action
     let allSame = true
-    eventList.forEach((event) => {
+    for (const event of eventList) {
       if (event.action !== action) {
         allSame = false
       }
-    })
+    }
     if (allSame) {
       description += scheduleActionToDescription(action) + ' multiple'
     } else {
@@ -370,7 +359,7 @@ function scheduleActionToDescription (action) {
   }
 }
 
-function scheduleTargetToDescription (targetList) {
+function scheduleTargetToDescription (targetList, action = '') {
   // Convert target uuids to English words
 
   if (targetList == null) return 'none'
@@ -418,14 +407,13 @@ function scheduleTargetToDescription (targetList) {
     // Deprecated in Ex5.2
     if ('id' in target) return target.id
   } else if (target.type === 'value') {
+    if (action === 'set_exhibit') return exTools.getExhibitName(target.value)
     return target.value
   } else return target
 }
 
-function setScheduleActionTargetSelectorPopulateOptions (optionsToAdd) {
+export function actionTargetSelectorPopulateOptions (targetSelector, optionsToAdd) {
   // Helper function for setScheduleActionTargetSelector that populates the target selector with the right options.
-
-  const targetSelector = $('#scheduleTargetSelector')
 
   if (optionsToAdd.includes('All')) {
     targetSelector.append(new Option('All', JSON.stringify({ type: 'all' })))
@@ -434,7 +422,7 @@ function setScheduleActionTargetSelectorPopulateOptions (optionsToAdd) {
     const sep = new Option('Groups', null)
     sep.setAttribute('disabled', true)
     targetSelector.append(sep)
-    exConfig.componentGroups.forEach((item) => {
+    for (const item of exConfig.componentGroups) {
       let groupName
       try {
         if (item.group === 'Default') {
@@ -451,7 +439,7 @@ function setScheduleActionTargetSelectorPopulateOptions (optionsToAdd) {
           uuid: item.group
         }
       )))
-    })
+    }
   }
   if (optionsToAdd.includes('ExhibitComponents') || optionsToAdd.includes('Projectors')) {
     const sep = new Option('Components', null)
@@ -461,7 +449,7 @@ function setScheduleActionTargetSelectorPopulateOptions (optionsToAdd) {
     const sortedComponents = exTools.sortExhibitComponentsByID()
 
     if (optionsToAdd.includes('ExhibitComponents')) {
-      sortedComponents.forEach((item) => {
+      for (const item of sortedComponents) {
         if (item.type === 'exhibit_component' && item.status !== exConfig.STATUS.STATIC) {
           targetSelector.append(new Option(item.id, JSON.stringify(
             {
@@ -470,10 +458,10 @@ function setScheduleActionTargetSelectorPopulateOptions (optionsToAdd) {
             }
           )))
         }
-      })
+      }
     }
     if (optionsToAdd.includes('Projectors')) {
-      sortedComponents.forEach((item) => {
+      for (const item of sortedComponents) {
         if (item.type === 'projector') {
           targetSelector.append(new Option(item.id, JSON.stringify(
             {
@@ -482,7 +470,7 @@ function setScheduleActionTargetSelectorPopulateOptions (optionsToAdd) {
             }
           )))
         }
-      })
+      }
     }
   }
 }
@@ -500,12 +488,12 @@ export function setScheduleActionTargetSelector (action = null, target = null) {
     targetSelector.attr('multiple', false)
     targetSelector.empty()
     const availableExhibits = $.makeArray($('#exhibitSelect option'))
-    availableExhibits.forEach((item) => {
-      targetSelector.append(new Option(item.value, JSON.stringify({
+    for (const item of availableExhibits) {
+      targetSelector.append(new Option(exTools.getExhibitName(item.value), JSON.stringify({
         type: 'value',
         value: item.value
       })))
-    })
+    }
     targetSelector.show()
     $('#scheduleTargetSelectorLabel').show()
     $('#scheduleNoteInput').hide()
@@ -515,13 +503,13 @@ export function setScheduleActionTargetSelector (action = null, target = null) {
 
     if (['power_on', 'power_off'].includes(action)) {
       targetSelector.attr('multiple', true)
-      setScheduleActionTargetSelectorPopulateOptions(['All', 'Groups', 'ExhibitComponents', 'Projectors'])
+      actionTargetSelectorPopulateOptions(targetSelector, ['All', 'Groups', 'ExhibitComponents', 'Projectors'])
     } else if (['refresh_page', 'restart'].includes(action)) {
       targetSelector.attr('multiple', true)
-      setScheduleActionTargetSelectorPopulateOptions(['All', 'Groups', 'ExhibitComponents'])
+      actionTargetSelectorPopulateOptions(targetSelector, ['All', 'Groups', 'ExhibitComponents'])
     } else if (['set_definition', 'set_dmx_scene'].includes(action)) {
       targetSelector.attr('multiple', false)
-      setScheduleActionTargetSelectorPopulateOptions(['ExhibitComponents'])
+      actionTargetSelectorPopulateOptions(targetSelector, ['ExhibitComponents'])
     }
     targetSelector.show()
     $('#scheduleTargetSelectorLabel').show()
@@ -595,16 +583,16 @@ export function setScheduleActionValueSelector (action = null, target = null) {
           // Convert the dictionary to an array, sorted by app ID
 
           const appDict = exTools.sortDefinitionsByApp(response.definitions)
-          Object.keys(appDict).sort().forEach((app) => {
+          for (const app of Object.keys(appDict).sort()) {
             const header = new Option(exExhibit.convertAppIDtoDisplayName(app))
             header.setAttribute('disabled', true)
             valueSelector.append(header)
 
-            appDict[app].forEach((def) => {
+            for (const def of appDict[app]) {
               const option = new Option(def.name, def.uuid)
               valueSelector.append(option)
-            })
-          })
+            }
+          }
         }
         // In the case of editing an action, preselect any existing values
         valueSelector.val($('#scheduleEditModal').data('currentValue'))
@@ -631,15 +619,15 @@ export function setScheduleActionValueSelector (action = null, target = null) {
     })
       .then((response) => {
         if ('success' in response && response.success === true) {
-          response.groups.forEach((group) => {
+          for (const group of response.groups) {
             const groupName = new Option(group.name, null)
             groupName.setAttribute('disabled', true)
             valueSelector.append(groupName)
 
-            group.scenes.forEach((scene) => {
+            for (const scene of group.scenes) {
               valueSelector.append(new Option(scene.name, scene.uuid))
-            })
-          })
+            }
+          }
         }
 
         // In the case of editing an action, preselect any existing values
@@ -743,7 +731,7 @@ export function scheduleConfigureEditModal (scheduleName,
     $('#scheduleTargetSelector').val(null)
   }
 
-  $('#scheduleEditModal').modal('show')
+  exTools.showModal('#scheduleEditModal')
 }
 
 export function sendScheduleUpdateFromModal () {
@@ -806,7 +794,7 @@ export function sendScheduleUpdateFromModal () {
     .then((update) => {
       if ('success' in update) {
         if (update.success === true) {
-          $('#scheduleEditModal').modal('hide')
+          exTools.hideModal('#scheduleEditModal')
           populateSchedule(update)
           if ($('#manageFutureDateModal').hasClass('show')) {
             populateFutureDateCalendarInput()
@@ -839,7 +827,7 @@ export function scheduleDeleteActionFromModal () {
   })
     .then((update) => {
       if ('success' in update && update.success === true) {
-        $('#scheduleEditModal').modal('hide')
+        exTools.hideModal('#scheduleEditModal')
         populateSchedule(update)
         if ($('#manageFutureDateModal').hasClass('show')) {
           populateFutureDateCalendarInput()
@@ -871,7 +859,7 @@ export function showManageFutureDateModal () {
     document.getElementById('manageFutureDateEntryList').classList.remove('mt-3')
   }
 
-  $('#manageFutureDateModal').modal('show')
+  exTools.showModal('#manageFutureDateModal')
 }
 
 function populateFutureDatesList () {
@@ -887,9 +875,10 @@ function populateFutureDatesList () {
         availableDatesList.innerHTML = ''
         const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }
 
-        result.schedules.sort((date1, date2) => {
+        const sortedSchedules = result.schedules.sort((date1, date2) => {
           return new Date(date1) - new Date(date2)
-        }).forEach((date) => {
+        })
+        for (const date of sortedSchedules) {
           const button = document.createElement('button')
           button.classList = 'btn btn-info mt-2 w-100 futureEventDateButton'
           button.setAttribute('id', 'futureDateButton_' + date)
@@ -903,14 +892,14 @@ function populateFutureDatesList () {
             populateFutureDateCalendarInput()
 
             // Highlight the button
-            Array.from(availableDatesList.querySelectorAll('.futureEventDateButton')).forEach((el) => {
+            for (const el of availableDatesList.querySelectorAll('.futureEventDateButton')) {
               el.classList.replace('btn-success', 'btn-info')
-            })
+            }
             event.target.classList.replace('btn-info', 'btn-success')
           })
 
           availableDatesList.appendChild(button)
-        })
+        }
       }
     })
 }
@@ -925,9 +914,9 @@ export function populateFutureDateCalendarInput () {
   scheduleList.innerHTML = ''
   const availableDatesList = document.getElementById('manageFutureDateAvailableSchedulesList')
 
-  Array.from(availableDatesList.querySelectorAll('.futureEventDateButton')).forEach((el) => {
+  for (const el of availableDatesList.querySelectorAll('.futureEventDateButton')) {
     el.classList.replace('btn-success', 'btn-info')
-  })
+  }
 
   if (date === '') {
     document.getElementById('manageFutureDateCreateScheduleButtonContainer').style.display = 'block'
@@ -960,7 +949,7 @@ export function populateFutureDateCalendarInput () {
       // Loop through the schedule elements and add a row for each
       const scheduleIDs = Object.keys(day.schedule)
 
-      scheduleIDs.forEach((scheduleID) => {
+      for (const scheduleID of scheduleIDs) {
         scheduleList.appendChild(createScheduleEntryHTML(day.schedule[scheduleID], scheduleID, date, 'date-specific'))
 
         // Sort the elements by time
@@ -969,7 +958,7 @@ export function populateFutureDateCalendarInput () {
           return $(a).data('time_in_seconds') - $(b).data('time_in_seconds')
         })
         $(scheduleList).append(events)
-      })
+      }
     })
 }
 
@@ -1052,7 +1041,7 @@ export function showScheduleFromFileModal () {
   document.getElementById('scheduleFromFileModal').setAttribute('data-schedule', '')
   document.getElementById('scheduleFromFileModalSubmitButton').style.display = 'none'
 
-  $('#scheduleFromFileModal').modal('show')
+  exTools.showModal('#scheduleFromFileModal')
 }
 
 export function onScheduleFromFileModalFileInputChange (event) {
@@ -1071,7 +1060,7 @@ export function onscheduleFromFileDateSelectChange () {
 }
 
 export function previewScheduleFromFile () {
-  // Use details from scheduleFromCSVModal to preview a new schedule.
+  // Use details from scheduleFromFileModal to preview a new schedule.
 
   const fileInput = document.getElementById('scheduleFromFileModalFileInput')
   if (fileInput.files.length === 0) return
@@ -1080,9 +1069,7 @@ export function previewScheduleFromFile () {
 
   const fileReader = new FileReader()
   fileReader.onload = (result) => {
-    if (extension === 'csv') {
-      previewCSVSchedule(result.target.result)
-    } else if (extension === 'json') {
+    if (extension === 'json') {
       previewJSONSchedule(result.target.result)
     }
   }
@@ -1116,58 +1103,12 @@ export function createScheduleFromFile () {
   })
     .then((response) => {
       if (response.success === true) {
-        $('#scheduleFromFileModal').modal('hide')
+        exTools.hideModal('#scheduleFromFileModal')
       }
     })
 }
 
-async function previewCSVSchedule (csv) {
-  // Build an HTML representation of the uploaded schedule
-
-  const result = exTools.csvToJSON(csv)
-  const schedule = result.json
-
-  // Convert any comma-separated values into arrays
-  const scheduleDict = {}
-  for (const entry of schedule) {
-    // First, convert the given time into seconds from midnight
-    entry.time_in_seconds = await _getSecondsFromMidnight(entry.time)
-
-    if (entry.action === 'note') {
-      // Notes may have commas that are okay.
-      scheduleDict[exTools.uuid()] = entry
-      continue
-    }
-    for (const key of ['target', 'value']) {
-      if ((entry[key] == null) || (entry[key].includes(',') === false)) continue
-      entry[key] = entry[key].split(',').map(function (item) {
-        return item.trim()
-      })
-    }
-    scheduleDict[exTools.uuid()] = entry
-  }
-
-  const newScheduleEl = document.getElementById('scheduleFromFileNewSchedule')
-  const type = document.getElementById('scheduleFromFileKindSelect').value
-  newScheduleEl.innerHTML = ''
-
-  // Loop through the schedule elements and add a row for each
-  const scheduleIDs = Object.keys(scheduleDict)
-
-  scheduleIDs.forEach((scheduleID) => {
-    newScheduleEl.appendChild(createScheduleEntryHTML(scheduleDict[scheduleID], scheduleID, type, 'day-specific', false))
-
-    // Sort the elements by time
-    const events = $(newScheduleEl).children('.eventListing')
-    events.sort(function (a, b) {
-      return $(a).data('time_in_seconds') - $(b).data('time_in_seconds')
-    })
-    $(newScheduleEl).append(events)
-  })
-  document.getElementById('scheduleFromFileModal').setAttribute('data-schedule', JSON.stringify(scheduleDict))
-}
-
-function previewJSONSchedule (jsonStr) {
+async function previewJSONSchedule (jsonStr) {
   // Read the given JSON string and turn it into a schedule
 
   const schedule = JSON.parse(jsonStr)
@@ -1176,23 +1117,25 @@ function previewJSONSchedule (jsonStr) {
   const type = document.getElementById('scheduleFromFileKindSelect').value
   newScheduleEl.innerHTML = ''
 
-  // Loop through the schedule elements and add a row for each
+  // Sort schedule IDs in time order
   const scheduleIDs = Object.keys(schedule)
-
-  scheduleIDs.forEach((scheduleID) => {
-    newScheduleEl.appendChild(createScheduleEntryHTML(schedule[scheduleID], scheduleID, type, 'day-specific', false))
-
-    // Sort the elements by time
-    const events = $(newScheduleEl).children('.eventListing')
-    events.sort(function (a, b) {
-      return $(a).data('time_in_seconds') - $(b).data('time_in_seconds')
-    })
-    $(newScheduleEl).append(events)
+  for (const entryID of scheduleIDs) {
+    schedule[entryID].time_in_seconds = await _getSecondsFromMidnight(schedule[entryID].time)
+  }
+  scheduleIDs.sort((a, b) => {
+    const scheduleA = schedule[a]
+    const scheduleB = schedule[b]
+    return scheduleA.time_in_seconds - scheduleB.time_in_seconds
   })
+
+  // Loop through the schedule elements and add a row for each
+  for (const scheduleID of scheduleIDs) {
+    newScheduleEl.appendChild(createScheduleEntryHTML(schedule[scheduleID], scheduleID, type, 'day-specific', false))
+  }
   document.getElementById('scheduleFromFileModal').setAttribute('data-schedule', JSON.stringify(schedule))
 }
 
-async function _getSecondsFromMidnight (timeString) {
+function _getSecondsFromMidnight (timeString) {
   return new Promise(function (resolve, reject) {
     exTools.makeServerRequest({
       method: 'POST',
@@ -1234,7 +1177,7 @@ function _scheduleFromFilePreviewCurrentSchedule (name, kind, retry = false) {
 
         // Loop through the schedule elements and add a row for each
         const scheduleIDs = Object.keys(response.schedule)
-        scheduleIDs.forEach((scheduleID) => {
+        for (const scheduleID of scheduleIDs) {
           currentScheduleEl.appendChild(createScheduleEntryHTML(response.schedule[scheduleID], scheduleID, kind, 'day-specific', false))
 
           // Sort the elements by time
@@ -1243,7 +1186,7 @@ function _scheduleFromFilePreviewCurrentSchedule (name, kind, retry = false) {
             return $(a).data('time_in_seconds') - $(b).data('time_in_seconds')
           })
           $(currentScheduleEl).append(events)
-        })
+        }
       } else if (kind === 'date-specific' && retry === false) {
         // A fail probably means there isn't a date-specific scheudle,
         // so look for a day-sepcific one. Only retry once to prevent an infinite loop

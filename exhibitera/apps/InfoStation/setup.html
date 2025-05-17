@@ -11,6 +11,7 @@
     <link rel="icon" type="image/x-icon" href="../_static/favicon.ico">
 
     <link rel="stylesheet" href="../css/bootstrap_5_3/bootstrap.min.css">
+    <link rel="stylesheet" href="../css/tiny-mde-Exhiibtera.css">
     <link rel="stylesheet" href="../css/coloris.min.css">
     <link rel="stylesheet" href="../css/setup.css">
 
@@ -236,25 +237,25 @@
                   <button id="manageContentButton" class="btn btn-primary w-100">Manage content</button>
                 </div>
                 <H5 class="mt-2">Add a langauge</H5>
-                <i>For each language you suppot, you need to define the appropriate content.</i>
-                <div class="col-12 col-md-6 col-lg-4">
+                <div id="languagePicker"></div>
+
+                <!-- <div class="col-12 col-md-6 col-lg-4">
                   <label for="languageNameInput" class="form-label">
                     Display name
                     <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="This is how the language will appear in the language switcher." style="font-size: 0.55em;">?</span>
                   </label>
                   <input type="text" placeholder="English" class="form-control" id="languageNameInput">
-                </div>
-                <div class="col-12 col-md-6 col-lg-4">
+                </div> -->
+                <!-- <div class="col-12 col-md-6 col-lg-4">
                   <label for="languageCodeInput" class="form-label">Language code</label>
                   <input type="text" placeholder="en" class="form-control" id="languageCodeInput">
-                </div>
-                <div class="col-12 col-md-6 col-lg-4 mt-3">
+                </div> -->
+                <!-- <div class="col-12 col-md-6 col-lg-4 mt-3">
                   <button id="languageAddButton" class="btn btn-primary w-100 mt-3">Add</button>
-                </div>
-                <div class="col-12 mt-1">
-                  <span id="languageAddEmptyFieldsWarning" class="text-danger">You must specify both a display name and a language code.</span>
-                  <span id="languageAddExistsWarning" class="text-danger">A language with that display name or language code already exists.</span>
-                </div>
+                </div> -->
+                <!-- <div class="col-12 mt-1">
+                  <span id="languageAddExistsWarning" class="text-danger">You've already added this language.</span>
+                </div> -->
               </div>
               <H5 class="mt-3">Current langauges</H5>
               <nav>
@@ -271,7 +272,14 @@
                     Tab button size
                     <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Set the width (portrait view) or height (landscape view) of the tab buttons. The user can swipe to see additional buttons." style="font-size: 0.55em;">?</span>
                   </label>
-                  <input id="buttonSizeSlider" type="range" class="form-range" data-property="header" min="10", max="100" start="30" step="5">
+                  <input id="buttonSizeSlider" type="range" class="form-range layout-slider" min="10", max="100" start="30" step="5">
+                </div>
+                <div class="col-12 col-md-6 col-lg-4">
+                  <label for="headerSizeSlider" class="form-label">
+                    Header height
+                    <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="The amount of vertical space allocated to the header." style="font-size: 0.55em;">?</span>
+                  </label>
+                  <input id="headerSizeSlider" type="range" class="form-range layout-slider" min="0", max="30" start="10" step="2.5">
                 </div>
               </div>
               <h4>Colors</h4>
@@ -281,6 +289,12 @@
                   <label for="colorPicker_text" class="form-label">Body text</label>
                   <div>
                     <input id="colorPicker_text" type="text" class="coloris form-control" value="#fff" data-property="text" data-default="#fff">
+                  </div>
+                </div>
+                <div class="col-12 col-sm-6 col-lg-4">
+                  <label for="colorPicker_quote" class="form-label">Quote text</label>
+                  <div>
+                    <input id="colorPicker_quote" type="text" class="coloris form-control" value="#fff" data-property="quote" data-default="#fff">
                   </div>
                 </div>
                 <div class="col-12 col-sm-6 col-lg-4">
@@ -341,17 +355,19 @@
 
                 <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Header" data-constAFP-path="style>font>header" data-default="OpenSans-Bold.ttf"></div>
 
-                <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Body" data-constAFP-path="style>font>body" data-default="OpenSans-Regular.ttf"></div>
+                <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Body text" data-constAFP-path="style>font>body" data-default="OpenSans-Regular.ttf"></div>
+                
+                <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Quote text" data-constAFP-path="style>font>quote" data-default="OpenSans-Regular.ttf"></div>
 
                 <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Section header" data-constAFP-path="style>font>section-header" data-default="OpenSans-Bold.ttf"></div>
 
-                <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Button" data-constAFP-path="style>font>button" data-default="OpenSans-Regular.ttf"></div>
+                <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Tab button" data-constAFP-path="style>font>button" data-default="OpenSans-Regular.ttf"></div>
               </div>
               <h4 class="mt-3">Text size</h4>
               <div class="row gy-2">
                 <div class="col-12 col-md-6 col-lg-4">
                   <label for="headerTextSizeSlider" class="form-label">Header</label>
-                  <input id="headerTextSizeSlider" type="range" class="form-range text-size-slider" data-property="header" min="-3", max="2" start="0" step="0.5">
+                  <input id="headerTextSizeSlider" type="range" class="form-range text-size-slider" data-property="header" min="-4", max="2" start="0" step="0.5">
                 </div>
                 <div class="col-12 col-md-6 col-lg-4">
                   <label for="section-headerTextSizeSlider" class="form-label">Section header</label>
@@ -360,6 +376,10 @@
                 <div class="col-12 col-md-6 col-lg-4">
                   <label for="bodyTextSizeSlider" class="form-label">Body text</label>
                   <input id="bodyTextSizeSlider" type="range" class="form-range text-size-slider" data-property="body" min="-1", max="1" start="0" step="0.1">
+                </div>
+                <div class="col-12 col-md-6 col-lg-4">
+                  <label for="quoteTextSizeSlider" class="form-label">Quote text</label>
+                  <input id="quoteTextSizeSlider" type="range" class="form-range text-size-slider" data-property="quote" min="-1", max="1" start="0" step="0.1">
                 </div>
                 <div class="col-12 col-md-6 col-lg-4">
                   <label for="tab-buttonTextSizeSlider" class="form-label">Tab button</label>
@@ -380,6 +400,7 @@
   <script type="text/javascript" src="../js/jquery-3.7.1.min.js"></script>
   <script type="text/javascript" src="../js/bootstrap_5_3/bootstrap.bundle.min.js"></script>
   <script type="text/javascript" src="../js/showdown.min.js"></script>
+  <script type="text/javascript" src="../js/tiny-mde.min.js"></script>
   <script type="text/javascript" src="../js/platform.js"></script>
   <script type="text/javascript" src="../js/coloris.min.js"></script>
   <script type="module" src="setup.js"></script>

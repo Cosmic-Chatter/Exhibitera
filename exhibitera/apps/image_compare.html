@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en" data-bs-theme="dark">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">    <link rel="icon" type="image/x-icon" href="/_static/favicon.ico">
+    <meta name="description" content="">
+    <meta name="author" content="Morgan Rehnberg">
+    <meta name="theme-color" content="#000000">
+    <meta name="msapplication-TileColor" content="#000000">
+
+    <title>Image Compare</title>
+
+    <link rel="stylesheet" href="css/bootstrap_5_3/bootstrap.min.css">
+    <link rel="stylesheet" href="image_compare/image_compare.css">
+    <link rel="stylesheet" href="css/exhibitera-common.css">
+
+  </head>
+
+  <script src="js/jquery-3.7.1.min.js"></script>
+  <script src="js/platform.js"></script>
+  <script src="js/bootstrap_5_3/bootstrap.bundle.min.js"></script>
+  <script type="text/javascript" src="js/showdown.min.js"></script>
+  <script type="text/javascript" src="js/html2canvas.min.js"></script>
+  <script type="module" src="image_compare/image_compare.js"></script>
+
+  <body  oncontextmenu="return false" class="no-select">
+
+    <div id="attractorOverlay">
+      <video id="attractorVideo" muted autoplay loop disablePictureInPicture="true" webkit-playsinline="true" playsinline="true"></video>
+      <img id="attractorImage">
+    </div>
+
+    <div id="langSwitchDropdown" class="dropup text-center">
+      <button id="langSwitchDropdownButton" type="button" class="btn btn-link overlay-button" data-bs-toggle="dropdown" aria-expanded="false">
+        <img class="w-100" id="langSwitchDropdownIcon" src="_static/icons/translation-icon_white.svg">
+      </button>
+      <ul id="langSwitchOptions" class="dropdown-menu">
+      </ul>
+    </div>
+
+    <!-- About modal-->
+    <div id="aboutModal" class="modal" tabindex="-1">
+      <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content" style="height: 80vmin;">
+          <div class="modal-header">
+            <div id="aboutModalTitle" class="modal-title w-100 py-2"></div>
+            <button type="button" class="btn-close me-4" data-bs-dismiss="modal" aria-label="Close" style="font-size: 25px;"></button>
+          </div>
+          <div id="aboutModalBody" class="modal-body mx-4">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="baseDiv" class="img-comp-container">
+      <div class="img-comp-img">
+        <img id="baseImg" class="comp-image" src="">
+      </div>
+      <div id="slider" class="img-comp-slider">
+        <div id="slider-icon">↔</div>
+      </div>
+      <div id="overlayDiv" class="img-comp-img img-comp-overlay">
+        <img id="overlayImg" class="comp-image" src="">
+      </div>
+    </div>
+
+    <!-- Bottom row of buttons -->
+    <button id="homeButton" class="overlay-button">〱</button>
+    <button id="aboutButton" data-bs-toggle="modal" data-bs-target="#aboutModal" class="overlay-button">?</button>
+
+    <!-- Swiping hand indicator -->
+    <div id="slidingHandContainer">
+      <img id="slidingHand" src="_static/icons/hand.svg"></img>
+    </div>
+
+    <!-- image labels -->
+    <div id="image2Label" class="name-label">
+      Top
+    </div>
+    <div id="image1Label" class="name-label">
+      Bottom
+    </div>
+
+    <!-- Main menu -->
+    <div id="mainMenu" class="">
+      <div class="col-12">
+        <div id="title">Comparison Sliders</div>
+      </div>
+      <div id="subtitle" class="col-8 offset-2">Some sliders comparing images</div>
+      <div id="itemListContainer" class="col d-flex">
+        <div id="itemList" class="row gy-4 gx-5">
+        </div>
+        <!-- pulsing hand indicator -->
+        <!-- <div id="pulsingHandContainer">
+          <img id="pulsingHand" src="_static/icons/hand.svg"></img>
+        </div> -->
+      </div>
+    </div>
+  </body>
+</html>

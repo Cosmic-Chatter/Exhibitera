@@ -290,96 +290,13 @@ def execute_scheduled_action(action: str,
                              value: list | str | None):
     """Dispatch the appropriate action when called by a schedule timer"""
 
-    config.last_update_time = time.time()
-    if action == 'set_definition' and target is not None and value is not None:
-        if isinstance(value, list):
-            value = value[0]
-        target_uuid = None
-        target_id = None
-        if "uuid" in target:
-            target_uuid = target["uuid"]
-        elif "id" in target:
-            # Depreciated in Ex5.2 - UUID should be the default
-            target_id = target["id"]
-        else:
-            if config.debug:
-                print("set_definition scheduled without a target uuid")
-            logging.error("set_definition scheduled without a target uuid")
-            return
-        print(f"Changing definition for {target} to {value}")
-
-        logging.info("Changing definition for %s to %s", target, value)
-        ex_exhibit.update_exhibit_configuration({"definition": value},
-                                                component_id=target_id,
-                                                component_uuid=target_uuid)
-    elif action == 'set_dmx_scene' and target is not None and value is not None:
-        if isinstance(value, list):
-            value = value[0]
-        target_uuid = None
-        target_id = None
-        if "uuid" in target:
-            target_uuid = target["uuid"]
-        elif "id" in target:
-            # Depreciated in Ex5.2 - UUID should be the default
-            target_id = target["id"]
-        else:
-            if config.debug:
-                print("set_definition scheduled without a target uuid")
-                logging.error("set_definition scheduled without a target uuid")
-            return
-
-        logging.info('Setting DMX scene for %s to %s', target, value)
-        component = ex_exhibit.get_exhibit_component(component_id=target_id, component_uuid=target_uuid)
-        component.queue_command("set_dmx_scene__" + value)
-    elif action == 'set_exhibit' and target is not None:
-        print("Changing exhibit to:", target["value"])
-        logging.info("Changing exhibit to %s", target["value"])
-        ex_exhibit.read_exhibit_configuration(target["value"])
-
-        # Update the components that the configuration has changed
-        for component in config.componentList:
-            component.update_configuration()
-    elif target is not None:
-        if isinstance(target, dict):
-            target = [target]
-        for target_i in target:
-            if target_i["type"] == 'all':
-                ex_exhibit.command_all_exhibit_components(action)
-            elif target_i["type"] == "group":
-                group = target_i["uuid"]
-                for component in config.componentList:
-                    if group in component.groups:
-                        component.queue_command(action)
-                for component in config.projectorList:
-                    if group in component.groups:
-                        component.queue_command(action)
-                for component in config.wakeOnLANList:
-                    if group in component.groups:
-                        component.queue_command(action)
-            elif target_i["type"] == "component":
-                target_uuid = None
-                target_id = None
-                if "uuid" in target_i:
-                    target_uuid = target_i["uuid"]
-                elif "id" in target_i:
-                    # Depreciated in Ex5.2 - UUID should be the default
-                    target_id = target_i["id"]
-                else:
-                    if config.debug:
-                        print("action scheduled without a target uuid")
-                        logging.error("set_definition scheduled without a target uuid")
-                    return
-                ex_exhibit.get_exhibit_component(component_id=target_id,
-                                                 component_uuid=target_uuid).queue_command(action)
-    else:
-        ex_exhibit.command_all_exhibit_components(action)
-
+    ex_exhibit.execute_action(action, target, value)
     get_next_scheduled_action()
     config.scheduleUpdateTime = time.time()
 
 
 def seconds_from_midnight(input_time: str) -> float:
-    """Parse a natural language expression of time and return the number of seconds from midight."""
+    """Parse a natural language expression of time and return the number of seconds from midnight."""
 
     time_dt = dateutil.parser.parse(input_time)
     return (time_dt - time_dt.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()

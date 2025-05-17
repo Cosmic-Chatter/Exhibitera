@@ -3,6 +3,7 @@
 import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exSetup from '../js/exhibitera_setup_common.js'
 import * as exFileSelect from '../js/exhibitera_file_select_modal.js'
+import * as exMarkdown from '../js/exhibitera_setup_markdown.js'
 
 async function initializeWizard () {
   // Setup the wizard
@@ -92,10 +93,14 @@ async function wizardCreateDefinition () {
   exSetup.updateWorkingDefinition(['appearance', 'rotation'], document.getElementById('wizard_wordRotationSelect').value)
   exSetup.updateWorkingDefinition(['appearance', 'cloud_shape'], document.getElementById('wizard_cloudShapeSelect').value)
 
+  const uuid = $('#definitionSaveButton').data('workingDefinition').uuid
+
   await exSetup.saveDefinition(defName)
-  await exCommon.getAvailableDefinitions(exCommon.config.app)
-  editDefinition($('#definitionSaveButton').data('workingDefinition').uuid)
-  $('#setupWizardModal').modal('hide')
+  const result = await exCommon.getAvailableDefinitions('word_cloud_viewer')
+  exSetup.populateAvailableDefinitions(result.definitions)
+  document.getElementById('availableDefinitionSelect').value = uuid
+  editDefinition(uuid)
+  exSetup.hideModal('#setupWizardModal')
 }
 
 function createWordList (textDict) {
@@ -178,7 +183,14 @@ async function clearDefinitionInput (full = true) {
   document.getElementById('refreshRateInput').value = 15
 
   // Content details
-  document.getElementById('promptInput').value = ''
+  const editor = new exMarkdown.ExhibiteraMarkdownEditor({
+    content: '',
+    editorDiv: document.getElementById('promptInput'),
+    commandDiv: document.getElementById('promptInputCommandBar'),
+    commands: ['basic'],
+    callback: (content) => {
+    }
+  })
   Array.from(document.querySelectorAll('.localization-input')).forEach((el) => {
     el.value = ''
   })
@@ -217,24 +229,21 @@ function editDefinition (uuid = '') {
   $('#definitionSaveButton').data('initialDefinition', structuredClone(def))
   $('#definitionSaveButton').data('workingDefinition', structuredClone(def))
 
-  $('#definitionNameInput').val(def.name)
-  if ('collection_name' in def.behavior) {
-    document.getElementById('collectionNameInput').value = def.behavior.collection_name
-  } else {
-    document.getElementById('collectionNameInput').value = ''
-  }
-  if ('refresh_rate' in def.behavior) {
-    document.getElementById('refreshRateInput').value = def.behavior.refresh_rate
-  } else {
-    document.getElementById('refreshRateInput').value = 15
-  }
+  document.getElementById('definitionNameInput').value = def.name
+  document.getElementById('collectionNameInput').value = def?.behavior?.collection_name ?? ''
+  document.getElementById('refreshRateInput').value = def?.behavior?.refresh_rate ?? 15
 
   // Content
-  if ('prompt' in def.content) {
-    document.getElementById('promptInput').value = def.content.prompt
-  } else {
-    document.getElementById('promptInput').value = ''
-  }
+  const editor = new exMarkdown.ExhibiteraMarkdownEditor({
+    content: def?.content?.prompt ?? '',
+    editorDiv: document.getElementById('promptInput'),
+    commandDiv: document.getElementById('promptInputCommandBar'),
+    commands: ['basic'],
+    callback: (content) => {
+      exSetup.updateWorkingDefinition(['content', 'prompt'], content)
+      exSetup.previewDefinition(true)
+    }
+  })
 
   Array.from(document.querySelectorAll('.localization-input')).forEach((el) => {
     const property = el.getAttribute('data-property')
@@ -242,47 +251,30 @@ function editDefinition (uuid = '') {
   })
 
   // Set values for the word cloud shape
-  if ('rotation' in def.appearance) {
-    document.getElementById('wordRotationSelect').value = def.appearance.rotation
-  } else {
-    document.getElementById('wordRotationSelect').value = 'horizontal'
-  }
-  if ('cloud_shape' in def.appearance) {
-    console.log('here')
-    document.getElementById('cloudShapeSelect').value = def.appearance.cloud_shape
-  } else {
-    document.getElementById('cloudShapeSelect').value = 'circle'
-  }
-  if ('text_case' in def.appearance) {
-    document.getElementById('textCaseSelect').value = def.appearance.text_case
-  } else {
-    document.getElementById('textCaseSelect').value = 'lowercase'
-  }
+  document.getElementById('wordRotationSelect').value = def?.appearance?.rotation ?? 'horizontal'
+  document.getElementById('cloudShapeSelect').value = def?.appearance?.cloud_shape ?? 'circle'
+  document.getElementById('textCaseSelect').value = def?.appearance?.text_case ?? 'lowercase'
 
   // Set the appropriate values for the color pickers
-  if ('color' in def.appearance) {
-    Object.keys(def.appearance.color).forEach((key) => {
-      $('#colorPicker_' + key).val(def.appearance.color[key])
-      document.querySelector('#colorPicker_' + key).dispatchEvent(new Event('input', { bubbles: true }))
-    })
+  for (const key of Object.keys(def?.appearance?.color ?? {})) {
+    const el = document.getElementById('colorPicker_' + key)
+    if (el == null) continue
+    el.value = def.appearance.color[key]
+    el.dispatchEvent(new Event('input', { bubbles: true }))
   }
 
   // Set the appropriate values for any advanced color pickers
-  if ('background' in def.appearance) {
+  if (def?.appearance?.background) {
     exSetup.updateAdvancedColorPicker('appearance>background', def.appearance.background)
   }
 
   // Set the appropriate values for the advanced font pickers
-  if ('font' in def.appearance) {
-    Object.keys(def.appearance.font).forEach((key) => {
-      const picker = document.querySelector(`.AFP-select[data-path="appearance>font>${key}"`)
-      exSetup.setAdvancedFontPicker(picker, def.appearance.font[key])
-    })
-  }
+  Object.keys(def?.appearance?.font ?? {}).forEach((key) => {
+    const picker = document.querySelector(`.AFP-select[data-path="appearance>font>${key}"`)
+    exSetup.setAdvancedFontPicker(picker, def.appearance.font[key])
+  })  
 
-  if ('prompt' in def.appearance.text_size) {
-    document.getElementById('promptTextSizeSlider').value = def.appearance.text_size.prompt
-  }
+  document.getElementById('promptTextSizeSlider').value = def?.appearance?.text_size?.prompt ?? 0
 
   // Configure the preview frame
   document.getElementById('previewFrame').src = '../word_cloud_viewer.html?standalone=true&definition=' + def.uuid
@@ -293,11 +285,7 @@ function showExcludedWordsModal () {
   const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
 
   const el = document.getElementById('excludedWordsInput')
-  if ('excluded_words_raw' in workingDefinition.behavior) {
-    el.value = workingDefinition.behavior.excluded_words_raw
-  } else {
-    el.value = ''
-  }
+  el.value = workingDefinition?.behavior?.excluded_words_raw ?? ''
 
   $('#excludedWordsModal').modal('show')
 }

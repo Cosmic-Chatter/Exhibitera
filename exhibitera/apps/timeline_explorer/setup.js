@@ -3,9 +3,13 @@
 import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exFileSelect from '../js/exhibitera_file_select_modal.js'
 import * as exSetup from '../js/exhibitera_setup_common.js'
+import * as exLang from '../js/exhibitera_setup_languages.js'
+import * as exMarkdown from '../js/exhibitera_setup_markdown.js'
+
+const wizardHeaders = {} // Holds the markdown-formatted header text in each language
 
 async function initializeWizard () {
-  // Set up the wizard
+  // Setup the wizard
 
   await exSetup.initializeDefinition()
 
@@ -18,6 +22,225 @@ async function initializeWizard () {
   // Reset fields
   document.getElementById('wizardDefinitionNameInput').value = ''
   document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'none'
+  document.getElementById('wizardLanguages').innerHTML = ''
+  document.getElementById('wizardLanguagesBlankWarning').style.display = 'none'
+  document.getElementById('wizardUploadTemplateButton').setAttribute('data-spreadsheet', '')
+  document.getElementById('wizardUploadTemplateBlankWarning').style.display = 'none'
+  document.getElementById('wizardUploadMediaMissingWarning').style.display = 'none'
+  document.getElementById('wizardUploadMediaMissingRow').innerHTML = ''
+  document.getElementById('wizardUploadMediaBadKeyWarning').style.display = 'none'
+  document.getElementById('wizardOrientationSelect').value = 'vertical'
+}
+
+async function wizardForward (currentPage) {
+  // Check if the wizard is ready to advance and perform the move
+
+  if (currentPage === 'Welcome') {
+    const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
+    if (defName !== '') {
+      document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'none'
+      wizardGoTo('Languages')
+    } else {
+      document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'block'
+    }
+  } else if (currentPage === 'Languages') {
+    if (document.getElementById('wizardLanguages').children.length > 0) {
+      document.getElementById('wizardLanguagesBlankWarning').style.display = 'none'
+
+      // Populate with a header input for each language
+      const headerDiv = document.getElementById('wizardHeaderInputDiv')
+      headerDiv.innerHTML = ''
+      for (const langEl of document.getElementById('wizardLanguages').children) {
+        const lang = langEl.querySelector('select').value
+
+        const label = document.createElement('label')
+        label.classList = 'form-label mt-2'
+        label.setAttribute('for', 'wizardHeaderInput_' + lang)
+        label.innerHTML = exLang.getLanguageDisplayName(lang, true)
+        headerDiv.appendChild(label)
+
+        const headerCommandBar = document.createElement('div')
+        headerDiv.appendChild(headerCommandBar)
+
+        const headerInput = document.createElement('div')
+        headerInput.setAttribute('id', 'wizardHeaderInput_' + lang)
+        headerDiv.appendChild(headerInput)
+
+        const headerEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+          content: '',
+          editorDiv: headerInput,
+          commandDiv: headerCommandBar,
+          commands: ['basic'],
+          callback: (content) => {
+            wizardHeaders[lang] = content
+          }
+        })
+      }
+      wizardGoTo('Header')
+    } else {
+      document.getElementById('wizardLanguagesBlankWarning').style.display = 'block'
+    }
+  } else if (currentPage === 'Header') {
+    wizardGoTo('Spreadsheet')
+  } else if (currentPage === 'Spreadsheet') {
+    const selectedFile = document.getElementById('wizardUploadTemplateButton').getAttribute('data-spreadsheet')
+    if (selectedFile !== '') {
+      document.getElementById('wizardUploadTemplateBlankWarning').style.display = 'none'
+      document.getElementById('wizardUploadMediaMissingWarning').style.display = 'none'
+      document.getElementById('wizardUploadMediaMissingRow').style.display = 'none'
+      wizardGoTo('MediaUpload')
+    } else {
+      document.getElementById('wizardUploadTemplateBlankWarning').style.display = 'block'
+    }
+  } else if (currentPage === 'MediaUpload') {
+    // Check that each file listed in the spreadsheet has an uploaded copy.
+    const spreadsheet = document.getElementById('wizardUploadTemplateButton').getAttribute('data-spreadsheet')
+    let missing = []
+    try {
+      missing = await _checkContentExists(spreadsheet, ['Image'])
+      document.getElementById('wizardUploadMediaBadKeyWarning').style.display = 'none'
+    } catch (e) {
+      if (String(e).slice(0, 14) === 'Error: bad_key') {
+        document.getElementById('wizardUploadMediaBadKeyWarning').style.display = 'block'
+        return
+      }
+    }
+
+    if (missing.length === 0) {
+      document.getElementById('wizardUploadMediaMissingWarning').style.display = 'none'
+      document.getElementById('wizardUploadMediaMissingRow').style.display = 'none'
+      wizardGoTo('Layout')
+    } else {
+      const missingRow = document.getElementById('wizardUploadMediaMissingRow')
+      missingRow.innerHTML = ''
+      missingRow.style.display = 'flex'
+      document.getElementById('wizardUploadMediaMissingWarning').style.display = 'block'
+
+      for (const item of missing) {
+        const col = document.createElement('div')
+        col.classList = 'col-12 col-md-4'
+        col.innerHTML = item
+        missingRow.appendChild(col)
+      }
+    }
+  } else if (currentPage === 'Layout') {
+    wizardCreateDefinition()
+  }
+}
+
+function wizardBack (currentPage) {
+  // Move the wizard back one page
+
+  if (currentPage === 'Languages') {
+    wizardGoTo('Welcome')
+  } else if (currentPage === 'Header') {
+    wizardGoTo('Languages')
+  } else if (currentPage === 'Spreadsheet') {
+    wizardGoTo('Header')
+  } else if (currentPage === 'MediaUpload') {
+    wizardGoTo('Spreadsheet')
+  } else if (currentPage === 'Layout') {
+    wizardGoTo('MediaUpload')
+  }
+}
+
+function wizardGoTo (page) {
+  Array.from(document.querySelectorAll('.wizard-pane')).forEach((el) => {
+    el.style.display = 'none'
+  })
+  document.getElementById('wizardPane_' + page).style.display = 'block'
+  console.log('wizardPane_' + page)
+}
+
+async function wizardCreateDefinition () {
+  // Use the provided details to build a definition file.
+
+  // Definition name
+  const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
+  exSetup.updateWorkingDefinition(['name'], defName)
+
+  // Langauges
+  const langOrder = []
+  for (const langEl of document.getElementById('wizardLanguages').children) {
+    const lang = langEl.querySelector('select').value
+    langOrder.push(lang)
+    const langDef = {
+      code: lang,
+      display_name: exLang.getLanguageDisplayName(lang),
+      image_key: 'Image',
+      level_key: 'Level',
+      title_key: 'Title (' + lang + ')',
+      time_key: 'Time (' + lang + ')',
+      short_text_key: 'Description (' + lang + ')',
+      header_text: wizardHeaders?.[lang] ?? ''
+    }
+    exSetup.updateWorkingDefinition(['languages', lang], langDef)
+  }
+  exSetup.updateWorkingDefinition(['language_order'], langOrder)
+
+  // Basics
+  exSetup.updateWorkingDefinition(['name'], document.getElementById('wizardDefinitionNameInput').value.trim())
+  exSetup.updateWorkingDefinition(['spreadsheet'], document.getElementById('wizardUploadTemplateButton').getAttribute('data-spreadsheet'))
+
+  // Layout
+  const orientation = document.getElementById('wizardOrientationSelect').value
+
+  // if (orientation === 'horizontal') {
+  //   exSetup.updateWorkingDefinition(['setup'], { auto_refresh: true, preview_ratio: '16x9' })
+  // } else {
+  //   exSetup.updateWorkingDefinition(['setup'], { auto_refresh: true, preview_ratio: '9x16' })
+  // }
+
+  $('#setupWizardModal').modal('hide')
+
+  if (orientation === 'horizontal') {
+    exSetup.configurePreview('16x9', true)
+  } else exSetup.configurePreview('9x16', true)
+
+  const uuid = $('#definitionSaveButton').data('workingDefinition').uuid
+
+  await exSetup.saveDefinition(defName)
+  const result = await exCommon.getAvailableDefinitions('timeline_explorer')
+  exSetup.populateAvailableDefinitions(result.definitions)
+  document.getElementById('availableDefinitionSelect').value = uuid
+
+  editDefinition(uuid)
+  exSetup.hideModal('#setupWizardModal')
+}
+
+function generateSpreadsheetTemplate () {
+  // Based on selections made in the wizard, generate a template spreadsheet and download it to the user's system.
+
+  const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
+
+  const languages = []
+  for (const child of document.getElementById('wizardLanguages').children) {
+    const lang = child.querySelector('select').value
+    if (languages.includes(lang) === false) languages.push(lang)
+  }
+
+  const details = ['Time', 'Title', 'Description']
+
+  // Loop through the various combinations to make the header line for the CSV file
+  let csv = 'Level, Image'
+  for (const lang of languages) {
+    for (const detail of details) {
+      csv += ', ' + detail + ' (' + lang + ')'
+    }
+  }
+
+  // Add a second line so it looks like a spreadsheet
+  csv += '\n'
+  for (let i = 0; i < languages.length * details.length; i++) csv += ', '
+
+  // Initiate file download
+  const element = document.createElement('a')
+  element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(csv))
+  element.setAttribute('download', defName + ' - event list.csv')
+  element.style.display = 'none'
+  document.body.appendChild(element)
+  element.click()
+  document.body.removeChild(element)
 }
 
 async function clearDefinitionInput (full = true) {
@@ -33,14 +256,14 @@ async function clearDefinitionInput (full = true) {
   spreadsheetSelect.setAttribute('data-filename', '')
   $(spreadsheetSelect).data('availableKeys', [])
 
-  // Language add
-  $('#languageAddEmptyFieldsWarning').hide()
-  $('#languageAddExistsWarning').hide()
+  // Language
+  exLang.clearLanguagePicker(document.getElementById('language-picker'))
+  exLang.createLanguagePicker(document.getElementById('language-picker'), { onLanguageRebuild: rebuildLanguageElements })
+
+  rebuildLanguageElements([])
 
   // Definition details
-  $('#definitionNameInput').val('')
-  $('#languageNav').empty()
-  $('#languageNavContent').empty()
+  document.getElementById('definitionNameInput').value = ''
   document.getElementById('missingContentWarningField').innerHTML = ''
 
   // Reset style options
@@ -60,14 +283,20 @@ async function clearDefinitionInput (full = true) {
 
   // Reset font face options
   exSetup.resetAdvancedFontPickers()
+
+  // Reset text size options
+  document.getElementById('timeTextSizeSlider').value = 0
+  document.getElementById('titleTextSizeSlider').value = 0
+  document.getElementById('bodyTextSizeSlider').value = 0
 }
 
 function editDefinition (uuid = '') {
   // Populate the given definition for editing.
 
   clearDefinitionInput(false)
+
   const def = exSetup.getDefinitionByUUID(uuid)
-  console.log(def)
+
   $('#definitionSaveButton').data('initialDefinition', structuredClone(def))
   $('#definitionSaveButton').data('workingDefinition', structuredClone(def))
 
@@ -87,40 +316,66 @@ function editDefinition (uuid = '') {
   }
 
   // Set the appropriate values for the color pickers
-  Object.keys(def.style.color).forEach((key) => {
-    $('#colorPicker_' + key).val(def.style.color[key])
-    document.querySelector('#colorPicker_' + key).dispatchEvent(new Event('input', { bubbles: true }))
-  })
+  for (const key of Object.keys(def.style.color)) {
+    const el = document.getElementById('colorPicker_' + key)
+    if (el == null) continue
+    el.value = def.style.color[key]
+    el.dispatchEvent(new Event('input', { bubbles: true }))
+  }
 
   // Set the appropriate values for any advanced color pickers
-  if ('background' in def.style) {
+  if (def?.style?.background) {
     exSetup.updateAdvancedColorPicker('style>background', def.style.background)
   }
 
   // Set the appropriate values for the advanced font pickers
-  if ('font' in def.style) {
-    Object.keys(def.style.font).forEach((key) => {
+    Object.keys(def?.style?.font ?? {}).forEach((key) => {
       const picker = document.querySelector(`.AFP-select[data-path="style>font>${key}"`)
       exSetup.setAdvancedFontPicker(picker, def.style.font[key])
     })
+
+  // Set the appropriate values for the text size selects
+  Object.keys(def.style?.text_size ?? {}).forEach((key) => {
+    document.getElementById(key + 'TextSizeSlider').value = def.style.text_size[key]
+  })
+
+  // Set up any existing languages and tabs
+  // In Ex5.3, we added the language_order field. If it doesn't exist
+  // set it up now
+  if ((def?.language_order || []).length === 0) {
+    def.language_order = []
+    for (const code of Object.keys(def.languages)) {
+      const lang = def.languages[code]
+      if (lang.default === true) {
+        def.language_order.unshift(code)
+      } else def.language_order.push(code)
+    }
+    exSetup.updateWorkingDefinition(['language_order'], def.language_order)
   }
 
-  // Build out the key input interface
-  let first = null
-  Object.keys(def.languages).forEach((lang) => {
-    const langDef = def.languages[lang]
-    if (first == null) {
-      createLanguageTab(lang, langDef.display_name)
-      first = lang
-    } else {
-      createLanguageTab(lang, langDef.display_name)
+  const langSelect = document.getElementById('language-picker')
+  exLang.createLanguagePicker(langSelect,
+    {
+      onLanguageRebuild: rebuildLanguageElements
     }
-    $('#languagePane_' + lang).removeClass('active').removeClass('show')
+  )
 
-    $('#headerText' + '_' + lang).val(langDef.header_text)
-  })
-  $('#languageTab_' + first).click()
-  $('#languagePane_' + first).addClass('active')
+  // Build out the key input interface
+  // let first = null
+  // Object.keys(def.languages).forEach((lang) => {
+  //   const langDef = def.languages[lang]
+  //   if (first == null) {
+  //     createLanguageTab(lang, langDef.display_name)
+  //     first = lang
+  //   } else {
+  //     createLanguageTab(lang, langDef.display_name)
+  //   }
+  //   $('#languagePane_' + lang).removeClass('active').removeClass('show')
+
+  //   $('#headerText' + '_' + lang).val(langDef.header_text)
+  // })
+  // $('#languageTab_' + first).click()
+  // $('#languagePane_' + first).addClass('active')
 
   // Load the spreadsheet to populate the existing keys
   onSpreadsheetFileChange()
@@ -129,50 +384,23 @@ function editDefinition (uuid = '') {
   document.getElementById('previewFrame').src = '../timeline_explorer.html?standalone=true&definition=' + def.uuid
 }
 
-function addLanguage () {
-  // Collect details from the language fields and add a new supported language to the definition.
+function rebuildLanguageElements (langOrder) {
+  // Clear and rebuild GUI elements when the languages have been modified
 
-  const displayName = $('#languageNameInput').val().trim()
-  const code = $('#languageCodeInput').val().trim()
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+  document.getElementById('languageNav').innerHTML = ''
+  document.getElementById('languageNavContent').innerHTML = ''
 
-  // Check if fields are full
-  if (displayName === '' || code === '') {
-    $('#languageAddEmptyFieldsWarning').show()
-    return
-  } else {
-    $('#languageAddEmptyFieldsWarning').hide()
-  }
-
-  // Check if name or code already exist
-  let error = false
-  Object.keys(workingDefinition.languages).forEach((key) => {
-    if (key === code || workingDefinition.languages[key].display_name === displayName) {
-      $('#languageAddExistsWarning').show()
-      error = true
-    } else {
-      $('#languageAddExistsWarning').hide()
+  let first = null
+  for (const lang of langOrder) {
+    const tabButton = createLanguageTab(lang)
+    if (first == null) {
+      first = tabButton
     }
-  })
-  if (error) return
-
-  // If this is the first language added, make it the default
-  let defaultLang = false
-  if (Object.keys(workingDefinition.languages).length === 0) defaultLang = true
-
-  workingDefinition.languages[code] = {
-    display_name: displayName,
-    code,
-    default: defaultLang
   }
-  createLanguageTab(code, displayName)
-
-  $('#definitionSaveButton').data('workingDefinition', structuredClone(workingDefinition))
-  $('#languageNameInput').val('')
-  $('#languageCodeInput').val('')
+  if (first) first.click()
 }
 
-function createLanguageTab (code, displayName) {
+function createLanguageTab (code) {
   // Create a new language tab for the given details.
   // Set first=true when creating the first tab
 
@@ -186,7 +414,7 @@ function createLanguageTab (code, displayName) {
   tabButton.setAttribute('data-bs-target', '#languagePane_' + code)
   tabButton.setAttribute('type', 'button')
   tabButton.setAttribute('role', 'tab')
-  tabButton.innerHTML = displayName
+  tabButton.innerHTML = exLang.getLanguageDisplayName(code, true)
   $('#languageNav').append(tabButton)
 
   // Create corresponding pane
@@ -201,110 +429,36 @@ function createLanguageTab (code, displayName) {
   row.classList = 'row gy-2 mt-2 mb-3'
   tabPane.appendChild(row)
 
-  // Create default language checkbox
-  const defaultCol = document.createElement('div')
-  defaultCol.classList = 'col-12'
-  row.appendChild(defaultCol)
+  // Create the header input
+  const headerCol = document.createElement('div')
+  headerCol.classList = 'col-12 col-md-6'
+  row.appendChild(headerCol)
 
-  const checkContainer = document.createElement('div')
-  checkContainer.classList = 'form-check'
-  defaultCol.appendChild(checkContainer)
+  const label = document.createElement('label')
+  label.classList = 'form-label mt-2'
+  label.setAttribute('for', 'headerInput_' + code)
+  label.innerHTML = 'Header'
+  headerCol.appendChild(label)
 
-  const defaultCheckbox = document.createElement('input')
-  defaultCheckbox.classList = 'form-check-input default-lang-checkbox'
-  defaultCheckbox.setAttribute('id', 'defaultCheckbox_' + code)
-  defaultCheckbox.setAttribute('data-lang', code)
-  defaultCheckbox.setAttribute('type', 'radio')
-  defaultCheckbox.checked = workingDefinition.languages[code].default
-  defaultCheckbox.addEventListener('change', (event) => {
-    // If the checkbox is checked, uncheck all the others and save to the working definition.
-    Array.from(document.querySelectorAll('.default-lang-checkbox')).forEach((el) => {
-      el.checked = false
-      exSetup.updateWorkingDefinition(['languages', el.getAttribute('data-lang'), 'default'], false)
-    })
-    event.target.checked = true
-    exSetup.updateWorkingDefinition(['languages', code, 'default'], true)
-    exSetup.previewDefinition(true)
+  const headerCommandBar = document.createElement('div')
+  headerCol.appendChild(headerCommandBar)
+
+  const headerInput = document.createElement('div')
+  headerInput.setAttribute('id', 'headerInput_' + code)
+  headerCol.appendChild(headerInput)
+
+  const headerEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+    content: workingDefinition?.languages?.[code]?.header_text ?? '',
+    editorDiv: headerInput,
+    commandDiv: headerCommandBar,
+    commands: ['basic'],
+    callback: (content) => {
+      exSetup.updateWorkingDefinition(['languages', code, 'header_text'], content)
+      exSetup.previewDefinition(true)
+    }
   })
-  checkContainer.appendChild(defaultCheckbox)
 
-  const defaultCheckboxLabel = document.createElement('label')
-  defaultCheckboxLabel.classList = 'form-check-label'
-  defaultCheckboxLabel.setAttribute('for', 'defaultCheckbox_' + code)
-  defaultCheckboxLabel.innerHTML = 'Default language'
-  checkContainer.appendChild(defaultCheckboxLabel)
-
-  // Create the flag input
-  const flagImgCol = document.createElement('div')
-  flagImgCol.classList = 'col-3 col-lg-2 d-flex'
-  row.append(flagImgCol)
-
-  const flagImg = document.createElement('img')
-  flagImg.setAttribute('id', 'flagImg_' + code)
-  const customFlag = $('#definitionSaveButton').data('workingDefinition').languages[code].custom_flag
-  if (customFlag != null) {
-    flagImg.src = '../content/' + customFlag
-  } else {
-    flagImg.src = '../_static/flags/' + code + '.svg'
-  }
-  flagImg.classList = 'align-self-center'
-  flagImg.style.width = '100%'
-  flagImg.addEventListener('error', function () {
-    this.src = '../_static/icons/translation-icon_black.svg'
-  })
-  flagImgCol.appendChild(flagImg)
-
-  const clearFlagCol = document.createElement('div')
-  clearFlagCol.classList = 'col-2 col-lg-1 d-flex mx-0 px-0 text-center4'
-  row.appendChild(clearFlagCol)
-
-  const clearFlagButton = document.createElement('button')
-  clearFlagButton.classList = 'btn btn-danger align-self-center'
-  clearFlagButton.innerHTML = '✕'
-  clearFlagButton.addEventListener('click', function () {
-    deleteLanguageFlag(code)
-  })
-  clearFlagCol.append(clearFlagButton)
-
-  const uploadFlagCol = document.createElement('div')
-  uploadFlagCol.classList = 'col-7 col-lg-3 d-flex'
-  row.append(uploadFlagCol)
-
-  const uploadFlagBox = document.createElement('label')
-  uploadFlagBox.classList = 'btn btn-outline-primary w-100 align-self-center d-flex'
-  uploadFlagCol.appendChild(uploadFlagBox)
-
-  const uploadFlagFileName = document.createElement('span')
-  uploadFlagFileName.setAttribute('id', 'uploadFlagFilename_' + code)
-  uploadFlagFileName.classList = 'w-100 align-self-center'
-  uploadFlagFileName.innerHTML = 'Upload flag'
-  uploadFlagBox.appendChild(uploadFlagFileName)
-
-  const uploadFlagInput = document.createElement('input')
-  uploadFlagInput.setAttribute('id', 'uploadFlagInput_' + code)
-  uploadFlagInput.classList = 'form-control-file w-100 align-self-center'
-  uploadFlagInput.setAttribute('type', 'file')
-  uploadFlagInput.setAttribute('hidden', true)
-  uploadFlagInput.setAttribute('accept', 'image/*')
-  uploadFlagInput.addEventListener('change', function () {
-    onFlagUploadChange(code)
-  })
-  uploadFlagBox.appendChild(uploadFlagInput)
-
-  // Create the delete button
-  const deleteCol = document.createElement('div')
-  deleteCol.classList = 'col col-12 col-lg-6 col-xl-4 d-flex'
-  row.appendChild(deleteCol)
-
-  const deleteButton = document.createElement('button')
-  deleteButton.classList = 'btn btn-danger w-100 align-self-center'
-  deleteButton.innerHTML = 'Delete language'
-  deleteButton.addEventListener('click', () => {
-    deleteLanguageTab(code)
-  })
-  deleteCol.appendChild(deleteButton)
-
-  // Create the various inputs
+  // Create the key selectors
   Object.keys(inputFields).forEach((key) => {
     const langKey = key + '_' + code
     const col = document.createElement('div')
@@ -355,78 +509,7 @@ function createLanguageTab (code, displayName) {
 
   // Switch to this new tab
   $(tabButton).click()
-}
-
-function deleteLanguageTab (lang) {
-  // Delete the given language tab.
-
-  delete $('#definitionSaveButton').data('workingDefinition').languages[lang]
-  $('#languageTab_' + lang).remove()
-  $('#languagePane_' + lang).remove()
-  $('.language-tab').click()
-}
-
-function deleteLanguageFlag (lang) {
-  // Ask the server to delete the language flag and remove it from the working definition.
-
-  const flag = $('#definitionSaveButton').data('workingDefinition').languages[lang].custom_flag
-
-  if (flag == null) {
-    // No custom flag
-    return
-  }
-
-  // Delete filename from working definition
-  delete $('#definitionSaveButton').data('workingDefinition').languages[lang].custom_flag
-
-  // Remove the icon
-  $('#flagImg_' + lang).attr('src', '../_static/flags/' + lang + '.svg')
-
-  // Delete from server
-  exCommon.makeHelperRequest({
-    method: 'POST',
-    endpoint: '/file/delete',
-    params: {
-      file: flag
-    }
-  })
-}
-
-function onFlagUploadChange (lang) {
-  // Called when the user selects a flag image file to upload
-
-  const fileInput = $('#uploadFlagInput_' + lang)[0]
-
-  const file = fileInput.files[0]
-  if (file == null) return
-
-  $('#uploadFlagFilename_' + lang).html('Uploading')
-
-  const ext = file.name.split('.').pop()
-  const newName = $('#definitionSaveButton').data('workingDefinition').uuid + '_flag_' + lang + '.' + ext
-
-  const formData = new FormData()
-
-  formData.append('files', fileInput.files[0], newName)
-
-  const xhr = new XMLHttpRequest()
-  xhr.open('POST', '/uploadContent', true)
-
-  xhr.onreadystatechange = function () {
-    if (this.readyState !== 4) return
-    if (this.status === 200) {
-      const response = JSON.parse(this.responseText)
-
-      if ('success' in response) {
-        $('#uploadFlagFilename_' + lang).html('Upload')
-        $('#flagImg_' + lang).attr('src', '../content/' + newName)
-        exSetup.updateWorkingDefinition(['languages', lang, 'custom_flag'], newName)
-      }
-    } else if (this.status === 422) {
-      console.log(JSON.parse(this.responseText))
-    }
-  }
-  xhr.send(formData)
+  return tabButton
 }
 
 function onAttractorFileChange () {
@@ -476,62 +559,80 @@ function onSpreadsheetFileChange () {
     })
 }
 
-function checkContentExists () {
+async function checkContentExists () {
   // Cross-check content from the spreadsheet with files in the content directory.
 
   const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
   const imageKeys = []
-  document.getElementById('missingContentWarningField').innerHTML = ''
+  const missingContentField = document.getElementById('missingContentWarningField')
 
-  // Loop through the defintion and collect any unique image keys
+  missingContentField.innerHTML = ''
+
+  // Loop through the defintion and collect any unique media keys
   Object.keys(workingDefinition.languages).forEach((lang) => {
     if (imageKeys.includes(workingDefinition.languages[lang].image_key) === false) {
       imageKeys.push(workingDefinition.languages[lang].image_key)
     }
   })
 
-  // Get a list of available content
-  let availableContent
-  const missingContent = []
-  exCommon.makeHelperRequest({
-    method: 'GET',
-    endpoint: '/getAvailableContent'
-  })
-    .then((result) => {
-      console.log(result)
-      availableContent = result.all_exhibits
-      // Retrieve the spreadsheet and check the content for each image key against the available content
-      exCommon.makeHelperRequest({
-        method: 'GET',
-        endpoint: '/content/' + workingDefinition.spreadsheet,
-        rawResponse: true,
-        noCache: true
-      })
-        .then((raw) => {
-          const spreadsheet = exCommon.csvToJSON(raw).json
-          spreadsheet.forEach((row) => {
-            imageKeys.forEach((key) => {
-              if (row[key].trim() === '') return
-              if (availableContent.includes(row[key]) === false) missingContent.push(row[key])
-            })
-          })
-          const missingContentField = document.getElementById('missingContentWarningField')
-          if (missingContent.length === 0) {
-            missingContentField.classList.add('text-success')
-            missingContentField.classList.remove('text-danger')
-            missingContentField.innerHTML = 'No missing content!'
-          } else {
-            missingContentField.classList.add('text-danger')
-            missingContentField.classList.remove('text-success')
-            let html = '<b>Missing content found:</b><ul>'
-            missingContent.forEach((file) => {
-              html += '<li>' + file + '</li>'
-            })
-            html += '</ul>'
-            missingContentField.innerHTML = html
-          }
-        })
+  const missingContent = await _checkContentExists(workingDefinition.spreadsheet, imageKeys)
+
+  if (missingContent.length === 0) {
+    missingContentField.classList.add('text-success')
+    missingContentField.classList.remove('text-danger')
+    missingContentField.innerHTML = 'No missing content!'
+  } else {
+    missingContentField.classList.add('text-danger')
+    missingContentField.classList.remove('text-success')
+    let html = '<b>Missing content found:</b><ul>'
+    missingContent.forEach((file) => {
+      html += '<li>' + file + '</li>'
     })
+    html += '</ul>'
+    missingContentField.innerHTML = html
+  }
+}
+
+function _checkContentExists (spreadsheet, keys) {
+  // Take the given spreadsheet filename and image keys and cross check with
+  // the files available in the content directory. Return the names of any
+  // files that do not exist.
+
+  return new Promise(function (resolve, reject) {
+    // Get a list of available content
+
+    let availableContent
+    const missingContent = []
+
+    exCommon.makeHelperRequest({
+      method: 'GET',
+      endpoint: '/getAvailableContent'
+    })
+      .then((result) => {
+        availableContent = result.all_exhibits
+        // Retrieve the spreadsheet and check the content for each image key against the available content
+        exCommon.makeHelperRequest({
+          method: 'GET',
+          endpoint: '/content/' + spreadsheet,
+          rawResponse: true,
+          noCache: true
+        })
+          .then((raw) => {
+            const spreadsheet = exCommon.csvToJSON(raw).json
+            spreadsheet.forEach((row) => {
+              keys.forEach((key) => {
+                if ((key in row) === false) {
+                  reject(new Error('bad_key: ' + key))
+                  return
+                }
+                if (row[key].trim() === '') return
+                if (availableContent.includes(row[key]) === false) missingContent.push(row[key])
+              })
+            })
+            resolve(missingContent)
+          })
+      })
+  })
 }
 
 function populateKeySelects (keyList) {
@@ -565,95 +666,89 @@ function populateKeySelects (keyList) {
   })
 }
 
-function showOptimizeContentModal () {
-  // Show the modal for optimizing the content and thumbnails.
+// function showOptimizeContentModal () {
+//   // Show the modal for optimizing the content and thumbnails.
 
-  document.getElementById('optimizeContentProgressBarDiv').style.display = 'none'
-  $('#optimizeContentModal').modal('show')
-}
+//   document.getElementById('optimizeContentProgressBarDiv').style.display = 'none'
+//   $('#optimizeContentModal').modal('show')
+// }
 
-function optimizeMediaFromModal () {
-  // Collect the necessary information and then optimize the media.
+// function optimizeMediaFromModal () {
+//   // Collect the necessary information and then optimize the media.
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+//   const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
 
-  const resolution = document.getElementById('resolutionSelect').value
-  const width = parseInt(resolution.split('_')[0])
-  const height = parseInt(resolution.split('_')[1])
-  let thumbRes
-  if (width > height) {
-    thumbRes = Math.round(width * 0.25)
-  } else {
-    thumbRes = Math.round(width * 0.5)
-  }
+//   const resolution = document.getElementById('resolutionSelect').value
+//   const width = parseInt(resolution.split('_')[0])
+//   const height = parseInt(resolution.split('_')[1])
+//   let thumbRes
+//   if (width > height) {
+//     thumbRes = Math.round(width * 0.25)
+//   } else {
+//     thumbRes = Math.round(width * 0.5)
+//   }
 
-  // Loop through the defintion and collect any unique image keys
-  const imageKeys = []
+//   // Loop through the defintion and collect any unique image keys
+//   const imageKeys = []
 
-  Object.keys(workingDefinition.languages).forEach((lang) => {
-    if (imageKeys.includes(workingDefinition.languages[lang].image_key) === false) {
-      imageKeys.push(workingDefinition.languages[lang].image_key)
-    }
-  })
+//   Object.keys(workingDefinition.languages).forEach((lang) => {
+//     if (imageKeys.includes(workingDefinition.languages[lang].image_key) === false) {
+//       imageKeys.push(workingDefinition.languages[lang].image_key)
+//     }
+//   })
 
-  // Retrieve the spreadsheet and collect all images
-  const toOptimize = []
+//   // Retrieve the spreadsheet and collect all images
+//   const toOptimize = []
 
-  exCommon.makeHelperRequest({
-    method: 'GET',
-    endpoint: '/content/' + workingDefinition.spreadsheet,
-    rawResponse: true,
-    noCache: true
-  })
-    .then((raw) => {
-      const spreadsheet = exCommon.csvToJSON(raw).json
-      spreadsheet.forEach((row) => {
-        imageKeys.forEach((key) => {
-          if (row[key].trim() === '') return
-          toOptimize.push(row[key])
-        })
-      })
-      const total = toOptimize.length
-      let numComplete = 0
+//   exCommon.makeHelperRequest({
+//     method: 'GET',
+//     endpoint: '/content/' + workingDefinition.spreadsheet,
+//     rawResponse: true,
+//     noCache: true
+//   })
+//     .then((raw) => {
+//       const spreadsheet = exCommon.csvToJSON(raw).json
+//       spreadsheet.forEach((row) => {
+//         imageKeys.forEach((key) => {
+//           if (row[key].trim() === '') return
+//           toOptimize.push(row[key])
+//         })
+//       })
+//       const total = toOptimize.length
+//       let numComplete = 0
 
-      // Show the progress bar
-      document.getElementById('optimizeContentProgressBarDiv').style.display = 'flex'
-      document.getElementById('optimizeContentProgressBar').style.width = '0%'
-      document.getElementById('optimizeContentProgressBarDiv').setAttribute('aria-valuenow', 0)
+//       // Show the progress bar
+//       document.getElementById('optimizeContentProgressBarDiv').style.display = 'flex'
+//       document.getElementById('optimizeContentProgressBar').style.width = '0%'
+//       document.getElementById('optimizeContentProgressBarDiv').setAttribute('aria-valuenow', 0)
 
-      toOptimize.forEach((file) => {
-        exCommon.makeHelperRequest({
-          method: 'POST',
-          endpoint: '/files/generateThumbnail',
-          params: {
-            source: file,
-            mimetype: 'image',
-            width: thumbRes
-          }
-        })
-          .then((result) => {
-            if (result.success === true) {
-              numComplete += 1
-              const percent = Math.round(100 * numComplete / total)
-              document.getElementById('optimizeContentProgressBar').style.width = String(percent) + '%'
-              document.getElementById('optimizeContentProgressBarDiv').setAttribute('aria-valuenow', percent)
-            }
-          })
-      })
-    })
-}
+//       toOptimize.forEach((file) => {
+//         exCommon.makeHelperRequest({
+//           method: 'POST',
+//           endpoint: '/files/generateThumbnail',
+//           params: {
+//             source: file,
+//             mimetype: 'image',
+//             width: thumbRes
+//           }
+//         })
+//           .then((result) => {
+//             if (result.success === true) {
+//               numComplete += 1
+//               const percent = Math.round(100 * numComplete / total)
+//               document.getElementById('optimizeContentProgressBar').style.width = String(percent) + '%'
+//               document.getElementById('optimizeContentProgressBarDiv').setAttribute('aria-valuenow', percent)
+//             }
+//           })
+//       })
+//     })
+// }
 
 // Set helper address for use with exCommon.makeHelperRequest
 exCommon.config.helperAddress = window.location.origin
 
 // The input fields to specifiy content for each langauge
 const inputFields = {
-  headerText: {
-    name: 'Header',
-    kind: 'input',
-    type: 'text',
-    property: 'header_text'
-  },
   keyTimeSelect: {
     name: 'Time column',
     kind: 'select',
@@ -710,8 +805,40 @@ setTimeout(setUpColorPickers, 100)
 // Add event listeners
 // -------------------------------------------------------------
 
+// Wizard
+
+// Connect the forward and back buttons
+Array.from(document.querySelectorAll('.wizard-forward')).forEach((el) => {
+  el.addEventListener('click', () => {
+    wizardForward(el.getAttribute('data-current-page'))
+  })
+})
+Array.from(document.querySelectorAll('.wizard-back')).forEach((el) => {
+  el.addEventListener('click', () => {
+    wizardBack(el.getAttribute('data-current-page'))
+  })
+})
+
+document.getElementById('wizardDownloadTemplateButton').addEventListener('click', generateSpreadsheetTemplate)
+document.getElementById('wizardUploadTemplateButton').addEventListener('click', () => {
+  exFileSelect.createFileSelectionModal({
+    filetypes: ['csv'],
+    multiple: false
+  })
+    .then((selectedFiles) => {
+      document.getElementById('wizardUploadTemplateButton').setAttribute('data-spreadsheet', selectedFiles[0])
+    })
+})
+
+document.getElementById('wizardUploadMediaButton').addEventListener('click', () => {
+  exFileSelect.createFileSelectionModal({
+    filetypes: ['image', 'video'],
+    manage: true,
+    multiple: true
+  })
+})
+
 // Main buttons
-$('#languageAddButton').click(addLanguage)
 document.getElementById('manageContentButton').addEventListener('click', (event) => {
   exFileSelect.createFileSelectionModal({ manage: true })
 })
@@ -720,8 +847,8 @@ document.getElementById('showCheckContentButton').addEventListener('click', () =
   $('#checkContentModal').modal('show')
 })
 document.getElementById('checkContentButton').addEventListener('click', checkContentExists)
-document.getElementById('optimizeContentButton').addEventListener('click', showOptimizeContentModal)
-document.getElementById('optimizeContentBeginButton').addEventListener('click', optimizeMediaFromModal)
+// document.getElementById('optimizeContentButton').addEventListener('click', showOptimizeContentModal)
+// document.getElementById('optimizeContentBeginButton').addEventListener('click', optimizeMediaFromModal)
 
 // Definition fields
 document.getElementById('spreadsheetSelect').addEventListener('click', (event) => {
@@ -768,6 +895,15 @@ document.getElementById('manageFontsButton').addEventListener('click', (event) =
     .then(exSetup.refreshAdvancedFontPickers)
 })
 
+// Text size fields
+Array.from(document.querySelectorAll('.text-size-slider')).forEach((el) => {
+  el.addEventListener('input', (event) => {
+    const property = event.target.getAttribute('data-property')
+    exSetup.updateWorkingDefinition(['style', 'text_size', property], parseFloat(event.target.value))
+    exSetup.previewDefinition(true)
+  })
+})
+
 // Set color mode
 if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
   document.querySelector('html').setAttribute('data-bs-theme', 'dark')
@@ -778,6 +914,9 @@ if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').match
 // Set helper address for use with exCommon.makeHelperRequest
 exCommon.config.helperAddress = window.location.origin
 
+// Populate available languages
+exLang.createLanguagePicker(document.getElementById('language-picker'), { onLanguageRebuild: rebuildLanguageElements })
+
 exSetup.configure({
   app: 'timeline_explorer',
   clearDefinition: clearDefinitionInput,
@@ -785,13 +924,15 @@ exSetup.configure({
   loadDefinition: editDefinition,
   blankDefinition: {
     languages: {},
+    language_order: [],
     style: {
       background: {
         mode: 'color',
         color: '#719abf'
       },
       color: {},
-      font: {}
+      font: {},
+      text_size: {}
     }
   }
 })

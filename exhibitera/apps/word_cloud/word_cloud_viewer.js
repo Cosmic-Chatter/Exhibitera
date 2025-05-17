@@ -1,17 +1,20 @@
 /* global swearList, pluralize, WordCloud */
 
 import * as exCommon from '../js/exhibitera_app_common.js'
+import * as exMarkdown from '../js/exhibitera_app_markdown.js'
 
 function cleanText (text) {
   // Converver to lowercase and remove special characters, while attempting
   // to retain apostrophes that are part of names. E.g., ja'mar
   // Then, check the text for profanity
 
-  const simpleText = text.toLowerCase().replace(/'\B|[^a-z'? ]/g, ' ')
-  $('#profanityCheckingDiv').html(simpleText).profanityFilter({ customSwears: swearList, replaceWith: '#' })
-  $('#profanityCheckingDiv').html($('#profanityCheckingDiv').html().replace(/#/g, ''))
+  const profanityCheckingDiv = document.getElementById('profanityCheckingDiv')
 
-  let cleanText = $('#profanityCheckingDiv').html().trim()
+  const simpleText = text.toLowerCase().replace(/'\B|[^a-z'? ]/g, ' ')
+  $(profanityCheckingDiv).html(simpleText).profanityFilter({ customSwears: swearList, replaceWith: '#' })
+  $(profanityCheckingDiv).html($('#profanityCheckingDiv').html().replace(/#/g, ''))
+
+  let cleanText = profanityCheckingDiv.innerHTML.trim()
   if (textCase === 'uppercase') cleanText = cleanText.toUpperCase()
 
   return cleanText
@@ -147,7 +150,7 @@ function loadDefinition (definition) {
   const wordCloudContainer = document.getElementById('wordCloudContainer')
 
   if ('prompt' in definition.content) {
-    promptText.innerHTML = definition.content.prompt
+    promptText.innerHTML = exMarkdown.formatText(definition.content.prompt, { removeParagraph: true, string: true })
     promptText.classList.replace('promptText-none', 'promptText-full')
     wordCloudContainer.classList.add('wordCloudContainer-small')
     wordCloudContainer.classList.remove('wordCloudContainer-full')
@@ -158,15 +161,8 @@ function loadDefinition (definition) {
     wordCloudContainer.classList.remove('wordCloudContainer-small')
   }
 
-  if ('collection_name' in definition.behavior) {
-    collectionName = definition.behavior.collection_name
-  } else {
-    collectionName = 'default'
-  }
-
-  if ('excluded_words' in definition.behavior) {
-    excludedWordList = definition.behavior.excluded_words
-  } else excludedWordList = []
+  collectionName = definition?.behavior?.collection_name ?? 'default'
+  excludedWordList = definition?.behavior?.excluded_words ?? []
 
   if ('refresh_rate' in definition.behavior) {
     const newRate = parseFloat(definition.behavior.refresh_rate)
@@ -202,16 +198,8 @@ function loadDefinition (definition) {
     WordCloudOptions.maxRotation = 0
   }
 
-  if ('cloud_shape' in definition.appearance) {
-    WordCloudOptions.shape = definition.appearance.cloud_shape
-  } else {
-    WordCloudOptions.shape = 'circle'
-  }
-  if ('text_case' in definition.appearance) {
-    textCase = definition.appearance.text_case
-  } else {
-    textCase = 'lowercase'
-  }
+  WordCloudOptions.shape = definition?.appearance?.cloud_shape ?? 'circle'
+  textCase = definition?.appearance?.text_case ?? 'lowercase'
 
   const root = document.querySelector(':root')
 

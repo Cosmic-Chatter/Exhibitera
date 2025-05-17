@@ -18,7 +18,7 @@ Here is some simple text formatted with Markdown:
 # The Space Race
 The Space Race was a competition between the United States and Soviet Union for scientific and technological preeminence in space that extended from the early 1950s until 1975.
 
-![left](content/Sputnik.jpg "A model of the Sputnik 1 satellite.")
+![left 50%](content/Sputnik.jpg "A model of the Sputnik 1 satellite.")
 
 Milestones during the Space Race included the launch of **Sputnik 1** by the U.S.S.R in 1957, the landing of _Eagle_ on the surface of the Moon as part of **Apollo 11**, and the joint U.S.-U.S.S.R **Apollo-Soyuz Test Project** in 1975.
 
@@ -33,7 +33,7 @@ InfoStation will break up the text into sections defined by top-level headers (`
 You can embed and place images following this pattern:
 
 ```md
-![placement](file_path "Title")
+![placement size](file_path "Title")
 ```
 
  The title must be in quotes or left blank. Images should be uploaded as content and the `file_path` should begin with `content/`.
@@ -41,41 +41,11 @@ You can embed and place images following this pattern:
 Here's an example:
 
 ```md
-![right](content/FDR.jpg "Franklin Delano Roosevelt")
+![right 50%](content/FDR.jpg "Franklin Delano Roosevelt")
 ```
 
-#### Controlling image placement
+#### Controlling image placement and sizing
 
-You can control the placement of an image by choosing one of `left`, `right`, or `full`. These apply different "container" sizes depending on whether InfoStation is in a landscape or portrait orientation.
+You can control the placement of an image by choosing one of `left`, `middle`, `right`. Text will flow around images placed with `left` and `right`, while `middle` will create a full-width interruption in the text.
 
-| `placement` value | Orientation | Maximum image width |
-| ----------------- | ----------- | ------------------- |
-| `center` | Horizontal | 100% |
-| `center` | Vertical | 100% |
-| `left` | Horizontal | 35% |
-| `left` | Vertical | 50% |
-| `right` | Horizontal | 35% |
-| `right` | Vertical | 50% |
-
-#### Controlling image size
-The default image sizes for each placement option will usually provide a good result, but you can also specify your image sizes more precisely using the pattern:
-
-```md
-![placement](file_path =WxH "Title")
-```
-
-There must be a space between the file path and the `=` and no spaces between the dimensions. Width (W) and height (H) can be specified in either pixels or percentages. If you use pixels, the image will be resized to exactly the size you give, up to the size of the container. If you use percentages, the image will be resized as a fraction of the container size.
-
-**In order to maintain the correct aspect ratio, it's best to specify the width and use `*` for the height.** For example:
-
-```md
-![right](content/FDR.jpg =50%x* "Franklin Delano Roosevelt")
-```
-
-or 
-
-```md
-![left](content/FDR.jpg =250x* "Franklin Delano Roosevelt")
-```
-
-_Note that your display may not have the same pixel dimensions as the Exhibitera Apps setup preview, so specifying in pixel size may not be consistent across devices._
+You can select one of six sizes when inserting an image: 25%, 33%, 50%, 67%, 75%, or 100%. Images whose width is smaller than the specified size will not be enlarged to fill the space, so make sure your images are large enough.

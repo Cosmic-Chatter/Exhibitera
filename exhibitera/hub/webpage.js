@@ -11,375 +11,566 @@ import * as exTools from './exhibitera_tools.js'
 import * as exTracker from './exhibitera_tracker.js'
 import * as exUsers from './exhibitera_users.js'
 
-function showManageExhibitsModal () {
-  // Configure the manageExhibitsModal and show it.
+function editExhibitCreateComponentHTML (component) {
+  // Create the HTML representation of a component exhibit entry.
 
-  document.getElementById('manageExhibitModalExhibitThumbnailCheckbox').checked = true
-  exTools.makeServerRequest({
-    method: 'GET',
-    endpoint: '/exhibit/getAvailable'
+  const contentList = document.getElementById('editExhibitExhibitContentList')
+
+  const col = document.createElement('div')
+  col.classList = 'col manageExhibit-component-col'
+  col.setAttribute('data-component-uuid', component.uuid)
+  contentList.appendChild(col)
+
+  const row = document.createElement('div')
+  row.classList = 'row mx-0'
+  col.appendChild(row)
+
+  const header = document.createElement('div')
+  header.classList = 'col-12 d-flex justify-content-between align-items-center bg-primary rounded-top text-light py-1'
+  row.appendChild(header)
+
+  const nameDiv = document.createElement('div')
+  nameDiv.classList = 'fs-5'
+  nameDiv.innerHTML = component.id
+  header.appendChild(nameDiv)
+
+  const deleteButton = document.createElement('button')
+  deleteButton.classList = 'btn btn-danger btn-sm py-0'
+  deleteButton.innerHTML = '✕'
+  deleteButton.addEventListener('click', () => {
+    deleteButton.closest('.manageExhibit-component-col').remove()
   })
-    .then((result) => {
-      populateManageExhibitsExhibitList(result.available_exhibits)
-      $('#manageExhibitsModal').modal('show')
+  header.appendChild(deleteButton)
+
+  const body = document.createElement('div')
+  body.classList = 'col-12 bg-secondary rounded-bottom py-2'
+  row.appendChild(body)
+
+  const bodyRow = document.createElement('div')
+  bodyRow.classList = 'row gy-2'
+  body.appendChild(bodyRow)
+
+  const componentObj = exExhibit.getExhibitComponent(component.id)
+  if (componentObj != null) {
+    // This component exists in the system
+
+    const definitionPreviewCol = document.createElement('div')
+    definitionPreviewCol.classList = 'col-12 exhibit-thumbnail'
+    if (document.getElementById('editExhibitThumbnailCheckbox').checked === false) definitionPreviewCol.style.display = 'none'
+    bodyRow.appendChild(definitionPreviewCol)
+
+    const definitionPreviewImage = document.createElement('img')
+    definitionPreviewImage.style.width = '100%'
+    definitionPreviewImage.style.height = '100px'
+    definitionPreviewImage.style.objectFit = 'contain'
+    definitionPreviewCol.appendChild(definitionPreviewImage)
+
+    const definitionPreviewVideo = document.createElement('video')
+    definitionPreviewVideo.setAttribute('autoplay', true)
+    definitionPreviewVideo.muted = 'true'
+    definitionPreviewVideo.setAttribute('loop', 'true')
+    definitionPreviewVideo.setAttribute('playsinline', 'true')
+    definitionPreviewVideo.setAttribute('webkit-playsinline', 'true')
+    definitionPreviewVideo.setAttribute('disablePictureInPicture', 'true')
+    definitionPreviewVideo.style.width = '100%'
+    definitionPreviewVideo.style.height = '100px'
+    definitionPreviewVideo.style.objectFit = 'contain'
+    definitionPreviewCol.appendChild(definitionPreviewVideo)
+
+    const definitionSelectCol = document.createElement('div')
+    definitionSelectCol.classList = 'col-12'
+    bodyRow.appendChild(definitionSelectCol)
+
+    const definitionSelect = document.createElement('select')
+    definitionSelect.classList = 'form-select manageExhibit-definition-select'
+    definitionSelect.setAttribute('data-component-uuid', component.uuid)
+    definitionSelect.setAttribute('data-component-id', component.id)
+    definitionSelect.setAttribute('data-initial-definition', component.definition)
+    definitionSelectCol.appendChild(definitionSelect)
+
+    exTools.makeRequest({
+      method: 'GET',
+      url: componentObj.getHelperURL(),
+      endpoint: '/getAvailableContent'
     })
-}
+      .then((availableContent) => {
+        // Build an option for each definition
+        const appDict = exTools.sortDefinitionsByApp(availableContent.definitions)
+        for (const app of Object.keys(appDict).sort()) {
+          const header = new Option(exExhibit.convertAppIDtoDisplayName(app))
+          header.setAttribute('disabled', true)
+          definitionSelect.appendChild(header)
 
-function populateManageExhibitsExhibitList (exhibits) {
-  // Take a list of exhibits and create a GUI representation for each
+          for (const def of appDict[app]) {
+            const option = new Option(def.name, def.uuid)
+            definitionSelect.appendChild(option)
+          }
+        }
 
-  const exhibitRow = document.getElementById('manageExhibitsModalExhibitList')
-  exhibitRow.innerHTML = ''
+        const changeThumb = function () {
+          if (availableContent.thumbnails.includes(definitionSelect.value + '.mp4')) {
+            definitionPreviewVideo.src = componentObj.getHelperURL() + '/thumbnails/' + definitionSelect.value + '.mp4'
+            definitionPreviewVideo.play()
+            definitionPreviewImage.style.display = 'none'
+            definitionPreviewVideo.style.display = 'block'
+          } else if (availableContent.thumbnails.includes(definitionSelect.value + '.jpg')) {
+            definitionPreviewImage.src = componentObj.getHelperURL() + '/thumbnails/' + definitionSelect.value + '.jpg'
+            definitionPreviewVideo.style.display = 'none'
+            definitionPreviewImage.style.display = 'block'
+          } else {
+            definitionPreviewVideo.style.display = 'none'
+            definitionPreviewImage.style.display = 'none'
+          }
+        }
 
-  exhibits.forEach((exhibit) => {
-    const col = document.createElement('div')
-    col.classList = 'col-12 mt-2'
-    exhibitRow.appendChild(col)
-
-    const button = document.createElement('button')
-    button.classList = 'btn btn-info w-100 manageExhibitListButton'
-    button.innerHTML = exhibit
-    button.addEventListener('click', (event) => {
-      Array.from(exhibitRow.querySelectorAll('.manageExhibitListButton')).forEach((el) => {
-        el.classList.replace('btn-success', 'btn-info')
+        definitionSelect.addEventListener('change', changeThumb)
+        definitionSelect.value = component.definition
+        changeThumb()
       })
-      event.target.classList.replace('btn-info', 'btn-success')
-      populateManageExhibitsExhibitContent(exhibit)
-    })
-    col.appendChild(button)
-  })
+      .catch((result) => {
+        // This component is offline
+        const badComponentCol = document.createElement('div')
+        badComponentCol.classList = 'col-12'
+        bodyRow.appendChild(badComponentCol)
+
+        const badComponentAlert = document.createElement('div')
+        badComponentAlert.classList = 'alert alert-danger fst-italic text-center py-2 mb-0'
+        badComponentAlert.innerHTML = 'Component offline'
+        badComponentCol.appendChild(badComponentAlert)
+
+        // Hide the thumbnail and select
+        definitionPreviewCol.style.display = 'none'
+        definitionSelectCol.style.display = 'none'
+      })
+  } else {
+    // This component doesn't exist
+    const badComponentCol = document.createElement('div')
+    badComponentCol.classList = 'col-12'
+    bodyRow.appendChild(badComponentCol)
+
+    const badComponentAlert = document.createElement('div')
+    badComponentAlert.classList = 'alert alert-danger fst-italic text-center py-2 mb-0'
+    badComponentAlert.innerHTML = 'Component does not exist'
+    badComponentCol.appendChild(badComponentAlert)
+  }
 }
 
-function populateManageExhibitsExhibitContent (exhibit) {
+async function editExhibitPopulateExhibitContent (exhibit) {
   // Create a GUI representation of the given exhibit that shows the defintion for each component.
 
-  const contentList = document.getElementById('manageExhibitsModalExhibitContentList')
+  const contentList = document.getElementById('editExhibitExhibitContentList')
+  const exhibitNameField = document.getElementById('editExhibitName')
+
   contentList.innerHTML = ''
-  document.getElementById('manageExhibitModalExhibitNameInput').value = exhibit
+  exhibitNameField.setAttribute('data-uuid', exhibit)
 
-  exTools.makeServerRequest({
-    method: 'POST',
-    endpoint: '/exhibit/getDetails',
-    params: { name: exhibit }
+  const result = await exTools.makeServerRequest({
+    method: 'GET',
+    endpoint: '/exhibit/' + exhibit + '/details'
   })
-    .then((result) => {
-      result.exhibit.forEach((component) => {
-        const col = document.createElement('div')
-        col.classList = 'col-6 mt-2'
-        contentList.appendChild(col)
+  exhibitNameField.value = result.exhibit.name
 
-        const row = document.createElement('div')
-        row.classList = 'row px-1'
-        col.appendChild(row)
+  for (const component of result.exhibit.components) {
+    editExhibitCreateComponentHTML(component)
+  }
 
-        const header = document.createElement('div')
-        header.classList = 'col-12 bg-primary rounded-top text-light py-1'
-        header.innerHTML = component.id
-        row.appendChild(header)
+  const actionsList = document.getElementById('editExhibitActionsList')
+  actionsList.innerHTML = ''
 
-        const body = document.createElement('div')
-        body.classList = 'col-12 bg-secondary rounded-bottom py-2'
-        row.appendChild(body)
+  for (const command of result.exhibit.commands) {
+    actionsList.append(createExhibitActionEntryHTML(command))
+  }
+  showEditExhibitGUI()
+}
 
-        const bodyRow = document.createElement('div')
-        bodyRow.classList = 'row gy-2'
-        body.appendChild(bodyRow)
+export function createExhibitActionEntryHTML (item, allowEdit = exTools.checkPermission('exhibits', 'edit')) {
+  // Take a dictionary of properties and build an HTML representation of the schedule entry.
 
-        const componentObj = exExhibit.getExhibitComponent(component.id)
+  const description = exSchedule.populateScheduleDescriptionHelper([item], false)
 
-        if (componentObj != null) {
-          // This component is active
+  if (description == null) return
 
-          const definitionPreviewCol = document.createElement('div')
-          definitionPreviewCol.classList = 'col-12 exhibit-thumbnail'
-          bodyRow.appendChild(definitionPreviewCol)
+  const eventRow = document.createElement('div')
+  eventRow.classList = 'row mt-2 actionListing'
+  eventRow.setAttribute('id', 'actionListing_' + item.uuid)
+  eventRow.setAttribute('data-action', JSON.stringify(item))
+  eventRow.setAttribute('data-uuid', item.uuid)
 
-          const definitionPreviewImage = document.createElement('img')
-          definitionPreviewImage.style.width = '100%'
-          definitionPreviewImage.style.height = '100px'
-          definitionPreviewImage.style.objectFit = 'contain'
-          definitionPreviewCol.appendChild(definitionPreviewImage)
+  const eventDescriptionCol = document.createElement('div')
+  if (allowEdit) {
+    eventDescriptionCol.classList = 'me-0 pe-0 col-9'
+  } else {
+    eventDescriptionCol.classList = 'col-12'
+  }
+  eventRow.appendChild(eventDescriptionCol)
 
-          const definitionPreviewVideo = document.createElement('video')
-          definitionPreviewVideo.setAttribute('autoplay', true)
-          definitionPreviewVideo.muted = 'true'
-          definitionPreviewVideo.setAttribute('loop', 'true')
-          definitionPreviewVideo.setAttribute('playsinline', 'true')
-          definitionPreviewVideo.setAttribute('webkit-playsinline', 'true')
-          definitionPreviewVideo.setAttribute('disablePictureInPicture', 'true')
-          definitionPreviewVideo.style.width = '100%'
-          definitionPreviewVideo.style.height = '100px'
-          definitionPreviewVideo.style.objectFit = 'contain'
-          definitionPreviewCol.appendChild(definitionPreviewVideo)
+  const eventDescriptionOuterContainer = document.createElement('div')
+  eventDescriptionOuterContainer.classList = 'text-white bg-secondary w-100 h-100 justify-content-center d-flex py-1 pe-1 rounded-start'
+  eventDescriptionCol.appendChild(eventDescriptionOuterContainer)
 
-          const definitionSelectCol = document.createElement('div')
-          definitionSelectCol.classList = 'col-12'
-          bodyRow.appendChild(definitionSelectCol)
+  const eventDescriptionInnerContainer = document.createElement('div')
+  eventDescriptionInnerContainer.classList = 'align-self-center justify-content-center text-wrap'
+  eventDescriptionOuterContainer.appendChild(eventDescriptionInnerContainer)
 
-          const definitionSelect = document.createElement('select')
-          definitionSelect.classList = 'form-select'
-          definitionSelectCol.appendChild(definitionSelect)
+  const eventDescription = document.createElement('div')
+  eventDescription.classList = 'text-center'
+  eventDescription.innerHTML = description
+  eventDescriptionOuterContainer.appendChild(eventDescription)
 
-          exTools.makeRequest({
-            method: 'GET',
-            url: componentObj.getHelperURL(),
-            endpoint: '/getAvailableContent'
-          })
-            .then((availableContent) => {
-              // Build an option for each definition
-              const appDict = exTools.sortDefinitionsByApp(availableContent.definitions)
-              Object.keys(appDict).sort().forEach((app) => {
-                const header = new Option(exExhibit.convertAppIDtoDisplayName(app))
-                header.setAttribute('disabled', true)
-                definitionSelect.appendChild(header)
+  if (allowEdit) {
+    const eventEditButtonCol = document.createElement('div')
+    eventEditButtonCol.classList = 'col-3 ms-0 ps-0'
+    eventRow.appendChild(eventEditButtonCol)
 
-                appDict[app].forEach((def) => {
-                  const option = new Option(def.name, def.uuid)
-                  definitionSelect.appendChild(option)
-                })
-              })
-
-              const changeThumb = function () {
-                if (availableContent.thumbnails.includes(definitionSelect.value + '.mp4')) {
-                  definitionPreviewVideo.src = componentObj.getHelperURL() + '/thumbnails/' + definitionSelect.value + '.mp4'
-                  definitionPreviewVideo.play()
-                  definitionPreviewImage.style.display = 'none'
-                  definitionPreviewVideo.style.display = 'block'
-                } else if (availableContent.thumbnails.includes(definitionSelect.value + '.jpg')) {
-                  definitionPreviewImage.src = componentObj.getHelperURL() + '/thumbnails/' + definitionSelect.value + '.jpg'
-                  definitionPreviewVideo.style.display = 'none'
-                  definitionPreviewImage.style.display = 'block'
-                } else {
-                  definitionPreviewVideo.style.display = 'none'
-                  definitionPreviewImage.style.display = 'none'
-                }
-              }
-
-              definitionSelect.addEventListener('change', changeThumb)
-              definitionSelect.value = component.definition
-              changeThumb()
-            })
-        } else {
-          // This component is inactive
-
-          const badComponentCol = document.createElement('div')
-          badComponentCol.classList = 'col-12 text-warning fst-italic text-center'
-          badComponentCol.innerHTML = 'Component unavailable'
-          bodyRow.appendChild(badComponentCol)
-        }
-      })
+    const eventEditButton = document.createElement('button')
+    eventEditButton.classList = 'bg-info w-100 h-100 rounded-end text-dark'
+    eventEditButton.setAttribute('type', 'button')
+    eventEditButton.style.borderStyle = 'solid'
+    eventEditButton.style.border = '0px'
+    eventEditButton.innerHTML = 'Edit'
+    eventEditButton.addEventListener('click', function () {
+      const currentActionDict = JSON.parse(eventRow.getAttribute('data-action'))
+      showEditExhibitActionModal(currentActionDict)
     })
+    eventEditButtonCol.appendChild(eventEditButton)
+  } else {
+    eventDescriptionOuterContainer.classList.add('rounded-end')
+  }
+
+  return eventRow
 }
 
 function onManageExhibitModalThumbnailCheckboxChange () {
   // Get the value of the checkbox and show/hide the definition
   // tbumbnails as appropriate.
 
-  const checked = document.getElementById('manageExhibitModalExhibitThumbnailCheckbox').checked
-  document.querySelectorAll('.exhibit-thumbnail').forEach((el) => {
+  const checked = document.getElementById('editExhibitThumbnailCheckbox').checked
+  for (const el of document.querySelectorAll('.exhibit-thumbnail')) {
     if (checked) {
       el.style.display = 'block'
     } else {
       el.style.display = 'none'
     }
-  })
-}
-
-function setCurrentExhibitName (name) {
-  exConfig.currentExhibit = name
-  document.getElementById('exhibitNameField').innerHTML = name
-
-  // Don't change the value of the exhibit selector if we're currently
-  // looking at the change confirmation modal, as this will result in
-  // submitting the incorrect value
-  if ($('#changeExhibitModal').hasClass('show') === false) {
-    $('#exhibitSelect').val(name)
   }
 }
 
+function editExhibitAddComponentPopulateList () {
+  // Called when a user clicks the 'Add component' button to populate
+  // the list of available, un-added components.
+
+  const componentList = document.getElementById('editExhibitAddComponentList')
+  componentList.innerHTML = ''
+
+  const existingComponents = []
+  for (const component of Array.from(document.querySelectorAll('.manageExhibit-component-col'))) {
+    existingComponents.push(component.getAttribute('data-component-uuid'))
+  }
+
+  for (const component of exConfig.exhibitComponents) {
+    // Filter out components that shouldn't be added (projectors, static, offline, existing)
+    if (component.type !== 'exhibit_component') continue
+    if ((component.status !== exConfig.STATUS.ONLINE) && (component.status !== exConfig.STATUS.ACTIVE) && (component.status !== exConfig.STATUS.WAITING)) continue
+    if (existingComponents.includes(component.uuid)) continue
+
+    const li = document.createElement('li')
+    const button = document.createElement('button')
+    button.classList = 'dropdown-item text-wrap'
+    button.innerHTML = component.id
+    button.addEventListener('click', () => {
+      editExhibitAddComponent(component)
+    })
+    li.appendChild(button)
+    componentList.appendChild(li)
+  }
+
+  if (componentList.children.length === 0) {
+    const li = document.createElement('li')
+    const button = document.createElement('button')
+    button.classList = 'dropdown-item fst-italic disabled text-wrap text-center'
+    button.innerHTML = 'Nothing to add'
+    li.appendChild(button)
+    componentList.appendChild(li)
+  }
+}
+
+function editExhibitAddComponent (component) {
+  // Add a component with the given uuid to the exhibit.
+
+  editExhibitCreateComponentHTML(component)
+}
+
+function editExhibitSubmitUpdate () {
+  // Build an exhibit from the selected options and submit it to Hub for saving.
+
+  const selects = Array.from(document.querySelectorAll('.manageExhibit-definition-select'))
+  const exhibitNameField = document.getElementById('editExhibitName')
+  const uuid = exhibitNameField.getAttribute('data-uuid')
+
+  const definitions = []
+  for (const select of selects) {
+    const entry = {
+      uuid: select.getAttribute('data-component-uuid'),
+      id: select.getAttribute('data-component-id')
+    }
+    if ((select.value !== '') && (select.value != null)) {
+      entry.definition = select.value
+    } else entry.definition = select.getAttribute('data-initial-definition')
+    definitions.push(entry)
+  }
+
+  const commands = []
+  for (const el of Array.from(document.querySelectorAll('.actionListing'))) {
+    const command = JSON.parse(el.getAttribute('data-action'))
+    commands.push(command)
+  }
+
+  const exhibit = {
+    components: definitions,
+    name: exhibitNameField.value,
+    uuid: exhibitNameField.getAttribute('data-uuid'),
+    commands
+  }
+  exTools.makeServerRequest({
+    method: 'POST',
+    endpoint: '/exhibit/' + uuid + '/edit',
+    params: { details: exhibit }
+  })
+    .then((result) => {
+      if (result.success === true) hideEditExhibitGUI()
+    })
+}
+
+async function showEditExhibitActionModal (actionDict = null) {
+  // Configure the modal for editing an action and show it.
+
+  const actionSelector = document.getElementById('editExhibitActionSelector')
+  actionSelector.value = null
+
+  const targetSelector = document.getElementById('editExhibitActionTargetSelector')
+  targetSelector.value = null
+  targetSelector.style.display = 'none'
+  document.getElementById('editExhibitActionTargetSelectorLabel').style.display = 'none'
+
+  const valueSelector = document.getElementById('editExhibitActionValueSelector')
+  valueSelector.value = null
+  valueSelector.style.display = 'none'
+  document.getElementById('editExhibitActionValueSelectorLabel').style.display = 'none'
+
+  const modal = document.getElementById('editExhibitActionModal')
+  modal.setAttribute('data-uuid', exTools.uuid())
+  modal.setAttribute('data-isEdit', 'false')
+
+  if (actionDict != null) {
+    modal.setAttribute('data-uuid', actionDict.uuid)
+    modal.setAttribute('data-isEdit', 'true')
+
+    actionSelector.value = actionDict.action
+
+    editExhibitActionConfigureTargetSelector(actionDict.action)
+    setTimeout(() => {
+      for (const target of actionDict.target) {
+        const targetStr = JSON.stringify(target)
+        for (const option of targetSelector.options) {
+          if (option.value === targetStr) option.selected = true
+        }
+      }
+    }, 0) // Make sure the DOM is updated
+
+    await editExhibitActionConfigureValueSelector(actionDict.action, actionDict.target)
+    valueSelector.value = actionDict.value
+  }
+
+  exTools.showModal('#editExhibitActionModal')
+}
+
+function editExhibitActionConfigureTargetSelector (action = null, target = null) {
+  // Show/hide the select element for picking the target of an action when appropriate
+
+  if (action == null) action = document.getElementById('editExhibitActionSelector').value
+
+  const targetSelector = document.getElementById('editExhibitActionTargetSelector')
+  const targetSelectorLabel = document.getElementById('editExhibitActionTargetSelectorLabel')
+  targetSelector.innerHTML = ''
+
+  if (['power_on', 'power_off'].includes(action)) {
+    targetSelector.setAttribute('multiple', true)
+    exSchedule.actionTargetSelectorPopulateOptions(targetSelector, ['All', 'Groups', 'ExhibitComponents', 'Projectors'])
+  } else if (['restart'].includes(action)) {
+    targetSelector.setAttribute('multiple', true)
+    exSchedule.actionTargetSelectorPopulateOptions(targetSelector, ['All', 'Groups', 'ExhibitComponents'])
+  } else if (['set_dmx_scene'].includes(action)) {
+    targetSelector.removeAttribute('multiple')
+    exSchedule.actionTargetSelectorPopulateOptions(targetSelector, ['ExhibitComponents'])
+  }
+  targetSelector.style.display = 'block'
+  targetSelectorLabel.style.display = 'block'
+
+  // For certain actions, we want to then populare the value selector
+  if (['set_dmx_scene'].includes(action)) {
+    editExhibitActionConfigureValueSelector(action, target)
+  } else {
+    document.getElementById('editExhibitActionValueSelector').style.display = 'none'
+    document.getElementById('editExhibitActionValueSelectorLabel').style.display = 'none'
+  }
+}
+
+async function editExhibitActionConfigureValueSelector (action = null, target = null) {
+  // Show/hide the select element for picking the value of an action when appropriate
+
+  if (action == null) action = document.getElementById('editExhibitActionSelector').value
+  if (target == null) target = JSON.parse(document.getElementById('editExhibitActionTargetSelector').value)
+    if (Array.isArray(target)) target = target[0]
+
+  const valueSelector = document.getElementById('editExhibitActionValueSelector')
+  const valueSelectorLabel = document.getElementById('editExhibitActionValueSelectorLabel')
+  valueSelector.innerHTML = ''
+
+  if (action === 'set_dmx_scene') {
+    let component
+    try {
+      component = exExhibit.getExhibitComponentByUUID(target.uuid)
+    } catch {
+      return
+    }
+    if (component == null) {
+      console.log('editExhibitActionConfigureValueSelector: component not available: ', target.uuid)
+      return
+    }
+    if (component.helperAddress == null || component.helperAddress === '') {
+      console.log('editExhibitActionConfigureValueSelector: invalid helper address')
+      return
+    }
+
+    const response = await exTools.makeRequest({
+      method: 'GET',
+      url: component.helperAddress,
+      endpoint: '/DMX/getScenes'
+    })
+
+    if (response?.success ?? false) {
+      for (const group of response.groups) {
+        const groupName = new Option(group.name)
+        groupName.setAttribute('disabled', true)
+        valueSelector.appendChild(groupName)
+
+        for (const scene of group.scenes) {
+          valueSelector.appendChild(new Option(scene.name, scene.uuid))
+        }
+      }
+    }
+    valueSelector.style.display = 'block'
+    valueSelectorLabel.style.display = 'block'
+  } else {
+    valueSelector.style.display = 'none'
+    valueSelectorLabel.style.display = 'none'
+  }
+}
+
+function editExhibitActionDeleteAction (uuid) {
+  // Remove the entry for the given action
+
+  document.getElementById('actionListing_' + uuid).remove()
+  exTools.hideModal('#editExhibitActionModal')
+}
+
+function showEditExhibitGUI () {
+  document.getElementById('editExhibitPane').style.display = 'flex'
+}
+
+function editExhibitActionSubmit () {
+  // Collect info from the edit exhibit action modal and create/update the action.
+
+  const modal = document.getElementById('editExhibitActionModal')
+  const isEdit = modal.getAttribute('data-isEdit') === 'true'
+  const uuid = modal.getAttribute('data-uuid')
+
+  let action, value
+  const targets = []
+  try {
+    action = document.getElementById('editExhibitActionSelector').value
+    value = document.getElementById('editExhibitActionValueSelector').value
+
+    const targetSelector = document.getElementById('editExhibitActionTargetSelector')
+    const targetStrings = Array.from(targetSelector.selectedOptions).map(option => option.value)
+    for (const target of targetStrings) {
+      targets.push(JSON.parse(target))
+    }
+  } catch {
+    console.log('editExhibitActionSubmit: JSON parse error')
+    return
+  }
+
+  if (action === '') return
+  if (action === 'set_dmx_scene' && (value === '' || value == null)) return
+
+  const actionsList = document.getElementById('editExhibitActionsList')
+  const actionHTML = createExhibitActionEntryHTML({ action, target: targets, uuid, value })
+  if (isEdit === false) {
+    actionsList.appendChild(actionHTML)
+  } else {
+    document.getElementById('actionListing_' + uuid).replaceWith(actionHTML)
+  }
+  exTools.hideModal('#editExhibitActionModal')
+}
+
+function hideEditExhibitGUI () {
+  document.getElementById('editExhibitPane').style.display = 'none'
+}
+
 function updateAvailableExhibits (exhibitList) {
-  // Rebuild the list of available exhibits on the settings tab
+  // Rebuild the list of available exhibits
 
   const exhibitSelect = document.getElementById('exhibitSelect')
-  const exhibitDeleteSelect = document.getElementById('exhibitDeleteSelector')
 
   const sortedExhibitList = exhibitList.sort((a, b) => {
-    const aVal = a.toLowerCase()
-    const bVal = b.toLowerCase()
+    const aVal = a.name.toLowerCase()
+    const bVal = b.name.toLowerCase()
     if (aVal > bVal) return 1
     if (aVal < bVal) return -1
     return 0
   })
-  if (exTools.arraysEqual(sortedExhibitList, exConfig.availableExhibits) === true) {
+
+  if (exTools.arraysEqual(sortedExhibitList, exConfig.availableExhibits, ['uuid', 'name']) === true) {
     return
   }
 
   exConfig.availableExhibits = sortedExhibitList
   exhibitSelect.innerHTML = ''
-  exhibitDeleteSelect.innerHTML = ''
 
-  sortedExhibitList.forEach((exhibit) => {
-    exhibitSelect.appendChild(new Option(exhibit, exhibit))
-    exhibitDeleteSelect.appendChild(new Option(exhibit, exhibit))
-  })
+  for (const exhibit of sortedExhibitList) {
+    exhibitSelect.appendChild(new Option(exhibit.name, exhibit.uuid))
+  }
 
   exhibitSelect.value = exConfig.currentExhibit
-  checkDeleteSelection()
+  updateExhibitButtons()
 }
 
-function changeExhibit (warningShown) {
+async function changeExhibit (warningShown) {
   // Send a command to Hub to change the current exhibit
 
   if (warningShown === false) {
-    $('#changeExhibitModal').modal('show')
+    exTools.showModal('#changeExhibitModal')
   } else {
-    $('#changeExhibitModal').modal('hide')
+    exTools.hideModal('#changeExhibitModal')
+    const uuid = document.getElementById('exhibitSelect').value
 
-    const requestDict = {
-      exhibit: {
-        name: $('#exhibitSelect').val()
-      }
-    }
-
-    exTools.makeServerRequest({
+    const response = await exTools.makeServerRequest({
       method: 'POST',
-      endpoint: '/exhibit/set',
-      params: requestDict
+      endpoint: '/exhibit/' + uuid + '/set'
     })
-    // .then(askForUpdate)
+    if ((response?.success ?? false) === true) {
+      updateExhibitButtons(uuid)
+    }
   }
-}
-
-function populateTrackerDataSelect (data) {
-  // Take a list of data filenames and populate the TrackerDataSelect
-
-  const trackerDataSelect = $('#trackerDataSelect')
-  trackerDataSelect.empty()
-
-  const sortedList = data.sort((a, b) => {
-    const aVal = a.toLowerCase()
-    const bVal = b.toLowerCase()
-
-    if (aVal > bVal) return 1
-    if (aVal < bVal) return -1
-    return 0
-  })
-
-  sortedList.forEach(item => {
-    const name = item.split('.').slice(0, -1).join('.')
-    const html = `<option value="${name}">${name}</option>`
-    trackerDataSelect.append(html)
-  })
-}
-
-function showDeleteTrackerDataModal () {
-  // Show a modal confirming the request to delete a specific dataset. To be sure
-  // populate the modal with data for a test.
-
-  const name = $('#trackerDataSelect').val()
-  $('#deleteTrackerDataModalDeletedName').html(name)
-  $('#deleteTrackerDataModalDeletedInput').val('')
-  $('#deleteTrackerDataModalSpellingError').hide()
-  $('#deleteTrackerDataModal').modal('show')
-}
-
-function deleteTrackerDataFromModal () {
-  // Check inputed answer and confirm it is correct. If so, ask for the data to
-  // be deleted.
-
-  const name = $('#deleteTrackerDataModalDeletedName').html()
-  const input = $('#deleteTrackerDataModalDeletedInput').val()
-
-  if (name === input) {
-    deleteTrackerData()
-  } else {
-    $('#deleteTrackerDataModalSpellingError').show()
-  }
-}
-
-function deleteTrackerData () {
-  // Send a message to the server asking it to delete the data for the currently
-  // selected template
-
-  const name = $('#trackerDataSelect').val()
-
-  exTools.makeServerRequest({
-    method: 'POST',
-    endpoint: '/tracker/flexible-tracker/deleteData',
-    params: { name }
-  })
-    .then((result) => {
-      if ('success' in result && result.success === true) {
-        $('#deleteTrackerDataModal').modal('hide')
-        exTracker.getAvailableTrackerData(populateTrackerDataSelect)
-      }
-    })
-}
-
-function launchTracker () {
-  // Open the tracker in a new tab with the currently selected layout
-
-  const name = $('#trackerTemplateSelect').val()
-
-  let url = exConfig.serverAddress + '/tracker.html'
-  if (name != null) {
-    url += '?layout=' + name
-  }
-  window.open(url, '_blank').focus()
-}
-
-function createTrackerTemplate (name = '') {
-  // Ask the server to create a template with the name provided in the text entry
-  // field.
-
-  if (name === '') {
-    name = $('#createTrackerTemplateName').val()
-  }
-
-  const requestDict = {
-    name,
-    template: {}
-  }
-
-  exTools.makeServerRequest({
-    method: 'POST',
-    endpoint: '/tracker/flexible-tracker/createTemplate',
-    params: requestDict
-  })
-    .then((result) => {
-      if ('success' in result && result.success === true) {
-        $('#createTrackerTemplateName').val('')
-        exTracker.getAvailableDefinitions(populateTrackerTemplateSelect)
-      }
-    })
-}
-
-function deleteTrackerTemplate (name = '') {
-  // Ask the server to delete the specified tracker template
-
-  if (name === '') {
-    name = $('#trackerTemplateSelect').val()
-  }
-
-  exTools.makeServerRequest({
-    method: 'POST',
-    endpoint: '/tracker/flexible-tracker/deleteTemplate',
-    params: { name }
-  })
-    .then((result) => {
-      if ('success' in result && result.success === true) {
-        exTracker.getAvailableDefinitions(populateTrackerTemplateSelect)
-        $('#deleteTrackerTemplateModal').modal('hide')
-      }
-    })
 }
 
 function parseUpdate (update) {
   // Take a dictionary of updates from Hub and act on them.
 
   if ('gallery' in update) {
-    setCurrentExhibitName(update.gallery.current_exhibit)
+    exConfig.currentExhibit = update.gallery.current_exhibit
     updateAvailableExhibits(update.gallery.availableExhibits)
+    document.getElementById('exhibitNameField').innerHTML = exTools.getExhibit(update.gallery.current_exhibit).name
 
     if ('galleryName' in update.gallery) {
       document.getElementById('galleryNameField').innerHTML = update.gallery.galleryName
@@ -399,6 +590,12 @@ function parseUpdate (update) {
         exTools.rebuildNotificationList()
       }
     }
+    if (update?.gallery?.outdated_os ?? false) {
+      exConfig.errorDict.__control_server = {
+        outdated_os: true
+      }
+      exTools.rebuildNotificationList()
+    }
   }
 
   if ('groups' in update) {
@@ -414,28 +611,13 @@ function parseUpdate (update) {
     }
   }
 
-  if ('issues' in update) {
-    // Check for the time of the most recent update. If it is more
-    // recent than our existing date, rebuild the issue list
-
-    const currentLastDate = Math.max.apply(Math, exConfig.issueList.map(function (o) { return new Date(o.lastUpdateDate) }))
-    const updatedDate = new Date(update.issues.lastUpdateDate)
-
-    if (updatedDate > currentLastDate) {
-      exConfig.issueList = update.issues.issueList
-      // exIssues.rebuildIssueList()
-      exIssues.upateIssueList()
-      exIssues.rebuildIssueFilters()
-    }
-  }
-
   if ('components' in update) {
     let numComps = 0
     let numOnline = 0
     let numStatic = 0
 
     exExhibit.checkForRemovedComponents(update.components)
-    update.components.forEach((component) => {
+    for (const component of update.components) {
       numComps += 1
       if ((component.status === exConfig.STATUS.ONLINE.name) || (component.status === exConfig.STATUS.STANDBY.name) || (component.status === exConfig.STATUS['SYSTEM ON'].name) || (component.status === exConfig.STATUS.STATIC.name)) {
         numOnline += 1
@@ -444,7 +626,7 @@ function parseUpdate (update) {
         numStatic += 1
       }
       exExhibit.updateComponentFromServer(component)
-    })
+    }
 
     // Set the favicon to reflect the aggregate status
     if (numOnline === numComps) {
@@ -461,6 +643,21 @@ function parseUpdate (update) {
     } else {
       $('#componentsTabSettingsShowStatic').parent().parent().show()
       document.getElementById('componentsTabSettingsShowStaticDivider').parentElement.style.display = 'block'
+    }
+  }
+
+  if ('issues' in update) {
+    // Check for the time of the most recent update. If it is more
+    // recent than our existing date, rebuild the issue list
+
+    const currentLastDate = Math.max.apply(Math, exConfig.issueList.map(function (o) { return new Date(o.lastUpdateDate) }))
+    const updatedDate = new Date(update.issues.lastUpdateDate)
+
+    if (updatedDate > currentLastDate) {
+      exConfig.issueList = update.issues.issueList
+      // exIssues.rebuildIssueList()
+      exIssues.upateIssueList()
+      exIssues.rebuildIssueFilters()
     }
   }
 
@@ -493,349 +690,12 @@ function populateHelpTab () {
     })
 }
 
-function populateTrackerTemplateSelect (definitionList) {
-  // Get a list of the available tracker layout templates and populate the
-  // selector
-
-  const templateSelect = $('#trackerTemplateSelect')
-  templateSelect.empty()
-
-  definitionList.forEach(item => {
-    const name = item.split('.').slice(0, -1).join('.')
-    const html = `<option value="${name}">${name}</option>`
-    templateSelect.append(html)
-  })
-}
-
-function showEditTrackerTemplateModal () {
-  // Retrieve the currently-selected layout and use it to configure the
-  // editTrackerTemplateModal
-
-  const layoutToLoad = $('#trackerTemplateSelect').val()
-  const lamda = function (template) { _showEditTrackerTemplateModal(layoutToLoad, template) }
-  exTracker.loadLayoutDefinition(layoutToLoad, lamda)
-}
-
-function _showEditTrackerTemplateModal (name, template) {
-  // Set the provided template in the data attributes, reset all the fields,
-  // and show the modal
-
-  // Set default values
-  $('#editTrackerTemplateNameInput').val('')
-  $('#editTrackerTemplateLabelInput').val('')
-  $('#editTrackerTemplateMultipleInputFalse').prop('checked', true)
-  $('#editTrackerTemplateExclusiveInputFalse').prop('checked', true)
-  $('#editTrackerTemplateSliderInputMin').val(1)
-  $('#editTrackerTemplateSliderInputMax').val(100)
-  $('#editTrackerTemplateSliderInputStep').val(1)
-  $('#editTrackerTemplateSliderInputStart').val(50)
-  $('#editTrackerTemplateLinesInput').val(5)
-  $('#editTrackerTemplateModalTitle').html('Edit template: ' + name)
-
-  $('#editTrackerTemplateModal').data('template', template)
-  $('#editTrackerTemplateModal').data('templateName', name)
-
-  populateEditTrackerTemplateCurrentLayout()
-  configureEditTrackerTemplateModal(Object.keys(template)[0])
-  $('#editTrackerTemplateModal').modal('show')
-}
-
-function configureEditTrackerTemplateModal (key) {
-  // Read the layout for the given key and set the appropriate divs visible to
-  // support editing it.
-
-  $('.editTrackerTemplateInputGroup').hide()
-  if (key == null) {
-    $('#editTrackerTemplateNameInputGroup').hide()
-    $('#editTrackerTemplateLabelInputGroup').hide()
-    $('#editTrackerTemplateModalDeleteWidgetButton').hide()
-    return
-  } else {
-    $('#editTrackerTemplateNameInputGroup').show()
-    $('#editTrackerTemplateLabelInputGroup').show()
-    $('#editTrackerTemplateModalDeleteWidgetButton').show()
-  }
-
-  const template = $('#editTrackerTemplateModal').data('template')[key]
-
-  $('#editTrackerTemplateModal').data('currentWidget', key)
-  $('.editTrackerTemplateInputGroup').hide()
-
-  $('#editTrackerTemplateNameInput').val(key)
-  $('#editTrackerTemplateLabelInput').val(template.label)
-
-  if (['counter', 'number'].includes(template.type)) {
-    // Only name and label
-  } else if (template.type === 'dropdown') {
-    $('#editTrackerTemplateOptionsInput').val(template.options)
-    $('#editTrackerTemplateOptionsInputGroup').show()
-    if (template.multiple === 'true') {
-      $('#editTrackerTemplateMultipleInputTrue').prop('checked', true)
-    } else {
-      $('#editTrackerTemplateMultipleInputFalse').prop('checked', true)
-    }
-    $('#editTrackerTemplateMultipleInputGroup').show()
-  } else if (template.type === 'slider') {
-    $('#editTrackerTemplateSliderInputMin').val(template.min || 1)
-    $('#editTrackerTemplateSliderInputMax').val(template.max || 100)
-    $('#editTrackerTemplateSliderInputStep').val(template.step || 1)
-    $('#editTrackerTemplateSliderInputStart').val(template.start || 50)
-    $('#editTrackerTemplateSliderInputGroup').show()
-  } else if (template.type === 'text') {
-    $('#editTrackerTemplateLinesInput').val(template.lines || 5)
-    $('#editTrackerTemplateLinesInputGroup').show()
-  } else if (template.type === 'timer') {
-    if (template.exclusive === 'true') {
-      $('#editTrackerTemplateExclusiveInputTrue').prop('checked', true)
-    } else {
-      $('#editTrackerTemplateExclusiveInputFalse').prop('checked', true)
-    }
-    $('#editTrackerTemplateExclusiveInputGroup').show()
-  }
-}
-
-function populateEditTrackerTemplateCurrentLayout () {
-  // Take the current template dictionary and render a set of buttons
-
-  const template = $('#editTrackerTemplateModal').data('template')
-  // const numItems = Object.keys(template).length
-
-  $('#editTrackerTemplateModalCurrentLayout').empty()
-  Object.keys(template).forEach((key, i) => {
-    const col = document.createElement('div')
-    col.classList = 'col-12 col-md-6 col-lg-4 mt-2 w-100'
-
-    const widget = document.createElement('div')
-    widget.classList = 'mx-1'
-    const row1 = document.createElement('div')
-    row1.classList = 'row'
-    widget.appendChild(row1)
-    const nameCol = document.createElement('div')
-    nameCol.classList = 'col-12 bg-secondary rounded-top'
-    row1.appendChild(nameCol)
-    const name = document.createElement('div')
-    name.classList = ' text-light w-100 text-center font-weight-bold'
-    name.innerHTML = key
-    nameCol.appendChild(name)
-    const row2 = document.createElement('div')
-    row2.classList = 'row'
-    widget.appendChild(row2)
-
-    const editCol = document.createElement('div')
-    editCol.classList = 'col-6 mx-0 px-0'
-    row2.appendChild(editCol)
-    const edit = document.createElement('div')
-    edit.classList = 'text-light bg-info w-100 h-100 justify-content-center d-flex ps-1'
-    edit.style.borderBottomLeftRadius = '0.25rem'
-    edit.innerHTML = 'Edit'
-    edit.style.cursor = 'pointer'
-    edit.addEventListener('click', function () { configureEditTrackerTemplateModal(key) })
-    editCol.appendChild(edit)
-
-    const leftCol = document.createElement('div')
-    leftCol.classList = 'col-3 mx-0 px-0'
-    row2.appendChild(leftCol)
-    const left = document.createElement('div')
-    left.classList = 'text-light bg-primary w-100 h-100 justify-content-center d-flex'
-    left.innerHTML = '◀'
-    left.style.cursor = 'pointer'
-
-    left.addEventListener('click', function () { editTrackerTemplateModalMoveWidget(key, -1) })
-    leftCol.appendChild(left)
-
-    const rightCol = document.createElement('div')
-    rightCol.classList = 'col-3 mx-0 px-0'
-    row2.appendChild(rightCol)
-    const right = document.createElement('div')
-    right.classList = 'text-light bg-primary w-100 h-100 justify-content-center d-flex pe-1'
-    right.style.borderBottomRightRadius = '0.25rem'
-    right.innerHTML = '▶'
-    right.style.cursor = 'pointer'
-    right.addEventListener('click', function () { editTrackerTemplateModalMoveWidget(key, 1) })
-    rightCol.appendChild(right)
-
-    col.appendChild(widget)
-    $('#editTrackerTemplateModalCurrentLayout').append(col)
-  })
-}
-
-function editTrackerTemplateModalMoveWidget (key, dir) {
-  // Reorder the dictionary of widgets, moving the given key the specified number
-  // of places
-
-  if (dir === 0) {
-    populateEditTrackerTemplateCurrentLayout()
-    return
-  }
-
-  const template = $('#editTrackerTemplateModal').data('template')
-  const keys = Object.keys(template)
-  const loc = keys.indexOf(key)
-  let newLoc = loc + dir
-  newLoc = Math.max(newLoc, 0)
-  newLoc = Math.min(newLoc, keys.length - 1)
-
-  // Iterate through the keys, inserting key into its new place
-  const newArray = []
-  keys.forEach((item, i) => {
-    if (dir < 0) {
-      if (i === newLoc) {
-        newArray.push(key)
-      }
-    }
-    if (item !== key) {
-      newArray.push(item)
-    }
-    if (dir > 0) {
-      if (item !== key) {
-        newArray.push(item)
-      }
-      if (i === newLoc) {
-        newArray.push(key)
-      }
-    }
-  })
-
-  // Build a new dictionary with the new order
-  const newDict = {}
-  newArray.forEach((item, i) => {
-    newDict[item] = template[item]
-  })
-
-  // Update the data attribute with the new dictionary
-  $('#editTrackerTemplateModal').data('template', newDict)
-  populateEditTrackerTemplateCurrentLayout()
-}
-
-function editTrackerTemplateModalAddWidget (name, type) {
-  // Create a new widget with the given name and add it to the template.
-  // If the name already exists, append a number
-
-  const template = $('#editTrackerTemplateModal').data('template')
-  const names = Object.keys(template)
-
-  // Check if name exists
-  let i = 2
-  let workingName = name
-  while (true) {
-    if (names.includes(workingName)) {
-      workingName = name + ' ' + String(i)
-      i++
-    } else {
-      name = workingName
-      break
-    }
-  }
-
-  template[name] = { type }
-  $('#editTrackerTemplateModal').data('template', template)
-  configureEditTrackerTemplateModal(name)
-  editTrackerTemplateModalUpdateFromInput()
-  populateEditTrackerTemplateCurrentLayout()
-}
-
-function editTrackerTemplateModalDeleteWidget () {
-  // Delete the given widget and shift focus to the neighboring one
-
-  const template = $('#editTrackerTemplateModal').data('template')
-  const currentWidgetName = $('#editTrackerTemplateModal').data('currentWidget')
-  const originalPosition = Object.keys(template).indexOf(currentWidgetName)
-
-  delete template[currentWidgetName]
-  $('#editTrackerTemplateModal').data('template', template)
-  const newPosition = Math.max(0, originalPosition - 1)
-  const newCurrentWidget = Object.keys(template)[newPosition]
-  $('#editTrackerTemplateModal').data('currentWidget', newCurrentWidget)
-
-  configureEditTrackerTemplateModal(newCurrentWidget)
-  populateEditTrackerTemplateCurrentLayout()
-}
-
-function editTrackerTemplateModalUpdateFromInput () {
-  // Fired when a change is made to a widget property. Write the new data into
-  // the template
-
-  const template = $('#editTrackerTemplateModal').data('template')
-  const originalWidgetName = $('#editTrackerTemplateModal').data('currentWidget')
-  const originalPosition = Object.keys(template).indexOf(originalWidgetName)
-  const currentWidget = template[originalWidgetName]
-
-  const currentWidgetName = $('#editTrackerTemplateNameInput').val()
-
-  currentWidget.label = $('#editTrackerTemplateLabelInput').val()
-  if (['counter', 'number'].includes(currentWidget.type)) {
-    // Only name and label
-  } else if (currentWidget.type === 'dropdown') {
-    currentWidget.options = $('#editTrackerTemplateOptionsInput').val()
-    currentWidget.multiple = String($('#editTrackerTemplateMultipleInputTrue').prop('checked'))
-  } else if (currentWidget.type === 'slider') {
-    currentWidget.min = $('#editTrackerTemplateSliderInputMin').val()
-    currentWidget.max = $('#editTrackerTemplateSliderInputMax').val()
-    currentWidget.step = $('#editTrackerTemplateSliderInputStep').val()
-    currentWidget.start = $('#editTrackerTemplateSliderInputStart').val()
-  } else if (currentWidget.type === 'text') {
-    currentWidget.lines = $('#editTrackerTemplateLinesInput').val()
-  } else if (currentWidget.type === 'timer') {
-    currentWidget.exclusive = String($('#editTrackerTemplateExclusiveInputTrue').prop('checked'))
-  }
-  delete template[originalWidgetName]
-  template[currentWidgetName] = currentWidget
-  $('#editTrackerTemplateModal').data('currentWidget', currentWidgetName)
-
-  $('#editTrackerTemplateModal').data('template', template)
-  $('#editTrackerTemplateModal').data('currentWidget', currentWidget.name)
-  // We have changed the name and need to move it back to the right place
-  editTrackerTemplateModalMoveWidget(currentWidgetName, originalPosition - Object.keys(template).length + 1)
-}
-
-function editTrackerTemplateModalSubmitChanges () {
-  // Send a message to the server with the updated template
-
-  const template = $('#editTrackerTemplateModal').data('template')
-  const templateName = $('#editTrackerTemplateModal').data('templateName')
-
-  const requestDict = {
-    name: templateName,
-    template
-  }
-
-  exTools.makeServerRequest({
-    method: 'POST',
-    endpoint: '/tracker/flexible-tracker/createTemplate',
-    params: requestDict
-  })
-    .then((response) => {
-      if ('success' in response && response.success === true) {
-        $('#editTrackerTemplateModal').modal('hide')
-      }
-    })
-}
-
-function parseQueryString () {
-  // Read the query string to determine what options to set
-
-  const queryString = decodeURIComponent(window.location.search)
-
-  const searchParams = new URLSearchParams(queryString)
-
-  if (searchParams.has('hideSTATIC')) {
-    $('#componentsTabSettingsShowStatic').prop('checked', false)
-  }
-  if (searchParams.has('showMaintStatus')) {
-    document.getElementById('componentStatusModeMaintenanceCheckbox').checked = true
-  }
-}
-
 function createExhibit (name, cloneFrom) {
   // Ask Hub to create a new exhibit with the given name.
   // set cloneFrom = null if we are making a new exhibit from scratch.
   // set cloneFrom to the name of an existing exhibit to copy that exhibit
 
-  const requestDict = {
-    exhibit: {
-      name
-    }
-  }
+  const requestDict = { name }
 
   if (cloneFrom != null && cloneFrom !== '') {
     requestDict.clone_from = cloneFrom
@@ -846,39 +706,56 @@ function createExhibit (name, cloneFrom) {
     endpoint: '/exhibit/create',
     params: requestDict
   })
+    .then((result) => {
+      if ('success' in result && result.success === true) {
+        editExhibitPopulateExhibitContent(result.uuid)
+      }
+    })
 }
 
-function deleteExhibit (name) {
+function deleteExhibit (uuid) {
   // Ask Hub to delete the exhibit with the given name.
 
   exTools.makeServerRequest({
-    method: 'POST',
-    endpoint: '/exhibit/delete',
-    params: { exhibit: { name } }
+    method: 'DELETE',
+    endpoint: '/exhibit/' + uuid + '/delete'
   })
 }
 
-function checkDeleteSelection () {
-  // Make sure the selected option is not hte current one.
+function updateExhibitButtons (uuid = '') {
+  // Adjust the exhibit buttons based on the value currently selected.
 
-  if ($('#exhibitSelect').val() === $('#exhibitDeleteSelector').val()) {
-    $('#exhibitDeleteSelectorButton').prop('disabled', true)
-    $('#exhibitDeleteSelectorWarning').show()
+  if (uuid === '') uuid = exConfig.currentExhibit
+
+  const exhibitSelect = document.getElementById('exhibitSelect')
+  const deleteButton = document.getElementById('exhibitDeleteSelectorButton')
+  const setExhibitButton = document.getElementById('setExhibitButton')
+
+  if (exhibitSelect.value === uuid) {
+    deleteButton.setAttribute('disabled', true)
+    setExhibitButton.innerHTML = 'Reload'
   } else {
-    $('#exhibitDeleteSelectorButton').prop('disabled', false)
-    $('#exhibitDeleteSelectorWarning').hide()
+    deleteButton.removeAttribute('disabled')
+    setExhibitButton.innerHTML = 'Set'
   }
 }
 
 function showExhibitDeleteModal () {
-  $('#deleteExhibitModal').modal('show')
+  exTools.showModal('#deleteExhibitModal')
 }
 
 function deleteExhibitFromModal () {
   // Take the info from the selector and delete the correct exhibit
 
-  deleteExhibit($('#exhibitDeleteSelector').val())
-  $('#deleteExhibitModal').modal('hide')
+  const UUIDToDelete = document.getElementById('exhibitSelect').value
+
+  // Check if we're currently editing this exhibit and clear
+  const exhibitNameField = document.getElementById('editExhibitName')
+  const editedUUID = exhibitNameField.getAttribute('data-uuid')
+  if (UUIDToDelete === editedUUID) hideEditExhibitGUI()
+
+  deleteExhibit(UUIDToDelete)
+  exTools.hideModal('#deleteExhibitModal')
 }
 
 function populateControlServerSettings () {
@@ -957,45 +834,67 @@ function loadVersion () {
 // Bind event listeners
 
 // Login
-document.getElementById('loginSubmitButton').addEventListener('click', exUsers.loginFromDropdown)
+document.getElementById('formTest').addEventListener('keydown', function (e) {
+  if (e.key === 'Enter') {
+    e.preventDefault() // Prevents form from reloading the page
+    document.getElementById('loginSubmitButton').click() // Trigger form submission programmatically
+  }
+})
+document.getElementById('formTest').addEventListener('submit', exUsers.loginFromDropdown)
 document.getElementById('logoutButton').addEventListener('click', exUsers.logoutUser)
+document.getElementById('viewUserPreferencesModalButton').addEventListener('click', exUsers.showUserPreferenceModal)
+document.getElementById('userPreferencesModalSaveButton').addEventListener('click', exUsers.submitUserPreferencesFromModal)
 document.getElementById('changePasswordButton').addEventListener('click', exUsers.showPasswordChangeModal)
 document.getElementById('passwordChangeModalSubmitButton').addEventListener('click', exUsers.submitUserPasswordChange)
 
 // Components tab
 // =========================
-$('#componentsTabSettingsShowStatic').change(function () {
-  // Modify the search params to soft-save the change
-  const urlParams = new URLSearchParams(window.location.search)
-  if ($('#componentsTabSettingsShowStatic').prop('checked') === true) {
-    urlParams.delete('hideSTATIC')
-  } else {
-    urlParams.set('hideSTATIC', 'true')
-  }
-  window.history.replaceState('', '', '?' + urlParams)
-
-  // Rebuild the interface with the new option
-  exExhibit.rebuildComponentInterface()
+document.getElementById('componentsTabSettingsSortSelect').addEventListener('change', () => {
+  // Update user preference
+  exUsers.updateUserPreferences({ sort_order: document.getElementById('componentsTabSettingsSortSelect').value })
+    .then(() => {
+      // Rebuild the interface with the new option
+      exExhibit.rebuildComponentInterface()
+    })
 })
-document.getElementById('componentStatusModeRealtimeCheckbox').addEventListener('change', exExhibit.rebuildComponentInterface)
-Array.from(document.getElementsByClassName('view-mode-radio')).forEach((el) => {
+document.getElementById('componentsTabSettingsLayoutSelect').addEventListener('change', () => {
+  // Update user preference
+  exUsers.updateUserPreferences({ components_layout: document.getElementById('componentsTabSettingsLayoutSelect').value })
+    .then(() => {
+      // Rebuild the interface with the new option
+      exExhibit.rebuildComponentInterface()
+    })
+})
+document.getElementById('componentsTabSettingsSizeSelect').addEventListener('change', () => {
+  // Update user preference
+  exUsers.updateUserPreferences({ components_size: document.getElementById('componentsTabSettingsSizeSelect').value })
+    .then(() => {
+      // Rebuild the interface with the new option
+      exExhibit.rebuildComponentInterface()
+    })
+})
+document.getElementById('componentsTabSettingsShowStatic').addEventListener('change', () => {
+  // Update user preference
+  exUsers.updateUserPreferences({ show_static: document.getElementById('componentsTabSettingsShowStatic').checked })
+    .then(() => {
+      // Rebuild the interface with the new option
+      exExhibit.rebuildComponentInterface()
+    })
+})
+
+for (const el of document.querySelectorAll('.view-mode-radio')) {
   el.addEventListener('change', () => {
-    // Modify the search params to soft-save the change
-    const urlParams = new URLSearchParams(window.location.search)
-
-    if (document.getElementById('componentStatusModeRealtimeCheckbox').checked === true) {
-      // Set real-time mode (default)
-      urlParams.delete('showMaintStatus')
-    } else {
-      // Set maintenance status mode
-      urlParams.set('showMaintStatus', 'true')
+    let mode = 'maintenance'
+    if (document.getElementById('componentStatusModeRealtimeCheckbox').checked) {
+      mode = 'realtime'
     }
-    window.history.replaceState('', '', '?' + urlParams)
-
-    // Rebuild the interface with the new option
-    exExhibit.rebuildComponentInterface()
+    exUsers.updateUserPreferences({ status_mode: mode })
+      .then(exExhibit.rebuildComponentInterface)
   })
-})
+}
+
+document.getElementById('showHideGroupsModalShowButton').addEventListener('click', exExhibit.configureVisibleGroups)
+document.getElementById('showHideGroupsModalSaveButton').addEventListener('click', exExhibit.updateVisibleGroupsPreference)
 
 document.getElementById('showAddStaticComponentModalButton').addEventListener('click', exExhibit.showAddStaticComponentsModal)
 document.getElementById('addStaticComponentModalAddButton').addEventListener('click', exExhibit.submitStaticComponentAdditionFromModal)
@@ -1013,11 +912,11 @@ $('#componentInfoModalMaintenanceStatusSelector').change(function () {
   $('#componentInfoModalMaintenanceSaveButton').show()
 })
 document.getElementById('componentInfoModalBasicSettingsSaveButton').addEventListener('click', exExhibit.submitComponentBasicSettingsChange)
-Array.from(document.querySelectorAll('.componentInfoBasicSetting')).forEach((el) => {
+for (const el of document.querySelectorAll('.componentInfoBasicSetting')) {
   el.addEventListener('change', () => {
     document.getElementById('componentInfoModalBasicSettingsSaveButton').style.display = 'block'
   })
-})
+}
 $('.componentInfoSetting').change(function () {
   $('#componentInfoModalSettingsSaveButton').show()
 })
@@ -1031,31 +930,35 @@ document.getElementById('definitionTabThumbnailsCheckbox').addEventListener('cha
 document.getElementById('componentInfoModalDefinitionSaveButton').addEventListener('click', exExhibit.submitDefinitionSelectionFromModal)
 
 document.getElementById('componentInfoModalViewScreenshot').addEventListener('click', () => {
-  const component = exExhibit.getExhibitComponent($('#componentInfoModal').data('id'))
+  const component = exExhibit.getExhibitComponent(document.getElementById('componentInfoModal').getAttribute('data-id'))
   exTools.openMediaInNewTab([component.getHelperURL() + '/system/getScreenshot'], ['image'])
 })
 document.getElementById('componentInfoModalEditDMXButton').addEventListener('click', (event) => {
-  const component = exExhibit.getExhibitComponent($('#componentInfoModal').data('id'))
+  const component = exExhibit.getExhibitComponent(document.getElementById('componentInfoModal').getAttribute('data-id'))
   window.open(component.getHelperURL() + '/dmx_control.html?standalone=true', '_blank').focus()
 })
-Array.from(document.querySelectorAll('.componentInfoProjectorSetting')).forEach((el) => {
+for (const el of document.querySelectorAll('.componentInfoProjectorSetting')) {
   el.addEventListener('change', () => {
     document.getElementById('componentInfoModalProjectorSettingsSaveButton').style.display = 'block'
   })
-})
+}
 document.getElementById('componentInfoModalProjectorSettingsSaveButton').addEventListener('click', exExhibit.updateProjectorFromInfoModal)
-Array.from(document.querySelectorAll('.componentInfoStaticSetting')).forEach((el) => {
+for (const el of document.querySelectorAll('.componentInfoStaticSetting')) {
   el.addEventListener('change', () => {
     document.getElementById('componentInfoModalStaticSettingsSaveButton').style.display = 'block'
   })
-})
+}
 document.getElementById('componentInfoModalStaticSettingsSaveButton').addEventListener('click', exExhibit.updateStaticComponentFromInfoModal)
-Array.from(document.querySelectorAll('.componentInfoWakeOnLANSetting')).forEach((el) => {
+for (const el of document.querySelectorAll('.componentInfoWakeOnLANSetting')) {
   el.addEventListener('change', () => {
     document.getElementById('componentInfoModalWakeOnLANSettingsSaveButton').style.display = 'block'
   })
-})
+}
 document.getElementById('componentInfoModalWakeOnLANSettingsSaveButton').addEventListener('click', exExhibit.updateWakeOnLANComponentFromInfoModal)
+
+// Copy definition modal
+document.getElementById('copyDefinitionModalSubmitButton').addEventListener('click', exExhibit.copyDefinitionModalPerformCopy)
+
 // Schedule tab
 // =========================
 document.getElementById('manageFutureDateButton').addEventListener('click', exSchedule.showManageFutureDateModal)
@@ -1099,25 +1002,40 @@ document.addEventListener('click', (event) => {
 
 // Exhibits tab
 // =========================
-// document.getElementById('manageExhibitsButton').addEventListener('click', showManageExhibitsModal)
-$('#exhibitSelect').change(function () {
+// document.getElementById('manageExhibitsModalSaveButton').addEventListener('click', manageExhibitModalSubmitUpdate)
+document.getElementById('exhibitSelect').addEventListener('change', () => {
+  updateExhibitButtons()
+})
+document.getElementById('setExhibitButton').addEventListener('click', () => {
   changeExhibit(false)
 })
-$('#exhibitDeleteSelector').change(checkDeleteSelection)
-$('#createExhibitButton').click(function () {
-  createExhibit($('#createExhibitNameInput').val(), null)
-  $('#createExhibitNameInput').val('')
+document.getElementById('editExhibitButton').addEventListener('click', () => {
+  editExhibitPopulateExhibitContent(document.getElementById('exhibitSelect').value)
 })
-$('#cloneExhibitButton').click(function () {
-  createExhibit($('#createExhibitNameInput').val(), $('#exhibitSelect').val())
-  $('#createExhibitNameInput').val('')
+document.getElementById('editExhibitAddComponentButton').addEventListener('click', editExhibitAddComponentPopulateList)
+document.getElementById('createExhibitButton').addEventListener('click', () => {
+  createExhibit('New exhibit', null)
 })
-$('#exhibitChangeConfirmationButton').click(function () {
+document.getElementById('cloneExhibitButton').addEventListener('click', () => {
+  createExhibit('New exhibit', document.getElementById('exhibitSelect').value)
+})
+document.getElementById('exhibitChangeConfirmationButton').addEventListener('click', () => {
   changeExhibit(true)
 })
-$('#deleteExhibitButton').click(deleteExhibitFromModal)
-$('#exhibitDeleteSelectorButton').click(showExhibitDeleteModal)
-document.getElementById('manageExhibitModalExhibitThumbnailCheckbox').addEventListener('change', onManageExhibitModalThumbnailCheckboxChange)
+document.getElementById('deleteExhibitButton').addEventListener('click', deleteExhibitFromModal)
+document.getElementById('exhibitDeleteSelectorButton').addEventListener('click', showExhibitDeleteModal)
+document.getElementById('editExhibitThumbnailCheckbox').addEventListener('change', onManageExhibitModalThumbnailCheckboxChange)
+document.getElementById('editExhibitSaveButton').addEventListener('click', editExhibitSubmitUpdate)
+document.getElementById('editExhibitShowActionModalButton').addEventListener('click', () => {
+  showEditExhibitActionModal()
+})
+document.getElementById('editExhibitActionSelector').addEventListener('change', () => { editExhibitActionConfigureTargetSelector() })
+document.getElementById('editExhibitActionTargetSelector').addEventListener('change', () => { editExhibitActionConfigureValueSelector() })
+document.getElementById('editExhibitActionEditDeleteActionButton').addEventListener('click', () => {
+  const uuid = document.getElementById('editExhibitActionModal').getAttribute('data-uuid')
+  editExhibitActionDeleteAction(uuid)
+})
+document.getElementById('editExhibitActionEditSubmitButton').addEventListener('click', editExhibitActionSubmit)
 
 // Maintenance tab
 // =========================
@@ -1135,12 +1053,12 @@ document.addEventListener('click', (event) => {
 document.getElementById('issueModifyModalDeleteButton').addEventListener('click', () => {
   const id = document.getElementById('issueModifyModal').getAttribute('data-id')
   exIssues.modifyIssue(id, 'delete')
-  $('#issueModifyModal').modal('hide')
+  exTools.hideModal('#issueModifyModal')
 })
 document.getElementById('issueModifyModalArchiveButton').addEventListener('click', () => {
   const id = document.getElementById('issueModifyModal').getAttribute('data-id')
   exIssues.modifyIssue(id, 'archive')
-  $('#issueModifyModal').modal('hide')
+  exTools.hideModal('#issueModifyModal')
 })
 $('#issueMediaViewFromModal').click(function () {
   const file = document.getElementById('issueMediaViewFromModalSelect').value
@@ -1167,57 +1085,55 @@ $('#componentInfoModalMaintenanceNote').on('input', function () {
 
 // Analytics tab
 // =========================
-$('#createTrackerTemplateButton').click(function () {
-  createTrackerTemplate()
+document.getElementById('createTrackerTemplateButton').addEventListener('click', () => {
+  exTracker.createTrackerTemplate()
 })
-$('#launchTrackerButton').click(launchTracker)
-$('#showEditTrackerTemplateButton').click(showEditTrackerTemplateModal)
-$('#deleteTrackerTemplateButton').click(function () {
-  $('#deleteTrackerTemplateModal').modal('show')
+document.getElementById('launchTrackerButton').addEventListener('click', exTracker.launchTracker)
+document.getElementById('showEditTrackerTemplateButton').addEventListener('click', () => {
+  exTracker.showEditTrackerTemplateModal()
 })
-$('#deleteTrackerTemplateFromModalButton').click(function () {
-  deleteTrackerTemplate()
+document.getElementById('deleteTrackerTemplateButton').addEventListener('click', () => {
+  const trackerTemplateSelect = document.getElementById('trackerTemplateSelect')
+  const name = trackerTemplateSelect.options[trackerTemplateSelect.selectedIndex].text
+  document.getElementById('deleteTrackerTemplateModalTemplateName').innerHTML = name
+  exTools.showModal('#deleteTrackerTemplateModal')
 })
-$('#getAvailableTrackerDataButton').click(function () {
-  exTracker.getAvailableTrackerData(populateTrackerDataSelect)
-})
-$('#downloadTrackerDataButton').click(function () {
-  exTracker.downloadTrackerData($('#trackerDataSelect').val())
-})
-$('#showDeleteTrackerDataModalButton').click(showDeleteTrackerDataModal)
-$('#deleteTrackerDataFromModalButton').click(deleteTrackerDataFromModal)
-$('#editTrackerTemplateModalAddCounterButton').click(function () {
-  editTrackerTemplateModalAddWidget('New Counter', 'counter')
-})
-$('#editTrackerTemplateModalAddDropdownButton').click(function () {
-  editTrackerTemplateModalAddWidget('New Dropdown', 'dropdown')
-})
-$('#editTrackerTemplateModalAddNumberButton').click(function () {
-  editTrackerTemplateModalAddWidget('New Number', 'number')
-})
-$('#editTrackerTemplateModalAddSliderButton').click(function () {
-  editTrackerTemplateModalAddWidget('New Slider', 'slider')
-})
-$('#editTrackerTemplateModalAddTextButton').click(function () {
-  editTrackerTemplateModalAddWidget('New Text', 'text')
-})
-$('#editTrackerTemplateModalAddTimerButton').click(function () {
-  editTrackerTemplateModalAddWidget('New Timer', 'timer')
-})
-$('#editTrackerTemplateModalDeleteWidgetButton').click(editTrackerTemplateModalDeleteWidget)
-$('#editTrackerTemplateModalSubmitChangesButton').click(editTrackerTemplateModalSubmitChanges)
-$('.editTrackerTemplateInputField').on('input', editTrackerTemplateModalUpdateFromInput)
+document.getElementById('deleteTrackerTemplateFromModalButton')
+  .addEventListener('click', () => exTracker.deleteTrackerTemplate())
+document.getElementById('getAvailableTrackerDataButton')
+  .addEventListener('click', () => exTracker.getAvailableTrackerData(exTracker.populateTrackerDataSelect))
+document.getElementById('downloadTrackerDataButton')
+  .addEventListener('click', () => exTracker.downloadTrackerData(document.getElementById('trackerDataSelect').value))
+document.getElementById('showDeleteTrackerDataModalButton')
+  .addEventListener('click', () => exTracker.showDeleteTrackerDataModal())
+document.getElementById('deleteTrackerDataFromModalButton')
+  .addEventListener('click', () => exTracker.deleteTrackerDataFromModal())
+document.getElementById('editTrackerTemplateModalAddCounterButton')
+  .addEventListener('click', () => exTracker.editTrackerTemplateModalAddWidget('New Counter', 'counter'))
+document.getElementById('editTrackerTemplateModalAddDropdownButton')
+  .addEventListener('click', () => exTracker.editTrackerTemplateModalAddWidget('New Dropdown', 'dropdown'))
+document.getElementById('editTrackerTemplateModalAddNumberButton')
+  .addEventListener('click', () => exTracker.editTrackerTemplateModalAddWidget('New Number', 'number'))
+document.getElementById('editTrackerTemplateModalAddSliderButton')
+  .addEventListener('click', () => exTracker.editTrackerTemplateModalAddWidget('New Slider', 'slider'))
+document.getElementById('editTrackerTemplateModalAddTextButton')
+  .addEventListener('click', () => exTracker.editTrackerTemplateModalAddWidget('New Text', 'text'))
+document.getElementById('editTrackerTemplateModalAddTimerButton')
+  .addEventListener('click', () => exTracker.editTrackerTemplateModalAddWidget('New Timer', 'timer'))
+document.getElementById('editTrackerTemplateModalSubmitChangesButton')
+  .addEventListener('click', () => exTracker.editTrackerTemplateModalSubmitChanges())
+document.getElementById('editTrackerTemplateGuestFacingCheckbox').addEventListener('change', exTracker.makeGuestFacing)
 
 // Users tab
 // =========================
 document.getElementById('showEditUserModalButton').addEventListener('click', () => {
   exUsers.showEditUserModal()
 })
-Array.from(document.querySelectorAll('.editUserField')).forEach((el) => {
+for (const el of document.querySelectorAll('.editUserField')) {
   el.addEventListener('change', () => {
     document.getElementById('editUserSubmitButton').style.display = 'block'
   })
-})
+}
 document.getElementById('editUserPermissionGroups').addEventListener('change', (event) => {
   if (event.target.value === 'custom') {
     document.getElementById('editUserGroupsRow').style.display = 'flex'
@@ -1238,11 +1154,11 @@ document.getElementById('editGroupModalSubmitButton').addEventListener('click', 
 document.getElementById('deleteGroupConfirmationButton').addEventListener('click', exGroup.deleteGroupFromModal)
 
 // Server settings
-Array.from(document.querySelectorAll('.controlServerSettingsInputField')).forEach((el) => {
+for (const el of document.querySelectorAll('.controlServerSettingsInputField')) {
   el.addEventListener('change', () => {
     document.getElementById('controlServerSettingsSaveButton').style.display = 'block'
   })
-})
+}
 document.getElementById('controlServerSettingsSaveButton').addEventListener('click', updateSystemConfiguration)
 
 // Activate all popovers
@@ -1263,12 +1179,17 @@ if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').match
   document.querySelector('html').setAttribute('data-bs-theme', 'light')
 }
 
+// Fix bootstrap modal accessibility issue
+document.addEventListener('hidden.bs.modal', function (event) {
+  if (document.activeElement) document.activeElement.blur()
+})
+
 loadVersion()
 populateHelpTab()
 exUsers.populateUsers()
 populateControlServerSettings()
-parseQueryString()
-exTracker.getAvailableDefinitions(populateTrackerTemplateSelect)
+const trackerTemplates = await exTracker.getAvailableTemplates()
+exTracker.populateTrackerTemplateSelect(trackerTemplates)
 
 exUsers.authenticateUser()
   .then(() => {

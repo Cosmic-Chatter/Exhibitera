@@ -20,6 +20,7 @@ software_version: float = 5.2
 software_update_available: bool = False
 software_update_available_version: str = ""
 software_update_timer: threading.Timer | None = None  # Timer reference to check for an update once daily
+outdated_os: bool = False
 
 # Threading resources
 polling_thread_dict: dict[str, threading.Timer] = {}
@@ -57,8 +58,8 @@ json_next_event: list[dict] = []
 scheduleUpdateTime: float = 0
 
 # Exhibit stuff
-current_exhibit: str | None = "Default.json"  # The JSON file defining the current exhibit "name.json"
-exhibit_configuration: list[dict[str, Any]] | None = None
+current_exhibit: str | None = "Default"  # The JSON file defining the current exhibit without the json extension
+exhibit_configuration: dict[str, Any] | None = None
 exhibit_list: list[str] = []
 
 # User stuff

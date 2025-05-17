@@ -16,6 +16,7 @@ import zipfile
 
 # Non-standard imports
 import mimetypes
+import requests
 
 ffmpeg_path: str
 try:
@@ -38,6 +39,26 @@ def get_path(path_list: list[str], user_file: bool = False) -> str:
         _path = os.path.join(config.exec_path, *path_list)
 
     return _path
+
+
+def path_safe(path: list[str]) -> bool:
+    """Ensure the given path doesn't escape the Exhibitera Apps directory.
+
+    `path` should be a list of directories, which should not include any path separators.
+    """
+
+    for item in path:
+        if not isinstance(item, str):
+            return False
+        for char in ['/', '\\', '<', '>', ':', '"', '|', '?', '*']:
+            if char in item:
+                return False
+        if item == '.' or item == '..':
+            return False
+    if path[0] not in ['content', 'data', 'definitions', 'thumbnails']:
+        return False
+
+    return True
 
 
 def filename_safe(filename: str) -> bool:
@@ -190,7 +211,7 @@ def create_csv(file_path: str | os.PathLike, filename: str = "") -> str:
 
 
 def json_list_to_csv(dict_list: list, filename: str = "") -> str:
-    """Convert a list JSON dicts to a comma-separated string"""
+    """Convert a list of JSON dicts to a comma-separated string"""
 
     # First, identify any keys that have lists as their value
     all_keys = {}
@@ -230,6 +251,8 @@ def json_list_to_csv(dict_list: list, filename: str = "") -> str:
     except IndexError:
         print("JSON_list_to_CSV: Error: Nothing to write")
         result = ""
+
+    result = result.strip()
 
     if filename != "":
         with open(filename, 'w', encoding="UTF-8", newline="") as f:
@@ -487,7 +510,9 @@ def create_thumbnail(filename: str,
 
             # First, find the length of the video
             _, video_details = get_video_file_details(filename)
-            duration_sec = round(video_details["duration"])
+            duration_sec = round(video_details.get('duration', 0))
+            if duration_sec == 0:
+                return False, "video has no duration"
 
             # Then, create the video thumbnail
             proc = subprocess.Popen([ffmpeg_path, "-y", "-i", file_path,
@@ -521,10 +546,17 @@ def create_thumbnail(filename: str,
 
 
 def is_url(filename: str) -> bool:
-    """Identify if the given filename is an url."""
+    """Identify if the given filename is a URL."""
 
     filename = filename.lower()
-    if filename.startswith("http://") or filename.startswith("https://"):
+    if (
+            filename.startswith("http://")
+            or filename.startswith("https://")
+            or filename.startswith("file://")
+            or filename.startswith("ftp://")
+            or filename.startswith("imap://")
+            or filename.startswith("nntp://")
+    ):
         return True
     return False
 
@@ -601,6 +633,9 @@ def get_video_file_details(filename: str) -> tuple[bool, dict[str, Any]]:
     except ImportError as e:
         print("get_video_file_details: error loading FFmpeg: ", e)
         success = False
+    except ValueError as e:
+        print("get_video_file_details: value error: ", e)
+        success = False
 
     return success, details
 
@@ -654,7 +689,6 @@ def get_mimetype(filename: str) -> str:
     """Return the kind of media file given by filename."""
 
     extension = os.path.splitext(filename)[1].lower()[1:]  # form of "jpg"
-    mimetype = ""
 
     # First, try the mimetypes module
     mimetype_guess, _ = mimetypes.guess_type(filename)
@@ -663,12 +697,12 @@ def get_mimetype(filename: str) -> str:
     except AttributeError:
         mimetype = ""
 
-    if mimetype is not None and mimetype != "":
-        return mimetype
-
     # Check for 3D models
     if extension in ["fbx", "glb", "obj", "stl", "usdz"]:
         return "model"
+
+    if mimetype is not None and mimetype != "":
+        return mimetype
 
     return ""
 
@@ -737,7 +771,7 @@ def get_thumbnail(filename: str,
 def create_missing_thumbnails() -> None:
     """Check the content directory for files without thumbnails and create them."""
 
-    content = get_all_directory_contents("content")
+    content, content_details = get_all_directory_contents("content")
 
     for file in content:
         file_path, mimetype = get_thumbnail(file)
@@ -745,12 +779,25 @@ def create_missing_thumbnails() -> None:
             create_thumbnail(file, mimetype)
 
 
-def get_all_directory_contents(directory: str = "content") -> list:
+def get_all_directory_contents(directory: str = "content") -> tuple[list, list[dict[str, Any]]]:
     """Recursively search for files in the content directory and its subdirectories"""
+
     content_path = get_path([directory], user_file=True)
     result = [os.path.relpath(os.path.join(dp, f), content_path) for dp, dn, fn in os.walk(content_path) for f in fn]
+    content = [x for x in result if x.find(".DS_Store") == -1]
+    content_details = []
 
-    return [x for x in result if x.find(".DS_Store") == -1]
+    for file in content:
+        file_details = {
+            'name': file
+        }
+        path = get_path(["content", file], user_file=True)
+        file_size, size_text = get_file_size(path)
+        file_details['size'] = file_size
+        file_details['size_text'] = size_text
+        content_details.append(file_details)
+
+    return content, content_details
 
 
 def get_directory_contents(directory: str, absolute: bool = False) -> list:
@@ -786,6 +833,56 @@ def check_directory_structure():
         os.listdir(v2_thumbs)
     except FileNotFoundError:
         os.mkdir(v2_thumbs)
+
+
+def get_file_size(path: str) -> (int, str):
+    """Return the size of the specified file.
+
+    Returns a tuple of (size_in_bytes, human_readable)
+    """
+
+    file_size = os.path.getsize(path)  # in bytes
+    return file_size, convert_bytes_to_readable(file_size)
+
+
+def convert_bytes_to_readable(file_size: int | float) -> str:
+    """Convert the given file size in bytes to a human-readable string."""
+
+    if file_size > 1e12:
+        size_text = str(round(file_size / 1e12 * 100) / 100) + ' TB'
+    elif file_size > 1e9:
+        size_text = str(round(file_size / 1e9 * 100) / 100) + ' GB'
+    elif file_size > 1e6:
+        size_text = str(round(file_size / 1e6 * 10) / 10) + ' MB'
+    elif file_size > 1e3:
+        size_text = str(round(file_size / 1e3)) + ' kB'
+    else:
+        size_text = str(file_size) + ' bytes'
+
+    return size_text
+
+
+def download_file(url: str, path_to_save: str) -> bool:
+    """Download the file at the given url and save it to disk."""
+
+    with config.content_file_lock:
+        try:
+            with requests.get(url, stream=True, timeout=2) as r:
+                try:
+                    # Check that we received a good response
+                    r.raise_for_status()
+                except requests.HTTPError:
+                    return False
+
+                with open(path_to_save, 'wb') as f:
+                    for chunk in r.iter_content(chunk_size=8192):
+                        f.write(chunk)
+        except requests.exceptions.ReadTimeout:
+            print("download_file: timeout retrieving ", url)
+            return False
+
+    return True
+
 
 # Set up log file
 log_path: str = get_path(["apps.log"], user_file=True)

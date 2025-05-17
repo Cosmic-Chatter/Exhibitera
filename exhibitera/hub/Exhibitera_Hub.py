@@ -25,6 +25,7 @@ import uvicorn
 # Non-standard modules
 import aiofiles
 import dateutil.parser
+import distro
 from fastapi import Body, FastAPI, File, Response, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
@@ -147,6 +148,7 @@ def send_webpage_update():
     update_dict["gallery"] = {"current_exhibit": ex_config.current_exhibit,
                               "availableExhibits": ex_config.exhibit_list,
                               "galleryName": ex_config.gallery_name,
+                              "outdated_os": ex_config.outdated_os,
                               "softwareVersion": str(ex_config.software_version),
                               "softwareVersionAvailable": ex_config.software_update_available_version,
                               "updateAvailable": str(ex_config.software_update_available).lower()}
@@ -216,7 +218,7 @@ def command_line_setup() -> None:
     settings_dict["current_exhibit"] = "Default"
     # Create this exhibit file if it doesn't exist
     if not os.path.exists(ex_tools.get_path(["exhibits", "Default.json"], user_file=True)):
-        ex_exhibit.create_new_exhibit("default", None)
+        ex_exhibit.create_new_exhibit("Default", None)
 
     # Write new system config to file
     config_path = ex_tools.get_path(["configuration", "system.json"], user_file=True)
@@ -243,18 +245,12 @@ def load_default_configuration() -> None:
     ex_legacy.convert_legacy_static_configuration()
     ex_legacy.convert_legacy_WOL_configuration()
     ex_legacy.convert_schedule_targets_to_json()
+    ex_legacy.convert_legacy_tracker_templates_to_json()
 
     ex_tools.start_debug_loop()
     ex_sched.retrieve_json_schedule()
     ex_exhibit.read_descriptions_configuration()
-    # ex_proj.read_projector_configuration()
-    # ex_exhibit.read_wake_on_LAN_configuration()
-    # ex_exhibit.read_static_components_configuration()
     ex_exhibit.read_exhibit_configuration(ex_config.current_exhibit)
-
-    # Update the components that their configuration may have changed
-    for component in ex_config.componentList:
-        component.update_configuration()
 
     # Build any existing issues
     ex_issues.read_issue_list()
@@ -299,6 +295,40 @@ def error_handler(*exc_info) -> None:
     print(f"Error: see hub.log for more details ({datetime.datetime.now()})")
 
 
+def check_for_outdated_os() -> tuple[bool, str]:
+    """Check if the OS release is out of date.
+
+    This is a very limited check based on Ubuntu and Windows
+    """
+
+    message = "This OS version may be unsupported in the next version of Exhibitera."
+
+    if sys.platform == 'linux':
+        # Check for outdated Ubuntu
+        if distro.id() != 'ubuntu':
+            # We are only checking for Ubuntu right now
+            return False, ""
+
+        # Ubuntu LTS versions are supported for 5 years
+        version_parts = distro.version_parts(best=True)
+        major = int(version_parts[0])
+        minor = int(version_parts[1])
+        if major % 2 != 0 or minor != 4:
+            # LTS releases are always even year + 04, such as 22.04
+            return True, message
+        now = datetime.datetime.now()
+        now_year = int(now.strftime("%y"))
+        if now_year - major >= 5:
+            # LTS releases are supported for 5 years
+            return True, message
+
+    if sys.platform == 'win32':
+        return False, ""
+
+    return False, ""
+
+
+
 def check_for_software_update() -> None:
     """Download the version.txt file from GitHub and check if there is an update"""
 
@@ -321,6 +351,10 @@ def check_for_software_update() -> None:
         print("update available!")
     else:
         print("the server is up to date.")
+
+    # Check to see if the OS is out of date
+    outdated, message = check_for_outdated_os()
+    ex_config.outdated_os = outdated
 
     # Reset the timer to check for an update tomorrow
     if ex_config.software_update_timer is not None:
@@ -434,9 +468,9 @@ def create_user(request: Request,
 def edit_user(request: Request,
               uuid_str: str,
               username: str | None = Body(description="The username", default=None),
-              password: str | None = Body(description="The password for the account to create.", default=None),
+              password: str | None = Body(description="A new password.", default=None),
               display_name: str | None = Body(description="The name of the account holder.", default=None),
-              permissions: dict | None = Body(description="A dictionary of permissions for the new account.",
+              permissions: dict | None = Body(description="A dictionary of permissions for the account.",
                                               default=None)):
     """Edit the given user."""
 
@@ -464,6 +498,32 @@ def edit_user(request: Request,
     ex_users.save_users()
 
     return {"success": success, "user": user.get_dict()}
+
+
+@app.post("/user/{uuid_str}/editPreferences")
+def edit_user_preferences(request: Request,
+                          uuid_str: str,
+                          preferences: dict[str, Any] = Body(description="A dictionary of preferences to update.",
+                                                             embed=True)):
+    """Update the preferences for the given user."""
+
+    token = request.cookies.get("authToken", "")
+    success, authorizing_user, reason = ex_users.check_user_permission("users", "none", token=token)
+    if success is False:
+        # Should fail only if the user does not exist
+        return {"success": False, "reason": reason}
+    if uuid_str != authorizing_user:
+        # Only the user can change their preferences
+        return {"success": False, "reason": "invalid_credentials"}
+
+    user = ex_users.get_user(uuid_str=uuid_str)
+    if user is None:
+        return {"success": False, "reason": "user_does_not_exist"}
+    result = ex_tools.deep_merge(preferences, user.preferences)
+    user.preferences = result
+    ex_users.save_users()
+
+    return {"success": True, "user": user.get_dict()}
 
 
 @app.post("/user/{uuid_str}/delete")
@@ -532,13 +592,6 @@ def change_user_password(user_uuid: str,
 
 
 # Exhibit component actions
-
-class Exhibit(BaseModel):
-    name: str = Field(
-        description="The name of the exhibit"
-    )
-
-
 class ExhibitComponent(BaseModel):
     id: str = Field(
         description="A unique identifier for this component",
@@ -652,7 +705,7 @@ async def edit_group(request: Request,
     return {"success": success}
 
 
-@app.get("/group/{uuid_str}/delete  ")
+@app.get("/group/{uuid_str}/delete")
 async def delete_group(request: Request, uuid_str: str):
     """Return the details for the given group."""
 
@@ -667,9 +720,8 @@ async def delete_group(request: Request, uuid_str: str):
 
 @app.post("/exhibit/create")
 async def create_exhibit(request: Request,
-                         exhibit: Exhibit,
-                         clone_from: Union[str, None] = Body(default=None,
-                                                             description="The name of the exhibit to clone.")):
+                         name: str = Body(description="The name of the exhibit."),
+                         clone_from: str | None = Body(default=None, description="The name of the exhibit to clone.")):
     """Create a new exhibit JSON file."""
 
     # Check permission
@@ -678,12 +730,33 @@ async def create_exhibit(request: Request,
     if success is False:
         return {"success": False, "reason": reason}
 
-    ex_exhibit.create_new_exhibit(exhibit.name, clone_from)
+    uuid_str = ex_exhibit.create_new_exhibit(name, clone_from)
+    return {"success": True, "reason": "", "uuid": uuid_str}
+
+
+@app.post("/exhibit/{uuid_str}/edit")
+async def edit_exhibit(request: Request,
+                       uuid_str: str,
+                       details: dict[str, Any] = Body(
+                           description="A dictionary specifying the details of the exhibit.", embed=True)):
+    """Update the given exhibit with the specified details."""
+
+    # Check permission
+    token = request.cookies.get("authToken", "")
+    success, authorizing_user, reason = ex_users.check_user_permission("exhibits", "edit", token=token)
+    if success is False:
+        return {"success": False, "reason": reason}
+
+    path = ex_tools.get_path(["exhibits", ex_tools.with_extension(uuid_str, '.json')], user_file=True)
+    ex_tools.write_json(details, path)
+    ex_exhibit.check_available_exhibits()
+    ex_config.last_update_time = time.time()
+
     return {"success": True, "reason": ""}
 
 
-@app.post("/exhibit/delete")
-async def delete_exhibit(request: Request, exhibit: Exhibit = Body(embed=True)):
+@app.delete("/exhibit/{uuid_str}/delete")
+async def delete_exhibit(request: Request, uuid_str: str):
     """Delete the specified exhibit."""
 
     # Check permission
@@ -692,7 +765,7 @@ async def delete_exhibit(request: Request, exhibit: Exhibit = Body(embed=True)):
     if success is False:
         return {"success": False, "reason": reason}
 
-    ex_exhibit.delete_exhibit(exhibit.name)
+    ex_exhibit.delete_exhibit(uuid_str)
     return {"success": True, "reason": ""}
 
 
@@ -714,28 +787,13 @@ async def queue_WOL_command(component: ExhibitComponent,
     return {"success": True, "reason": ""}
 
 
-@app.post("/exhibit/removeComponent")
-async def remove_component(component: ExhibitComponent = Body(embed=True)):
-    """Queue the specified command for the exhibit component to retrieve."""
-
-    to_remove = ex_exhibit.get_exhibit_component(component_id=component.id)
-    print("Removing component:", component.id)
-    to_remove.remove()
-    return {"success": True, "reason": ""}
-
-
-@app.post("/exhibit/set")
-async def set_exhibit(exhibit: Exhibit = Body(embed=True)):
+@app.post("/exhibit/{uuid_str}/set")
+async def set_exhibit(uuid_str: str):
     """Set the specified exhibit as the current one."""
 
-    print("Changing exhibit to:", exhibit.name)
-    ex_tools.update_system_configuration({"current_exhibit": exhibit.name})
-    ex_exhibit.read_exhibit_configuration(exhibit.name)
-
-    # Update the components that the configuration has changed
-    for component in ex_config.componentList:
-        component.update_configuration()
-    return {"success": True, "reason": ""}
+    ex_tools.update_system_configuration({"current_exhibit": uuid_str})
+    success, reason = ex_exhibit.read_exhibit_configuration(uuid_str)
+    return {"success": success, "reason": reason}
 
 
 @app.get("/exhibit/getAvailable")
@@ -745,13 +803,13 @@ async def get_available_exhibits():
     return {"success": True, "available_exhibits": ex_config.exhibit_list}
 
 
-@app.post("/exhibit/getDetails")
-async def get_exhibit_details(name: str = Body(description='The name of the exhibit to fetch.', embed=True)):
+@app.get("/exhibit/{uuid_str}/details")
+async def get_exhibit_details(uuid_str: str):
     """Return the JSON for a particular exhibit."""
 
-    if not name.endswith('.json'):
-        name += '.json'
-    exhibit_path = ex_tools.get_path(["exhibits", name], user_file=True)
+    if not uuid_str.endswith('.json'):
+        uuid_str += '.json'
+    exhibit_path = ex_tools.get_path(["exhibits", uuid_str], user_file=True)
     result = ex_tools.load_json(exhibit_path)
     if result is None:
         return {"success": False, "reason": "Exhibit does not exist."}
@@ -760,8 +818,11 @@ async def get_exhibit_details(name: str = Body(description='The name of the exhi
 
 # Flexible Tracker actions
 @app.post("/tracker/{tracker_type}/createTemplate")
-async def create_tracker_template(request: Request, data: dict[str, Any], tracker_type: str):
-    """Create a new tracker template, overwriting if necessary."""
+async def create_tracker_template(request: Request,
+                                  tracker_type: str,
+                                  template: dict[str, Any] = Body(description='A dictionary containing the template'),
+                                  tracker_uuid: str = Body(description='The UUID for the template we are creating.')):
+    """Write the given tracker template to file"""
 
     # Check permission
     token = request.cookies.get("authToken", "")
@@ -769,17 +830,11 @@ async def create_tracker_template(request: Request, data: dict[str, Any], tracke
     if success is False:
         return {"success": False, "reason": reason}
 
-    if "name" not in data or "template" not in data:
-        response = {"success": False,
-                    "reason": "Request missing 'name' or 'template' field."}
-        return response
-    name = data["name"]
-    if not name.lower().endswith(".ini"):
-        name += ".ini"
-    file_path = ex_tools.get_path([tracker_type, "templates", name], user_file=True)
-    success = ex_track.create_template(file_path, data["template"])
-    response = {"success": success}
-    return response
+    template_path = ex_tools.get_path(
+        [tracker_type, "templates", ex_tools.with_extension(tracker_uuid, 'json')],
+        user_file=True)
+    success, reason = ex_tools.write_json(template, template_path)
+    return {"success": success, "reason": reason}
 
 
 @app.post("/tracker/{tracker_type}/deleteData")
@@ -822,8 +877,8 @@ async def delete_tracker_data(request: Request, data: dict[str, Any], tracker_ty
     return response
 
 
-@app.post("/tracker/{tracker_type}/deleteTemplate")
-async def delete_tracker_template(request: Request, data: dict[str, Any], tracker_type: str):
+@app.delete("/tracker/{tracker_type}/{tracker_uuid}/deleteTemplate")
+async def delete_tracker_template(request: Request, tracker_type: str, tracker_uuid: str):
     """Delete the specified tracker template."""
 
     # Check permission
@@ -832,11 +887,7 @@ async def delete_tracker_template(request: Request, data: dict[str, Any], tracke
     if success is False:
         return {"success": False, "reason": reason}
 
-    if "name" not in data:
-        response = {"success": False,
-                    "reason": "Request missing 'name' field."}
-        return response
-    file_path = ex_tools.get_path([tracker_type, "templates", data["name"] + ".ini"], user_file=True)
+    file_path = ex_tools.get_path([tracker_type, "templates", ex_tools.with_extension(tracker_uuid, 'json')], user_file=True)
     with ex_config.trackerTemplateWriteLock:
         response = ex_tools.delete_file(file_path)
     return response
@@ -856,17 +907,19 @@ async def get_available_tracker_data(tracker_type: str):
     return response
 
 
-@app.get("/tracker/{tracker_type}/getAvailableDefinitions")
-async def get_available_tracker_definitions(tracker_type: str):
-    """Send a list of all the available definitions for the given tracker group (usually flexible-tracker)."""
+@app.get("/tracker/{tracker_type}/getAvailableTemplates")
+async def get_available_tracker_templates(tracker_type: str):
+    """Send a list of all the available templates for the given tracker group (usually flexible-tracker)."""
 
-    definition_list = []
+    template_list = []
     template_path = ex_tools.get_path([tracker_type, "templates"], user_file=True)
     for file in os.listdir(template_path):
-        if file.lower().endswith(".ini"):
-            definition_list.append(file)
+        if file.lower().endswith(".json"):
+            file_path = ex_tools.get_path([tracker_type, "templates", file], user_file=True)
+            template = ex_tools.load_json(file_path)
+            template_list.append({"name": template["name"], "uuid": template["uuid"]})
 
-    return definition_list
+    return template_list
 
 
 @app.post("/tracker/{tracker_type}/getDataAsCSV")
@@ -887,21 +940,18 @@ async def get_tracker_data_csv(data: dict[str, Any], tracker_type: str):
     return {"success": True, "csv": result}
 
 
-@app.post("/tracker/{tracker_type}/getLayoutDefinition")
-async def get_tracker_layout_definition(data: dict[str, Any], tracker_type: str):
-    """Load the requested INI file and return it as a dictionary."""
+@app.get("/tracker/{tracker_type}/{template_uuid}")
+async def get_tracker_template(tracker_type: str, template_uuid: str):
+    """Load the requested tracker template and return it as a dictionary."""
 
-    if "name" not in data:
-        response = {"success": False,
-                    "reason": "Request missing 'name' field."}
-        return response
+    template_path = ex_tools.get_path([tracker_type, "templates", ex_tools.with_extension(template_uuid, "json")], user_file=True)
+    template = ex_tools.load_json(template_path)
+    if template is None:
+        success = False
+    else:
+        success = True
 
-    layout_definition, success, reason = ex_track.get_layout_definition(data["name"] + ".ini", kind=tracker_type)
-
-    response = {"success": success,
-                "reason": reason,
-                "layout": layout_definition}
-    return response
+    return {"success": success, "template": template}
 
 
 @app.post("/tracker/{tracker_type}/getRawText")
@@ -922,13 +972,11 @@ async def submit_analytics(data: dict[str, Any]):
     """Write the provided analytics data to file."""
 
     if "data" not in data or 'name' not in data:
-        response = {"success": False,
-                    "reason": "Request missing 'data' or 'name' field."}
-        return response
-    file_path = ex_tools.get_path(["analytics", data["name"] + ".txt"], user_file=True)
-    success, reason = ex_track.write_JSON(data["data"], file_path)
-    response = {"success": success, "reason": reason}
-    return response
+        return {"success": False, "reason": "Request missing 'data' or 'name' field."}
+
+    file_path = ex_tools.get_path(["analytics", ex_tools.with_extension(data["name"], "txt")], user_file=True)
+    success, reason = ex_tools.write_json(data["data"], file_path, append=True)
+    return {"success": success, "reason": reason}
 
 
 @app.post("/tracker/{tracker_type}/submitData")
@@ -936,13 +984,11 @@ async def submit_tracker_data(data: dict[str, Any], tracker_type: str):
     """Record the submitted data to file."""
 
     if "data" not in data or "name" not in data:
-        response = {"success": False,
-                    "reason": "Request missing 'data' or 'name' field."}
-        return response
+        return {"success": False, "reason": "Request missing 'data' or 'name' field."}
+
     file_path = ex_tools.get_path([tracker_type, "data", ex_tools.with_extension(data["name"], 'txt')], user_file=True)
-    success, reason = ex_track.write_JSON(data["data"], file_path)
-    response = {"success": success, "reason": reason}
-    return response
+    success, reason = ex_tools.write_json(data["data"], file_path, append=True, indent=None, newline=True)
+    return {"success": success, "reason": reason}
 
 
 @app.post("/tracker/{tracker_type}/submitRawText")
@@ -1067,8 +1113,8 @@ async def edit_issue(request: Request,
     return response_dict
 
 
-@app.get("/issue/list/{match_id}")
-async def get_issue_list(request: Request, match_id: str):
+@app.get("/issue/list/{match_uuid}")
+async def get_issue_list(request: Request, match_uuid: str):
     """Return a list of open issues."""
 
     # Check permission
@@ -1077,10 +1123,10 @@ async def get_issue_list(request: Request, match_id: str):
     if success is False:
         return {"success": False, "reason": reason}
 
-    if match_id != "__all":
+    if match_uuid != "__all":
         matched_issues = []
         for issue in ex_config.issueList:
-            if match_id in issue.details["relatedComponentIDs"]:
+            if match_uuid in issue.details["relatedComponentUUIDs"]:
                 matched_issues.append(issue.details)
     else:
         matched_issues = [x.details for x in ex_config.issueList]
@@ -1092,8 +1138,8 @@ async def get_issue_list(request: Request, match_id: str):
     return response
 
 
-@app.get("/issue/archive/list/{match_id}")
-async def get_archived_issues(request: Request, match_id: str):
+@app.get("/issue/archive/list/{match_uuid}")
+async def get_archived_issues(request: Request, match_uuid: str):
     """Return a list of open issues."""
 
     # Check permission
@@ -1111,10 +1157,10 @@ async def get_archived_issues(request: Request, match_id: str):
         except (FileNotFoundError, json.JSONDecodeError):
             archive_list = []
 
-    if match_id != "__all":
+    if match_uuid != "__all":
         matched_issues = []
         for issue in archive_list:
-            if match_id in issue["relatedComponentIDs"]:
+            if match_uuid in issue["relatedComponentUUIDs"]:
                 matched_issues.append(issue)
     else:
         matched_issues = archive_list
@@ -1169,9 +1215,9 @@ async def upload_issue_media(request: Request, files: list[UploadFile] = File())
 
 
 # Maintenance actions
-@app.post("/maintenance/deleteRecord")
-async def delete_maintenance_record(request: Request, data: dict[str, Any]):
-    """Delete the specified maintenance record."""
+@app.post("/maintenance/{uuid_str}/delete")
+async def delete_maintenance_record(request: Request, uuid_str: str):
+    """Clear the maintenance log for the given component."""
 
     # Check permission
     token = request.cookies.get("authToken", "")
@@ -1179,14 +1225,21 @@ async def delete_maintenance_record(request: Request, data: dict[str, Any]):
     if success is False:
         return {"success": False, "reason": reason}
 
-    if "id" not in data:
-        return {"success": False, "reason": "Request missing 'id' field."}
+    component = ex_exhibit.get_exhibit_component(component_uuid=uuid_str)
+    if component is None:
+        return {"success": False, "reason": "invalid_uuid"}
 
-    file_path = ex_tools.get_path(["maintenance-logs", data["id"] + ".txt"], user_file=True)
-    with ex_config.maintenanceLock:
-        response = ex_tools.delete_file(file_path)
+    component.maintenance_log = {
+        "current": {
+            "date": str(datetime.datetime.now()),
+            "status": "On floor, not working",
+            "notes": ""
+        },
+        "history": []
+    }
+    component.save()
     ex_config.last_update_time = time.time()
-    return response
+    return {"success": True}
 
 
 @app.get("/maintenance/getAllStatuses")
@@ -1200,20 +1253,18 @@ async def get_all_maintenance_statuses(request: Request):
         return {"success": False, "reason": reason}
 
     record_list = []
-    maintenance_path = ex_tools.get_path(["maintenance-logs"], user_file=True)
-    for file in os.listdir(maintenance_path):
-        if file.lower().endswith(".txt"):
-            with ex_config.maintenanceLock:
-                file_path = os.path.join(maintenance_path, file)
-                record_list.append(ex_maint.get_maintenance_report(file_path))
-    response_dict = {"success": True,
-                     "records": record_list}
-    return response_dict
+    for component in ex_config.componentList:
+        record_list.append(component.get_maintenance_report())
+    for projector in ex_config.projectorList:
+        record_list.append(projector.get_maintenance_report())
+    for wol in ex_config.wakeOnLANList:
+        record_list.append(wol.get_maintenance_report())
+    return {"success": True, "records": record_list}
 
 
-@app.post("/maintenance/getStatus")
-async def get_maintenance_status(request: Request, data: dict[str, Any]):
-    """Return the specified maintenance status"""
+@app.get("/maintenance/{uuid_str}/status")
+async def get_maintenance_status(request: Request, uuid_str: str):
+    """Return the maintenance status for the given component."""
 
     # Check permission
     token = request.cookies.get("authToken", "")
@@ -1221,22 +1272,18 @@ async def get_maintenance_status(request: Request, data: dict[str, Any]):
     if success is False:
         return {"success": False, "reason": reason}
 
-    if "id" not in data:
-        response = {"success": False,
-                    "reason": "Request missing 'id' field."}
-        return response
-    file_path = ex_tools.get_path(["maintenance-logs", data["id"] + ".txt"], user_file=True)
-    with ex_config.maintenanceLock:
-        response_dict = ex_maint.get_maintenance_report(file_path)
-    return response_dict
+    component = ex_exhibit.get_exhibit_component(component_uuid=uuid_str)
+    if component is None:
+        return {"success": False, "reason": "invalid_uuid"}
+    return {"success": True, "status": component.get_maintenance_report()}
 
 
-@app.post("/maintenance/updateStatus")
+@app.post("/maintenance/{uuid_str}/updateStatus")
 async def update_maintenance_status(request: Request,
-                                    component_id: str = Body(description='The ID of the component to update.'),
+                                    uuid_str: str,
                                     notes: str = Body(description="Text notes about this component."),
                                     status: str = Body(description="The status of the component.")):
-    """Update the given maintenance status."""
+    """Update the maintenance status for the given component."""
 
     # Check permission
     token = request.cookies.get("authToken", "")
@@ -1244,29 +1291,20 @@ async def update_maintenance_status(request: Request,
     if success is False:
         return {"success": False, "reason": reason}
 
-    file_path = ex_tools.get_path(["maintenance-logs", component_id + ".txt"], user_file=True)
-    record = {"id": component_id,
+    component = ex_exhibit.get_exhibit_component(component_uuid=uuid_str)
+    if component is None:
+        return {"success": False, "reason": "invalid_uuid"}
+
+    record = {"id": component.id,
               "date": datetime.datetime.now().isoformat(),
               "status": status,
               "notes": notes}
-    with ex_config.maintenanceLock:
-        try:
-            with open(file_path, 'a', encoding='UTF-8') as f:
-                f.write(json.dumps(record) + "\n")
-            success = True
-            reason = ""
-            ex_config.last_update_time = time.time()
-        except FileNotFoundError:
-            success = False
-            reason = f"File path {file_path} does not exist"
-        except PermissionError:
-            success = False
-            reason = f"You do not have write permission for the file {file_path}"
+    component.maintenance_log["current"] = record
+    component.maintenance_log["history"].append(record)
+    component.config["maintenance_status"] = status
+    component.save()
 
-    if success is True:
-        ex_exhibit.get_exhibit_component(component_id=component_id).config["maintenance_status"] = status
-
-    return {"success": success, "reason": reason}
+    return {"success": True}
 
 
 @app.post("/projector/create")
@@ -1334,6 +1372,15 @@ async def queue_projector_command(component: ExhibitComponent,
     """Send a command to the specified projector."""
 
     ex_exhibit.get_exhibit_component(component_id=component.id).queue_command(command)
+    return {"success": True, "reason": ""}
+
+
+@app.delete("/component/{uuid_str}/delete")
+async def remove_component(uuid_str: str):
+    """Remove the specified exhibit component"""
+
+    to_remove = ex_exhibit.get_exhibit_component(component_uuid=uuid_str)
+    to_remove.remove()
     return {"success": True, "reason": ""}
 
 
@@ -1657,7 +1704,8 @@ async def update_schedule(
         name: str = Body(),
         time_to_set: str = Body(description="The time of the action to set, expressed in any normal way."),
         action_to_set: str = Body(description="The action to set."),
-        target_to_set: list[dict] | dict | None = Body(default=None, description="The details of the component(s) that should be acted upon."),
+        target_to_set: list[dict] | dict | None = Body(default=None,
+                                                       description="The details of the component(s) that should be acted upon."),
         value_to_set: str = Body(default="", description="A value corresponding to the action."),
         schedule_id: str = Body(description="A unique identifier corresponding to the schedule entry.")):
     """Write a schedule update to disk.
@@ -1862,6 +1910,9 @@ app.mount("/",
 if __name__ == "__main__":
     print("Checking file structure...")
     ex_tools.check_file_structure()
+    ex_legacy.convert_exhibit_files() # Run early before any exhibits are loaded.
+    print("Loading components...")
+    ex_exhibit.load_components()
     print("Loading exhibits...")
     ex_exhibit.check_available_exhibits()
     print("Loading configuration...")
@@ -1870,8 +1921,7 @@ if __name__ == "__main__":
     ex_users.load_users()
     print("Loading groups...")
     ex_group.load_groups()
-    print("Loading components...")
-    ex_exhibit.load_components()
+
     ex_proj.poll_projectors()
     ex_exhibit.poll_wake_on_LAN_devices()
     check_for_software_update()

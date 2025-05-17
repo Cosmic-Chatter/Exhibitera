@@ -7,17 +7,18 @@ import os
 import shutil
 import sys
 import threading
-from typing import Any
+from typing import Annotated, Any
 import uuid
 
 # Third-party modules
-from fastapi import FastAPI, Body, Depends, File, UploadFile
+from fastapi import FastAPI, Body, Depends, File, Form, UploadFile
 from fastapi.responses import FileResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.background import BackgroundTasks
 import platform
+import requests
 import uvicorn
 
 # Exhibitera modules
@@ -30,6 +31,7 @@ import helper_utilities
 # Api Modules
 from api.system import system
 from api.definitions import definitions
+
 # If we're not on Linux, prepare to use the webview
 if sys.platform != 'linux':
     import webview
@@ -67,6 +69,9 @@ app.add_middleware(
 app.mount("/dmx_control",
           StaticFiles(directory=helper_files.get_path(["dmx_control"])),
           name="dmx_control")
+app.mount("/image_compare",
+          StaticFiles(directory=helper_files.get_path(["image_compare"])),
+          name="image_compare")
 app.mount("/InfoStation",
           StaticFiles(directory=helper_files.get_path(["InfoStation"])),
           name="InfoStation")
@@ -126,6 +131,8 @@ app.mount("/thumbnails",
 
 app.include_router(system.router)
 app.include_router(definitions.router)
+
+
 @lru_cache()
 def get_config():
     return const_config
@@ -160,7 +167,9 @@ async def serve_readme():
 async def get_available_content(config: const_config = Depends(get_config)):
     """Return a list of all files in the content directory, plus some useful system info."""
 
-    response = {"all_exhibits": helper_files.get_all_directory_contents(),
+    content, content_details = helper_files.get_all_directory_contents()
+    response = {"all_exhibits": content,
+                "content_details": content_details,
                 "definitions": helper_files.get_available_definitions(),
                 "thumbnails": helper_files.get_directory_contents("thumbnails"),
                 "system_stats": helper_utilities.get_system_stats()}
@@ -284,7 +293,8 @@ def upload_thumbnail(files: list[UploadFile] = File(),
 
 @app.post('/files/createZip')
 def create_zip(background_tasks: BackgroundTasks,
-               files: list[str] = Body(description="A list of the files to be zipped. Files must be in the content directory."),
+               files: list[str] = Body(
+                   description="A list of the files to be zipped. Files must be in the content directory."),
                zip_filename: str = Body(description="The filename of the zip file to be created.")):
     """Create a ZIP file containing the given files."""
 
@@ -294,44 +304,21 @@ def create_zip(background_tasks: BackgroundTasks,
     return FileResponse(zip_path, filename=zip_filename)
 
 
-@app.get('/system/getPlatformDetails')
-async def get_platform_details():
-    """Return details on the current operating system."""
+@app.post('/files/retrieve')
+async def retrieve_file(file_url: Annotated[str, Body(description="The URL of the file to retrieve")],
+                        path_list: Annotated[list[str], Body(description="A series of directories ending with the filename.")],
+                        config: const_config = Depends(get_config)):
+    """Download the given file and save it to disk."""
 
-    details = {
-        "architecture": platform.architecture()[0],
-        "os_version": platform.release()
-    }
+    if not helper_files.path_safe(path_list):
+        return {"success": False, "reason": "invalid_path"}
+    if not helper_files.is_url(file_url):
+        return {"success": False, "reason": "invalid_url"}
 
-    os = sys.platform
-    if os == "darwin":
-        os = 'macOS'
-    elif os == "win32":
-        os = "Windows"
-    details["os"] = os
+    path = helper_files.get_path(path_list, user_file=True)
+    success = helper_files.download_file(file_url, path)
 
-    return details
-
-
-@app.get('/system/getScreenshot', responses={200: {"content": {"image/png": {}}}}, response_class=Response)
-async def get_screenshot():
-    """Capture a screenshot and return it as a JPEG response."""
-
-    image = helper_utilities.capture_screenshot()
-    byte_array = io.BytesIO()
-    image.save(byte_array, format='JPEG', quality=85)
-    byte_array = byte_array.getvalue()
-    return Response(content=byte_array,
-                    media_type="image/jpeg",
-                    headers={
-                        "Pragma-directive": "no-cache",
-                        "Cache-directive": "no-cache",
-                        "Cache-control": "no-cache",
-                        "Pragma": "no-cache",
-                        "Expires": "0"
-                    })
-
-
+    return {"success": success}
 
 
 @app.get("/getDefaults")
@@ -342,7 +329,7 @@ async def send_defaults(config: const_config = Depends(get_config)):
     config_to_send["software_update"] = config.software_update
 
     config_to_send["availableContent"] = \
-        {"all_exhibits": helper_files.get_all_directory_contents()}
+        {"all_exhibits": helper_files.get_all_directory_contents()[0]}
 
     return config_to_send
 
@@ -483,57 +470,30 @@ async def get_available_data():
     return {"success": True, "files": helper_files.get_available_data()}
 
 
-@app.post("/gotoClip")
-async def goto_clip(data: dict[str, Any], config: const_config = Depends(get_config)):
-    """Command the client to display the given clip number"""
+@app.post("/upload")
+def upload_files(files: list[UploadFile] = File(),
+                 path: list[str] = Form(default=['content']),
+                 create_thumbnail: bool = True,
+                 config: const_config = Depends(get_config)):
+    """Receive uploaded files and save them to disk.
 
-    if "clipNumber" in data:
-        config.commandList.append("gotoClip_" + str(data["clipNumber"]))
+    `path` should be a relative path from the Exhibitera Apps directory.
+    """
 
-
-@app.post("/setAutoplay")
-async def set_autoplay(data: dict[str, Any], config: const_config = Depends(get_config)):
-    """Command the client to change the state of autoplay"""
-
-    if "state" in data:
-        if data["state"] == "on":
-            config.commandList.append("enableAutoplay")
-        elif data["state"] == "off":
-            config.commandList.append("disableAutoplay")
-        elif data["state"] == "toggle":
-            config.commandList.append("toggleAutoplay")
-
-
-@app.post("/updateActiveClip")
-async def update_active_clip(data: dict[str, Any], config: const_config = Depends(get_config)):
-    """Store the active media clip index"""
-
-    if "index" in data:
-        config.clipList["activeClip"] = data["index"]
-
-
-@app.post("/updateClipList")
-async def update_clip_list(data: dict[str, Any], config: const_config = Depends(get_config)):
-    """Store the current list of active media clips"""
-
-    if "clipList" in data:
-        config.clipList["clipList"] = data["clipList"]
-
-
-@app.post("/uploadContent")
-def upload_content(files: list[UploadFile] = File(),
-                   config: const_config = Depends(get_config)):
-    """Receive uploaded files and save them to disk"""
+    if not helper_files.path_safe(path):
+        print('upload_files: error: bad path', path)
 
     for file in files:
         filename = file.filename
 
         if not helper_files.filename_safe(filename):
-            print("upload_content: error: invalid filename: ", filename)
+            print("upload_files: error: invalid filename: ", filename)
             continue
 
-        file_path = helper_files.get_path(
-            ["content", filename], user_file=True)
+        path_with_filename = path.copy()
+        path_with_filename.append(filename)
+
+        file_path = helper_files.get_path(path_with_filename, user_file=True)
         print(f"Saving uploaded file to {file_path}")
         with config.content_file_lock:
             try:
@@ -542,11 +502,12 @@ def upload_content(files: list[UploadFile] = File(),
             finally:
                 file.file.close()
 
-        mimetype = mimetypes.guess_type(file_path, strict=False)[0]
-        if mimetype is not None:
-            th = threading.Thread(target=helper_files.create_thumbnail, args=(filename, mimetype.split("/")[0]),
-                                  daemon=True)
-            th.start()
+        if create_thumbnail:
+            mimetype = mimetypes.guess_type(file_path, strict=False)[0]
+            if mimetype is not None:
+                th = threading.Thread(target=helper_files.create_thumbnail, args=(filename, mimetype.split("/")[0]),
+                                      daemon=True)
+                th.start()
     return {"success": True}
 
 
@@ -1104,7 +1065,7 @@ def create_config():
                               url='http://localhost:' + str(
                                   available_port) + '/first_time_setup.html')
 
-        webview.start(func=bootstrap_app, args=available_port)
+        webview.start(func=bootstrap_app, args=available_port, private_mode=False)
 
 
 if __name__ == "__main__":
@@ -1180,6 +1141,9 @@ if __name__ == "__main__":
                                               webview_menu.MenuAction('DMX Control',
                                                                       partial(helper_webview.show_webview_window,
                                                                               'dmx_control')),
+                                              webview_menu.MenuAction('Image Compare',
+                                                                      partial(helper_webview.show_webview_window,
+                                                                              'image_compare_setup')),
                                               webview_menu.MenuAction('InfoStation',
                                                                       partial(helper_webview.show_webview_window,
                                                                               'infostation_setup')),
@@ -1212,4 +1176,4 @@ if __name__ == "__main__":
                 )
             ]
 
-        webview.start(func=start_app, menu=menu_items)
+        webview.start(func=start_app, menu=menu_items, private_mode=False)

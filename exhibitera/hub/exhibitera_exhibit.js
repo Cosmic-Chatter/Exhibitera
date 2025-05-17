@@ -1,3 +1,5 @@
+/* global bootstrap */
+
 import config from './config.js'
 import exConfig from './config.js'
 import * as constDMX from './exhibitera_dmx.js'
@@ -43,13 +45,13 @@ class BaseComponent {
       permission = 'edit_content'
     }
 
-    // If the element is static and the 'Show STATIC' checkbox is not ticked, bail out
-    if (this.status === exConfig.STATUS.STATIC && $('#componentsTabSettingsShowStatic').prop('checked') === false) {
+    // If the element is static and we're not showing static elements, bail out
+    if (this.status === exConfig.STATUS.STATIC && exUsers.checkUserPreference('show_static') === false) {
       return
     }
+
     const displayName = this.id
-    const thisId = this.id
-    const cleanId = this.cleanID()
+    const thisUUID = this.uuid
 
     const col = document.createElement('div')
     col.classList = 'col mt-1'
@@ -60,30 +62,92 @@ class BaseComponent {
 
     const mainButton = document.createElement('button')
     mainButton.classList = 'btn w-100 componentStatusButton ' + this.getStatus().colorClass
+    if (exUsers.checkUserPreference('components_size') === 'small') {
+      mainButton.classList.add('btn-sm')
+    } else if (exUsers.checkUserPreference('components_size') === 'large') {
+      mainButton.classList.add('btn-lg')
+    }
+
+    if (exUsers.checkUserPreference('components_layout') === 'list') {
+      if (exUsers.checkUserPreference('components_size') === 'small') {
+        mainButton.classList.add('py-0')
+      } else if (exUsers.checkUserPreference('components_size') === 'regular') {
+        mainButton.classList.add('py-1')
+      } else if (exUsers.checkUserPreference('components_size') === 'regular') {
+        mainButton.classList.add('py-2')
+      }
+    }
+
     mainButton.setAttribute('type', 'button')
-    mainButton.setAttribute('id', cleanId + '_' + group + '_MainButton')
+    mainButton.setAttribute('id', this.uuid + '_' + group + '_MainButton')
     mainButton.addEventListener('click', function () {
-      showExhibitComponentInfo(thisId, group)
+      showExhibitComponentInfo(thisUUID, group)
     }, false)
     btnGroup.appendChild(mainButton)
 
+    const row = document.createElement('div')
+    row.classList = 'row'
+    mainButton.appendChild(row)
+
+    const displayNameCol = document.createElement('div')
+    if (exUsers.checkUserPreference('components_layout') === 'grid') {
+      displayNameCol.classList = 'col-12 d-flex justify-content-center align-items-center'
+    } else {
+      if (exUsers.checkUserPreference('status_mode') === 'realtime') {
+        displayNameCol.classList = 'col-8 d-flex justify-content-start align-items-center'
+      } else {
+        displayNameCol.classList = 'col-5 d-flex justify-content-start align-items-center'
+      }
+    }
+    row.appendChild(displayNameCol)
+
     const displayNameEl = document.createElement('div')
-    displayNameEl.classList = 'fs-5 fw-medium'
+    displayNameEl.classList = 'fw-medium'
+    if (exUsers.checkUserPreference('components_size') === 'regular') {
+      displayNameEl.classList.add('fs-6')
+    } else if (exUsers.checkUserPreference('components_size') === 'large') {
+      displayNameEl.classList.add('fs-5')
+    }
     displayNameEl.innerHTML = displayName
-    mainButton.appendChild(displayNameEl)
+    displayNameCol.appendChild(displayNameEl)
+
+    const statusFieldCol = document.createElement('div')
+    if (exUsers.checkUserPreference('components_layout') === 'grid') {
+      statusFieldCol.classList = 'col-12 d-flex justify-content-center  align-items-center'
+    } else {
+      if (exUsers.checkUserPreference('status_mode') === 'realtime') {
+        statusFieldCol.classList = 'col-4 d-flex justify-content-end align-items-center'
+      } else {
+        statusFieldCol.classList = 'col-7 d-flex justify-content-end  align-items-center'
+      }
+    }
+    row.appendChild(statusFieldCol)
 
     const statusFieldEl = document.createElement('div')
-    statusFieldEl.setAttribute('id', cleanId + '_' + group + '_StatusField')
+    statusFieldEl.setAttribute('id', this.uuid + '_' + group + '_StatusField')
     statusFieldEl.innerHTML = this.getStatus().name
-    mainButton.appendChild(statusFieldEl)
+    if (exUsers.checkUserPreference('components_size') === 'small') {
+      statusFieldEl.classList.add('small')
+    } else if (exUsers.checkUserPreference('components_size') === 'large') {
+      statusFieldEl.classList.add('fs-6')
+    }
+    statusFieldCol.appendChild(statusFieldEl)
 
     const dropdownButton = document.createElement('button')
     dropdownButton.classList = 'btn dropdown-toggle dropdown-toggle-split ' + this.getStatus().colorClass
-    dropdownButton.setAttribute('id', cleanId + '_' + group + '_DropdownButton')
+    dropdownButton.setAttribute('id', this.uuid + '_' + group + '_DropdownButton')
     dropdownButton.setAttribute('type', 'button')
     dropdownButton.setAttribute('data-bs-toggle', 'dropdown')
     dropdownButton.setAttribute('aria-haspopup', 'true')
     dropdownButton.setAttribute('aria-expanded', 'false')
+    if (exUsers.checkUserPreference('components_layout') === 'list') {
+      if (exUsers.checkUserPreference('components_size') === 'small') {
+        dropdownButton.classList.add('py-0')
+      } else if (exUsers.checkUserPreference('components_size') === 'regular') {
+        dropdownButton.classList.add('py-0')
+      }
+    }
+
     btnGroup.appendChild(dropdownButton)
 
     const dropdownLabel = document.createElement('span')
@@ -93,7 +157,7 @@ class BaseComponent {
 
     const dropdownMenu = document.createElement('div')
     dropdownMenu.classList = 'dropdown-menu'
-    dropdownMenu.setAttribute('id', cleanId + '_' + group + '_DropdownMenu')
+    dropdownMenu.setAttribute('id', this.uuid + '_' + group + '_DropdownMenu')
     this.populateActionMenu(dropdownMenu, group, permission)
     btnGroup.appendChild(dropdownMenu)
     return col
@@ -102,10 +166,12 @@ class BaseComponent {
   getStatus () {
     // Return the current status, based on the selected status mode
 
-    if (document.getElementById('componentStatusModeRealtimeCheckbox').checked === true) {
-      return this.status
-    } else if (this.maintenanceStatus != null) {
-      return this.maintenanceStatus
+    if (('preferences' in exConfig.user) && ('status_mode' in exConfig.user.preferences)) {
+      if (exConfig.user.preferences.status_mode === 'realtime' && (this.status != null)) {
+        return this.status
+      } else if (exConfig.user.preferences.status_mode === 'maintenance' && (this.maintenanceStatus != null)) {
+        return this.maintenanceStatus
+      }
     }
     return exConfig.MAINTANANCE_STATUS['Off floor, not working']
   }
@@ -113,8 +179,9 @@ class BaseComponent {
   populateActionMenu (dropdownMenu, groupUUID, permission = 'view') {
     // Build out the dropdown menu options based on the this.permissions.
 
-    $(dropdownMenu).empty()
+    dropdownMenu.innerHTML = ''
     const thisId = this.id
+    const thisUUID = this.uuid
     let numOptions = 0
 
     if (permission === 'edit') {
@@ -192,7 +259,7 @@ class BaseComponent {
     detailsAction.classList = 'dropdown-item handCursor'
     detailsAction.innerHTML = 'View details'
     detailsAction.addEventListener('click', function () {
-      showExhibitComponentInfo(thisId, groupUUID)
+      showExhibitComponentInfo(thisUUID, groupUUID)
     }, false)
     dropdownMenu.appendChild(detailsAction)
   }
@@ -200,12 +267,11 @@ class BaseComponent {
   remove () {
     // Remove the component from its ComponentGroup
     for (const group of this.groups) {
-      exTools.getExhibitComponentGroup(group).removeComponent(this.id)
+      exTools.getExhibitComponentGroup(group).removeComponent(this.uuid)
     }
-
     // Remove the component from the exhibitComponents list
     const thisInstance = this
-    exConfig.exhibitComponents = $.grep(exConfig.exhibitComponents, function (el, idx) { return el.id === thisInstance.id }, true)
+    exConfig.exhibitComponents = $.grep(exConfig.exhibitComponents, function (el, idx) { return el.uuid === thisInstance.uuid }, true)
 
     // Cancel the pollingFunction
     clearInterval(this.pollingFunction)
@@ -221,7 +287,7 @@ class BaseComponent {
 
     // First, remove the component from any groups it is no longer in
     for (const group of this.groups) {
-      if (groups.includes(group) === false) exTools.getExhibitComponentGroup(group).removeComponent(this.id)
+      if (groups.includes(group) === false) exTools.getExhibitComponentGroup(group).removeComponent(this.uuid)
     }
 
     // Then, add component to any groups it was not in before
@@ -249,22 +315,24 @@ class BaseComponent {
   setStatus (status, maintenanceStatus) {
     // Set the component's status and change the GUI to reflect the change.
 
-    const cleanId = this.cleanID()
-
+    const oldStatus = this.status
     this.status = exConfig.STATUS[status]
+    const oldMaintStatus = this.maintenanceStatus
     this.maintenanceStatus = exConfig.MAINTANANCE_STATUS[maintenanceStatus]
+
+    // If nothing has changed, bail out
+    if ((oldStatus === this.status) && (oldMaintStatus === this.maintenanceStatus)) return
 
     for (const group of this.groups) {
       // Make sure this is a group we can actually see
       if (exUsers.checkUserPermission('components', 'view', group) === false) return
 
       // Update the GUI based on which view mode we're in
-      const statusFieldEl = document.getElementById(cleanId + '_' + group + '_StatusField')
+      const statusFieldEl = document.getElementById(this.uuid + '_' + group + '_StatusField')
       if (statusFieldEl == null) return // This is a hidden static component
 
       let btnClass
-      if (document.getElementById('componentStatusModeRealtimeCheckbox').checked === true) {
-      // Real-time status mode
+      if (exUsers.checkUserPreference('status_mode') === 'realtime') {
         statusFieldEl.innerHTML = this.status.name
         btnClass = this.status.colorClass
       } else {
@@ -274,8 +342,13 @@ class BaseComponent {
       }
 
       // Strip all existing classes, then add the new one
-      $('#' + cleanId + '_' + group + '_MainButton').removeClass('btn-primary btn-warning btn-danger btn-success btn-info').addClass(btnClass)
-      $('#' + cleanId + '_' + group + '_DropdownButton').removeClass('btn-primary btn-warning btn-danger btn-success btn-info').addClass(btnClass)
+      const mainButton = document.getElementById(this.uuid + '_' + group + '_MainButton')
+      mainButton.classList.remove('btn-primary', 'btn-warning', 'btn-danger', 'btn-success', 'btn-info')
+      mainButton.classList.add(btnClass)
+
+      const dropdownButton = document.getElementById(this.uuid + '_' + group + '_DropdownButton')
+      dropdownButton.classList.remove('btn-primary', 'btn-warning', 'btn-danger', 'btn-success', 'btn-info')
+      dropdownButton.classList.add(btnClass)
     }
   }
 
@@ -337,39 +410,6 @@ class ExhibitComponent extends BaseComponent {
     // Return the url for the helper of this component.
 
     return this.helperAddress
-  }
-
-  remove (deleteConfigurtion = true) {
-    if (this.status === exConfig.STATUS.STATIC) {
-      // Remove the component from the static system configuration
-
-      if (deleteConfigurtion === true) {
-        // First, get the current static configuration
-        exTools.makeServerRequest({
-          method: 'GET',
-          endpoint: '/system/static/getConfiguration'
-        })
-          .then((result) => {
-            let staticConfig = result.configuration
-            // Next, remove this element
-            const thisID = this.id
-            staticConfig = staticConfig.filter(function (obj) {
-              return obj.id !== thisID
-            })
-
-            // Finally, send the configuration back for writing
-            exTools.makeServerRequest({
-              method: 'POST',
-              endpoint: '/system/static/updateConfiguration',
-              params: {
-                configuration: staticConfig
-              }
-            })
-          })
-      }
-
-      super.remove()
-    }
   }
 
   updateFromServer (update) {
@@ -439,11 +479,11 @@ class Projector extends BaseComponent {
       if ('error_status' in state) {
         this.state.error_status = state.error_status
         const errorList = {}
-        Object.keys(state.error_status).forEach((item, i) => {
+        for (const item of Object.keys(state.error_status)) {
           if ((state.error_status)[item] !== 'ok') {
             errorList[item] = (state.error_status)[item]
           }
-        })
+        }
         exConfig.errorDict[this.id] = errorList
         exTools.rebuildNotificationList()
       }
@@ -469,44 +509,47 @@ class ExhibitComponentGroup {
 
   addComponent (component) {
     this.components.push(component)
-    this.sortComponentList()
+    this.sortComponentList(exUsers.checkUserPreference('sort_order'))
   }
 
-  sortComponentList () {
+  sortComponentList (method) {
     // Sort the component list by ID and then rebuild the HTML
     // representation in order
 
-    this.components.sort(
-      function (a, b) {
-        if (a.status === exConfig.STATUS.STATIC && b.status !== exConfig.STATUS.STATIC) {
-          return 1
-        } else if (b.status === exConfig.STATUS.STATIC && a.status !== exConfig.STATUS.STATIC) {
-          return -1
-        }
-        if (a.status.value > b.status.value) {
-          return -1
-        } else if (b.status.value > a.status.value) {
-          return 1
-        } else if (a.id > b.id) {
-          return 1
-        } else if (b.id > a.id) {
-          return -1
-        }
-        return 0
-      }
-    )
+    if (method === 'alphabetical') {
+      this.components.sort((a, b) => {
+        const aName = a.id.toLowerCase()
+        const bName = b.id.toLowerCase()
+        return aName.localeCompare(bName)
+      })
+    } else if (method === 'status') {
+      this.components.sort((a, b) => {
+        const aName = a.id.toLowerCase()
+        const bName = b.id.toLowerCase()
+        const aStatus = a.getStatus().value
+        const bStatus = b.getStatus().value
+        if (aStatus > bStatus) return -1
+        if (bStatus > aStatus) return 1
+
+        // Fall back to alphabetical if they are the same
+        return aName.localeCompare(bName)
+      })
+    }
   }
 
-  removeComponent (id) {
+  removeComponent (uuid) {
     // Remove a component based on its id
 
-    this.components = $.grep(this.components, function (el, idx) { return el.id === id }, true)
+    this.components = $.grep(this.components, function (el, idx) { return el.uuid === uuid }, true)
+  }
 
-    // If the group now has seven components, make sure we're using the small
-    // size rendering now by rebuilding the interface
-    if (this.components.length === 7) {
-      rebuildComponentInterface()
+  getStatus () {
+    // Return the most problematic status from the components
+    let status = exConfig.STATUS.STATIC
+    for (const component of this.components) {
+      if (component.status.value > status.value) status = component.status
     }
+    return status
   }
 
   buildHTML () {
@@ -515,6 +558,10 @@ class ExhibitComponentGroup {
 
     // First, make sure we have permission to view this group.
     if (exUsers.checkUserPermission('components', 'view', this.group) === false) return
+
+    // Then, make sure the user wants to display this group
+    const groupPrefs = exUsers.checkUserPreference('show_groups')
+    if ((this.group in groupPrefs) && groupPrefs[this.group] === false) return
 
     let permission = 'view'
     if (exUsers.checkUserPermission('components', 'edit', this.group) === true) {
@@ -536,26 +583,28 @@ class ExhibitComponentGroup {
     const displayRefresh = 'block'
 
     // Cycle through the components and count how many we will actually be displaying
-    const showStatic = $('#componentsTabSettingsShowStatic').prop('checked')
+    const showStatic = exUsers.checkUserPreference('show_static')
     let numToDisplay = 0
-    this.components.forEach((component) => {
+    for (const component of this.components) {
       if (showStatic || component.status !== exConfig.STATUS.STATIC) {
         numToDisplay += 1
       }
-    })
+    }
 
     if (numToDisplay === 0) {
       // Nothing to do
       return
     }
 
-    // Allow groups with lots of components to display with double width
+    // Allow groups with lots of components to display with double width in grid view
     let classString
-    if (numToDisplay > 7) {
-      classString = 'col-12 col-lg-8 col-xl-6 mt-4'
-    } else {
-      classString = 'col-12 col-md-6 col-lg-4 col-xl-3 mt-4'
-    }
+    if (exUsers.checkUserPreference('components_layout') === 'grid') {
+      if (numToDisplay > 7) {
+        classString = 'col-12 col-lg-8 col-xl-6 mt-4'
+      } else {
+        classString = 'col-12 col-md-6 col-lg-4 col-xl-3 mt-4'
+      }
+    } else classString = 'col-12 col-md-6 col-lg-4 col-xl-4 mt-4'
 
     const col = document.createElement('div')
     col.classList = classString
@@ -565,7 +614,10 @@ class ExhibitComponentGroup {
     col.appendChild(btnGroup)
 
     const mainButton = document.createElement('button')
-    mainButton.classList = 'btn btn-secondary w-100 btn-lg'
+    mainButton.classList = 'btn btn-secondary w-100'
+    if (exUsers.checkUserPreference('components_size') === 'large') {
+      mainButton.classList.add('btn-lg')
+    }
     mainButton.setAttribute('type', 'button')
     mainButton.innerHTML = exTools.getGroupName(this.group)
     btnGroup.appendChild(mainButton)
@@ -617,19 +669,23 @@ class ExhibitComponentGroup {
     const componentList = document.createElement('div')
     componentList.classList = 'row'
     componentList.setAttribute('id', this.cleanID() + 'ComponentList')
-    if (numToDisplay > 7) {
-      componentList.classList.add('row-cols-2', 'row-cols-sm-3', 'row-cols-md-4')
+    if (exUsers.checkUserPreference('components_layout') === 'grid') {
+      if (numToDisplay > 7) {
+        componentList.classList.add('row-cols-2', 'row-cols-sm-3', 'row-cols-md-4')
+      } else {
+        componentList.classList.add('row-cols-2', 'row-cols-sm-3', 'row-cols-md-2')
+      }
     } else {
-      componentList.classList.add('row-cols-2', 'row-cols-sm-3', 'row-cols-md-2')
+      componentList.classList.add('row-cols-1')
     }
 
     col.appendChild(componentList)
 
     document.getElementById('componentGroupsRow').appendChild(col)
-    this.components.forEach((component) => {
+    for (const component of this.components) {
       const componentToAdd = component.buildHTML(this.group)
       if (componentToAdd != null) componentList.appendChild(componentToAdd)
-    })
+    }
   }
 }
 
@@ -684,6 +740,78 @@ export function updateComponentFromServer (update) {
   } else {
     createComponentFromUpdate(update)
   }
+}
+
+export function configureVisibleGroups () {
+  // Set up the show/hide groups modal and show it.
+
+  const groupListEl = document.getElementById('showHideGroupsList')
+  const groupPrefs = exUsers.checkUserPreference('show_groups')
+
+  groupListEl.innerHTML = ''
+
+  // Sort groups by name field
+  const keys = Object.keys(exConfig.groups).sort((a, b) => {
+    const aName = exConfig.groups[a].name.toLowerCase()
+    const bName = exConfig.groups[b].name.toLowerCase()
+    if (aName > bName) {
+      return 1
+    } else if (bName > aName) {
+      return -1
+    }
+    return 0
+  })
+
+  for (const key of keys) {
+    const group = exConfig.groups[key]
+    // Make sure user is allowed to see group
+    if (exUsers.checkUserPermission('components', 'view', group.uuid) === false) continue
+
+    const col = document.createElement('div')
+    col.classList = 'col'
+    groupListEl.appendChild(col)
+
+    const formCheck = document.createElement('div')
+    formCheck.classList = 'form-check'
+    col.appendChild(formCheck)
+
+    const check = document.createElement('input')
+    check.classList = 'form-check-input showHideGroupCheckbox'
+    check.setAttribute('type', 'checkbox')
+    check.setAttribute('id', 'showHideGroup_' + group.uuid)
+    check.setAttribute('data-uuid', group.uuid)
+    if (group.uuid in groupPrefs) {
+      if (groupPrefs[group.uuid] === true) {
+        check.checked = true
+      } else check.checked = false
+    } else check.checked = true
+    formCheck.appendChild(check)
+
+    const checkLabel = document.createElement('label')
+    checkLabel.classList = 'form-check-label'
+    checkLabel.setAttribute('for', 'showHideGroup_' + group.uuid)
+    checkLabel.innerHTML = group.name
+    formCheck.appendChild(checkLabel)
+  }
+
+  exTools.showModal('#showHideGroupsModal')
+}
+
+export function updateVisibleGroupsPreference () {
+  // Collect the checked/unchecked groups and update the user preference
+
+  const prefDict = {}
+
+  for (const el of Array.from(document.querySelectorAll('.showHideGroupCheckbox'))) {
+    prefDict[el.getAttribute('data-uuid')] = el.checked
+  }
+
+  exUsers.updateUserPreferences({
+    show_groups: prefDict
+  })
+    .then(rebuildComponentInterface)
+
+  exTools.hideModal('#showHideGroupsModal')
 }
 
 export function sendGroupCommand (group, cmd) {
@@ -742,7 +870,7 @@ function componentGoodConnection (screenshot = true) {
   if (screenshot) document.getElementById('componentInfoModalViewScreenshot').style.display = 'block'
 }
 
-function showExhibitComponentInfo (id, groupUUID) {
+function showExhibitComponentInfo (uuid, groupUUID) {
   // This sets up the componentInfoModal with the info from the selected
   // component and shows it on the screen.
 
@@ -780,12 +908,12 @@ function showExhibitComponentInfo (id, groupUUID) {
     document.getElementById('componentInfoModalMaintenanceTabButton').style.display = 'none'
   }
 
-  const obj = getExhibitComponent(id)
+  const obj = getExhibitComponentByUUID(uuid)
+  const componentInfoModal = document.getElementById('componentInfoModal')
+  componentInfoModal.setAttribute('data-id', obj.id)
+  componentInfoModal.setAttribute('data-uuid', uuid)
 
-  $('#componentInfoModal').data('id', id)
-  document.getElementById('componentInfoModal').setAttribute('data-uuid', obj.uuid)
-
-  document.getElementById('componentInfoModalTitle').innerHTML = id
+  document.getElementById('componentInfoModalTitle').innerHTML = obj.id
 
   // Set up the upper-right dropdown menu with helpful details
   document.getElementById('exhibiteraComponentIdButton').innerHTML = convertAppIDtoDisplayName(obj.exhibiteraAppId)
@@ -851,8 +979,6 @@ function showExhibitComponentInfo (id, groupUUID) {
   updateComponentInfoDescription(obj.description)
 
   // Show/hide warnings and checkboxes as appropriate
-  $('#componentInfoModalThumbnailCheckbox').prop('checked', true)
-  $('#componentSaveConfirmationButton').hide()
   clearComponentInfoStatusMessage()
 
   document.getElementById('componentInfoModalViewScreenshot').style.display = 'none'
@@ -861,11 +987,12 @@ function showExhibitComponentInfo (id, groupUUID) {
   document.getElementById('componentInfoModalWakeOnLANSettings').style.display = 'none'
 
   $('#componentInfoModaProejctorTabButton').hide()
-  $('#componentInfoModalModelGroup').hide()
+  document.getElementById('componentInfoModalModelGroup').style.display = 'none'
+
   document.getElementById('componentInfoModalProjectorSettings').style.display = 'none'
 
   // Populate maintenance details
-  constMaint.setComponentInfoModalMaintenanceStatus(id)
+  constMaint.setComponentInfoModalMaintenanceStatus(uuid, obj.id)
 
   // Definition tab
   document.getElementById('definitionTabAppFilterSelect').value = 'all'
@@ -882,7 +1009,7 @@ function showExhibitComponentInfo (id, groupUUID) {
   document.getElementById('componentInfoModalDefinitionsTabButton').style.display = 'none'
 
   $('#componentInfoModalDMXTabButton').hide()
-  $('#contentUploadSystemStatsView').hide()
+  document.getElementById('contentUploadSystemStatsView').style.display = 'none'
 
   // Based on the component type, configure the various tabs and panes
   if (obj.type === 'exhibit_component') {
@@ -910,7 +1037,7 @@ function showExhibitComponentInfo (id, groupUUID) {
   document.getElementById('componentInfoModalBasicSettingsSaveButton').style.display = 'none'
 
   // Make the modal visible
-  $('#componentInfoModal').modal('show')
+  exTools.showModal('#componentInfoModal')
 }
 
 function configureComponentInfoModalForExhibitComponent (obj, permission) {
@@ -932,13 +1059,12 @@ function configureComponentInfoModalForExhibitComponent (obj, permission) {
     groupSelect.appendChild(option)
   }
 
-  $('#componentInfoModalSettingsAppName').val(obj.exhibiteraAppId)
   $('#componentInfoModalFullSettingsButton').prop('href', obj.helperAddress + '?showSettings=true')
-  $('#componentInfoModalSettingsAutoplayAudio').val(String(obj.permissions.audio))
-  $('#componentInfoModalSettingsAllowRefresh').val(String(obj.permissions.refresh))
-  $('#componentInfoModalSettingsAllowRestart').val(String(obj.permissions.restart))
-  $('#componentInfoModalSettingsAllowShutdown').val(String(obj.permissions.shutdown))
-  $('#componentInfoModalSettingsAllowSleep').val(String(obj.permissions.sleep))
+  document.getElementById('componentInfoModalSettingsAutoplayAudio').value = String(obj.permissions.audio)
+  document.getElementById('componentInfoModalSettingsAllowRefresh').value = String(obj.permissions.refresh)
+  document.getElementById('componentInfoModalSettingsAllowRestart').value = String(obj.permissions.restart)
+  document.getElementById('componentInfoModalSettingsAllowShutdown').value = String(obj.permissions.shutdown)
+  document.getElementById('componentInfoModalSettingsAllowSleep').value = String(obj.permissions.sleep)
 
   document.getElementById('componentInfoModalSettingsPermissionsPane').style.display = 'flex'
   document.getElementById('componentInfoModalFullSettingsButton').style.display = 'inline-block'
@@ -985,44 +1111,37 @@ function configureComponentInfoModalForProjector (obj) {
   // // Projector status pane
   document.getElementById('componentInfoModalProjectorWarningList').innerHTML = ''
 
-  if (('error_status' in obj.state) && (obj.state.error_status.constructor === Object)) {
-    if (('lamp' in obj.state.error_status) && (obj.state.error_status.lamp !== 'ok')) {
+  if (obj?.state?.error_status?.constructor === Object) {
+    if ((obj?.state?.error_status?.lamp ?? 'ok') !== 'ok') {
       createProjectorWarningEntry('Lamp', obj.state.error_status.lamp, 'A projector lamp or light engine may have blown.')
     }
-    if (('fan' in obj.state.error_status) && (obj.state.error_status.fan !== 'ok')) {
+    if ((obj?.state?.error_status?.fan ?? 'ok') !== 'ok') {
       createProjectorWarningEntry('Fan', obj.state.error_status.fan, 'Fan warnings or errors are often related to the dust filter.')
     }
-    if (('filter' in obj.state.error_status) && (obj.state.error_status.filter !== 'ok')) {
+    if ((obj?.state?.error_status?.filter ?? 'ok') !== 'ok') {
       createProjectorWarningEntry('Filter', obj.state.error_status.filter, 'Filter warnings or errors usually indicate the dust filter needs to be cleaned.')
     }
-    if (('cover' in obj.state.error_status) && (obj.state.error_status.cover !== 'ok')) {
+    if ((obj?.state?.error_status?.cover ?? 'ok') !== 'ok') {
       createProjectorWarningEntry('Cover', obj.state.error_status.cover)
     }
-    if (('temperature' in obj.state.error_status) && (obj.state.error_status.temperature !== 'ok')) {
+    if ((obj?.state?.error_status?.temperature ?? 'ok') !== 'ok') {
       createProjectorWarningEntry('Temperature', obj.state.error_status.temperature, 'The projector may be overheating.')
     }
-    if (('other' in obj.state.error_status) && (obj.state.error_status.other !== 'ok')) {
+    if ((obj?.state?.error_status?.other ?? 'ok') !== 'ok') {
       createProjectorWarningEntry('Other', obj.state.error_status.other, "An unspecified error. Consult the projector's menu for more information")
     }
-  } else {
-    $('#projectorInfoLampState').html('-')
-    $('#projectorInfoFanState').html('-')
-    $('#projectorInfoFilterState').html('-')
-    $('#projectorInfoCoverState').html('-')
-    $('#projectorInfoOtherState').html('-')
-    $('#projectorInfoTempState').html('-')
   }
   if ('model' in obj.state) {
-    $('#componentInfoModalModel').html(obj.state.model)
-    $('#componentInfoModalModelGroup').show()
+    document.getElementById('componentInfoModalModel').innerHTML = obj.state.model
+    document.getElementById('componentInfoModalModelGroup').style.display = 'block'
   } else {
-    $('#componentInfoModalModelGroup').hide()
+    document.getElementById('componentInfoModalModelGroup').style.display = 'none'
   }
 
-  if ('lamp_status' in obj.state && obj.state.lamp_status !== '') {
+  if ((obj?.state?.lamp_status ?? '') !== '') {
     const lampList = obj.state.lamp_status
 
-    $('#componentInfoModalProjectorLampList').empty()
+    document.getElementById('componentInfoModalProjectorLampList').innerHTML = ''
     for (let i = 0; i < lampList.length; i++) {
       createProjectorLampStatusEntry(lampList[i], i)
     }
@@ -1038,9 +1157,7 @@ function configureComponentInfoModalForProjector (obj) {
   groupSelect.appendChild(defaultOption)
   for (const group of exConfig.groups) {
     const option = new Option(group.name, group.uuid)
-    if (obj.groups.includes(group.uuid)) {
-      option.selected = true
-    }
+    if (obj.groups.includes(group.uuid)) option.selected = true
     groupSelect.appendChild(option)
   }
 
@@ -1127,7 +1244,7 @@ function configureComponentInfoModalForWakeOnLAN (obj) {
 function configureNewDefinitionOptions (obj) {
   // Use the given IP address to configure the URLs for creating new definitions.
 
-  Array.from(document.querySelectorAll('.defintion-new-option')).forEach((el) => {
+  for (const el of document.querySelectorAll('.defintion-new-option')) {
     const app = el.getAttribute('data-app')
     if (app === 'word_cloud_input') {
       el.href = obj.getHelperURL() + '/word_cloud/setup_input.html'
@@ -1136,7 +1253,7 @@ function configureNewDefinitionOptions (obj) {
     } else {
       el.href = obj.getHelperURL() + '/' + app + '/setup.html'
     }
-  })
+  }
 }
 
 export function updateProjectorFromInfoModal () {
@@ -1316,6 +1433,7 @@ export function convertAppIDtoDisplayName (appName) {
     const exhibiteraAppIdDisplayNames = {
       dmx_control: 'DMX Control',
       heartbeat: 'Heartbeat',
+      image_compare: 'Image Compare',
       infostation: 'InfoStation',
       media_browser: 'Media Browser',
       media_player: 'Media Player',
@@ -1345,7 +1463,7 @@ function createProjectorLampStatusEntry (entry, number) {
   const containerCol = document.createElement('div')
   containerCol.classList = 'col-6 col-sm-4 mb-3'
   $(containerCol).data('config', entry)
-  $('#componentInfoModalProjectorLampList').append(containerCol)
+  document.getElementById('componentInfoModalProjectorLampList').appendChild(containerCol)
 
   const containerRow = document.createElement('div')
   containerRow.classList = 'row px-1'
@@ -1463,21 +1581,16 @@ export function removeExhibitComponentFromModal () {
   // Called when the Remove button is clicked in the componentInfoModal.
   // Send a message to the server to remove the component.
 
-  const id = $('#componentInfoModalTitle').html()
-
+  const uuid = document.getElementById('componentInfoModal').getAttribute('data-uuid')
+  console.log(uuid)
   exTools.makeServerRequest({
-    method: 'POST',
-    endpoint: '/exhibit/removeComponent',
-    params: {
-      component: {
-        id
-      }
-    }
+    method: 'DELETE',
+    endpoint: '/component/' + uuid + '/delete'
   })
     .then((response) => {
       if ('success' in response && response.success === true) {
-        getExhibitComponent(id).remove()
-        $('#componentInfoModal').modal('hide')
+        getExhibitComponentByUUID(uuid).remove()
+        exTools.hideModal('#componentInfoModal')
       }
     })
 }
@@ -1485,9 +1598,11 @@ export function removeExhibitComponentFromModal () {
 function populateComponentDefinitionList (definitions, thumbnails, permission) {
   // Take a dictionary of definitions and convert it to GUI elements.
 
-  const component = getExhibitComponent($('#componentInfoModal').data('id'))
+  const id = document.getElementById('componentInfoModal').getAttribute('data-id')
+  const component = getExhibitComponent(id)
 
-  $('#componentInfoModalDefinitionList').empty()
+  const componentInfoModalDefinitionList = document.getElementById('componentInfoModalDefinitionList')
+  componentInfoModalDefinitionList.innerHTML = ''
 
   const sortedByName = Object.keys(definitions).sort((a, b) => {
     try {
@@ -1500,8 +1615,8 @@ function populateComponentDefinitionList (definitions, thumbnails, permission) {
     }
     return 0
   })
-  sortedByName.forEach((uuid) => {
-    if ((uuid.slice(0, 9) === '__preview') || uuid.trim() === '') return
+  for (const uuid of sortedByName) {
+    if (uuid.startsWith('__preview') || uuid.trim() === '') continue
 
     const definition = definitions[uuid]
 
@@ -1558,9 +1673,14 @@ function populateComponentDefinitionList (definitions, thumbnails, permission) {
 
     const dropdownMenu = document.createElement('div')
     dropdownMenu.classList = 'dropdown-menu'
-    let html = `
-    <a class="dropdown-item" href="${component.getHelperURL() + '/' + definition.app + '.html?standalone=true&definition=' + uuid}" target="_blank">Preview</a>
-    `
+
+    const previewOption = document.createElement('a')
+    previewOption.classList = 'dropdown-item'
+    previewOption.setAttribute('href', component.getHelperURL() + '/' + definition.app + '.html?standalone=true&definition=' + uuid)
+    previewOption.setAttribute('target', '_blank')
+    previewOption.innerHTML = 'Preview'
+    dropdownMenu.appendChild(previewOption)
+
     if (permission === 'edit' || permission === 'edit_content') {
       let app = definition.app
       let page = 'setup.html'
@@ -1574,11 +1694,23 @@ function populateComponentDefinitionList (definitions, thumbnails, permission) {
         page = 'setup_viewer.html'
       }
 
-      html += `
-      <a class="dropdown-item" href="${component.getHelperURL() + '/' + app + '/' + page + '?definition=' + uuid}" target="_blank">Edit</a>
-      `
+      const editOption = document.createElement('a')
+      editOption.classList = 'dropdown-item'
+      editOption.setAttribute('href', component.getHelperURL() + '/' + app + '/' + page + '?definition=' + uuid)
+      editOption.setAttribute('target', '_blank')
+      editOption.innerHTML = 'Edit'
+      dropdownMenu.appendChild(editOption)
+
+      if (['image_compare', 'media_player', 'timelapse_viewer', 'voting_kiosk', 'word_cloud_input', 'word_cloud_viewer'].includes(definition.app)) {
+        const copyOption = document.createElement('a')
+        copyOption.classList = 'dropdown-item'
+        copyOption.innerHTML = 'Copy to...'
+        copyOption.addEventListener('click', () => {
+          showCopyDefinitionModal(component.uuid, definition.uuid, definition.name)
+        })
+        dropdownMenu.appendChild(copyOption)
+      }
     }
-    dropdownMenu.innerHTML = html
     btnGroup.appendChild(dropdownMenu)
 
     if (thumbnails.includes(uuid + '.mp4')) {
@@ -1634,21 +1766,291 @@ function populateComponentDefinitionList (definitions, thumbnails, permission) {
 
     row.appendChild(app)
 
-    $('#componentInfoModalDefinitionList').append(col)
+    componentInfoModalDefinitionList.appendChild(col)
+  }
+}
+
+function showCopyDefinitionModal (componentUUID, definitionUUID, definitionName) {
+  // Set up and show the model for copying a definition from one component to another
+
+  const component = getExhibitComponentByUUID(componentUUID)
+  const modal = document.getElementById('copyDefinitionModal')
+  modal.setAttribute('data-definition', definitionUUID)
+  modal.setAttribute('data-component', componentUUID)
+
+  const submitButton = document.getElementById('copyDefinitionModalSubmitButton')
+  submitButton.innerHTML = 'Copy'
+  submitButton.classList.remove('btn-info')
+  submitButton.classList.add('btn-primary')
+  submitButton.style.display = 'none'
+
+  const url = component.getHelperURL()
+  if (url == null) {
+    // We don't have enough information to contact the helper
+    console.log('Error: No helper address')
+  }
+
+  let content = []
+  exTools.makeRequest({
+    method: 'GET',
+    url,
+    endpoint: '/definitions/' + definitionUUID + '/getContentList'
+  }).then((result) => {
+    console.log(result)
+
+    // Populate source files
+    const sourceDiv = document.getElementById('copyDefinitionModalSourceFiles')
+    sourceDiv.innerHTML = ''
+
+    sourceDiv.appendChild(copyDefinitionModalCreateSourceHTML(definitionName, '', true))
+    if (result.content && result.content.length > 0) {
+      content = result.content
+      modal.setAttribute('data-sourceFiles', JSON.stringify(result.content))
+
+      let supportingText = ' supporting file'
+      if (result.content.length > 1) supportingText = ' supporting files'
+      sourceDiv.appendChild(copyDefinitionModalCreateSourceHTML(String(result.content.length) + supportingText, result?.total_size ?? ''))
+    } else {
+      modal.setAttribute('data-sourceFiles', JSON.stringify([]))
+    }
+
+    // Populate destination options
+    const destDiv = document.getElementById('copyDefinitionModalDestinations')
+    destDiv.innerHTML = ''
+
+    const compsByGroup = exTools.sortComponentsByGroup()
+    const groups = Object.keys(compsByGroup)
+    let totalComps = 0
+
+    for (const group of groups) {
+      const comps = compsByGroup[group]
+
+      const compsToShow = []
+      for (const comp of comps) {
+        if (comp.type !== 'exhibit_component') continue
+        if (comp.status !== exConfig.STATUS.ONLINE && comp.status !== exConfig.STATUS.ACTIVE) continue
+        if (comp.uuid === componentUUID) continue
+        totalComps += 1
+        compsToShow.push(comp)
+      }
+      if (compsToShow.length === 0) continue
+
+      const label = document.createElement('label')
+      label.innerHTML = exTools.getGroup(group)?.name ?? group
+      label.classList = 'text-secondary'
+      destDiv.appendChild(label)
+
+      for (const comp of compsToShow) {
+        destDiv.appendChild(copyDefinitionModalCreateDestinationHTML(comp, group, definitionUUID, content))
+      }
+    }
+
+    if (totalComps === 0) destDiv.innerHTML = '<i>No available components</i>'
+
+    exTools.hideModal('#componentInfoModal')
+    exTools.showModal('#copyDefinitionModal')
   })
+}
+
+function copyDefinitionModalCreateDestinationHTML (component, group, def, content) {
+  // Take an exhibit component and build an HTML representation.
+  // Check if the given destination contains a definition or content of the
+  // same name and warn the user.
+
+  const modal = document.getElementById('copyDefinitionModal')
+  const submitButton = document.getElementById('copyDefinitionModalSubmitButton')
+
+  const col = document.createElement('div')
+  col.classList = 'col-12'
+
+  const checkGroup = document.createElement('div')
+  checkGroup.classList = 'form-check'
+  col.appendChild(checkGroup)
+
+  const input = document.createElement('input')
+  input.classList = 'form-check-input copyDest'
+  input.setAttribute('type', 'checkbox')
+  input.setAttribute('id', 'copyOption_' + group + '_' + component.uuid)
+  input.setAttribute('data-uuid', component.uuid)
+  input.value = ''
+  input.addEventListener('change', (ev) => {
+    const checked = modal.querySelectorAll('input.copyDest:checked')
+    if (checked.length > 0) {
+      submitButton.style.display = 'block'
+    } else submitButton.style.display = 'none'
+  })
+  checkGroup.appendChild(input)
+
+  const label = document.createElement('label')
+  label.classList = 'form-check-label'
+  label.setAttribute('for', 'copyOption_' + group + '_' + component.uuid)
+  label.innerHTML = component.id
+  checkGroup.appendChild(label)
+
+  label.innerHTML += `<span data-uuid="${component.uuid}" class="ms-2 badge text-bg-success copy-success" style="display:none;">Copied</span>`
+  label.innerHTML += `<span data-uuid="${component.uuid}" class="ms-2 badge text-bg-danger copy-fail" style="display:none;">Error</span>`
+
+  // Check if the given definition already exists on the destination
+  exTools.makeRequest({
+    method: 'GET',
+    url: component.getHelperURL(),
+    endpoint: '/getAvailableContent'
+  })
+    .then((result) => {
+      if (def in result.definitions) {
+        label.innerHTML += '<span class="badge bg-warning ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="This definition already exists here and will be overwritten." style="font-size: 0.55em;">!</span>'
+      }
+      for (const file of content) {
+        if (result.all_exhibits.includes(file.name)) {
+          label.innerHTML += `<span class="badge bg-warning ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="${file.name} already exists here and will be overwritten." style="font-size: 0.55em;">!</span>`
+        }
+      }
+      // Enable all tooltips
+      const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+      const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+    })
+
+  return col
+}
+
+function copyDefinitionModalCreateSourceHTML (filename, sizeText, isDefinition = false) {
+  // Create an HTML representation of the given file for the definitionCopyModal.
+
+  const col = document.createElement('div')
+  col.classList = 'col-12'
+
+  const row = document.createElement('div')
+  row.classList = 'row gy-2'
+  col.appendChild(row)
+
+  const name = document.createElement('div')
+  name.classList = 'col-8'
+  if (isDefinition) {
+    name.classList.add('fw-bold')
+  } else {
+    name.classList.add('ps-4')
+  }
+  name.innerHTML = filename
+  row.appendChild(name)
+
+  const size = document.createElement('div')
+  size.classList = 'col-4'
+  size.innerHTML = sizeText
+  row.appendChild(size)
+
+  return col
+}
+
+export async function copyDefinitionModalPerformCopy () {
+  // Collect information from the modal and trigger the file copy to each destinaition.
+
+  const modal = document.getElementById('copyDefinitionModal')
+  const submitButton = document.getElementById('copyDefinitionModalSubmitButton')
+  submitButton.innerHTML = 'Copying...'
+  submitButton.classList.add('btn-info')
+  submitButton.classList.remove('btn-primary')
+
+  // Sources
+  const definitionUUID = modal.getAttribute('data-definition')
+  const sourceUUID = modal.getAttribute('data-component')
+  const sourceComponent = getExhibitComponentByUUID(sourceUUID)
+  const filesToCopy = JSON.parse(modal.getAttribute('data-sourceFiles')) ?? []
+
+  // Destinations
+  const checkedElements = modal.querySelectorAll('input.copyDest:checked')
+  const destComponents = []
+  for (const el of checkedElements) {
+    const destUUID = el.getAttribute('data-uuid')
+    if (destUUID != null) {
+      const destComp = getExhibitComponentByUUID(destUUID)
+      if (destComp != null) destComponents.push(destComp)
+    }
+  }
+
+  // Cycle the destinations and copy the files
+  let error = false
+  for (const destComp of destComponents) {
+    const destUrl = destComp.getHelperURL()
+    if (destUrl == null) continue
+
+    try {
+      await exTools.makeRequest({
+        method: 'POST',
+        url: destUrl,
+        endpoint: '/files/retrieve',
+        params: {
+          file_url: sourceComponent.getHelperURL() + '/definitions/' + definitionUUID + '.json',
+          path_list: ['definitions', definitionUUID + '.json']
+        }
+      })
+
+      for (const file of filesToCopy) {
+        await exTools.makeRequest({
+          method: 'POST',
+          url: destUrl,
+          endpoint: '/files/retrieve',
+          params: {
+            file_url: sourceComponent.getHelperURL() + '/content/' + file.name,
+            path_list: ['content', file.name]
+          }
+        })
+      }
+      const successBadge = Array.from(checkedElements).map(node => node.parentElement.querySelector(`span.copy-success[data-uuid="${destComp.uuid}"]`)).find(el => el !== null)
+      successBadge.style.display = 'inline'
+    } catch (e) {
+      // This might happen if the component loses connection or is not on Ex5.3+
+      error = true
+      const failBadge = Array.from(checkedElements).map(node => node.parentElement.querySelector(`span.copy-fail[data-uuid="${destComp.uuid}"]`)).find(el => el !== null)
+      failBadge.style.display = 'inline'
+    }
+  }
+  if (error === false) {
+    exTools.hideModal(modal)
+  } else {
+    const button = document.getElementById('copyDefinitionModalSubmitButton')
+    button.style.display = 'none'
+  }
 }
 
 function handleDefinitionItemSelection (uuid) {
   // Called when a user clicks on the definition in the componentInfoModal.
 
-  $('.definition-entry').removeClass('definition-selected')
-  $('.definition-name').removeClass('btn-success')
-  $('.definition-name').addClass('btn-primary')
-  $('.definition-dropdown').removeClass('btn-success')
-  $('.definition-dropdown').addClass('btn-primary')
-  $('#definitionButton_' + uuid).addClass('definition-selected')
-  $('#definitionButtonName_' + uuid).addClass('btn-success')
-  $('#definitionButtonDropdown_' + uuid).addClass('btn-success')
+  // Remove classes from all elements with the 'definition-entry' class
+  for (const el of document.querySelectorAll('.definition-entry')) {
+    el.classList.remove('definition-selected')
+  }
+
+  // Remove and add classes to all elements with the 'definition-name' class
+  for (const el of document.querySelectorAll('.definition-name')) {
+    el.classList.remove('btn-success')
+    el.classList.add('btn-primary')
+  }
+
+  // Remove and add classes to all elements with the 'definition-dropdown' class
+  for (const el of document.querySelectorAll('.definition-dropdown')) {
+    el.classList.remove('btn-success')
+    el.classList.add('btn-primary')
+  }
+
+  // Add the 'definition-selected' class to the specific button
+  const definitionButton = document.getElementById('definitionButton_' + uuid)
+  if (definitionButton) {
+    definitionButton.classList.add('definition-selected')
+  }
+
+  // Add the 'btn-success' class to the specific button name
+  const definitionButtonName = document.getElementById('definitionButtonName_' + uuid)
+  if (definitionButtonName) {
+    definitionButtonName.classList.add('btn-success')
+  }
+
+  // Add the 'btn-success' class to the specific button dropdown
+  const definitionButtonDropdown = document.getElementById('definitionButtonDropdown_' + uuid)
+  if (definitionButtonDropdown) {
+    definitionButtonDropdown.classList.add('btn-success')
+  }
+
+  // Show the save button
   document.getElementById('componentInfoModalDefinitionSaveButton').style.display = 'block'
 }
 
@@ -1656,7 +2058,7 @@ export function submitDefinitionSelectionFromModal () {
   // Called when the "Save changes" button is pressed on the definitions pane of the componentInfoModal.
 
   const definition = $('.definition-selected').data('definition')
-  const id = $('#componentInfoModal').data('id')
+  const id = document.getElementById('componentInfoModal').getAttribute('data-id')
   const componentUUID = document.getElementById('componentInfoModal').getAttribute('data-uuid')
 
   // Exhibitera 5 starts the transition from ID to UUID
@@ -1682,7 +2084,7 @@ function updateComponentInfoModalFromHelper (id, permission) {
     componentCannotConnect()
 
     // Make the modal visible
-    $('#componentInfoModal').modal('show')
+    exTools.showModal('#componentInfoModal')
     return
   }
 
@@ -1705,52 +2107,69 @@ function updateComponentInfoModalFromHelper (id, permission) {
       // If it is provided, show the system stats
       if ('system_stats' in availableContent) {
         const stats = availableContent.system_stats
-
         // Disk
-        $('#contentUploadDiskSpaceUsedBar').attr('ariaValueNow', 100 - stats.disk_pct_free)
-        $('#contentUploadDiskSpaceUsedBar').width(String(100 - stats.disk_pct_free) + '%')
-        $('#contentUploadDiskSpaceFreeBar').attr('ariaValueNow', stats.disk_pct_free)
-        $('#contentUploadDiskSpaceFreeBar').width(String(stats.disk_pct_free) + '%')
-        $('#contentUploadDiskSpaceFree').html(`Disk: ${String(Math.round(stats.disK_free_GB))} GB`)
+        const spaceUsedBar = document.getElementById('contentUploadDiskSpaceUsedBar')
+        const spaceFreeBar = document.getElementById('contentUploadDiskSpaceFreeBar')
+        spaceUsedBar.setAttribute('ariaValueNow', 100 - stats.disk_pct_free)
+        spaceUsedBar.style.width = String(100 - stats.disk_pct_free) + '%'
+        spaceFreeBar.setAttribute('ariaValueNow', stats.disk_pct_free)
+        spaceFreeBar.style.width = String(stats.disk_pct_free) + '%'
+        document.getElementById('contentUploadDiskSpaceFree').innerHTML = `Disk: ${String(Math.round(stats.disK_free_GB))} GB`
+
         if (stats.disk_pct_free > 20) {
-          $('#contentUploadDiskSpaceUsedBar').removeClass('bg-warning bg-danger').addClass('bg-success')
+          spaceUsedBar.classList.remove('bg-warning', 'bg-danger')
+          spaceUsedBar.classList.add('bg-success')
         } else if (stats.disk_pct_free > 10) {
-          $('#contentUploadDiskSpaceUsedBar').removeClass('bg-success bg-danger').addClass('bg-warning')
+          spaceUsedBar.classList.remove('bg-success', 'bg-danger')
+          spaceUsedBar.classList.add('bg-warning')
         } else {
-          $('#contentUploadDiskSpaceUsedBar').removeClass('bg-success bg-warning').addClass('bg-danger')
+          spaceUsedBar.classList.remove('bg-success', 'bg-warning')
+          spaceUsedBar.classList.add('bg-danger')
         }
 
         // CPU
-        $('#contentUploadCPUUsedBar').attr('ariaValueNow', stats.cpu_load_pct)
-        $('#contentUploadCPUUsedBar').width(String(stats.cpu_load_pct) + '%')
-        $('#contentUploadCPUFreeBar').attr('ariaValueNow', 100 - stats.cpu_load_pct)
-        $('#contentUploadCPUFreeBar').width(String(100 - stats.cpu_load_pct) + '%')
-        $('#contentUploadCPUUsed').html(`CPU: ${String(Math.round(stats.cpu_load_pct))}%`)
+        const CPUUsedBar = document.getElementById('contentUploadCPUUsedBar')
+        const CPUFreeBar = document.getElementById('contentUploadCPUFreeBar')
+        CPUUsedBar.setAttribute('ariaValueNow', stats.cpu_load_pct)
+        CPUUsedBar.style.width = String(stats.cpu_load_pct) + '%'
+        document.getElementById('contentUploadCPUUsed').innerHTML = `CPU: ${String(Math.round(stats.cpu_load_pct))}%`
+        CPUFreeBar.setAttribute('ariaValueNow', 100 - stats.cpu_load_pct)
+        CPUFreeBar.style.width = String(100 - stats.cpu_load_pct) + '%'
+
         if (stats.cpu_load_pct < 80) {
-          $('#contentUploadCPUUsedBar').removeClass('bg-warning bg-danger').addClass('bg-success')
+          CPUUsedBar.classList.remove('bg-warning', 'bg-danger')
+          CPUUsedBar.classList.add('bg-success')
         } else if (stats.cpu_load_pct < 90) {
-          $('#contentUploadCPUUsedBar').removeClass('bg-success bg-danger').addClass('bg-warning')
+          CPUUsedBar.classList.remove('bg-success', 'bg-danger')
+          CPUUsedBar.classList.add('bg-warning')
         } else {
-          $('#contentUploadCPUUsedBar').removeClass('bg-success bg-warning').addClass('bg-danger')
+          CPUUsedBar.classList.remove('bg-success', 'bg-warning')
+          CPUUsedBar.classList.add('bg-danger')
         }
 
         // RAM
-        $('#contentUploadRAMUsedBar').attr('ariaValueNow', stats.ram_used_pct)
-        $('#contentUploadRAMUsedBar').width(String(stats.ram_used_pct) + '%')
-        $('#contentUploadRAMFreeBar').attr('ariaValueNow', 100 - stats.ram_used_pct)
-        $('#contentUploadRAMFreeBar').width(String(100 - stats.ram_used_pct) + '%')
-        $('#contentUploadRAMUsed').html(`RAM: ${String(Math.round(stats.ram_used_pct))}%`)
+        const RAMUsedBar = document.getElementById('contentUploadRAMUsedBar')
+        const RAMFreeBar = document.getElementById('contentUploadRAMFreeBar')
+        RAMUsedBar.setAttribute('ariaValueNow', stats.ram_used_pct)
+        RAMUsedBar.style.width = String(stats.ram_used_pct) + '%'
+        document.getElementById('contentUploadRAMUsed').innerHTML = `RAM: ${String(Math.round(stats.ram_used_pct))}%`
+        RAMFreeBar.setAttribute('ariaValueNow', 100 - stats.ram_used_pct)
+        RAMFreeBar.style.width = String(100 - stats.ram_used_pct) + '%'
+
         if (stats.ram_used_pct < 80) {
-          $('#contentUploadRAMUsedBar').removeClass('bg-warning bg-danger').addClass('bg-success')
+          RAMUsedBar.classList.remove('bg-warning', 'bg-danger')
+          RAMUsedBar.classList.add('bg-success')
         } else if (stats.ram_used_pct < 90) {
-          $('#contentUploadRAMUsedBar').removeClass('bg-success bg-danger').addClass('bg-warning')
+          RAMUsedBar.classList.remove('bg-success', 'bg-danger')
+          RAMUsedBar.classList.add('bg-warning')
         } else {
-          $('#contentUploadCPUUsedBar').removeClass('bg-success bg-warning').addClass('bg-danger')
+          RAMUsedBar.classList.remove('bg-success', 'bg-warning')
+          RAMUsedBar.classList.add('bg-danger')
         }
 
-        $('#contentUploadSystemStatsView').show()
+        document.getElementById('contentUploadSystemStatsView').style.display = 'flex'
       } else {
-        $('#contentUploadSystemStatsView').hide()
+        document.getElementById('contentUploadSystemStatsView').style.display = 'none'
       }
     })
     .catch(() => {
@@ -1764,13 +2183,13 @@ export function onDefinitionTabThumbnailsCheckboxChange () {
   const defList = document.getElementById('componentInfoModalDefinitionList')
   const checkState = document.getElementById('definitionTabThumbnailsCheckbox').checked
 
-  Array.from(defList.querySelectorAll('.definition-thumbnail')).forEach((entry) => {
+  for (const entry of defList.querySelectorAll('.definition-thumbnail')) {
     if (checkState === true) {
       entry.style.display = 'block'
     } else {
       entry.style.display = 'none'
     }
-  })
+  }
 }
 
 export function filterDefinitionListByApp () {
@@ -1779,14 +2198,14 @@ export function filterDefinitionListByApp () {
   const appToShow = document.getElementById('definitionTabAppFilterSelect').value
   const defList = document.getElementById('componentInfoModalDefinitionList')
 
-  Array.from(defList.querySelectorAll('.definition-entry')).forEach((entry) => {
+  for (const entry of defList.querySelectorAll('.definition-entry')) {
     const thisApp = entry.getAttribute('data-app')
     if ((thisApp === appToShow) || (appToShow === 'all')) {
       entry.style.display = 'block'
     } else {
       entry.style.display = 'none'
     }
-  })
+  }
 }
 
 export function submitComponentBasicSettingsChange () {
@@ -1837,18 +2256,18 @@ export function submitComponentBasicSettingsChange () {
 export function submitComponentSettingsChange () {
   // Collect the current settings and send them to the component's helper for saving.
 
-  const obj = getExhibitComponent($('#componentInfoModalTitle').html())
+  const obj = getExhibitComponent(document.getElementById('componentInfoModalTitle').innerHTML)
 
   // Update component settings, if allowed
   const settingsAvailable = document.getElementById('componentInfoModalSettingsPermissionsPane').style.display === 'flex'
   if (settingsAvailable === true) {
     const settings = {
       permissions: {
-        audio: exTools.stringToBool($('#componentInfoModalSettingsAutoplayAudio').val()),
-        refresh: exTools.stringToBool($('#componentInfoModalSettingsAllowRefresh').val()),
-        restart: exTools.stringToBool($('#componentInfoModalSettingsAllowRestart').val()),
-        shutdown: exTools.stringToBool($('#componentInfoModalSettingsAllowShutdown').val()),
-        sleep: exTools.stringToBool($('#componentInfoModalSettingsAllowSleep').val())
+        audio: exTools.stringToBool(document.getElementById('componentInfoModalSettingsAutoplayAudio').value),
+        refresh: exTools.stringToBool(document.getElementById('componentInfoModalSettingsAllowRefresh').value),
+        restart: exTools.stringToBool(document.getElementById('componentInfoModalSettingsAllowRestart').value),
+        shutdown: exTools.stringToBool(document.getElementById('componentInfoModalSettingsAllowRestart').value),
+        sleep: exTools.stringToBool(document.getElementById('componentInfoModalSettingsAllowRestart').value)
       }
     }
     exTools.makeRequest({
@@ -1889,25 +2308,28 @@ export function checkForRemovedComponents (update) {
   // Check exConfig.exhibitComponents and remove any components not in `update`
 
   const updateIDs = []
-  update.forEach((component) => {
+  for (const component of update) {
     updateIDs.push(component.id)
-  })
+  }
 
-  exConfig.exhibitComponents.forEach((component) => {
+  for (const component of exConfig.exhibitComponents) {
     if (updateIDs.includes(component.id) === false) {
       component.remove(false) // Remove from interface, but not the config
     }
-  })
+  }
 }
 
 export function rebuildComponentInterface () {
   // Clear the componentGroupsRow and rebuild it
 
+  const sortOrder = exUsers.checkUserPreference('sort_order')
   document.getElementById('componentGroupsRow').innerHTML = ''
-  let i
-  for (i = 0; i < exConfig.componentGroups.length; i++) {
-    exConfig.componentGroups[i].sortComponentList()
-    exConfig.componentGroups[i].buildHTML()
+
+  exTools.sortGroups(sortOrder)
+
+  for (const group of exConfig.componentGroups) {
+    group.sortComponentList(sortOrder)
+    group.buildHTML()
   }
 }
 
@@ -1964,7 +2386,7 @@ export function showAddStaticComponentsModal () {
   // Hide warnings
   document.getElementById('addStaticComponentModalIDError').style.display = 'none'
 
-  $('#addStaticComponentModal').modal('show')
+  exTools.showModal('#addStaticComponentModal')
 }
 
 export function submitStaticComponentAdditionFromModal () {
@@ -1989,7 +2411,7 @@ export function submitStaticComponentAdditionFromModal () {
     params: { id, groups }
   })
     .then((response) => {
-      $('#addStaticComponentModal').modal('hide')
+      exTools.hideModal('#addStaticComponentModal')
     })
 }
 
@@ -2012,7 +2434,7 @@ export function showAddWakeOnLANModal () {
   document.getElementById('addWakeOnLANModalMACError').style.display = 'none'
   document.getElementById('addWakeOnLANModalBadMACError').style.display = 'none'
 
-  $('#addWakeOnLANModal').modal('show')
+  exTools.showModal('#addWakeOnLANModal')
 }
 
 export function submitWakeOnLANAdditionFromModal () {
@@ -2058,6 +2480,6 @@ export function submitWakeOnLANAdditionFromModal () {
     }
   })
     .then((response) => {
-      $('#addWakeOnLANModal').modal('hide')
+      exTools.hideModal('#addWakeOnLANModal')
     })
 }

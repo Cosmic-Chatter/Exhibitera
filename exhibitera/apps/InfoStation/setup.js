@@ -1,11 +1,13 @@
-/* global Coloris */
+/* global Coloris, TinyMDE */
 
 import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exFileSelect from '../js/exhibitera_file_select_modal.js'
 import * as exSetup from '../js/exhibitera_setup_common.js'
+import * as exLang from '../js/exhibitera_setup_languages.js'
+import * as exMarkdown from '../js/exhibitera_setup_markdown.js'
 
 async function initializeWizard () {
-  // Setup the wizard
+  // Set up the wizard
 
   await exSetup.initializeDefinition()
 
@@ -27,9 +29,11 @@ async function clearDefinitionInput (full = true) {
     await exSetup.initializeDefinition()
   }
 
-  // Language add
-  $('#languageAddEmptyFieldsWarning').hide()
-  $('#languageAddExistsWarning').hide()
+  // Language
+  exLang.clearLanguagePicker(document.getElementById('languagePicker'))
+  exLang.createLanguagePicker(document.getElementById('languagePicker'), { onLanguageRebuild: rebuildLanguageElements })
+
+  rebuildLanguageElements([])
 
   // Definition details
   document.getElementById('definitionNameInput').value = ''
@@ -44,6 +48,10 @@ async function clearDefinitionInput (full = true) {
   Array.from(document.querySelectorAll('.coloris')).forEach((el) => {
     el.value = el.getAttribute('data-default')
     el.dispatchEvent(new Event('input', { bubbles: true }))
+  })
+
+  Array.from(document.querySelectorAll('.layout-slider')).forEach((el) => {
+    el.value = el.getAttribute('start')
   })
 
   exSetup.updateAdvancedColorPicker('style>background', {
@@ -82,6 +90,13 @@ function editDefinition (uuid = '') {
     document.getElementById('inactivityTimeoutField').value = def.inactivity_timeout
   }
 
+  // Layout fields
+  const buttonSizeSlider = document.getElementById('buttonSizeSlider')
+  buttonSizeSlider.value = def?.style?.layout?.button_size || buttonSizeSlider.getAttribute('start')
+
+  const headerSizeSlider = document.getElementById('headerSizeSlider')
+  headerSizeSlider.value = def?.style?.layout?.header_height || headerSizeSlider.getAttribute('start')
+
   if ('background' in def.style === false) {
     def.style.background = {
       mode: 'color',
@@ -92,15 +107,17 @@ function editDefinition (uuid = '') {
   }
 
   // Set the appropriate values for any advanced color pickers
-  if ('background' in def.style) {
+  if (def?.style?.background) {
     exSetup.updateAdvancedColorPicker('style>background', def.style.background)
   }
 
   // Set the appropriate values for the color pickers
-  Object.keys(def.style.color).forEach((key) => {
-    $('#colorPicker_' + key).val(def.style.color[key])
-    document.querySelector('#colorPicker_' + key).dispatchEvent(new Event('input', { bubbles: true }))
-  })
+  for (const key of Object.keys(def.style.color)) {
+    const el = document.getElementById('colorPicker_' + key)
+    if (el == null) continue
+    el.value = def.style.color[key]
+    el.dispatchEvent(new Event('input', { bubbles: true }))
+  }
 
   // Set the appropriate values for the advanced font pickers
   if ('font' in def.style) {
@@ -117,46 +134,58 @@ function editDefinition (uuid = '') {
   })
 
   // Set up any existing languages and tabs
-  let first = null
-  Object.keys(def.languages).forEach((lang) => {
-    const langDef = def.languages[lang]
-    createLanguageTab(lang, langDef.display_name)
-    if (first == null) first = lang
-
-    $('#languagePane_' + lang).removeClass('active').removeClass('show')
-    $('#headerText' + '_' + lang).val(langDef.header_text)
-
-    // Then build out any InfoStation tabs
-    def.languages[lang].tab_order.forEach((uuid) => {
-      createInfoStationTab(lang, uuid)
-    })
-  })
-  $('#languageTab_' + first).click()
-  $('#languagePane_' + first).addClass('active')
+  // In Ex5.3, we added the language_order field. If it doesn't exist
+  // set it up now
+  if ((def?.language_order || []).length === 0) {
+    def.language_order = []
+    for (const code of Object.keys(def.languages)) {
+      const lang = def.languages[code]
+      if (lang.default === true) {
+        def.language_order.unshift(code)
+      } else def.language_order.push(code)
+    }
+    exSetup.updateWorkingDefinition(['language_order'], def.language_order)
+  }
+  exLang.createLanguagePicker(document.getElementById('languagePicker'),
+    {
+      onLanguageRebuild: rebuildLanguageElements
+    }
+  )
 
   // Configure the preview frame
   document.getElementById('previewFrame').src = '../infostation.html?standalone=true&definition=' + def.uuid
 }
 
-function addLanguage () {
-  // Collect details from the language fields and add a new supported language to the definition.
+function rebuildLanguageElements (langOrder) {
+  // Called whenever we modify the languages to rebuild the GUI representation.
 
-  const displayName = $('#languageNameInput').val().trim()
-  const code = $('#languageCodeInput').val().trim()
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+  document.getElementById('languageNav').innerHTML = ''
+  document.getElementById('languageNavContent').innerHTML = ''
 
-  // Check if fields are full
-  if (displayName === '' || code === '') {
-    $('#languageAddEmptyFieldsWarning').show()
-    return
-  } else {
-    $('#languageAddEmptyFieldsWarning').hide()
+  let first = null
+  for (const lang of langOrder) {
+    if (first == null) first = lang
+    createLanguageTab(lang)
+
+    // document.getElementById('languagePane_' + lang).classList.remove('active', 'show')
+    // $('#headerText' + '_' + lang).val(langDef.header_text)
   }
 
-  // Check if name or code already exist
+  if (first != null) {
+    document.getElementById('languageTab_' + first).click()
+    document.getElementById('languagePane_' + first).classList.add('active')
+  }
+}
+
+function addLanguage (code, displayName, englishName) {
+  // Add a new supported language to the definition.
+
+  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+
+  // Check if language already exists
   let error = false
   Object.keys(workingDefinition.languages).forEach((key) => {
-    if (key === code || workingDefinition.languages[key].display_name === displayName) {
+    if (key === code) {
       $('#languageAddExistsWarning').show()
       error = true
     } else {
@@ -165,27 +194,28 @@ function addLanguage () {
   })
   if (error) return
 
-  // If this is the first language added, make it the default
-  let defaultLang = false
-  if (Object.keys(workingDefinition.languages).length === 0) defaultLang = true
+  if ((workingDefinition?.language_order || []).length === 0) {
+    workingDefinition.language_order = [code]
+  } else {
+    workingDefinition.language_order.push(code)
+  }
 
   workingDefinition.languages[code] = {
     display_name: displayName,
+    english_name: englishName,
     code,
-    default: defaultLang,
     tabs: {},
     tab_order: []
   }
-  createLanguageTab(code, displayName)
+
+  createLanguageTab(code)
 
   $('#definitionSaveButton').data('workingDefinition', structuredClone(workingDefinition))
-  $('#languageNameInput').val('')
-  $('#languageCodeInput').val('')
+  exSetup.previewDefinition(true)
 }
 
-function createLanguageTab (code, displayName) {
+function createLanguageTab (code) {
   // Create a new language tab for the given details.
-  // Set first=true when creating the first tab
 
   const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
 
@@ -197,7 +227,7 @@ function createLanguageTab (code, displayName) {
   tabButton.setAttribute('data-bs-target', '#languagePane_' + code)
   tabButton.setAttribute('type', 'button')
   tabButton.setAttribute('role', 'tab')
-  tabButton.innerHTML = displayName
+  tabButton.innerHTML = exLang.getLanguageDisplayName(code, true)
   $('#languageNav').append(tabButton)
 
   // Create corresponding pane
@@ -212,114 +242,10 @@ function createLanguageTab (code, displayName) {
   row.classList = 'row gy-2 mt-2 mb-3'
   tabPane.appendChild(row)
 
-  // Create default language checkbox
-  const defaultCol = document.createElement('div')
-  defaultCol.classList = 'col-12'
-  row.appendChild(defaultCol)
-
-  const checkContainer = document.createElement('div')
-  checkContainer.classList = 'form-check'
-  defaultCol.appendChild(checkContainer)
-
-  const defaultCheckbox = document.createElement('input')
-  defaultCheckbox.classList = 'form-check-input default-lang-checkbox'
-  defaultCheckbox.setAttribute('id', 'defaultCheckbox_' + code)
-  defaultCheckbox.setAttribute('data-lang', code)
-  defaultCheckbox.setAttribute('type', 'radio')
-  defaultCheckbox.checked = workingDefinition.languages[code].default
-  defaultCheckbox.addEventListener('change', (event) => {
-    // If the checkbox is checked, uncheck all the others and save to the working definition.
-    Array.from(document.querySelectorAll('.default-lang-checkbox')).forEach((el) => {
-      el.checked = false
-      exSetup.updateWorkingDefinition(['languages', el.getAttribute('data-lang'), 'default'], false)
-    })
-    event.target.checked = true
-    exSetup.updateWorkingDefinition(['languages', code, 'default'], true)
-    exSetup.previewDefinition(true)
-  })
-  checkContainer.appendChild(defaultCheckbox)
-
-  const defaultCheckboxLabel = document.createElement('label')
-  defaultCheckboxLabel.classList = 'form-check-label'
-  defaultCheckboxLabel.setAttribute('for', 'defaultCheckbox_' + code)
-  defaultCheckboxLabel.innerHTML = 'Default language'
-  checkContainer.appendChild(defaultCheckboxLabel)
-
-  // Create the flag input
-  const flagImgCol = document.createElement('div')
-  flagImgCol.classList = 'col-3 col-lg-2 d-flex'
-  row.append(flagImgCol)
-
-  const flagImg = document.createElement('img')
-  flagImg.setAttribute('id', 'flagImg_' + code)
-  const customFlag = $('#definitionSaveButton').data('workingDefinition').languages[code].custom_flag
-  if (customFlag != null) {
-    flagImg.src = '../content/' + customFlag
-  } else {
-    flagImg.src = '../_static/flags/' + code + '.svg'
-  }
-  flagImg.classList = 'align-self-center'
-  flagImg.style.width = '100%'
-  flagImg.addEventListener('error', function () {
-    this.src = '../_static/icons/translation-icon_black.svg'
-  })
-  flagImgCol.appendChild(flagImg)
-
-  const clearFlagCol = document.createElement('div')
-  clearFlagCol.classList = 'col-2 col-lg-1 d-flex mx-0 px-0 text-center4'
-  row.appendChild(clearFlagCol)
-
-  const clearFlagButton = document.createElement('button')
-  clearFlagButton.classList = 'btn btn-danger align-self-center'
-  clearFlagButton.innerHTML = '✕'
-  clearFlagButton.addEventListener('click', function () {
-    deleteLanguageFlag(code)
-  })
-  clearFlagCol.append(clearFlagButton)
-
-  const uploadFlagCol = document.createElement('div')
-  uploadFlagCol.classList = 'col-7 col-lg-3 d-flex'
-  row.append(uploadFlagCol)
-
-  const uploadFlagBox = document.createElement('label')
-  uploadFlagBox.classList = 'btn btn-outline-primary w-100 align-self-center d-flex'
-  uploadFlagCol.appendChild(uploadFlagBox)
-
-  const uploadFlagFileName = document.createElement('span')
-  uploadFlagFileName.setAttribute('id', 'uploadFlagFilename_' + code)
-  uploadFlagFileName.classList = 'w-100 align-self-center'
-  uploadFlagFileName.innerHTML = 'Upload flag'
-  uploadFlagBox.appendChild(uploadFlagFileName)
-
-  const uploadFlagInput = document.createElement('input')
-  uploadFlagInput.setAttribute('id', 'uploadFlagInput_' + code)
-  uploadFlagInput.classList = 'form-control-file w-100 align-self-center'
-  uploadFlagInput.setAttribute('type', 'file')
-  uploadFlagInput.setAttribute('hidden', true)
-  uploadFlagInput.setAttribute('accept', 'image/*')
-  uploadFlagInput.addEventListener('change', function () {
-    onFlagUploadChange(code)
-  })
-  uploadFlagBox.appendChild(uploadFlagInput)
-
-  // Create the delete button
-  const deleteCol = document.createElement('div')
-  deleteCol.classList = 'col col-12 col-lg-6 col-xl-4 d-flex'
-  row.appendChild(deleteCol)
-
-  const deleteButton = document.createElement('button')
-  deleteButton.classList = 'btn btn-danger w-100 align-self-center'
-  deleteButton.setAttribute('data-bs-toggle', 'popover')
-  deleteButton.setAttribute('title', 'Are you sure?')
-  deleteButton.setAttribute('data-bs-content', `<a id='deleteLang_${code}' class='btn btn-danger w-100 lang-delete'>Confirm</a>`)
-  deleteButton.setAttribute('data-bs-trigger', 'focus')
-  deleteButton.setAttribute('data-bs-html', 'true')
-  // Note: The event listener to detect is the delete button is clicked is defined in webpage.js
-  deleteButton.addEventListener('click', function () { deleteButton.focus() })
-  deleteButton.innerHTML = 'Delete language'
-
-  deleteCol.appendChild(deleteButton)
-  $(deleteButton).popover()
+  // Create the left and right shift buttons
+  const leftCol = document.createElement('div')
+  leftCol.classList = 'col-4 col-md-3 col-lg-2'
+  row.appendChild(leftCol)
 
   // Create the header input
   const headerCol = document.createElement('div')
@@ -332,20 +258,26 @@ function createLanguageTab (code, displayName) {
   headerInputLabel.setAttribute('for', 'languageTabHeader_' + code)
   headerCol.appendChild(headerInputLabel)
 
-  const headerInput = document.createElement('input')
-  headerInput.classList = 'form-control'
-  headerInput.setAttribute('type', 'text')
-  headerInput.setAttribute('id', 'languageTabHeader_' + code)
-  headerInput.addEventListener('change', (event) => {
-    exSetup.updateWorkingDefinition(['languages', code, 'header'], event.target.value)
-    exSetup.previewDefinition(true)
-  })
-  headerInput.value = workingDefinition.languages[code].header ?? ''
+  const headerCommandBar = document.createElement('div')
+  headerCol.appendChild(headerCommandBar)
+
+  const headerInput = document.createElement('div')
   headerCol.appendChild(headerInput)
+
+  const titleEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+    content: workingDefinition.languages[code].header ?? '',
+    editorDiv: headerInput,
+    commandDiv: headerCommandBar,
+    commands: ['basic'],
+    callback: (content) => {
+      exSetup.updateWorkingDefinition(['languages', code, 'header'], content)
+      exSetup.previewDefinition(true)
+    }
+  })
 
   // Create the new sub-tab button
   const newInfoTabCol = document.createElement('div')
-  newInfoTabCol.classList = 'col col-12 col-lg-6 col-xl-4 d-flex mt-2'
+  newInfoTabCol.classList = 'col col-12 col-md-6 col-lg-4 col-xl-3 d-flex mt-2'
   row.appendChild(newInfoTabCol)
 
   const newInfoTabButton = document.createElement('button')
@@ -371,6 +303,11 @@ function createLanguageTab (code, displayName) {
   subTabPane.setAttribute('id', 'subTabPane_' + code)
   tabPane.appendChild(subTabPane)
 
+  // Then build out any InfoStation tabs
+  for (const uuid of workingDefinition.languages[code]?.tab_order || []) {
+    createInfoStationTab(code, uuid)
+  }
+
   // Switch to this new tab
   $(tabButton).click()
 }
@@ -384,39 +321,19 @@ function deleteLanguageTab (lang) {
   $('.language-tab').click()
 }
 
-function deleteLanguageFlag (lang) {
-  // Ask the server to delete the language flag and remove it from the working definition.
-
-  const flag = $('#definitionSaveButton').data('workingDefinition').languages[lang].custom_flag
-
-  if (flag == null) {
-    // No custom flag
-    return
-  }
-
-  // Delete filename from working definition
-  delete $('#definitionSaveButton').data('workingDefinition').languages[lang].custom_flag
-
-  // Remove the icon
-  $('#flagImg_' + lang).attr('src', '../_static/flags/' + lang + '.svg')
-
-  // Delete from server
-  exCommon.makeHelperRequest({
-    method: 'POST',
-    endpoint: '/file/delete',
-    params: {
-      file: flag
-    }
-  })
-}
-
 function createInfoStationTab (lang, uuid = '') {
   // Create a new InfoStation tab and attach it to the given language.
 
   const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
 
+  if (('tabs' in workingDefinition.languages[lang]) === false) {
+    workingDefinition.languages[lang].tabs = {}
+  }
+  if (('tab_order' in workingDefinition.languages[lang]) === false) {
+    workingDefinition.languages[lang].tab_order = []
+  }
   if (uuid === '') {
-    uuid = new Date() * 1e6 * Math.random()
+    uuid = exCommon.uuid()
     workingDefinition.languages[lang].tabs[uuid] = {
       button_text: '',
       type: 'text',
@@ -457,6 +374,25 @@ function createInfoStationTab (lang, uuid = '') {
   row.classList = 'row gy-2 mt-2 mb-3'
   tabPane.appendChild(row)
 
+  // Create the delete button
+  const deleteCol = document.createElement('div')
+  deleteCol.classList = 'col-12'
+  row.appendChild(deleteCol)
+
+  const deleteButton = document.createElement('button')
+  deleteButton.classList = 'btn btn-danger align-self-center'
+  deleteButton.setAttribute('data-bs-toggle', 'popover')
+  deleteButton.setAttribute('title', 'Are you sure?')
+  deleteButton.setAttribute('data-bs-content', `<a id='deleteTab_${lang}_${uuid}' class='btn btn-danger w-100 tab-delete'>Confirm</a>`)
+  deleteButton.setAttribute('data-bs-trigger', 'focus')
+  deleteButton.setAttribute('data-bs-html', 'true')
+  // Note: The event listener to detect is the delete button is clicked is defined elsewhere
+  deleteButton.addEventListener('click', function () { deleteButton.focus() })
+  deleteButton.innerHTML = 'Delete tab'
+
+  deleteCol.appendChild(deleteButton)
+  $(deleteButton).popover()
+
   const buttonTextCol = document.createElement('div')
   buttonTextCol.classList = 'col-12 col-md-6'
   row.appendChild(buttonTextCol)
@@ -467,22 +403,28 @@ function createInfoStationTab (lang, uuid = '') {
   buttonTextLabel.setAttribute('for', 'infostationTabButtonTextInput_' + uuid)
   buttonTextCol.appendChild(buttonTextLabel)
 
-  const buttonTextInput = document.createElement('input')
-  buttonTextInput.classList = 'form-control'
-  buttonTextInput.setAttribute('type', 'text')
-  buttonTextInput.setAttribute('id', 'infostationTabButtonTextInput_' + uuid)
-  buttonTextInput.addEventListener('change', (event) => {
-    exSetup.updateWorkingDefinition(['languages', lang, 'tabs', uuid, 'button_text'], event.target.value)
-    document.getElementById('infostationTab_' + lang + '_' + uuid).innerHTML = event.target.value
-    exSetup.previewDefinition(true)
-  })
-  buttonTextInput.value = workingDefinition.languages[lang].tabs[uuid].button_text
+  const buttonTextCommandBar = document.createElement('div')
+  buttonTextCol.appendChild(buttonTextCommandBar)
+
+  const buttonTextInput = document.createElement('div')
   buttonTextCol.appendChild(buttonTextInput)
 
-  const textTabTipCol = document.createElement('div')
-  textTabTipCol.classList = 'col-12 mt-3 fst-italic alert alert-info'
-  textTabTipCol.innerHTML = 'Text and images in text tabs are formatted using Markdown. See the help page to learn more about Markdown.'
-  row.appendChild(textTabTipCol)
+  const titleEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+    content: workingDefinition.languages[lang].tabs[uuid].button_text ?? '',
+    editorDiv: buttonTextInput,
+    commandDiv: buttonTextCommandBar,
+    commands: ['basic'],
+    callback: (content) => {
+      exSetup.updateWorkingDefinition(['languages', lang, 'tabs', uuid, 'button_text'], content)
+      document.getElementById('infostationTab_' + lang + '_' + uuid).innerHTML = exMarkdown.formatText(content, { string: true, removeParagraph: true })
+      exSetup.previewDefinition(true)
+    }
+  })
+
+  // const textTabTipCol = document.createElement('div')
+  // textTabTipCol.classList = 'col-12 mt-3 fst-italic alert alert-info'
+  // textTabTipCol.innerHTML = 'Text and images in text tabs are formatted using Markdown. See the help page to learn more about Markdown.'
+  // row.appendChild(textTabTipCol)
 
   const textCol = document.createElement('div')
   textCol.classList = 'col-12'
@@ -490,43 +432,35 @@ function createInfoStationTab (lang, uuid = '') {
 
   const textLabel = document.createElement('label')
   textLabel.classList = 'form-label'
-  textLabel.innerHTML = 'Text'
-  textLabel.setAttribute('for', 'infostationTabTextInput_' + uuid)
+  textLabel.innerHTML = `
+  Text
+  <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Text and images are formatted using Markdown. See the help page to learn more about Markdown." style="font-size: 0.55em;">?</span>
+  `
   textCol.appendChild(textLabel)
 
-  const textInput = document.createElement('textarea')
-  textInput.classList = 'form-control'
-  textInput.setAttribute('rows', '5')
-  textInput.setAttribute('id', 'infostationTabTextInput_' + uuid)
-  textInput.setAttribute('placeholder', '# Header\nThis is a sentence with a **bold** word and an _italics_ word.\n\n## Subheader\nThis is a sentance under the subheader.')
-  textInput.addEventListener('change', (event) => {
-    exSetup.updateWorkingDefinition(['languages', lang, 'tabs', uuid, 'text'], event.target.value)
-    exSetup.previewDefinition(true)
-  })
-  textInput.value = workingDefinition.languages[lang].tabs[uuid].text
+  const textInputCMD = document.createElement('div')
+  textCol.appendChild(textInputCMD)
+  const textInput = document.createElement('div')
   textCol.appendChild(textInput)
 
-  // Create the delete button
-  const deleteCol = document.createElement('div')
-  deleteCol.classList = 'col-12'
-  row.appendChild(deleteCol)
-
-  const deleteButton = document.createElement('button')
-  deleteButton.classList = 'btn btn-danger w-100 align-self-center'
-  deleteButton.setAttribute('data-bs-toggle', 'popover')
-  deleteButton.setAttribute('title', 'Are you sure?')
-  deleteButton.setAttribute('data-bs-content', `<a id='deleteTab_${lang}_${uuid}' class='btn btn-danger w-100 tab-delete'>Confirm</a>`)
-  deleteButton.setAttribute('data-bs-trigger', 'focus')
-  deleteButton.setAttribute('data-bs-html', 'true')
-  // Note: The event listener to detect is the delete button is clicked is defined in webpage.js
-  deleteButton.addEventListener('click', function () { deleteButton.focus() })
-  deleteButton.innerHTML = 'Delete tab'
-
-  deleteCol.appendChild(deleteButton)
-  $(deleteButton).popover()
+  const textEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+    content: workingDefinition.languages[lang].tabs[uuid].text,
+    editorDiv: textInput,
+    commandDiv: textInputCMD,
+    callback: (content) => {
+      exSetup.updateWorkingDefinition(['languages', lang, 'tabs', uuid, 'text'], content)
+      exSetup.previewDefinition(true)
+    }
+  })
 
   $(tabButton).click()
   exSetup.previewDefinition(true)
+
+  // Activate tooltips
+  const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+  tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl)
+  })
 }
 
 function deleteInfoStationTab (lang, uuid) {
@@ -539,43 +473,6 @@ function deleteInfoStationTab (lang, uuid) {
   $('#infostationTab_' + lang + '_' + uuid).remove()
   $('#infostationPane_' + lang + '_' + uuid).remove()
   $('.infostation-tab').click()
-}
-
-function onFlagUploadChange (lang) {
-  // Called when the user selects a flag image file to upload
-
-  const fileInput = $('#uploadFlagInput_' + lang)[0]
-
-  const file = fileInput.files[0]
-  if (file == null) return
-
-  $('#uploadFlagFilename_' + lang).html('Uploading')
-
-  const ext = file.name.split('.').pop()
-  const newName = $('#definitionSaveButton').data('workingDefinition').uuid + '_flag_' + lang + '.' + ext
-
-  const formData = new FormData()
-
-  formData.append('files', fileInput.files[0], newName)
-
-  const xhr = new XMLHttpRequest()
-  xhr.open('POST', '/uploadContent', true)
-
-  xhr.onreadystatechange = function () {
-    if (this.readyState !== 4) return
-    if (this.status === 200) {
-      const response = JSON.parse(this.responseText)
-
-      if ('success' in response) {
-        $('#uploadFlagFilename_' + lang).html('Upload')
-        $('#flagImg_' + lang).attr('src', '../content/' + newName)
-        exSetup.updateWorkingDefinition(['languages', lang, 'custom_flag'], newName)
-      }
-    } else if (this.status === 422) {
-      console.log(JSON.parse(this.responseText))
-    }
-  }
-  xhr.send(formData)
 }
 
 function onAttractorFileChange () {
@@ -617,7 +514,6 @@ setTimeout(setUpColorPickers, 100)
 // -------------------------------------------------------------
 
 // Main buttons
-$('#languageAddButton').click(addLanguage)
 document.getElementById('manageContentButton').addEventListener('click', (event) => {
   exFileSelect.createFileSelectionModal({ manage: true })
 })
@@ -648,6 +544,11 @@ document.getElementById('inactivityTimeoutField').addEventListener('change', (ev
 // Style fields
 document.getElementById('buttonSizeSlider').addEventListener('change', (event) => {
   exSetup.updateWorkingDefinition(['style', 'layout', 'button_size'], event.target.value)
+  exSetup.previewDefinition(true)
+})
+
+document.getElementById('headerSizeSlider').addEventListener('change', (event) => {
+  exSetup.updateWorkingDefinition(['style', 'layout', 'header_height'], event.target.value)
   exSetup.previewDefinition(true)
 })
 
@@ -709,6 +610,7 @@ exSetup.configure({
   loadDefinition: editDefinition,
   blankDefinition: {
     languages: {},
+    language_order: [],
     style: {
       background: {
         color: '#719abf',

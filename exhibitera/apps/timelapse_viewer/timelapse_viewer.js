@@ -73,8 +73,8 @@ function loadDefinition (definition) {
     root.style.setProperty('--attractor-text-color', 'white')
   }
 
-  // Backgorund settings
-  if ('background' in definition.style) {
+  // Background settings
+  if (definition?.style?.background) {
     exCommon.setBackground(definition.style.background, root, '#22222E', true)
   }
 

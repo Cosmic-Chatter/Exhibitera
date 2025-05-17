@@ -25,18 +25,23 @@
         <div class="modal-dialog modal-dialog-centered exhibitera-dialog" role="document">
           <div class="modal-content">
             <div class="modal-header">
-              <h4 class="modal-title">Welcome to Exhibitera 5.2</h4>
+              <h4 class="modal-title">Welcome to Exhibitera 5.3</h4>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" style="max-height: 55vh; overflow-y: auto;">
-              <H5>New guided setup wizard for Apps</H5>
+              <H5>A more personal Hub</H5>
               <p>
-                Media Browser, Voting Kiosk, and Word Cloud have new guided setup wizards that make starting a new app definition easier than ever. These wizards will roll out to the other apps in a future update.
+                The expanded View Options menu in the <i>Components</i> tab helps you fine-tune the way Hub works and looks for you. Toggle light- or dark-mode from the new user preferences menu.
               </p>
 
-              <H5>3D models in Media Player <span class='badge bg-secondary'><small>Experimental</small></span></H5>
+              <H5>New Image Compare app</H5>
               <p>
-                Show off your .OBJ or .GLB model files as part of a Media Browser definition. Your model can rotate automatically or respond to touch input. 
+                With Image Compare in Exhibitera Apps, create a before/after slider between a pair of images.
+              </p>
+
+              <H5>Rich text editing in Apps</H5>
+              <p>
+                New rich text editors during app setups give you more control over text styling across many apps. 
               </p>
 
               <H4>Previously in Exhibitera 5...</H4>
@@ -50,7 +55,7 @@
               </p>
               <H5>New ways to work with schedules</H5>
               <p>
-                Create or download schedules as JSON or CSV files to work with them without having to use the web interface.
+                Create or download schedules as JSON files to work with them without having to use the web interface.
               </p>
               <H5>New tools for working with media</H5>
               <p>
@@ -59,6 +64,35 @@
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- User preferences modal -->
+      <div class="modal" tabindex="-1" role="dialog" id="userPreferencesModal">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Preferences</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div class="row gy-2">
+                <div class="col-6">
+                  <label class="form-label" for="userPreferencesModalAppearanceSelect">Appearance</label>
+                  <select id="userPreferencesModalAppearanceSelect" class="form-select">
+                    <option value="auto">Auto (match system)</option>
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button id="userPreferencesModalSaveButton" type="button" class="btn btn-primary">Save</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
             </div>
           </div>
           </div>
@@ -394,6 +428,7 @@
                       <div class="form-group">
                         <select class="form-select form-select-sm" value="all" id="definitionTabAppFilterSelect">
                           <option value="all">All</option>
+                          <option value="image_compare">Image Compare</option>
                           <option value="infostation">Infostation</option>
                           <option value="media_browser">Media Browser</option>
                           <option value="media_player">Media Player</option>
@@ -414,6 +449,7 @@
                           New
                         </button>
                         <div class="dropdown-menu" aria-labelledby="componentInfoModalNewDefinitionButton">
+                          <a class="dropdown-item defintion-new-option" href="#" data-app="image_compare" target="_blank">Image Compare</a>
                           <a class="dropdown-item defintion-new-option" href="#" data-app="InfoStation" target="_blank">Infostation</a>
                           <a class="dropdown-item defintion-new-option" href="#" data-app="media_browser" target="_blank">Media Browser</a>
                           <a class="dropdown-item defintion-new-option" href="#" data-app="media_player" target="_blank">Media Player</a>
@@ -430,6 +466,7 @@
                   <div id="componentInfoModalDefinitionList" class="row mx-1">
                   </div>
                 </div>
+
                 <!-- DMX page -->
                 <div class="tab-pane fade" id="componentInfoModalDMXTab" role="tabpanel" aria-labelledby="componentInfoModalDMXTabButton">
                   <div class="row mt-3">
@@ -752,6 +789,35 @@
         </div>
       </div>
 
+      <!-- Copy definition modal -->
+      <div class="modal" tabindex="-1" role="dialog" id="copyDefinitionModal">
+        <div class="modal-dialog modal-dialog-centered exhibitera-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Copy a definition</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" style="height:55vh;">
+              <div class="row gy-2 h-100">
+                <div id="copyDefinitionModalSourceCol" class="col-12 col-md-6 border-end">
+                  <div class='fs-5 text-center border-bottom'>Copy these files</div>
+                  <div class="row gy-2 mt-2" id="copyDefinitionModalSourceFiles"></div>
+                </div>
+                <div id="copyDefinitionModalDestinationCol" class="col-12 col-md-6 h-100">
+                  <div class='fs-5 text-center border-bottom'>To these components</div>
+                  <div class="row gy-2 mt-2" id="copyDefinitionModalDestinations"></div>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button id="copyDefinitionModalSubmitButton" type="button" class="btn btn-primary">Copy</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Issue edit modal -->
       <div class="modal" tabindex="-1" role="dialog" id="issueEditModal">
         <div class="modal-dialog modal-dialog-centered" role="document">
@@ -1031,6 +1097,29 @@
         </div>
       </div>
 
+      <!-- Show/hide groups modal -->
+      <div class="modal" tabindex="-1" role="dialog" id="showHideGroupsModal">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Show or hide groups</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <p class="fst-italic">Uncheck groups to hide them from your components view.</p>
+
+              <div id="showHideGroupsList" class="row row-cols-3 gy-2">
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button id="showHideGroupsModalSaveButton" type="button" class="btn btn-primary">Save</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+          </div>
+        </div>
+      </div>
+
       <div class="row mb-2">
         <div class="col-10">
           <div id="galleryNameField"></div>
@@ -1041,15 +1130,18 @@
             <button class="btn btn-outline-primary btn-sm dropdown-toggle float-end" type="button" data-bs-toggle="dropdown" aria-expanded="false">Log in</button>
             <div class="dropdown-menu">
               <div class="px-4 py-3">
-                <div class="mb-3">
-                  <label for="loginDropdownUsername" class="form-label">Username</label>
-                  <input type="text" class="form-control" id="loginDropdownUsername">
-                </div>
-                <div class="mb-3">
-                  <label for="loginDropdownPassword" class="form-label">Password</label>
-                  <input type="password" class="form-control" id="loginDropdownPassword">
-                </div>
-                <button id="loginSubmitButton" class="btn btn-primary">Log in</button>
+                <form id="formTest">
+                  <div class="mb-3">
+                    <label for="loginDropdownUsername" class="form-label">Username</label>
+                    <input type="text" class="form-control" id="loginDropdownUsername">
+                  </div>
+                  <div class="mb-3">
+                    <label for="loginDropdownPassword" class="form-label">Password</label>
+                    <input type="password" class="form-control" id="loginDropdownPassword">
+                  </div>
+                  <button type="submit" id="loginSubmitButton" class="btn btn-primary">Log in</button>
+                </form>
+                
               </div>
               <div class="dropdown-divider"></div>
               <div class="dropdown-item text-center" data-bs-toggle="tooltip" data-bs-placement="top" title="To create an account or reset your password, contact your system administrator. To log in as the administrator, use the username 'admin'.">
@@ -1063,6 +1155,7 @@
               <span id="userMenuUserShortName" class="d-sm-none">MR</span>
               </button>
             <div class="dropdown-menu">
+              <button class="dropdown-item" id="viewUserPreferencesModalButton">Preferences</button>
               <button class="dropdown-item" id="changePasswordButton">Change password</button>
               <div class="dropdown-divider"></div>
               <button class="dropdown-item" id="logoutButton">Log out</button>
@@ -1200,6 +1293,7 @@
           </div>
 
           <div class="row mt-3" id="componentsTabSettingsRow">
+            <!-- Add item -->
             <div class="col-3 col-md-2 col-xl-1">
               <div class="dropdown">
                 <button class="btn btn-primary dropdown-toggle w-100" type="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -1212,33 +1306,73 @@
                 </ul>
               </div>
             </div>
-            <div class="col-5 col-md-3 col-xl-2">
+            
+            <!-- View options -->
+            <div class="col-4 col-md-3 col-xl-2">
               <div class="dropdown">
                 <button class="btn btn-info dropdown-toggle w-100" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
-                  View options
+                  <span class='d-none d-md-inline'>View options</span>
+                  <span class='d-inline d-md-none'>Options</span>
                 </button>
                 <ul class="dropdown-menu w-100">
-                  <li>
-                    <div class="form-check ms-3">
+                  <li id="componentsTabSettingAdminWarning" class="px-3 fst-italic text-center">
+                    Log in with a non-admin account to configure your preferences.
+                  </li>
+                  <li class="user-preference">
+                    <div class="px-3">
+                      <label class="form-label" for="componentsTabSettingsSortSelect">Sort order</label>
+                      <select id="componentsTabSettingsSortSelect" class="form-select">
+                        <option value="alphabetical">Alphabetical</option>
+                        <option value="status">Status</option>
+                      </select>
+                    </div>                
+                  </li>
+                  <li class="user-preference">
+                    <div class="px-3">
+                      <label class="form-label mt-1" for="componentsTabSettingsLayoutSelect">Layout</label>
+                      <select id="componentsTabSettingsLayoutSelect" class="form-select">
+                        <option value="grid">Grid</option>
+                        <option value="list">List</option>
+                      </select>
+                    </div>                
+                  </li>
+                  <li class="user-preference">
+                    <div class="px-3">
+                      <label class="form-label mt-1" for="componentsTabSettingsSizeSelect">Component size</label>
+                      <select id="componentsTabSettingsSizeSelect" class="form-select">
+                        <option value="small">Small</option>
+                        <option value="regular">Regular</option>
+                        <option value="large">Large</option>
+                      </select>
+                    </div>                
+                  </li>
+                  <li class="user-preference"><hr id="componentsTabSettingsShowStaticDivider" class='dropdown-divider'></li>
+                  <li class="user-preference">
+                    <div class="form-check ms-3 mt-1 d-flex align-items-center">
                       <input class="form-check-input" type="checkbox" checked id="componentsTabSettingsShowStatic">
-                      <label class="form-check-label" for="componentsTabSettingsShowStatic">
+                      <label class="form-check-label ms-2" for="componentsTabSettingsShowStatic">
                         Show static components
                       </label>
                     </div>
                   </li>
-                  <li><hr id="componentsTabSettingsShowStaticDivider" class='dropdown-divider'></li>
-                  <li>
-                    <div class="form-check ms-3">
+                  <li class="user-preference">
+                    <div class="px-3 mt-1">
+                      <button id="showHideGroupsModalShowButton" class="btn btn-primary btn-sm w-100">Show/hide groups</button>
+                    </div>
+                  </li>
+                  <li class="user-preference"><hr id="componentsTabSettingsShowStaticDivider" class='dropdown-divider'></li>
+                  <li class="user-preference">
+                    <div class="form-check ms-3 d-flex align-items-center">
                       <input class="form-check-input view-mode-radio" type="radio" name="componentStatusMode" checked id="componentStatusModeRealtimeCheckbox">
-                      <label class="form-check-label" for="componentStatusModeRealtimeCheckbox">
+                      <label class="form-check-label ms-2" for="componentStatusModeRealtimeCheckbox">
                         Real-time status
                       </label>
                     </div>
                   </li>
-                  <li>
-                    <div class="form-check ms-3">
+                  <li class="user-preference">
+                    <div class="form-check ms-3 d-flex align-items-center">
                       <input class="form-check-input view-mode-radio" type="radio" name="componentStatusMode" id="componentStatusModeMaintenanceCheckbox">
-                      <label class="form-check-label" for="componentStatusModeMaintenanceCheckbox">
+                      <label class="form-check-label ms-2" for="componentStatusModeMaintenanceCheckbox">
                         Maintenance status
                       </label>
                     </div>
@@ -1246,12 +1380,22 @@
                 </ul>
               </div>
             </div>
+
+            <!-- Notifications dropdown -->
+            <div id="notificationsDropdownCol" class="col-5 col-md-3 col-xl-2">
+              <div class="dropdown">
+                <button id="notificationsDropdownButton" class="btn btn-info dropdown-toggle w-100" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  Notifications
+                </button>
+                <ul id="notificationDisplayRow" class="dropdown-menu">
+                </ul>
+              </div>
+            </div>
             <div class="col d-flex align-items-end">
               
             </div>
           </div>
-          <div class="row" id="notificationDisplayRow">
-          </div>
+
           <div class="row" id="componentGroupsRow">
           </div>
         </div>
@@ -1266,16 +1410,16 @@
                   <h5 class="modal-title">Manage a future date</h5>
                   <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body h-75 h-sm-100">
                   <div class="row h-100">
-                    <div class="col-12 col-sm-5 h-100">
+                    <div id="manageFutureDateLeftPane" class="col-12 col-sm-5">
                       <div>
                         <label for="manageFutureDateCalendarInput" class="visually-hidden">Date</label>
                         <input id="manageFutureDateCalendarInput" type="date" class="form-control mb-3">
                       </div>
                       <div id="manageFutureDateAvailableSchedulesList" style="max-height: 50vh; overflow-y: auto;"></div>
                     </div>
-                    <div class="col-12 col-sm-7">
+                    <div id="manageFutureDateRightPane" class="col-12 col-sm-7">
                       <div class="row">
                         <div id="manageFutureDateCreateScheduleButtonContainer" class="col-12 text-center mt-auto">
                           <button id="manageFutureDateCreateScheduleButton" class="btn btn-primary">Create date-specific schedule</button>
@@ -1287,7 +1431,7 @@
                           <button id="manageFutureDateDeleteScheduleButton" type="button" class="btn btn-danger w-100" data-bs-toggle="popover" title="Are you sure?" data-bs-content="<a id='manageFutureDateDeleteScheduleButtonPopover' class='btn btn-danger w-100 schedule-delete'>Confirm</a>" data-bs-trigger="focus" data-bs-html="true"  style="display: none;">Delete schedule</button>
                         </div>
                       </div>
-                      <div id="manageFutureDateEntryList" class="mt-3" style="max-height: 50vh; overflow-y: auto; overflow-x: hidden;"></div>
+                      <div id="manageFutureDateEntryList" class="mt-3"></div>
                     </div>
                   </div>
                   
@@ -1330,7 +1474,7 @@
                     <div class="col-6 col-md-3 d-flex align-self-end">
                       <label class="btn btn-outline-primary w-100">
                         <span id="scheduleFromFileModalFileInputLabel" style="overflow-wrap: break-word!important;">Select file</span>
-                        <input hidden type="file" class="form-control" id="scheduleFromFileModalFileInput" accept=".csv,.json">
+                        <input hidden type="file" class="form-control" id="scheduleFromFileModalFileInput" accept=".json">
                       </label>
                     </div>
                     <div class="col-3 d-flex align-self-end">
@@ -1357,7 +1501,7 @@
             </div>
           </div>
 
-          <!-- Add action modal -->
+          <!-- Add schedule action modal -->
           <div class="modal" tabindex="-1" role="dialog" id="scheduleEditModal">
             <div class="modal-dialog modal-dialog-centered exhibitera-dialog" role="document">
               <div class="modal-content">
@@ -1470,130 +1614,141 @@
             </div>
           </div>
 
-          <!-- Modal for managing exhibits -->
-          <div class="modal" tabindex="-1" role="dialog" id="manageExhibitsModal">
+          <!-- Add exhibit action modal -->
+          <div class="modal" tabindex="-1" role="dialog" id="editExhibitActionModal">
             <div class="modal-dialog modal-dialog-centered exhibitera-dialog" role="document">
               <div class="modal-content">
                 <div class="modal-header">
-                  <h5 class="modal-title">Manage exhibits</h5>
+                  <h5 id="editExhibitActionModalTitle" class="modal-title">Edit action</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                  <div class="row">
-                    <!-- Tool row -->
-                    <div class="col-12">
-                      <div class="row gy-2">
-                        <div class="col-6 col-sm-3 col-md-4 d-flex align-items-end">
-                          <div class="dropdown w-100">
-                            <button class="btn btn-primary dropdown w-100 mt-3" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                              Create new
-                            </button>
-                            <ul class="dropdown-menu w-100">
-                              <li><a id="manageExhibitsCreateEmptyButton" class="dropdown-item" href="#">
-                                <span class="d-none d-sm-block">Create empty exhibit</span>
-                                <span class="d-block d-sm-none">Create empty</span>
-                              </a></li>
-                              <li><a id="manageExhibitsCloneCurrentButton" class="dropdown-item" href="#">
-                                <span class="d-none d-sm-block">Clone current exhibit</span>
-                                <span class="d-block d-sm-none">Clone current</span>
-                              </a></li>
-                            </ul>
-                          </div>
-                        </div>
-
-                        <div class="col-6 col-sm-3">
-                          <label for="manageExhibitModalExhibitNameInput">Name</label>
-                          <input type="text" class="form-control" id="manageExhibitModalExhibitNameInput" placeholder="Name">
+                  <div class="form-group">
+                    <div class="row gy-2">
+                      <div class="col-6 col-md-4">
+                        <label for="editExhibitActionSelector">Action</label>
+                        <select class="form-select" id="editExhibitActionSelector">
+                          <option value="power_on">Power on</option>
+                          <option value="power_off">Power off</option>
+                          <option value="restart">Restart components</option>
+                          <option value="set_dmx_scene">Set DMX lighting scene</option>
+                        </select>
                       </div>
-                      <div class="col-6 col-sm-3 col-md-2 d-flex align-items-end">
-                        <div class="form-check">
-                          <input class="form-check-input" type="checkbox" value="" id="manageExhibitModalExhibitThumbnailCheckbox" checked>
-                          <label class="form-check-label" for="manageExhibitModalExhibitThumbnailCheckbox">
-                            Thumbnails
-                          </label>
-                        </div>
+                      <div class="col-6 col-md-4">
+                        <label id="editExhibitActionTargetSelectorLabel" for="editExhibitActionTargetSelector">Target</label>
+                        <select class="form-select" id="editExhibitActionTargetSelector">
+                        </select>
                       </div>
-                      <div class="col-6 col-sm-3 d-flex align-items-end">
-                        <button class="btn btn-success w-100">
-                          Save exhibit
-                        </button>
+                      <div class="col-6 col-md-4">
+                        <label id="editExhibitActionValueSelectorLabel" for="editExhibitActionValueSelector">Value</label>
+                        <select class="form-select" id="editExhibitActionValueSelector">
+                        </select>
                       </div>
-                      </div>
-                      <hr>
-                    </div>
-                    <!-- Exhibit list -->
-                    <div class="col-4 border-end">
-                      <div id="manageExhibitsModalExhibitList" class="row"></div>
-                    </div>
-                    <!-- Exhibit content -->
-                    <div class="col-8">
-                      <div id="manageExhibitsModalExhibitContentList" class="row"></div>
                     </div>
                   </div>
+                  <div id="editExhibitActionEditErrorAlert" class="text-danger w-100" style="display: none;"></div>
                 </div>
                 <div class="modal-footer">
-                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                  <button type="button" class="btn btn-danger" me-auto id="editExhibitActionEditDeleteActionButton">Delete action</button>
+                  <button type="button" class="btn btn-primary ms-auto" id="editExhibitActionEditSubmitButton">Save changes</button>
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 </div>
               </div>
             </div>
           </div>
 
+          <!-- Manage exhibit buttons -->
           <div class="row mt-0 gy-2">
             <div class="col-12 fst-italic">
               Exhibits match each component in your gallery with one of its definitions. Switching exhibits makes it easy to switch the content on many components at once.
             </div>
-            <div class="col-6 col-md-4 col-lg-3 col-xl-2">
-              <div class="form-group">
-                <label for="exhibitSelect">Set current exhibit</label>
-                <select class="form-select" id="exhibitSelect"></select>
+            <div class="col-6 col-sm-4 col-md-4 col-lg-3 col-xl-2">
+              <select class="form-select" id="exhibitSelect"></select>
+            </div>
+            <div class="col-3 col-sm-2 col-md-2">
+              <button id="setExhibitButton" class="btn btn-primary w-100">Set</button>
+            </div>
+            <div class="col-3 col-sm-2 col-md-2">
+              <button id="editExhibitButton" class="btn btn-primary w-100">Edit</button>
+            </div>
+            <div class='col-4 col-sm-3 col-md-2'>
+              <div class="dropdown w-100">
+                <button class="btn btn-primary dropdown-toggle w-100" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  Create
+                </button>
+                <ul class="dropdown-menu w-100">
+                  <li><button id="createExhibitButton" class='dropdown-item'>Create empty</button></li>
+                  <li><button id="cloneExhibitButton" class='dropdown-item'>Clone selected</button></li>
+                </ul>
               </div>
             </div>
-            <!-- <div class="col-3 d-flex align-items-end">
-              <button id="manageExhibitsButton" class="btn btn-primary">Manage exhibits</button>
-            </div> -->
-            <div class="col-12 col-md-8">
-              <div class="form-group">
-                <label for="createExhibitNameInput">Create new exhibit</label>
-                <div class='row'>
-                  <div class='col-8 col-md-6 col-lg-4 col-xl-3 pe-1 mt-1'>
-                    <input type="text" id='createExhibitNameInput' class='form-control' placeholder="Enter exhibit name"></input>
-                  </div>
-                  <div class='col-4 col-md-4 col-lg-3 col-xl-2 mt-1'>
-                    <div class="dropdown">
-                      <button class="btn btn-primary dropdown-toggle w-100" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        Create
-                      </button>
-                      <ul class="dropdown-menu">
-                        <li><button id="createExhibitButton" class='dropdown-item'>Create empty</button></li>
-                        <li><button id="cloneExhibitButton" class='dropdown-item'>Clone current</button></li>
-                      </ul>
-                    </div>
-                  </div>
-                  <!-- <div class='col-6 col-md-3 col-lg-3 mt-1'>
-                    <button id="createExhibitButton" class='btn btn-primary w-100'>Create Empty</button>
-                  </div>
-                  <div class='col-6 col-md-4 col-lg-3 mt-1'>
-                    <button id="cloneExhibitButton" class='btn btn-primary w-100'>Clone Current</button>
-                  </div> -->
-                </div>
-              </div>
-            </div>
-            <div class="col-12 col-sm-6 col-md-6 col-lg-4">
-              <div class="form-group">
-                  <label for="exhibitDeleteSelector">Delete exhibit</label>
-                <div class="row">
-                  <div class='col-7'>
-                    <select class="form-select w-100" id="exhibitDeleteSelector"></select>
-                  </div>
-                  <div class='col-5'>
-                    <button class='btn btn-danger w-100' id="exhibitDeleteSelectorButton">Delete</button>
-                  </div>
-                  <div class='col-12 mt-1'>
-                    <span class='text-danger' id="exhibitDeleteSelectorWarning">Cannot delete current exhibit</span>
-                  </div>
-                </div>
-              </div>
+            <div class="col-4 col-sm-3 col-md-2">
+              <button class='btn btn-danger w-100' id="exhibitDeleteSelectorButton">Delete</button>
             </div>
           </div>
+          <!-- Edit exhibit fields -->
+           <div id="editExhibitPane" class="row gy-2 mt-2" style="display: none;">
+
+            <div class="col-12">
+              <hr class="mt-0">
+              <div class="row gy-2">
+                <div class="col-12 col-md-4">
+                  <div class="input-group">
+                    <span class="input-group-text">Exhibit name</span>
+                    <input id="editExhibitName" type="text" aria-label="Exhibit name" class="form-control">
+                  </div>
+                </div>
+                <div class="col-4 col-sm-3 col-md-2 col-xl-1">
+                  <div class="dropdown">
+                    <button class="btn btn-primary w-100 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
+                      Add
+                    </button>
+                    <ul class="dropdown-menu w-100">
+                      <li id="editExhibitShowActionModalButton" class="dropdown-item">Action</li>
+                      <li>
+                        <div class="btn-group w-100">
+                          <button id="editExhibitAddComponentButton" class="dropdown-item dropdown-toggle" data-bs-toggle="dropdown"
+                             aria-expanded="false">
+                              Component
+                          </button>
+                          <ul id="editExhibitAddComponentList" class="dropdown-menu w-100 ">
+                          </ul>
+                      </div>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+                <div class="col-5 col-sm-4 col-md-3 col-xl-2">
+                  <div class="input-group mb-3">
+                    <div class="input-group-text">
+                      <input id="editExhibitThumbnailCheckbox" class="form-check-input mt-0" type="checkbox" value="" aria-label="Thumbnails" checked>
+                    </div>
+                    <div class="input-group-text">
+                      <label class="form-check-label" for="editExhibitThumbnailCheckbox">
+                        <span class="d-none d-sm-block">Thumbnails</span>
+                        <span class="d-block d-sm-none"><small>Thumbs</small></span>  
+                      </label>
+                    </div>
+                  </div>
+                    
+                </div>
+                <div class="col-3 col-md-2 col-xl-1">
+                  <button id="editExhibitSaveButton" class="btn btn-success w-100">Save</button>
+                </div>
+              </div>
+            </div>
+            <div class="col-12 col-md-9">
+              <H4>Components</H4>
+              <div id="editExhibitExhibitContentList" class="row gy-2 row-cols-2 row-cols-sm-3 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 border-end"></div>
+            </div>
+            <div class="col-12 col-md-3">
+              <H4>
+                Actions
+                <div class="badge bg-info ml-1 align-middle " data-bs-toggle="tooltip" data-bs-placement="top" title="Actions will be run when the exhibit is loaded." style="font-size: 0.4em;">?</div>
+              </H4>
+              <div id="editExhibitActionsList"></div>
+            </div>
+           </div>
         </div>
 
         <div class="tab-pane fade" id="nav-issues" role="tabpanel" aria-labelledby="nav-issues-tab">
@@ -1654,89 +1809,21 @@
                       </div>
                     </div>
                     <div class='col-4 border-left h-100 d-flex flex-column' style="max-height: 100%; overflow-y: auto;">
-                      <H3>Edit properties</H3>
-                      <div id='editTrackerTemplateNameInputGroup'>
-                        <label for='editTrackerTemplateNameInput'>Name</label>
-                        <input id="editTrackerTemplateNameInput" type="text" class='form-control editTrackerTemplateInputField'></input>
-                      </div>
-
-                      <div id='editTrackerTemplateLabelInputGroup'>
-                        <hr>
-                        <label for='editTrackerTemplateLabelInput'>Label</label>
-                        <input id="editTrackerTemplateLabelInput" type="text" class='form-control editTrackerTemplateInputField'></input>
-                      </div>
-
-                      <div id='editTrackerTemplateMultipleInputGroup' class='editTrackerTemplateInputGroup'>
-                        <hr>
-                        <label>Multiple</label>
-                        <br>
-                        <div class="form-check form-check-inline">
-                          <input class="form-check-input editTrackerTemplateInputField" type="radio" name="editTrackerTemplateMultipleInput" id="editTrackerTemplateMultipleInputTrue" value="true">
-                          <label class="form-check-label" for="editTrackerTemplateMultipleInputTrue">True</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                          <input class="form-check-input editTrackerTemplateInputField" type="radio" name="editTrackerTemplateMultipleInput" id="editTrackerTemplateMultipleInputFalse" value="false" checked>
-                          <label class="form-check-label" for="editTrackerTemplateMultipleInputFalse">False</label>
-                        </div>
-                        <p><i>Allow more than one option to be selected.</i></p>
-                      </div>
-
-                      <div id='editTrackerTemplateOptionsInputGroup' class='editTrackerTemplateInputGroup'>
-                        <hr>
-                        <label for='editTrackerTemplateOptionsInput'>Options</label>
-                        <input id="editTrackerTemplateOptionsInput" type="text" class='form-control editTrackerTemplateInputField'></input>
-                        <p><i>Separate each option with a comma.</i></p>
-                      </div>
-
-                      <div id='editTrackerTemplateSliderInputGroup' class='editTrackerTemplateInputGroup'>
-                        <hr>
-                        <label>Slider options</label>
-                        <div class='row no-gutters'>
-                          <div class='col-6 col-lg-3 px-1'>
-                            <label for='editTrackerTemplateSliderInputMin'>Min</label>
-                            <input id="editTrackerTemplateSliderInputMin" type="number" class='form-control editTrackerTemplateInputField' value=1></input>
-                          </div>
-                          <div class='col-6 col-lg-3 px-1'>
-                            <label for='editTrackerTemplateSliderInputMax'>Max</label>
-                            <input id="editTrackerTemplateSliderInputMax" type="number" class='form-control editTrackerTemplateInputField' value=5></input>
-                          </div>
-                          <div class='col-6 col-lg-3 px-1'>
-                            <label for='editTrackerTemplateSliderInputStep'>Step</label>
-                            <input id="editTrackerTemplateSliderInputStep" type="number" class='form-control editTrackerTemplateInputField' value=1></input>
-                          </div>
-                          <div class='col-6 col-lg-3 px-1'>
-                            <label for='editTrackerTemplateSliderInputStart'>Start</label>
-                            <input id="editTrackerTemplateSliderInputStart" type="number" class='form-control editTrackerTemplateInputField' value=3></input>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div id='editTrackerTemplateExclusiveInputGroup' class='editTrackerTemplateInputGroup'>
-                        <hr>
-                        <label>Exclusive</label>
-                        <br>
-                        <div class="form-check form-check-inline">
-                          <input class="form-check-input editTrackerTemplateInputField" type="radio" name="editTrackerTemplateExclusiveInput" id="editTrackerTemplateExclusiveInputTrue" value="true">
-                          <label class="form-check-label" for="editTrackerTemplateExclusiveInputTrue">True</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                          <input class="form-check-input editTrackerTemplateInputField" type="radio" name="editTrackerTemplateExclusiveInput" id="editTrackerTemplateExclusiveInputFalse" value="false" checked>
-                          <label class="form-check-label" for="editTrackerTemplateExclusiveInputFalse">False</label>
-                        </div>
-                        <p><i>Starting an exclusive timer stops the others.</i></p>
-                      </div>
-
-                      <div id='editTrackerTemplateLinesInputGroup' class='editTrackerTemplateInputGroup'>
-                        <hr>
-                        <label for='editTrackerTemplateLinesInput'>Lines</label>
-                        <input id="editTrackerTemplateLinesInput" type="number" class='form-control editTrackerTemplateInputField' value=5></input>
-                        <p><i>Number of lines visible.</i></p>
-                      </div>
-                      <button id="editTrackerTemplateModalDeleteWidgetButton" class='btn btn-danger w-100 mt-4 mt-auto'>Delete</button>
+                      <H3>Widget properties</H3>
+                      <div id="editTrackerTemplatePropertiesDiv"></div>
+                      
                     </div>
                   </div>
                 </div>
                 <div class="modal-footer">
+                  <div class="form-check me-auto">
+                    <input class="form-check-input" type="checkbox" value="" id="editTrackerTemplateGuestFacingCheckbox">
+                    <label class="form-check-label" for="editTrackerTemplateGuestFacingCheckbox">
+                      Guest-facing 
+                      <span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Enable guests to input responses without changing templates." style="font-size: 0.55em; color: black">?</span>
+                      <span class="badge bg-secondary">Beta</span>
+                    </label>
+                  </div>
                   <button id="editTrackerTemplateModalSubmitChangesButton" type="button" class="btn btn-primary">Save</button>
                   <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 </div>
@@ -1749,14 +1836,14 @@
             <div class="modal-dialog modal-dialog-centered" role="document">
               <div class="modal-content">
                 <div class="modal-header">
-                  <h5 class="modal-title">Are you sure?</h5>
+                  <h5 class="modal-title">Delete <span id="deleteTrackerTemplateModalTemplateName"></span>?</h5>
                 </div>
                 <div class="modal-body">
                   Deleting a template cannot be undone.
                 </div>
                 <div class="modal-footer">
                   <button id="deleteTrackerTemplateFromModalButton" type="button" class="btn btn-danger">Delete template</button>
-                  <button type="button" class="btn btn-success" data-bs-dismiss="modal">Cancel</button>
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 </div>
               </div>
             </div>
@@ -1771,13 +1858,13 @@
                 </div>
                 <div class="modal-body">
                   Deleting the data cannot be undone. To continue, please retype the name of the data to be deleted:
-                  <center><div id='deleteTrackerDataModalDeletedName' class='h4 mt-1'>TEST</div></center>
-                  <center><input type="text" id='deleteTrackerDataModalDeletedInput'></input></center>
+                  <div id='deleteTrackerDataModalDeletedName' class='h4 mt-1 text-center'>TEST</div>
+                  <input type="text" id='deleteTrackerDataModalDeletedInput' class="form-control"></input>
                   <p id='deleteTrackerDataModalSpellingError' class='text-danger mt-2'>Your typed name does not match. Are you sure you want to delete these data?</p>
                 </div>
                 <div class="modal-footer">
                   <button type="button" class="btn btn-danger" id="deleteTrackerDataFromModalButton">Delete data</button>
-                  <button type="button" class="btn btn-success" data-bs-dismiss="modal">Cancel</button>
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 </div>
               </div>
             </div>

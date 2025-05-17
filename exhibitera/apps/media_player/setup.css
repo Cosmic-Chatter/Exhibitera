@@ -8,6 +8,11 @@ ul, #myUL {
     overflow-y: auto;
 }
 
+#configureSubtitlesModalVideoPreview {
+  width: 100%;
+  max-height: 30vh;
+}
+
 /* Remove margins and padding from the parent ul */
 #myUL {
   margin: 0;

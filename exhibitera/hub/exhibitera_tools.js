@@ -1,4 +1,4 @@
-/* global showdown */
+/* global showdown, bootstrap */
 
 import exConfig from './config.js'
 
@@ -99,8 +99,14 @@ export function guessMimetype (filename) {
 
   if (['mp4', 'mpeg', 'webm', 'mov', 'm4v', 'avi', 'flv'].includes(ext)) {
     return 'video'
-  } else if (['jpeg', 'jpg', 'tiff', 'tif', 'png', 'bmp', 'gif', 'webp', 'eps', 'ps', 'svg'].includes(ext)) {
+  }
+
+  if (['jpeg', 'jpg', 'tiff', 'tif', 'png', 'bmp', 'gif', 'webp', 'eps', 'ps', 'svg'].includes(ext)) {
     return 'image'
+  }
+
+  if (['wav', 'mp3', 'aac', 'm4a', 'ogg'].includes(ext)) {
+    return 'audio'
   }
 }
 
@@ -227,60 +233,88 @@ function showUpdateInfoModal (id, kind, details) {
 }
 
 export function rebuildNotificationList () {
-  // Function to use the exConfig.errorDict   to build a set of buttons indicating
+  // Function to use the exConfig.errorDict to build a set of buttons indicating
   // that there is a notification from a component.
 
+  const notificationsCol = document.getElementById('notificationsDropdownCol')
+  const dropdownButton = document.getElementById('notificationsDropdownButton')
+  const notificationDisplayRow = document.getElementById('notificationDisplayRow')
+  const errorKeys = Object.keys(exConfig.errorDict)
+
+  dropdownButton.classList.add('btn-info')
+  dropdownButton.classList.remove('btn-danger')
+
   // Clear the existing buttons
-  $('#notificationDisplayRow').empty()
+  document.getElementById('notificationDisplayRow').innerHTML = ''
 
   // Iterate through the items in the exConfig.errorDict. Each item should correspond
   // to one component with an notification.
-  Object.keys(exConfig.errorDict).forEach((item, i) => {
+  let notificationCount = 0
+
+  for (const item of errorKeys) {
     // Then, iterate through the notifications on that given item
-    Object.keys(exConfig.errorDict[item]).forEach((itemError, j) => {
+    for (const itemError of Object.keys(exConfig.errorDict[item])) {
       let notification
       if (itemError === 'software_update') {
         if (item === '__control_server') {
           const labelName = 'Hub: Software update available'
           notification = createNotificationHTML(labelName, 'update')
           notification.addEventListener('click', notification.addEventListener('click', () => { showUpdateInfoModal('Hub', 'control_server', exConfig.errorDict[item].software_update) }))
+          notificationCount += 1
         } else {
           const labelName = item + ': Software update available'
           notification = createNotificationHTML(labelName, 'update')
           notification.addEventListener('click', notification.addEventListener('click', () => { showUpdateInfoModal(item, 'apps', exConfig.errorDict[item].software_update) }))
+          notificationCount += 1
         }
+      } else if (itemError === 'outdated_os') {
+        let labelName
+        if (item === '__control_server') {
+          labelName = 'Hub: This OS may not be supported in the next version of Exhibitera.'
+        } else {
+          labelName = item + ': This OS may not be supported in the next version of Exhibitera.'
+        }
+
+        notification = createNotificationHTML(labelName, 'outdated_os')
+        notificationCount += 1
       } else {
         const itemErrorMsg = (exConfig.errorDict[item])[itemError]
         if (itemErrorMsg.length > 0) {
+          notificationCount += 1
           const labelName = item + ': ' + itemError + ': ' + itemErrorMsg
           // Create and add the button
           notification = createNotificationHTML(labelName, 'error')
+
+          // Recolor the dropdown to red to indicate an error
+          dropdownButton.classList.remove('btn-info')
+          dropdownButton.classList.add('btn-danger')
         }
       }
-      $('#notificationDisplayRow').append(notification)
-    })
-  })
+      notificationDisplayRow.appendChild(notification)
+    }
+  }
+
+  if (notificationCount > 0) {
+    notificationsCol.style.display = 'block'
+  } else {
+    notificationsCol.style.display = 'none'
+  }
 }
 
 function createNotificationHTML (name, kind) {
   // Create and return a DOM element representing a notification.
 
-  let colorClass
-  if (kind === 'error') {
-    colorClass = 'btn-danger'
-  } else if (kind === 'update') {
-    colorClass = 'btn-info'
-  }
+  const colorClass = {
+    error: 'btn-danger',
+    update: 'btn-info',
+    outdated_os: 'btn-warning'
+  }[kind] ?? 'btn-info'
 
-  const col = document.createElement('div')
-  col.classList = 'col-auto mt-3'
+  const li = document.createElement('li')
+  li.classList = 'dropdown-item'
+  li.innerHTML = `<button class="btn btn-block ${colorClass}">${name}</button>`
 
-  const button = document.createElement('button')
-  button.classList = 'btn btn-block ' + colorClass
-  button.innerHTML = name
-  col.appendChild(button)
-
-  return col
+  return li
 }
 
 export function stringToBool (str) {
@@ -297,13 +331,24 @@ export function stringToBool (str) {
   }
 }
 
-export function arraysEqual (a, b) {
+export function arraysEqual (a, b, property = null) {
+  // Deternine if the provided arrays are equal.
+  // If property != null, the given property(s) is used for each dict in the array.
+
   if (a === b) return true
   if (a == null || b == null) return false
   if (a.length !== b.length) return false
 
   for (let i = 0; i < a.length; ++i) {
-    if (a[i] !== b[i]) return false
+    if (property !== null) {
+      if (Array.isArray(property)) {
+        for (const prop of property) {
+          if (a[i][prop] !== b[i][prop]) return false
+        }
+      } else if (a[i][property] !== b[i][property]) return false
+    } else {
+      if (a[i] !== b[i]) return false
+    }
   }
   return true
 }
@@ -323,7 +368,7 @@ export function sortComponentsByGroup () {
 
   const result = {}
 
-  exConfig.exhibitComponents.forEach((component) => {
+  for (const component of exConfig.exhibitComponents) {
     for (const group of component.groups) {
       if (group in result) {
         result[group].push(component)
@@ -331,9 +376,40 @@ export function sortComponentsByGroup () {
         result[group] = [component]
       }
     }
-  })
+  }
 
   return result
+}
+
+export function sortGroups (method) {
+  // Return the componentGroups sorted in the given way.
+
+  if (method === 'alphabetical') {
+    exConfig.componentGroups.sort((a, b) => {
+      const aName = getGroupName(a.group).toLowerCase()
+      const bName = getGroupName(b.group).toLowerCase()
+      return aName.localeCompare(bName)
+    })
+  } else if (method === 'status') {
+    exConfig.componentGroups.sort((a, b) => {
+      const aName = getGroupName(a.group).toLowerCase()
+      const bName = getGroupName(b.group).toLowerCase()
+      const aStatus = a.getStatus().value
+      const bStatus = b.getStatus().value
+      if (aStatus > bStatus) return -1
+      if (bStatus > aStatus) return 1
+
+      // Fall back to alphabetical if they are the same
+      return aName.localeCompare(bName)
+    })
+  }
+
+  // Move the Default group to the front if it exists
+  const index = exConfig.componentGroups.findIndex(obj => obj.group === 'Default')
+  if (index > -1) {
+    const [item] = exConfig.componentGroups.splice(index, 1)
+    exConfig.componentGroups.unshift(item)
+  }
 }
 
 export function sortDefinitionsByApp (defDict, dropPreview = true) {
@@ -344,21 +420,15 @@ export function sortDefinitionsByApp (defDict, dropPreview = true) {
 
   const result = {}
 
-  Object.keys(defDict).forEach((uuid) => {
-    const def = defDict[uuid]
-    try {
-      if ((def.uuid.slice(0, 9) === '__preview') && (dropPreview === true)) return
-    } catch {
-      // If we don't have a name, this definition is faulty.
-      return
-    }
+  for (const def of Object.values(defDict)) {
+    if (def?.uuid?.startsWith('__preview') && dropPreview === true) continue
 
     if (def.app in result) {
       result[def.app].push(def)
     } else {
       result[def.app] = [def]
     }
-  })
+  }
 
   // Sort the arrays
   Object.keys(result).forEach((key) => {
@@ -460,12 +530,28 @@ export function getExhibitComponentGroup (group) {
 }
 
 export function getGroup (uuid) {
-  // Function to search the groups list for a given uuid
+  // Search the groups list for a given uuid and return the corresponding group.
 
   const result = exConfig.groups.find(obj => {
     return obj.uuid === uuid
   })
   return result
+}
+
+export function getExhibit (uuid) {
+  // Search the exhibit list for a given uuid and return the corresponding exhibit.
+
+  const result = exConfig.availableExhibits.find(obj => {
+    return obj.uuid === uuid
+  })
+  return result
+}
+
+export function getExhibitName (uuid) {
+  // Return the name of the specified exhibit, if it exists.
+  const exhibit = getExhibit(uuid)
+  if (exhibit == null) return 'Invalid exhibit'
+  return exhibit.name
 }
 
 export function uuid () {
@@ -580,4 +666,20 @@ function splitCsv (str) {
     }
     return accum
   }, { soFar: [], isConcatting: false }).soFar
+}
+
+export function showModal (modal) {
+  // Show the given Bootstrap modal
+  // Modal can either be a string starting with # (e.g., '#myID') or a DOM element
+
+  const myModal = new bootstrap.Modal(modal)
+  myModal.show()
+}
+
+export function hideModal (modal) {
+  // Hide the given Bootstrap modal
+  // Modal can either be a string starting with # (e.g., '#myID') or a DOM element
+
+  const myModal = bootstrap.Modal.getInstance(modal)
+  myModal.hide()
 }

@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="../css/bootstrap_5_3/bootstrap.min.css">
     <link rel="stylesheet" href="../css/coloris.min.css">
     <link rel="stylesheet" href="../css/setup.css">
+    <link rel="stylesheet" href="../css/tiny-mde-Exhiibtera.css">
 
     <title>Voting Kiosk Setup</title>
 
@@ -396,26 +397,31 @@
                   <div class="row gy-2">
                     <div class="col-12 col-md-6">
                       <label for="headerInput" class="form-label">Header</label>
-                      <input data-def-key="header" type="text" class="form-control definition-text-input" id="headerInput">
+                      <div id="headerInputCommandBar"></div>
+                      <div id="headerInput"></div>
                     </div>
                     <div class="col-12 col-md-6">
                       <label for="subheaderInput" class="form-label">Subheader</label>
-                      <input data-def-key="subheader" type="text" class="form-control definition-text-input" id="subheaderInput">
+                      <div id="subheaderInputCommandBar"></div>
+                      <div id="subheaderInput"></div>
                     </div>
                     <div class="col-12 col-md-6">
                       <label for="footerInput" class="form-label">Footer</label>
-                      <input data-def-key="footer" type="text" class="form-control definition-text-input" id="footerInput">
+                      <div id="footerInputCommandBar"></div>
+                      <div id="footerInput"></div>
                     </div>
                     <div class="col-12 col-md-6">
                       <label for="subfooterInput" class="form-label">Subfooter</label>
-                      <input data-def-key="subfooter" type="text" class="form-control definition-text-input" id="subfooterInput">
+                      <div id="subfooterInputCommandBar"></div>
+                      <div id="subfooterInput"></div>
                     </div>
                     <div class="col-12 col-md-6">
                       <label for="success_messageInput" class="form-label">
                         Success message
                         <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="The success message appears after a button is pressed." style="font-size: 0.55em;">?</span>
                       </label>
-                      <input data-def-key="success_message" type="text" class="form-control definition-text-input" placeholder="Thank you!" id="success_messageInput">
+                      <div id="success_messageInputCommandBar"></div>
+                      <div id="success_messageInput"></div>
                     </div>
                   </div>
 
@@ -430,7 +436,8 @@
                       <div id="optionEditor" class="row border-start border-end py-2 gy-2">
                         <div class="col-12">
                           <label for="optionInput_label" class="form-label">Label</label>
-                          <input type="text" class="form-control option-input" id="optionInput_label" data-field="label">
+                          <div id="optionInputCommandBar_label"></div>
+                          <div id="optionInput_label"></div>
                         </div>
                         <div class="col-12">
                           <label for="optionInput_value" class="form-label">
@@ -661,6 +668,7 @@
   <script type="text/javascript" src="../js/showdown.min.js"></script>
   <script type="text/javascript" src="../js/platform.js"></script>
   <script type="text/javascript" src="../js/coloris.min.js"></script>
+  <script type="text/javascript" src="../js/tiny-mde.min.js"></script>
   <script type="module" src="setup.js"></script>
 
   </body>

@@ -11,18 +11,18 @@ export function rebuildIssueList () {
   const issueList = document.getElementById('issuesRow')
   issueList.innerHTML = ''
 
-  exConfig.issueList.forEach((issue, i) => {
+  for (const issue of exConfig.issueList) {
     // Check against the filters
     if (filterPriority !== 'all' && filterPriority !== issue.priority && filterPriority != null) {
-      return
+      continue
     }
     if (
       (filterAssignedTo != null && filterAssignedTo !== 'all' && filterAssignedTo !== 'unassigned' && !issue.assignedTo.includes(filterAssignedTo)) ||
       (filterAssignedTo === 'unassigned' && issue.assignedTo.length > 0)
-    ) return
+    ) continue
 
     issueList.append(createIssueHTML(issue))
-  })
+  }
 }
 
 export function upateIssueList () {
@@ -43,7 +43,7 @@ export function upateIssueList () {
     }
   }
 
-  exConfig.issueList.forEach((issue, i) => {
+  for (const issue of exConfig.issueList) {
     if (issue.id in issueColMap) {
       const details = issueColMap[issue.id]
       if (issue.lastUpdateDate > details.lastUpdateDate) {
@@ -56,7 +56,7 @@ export function upateIssueList () {
       // This is a new issue
       issueRow.appendChild(createIssueHTML(issue))
     }
-  })
+  }
 
   // Anything left in the map at the end is a col that should be deleted.
   for (const uuid of Object.keys(issueColMap)) {
@@ -90,9 +90,9 @@ export async function rebuildIssueFilters () {
     return a.innerHTML.toLowerCase().localeCompare(b.innerHTML.toLowerCase())
   })
   // Populate the filter
-  sortedOptionsList.forEach((option) => {
+  for (const option of sortedOptionsList) {
     assignedToSelect.appendChild(option)
-  })
+  }
 }
 
 export function createIssueHTML (issue, full = true, archived = false) {
@@ -131,14 +131,21 @@ export function createIssueHTML (issue, full = true, archived = false) {
   content.style.transition = 'all 1s'
   body.appendChild(content)
 
-  issue.relatedComponentIDs.forEach((id, i) => {
-    const tag = document.createElement('span')
-    tag.setAttribute('class', 'badge bg-secondary me-1')
-    tag.innerHTML = id
-    content.appendChild(tag)
-  })
+  if (issue.relatedComponentUUIDs) {
+    for (const uuid of issue.relatedComponentUUIDs) {
+      const component = exConfig.exhibitComponents.find(obj => {
+        return obj.uuid === uuid
+      })
+      if (component == null) continue
+      const tag = document.createElement('span')
+      tag.setAttribute('class', 'badge bg-secondary me-1')
+      tag.innerHTML = component.id
+      content.appendChild(tag)
+    }
+  }
+  
 
-  issue.assignedTo.forEach((uuid, i) => {
+  for (const uuid of issue.assignedTo) {
     const tag = document.createElement('span')
     tag.setAttribute('class', 'badge bg-success me-1')
     exTools.getUserDisplayName(uuid)
@@ -146,7 +153,7 @@ export function createIssueHTML (issue, full = true, archived = false) {
         tag.innerHTML = displayName
       })
     content.appendChild(tag)
-  })
+  }
 
   const desc = document.createElement('p')
   desc.classList = 'card-text mt-2'
@@ -239,9 +246,9 @@ export function createIssueHTML (issue, full = true, archived = false) {
     mediaBut.innerHTML = 'View media'
 
     const mediaFiles = []
-    issue.media.forEach((file) => {
+    for (const file of issue.media) {
       mediaFiles.push('issues/media/' + file)
-    })
+    }
     mediaBut.addEventListener('click', function () {
       exTools.openMediaInNewTab(mediaFiles)
     }, false)
@@ -368,7 +375,7 @@ function showModifyIssueModal (id, mode) {
     archiveButton.style.display = 'none'
   }
 
-  $('#issueModifyModal').modal('show')
+  exTools.showModal('#issueModifyModal')
 }
 
 export function showArchivedIssuesModal () {
@@ -381,10 +388,10 @@ export function showArchivedIssuesModal () {
     .then((response) => {
       const issueRow = document.getElementById('completedIssuesModalIssueRow')
       issueRow.innerHTML = ''
-      response.issues.reverse().forEach((issue) => {
+      for (const issue of response.issues.reverse()) {
         issueRow.appendChild(createIssueHTML(issue, false, true))
-      })
-      $('#archivedIssuesModal').modal('show')
+      }
+      exTools.showModal('#archivedIssuesModal')
     })
 }
 
@@ -436,7 +443,7 @@ export async function showIssueEditModal (issueType, target) {
 
   const components = exTools.sortComponentsByGroup()
 
-  Object.keys(components).sort().forEach((group) => {
+  for (const group of Object.keys(components).sort()) {
     const header = new Option(exTools.getGroupName(group))
     header.setAttribute('disabled', true)
     issueRelatedComponentsSelector.appendChild(header)
@@ -447,15 +454,15 @@ export async function showIssueEditModal (issueType, target) {
       if (aID < bID) return -1
       return 0
     })
-    sortedGroup.forEach((component) => {
-      const option = new Option(component.id, component.id)
+    for (const component of sortedGroup) {
+      const option = new Option(component.id, component.uuid)
       issueRelatedComponentsSelector.appendChild(option)
-    })
-  })
+    }
+  }
 
   for (let i = 0; i < exConfig.exhibitComponents.length; i++) {
     // Check if component already exists as an option. If not, add it
-    if ($(`#issueRelatedComponentsSelector option[value='${exConfig.exhibitComponents[i].id}']`).length === 0) {
+    if ($(`#issueRelatedComponentsSelector option[value='${exConfig.exhibitComponents[i].uuid}']`).length === 0) {
       $('#issueRelatedComponentsSelector').append()
     }
   }
@@ -474,9 +481,9 @@ export async function showIssueEditModal (issueType, target) {
   })
     .then((response) => {
       if (response.success === true) {
-        response.users.forEach((user) => {
+        for (const user of response.users) {
           document.getElementById('issueAssignedToSelector').appendChild(new Option(user.display_name, user.uuid))
-        })
+        }
       }
     })
 
@@ -511,7 +518,7 @@ export async function showIssueEditModal (issueType, target) {
     $('#issueTitleInput').val(targetIssue.issueName)
     $('#issueDescriptionInput').val(targetIssue.issueDescription)
     $('#issueAssignedToSelector').val(targetIssue.assignedTo)
-    $('#issueRelatedComponentsSelector').val(targetIssue.relatedComponentIDs)
+    $('#issueRelatedComponentsSelector').val(targetIssue.relatedComponentUUIDs)
     if (targetIssue.media.length > 0) {
       rebuildIssueMediaUploadedList(target)
     } else {
@@ -519,7 +526,7 @@ export async function showIssueEditModal (issueType, target) {
     }
   }
 
-  $('#issueEditModal').modal('show')
+  exTools.showModal('#issueEditModal')
 }
 
 export function onIssueMediaUploadChange () {
@@ -641,7 +648,7 @@ function _rebuildIssueMediaUploadedList (filenames, append = false) {
     let videoCounter = 0
     const imageOptions = []
     const videoOptions = []
-    current.forEach((filename) => {
+    for (const filename of current) {
       const fileType = exTools.guessMimetype(filename)
       if (fileType === 'image') {
         imageCounter += 1
@@ -650,19 +657,23 @@ function _rebuildIssueMediaUploadedList (filenames, append = false) {
         videoCounter += 1
         videoOptions.push(new Option('Video ' + videoCounter, filename))
       }
-    })
+    }
     if (imageOptions.length > 0) {
       const imageHeader = new Option('Images')
       imageHeader.setAttribute('disabled', true)
       mediaSelect.appendChild(imageHeader)
-      imageOptions.forEach((option) => { mediaSelect.appendChild(option) })
+      for (const option of imageOptions) {
+        mediaSelect.appendChild(option)
+      }
     }
 
     if (videoOptions.length > 0) {
       const videoHeader = new Option('Videos')
       videoHeader.setAttribute('disabled', true)
       mediaSelect.appendChild(videoHeader)
-      videoOptions.forEach((option) => { mediaSelect.appendChild(option) })
+      for (const option of videoOptions) {
+        mediaSelect.appendChild(option)
+      }
     }
   } else {
     $('#issueMediaModalLabel').html('Add media')
@@ -705,7 +716,7 @@ export function submitIssueFromModal () {
   const issueDict = {}
   issueDict.issueName = $('#issueTitleInput').val()
   issueDict.issueDescription = $('#issueDescriptionInput').val()
-  issueDict.relatedComponentIDs = $('#issueRelatedComponentsSelector').val()
+  issueDict.relatedComponentUUIDs = $('#issueRelatedComponentsSelector').val()
   issueDict.assignedTo = $('#issueAssignedToSelector').val()
   issueDict.priority = $('#issuePrioritySelector').val()
   if ($('#issueMediaViewFromModal').data('filenames').length > 0) {
@@ -727,7 +738,7 @@ export function submitIssueFromModal () {
       issueDict.id = $('#issueEditModal').data('target')
       endpoint = '/issue/edit'
     }
-    $('#issueEditModal').modal('hide')
+    exTools.hideModal('#issueEditModal')
 
     exTools.makeServerRequest({
       method: 'POST',

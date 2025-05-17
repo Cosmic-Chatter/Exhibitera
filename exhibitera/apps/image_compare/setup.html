@@ -1,0 +1,633 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+
+    <meta name="description" content="">
+    <meta name="author" content="Morgan Rehnberg">
+    <link rel="icon" type="image/x-icon" href="../_static/favicon.ico">
+
+    <link rel="stylesheet" href="../css/bootstrap_5_3/bootstrap.min.css">
+    <link rel="stylesheet" href="../css/coloris.min.css">
+    <link rel="stylesheet" href="../css/tiny-mde-Exhiibtera.css">
+    <link rel="stylesheet" href="../css/setup.css">
+    <link rel="stylesheet" href="setup.css">
+
+    <title>Image Compare Setup</title>
+
+  </head>
+
+  <body>
+    <div id="mainContainer" class="container mt-2 mb-5">
+
+      <!-- Password change modal -->
+      <div class="modal" tabindex="-1" role="dialog" id="passwordChangeModal">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Change your password</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <p class="fst-italic">Use the fields below to change you password. If you don't know your current password, your administrator can set a temporary password for you.</p>
+              
+              <label class="form-label mt-2" for="passwordChangeModalCurrentPassword">Current password</label>
+              <input class="form-control editUserField" type="password" id="passwordChangeModalCurrentPassword">
+              
+              <label class="form-label mt-2" for="passwordChangeModalNewPassword1">New password</label>
+              <input class="form-control editUserField" type="password" id="passwordChangeModalNewPassword1" autocomplete="new-password">
+
+              <label class="form-label mt-2" for="passwordChangeModalNewPassword2">Confirm new password</label>
+              <input class="form-control editUserField" type="password" id="passwordChangeModalNewPassword2" autocomplete="new-password">
+
+              <div class="text-danger mt-3">
+                <div id="passwordChangeModalNoCurrentPassWarning">You must enter your current password.</div>
+                <div id="passwordChangeModalBadCurrentPassWarning">The current password was incorrect.</div>
+                <div id="passwordChangeModalNoBlankPassWarning">The password cannot be blank.</div>
+                <div id="passwordChangeModalPassMismatchWarning">The new passwords do not match.</div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button id="passwordChangeModalSubmitButton" type="button" class="btn btn-primary">Change</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- App help modal -->
+      <div id="appHelpModal" class="modal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered mw-100 w-75">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Help</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body"  style="max-height: 70vh; overflow-y: auto;">
+              <div class="row">
+                <div id='helpTextDiv' class="col-12"></div>
+              </div>
+
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Welcome modal -->
+      <div id="appWelcomeModal" class="modal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Welcome to Image Compare</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body"  style="max-height: 70vh; overflow-y: auto;">
+              <div class="row gy-2 row-cols-1 row-cols-md-2">
+                <div class="col">
+                  <div class="card h-100">
+                    <div class="card-body d-flex flex-column">
+                      <h5 class="card-title text-center">Guided Setup</h5>
+                      <p class="card-text">Get started with step-by-step instructions. You can always fine-tune things afterwards.</p>
+                      <button id="appWelcomeModalWizardButton" class="btn btn-primary w-100 mt-auto">Start Guided Setup</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="col">
+                  <div class="card h-100">
+                    <div class="card-body d-flex flex-column">
+                      <h5 class="card-title text-center">Custom Setup</h5>
+                      <p class="card-text">Fully control all attributes from the beginning. <span class='badge text-bg-secondary'>Advanced</span></p>
+                      <button class="btn btn-primary w-100 mt-auto" data-bs-dismiss="modal">Start Custom Setup</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Setup wizard modal -->
+      <div id="setupWizardModal" class="modal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Create a new definition</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div id="setupWizardModalBody" class="modal-body">
+
+              <!-- Welcome -->
+              <div id="wizardPane_Welcome" class="row wizard-pane">
+                <div class="col-8 offset-2 mt-3">
+                  <H4 class="text-center">Welcome to Image Compare!</H4>
+                  <i>
+                    <p>
+                      Image Compare creates one or more image sliders, allowing a user to swipe back and forth between two images for a before/after effect. A single Image Compare instance can have up to eight pairs of images for users to select from.
+                    </p>
+                    <p>
+                      To create an Image Compare, you will need:
+                      <ul>
+                        <li>At least one pair of image files;</li>
+                        <li>Basic details like a title and subtitle for the app.</li>
+                      </ul>
+                    </p>
+                  </i>
+                  <div class="row">
+                    <div class="col-6 offset-3">
+                      <label class="form-label" for="wizardDefinitionNameInput">Definition name</label>
+                      <input class="form-control" id="wizardDefinitionNameInput" type="text">
+                    </div>
+                    <div id="wizardDefinitionNameBlankWarning" class="col-12 text-warning mt-2" style="display: none;">
+                      Definition name must not be blank.
+                    </div>
+                  </div>
+                  <div class="text-center mt-4">
+                    <button class="btn btn-primary wizard-forward" data-current-page="Welcome">Get started</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Languages -->
+              <div id="wizardPane_Languages" class="row wizard-pane">
+                <div class="col-8 offset-2 mt-3">
+                  <H4 class="text-center">What languages will you include?</H4>
+                  <i>
+                    <p>
+                      Image Compare supports browsing in multiple languages. Select the langauges you want to include:
+                    </p>
+                  </i>
+                  <button id="wizardAddLanguageButton" class="btn btn-primary">Add language</button>
+                  <div id="wizardLanguages" class="row mt-2 gy-2 row-cols-1 row-cols-lg-2"></div>
+                  <div id="wizardLanguagesBlankWarning" class="mt-2 text-warning" style="display: none;">
+                    You must add at least one language.
+                  </div>
+                  <div class="text-center mt-4">
+                    <button class="btn btn-secondary me-4 wizard-back" data-current-page="Languages">Back</button>
+                    <button class="btn btn-primary ms-4 wizard-forward" data-current-page="Languages">Next</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Select Images -->
+              <div id="wizardPane_SelectImages" class="row wizard-pane">
+                <div class="col-8 offset-2 mt-3">
+                  <H4 class="text-center">Choose your image pairs</H4>
+                  <i>
+                    <p>
+                      Image Compare can include up to eight pairs of images. Add those that you would like to include:
+                    </p>
+                  </i>
+                  <div class="row gy-2">
+                    <div class="col-12 col-lg-4">
+                      <button id="wizardAddImagePairButton" class="btn btn-primary">Add image pair</button>
+                    </div>
+                    <div class="col-12 col-lg-8">
+                      <div id="wizardMaxImagePairsWarning" class="mt-2 text-warning" style="display: none;">
+                        You can only add up to eight image pairs.
+                      </div>
+                    </div>
+                  </div>
+                  <nav class="mt-2">
+                    <div id="wizardImagesNav" class="nav nav-tabs" role="tablist"></div>
+                  </nav>
+                  <div class="tab-content mx-2" id="wizardImagesNavContent"></div>
+                  <div id="wizardNoImagePairsWarning" class="mt-2 text-warning" style="display: none;">
+                    You must add at least one image pair.
+                  </div>
+                  <div id="wizardEmptyImagePairsWarning" class="mt-2 text-warning" style="display: none;">
+                    Make sure you have selected images for each image pair.
+                  </div>
+                  <div class="text-center mt-4">
+                    <button class="btn btn-secondary me-4 wizard-back" data-current-page="SelectImages">Back</button>
+                    <button class="btn btn-primary ms-4 wizard-forward" data-current-page="SelectImages">Next</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Pair Details -->
+              <div id="wizardPane_PairDetails" class="row wizard-pane">
+                <div class="col-8 offset-2 mt-3">
+                  <H4 class="text-center">Add image pair details</H4>
+                  <i>
+                    <p>
+                      You can add short labels to each of your images, as well as a longer description that will be visible in a pop-up. You'll do this for each language you are supporting. You can always change these later.
+                    </p>
+                  </i>
+                  <nav class="mt-2">
+                    <div id="wizardPairDetailsNav" class="nav nav-tabs" role="tablist"></div>
+                  </nav>
+                  <div class="tab-content mx-2 mt-2" id="wizardPairDetailsNavContent"></div>
+
+                  <div class="text-center mt-4">
+                    <button class="btn btn-secondary me-4 wizard-back" data-current-page="PairDetails">Back</button>
+                    <button class="btn btn-primary ms-4 wizard-forward" data-current-page="PairDetails">Next</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Home Details -->
+              <div id="wizardPane_HomeDetails" class="row wizard-pane">
+                <div class="col-8 offset-2 mt-3">
+                  <H4 class="text-center">Give your app a title</H4>
+                  <i>
+                    <p>
+                      Visitors will first see a grid of icons representing your image pairs. On this "home screen," you can add a title and a subtitle to provide come context for what they will see.
+                    </p>
+                  </i>
+                  
+                  <nav class="mt-2">
+                    <div id="wizardHomeDetailsNav" class="nav nav-tabs" role="tablist"></div>
+                  </nav>
+                  <div class="tab-content mx-2 mt-2" id="wizardHomeDetailsNavContent"></div>
+
+                  <div class="text-center mt-4">
+                    <button class="btn btn-secondary me-4 wizard-back" data-current-page="HomeDetails">Back</button>
+                    <button class="btn btn-primary ms-4 wizard-forward" data-current-page="HomeDetails">Finish</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-10" id="setupHeader">
+          <H2>Image Compare  Setup</H2>
+          Use this utility to create and edit Image Compare configurations.
+          </div>
+
+        <div class="col-2">
+          <div id="loginMenu">
+            <button class="btn btn-outline-primary btn-sm dropdown-toggle float-end" type="button" data-bs-toggle="dropdown" aria-expanded="false">Log in</button>
+            <div class="dropdown-menu">
+              <div class="px-4 py-3">
+                <div class="mb-3">
+                  <label for="loginDropdownUsername" class="form-label">Username</label>
+                  <input type="text" class="form-control" id="loginDropdownUsername">
+                </div>
+                <div class="mb-3">
+                  <label for="loginDropdownPassword" class="form-label">Password</label>
+                  <input type="password" class="form-control" id="loginDropdownPassword">
+                </div>
+                <button id="loginSubmitButton" class="btn btn-primary">Log in</button>
+              </div>
+              <div class="dropdown-divider"></div>
+              <div class="dropdown-item text-center" data-bs-toggle="tooltip" data-bs-placement="top" title="To create an account or reset your password, contact your system administrator. To log in as the administrator, use the username 'admin'.">
+                Login help
+              </div>
+            </div>
+          </div>
+          <div id="userMenu" style="display: none;">
+            <button class="btn btn-outline-primary btn-sm dropdown-toggle float-end" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <span id="userMenuUserDisplayName" class="d-none d-sm-inline-block">Morgan Rehnberg</span>
+              <span id="userMenuUserShortName" class="d-sm-none">MR</span>
+              </button>
+            <div class="dropdown-menu">
+              <button class="dropdown-item" id="changePasswordButton">Change password</button>
+              <div class="dropdown-divider"></div>
+              <button class="dropdown-item" id="logoutButton">Log out</button>
+            </div>
+          </div>
+        </div>
+        <div id="helpNewAccountMessage" class="col-6 offset-3 alert alert-primary my-4">
+          <H4 class="text-center">Need an account?</H4>
+          Exhibitera requires a user account to access functionality. If you need an account, or your password to be reset, please contact your system administrator.
+        </div>
+        <div id="helpInsufficientPermissionstMessage" class="col-6 offset-3 alert alert-warning my-4" style="display: none;">
+          <H4 class="text-center">Insufficient Permissions</H4>
+          You do not have permission to edit this component. If you believe this is an error, contact your system administrator.
+        </div>
+      </div>
+      
+      <div id="setupTools" class="row my-1 gx-2 gy-2">
+        <div class="col-6 col-sm-2">
+          <div class="dropdown">
+            <button class="btn btn-primary dropdown-toggle w-100" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <span class="d-inline d-sm-none d-lg-inline">Create new</span>
+              <span class="d-none d-sm-inline d-lg-none">New</span>
+            </button>
+            <ul class="dropdown-menu">
+              <li><h6 class="dropdown-header">Basic</h6></li>
+              <li><a id="showWizardButton" class="dropdown-item" href="#">Guided setup</a></li>
+              <li><h6 class="dropdown-header">Advanced</h6></li>
+              <li><a id="newDefinitionButton" class="dropdown-item" href="#">Create blank definition</a></li>
+              <li><a id="cloneDefinitionButton" class="dropdown-item" href="#">Clone selected definition</a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="col-6 col-sm-2">
+          <button id="editDefinitionButton" class="btn btn-primary w-100">
+            <span class="d-inline d-sm-none d-lg-inline">Edit existing</span>
+            <span class="d-none d-sm-inline d-lg-none">Edit</span>
+          </button>
+        </div>
+        <div class="col-6 col-sm-4 col-lg-3 col-xl-2">
+          <select id="availableDefinitionSelect" class="form-select w-100">Edit existing</select>
+        </div>
+        <div class="col-3 col-sm-2 col-md-2 col-lg-1">
+          <button id="deleteDefinitionButton" class="btn btn-danger w-100">Delete</button>
+        </div>
+        <div class="col-3 col-sm-2 col-md-2 col-lg-1 ms-auto">
+          <button id="helpButton" class="btn btn-info w-100">Help</button>
+        </div>
+        <!-- Top toolbar -->
+        <div class="col-12 col-lg-12">
+          <div class="row mt-3 pb-2 gx-2 gy-2 border-top border-bottom">
+            <div class="col-2 col-sm-4 col-md-3 col-lg-2 col-xl-1">
+              <button id="definitionSaveButton" class="btn btn-success w-100 px-0">Save</button>
+            </div>
+            <div class="col-5 col-sm-4 col-md-3 col-lg-2">
+              <button id="previewRefreshButton" class="btn btn-info w-100">Refresh preview</button>
+            </div>
+            <div class="col-5 col-sm-4 col-md-3 col-lg-2">
+              <div class="dropdown">
+                <button class="btn btn-primary dropdown-toggle w-100" type="button" data-bs-toggle="dropdown" aria-expanded="false">Adjust preview</button>
+                <ul class="dropdown-menu">
+                  <li><h6 class="dropdown-header">Typical widescreen</h6></li>
+                  <li><a id="previewAspect16x9" class="dropdown-item" href="#">16x9 (horizontal)</a></li>
+                  <li><a id="previewAspect9x16" class="dropdown-item" href="#">9x16 (vertical)</a></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><h6 class="dropdown-header">Business widescreen</h6></li>
+                  <li><a id="previewAspect16x10" class="dropdown-item" href="#">16x10 (horizontal)</a></li>
+                  <li><a id="previewAspect10x16" class="dropdown-item" href="#">10x16 (vertical)</a></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><h6 class="dropdown-header">Fullscreen / iPad</h6></li>
+                  <li><a id="previewAspect4x3" class="dropdown-item" href="#">4x3 (horizontal)</a></li>
+                  <li><a id="previewAspect3x4" class="dropdown-item" href="#">3x4 (vertical)</a></li>
+                </ul>
+              </div>
+            </div>
+            <div class="col-6 col-sm-4 offset-sm-8 offset-md-0 col-md-3 col-xl-2 d-flex align-items-center">
+              <div class="form-check mb-0">
+                <input class="form-check-input" type="checkbox" value="" id="refreshOnChangeCheckbox" checked>
+                <label class="form-check-label small" for="refreshOnChangeCheckbox">
+                  Refresh on change
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row align-items-start">
+        <div id='editPane' class="col-6 col-lg-7">
+
+          <div class="accordion mt-3" id="topLevelAccordion">
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#basicDetails" aria-expanded="true" aria-controls="basicDetails">
+                  Basic details
+                  <div class="accordion-detail">Set the definition name and configure the attractor.</div>
+                </button>
+              </h2>
+              <div id="basicDetails" class="accordion-collapse collapse show" data-bs-parent="#topLevelAccordion">
+                <div class="accordion-body">
+                  <div class="row gy-2">
+                    <div class="col-12 col-md-6">
+                      <label for="definitionNameInput" class="form-label">Definition name</label>
+                      <input type="text" class="form-control" id="definitionNameInput">
+                    </div>
+                    <div class="col-12 col-md-6">
+                      <div class="row">
+                        <label for="attractorSelect" class="form-label">
+                          Attractor
+                          <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="An attractor is a fullscreen image or video that takes over when the app is idle." style="font-size: 0.55em;">?</span>
+                        </label>
+                        <div class="col-8 col-sm-9 col-md-8 col-lg-9 col-xxl-10 pe-0">
+                          <button id="attractorSelect" class="btn btn-outline-primary w-100">Select file</button>
+                        </div>
+                        <div class="col-4 col-sm-3 col-md-4 col-lg-3 col-xxl-2">
+                          <button id="attractorSelectClear" class="btn btn-danger align-self-center w-100">✕</button>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-12 col-md-6 col-lg-4 col-xxl-3">
+                      <label for="inactivityTimeoutField" class="form-label">
+                        Inactivity timeout
+                        <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Seconds of inactivity before the attractor is shown." style="font-size: 0.55em;">?</span>
+                      </label>
+                      <input type="number" class="form-control" min="10" value="30" id="inactivityTimeoutField">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Content -->
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#content" aria-expanded="false" aria-controls="content">
+                  Content
+                  <div class="accordion-detail">Add image pairs, choose languages, set up text, and more.</div>
+                </button>
+              </h2>
+              <div id="content" class="accordion-collapse collapse" data-bs-parent="#topLevelAccordion">
+                <div class="accordion-body">
+                  <div class="row gy-2">
+                    <div class="col-12 mt-2">
+                      <div class="row mt-2 gy-2 align-items-top">
+                        <H4>Languages</H4>
+                        <div id="language-select"></div>
+                        
+                        <H4>Home screen text</H4>
+                        <div class="col-12">
+                          <nav>
+                            <div id="homeTextNav" class="nav nav-tabs" role="tablist"></div>
+                          </nav>
+                          <div class="tab-content mx-2" id="homeTextContent"></div>
+                        </div>
+        
+                        <H4 class="mt-2">Image pairs</H4>
+                        <div class="mt-2 fst-italic">Your app can contain up to eight pairs of images for guests to explore. Image 1 will be placed below image 2.</div>
+                        <div class="col-12 col-md-6 col-lg-4 col-xxl-3">
+                          <button id="addItemButton" class="btn btn-primary w-100">Add image pair</button>
+                        </div>
+                        <div class="col-12 mt-3">
+                          <div id="imagePairMaxNumberWarning" class="alert alert-warning alert-dismissible" style="display: none;">
+                            You can only have eight image pairs.
+                            <button id="imagePairMaxNumberWarningDismissButton" type="button" class="btn-close" aria-label="Close"></button>
+                          </div>
+                          
+                          <nav>
+                            <div id="contentNav" class="nav nav-tabs" role="tablist"></div>
+                          </nav>
+                          <div class="tab-content mx-2" id="contentNavContent"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Appearance -->
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#appearance" aria-expanded="false" aria-controls="appearance">
+                  Appearance
+                  <div class="accordion-detail">Adjust colors, fonts, and text sizes.</div>
+                </button>
+              </h2>
+              <div id="appearance" class="accordion-collapse collapse" data-bs-parent="#topLevelAccordion">
+                <div class="accordion-body">
+                  <div class="row gy-2">
+                    <h4>Colors</h4>
+                    <div class="row gy-2 mb-3">
+                      <div class="col-12 col-lg-8 advanced-color-picker" data-constACP-name="Background" data-constACP-path="style>background"></div>
+      
+                      <div class="col-12 col-sm-6 col-lg-4">
+                        <label for="colorPicker_titleColor" class="form-label">Title</label>
+                        <div>
+                          <input id="colorPicker_titleColor" type="text" class="coloris form-control" value="#fff" data-property="titleColor" data-default="#fff">
+                        </div>
+                      </div>
+                      <div class="col-12 col-sm-6 col-lg-4">
+                        <label for="colorPicker_subtitleColor" class="form-label">Subtitle</label>
+                        <div>
+                          <input id="colorPicker_subtitleColor" type="text" class="coloris form-control" value="#fff" data-property="subtitleColor" data-default="#fff">
+                        </div>
+                      </div>
+                      <div class="col-12 col-sm-6 col-lg-4">
+                        <label for="colorPicker_itemNameColor" class="form-label">Item name</label>
+                        <div>
+                          <input id="colorPicker_itemNameColor" type="text" class="coloris form-control" value="#fff" data-property="itemNameColor" data-default="#fff">
+                        </div>
+                      </div>
+                      <div class="col-12 col-sm-6 col-lg-4">
+                        <label for="colorPicker_buttonBackgroundColor" class="form-label">Button background</label>
+                        <div>
+                          <input id="colorPicker_buttonBackgroundColor" type="text" class="coloris form-control" value="#393a5acc" data-property="buttonBackgroundColor" data-default="#393a5acc">
+                        </div>
+                      </div>
+                      <div class="col-12 col-sm-6 col-lg-4">
+                        <label for="colorPicker_buttonTextColor" class="form-label">Button text</label>
+                        <div>
+                          <input id="colorPicker_buttonTextColor" type="text" class="coloris form-control" value="#fff" data-property="buttonTextColor" data-default="#fff">
+                        </div>
+                      </div>
+                      <div class="col-12 col-sm-6 col-lg-4">
+                        <label for="colorPicker_buttonOutlineColor" class="form-label">Button outline</label>
+                        <div>
+                          <input id="colorPicker_buttonOutlineColor" type="text" class="coloris form-control" value="#fff" data-property="buttonOutlineColor" data-default="#fff">
+                        </div>
+                      </div>
+                      <div class="col-12 col-sm-6 col-lg-4">
+                        <label for="colorPicker_sliderBackgroundColor" class="form-label">Slider background</label>
+                        <div>
+                          <input id="colorPicker_sliderBackgroundColor" type="text" class="coloris form-control" value="#719bbfb3" data-property="sliderBackgroundColor" data-default="#719bbfb3">
+                        </div>
+                      </div>
+                      <div class="col-12 col-sm-6 col-lg-4">
+                        <label for="colorPicker_sliderIconColor" class="form-label">Slider icon</label>
+                        <div>
+                          <input id="colorPicker_sliderIconColor" type="text" class="coloris form-control" value="#000" data-property="sliderIconColor" data-default="#000">
+                        </div>
+                      </div>
+                      <div class="col-12 col-sm-6 col-lg-4">
+                        <label for="colorPicker_labelBackgroundColor" class="form-label">Label background</label>
+                        <div>
+                          <input id="colorPicker_labelBackgroundColor" type="text" class="coloris form-control" value="#00000080" data-property="labelBackgroundColor" data-default="#00000080">
+                        </div>
+                      </div>
+                      <div class="col-12 col-sm-6 col-lg-4">
+                        <label for="colorPicker_labelTextColor" class="form-label">Label text</label>
+                        <div>
+                          <input id="colorPicker_labelTextColor" type="text" class="coloris form-control" value="#fff" data-property="labelTextColor" data-default="#fff">
+                        </div>
+                      </div>
+                      <div class="col-12 col-sm-6 col-lg-4">
+                        <label for="colorPicker_infoTitleColor" class="form-label">Info pane title</label>
+                        <div>
+                          <input id="colorPicker_infoTitleColor" type="text" class="coloris form-control" value="#fff" data-property="infoTitleColor" data-default="#fff">
+                        </div>
+                      </div>
+                      <div class="col-12 col-sm-6 col-lg-4">
+                        <label for="colorPicker_infoBodyColor" class="form-label">Info pane text</label>
+                        <div>
+                          <input id="colorPicker_infoBodyColor" type="text" class="coloris form-control" value="#fff" data-property="infoBodyColor" data-default="#fff">
+                        </div>
+                      </div>
+                    </div>
+      
+                    <h4>Fonts</h4>
+                    <div class="row gy-2">
+                      <div class="col-12 col-md-6 col-lg-4 col-xl-3">
+                        <button id="manageFontsButton" class="btn btn-info w-100">Manage fonts</button>
+                      </div>
+                      <div class="col-0 col-lg-9"></div>
+      
+                      <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Title" data-constAFP-path="style>font>title" data-default="OpenSans-Bold.ttf"></div>
+      
+                      <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Subtitle" data-constAFP-path="style>font>subtitle" data-default="OpenSans-Regular.ttf"></div>
+      
+                      <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Item name" data-constAFP-path="style>font>item_name" data-default="OpenSans-Regular.ttf"></div>
+      
+                      <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Label" data-constAFP-path="style>font>label" data-default="OpenSans-Regular.ttf"></div>
+      
+                      <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Info pane title" data-constAFP-path="style>font>info_pane_title" data-default="OpenSans-Bold.ttf"></div>
+      
+                      <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Info pane text" data-constAFP-path="style>font>info_pane_body" data-default="OpenSans-Regular.ttf"></div>
+                    </div>
+      
+                    <h4 class="mt-2">Text size</h4>
+                    <div class="row gy-2">
+                      <div class="col-12 col-md-6 col-lg-4">
+                        <label for="titleTextSizeSlider" class="form-label">Title</label>
+                        <input id="titleTextSizeSlider" type="range" class="form-range text-size-slider" data-property="title" min="-2", max="3" start="0" step="0.25">
+                      </div>
+                      <div class="col-12 col-md-6 col-lg-4">
+                        <label for="subtitleTextSizeSlider" class="form-label">Subtitle</label>
+                        <input id="subtitleTextSizeSlider" type="range" class="form-range text-size-slider" data-property="subtitle" min="-0.5", max="2" start="0" step="0.25">
+                      </div>
+                      <div class="col-12 col-md-6 col-lg-4">
+                        <label for="item_nameTextSizeSlider" class="form-label">Item name</label>
+                        <input id="item_nameTextSizeSlider" type="range" class="form-range text-size-slider" data-property="item_name" min="-0.75", max="2" start="0" step="0.25">
+                      </div>
+                      <div class="col-12 col-md-6 col-lg-4">
+                        <label for="labelTextSizeSlider" class="form-label">Label</label>
+                        <input id="labelTextSizeSlider" type="range" class="form-range text-size-slider" data-property="label" min="-1", max="1.5" start="0" step="0.25">
+                      </div>
+                      <div class="col-12 col-md-6 col-lg-4">
+                        <label for="info_pane_titleTextSizeSlider" class="form-label">Info pane title</label>
+                        <input id="info_pane_titleTextSizeSlider" type="range" class="form-range text-size-slider" data-property="info_pane_title" min="-1.5", max="1" start="0" step="0.25">
+                      </div>
+                      <div class="col-12 col-md-6 col-lg-4">
+                        <label for="info_pane_bodyTextSizeSlider" class="form-label">Info pane text</label>
+                        <input id="info_pane_bodyTextSizeSlider" type="range" class="form-range text-size-slider" data-property="info_pane_body" min="-0.5", max="1" start="0" step="0.25">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id='previewPane' class="col-6 col-lg-5 sticky-top" style="z-index: 1;">
+          <div id="previewContainer">
+            <iframe id="previewFrame" class="mt-3 preview-16x9" src="../image_compare.html?standalone=true"></iframe>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  <script type="text/javascript" src="../js/jquery-3.7.1.min.js"></script>
+  <script type="text/javascript" src="../js/bootstrap_5_3/bootstrap.bundle.min.js"></script>
+  <script type="text/javascript" src="../js/showdown.min.js"></script>
+  <script type="text/javascript" src="../js/tiny-mde.min.js"></script>
+  <script type="text/javascript" src="../js/platform.js"></script>
+  <script type="text/javascript" src="../js/coloris.min.js"></script>
+  <script type="module" src="setup.js"></script>
+
+  </body>
+
+</html>

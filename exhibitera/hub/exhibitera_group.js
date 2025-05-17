@@ -21,7 +21,7 @@ export function showEditGroupModal (uuid = '') {
           document.getElementById('editGroupModalNameInput').value = response.details.name
           document.getElementById('editGroupModalDescriptionInput').value = response.details.description
         }
-        $('#editGroupModal').modal('show')
+        exTools.showModal('#editGroupModal')
       })
   } else {
     // Creating a new group
@@ -31,7 +31,7 @@ export function showEditGroupModal (uuid = '') {
     document.getElementById('editGroupModalNameInput').value = ''
     document.getElementById('editGroupModalDescriptionInput').value = ''
 
-    $('#editGroupModal').modal('show')
+    exTools.showModal('#editGroupModal')
   }
 }
 
@@ -57,7 +57,7 @@ export function submitChangeFromGroupEditModal () {
       }
     })
       .then(() => {
-        $('#editGroupModal').modal('hide')
+        exTools.hideModal('#editGroupModal')
       })
   } else {
     // Edit group
@@ -69,7 +69,7 @@ export function submitChangeFromGroupEditModal () {
       }
     })
       .then(() => {
-        $('#editGroupModal').modal('hide')
+        exTools.hideModal('#editGroupModal')
       })
   }
 }
@@ -133,7 +133,7 @@ export function populateGroupsRow () {
     deleteButton.innerHTML = 'Delete'
     deleteButton.addEventListener('click', () => {
       document.getElementById('deleteGroupModal').setAttribute('data-uuid', group.uuid)
-      $('#deleteGroupModal').modal('show')
+      exTools.showModal('#deleteGroupModal')
     })
     dropdownMenu.appendChild(deleteButton)
 
@@ -164,7 +164,7 @@ export function deleteGroupFromModal () {
     endpoint: '/group/' + uuid + '/delete'
   })
     .then(() => {
-      $('#deleteGroupModal').modal('hide')
+      exTools.hideModal('#deleteGroupModal')
     })
 }
 

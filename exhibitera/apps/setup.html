@@ -157,14 +157,14 @@
                     <div class="col-12">
                       <h4 class="modal-title" id="updateInfoModalTitle">Update Available</h4>
                     </div>
-                    <div class="col-6 col-sm-4 col-md-3 pt-2">
-                      <div class="row ps-3 pe-1">
+                    <div class="col-12 col-sm-6 col-lg-3 pt-2 px-4">
+                      <div class="row">
                         <div class="col-9 bg-info text-dark font-weight-bold ps-2 py-1 rounded-start me-0 pe-0">Your version</div>
                         <div id="updateInfoModalCurrentVersion" class="col-3  py-1 bg-warning text-dark font-weight-bold rounded-end ms-0 ps-2">1.0</div>
                       </div>
                     </div>
-                    <div class="col-6 col-sm-4 col-md-3 pt-2">
-                      <div class="row ps-1 pe-3">
+                    <div class="col-12 col-sm-6 col-lg-3 pt-2 px-4">
+                      <div class="row">
                         <div class="col-9 bg-info text-dark font-weight-bold ps-2 py-1 rounded-start me-0 pe-0">Latest version</div>
                         <div id="updateInfoModalLatestVersion" class="col-3  py-1 bg-success font-weight-bold text-dark rounded-end ms-0 ps-2">2.0</div>
                       </div>
@@ -199,6 +199,9 @@
           <div class='row'>
             <div id="showUpdateInfoButtonCol" class="col-6 col-sm-4 col-md-3 col-xl-2 mt-2">
               <button id="showUpdateInfoButton" class="btn btn-info w-100">Update available</button>
+            </div>
+            <div id="outdatedOSCol" class="col mt-2" style="display: none;">
+              <button type="button" class="btn btn-warning" data-bs-toggle="popover" data-bs-trigger="hover" data-bs-title="Your OS is reaching end of life" data-bs-content="This OS version may be unsupported in the next version of Exhibitera.">Outdated OS</button>
             </div>
             <div class="col-12 mt-3">
               <button id="saveDefaultsButton" class='btn btn-primary' style="width: 150px;">Save changes</button>
@@ -425,6 +428,18 @@
                   <h3 class="card-title">DMX Control</h3>
                   <p class="card-text">Control DMX lighting.</p>
                   <button class="btn btn-primary mt-1 app-link" data-app-link="dmx_control" data-web-link="/dmx_control.html?standalone=true">Launch</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Image Compare -->
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3 mt-3">
+              <div class="card h-100">
+                <!-- <img src="..." class="card-img-top" alt="..."> -->
+                <div class="card-body">
+                  <h3 class="card-title">Image Compare</h3>
+                  <p class="card-text">Create before/after sliders between pairs of images.</p>
+                  <button data-app-link="image_compare_setup" data-web-link="/image_compare/setup.html" class="btn btn-primary mt-1 app-link">Configure</button>
                 </div>
               </div>
             </div>

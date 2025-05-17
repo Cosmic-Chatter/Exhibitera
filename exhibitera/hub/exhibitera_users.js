@@ -49,6 +49,50 @@ export function checkUserPermission (action, neededLevel, group = null) {
   return false
 }
 
+export function checkUserPreference (pref) {
+  // Return a user preference value, or a default
+
+  const prefs = exConfig.user?.preferences
+
+  switch (pref) {
+    case 'appearance':
+      return prefs?.appearance ?? 'auto'
+    case 'components_layout':
+      return prefs?.components_layout ?? 'grid'
+    case 'components_size':
+      return prefs?.components_size ?? 'regular'
+    case 'show_groups':
+      return prefs?.show_groups ?? {}
+    case 'show_static':
+      return prefs?.show_static ?? true
+    case 'sort_order':
+      return prefs?.sort_order ?? 'status'
+    case 'status_mode':
+      return prefs?.status_mode ?? 'realtime'
+    default:
+      console.log('checkUserPreference: error: unknown preference:', pref)
+  }
+}
+
+export function showUserPreferenceModal () {
+  // Configure and display the modal for editing user preferences
+
+  document.getElementById('userPreferencesModalAppearanceSelect').value = checkUserPreference('appearance')
+
+  exTools.showModal('#userPreferencesModal')
+}
+
+export function submitUserPreferencesFromModal () {
+  // Collect details from the modal to update the user preferences
+
+  const prefs = {
+    appearance: document.getElementById('userPreferencesModalAppearanceSelect').value
+  }
+  updateUserPreferences(prefs)
+    .then(configureUserPreferences)
+  exTools.hideModal('#userPreferencesModal')
+}
+
 export function showEditUserModal (user = null) {
   // Show the modal for creating a new user account.
 
@@ -67,7 +111,7 @@ export function showEditUserModal (user = null) {
   document.getElementById('editUserUsernameExists').style.display = 'none'
 
   document.getElementById('editUserSubmitButton').style.display = 'none'
-  $('#editUserModal').modal('show')
+  exTools.showModal('#editUserModal')
 }
 
 function configureEditUserModalForNewUser () {
@@ -175,6 +219,25 @@ function populateEditUserGroupsRow (permissions) {
   }
 }
 
+export function updateUserPreferences (preferences) {
+  // Ask Hub to update the given preferences for the current user
+
+  if (exConfig.user.uuid == null) {
+    console.log('updateUserPreference: error: a user is not logged in')
+  }
+
+  return exTools.makeServerRequest({
+    method: 'POST',
+    endpoint: '/user/' + exConfig.user.uuid + '/editPreferences',
+    params: {
+      preferences
+    }
+  })
+    .then((response) => {
+      exConfig.user.preferences = response.user.preferences
+    })
+}
+
 export function submitChangeFromEditUserModal () {
   // Collect the necessary details and submit a new or edited user.
 
@@ -204,7 +267,7 @@ export function submitChangeFromEditUserModal () {
   } else {
     // Custom
     const obj = { edit: [], edit_content: [], view: [] }
-    Array.from(document.querySelectorAll('.editUserGroupSelect')).forEach((el) => {
+    for (const el of document.querySelectorAll('.editUserGroupSelect')) {
       const groupUUID = el.getAttribute('data-uuid')
       if (el.value === 'edit') {
         obj.edit.push(groupUUID)
@@ -213,7 +276,7 @@ export function submitChangeFromEditUserModal () {
       } else if (el.value === 'view') {
         obj.view.push(groupUUID)
       }
-    })
+    }
     details.permissions.components = obj
   }
 
@@ -258,7 +321,7 @@ export function submitChangeFromEditUserModal () {
         if (response.success === false && response.reason === 'username_taken') {
           document.getElementById('editUserUsernameExists').style.display = 'block'
         } else if (response.success === true) {
-          $('#editUserModal').modal('hide')
+          exTools.hideModal('#editUserModal')
           populateUsers()
         }
       })
@@ -278,7 +341,7 @@ export function submitChangeFromEditUserModal () {
         if (response.success === false && response.reason === 'username_taken') {
           document.getElementById('editUserUsernameExists').style.display = 'block'
         } else if (response.success === true) {
-          $('#editUserModal').modal('hide')
+          exTools.hideModal('#editUserModal')
           populateUsers()
         }
       })
@@ -336,7 +399,6 @@ export function loginFromDropdown () {
     }
   })
     .then((response) => {
-      console.log(response)
       if (response.success === true) {
         // Reload the page now that the authentication cookie is set.
         location.reload()
@@ -348,12 +410,12 @@ export function authenticateUser () {
   // If authToken exists in the cookie, use it to log in
 
   let token = ''
-  document.cookie.split(';').forEach((item) => {
+  for (let item of document.cookie.split(';')) {
     item = item.trim()
     if (item.startsWith('authToken="')) {
       token = item.slice(11, -1)
     }
-  })
+  }
 
   if (token === '') {
     token = 'This will fail' // Token cannot be an empty string
@@ -367,6 +429,11 @@ export function authenticateUser () {
     .then((response) => {
       if (response.success === true) {
         configureUser(response.user)
+      } else {
+        if (document.cookie !== '') {
+          document.cookie = 'authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC;'
+          location.reload()
+        }
       }
     })
 }
@@ -406,10 +473,12 @@ function configureUser (userDict, login = true) {
     // Set the name of the account
     document.getElementById('userMenuUserDisplayName').innerHTML = userDict.display_name
     let initials = ''
-    userDict.display_name.split(' ').forEach((word) => {
+    for (const word of userDict.display_name.split(' ')) {
       initials += word.slice(0, 1)
-    })
+    }
     document.getElementById('userMenuUserShortName').innerHTML = initials
+
+    configureUserPreferences()
   } else {
     document.getElementById('loginMenu').style.display = 'block'
     document.getElementById('userMenu').style.display = 'none'
@@ -488,6 +557,55 @@ function _showTab (tab) {
   }, 20)
 }
 
+function configureUserPreferences () {
+  // Take the user preferences and adjust the GUI to match
+
+  // Check for admin account
+  const userPrefs = document.querySelectorAll('.user-preference')
+  const adminWarning = document.getElementById('componentsTabSettingAdminWarning')
+  if (exConfig.user.uuid === 'admin') {
+    adminWarning.style.display = 'block'
+    for (const pref of userPrefs) {
+      pref.style.display = 'none'
+    }
+  } else {
+    adminWarning.style.display = 'none'
+    for (const pref of userPrefs) {
+      pref.style.display = 'block'
+    }
+  }
+
+  // show_static
+  document.getElementById('componentsTabSettingsShowStatic').checked = checkUserPreference('show_static')
+
+  // status_mode
+  if (exConfig.user.preferences.status_mode === 'realtime') {
+    document.getElementById('componentStatusModeRealtimeCheckbox').checked = true
+  } else {
+    document.getElementById('componentStatusModeMaintenanceCheckbox').checked = true
+  }
+
+  // appearance
+  if ((exConfig.user.preferences.appearance === 'auto') || (exConfig.user.preferences.appearance == null)) {
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      document.querySelector('html').setAttribute('data-bs-theme', 'dark')
+    } else {
+      document.querySelector('html').setAttribute('data-bs-theme', 'light')
+    }
+  } else {
+    document.querySelector('html').setAttribute('data-bs-theme', exConfig.user.preferences.appearance)
+  }
+
+  // sort_order
+  document.getElementById('componentsTabSettingsSortSelect').value = checkUserPreference('sort_order')
+
+  // components_layout
+  document.getElementById('componentsTabSettingsLayoutSelect').value = checkUserPreference('components_layout')
+
+  // components_size
+  document.getElementById('componentsTabSettingsSizeSelect').value = checkUserPreference('components_size')
+}
+
 export function logoutUser () {
   // Remove the user and delete the cookie.
 
@@ -505,7 +623,7 @@ export function deleteUser (uuid) {
     .then((response) => {
       if ('success' in response && response.success === true) {
         populateUsers()
-        $('#editUserModal').modal('hide')
+        exTools.hideModal('#editUserModal')
       }
     })
 }
@@ -548,7 +666,7 @@ export function showPasswordChangeModal () {
   document.getElementById('passwordChangeModalPassMismatchWarning').style.display = 'none'
   document.getElementById('passwordChangeModalBadCurrentPassWarning').style.display = 'none'
 
-  $('#passwordChangeModal').modal('show')
+  exTools.showModal('#passwordChangeModal')
 }
 
 export function submitUserPasswordChange () {
@@ -590,7 +708,7 @@ export function submitUserPasswordChange () {
           document.getElementById('passwordChangeModalBadCurrentPassWarning').style.display = 'block'
         }
       } else {
-        $('changePasswordModal').modal('hide')
+        exTools.hideModal('#changePasswordModal')
         logoutUser()
       }
     })
