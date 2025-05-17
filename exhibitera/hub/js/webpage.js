@@ -642,20 +642,22 @@ function parseUpdate (update) {
     }
 
     // Set the favicon to reflect the aggregate status
+    const favicon = document.querySelector("link[rel='icon']")
+
     if (numOnline === numComps) {
-      $("link[rel='icon']").attr('href', '_static/icons/green.ico')
+      favicon.href = '_static/icons/green.ico'
     } else if (numOnline === 0) {
-      $("link[rel='icon']").attr('href', '_static/icons/red.ico')
+      favicon.href = '_static/icons/red.ico'
     } else {
-      $("link[rel='icon']").attr('href', '_static/icons/yellow.ico')
+      favicon.href = '_static/icons/yellow.ico'
     }
     // If there are no static components, hide the "SHow STATIC" button
+    const el = document.getElementById('componentsTabSettingsShowStatic').parentElement.parentElement
     if (numStatic === 0) {
-      $('#componentsTabSettingsShowStatic').parent().parent().hide()
+      el.style.display = 'none'
       document.getElementById('componentsTabSettingsShowStaticDivider').parentElement.style.display = 'none'
     } else {
-      $('#componentsTabSettingsShowStatic').parent().parent().show()
-      document.getElementById('componentsTabSettingsShowStaticDivider').parentElement.style.display = 'block'
+      el.style.display = 'block'
     }
   }
 
@@ -691,14 +693,16 @@ function populateHelpTab () {
     endpoint: '/system/getHelpText'
   })
     .then((result) => {
+      const helpTextDiv = document.getElementById('helpTextDiv')
+
       if (result.success === true) {
         const markdownConverter = new showdown.Converter()
         markdownConverter.setFlavor('github')
 
         const formattedText = markdownConverter.makeHtml(result.text)
-        $('#helpTextDiv').html(formattedText)
+        helpTextDiv.innerHTML = formattedText
       } else {
-        $('#helpTextDiv').html('Help text not available.')
+        helpTextDiv.innerHTML = 'Help text not available.'
       }
     })
 }
@@ -917,23 +921,30 @@ document.getElementById('showAddWakeOnLANModalButton').addEventListener('click',
 document.getElementById('addWakeOnLANModalAddButton').addEventListener('click', exExhibit.submitWakeOnLANAdditionFromModal)
 
 // Component info modal
-$('#componentInfoModalRemoveComponentButton').click(exExhibit.removeExhibitComponentFromModal)
-$('#componentInfoModalMaintenanceSaveButton').click(function () {
-  exMaintenance.submitComponentMaintenanceStatusChange()
-})
-$('#componentInfoModalMaintenanceStatusSelector').change(function () {
-  $('#componentInfoModalMaintenanceSaveButton').show()
-})
+document.getElementById('componentInfoModalRemoveComponentButton')
+  .addEventListener('click', exExhibit.removeExhibitComponentFromModal)
+document.getElementById('componentInfoModalMaintenanceSaveButton')
+  .addEventListener('click', function () {
+    exMaintenance.submitComponentMaintenanceStatusChange()
+  })
+document.getElementById('componentInfoModalMaintenanceStatusSelector')
+  .addEventListener('change', function () {
+    document.getElementById('componentInfoModalMaintenanceSaveButton').style.display = ''
+  })
 document.getElementById('componentInfoModalBasicSettingsSaveButton').addEventListener('click', exExhibit.submitComponentBasicSettingsChange)
 for (const el of document.querySelectorAll('.componentInfoBasicSetting')) {
   el.addEventListener('change', () => {
     document.getElementById('componentInfoModalBasicSettingsSaveButton').style.display = 'block'
   })
 }
-$('.componentInfoSetting').change(function () {
-  $('#componentInfoModalSettingsSaveButton').show()
-})
-$('#componentInfoModalSettingsSaveButton').click(exExhibit.submitComponentSettingsChange)
+const settingEls = document.querySelectorAll('.componentInfoSetting')
+for (const el of settingEls) {
+  el.addEventListener('change', function () {
+    document.getElementById('componentInfoModalSettingsSaveButton').style.display = 'block'
+  })
+}
+document.getElementById('componentInfoModalSettingsSaveButton')
+  .addEventListener('click', exExhibit.submitComponentSettingsChange)
 document.getElementById('definitionTabAppFilterSelect').addEventListener('change', (event) => {
   exExhibit.filterDefinitionListByApp()
 })
@@ -992,19 +1003,19 @@ document.getElementById('scheduleFromFileKindSelect').addEventListener('change',
 document.getElementById('scheduleFromFileDateSelect').addEventListener('change', exSchedule.onscheduleFromFileDateSelectChange)
 document.getElementById('scheduleFromFileModalSubmitButton').addEventListener('click', exSchedule.createScheduleFromFile)
 
-$('#scheduleEditDeleteActionButton').click(exSchedule.scheduleDeleteActionFromModal)
-$('#scheduleEditSubmitButton').click(exSchedule.sendScheduleUpdateFromModal)
-$('#scheduleActionSelector').change(() => {
+document.getElementById('scheduleEditDeleteActionButton').addEventListener('click', exSchedule.scheduleDeleteActionFromModal)
+document.getElementById('scheduleEditSubmitButton').addEventListener('click', exSchedule.sendScheduleUpdateFromModal)
+document.getElementById('scheduleActionSelector').addEventListener('change', () => {
   exSchedule.setScheduleActionTargetSelector()
-}
-)
-$('#scheduleTargetSelector').change(() => {
+})
+document.getElementById('scheduleTargetSelector').addEventListener('change', () => {
   exSchedule.setScheduleActionValueSelector()
 })
+
 // This event detects when the delete button has been clicked inside a popover to delete a date-specific schedule.
 document.addEventListener('click', (event) => {
   if (event.target.classList.contains('schedule-delete') === false) return
-  if ($('#manageFutureDateModal').hasClass('show')) {
+  if (document.getElementById('manageFutureDateModal').classList.contains('show')) {
     // This popover is from the future dates edit modal
     exSchedule.deleteSchedule(document.getElementById('manageFutureDateCalendarInput').value)
   } else {
@@ -1075,27 +1086,28 @@ document.getElementById('issueModifyModalArchiveButton').addEventListener('click
   exIssues.modifyIssue(id, 'archive')
   exUtilities.hideModal('#issueModifyModal')
 })
-$('#issueMediaViewFromModal').click(function () {
+document.getElementById('issueMediaViewFromModal').addEventListener('click', () => {
   const file = document.getElementById('issueMediaViewFromModalSelect').value
   exTools.openMediaInNewTab(['issues/media/' + file])
 })
-$('#issueMediaUploadSubmitButton').click(exIssues.uploadIssueMediaFile)
-$('#issueMediaUpload').change(exIssues.onIssueMediaUploadChange)
-$('#issueEditSubmitButton').click(exIssues.submitIssueFromModal)
-$('#createIssueButton').click(function () {
+document.getElementById('issueMediaUploadSubmitButton').addEventListener('click', exIssues.uploadIssueMediaFile)
+document.getElementById('issueMediaUpload').addEventListener('change', exIssues.onIssueMediaUploadChange)
+document.getElementById('issueEditSubmitButton').addEventListener('click', exIssues.submitIssueFromModal)
+document.getElementById('createIssueButton').addEventListener('click', () => {
   exIssues.showIssueEditModal('new')
 })
+
 document.getElementById('viewIssueArchiveButton').addEventListener('click', () => {
   exIssues.showArchivedIssuesModal()
 })
-$('#issueListFilterPrioritySelect').change(function () {
+document.getElementById('issueListFilterPrioritySelect').addEventListener('change', () => {
   exIssues.rebuildIssueList()
 })
-$('#issueListFilterAssignedToSelect').change(function () {
+document.getElementById('issueListFilterAssignedToSelect').addEventListener('change', () => {
   exIssues.rebuildIssueList()
 })
-$('#componentInfoModalMaintenanceNote').on('input', function () {
-  $('#componentInfoModalMaintenanceSaveButton').show()
+document.getElementById('componentInfoModalMaintenanceNote').addEventListener('input', () => {
+  document.getElementById('componentInfoModalMaintenanceSaveButton').style.display = 'block'
 })
 
 // Analytics tab
@@ -1177,9 +1189,10 @@ for (const el of document.querySelectorAll('.controlServerSettingsInputField')) 
 document.getElementById('controlServerSettingsSaveButton').addEventListener('click', updateSystemConfiguration)
 
 // Activate all popovers
-$(function () {
-  $('[data-bs-toggle="popover"]').popover()
-})
+const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]')
+for (const triggerEl of popoverTriggerList) {
+  const po = new bootstrap.Popover(triggerEl)
+}
 
 // Enable all tooltips
 const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')

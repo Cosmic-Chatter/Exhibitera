@@ -644,10 +644,10 @@ export function showDeleteTrackerDataModal () {
   // Show a modal confirming the request to delete a specific dataset. To be sure
   // populate the modal with data for a test.
 
-  const name = $('#trackerDataSelect').val()
-  $('#deleteTrackerDataModalDeletedName').html(name)
-  $('#deleteTrackerDataModalDeletedInput').val('')
-  $('#deleteTrackerDataModalSpellingError').hide()
+  const name = document.getElementById('trackerDataSelect').value
+  document.getElementById('deleteTrackerDataModalDeletedName').innerText = name
+  document.getElementById('deleteTrackerDataModalDeletedInput').value = ''
+  document.getElementById('deleteTrackerDataModalSpellingError').style.display = 'none'
   exUtilities.showModal('#deleteTrackerDataModal')
 }
 
@@ -655,13 +655,13 @@ export function deleteTrackerDataFromModal () {
   // Check inputed answer and confirm it is correct. If so, ask for the data to
   // be deleted.
 
-  const name = $('#deleteTrackerDataModalDeletedName').html()
-  const input = $('#deleteTrackerDataModalDeletedInput').val()
+  const name = document.getElementById('deleteTrackerDataModalDeletedName').innerText
+  const input = document.getElementById('deleteTrackerDataModalDeletedInput').value
 
   if (name === input) {
     deleteTrackerData()
   } else {
-    $('#deleteTrackerDataModalSpellingError').show()
+    document.getElementById('deleteTrackerDataModalSpellingError').style.display = 'block'
   }
 }
 
@@ -669,7 +669,7 @@ export function deleteTrackerData () {
   // Send a message to the server asking it to delete the data for the currently
   // selected template
 
-  const name = $('#trackerDataSelect').val()
+  const name = document.getElementById('trackerDataSelect').value
 
   exTools.makeServerRequest({
     method: 'DELETE',

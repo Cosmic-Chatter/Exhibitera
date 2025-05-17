@@ -1,3 +1,5 @@
+/* global bootstrap */
+
 import * as exUtilities from '../../../common/utilities.js'
 import exConfig from '../../config.js'
 import * as exTools from '../tools.js'
@@ -554,7 +556,9 @@ function configureUser (userDict, login = true) {
 
 function _showTab (tab) {
   setTimeout(() => {
-    $('#nav-' + tab + '-tab').tab('show')
+    const tabEl = document.querySelector('#nav-' + tab + '-tab')
+    const tabInstance = new bootstrap.Tab(tabEl)
+    tabInstance.show()
   }, 20)
 }
 
