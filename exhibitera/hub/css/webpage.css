@@ -66,6 +66,9 @@ tr, td, th {
     height: 45vh;
     overflow-y: auto;
 }
+#componentInfoModalDMXIntro {
+    height: 51vh;
+}
 #componentInfoModalDMXSceneList {
     height: 45vh;
     overflow-y: auto;

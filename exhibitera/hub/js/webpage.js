@@ -959,7 +959,11 @@ document.getElementById('componentInfoModalViewScreenshot').addEventListener('cl
 })
 document.getElementById('componentInfoModalEditDMXButton').addEventListener('click', (event) => {
   const component = exExhibit.getExhibitComponent(document.getElementById('componentInfoModal').dataset.uuid)
-  window.open(component.getHelperURL() + '/dmx_control.html?standalone=true', '_blank').focus()
+  window.open(component.getHelperURL() + '/dmx_control/?standalone=true', '_blank').focus()
+})
+document.getElementById('componentInfoModalDMXIntroConfigureButton').addEventListener('click', (event) => {
+  const component = exExhibit.getExhibitComponent(document.getElementById('componentInfoModal').dataset.uuid)
+  window.open(component.getHelperURL() + '/dmx_control/?standalone=true', '_blank').focus()
 })
 for (const el of document.querySelectorAll('.componentInfoProjectorSetting')) {
   el.addEventListener('change', () => {

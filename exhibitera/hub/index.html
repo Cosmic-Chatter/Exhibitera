@@ -389,7 +389,7 @@
                   <a class="nav-link active px-3 px-sm-4" id="componentInfoModalDefinitionsTabButton" data-bs-toggle="tab" href="#componentInfoModalDefinitionsTab" role="tab" aria-controls="Definitions" aria-selected="true">Definitions</a>
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link px-3 px-sm-4" id="componentInfoModalDMXTabButton" data-bs-toggle="tab" href="#componentInfoModalDMXTab" role="tab" aria-controls="DMX" aria-selected="false">DMX</a>
+                  <a class="nav-link px-3 px-sm-4" id="componentInfoModalDMXTabButton" data-bs-toggle="tab" href="#componentInfoModalDMXTab" role="tab" aria-controls="Lighting" aria-selected="false">Lighting</a>
                 </li>
                 <li class="nav-item">
                   <a class="nav-link px-3 px-sm-4" id="componentInfoModaProejctorTabButton" data-bs-toggle="tab" href="#componentInfoModaProejctorTab" role="tab" aria-controls="Status" aria-selected="false">Status</a>
@@ -469,7 +469,7 @@
 
                 <!-- DMX page -->
                 <div class="tab-pane fade" id="componentInfoModalDMXTab" role="tabpanel" aria-labelledby="componentInfoModalDMXTabButton">
-                  <div class="row mt-3">
+                  <div id="componentInfoModalDMXControls" class="row mt-3">
                     <div class="col-9">
                       <div class="mt-2">Click on a scene below to immediately show it.</div>
                     </div>
@@ -478,6 +478,17 @@
                     </div>
                     <div class="col-12">
                       <div  id="componentInfoModalDMXSceneList" class="row"></div>
+                    </div>
+                  </div>
+                  <div id="componentInfoModalDMXIntro" class="col-12 col-md-8 offset-md-2">
+                    <div class="alert alert-primary mt-5">
+                      <H5 class="text-center">DMX lighting control</H5>
+                      <span class="fw-italic">
+                        <p>Exhibitera Hub can control gallery lighting connected to a DMX lighting controller attached to this component.</p> 
+                      </span>
+                      <center>
+                        <button id="componentInfoModalDMXIntroConfigureButton" class="btn btn-primary">Configure DMX controller</button>
+                      </center>
                     </div>
                   </div>
                 </div>
@@ -1577,7 +1588,7 @@
                             <option value="refresh_page">Refresh components</option>
                             <option value="restart">Restart components</option>
                             <option value="set_definition">Set defintion</option>
-                            <option value="set_dmx_scene">Set DMX scene</option>
+                            <option value="set_dmx_scene">Set DMX lighting scene</option>
                             <option value="set_exhibit">Set exhibition</option>
                             <option value="note">Add note</option>
                           </select>

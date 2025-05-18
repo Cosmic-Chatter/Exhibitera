@@ -236,6 +236,7 @@ export function showAppHelpModal (app) {
 
   exCommon.makeHelperRequest({
     method: 'GET',
+    api: '',
     endpoint: endpointStems[app] + 'README.md',
     rawResponse: true
   })
