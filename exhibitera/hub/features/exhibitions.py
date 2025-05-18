@@ -122,6 +122,8 @@ def load_exhibition(uuid_str: str) -> tuple[bool, str]:
 def add_exhibition_modification(component_uuid: str, update: dict[str, Any]):
     """Temporarily change the definition for the given component"""
 
+    if update.get("definition", None) in [None, "undefined"]:
+        return
     match_found = False
     for index, component in enumerate(hub_config.exhibit_modifications.get("components", [])):
         if component.get("uuid") == component_uuid:

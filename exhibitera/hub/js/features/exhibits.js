@@ -1615,7 +1615,7 @@ async function populateComponentDefinitionList (definitions, permission) {
     const col = document.createElement('div')
     col.setAttribute('id', 'definitionButton_' + uuid)
     col.classList = 'col-6 col-sm-4 mt-2 handCursor definition-entry'
-    col.dataset.definition = definition
+    col.dataset.definition = definition.uuid
     col.setAttribute('data-app', definition.app)
 
     const row = document.createElement('div')
@@ -2024,12 +2024,12 @@ function handleDefinitionItemSelection (uuid) {
 export function submitDefinitionSelectionFromModal () {
   // Called when the "Save changes" button is pressed on the definitions pane of the componentInfoModal.
 
-  const definition = document.querySelector('.definition-selected')?.dataset.definition
-  const componentUUID = document.getElementById('componentInfoModal').getAttribute('data-uuid')
+  const definition = document.querySelector('.definition-selected').dataset.definition
+  const componentUUID = document.getElementById('componentInfoModal').dataset.uuid
 
   hubTools.makeServerRequest({
     method: 'POST',
-    endpoint: '/component/' + componentUUID + '/definition/' + definition.uuid
+    endpoint: '/component/' + componentUUID + '/definition/' + definition
   })
   document.getElementById('componentInfoModalDefinitionSaveButton').style.display = 'none'
 }
