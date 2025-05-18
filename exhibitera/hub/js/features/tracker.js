@@ -328,12 +328,12 @@ function editTrackerTemplateUpdateProperty (uuid, property, value) {
   }
 
   const modal = document.getElementById('editTrackerTemplateModal')
-  const template = JSON.parse(modal.getAttribute('data-template'))
+  const template = JSON.parse(modal.dataset.template)
 
   template.widgets[uuid][property] = value
 
   // Update the data attribute with the updated template
-  modal.setAttribute('data-template', JSON.stringify(template))
+  modal.dataset.template = JSON.stringify(template)
 }
 
 export function populateEditTrackerTemplateCurrentLayout (template) {
@@ -383,7 +383,7 @@ export function populateEditTrackerTemplateCurrentLayout (template) {
     edit.style.cursor = 'pointer'
     edit.addEventListener('click', function () {
       // Get the latest template in case of changes
-      const newTemplate = JSON.parse(modal.getAttribute('data-template'))
+      const newTemplate = JSON.parse(modal.dataset.template)
 
       populateWidgetProperties(newTemplate.widgets[widgetDef.uuid])
     })
@@ -433,7 +433,7 @@ function editTrackerTemplateModalMoveWidget (uuid, dir) {
   // of places
 
   const modal = document.getElementById('editTrackerTemplateModal')
-  const template = JSON.parse(modal.getAttribute('data-template'))
+  const template = JSON.parse(modal.dataset.template)
 
   const uuidIndex = template.widget_order.indexOf(uuid)
   if (dir === -1 && uuidIndex === 0) return
@@ -445,7 +445,7 @@ function editTrackerTemplateModalMoveWidget (uuid, dir) {
   template.widget_order[uuidIndex] = otherUuid
 
   // Update the data attribute with the updated template
-  modal.setAttribute('data-template', JSON.stringify(template))
+  modal.dataset.template = JSON.stringify(template)
   populateEditTrackerTemplateCurrentLayout(template)
 }
 
@@ -453,7 +453,7 @@ export function editTrackerTemplateModalAddWidget (name, type) {
   // Create a new widget with the given name and add it to the template.
 
   const modal = document.getElementById('editTrackerTemplateModal')
-  const template = JSON.parse(modal.getAttribute('data-template'))
+  const template = JSON.parse(modal.dataset.template)
 
   const widgetUUID = exUtilities.uuid()
 
@@ -480,7 +480,7 @@ export function editTrackerTemplateModalAddWidget (name, type) {
   template.widgets[widgetUUID] = widgetDef
 
   // Update the data attribute with the updated template
-  modal.setAttribute('data-template', JSON.stringify(template))
+  modal.dataset.template = JSON.stringify(template)
   populateEditTrackerTemplateCurrentLayout(template)
 }
 
@@ -488,12 +488,12 @@ function editTrackerTemplateModalDeleteWidget (uuid) {
   // Delete the given widget and shift focus to the neighboring one
 
   const modal = document.getElementById('editTrackerTemplateModal')
-  const template = JSON.parse(modal.getAttribute('data-template'))
+  const template = JSON.parse(modal.dataset.template)
 
   template.widget_order = template.widget_order.filter(item => item !== uuid)
   delete template.widgets[uuid]
 
-  modal.setAttribute('data-template', JSON.stringify(template))
+  modal.dataset.template = JSON.stringify(template)
 
   const newCurrentWidgetUUID = template.widget_order[0]
   populateEditTrackerTemplateCurrentLayout(template)
@@ -533,8 +533,8 @@ function _showEditTrackerTemplateModal (template) {
   document.getElementById('editTrackerTemplatePropertiesDiv').innerHTML = ''
 
   const modal = document.getElementById('editTrackerTemplateModal')
-  modal.setAttribute('data-template', JSON.stringify(template))
-  modal.setAttribute('data-uuid', template.uuid)
+  modal.dataset.template = JSON.stringify(template)
+  modal.dataset.uuid = template.uuid
 
   populateEditTrackerTemplateCurrentLayout(template)
   exUtilities.showModal('#editTrackerTemplateModal')
@@ -544,7 +544,7 @@ export function editTrackerTemplateModalSubmitChanges () {
   // Send a message to the server with the updated template
 
   const modal = document.getElementById('editTrackerTemplateModal')
-  const template = JSON.parse(modal.getAttribute('data-template'))
+  const template = JSON.parse(modal.dataset.template)
 
   const requestDict = {
     tracker_uuid: template.uuid,
@@ -700,10 +700,10 @@ export function makeGuestFacing () {
 
   const modal = document.getElementById('editTrackerTemplateModal')
   const checkbox = document.getElementById('editTrackerTemplateGuestFacingCheckbox')
-  const template = JSON.parse(modal.getAttribute('data-template'))
+  const template = JSON.parse(modal.dataset.template)
 
   template.guest_facing = checkbox.checked
 
   // Update the data attribute with the updated template
-  modal.setAttribute('data-template', JSON.stringify(template))
+  modal.dataset.template = JSON.stringify(template)
 }

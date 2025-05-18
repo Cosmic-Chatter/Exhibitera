@@ -1,4 +1,4 @@
-/* global showdown, bootstrap */
+/* global showdown */
 
 import * as exFiles from '../../common/files.js'
 import * as exUtilities from '../../common/utilities.js'

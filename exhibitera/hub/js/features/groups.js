@@ -5,7 +5,7 @@ import * as exTools from '../tools.js'
 export function showEditGroupModal (uuid = '') {
   // Show the modal for creatng or editing a group
 
-  document.getElementById('editGroupModal').setAttribute('data-uuid', uuid)
+  document.getElementById('editGroupModal').dataset.uuid = uuid
   document.getElementById('editGroupModalNameWarning').style.display = 'none'
 
   if (uuid !== '') {
@@ -39,7 +39,7 @@ export function showEditGroupModal (uuid = '') {
 export function submitChangeFromGroupEditModal () {
   // Collect details from the group edit modal and submit them to the server
 
-  const uuid = document.getElementById('editGroupModal').getAttribute('data-uuid')
+  const uuid = document.getElementById('editGroupModal').dataset.uuid
   const name = document.getElementById('editGroupModalNameInput').value.trim()
   const description = document.getElementById('editGroupModalDescriptionInput').value.trim()
 
@@ -133,7 +133,7 @@ export function populateGroupsRow () {
     deleteButton.classList = 'dropdown-item text-danger'
     deleteButton.innerHTML = 'Delete'
     deleteButton.addEventListener('click', () => {
-      document.getElementById('deleteGroupModal').setAttribute('data-uuid', group.uuid)
+      document.getElementById('deleteGroupModal').dataset.uuid = group.uuid
       exUtilities.showModal('#deleteGroupModal')
     })
     dropdownMenu.appendChild(deleteButton)
@@ -158,7 +158,7 @@ export function populateGroupsRow () {
 export function deleteGroupFromModal () {
   // Delete the group for the displayed confirmation modal
 
-  const uuid = document.getElementById('deleteGroupModal').getAttribute('data-uuid')
+  const uuid = document.getElementById('deleteGroupModal').dataset.uuid
 
   exTools.makeServerRequest({
     method: 'DELETE',

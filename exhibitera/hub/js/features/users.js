@@ -120,9 +120,9 @@ export function showEditUserModal (user = null) {
 function configureEditUserModalForNewUser () {
   // Set up the editUser modal for a new user.
 
-  document.getElementById('editUserModal').setAttribute('data-uuid', '')
-  document.getElementById('editUserModalTitle').innerHTML = 'Create a user'
-  document.getElementById('editUserSubmitButton').innerHTML = 'Create'
+  document.getElementById('editUserModal').dataset.uuid = ''
+  document.getElementById('editUserModalTitle').innerText = 'Create a user'
+  document.getElementById('editUserSubmitButton').innerText = 'Create'
 
   document.getElementById('editUserUsernameInput').value = ''
   document.getElementById('editUserDisplayNameInput').value = ''
@@ -142,9 +142,9 @@ function configureEditUserModalForNewUser () {
 function configureEditUserModalForExistingUser (user) {
   // Set up the editUser modal for editing an existing user.
 
-  document.getElementById('editUserModal').setAttribute('data-uuid', user.uuid)
-  document.getElementById('editUserModalTitle').innerHTML = 'Edit user'
-  document.getElementById('editUserSubmitButton').innerHTML = 'Save'
+  document.getElementById('editUserModal').dataset.uuid = user.uuid
+  document.getElementById('editUserModalTitle').innerText = 'Edit user'
+  document.getElementById('editUserSubmitButton').innerText = 'Save'
 
   document.getElementById('editUserUsernameInput').value = user.username
   document.getElementById('editUserDisplayNameInput').value = user.display_name
@@ -197,7 +197,7 @@ function populateEditUserGroupsRow (permissions) {
 
     const select = document.createElement('select')
     select.classList = 'form-select editUserGroupSelect'
-    select.setAttribute('data-uuid', group.uuid)
+    select.dataset.uuid = group.uuid
     select.addEventListener('change', () => {
       document.getElementById('editUserSubmitButton').style.display = 'block'
     })
@@ -244,7 +244,7 @@ export function updateUserPreferences (preferences) {
 export function submitChangeFromEditUserModal () {
   // Collect the necessary details and submit a new or edited user.
 
-  const uuid = document.getElementById('editUserModal').getAttribute('data-uuid')
+  const uuid = document.getElementById('editUserModal').dataset.uuid
 
   const details = {
     username: document.getElementById('editUserUsernameInput').value.trim(),
@@ -271,7 +271,7 @@ export function submitChangeFromEditUserModal () {
     // Custom
     const obj = { edit: [], edit_content: [], view: [] }
     for (const el of document.querySelectorAll('.editUserGroupSelect')) {
-      const groupUUID = el.getAttribute('data-uuid')
+      const groupUUID = el.dataset.uuid
       if (el.value === 'edit') {
         obj.edit.push(groupUUID)
       } else if (el.value === 'edit_content') {

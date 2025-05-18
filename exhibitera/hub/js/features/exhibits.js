@@ -769,7 +769,7 @@ export function configureVisibleGroups () {
     check.classList = 'form-check-input showHideGroupCheckbox'
     check.setAttribute('type', 'checkbox')
     check.setAttribute('id', 'showHideGroup_' + group.uuid)
-    check.setAttribute('data-uuid', group.uuid)
+    check.dataset.uuid = group.uuid
     if (group.uuid in groupPrefs) {
       if (groupPrefs[group.uuid] === true) {
         check.checked = true
@@ -793,7 +793,7 @@ export function updateVisibleGroupsPreference () {
   const prefDict = {}
 
   for (const el of Array.from(document.querySelectorAll('.showHideGroupCheckbox'))) {
-    prefDict[el.getAttribute('data-uuid')] = el.checked
+    prefDict[el.dataset.uuid] = el.checked
   }
 
   hubUsers.updateUserPreferences({
@@ -1282,7 +1282,7 @@ function configureNewDefinitionOptions (obj) {
   // Use the given IP address to configure the URLs for creating new definitions.
 
   for (const el of document.querySelectorAll('.defintion-new-option')) {
-    const app = el.getAttribute('data-app')
+    const app = el.dataset.app
     if (app === 'word_cloud_input') {
       el.href = obj.getHelperURL() + '/word_cloud/input/setup.html'
     } else if (app === 'word_cloud_viewer') {
@@ -1296,7 +1296,7 @@ function configureNewDefinitionOptions (obj) {
 export function updateProjectorFromInfoModal () {
   // Collect details from the component info modal and update the proejctor
 
-  const uuid = document.getElementById('componentInfoModal').getAttribute('data-uuid')
+  const uuid = document.getElementById('componentInfoModal').dataset.uuid
 
   const groupSelect = document.getElementById('componentInfoModalProjectorSettingsGroup')
   const selectedGroups = groupSelect.selectedOptions
@@ -1348,7 +1348,7 @@ export function updateProjectorFromInfoModal () {
 export function updateStaticComponentFromInfoModal () {
   // Collect details from the component info modal and update the static component
 
-  const uuid = document.getElementById('componentInfoModal').getAttribute('data-uuid')
+  const uuid = document.getElementById('componentInfoModal').dataset.uuid
 
   const groupSelect = document.getElementById('componentInfoModalStaticSettingsGroup')
   const selectedGroups = groupSelect.selectedOptions
@@ -1394,7 +1394,7 @@ export function updateStaticComponentFromInfoModal () {
 export function updateWakeOnLANComponentFromInfoModal () {
   // Collect details from the component info modal and update the Wake on LAN component
 
-  const uuid = document.getElementById('componentInfoModal').getAttribute('data-uuid')
+  const uuid = document.getElementById('componentInfoModal').dataset.uuid
 
   const groupSelect = document.getElementById('componentInfoModalWakeOnLANSettingsGroup')
   const selectedGroups = groupSelect.selectedOptions
@@ -1586,14 +1586,14 @@ export function removeExhibitComponentFromModal () {
   // Called when the Remove button is clicked in the componentInfoModal.
   // Send a message to the server to remove the component.
 
-  const uuid = document.getElementById('componentInfoModal').getAttribute('data-uuid')
-  console.log(uuid)
+  const uuid = document.getElementById('componentInfoModal').dataset.uuid
+
   hubTools.makeServerRequest({
     method: 'DELETE',
     endpoint: '/component/' + uuid + '/delete'
   })
     .then((response) => {
-      if ('success' in response && response.success === true) {
+      if (response.success && response.success === true) {
         getExhibitComponent(uuid).remove()
         exUtilities.hideModal('#componentInfoModal')
       }
@@ -1629,7 +1629,7 @@ async function populateComponentDefinitionList (definitions, permission) {
     col.setAttribute('id', 'definitionButton_' + uuid)
     col.classList = 'col-6 col-sm-4 mt-2 handCursor definition-entry'
     col.dataset.definition = definition.uuid
-    col.setAttribute('data-app', definition.app)
+    col.dataset.app = definition.app
 
     const row = document.createElement('div')
     row.classList = 'row px-2'
@@ -1748,8 +1748,8 @@ function showCopyDefinitionModal (componentUUID, definitionUUID, definitionName)
 
   const component = getExhibitComponent(componentUUID)
   const modal = document.getElementById('copyDefinitionModal')
-  modal.setAttribute('data-definition', definitionUUID)
-  modal.setAttribute('data-component', componentUUID)
+  modal.dataset.definition = definitionUUID
+  modal.dataset.component = componentUUID
 
   const submitButton = document.getElementById('copyDefinitionModalSubmitButton')
   submitButton.innerHTML = 'Copy'
@@ -1844,7 +1844,7 @@ async function copyDefinitionModalCreateDestinationHTML (component, group, def, 
   input.classList = 'form-check-input copyDest'
   input.setAttribute('type', 'checkbox')
   input.setAttribute('id', 'copyOption_' + group + '_' + component.uuid)
-  input.setAttribute('data-uuid', component.uuid)
+  input.dataset.uuid = component.uuid
   input.value = ''
   input.addEventListener('change', (ev) => {
     const checked = modal.querySelectorAll('input.copyDest:checked')
@@ -1931,8 +1931,8 @@ export async function copyDefinitionModalPerformCopy () {
   submitButton.classList.remove('btn-primary')
 
   // Sources
-  const definitionUUID = modal.getAttribute('data-definition')
-  const sourceUUID = modal.getAttribute('data-component')
+  const definitionUUID = modal.dataset.definition
+  const sourceUUID = modal.dataset.component
   const sourceComponent = getExhibitComponent(sourceUUID)
   const filesToCopy = JSON.parse(modal.getAttribute('data-sourceFiles')) ?? []
 
@@ -1940,7 +1940,7 @@ export async function copyDefinitionModalPerformCopy () {
   const checkedElements = modal.querySelectorAll('input.copyDest:checked')
   const destComponents = []
   for (const el of checkedElements) {
-    const destUUID = el.getAttribute('data-uuid')
+    const destUUID = el.dataset.uuid
     if (destUUID != null) {
       const destComp = getExhibitComponent(destUUID)
       if (destComp != null) destComponents.push(destComp)
@@ -2180,7 +2180,7 @@ export function filterDefinitionListByApp () {
   const defList = document.getElementById('componentInfoModalDefinitionList')
 
   for (const entry of defList.querySelectorAll('.definition-entry')) {
-    const thisApp = entry.getAttribute('data-app')
+    const thisApp = entry.dataset.app
     if ((thisApp === appToShow) || (appToShow === 'all')) {
       entry.style.display = 'block'
     } else {
@@ -2192,7 +2192,7 @@ export function filterDefinitionListByApp () {
 export function submitComponentBasicSettingsChange () {
   // Update the id, group, and description of an exhibit component
 
-  const uuid = document.getElementById('componentInfoModal').getAttribute('data-uuid')
+  const uuid = document.getElementById('componentInfoModal').dataset.uuid
 
   const groupSelect = document.getElementById('componentInfoModalBasicSettingsGroup')
   const selectedGroups = groupSelect.selectedOptions

@@ -1038,7 +1038,7 @@ export function showScheduleFromFileModal () {
   document.getElementById('scheduleFromFileModalFileInputLabel').innerHTML = 'Select file'
   document.getElementById('scheduleFromFileModalFileInput').value = null
   document.getElementById('scheduleFromFileNewSchedule').innerHTML = ''
-  document.getElementById('scheduleFromFileModal').setAttribute('data-schedule', '')
+  document.getElementById('scheduleFromFileModal').dataset.schedule = ''
   document.getElementById('scheduleFromFileModalSubmitButton').style.display = 'none'
 
   exUtilities.showModal('#scheduleFromFileModal')
@@ -1080,7 +1080,7 @@ export function previewScheduleFromFile () {
 export function createScheduleFromFile () {
   // Submit the upoaded schedule to Hub for creation.
 
-  const jsonStr = document.getElementById('scheduleFromFileModal').getAttribute('data-schedule')
+  const jsonStr = document.getElementById('scheduleFromFileModal').dataset.schedule
   if (jsonStr == null || jsonStr === '') return
   const schedule = JSON.parse(jsonStr)
 
@@ -1132,7 +1132,7 @@ async function previewJSONSchedule (jsonStr) {
   for (const scheduleID of scheduleIDs) {
     newScheduleEl.appendChild(createScheduleEntryHTML(schedule[scheduleID], scheduleID, type, 'day-specific', false))
   }
-  document.getElementById('scheduleFromFileModal').setAttribute('data-schedule', JSON.stringify(schedule))
+  document.getElementById('scheduleFromFileModal').dataset.schedule = JSON.stringify(schedule)
 }
 
 function _getSecondsFromMidnight (timeString) {

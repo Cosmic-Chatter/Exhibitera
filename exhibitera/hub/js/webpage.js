@@ -165,7 +165,7 @@ async function editExhibitPopulateExhibitContent (exhibit) {
   const exhibitNameField = document.getElementById('editExhibitName')
 
   contentList.innerHTML = ''
-  exhibitNameField.setAttribute('data-uuid', exhibit)
+  exhibitNameField.dataset.uuid = exhibit
 
   const result = await exTools.makeServerRequest({
     method: 'GET',
@@ -196,8 +196,8 @@ export function createExhibitActionEntryHTML (item, allowEdit = exTools.checkPer
   const eventRow = document.createElement('div')
   eventRow.classList = 'row mt-2 actionListing'
   eventRow.setAttribute('id', 'actionListing_' + item.uuid)
-  eventRow.setAttribute('data-action', JSON.stringify(item))
-  eventRow.setAttribute('data-uuid', item.uuid)
+  eventRow.dataset.action = JSON.stringify(item)
+  eventRow.dataset.uuid = item.uuid
 
   const eventDescriptionCol = document.createElement('div')
   if (allowEdit) {
@@ -232,7 +232,7 @@ export function createExhibitActionEntryHTML (item, allowEdit = exTools.checkPer
     eventEditButton.style.border = '0px'
     eventEditButton.innerHTML = 'Edit'
     eventEditButton.addEventListener('click', function () {
-      const currentActionDict = JSON.parse(eventRow.getAttribute('data-action'))
+      const currentActionDict = JSON.parse(eventRow.dataset.action)
       showEditExhibitActionModal(currentActionDict)
     })
     eventEditButtonCol.appendChild(eventEditButton)
@@ -307,7 +307,7 @@ function editExhibitSubmitUpdate () {
 
   const selects = Array.from(document.querySelectorAll('.manageExhibit-definition-select'))
   const exhibitNameField = document.getElementById('editExhibitName')
-  const uuid = exhibitNameField.getAttribute('data-uuid')
+  const uuid = exhibitNameField.dataset.uuid
 
   const definitions = []
   for (const select of selects) {
@@ -323,14 +323,14 @@ function editExhibitSubmitUpdate () {
 
   const commands = []
   for (const el of Array.from(document.querySelectorAll('.actionListing'))) {
-    const command = JSON.parse(el.getAttribute('data-action'))
+    const command = JSON.parse(el.dataset.action)
     commands.push(command)
   }
 
   const exhibit = {
     components: definitions,
     name: exhibitNameField.value,
-    uuid: exhibitNameField.getAttribute('data-uuid'),
+    uuid: exhibitNameField.dataset.uuid,
     commands
   }
   exTools.makeServerRequest({
@@ -360,12 +360,12 @@ async function showEditExhibitActionModal (actionDict = null) {
   document.getElementById('editExhibitActionValueSelectorLabel').style.display = 'none'
 
   const modal = document.getElementById('editExhibitActionModal')
-  modal.setAttribute('data-uuid', exUtilities.uuid())
-  modal.setAttribute('data-isEdit', 'false')
+  modal.dataset.uuid = exUtilities.uuid()
+  modal.dataset.isEdit = 'false'
 
   if (actionDict != null) {
-    modal.setAttribute('data-uuid', actionDict.uuid)
-    modal.setAttribute('data-isEdit', 'true')
+    modal.dataset.uuid = actionDict.uuid
+    modal.dataset.isEdit = 'true'
 
     actionSelector.value = actionDict.action
 
@@ -484,8 +484,8 @@ function editExhibitActionSubmit () {
   // Collect info from the edit exhibit action modal and create/update the action.
 
   const modal = document.getElementById('editExhibitActionModal')
-  const isEdit = modal.getAttribute('data-isEdit') === 'true'
-  const uuid = modal.getAttribute('data-uuid')
+  const isEdit = modal.dataset.isEdit === 'true'
+  const uuid = modal.dataset.uuid
 
   let action, value
   const targets = []
@@ -768,7 +768,7 @@ function deleteExhibitFromModal () {
 
   // Check if we're currently editing this exhibit and clear
   const exhibitNameField = document.getElementById('editExhibitName')
-  const editedUUID = exhibitNameField.getAttribute('data-uuid')
+  const editedUUID = exhibitNameField.dataset.uuid
   if (UUIDToDelete === editedUUID) hideEditExhibitGUI()
 
   deleteExhibit(UUIDToDelete)
@@ -1060,7 +1060,7 @@ document.getElementById('editExhibitShowActionModalButton').addEventListener('cl
 document.getElementById('editExhibitActionSelector').addEventListener('change', () => { editExhibitActionConfigureTargetSelector() })
 document.getElementById('editExhibitActionTargetSelector').addEventListener('change', () => { editExhibitActionConfigureValueSelector() })
 document.getElementById('editExhibitActionEditDeleteActionButton').addEventListener('click', () => {
-  const uuid = document.getElementById('editExhibitActionModal').getAttribute('data-uuid')
+  const uuid = document.getElementById('editExhibitActionModal').dataset.uuid
   editExhibitActionDeleteAction(uuid)
 })
 document.getElementById('editExhibitActionEditSubmitButton').addEventListener('click', editExhibitActionSubmit)
@@ -1076,17 +1076,17 @@ document.addEventListener('click', (event) => {
     const file = document.getElementById('issueMediaViewFromModalSelect').value
     exIssues.issueMediaDelete([file])
   } else if (id === 'editUserDeleteButtonConfirmation') {
-    const user = document.getElementById('editUserModal').getAttribute('data-uuid')
+    const user = document.getElementById('editUserModal').dataset.uuid
     exUsers.deleteUser(user)
   }
 })
 document.getElementById('issueModifyModalDeleteButton').addEventListener('click', () => {
-  const id = document.getElementById('issueModifyModal').getAttribute('data-id')
+  const id = document.getElementById('issueModifyModal').dataset.id
   exIssues.modifyIssue(id, 'delete')
   exUtilities.hideModal('#issueModifyModal')
 })
 document.getElementById('issueModifyModalArchiveButton').addEventListener('click', () => {
-  const id = document.getElementById('issueModifyModal').getAttribute('data-id')
+  const id = document.getElementById('issueModifyModal').dataset.id
   exIssues.modifyIssue(id, 'archive')
   exUtilities.hideModal('#issueModifyModal')
 })

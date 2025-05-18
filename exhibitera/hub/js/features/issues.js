@@ -38,7 +38,7 @@ export function upateIssueList () {
   // Create a mapping of issue UUIDs to issue cols
   const issueColMap = {}
   for (const issueCol of issueCols) {
-    const details = JSON.parse(issueCol.getAttribute('data-details'))
+    const details = JSON.parse(issueCol.dataset.details)
     issueColMap[details.id] = {
       element: issueCol,
       uuid: details.id,
@@ -105,8 +105,8 @@ export function createIssueHTML (issue, full = true, archived = false) {
 
   const col = document.createElement('div')
   col.classList = 'col mt-2 issue-col'
-  col.setAttribute('data-details', JSON.stringify(issue))
-  col.setAttribute('data-uuid', issue.id)
+  col.dataset.details = JSON.stringify(issue)
+  col.dataset.uuid = issue.id
 
   const card = document.createElement('div')
   // Color the border based on the priority
@@ -350,7 +350,7 @@ export function createIssueHTML (issue, full = true, archived = false) {
 function showModifyIssueModal (id, mode) {
   // Configure the modal to confirm archiving or deleting
 
-  document.getElementById('issueModifyModal').setAttribute('data-id', id)
+  document.getElementById('issueModifyModal').dataset.id = id
 
   const deleteTitle = document.getElementById('issueModifyModalDeleteTitle')
   const archiveTitle = document.getElementById('issueModifyModalArchiveTitle')
