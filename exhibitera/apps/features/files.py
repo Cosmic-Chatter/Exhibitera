@@ -479,16 +479,21 @@ def create_missing_thumbnails() -> None:
 def get_all_directory_contents(directory: str = "content") -> tuple[list, list[dict[str, Any]]]:
     """Recursively search for files in the content directory and its subdirectories"""
 
+    if directory not in ["content", "static"]:
+        print("get_all_directory_contents: invalid directory: " + directory)
+        logging.warning("get_all_directory_contents: invalid directory: " + directory)
+        return [], []
+
     content_path = ex_files.get_path([directory], user_file=True)
     result = [os.path.relpath(os.path.join(dp, f), content_path) for dp, dn, fn in os.walk(content_path) for f in fn]
-    content = [x for x in result if x.find(".DS_Store") == -1]
+    content = [x for x in result if not any(part.startswith('.') for part in pathlib.PurePath(x).parts if part)]
     content_details = []
 
     for file in content:
         file_details = {
             'name': file
         }
-        path = ex_files.get_path(["content", file], user_file=True)
+        path = ex_files.get_path([directory, file], user_file=True)
         file_size, size_text = ex_files.get_file_size(path)
         file_details['size'] = file_size
         file_details['size_text'] = size_text

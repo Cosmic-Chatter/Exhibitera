@@ -197,7 +197,10 @@ async def get_available_content(config: apps_config = Depends(get_config)):
     """Return a list of all files in the content directory, plus some useful system info."""
 
     content, content_details = apps_files.get_all_directory_contents()
+    static, static_details = apps_files.get_all_directory_contents('static')
     response = {"content": content,
-                "content_details": content_details}
+                "content_details": content_details,
+                "static": static,
+                "static_details": static_details}
 
     return response

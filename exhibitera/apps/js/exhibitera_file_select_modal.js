@@ -7,6 +7,7 @@ export function createFileSelectionModal (userOptions) {
   // Build a standard Exhibitera file selection modal
 
   let options = {
+    directory: 'content', // Choice of 'content' or 'static'
     filetypes: [], // List of file types to allow ([] for all)
     manage: false, // Allow uploading, deleting, and renaming, but not selecting
     multiple: true // Select multiple files?
@@ -310,18 +311,25 @@ function populateComponentContent (options) {
     endpoint: '/files/availableContent'
   })
     .then((result) => {
+      console.log(result)
       _populateComponentContent(result, options)
       previewFile({})
     })
 }
 
 function _populateComponentContent (fileDict, options) {
-  // Build HTML elements for every file in fileDict.content_details, modified by
+  // Build HTML elements for every file, modified by
   // the options passed in from createFileSelectionModal()
 
   const fileRow = document.getElementById('exFileSelectModalFileList')
+
+  let fileDirectory
+  if (options.directory === 'content') {
+    fileDirectory = fileDict.content_details
+  } else fileDirectory = fileDict.static_details
+
   // Alphabetize the list
-  const fileList = fileDict.content_details.sort(function (a, b) { return a.name.localeCompare(b.name) })
+  const fileList = fileDirectory.sort(function (a, b) { return a.name.localeCompare(b.name) })
 
   // Clear any existing files
   fileRow.innerHTML = ''
@@ -441,7 +449,7 @@ function _populateThumbnail (file, thumbContainer) {
   } else {
     // We don't have a thumbnail
     thumb = document.createElement('img')
-    thumb.src = exCommon.config.helperAddress + getDefaultDocumentImage()
+    thumb.src = exCommon.config.helperAddress + getDefaultDocumentImage(file)
   }
   thumbContainer.appendChild(thumb)
   thumb.style.width = '100%'
@@ -528,20 +536,34 @@ function previewFile (fileDetails) {
     vid.style.display = 'none'
     aud.parentElement.style.display = 'none'
     font.style.display = 'none'
-    img.src = exCommon.config.helperAddress + getDefaultDocumentImage()
+    img.src = exCommon.config.helperAddress + getDefaultDocumentImage(file)
   }
 }
 
-function getDefaultDocumentImage (png = false) {
+function getDefaultDocumentImage (file = '', png = false) {
   // Return the approriate thumbnail based on whether dark mode is enabled.
+  // If a file is passed, try to populate an image based on the extension.
 
   let ext = 'svg'
   if (png === true) ext = 'png'
 
+  let fileExt = ''
+  if (file !== '') {
+    fileExt = file.split('.').slice(-1)[0].toLowerCase()
+  }
+  const icons = {
+    css: 'css',
+    html: 'html',
+    js: 'js',
+    md: 'md'
+  }
+  let icon = icons[fileExt]
+  if (icon == null) icon = 'document'
+
   const mode = document.querySelector('html').getAttribute('data-bs-theme')
-  if (mode === 'dark') return '/_static/icons/document_white.' + ext
+  if (mode === 'dark') return '/_static/icons/' + icon + '_white.' + ext
   else if (mode === 'light') return '/_static/icons/document_black.' + ext
-  else return '/_static/icons/document_black.' + ext
+  else return '/_static/icons/' + icon + '_black.' + ext
 }
 
 function getDefaultSpreadsheetImage () {
@@ -691,7 +713,7 @@ function uploadFile (options) {
       if (this.status === 200) {
         const response = JSON.parse(this.responseText)
 
-        if ('success' in response) {
+        if (response.success) {
           document.getElementById('exFileSelectModalUploadProgressBarContainer').style.display = 'none'
           document.getElementById('exFileSelectModalUploadfilename').innerHTML = 'Upload new'
           populateComponentContent(options)

@@ -678,17 +678,14 @@ export function previewDefinition (automatic = false) {
   def.uuid = '__preview_' + config.app
   exCommon.writeDefinition(def)
     .then((result) => {
-      if ('success' in result && result.success === true) {
+      if (result.success && result.success === true) {
         // Configure the preview frame
         if (config.app === 'word_cloud_input') {
           document.getElementById('previewFrame').src = '/word_cloud/input?standalone=true&definition=' + '__preview_' + config.app
         } else if (config.app === 'word_cloud_viewer') {
           document.getElementById('previewFrame').src = '/word_cloud/viewer?standalone=true&definition=' + '__preview_' + config.app
-        } else if (config.app !== 'other') {
-          document.getElementById('previewFrame').src = '/' + config.app + '?standalone=true&definition=' + '__preview_' + config.app
         } else {
-          if (def.path === '') return
-          document.getElementById('previewFrame').src = '/' + def.path + '?standalone=true&definition=' + '__preview_other'
+          document.getElementById('previewFrame').src = '/' + config.app + '?standalone=true&definition=' + '__preview_' + config.app
         }
       }
     })

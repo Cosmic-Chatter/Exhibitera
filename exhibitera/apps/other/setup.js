@@ -1,5 +1,6 @@
 import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exSetup from '../js/exhibitera_setup_common.js'
+import * as exFileSelect from '../js/exhibitera_file_select_modal.js'
 
 async function initializeWizard () {
   // Set up the wizard
@@ -18,8 +19,9 @@ async function clearDefinitionInput (full = true) {
 
   // Definition details
   document.getElementById('definitionNameInput').value = ''
+  document.getElementById('definitionModeInput').value = 'basic'
+  document.getElementById('appFileSelect').innerText = 'Select file'
   document.getElementById('keyList').innerHTML = ''
-  document.getElementById('pathInput').value = ''
 }
 
 function editDefinition (uuid = '') {
@@ -31,11 +33,9 @@ function editDefinition (uuid = '') {
   exSetup.config.workingDefinition = structuredClone(def)
 
   document.getElementById('definitionNameInput').value = def.name
+  document.getElementById('definitionModeInput').value = def?.mode ?? 'basic'
 
-  document.getElementById('pathInput').value = def.path
-  Object.keys(def.properties).forEach((key) => {
-    createKeyValueHTML(key, def.properties[key])
-  })
+  document.getElementById('appFileSelect').innerText = def?.path ?? 'Select file'
 
   // Configure the preview frame
   if (def.path !== '') {
@@ -100,13 +100,19 @@ exCommon.config.helperAddress = window.location.origin
 // -------------------------------------------------------------
 
 // Settings
-document.getElementById('pathInput').addEventListener('change', (event) => {
-  // Fix common errors with the app path
-  if (event.target.value.slice(0, 8) === '/static/') event.target.value = event.target.value.slice(1)
-  if (event.target.value.slice(0, 7) !== 'static/') event.target.value = 'static/' + event.target.value
-
-  exSetup.updateWorkingDefinition(['path'], event.target.value)
+document.getElementById('definitionModeInput').addEventListener('change', (event) => {
+  exSetup.updateWorkingDefinition(['mode'], event.target.value)
   exSetup.previewDefinition()
+})
+document.getElementById('appFileSelect').addEventListener('click', (event) => {
+  exFileSelect.createFileSelectionModal({ directory: 'static', filetypes: ['html'], multiple: false })
+    .then((result) => {
+      if (result.length > 0) {
+        event.target.innerHTML = result[0]
+        exSetup.updateWorkingDefinition(['path'], 'static/' + result[0])
+        exSetup.previewDefinition()
+      }
+    })
 })
 document.getElementById('addKeyButton').addEventListener('click', (event) => {
   createKeyValueHTML()
@@ -127,6 +133,7 @@ exSetup.configure({
   initializeWizard,
   loadDefinition: editDefinition,
   blankDefinition: {
+    mode: 'basic',
     path: '',
     properties: {}
   }

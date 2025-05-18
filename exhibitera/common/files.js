@@ -11,18 +11,18 @@ export function guessMimetype (filename) {
 
   const ext = filename.split('.').slice(-1)[0].toLowerCase()
 
-  if (['mp4', 'mpeg', 'mpg', 'webm', 'mov', 'm4v', 'avi', 'flv'].includes(ext)) {
-    return 'video'
-  } else if (['jpeg', 'jpg', 'tiff', 'tif', 'png', 'bmp', 'gif', 'webp', 'eps', 'ps', 'svg'].includes(ext)) {
-    return 'image'
-  } else if (['aac', 'm4a', 'mp3', 'oga', 'ogg', 'wav'].includes(ext)) {
+  if (['aac', 'm4a', 'mp3', 'oga', 'ogg', 'wav'].includes(ext)) {
     return 'audio'
   } else if (['otf', 'ttf', 'woff', 'woff2'].includes(ext)) {
     return 'font'
+  } else if (['jpeg', 'jpg', 'tiff', 'tif', 'png', 'bmp', 'gif', 'webp', 'eps', 'ps', 'svg'].includes(ext)) {
+    return 'image'
   } else if (['fbx', 'glb', 'obj', 'stl', 'usdz'].includes(ext)) {
     return 'model'
   } else if (['csv', 'xls', 'xlsx'].includes(ext)) {
     return 'spreadsheet'
+  } else if (['mp4', 'mpeg', 'mpg', 'webm', 'mov', 'm4v', 'avi', 'flv'].includes(ext)) {
+    return 'video'
   }
   return ''
 }
