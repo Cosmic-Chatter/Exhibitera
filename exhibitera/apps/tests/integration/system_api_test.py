@@ -7,7 +7,7 @@ base_url = "http://localhost:8000"
 # This is meant as a regression test for some api reorganization
 
 def test_system_get_platform_details():
-    response = requests.get(base_url+'/system/getPlatformDetails')
+    response = requests.get(base_url+'/system/platformDetails')
     assert response.status_code == 200
     json = response.json()
     architecture = json.get('architecture')

@@ -45,7 +45,7 @@ async def get_system_stats():
     return {"success": True, "system_stats": apps_utilities.get_system_stats()}
 
 
-@router.get('/getPlatformDetails')
+@router.get('/platformDetails')
 async def get_platform_details():
     """Return details on the current operating system."""
 

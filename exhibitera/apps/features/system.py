@@ -156,6 +156,7 @@ def get_platform_details() -> dict[str, Any]:
 
     details = {
         "architecture": platform.architecture()[0],
+        "exhibitera_version": apps_config.software_version,
         "os_version": platform.release()
     }
 

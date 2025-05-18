@@ -40,14 +40,16 @@ try {
   }
 } catch {
   console.log('script platform.js not found. Include this script to send additional details to Hub.')
+  config.platformDetails = {}
 }
 
 makeHelperRequest({
   method: 'GET',
-  endpoint: '/system/getPlatformDetails'
+  endpoint: '/system/platformDetails'
 })
   .then((result) => {
     config.platformDetails.outdated = result?.outdated ?? false
+    config.platformDetails.exhibitera_version = result?.exhibitera_version ?? {}
   })
 
 // Fix bootstrap modal accessibility issue
@@ -142,6 +144,7 @@ export function sendPing () {
       platform_details: config.platformDetails,
       currentInteraction: config.currentInteraction
     }
+
     // See if there is an error to report
     const errorString = JSON.stringify(config.errorDict)
     if (errorString !== '') {

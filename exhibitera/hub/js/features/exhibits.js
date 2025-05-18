@@ -413,19 +413,19 @@ class ExhibitComponent extends BaseComponent {
 
     super.updateFromServer(update)
 
-    if ('autoplay_audio' in update) {
+    if (update.autoplay_audio) {
       this.autoplay_audio = update.autoplay_audio
     }
-    if ('definition' in update) {
+    if (update.definition) {
       this.definition = update.definition
     }
-    if ('exhibiteraAppID' in update) {
+    if (update.exhibiteraAppID) {
       this.exhibiteraAppId = update.exhibiteraAppID
     }
-    if ('helperAddress' in update) {
+    if (update.helperAddress) {
       this.helperAddress = update.helperAddress
     }
-    if ('platform_details' in update) {
+    if (update.platform_details) {
       this.platformDetails = update.platform_details
     }
   }
@@ -927,14 +927,20 @@ function showExhibitComponentInfo (uuid, groupUUID) {
     document.getElementById('componentInfoModalHelperIPAddressGroup').style.display = 'none'
   }
 
-  if ('platformDetails' in obj) {
-    if ('operating_system' in obj.platformDetails) {
+  if (obj.platformDetails) {
+    if (obj.platformDetails.operating_system) {
       document.getElementById('componentInfoModalOperatingSystem').innerHTML = obj.platformDetails.operating_system.replace('OS X', 'macOS')
       document.getElementById('componentInfoModalOperatingSystemGroup').style.display = 'block'
     } else {
       document.getElementById('componentInfoModalOperatingSystemGroup').style.display = 'none'
     }
-    if ('browser' in obj.platformDetails && obj.platformDetails.browser !== 'null null') {
+    if (obj.platformDetails.exhibitera_version) {
+      document.getElementById('componentInfoModalExhibtera').innerText = exUtilities.formatSemanticVersion(obj.platformDetails.exhibitera_version)
+      document.getElementById('componentInfoModalExhibteraGroup').style.display = 'block'
+    } else {
+      document.getElementById('componentInfoModalExhibteraGroup').style.display = 'none'
+    }
+    if (obj.platformDetails.browser && obj.platformDetails.browser !== 'null null') {
       document.getElementById('componentInfoModalBrowser').innerHTML = obj.platformDetails.browser
       document.getElementById('componentInfoModalBrowserGroup').style.display = 'block'
     } else {
@@ -944,7 +950,7 @@ function showExhibitComponentInfo (uuid, groupUUID) {
     document.getElementById('componentInfoModalOperatingSystemGroup').style.display = 'none'
     document.getElementById('componentInfoModalBrowserGroup').style.display = 'none'
   }
-  if ('protocol' in obj && obj.protocol != null) {
+  if (obj.protocol) {
     const protocolNames = {
       pjlink: 'PJLink'
     }
@@ -953,13 +959,13 @@ function showExhibitComponentInfo (uuid, groupUUID) {
   } else {
     document.getElementById('componentInfoModalProtocolGroup').style.display = 'none'
   }
-  if (obj.latency != null) {
+  if (obj.latency) {
     document.getElementById('componentInfoModalLatency').innerHTML = String(obj.latency) + ' ms'
     document.getElementById('componentInfoModalLatencyGroup').style.display = 'block'
   } else {
     document.getElementById('componentInfoModalLatencyGroup').style.display = 'none'
   }
-  if (obj.lastContactDateTime != null) {
+  if (obj.lastContactDateTime) {
     document.getElementById('componentInfoModalLastContact').innerHTML = exUtilities.formatDateTimeDifference(new Date(), new Date(obj.lastContactDateTime))
     document.getElementById('componentInfoModalLastContactGroup').style.display = 'block'
   } else {

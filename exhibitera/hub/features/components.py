@@ -822,7 +822,7 @@ def update_exhibit_component_status(data: dict[str, Any], ip: str):
         ip = "localhost"
 
     component = get_exhibit_component(data["uuid"])
-    if component is None:  # This is a new uuid, so make the component
+    if component is None:  # This is a new uuid, so create the component
         component = add_exhibit_component(data["id"], ["Default"], uuid_str=data.get("uuid", ""))
 
     component.ip_address = ip

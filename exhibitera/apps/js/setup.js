@@ -211,7 +211,7 @@ function configureInterface () {
   }
   exCommon.makeHelperRequest({
     method: 'GET',
-    endpoint: '/system/getPlatformDetails'
+    endpoint: '/system/platformDetails'
   })
     .then((result) => {
       if (result.os === 'linux') {

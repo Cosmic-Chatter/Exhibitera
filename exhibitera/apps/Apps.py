@@ -264,6 +264,10 @@ def run():
         apps_legacy.migrate_definition_thumbnails()
         apps_legacy.fix_appearance_to_style()
 
+        # Load the current software version
+        apps_config.software_version = ex_files.load_json(
+            (ex_files.get_path(["_static", "semantic_version.json"]))).get("version", {})
+
         # Check the GitHub server for an available software update
         ex_utilities.check_for_software_update('apps')
 
