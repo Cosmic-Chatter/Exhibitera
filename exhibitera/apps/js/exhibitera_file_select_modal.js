@@ -10,7 +10,8 @@ export function createFileSelectionModal (userOptions) {
     directory: 'content', // Choice of 'content' or 'static'
     filetypes: [], // List of file types to allow ([] for all)
     manage: false, // Allow uploading, deleting, and renaming, but not selecting
-    multiple: true // Select multiple files?
+    multiple: true, // Select multiple files?
+    upload_any: false // If false, users may only upload files matching filetypes.
   }
 
   // Merge in user options
@@ -190,10 +191,13 @@ export function createFileSelectionModal (userOptions) {
       // Need to configure the accept= property to limit which file types can be uploaded.
 
       let acceptStr = ''
-      options.filetypes.forEach((type) => {
-        if (type === 'audio' || type === 'image' || type === 'video') acceptStr += type + '/*, '
-        else acceptStr += '.' + type + ', '
-      })
+      if (options.upload_any === false) {
+        options.filetypes.forEach((type) => {
+          if (type === 'audio' || type === 'image' || type === 'video') acceptStr += type + '/*, '
+          else acceptStr += '.' + type + ', '
+        })
+      }
+
       document.getElementById('exFileSelectModalUpload').setAttribute('accept', acceptStr)
     }
 

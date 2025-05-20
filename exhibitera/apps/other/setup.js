@@ -147,7 +147,7 @@ document.getElementById('appURLInput').addEventListener('change', (event) => {
   exSetup.previewDefinition()
 })
 document.getElementById('appFileSelect').addEventListener('click', (event) => {
-  exFileSelect.createFileSelectionModal({ directory: 'static', filetypes: ['html'], multiple: false })
+  exFileSelect.createFileSelectionModal({ directory: 'static', filetypes: ['html'], multiple: false, upload_any: true })
     .then((result) => {
       if (result.length > 0) {
         event.target.innerHTML = result[0]
