@@ -699,6 +699,7 @@ function uploadFile (options) {
     document.getElementById('exFileSelectModalUploadProgressBarContainer').style.display = 'block'
 
     const formData = new FormData()
+    formData.append('path', options.directory)
 
     for (let i = 0; i < fileInput.files.length; i++) {
       const file = fileInput.files[i]

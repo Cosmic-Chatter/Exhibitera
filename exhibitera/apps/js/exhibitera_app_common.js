@@ -278,13 +278,8 @@ function readServerUpdate (update) {
 
         const def = result.definition
         if ('app' in def && def.app !== '') {
-          if (
-            (def.app !== config.exhibiteraAppID) ||
-          (config.exhibiteraAppID === 'other' && def.path !== location.pathname.slice(1))
-          ) {
-            let otherPath = ''
-            if (def.app === 'other') otherPath = def.path
-            gotoApp(def.app, otherPath)
+          if (def.app !== config.exhibiteraAppID) {
+            gotoApp(def.app)
           }
         }
       })
@@ -370,14 +365,9 @@ function readHelperUpdate (update, changeApp = true) {
         if ('success' in result && result.success === false) return
 
         const def = result.definition
-        if ('app' in def && def.app !== '') {
-          if (
-            (def.app !== config.exhibiteraAppID) ||
-          (config.exhibiteraAppID === 'other' && def.path !== location.pathname.slice(1))
-          ) {
-            let otherPath = ''
-            if (def.app === 'other') otherPath = def.path
-            gotoApp(def.app, otherPath)
+        if (def.app && def.app !== '') {
+          if (def.app !== config.exhibiteraAppID) {
+            gotoApp(def.app)
           }
         }
       })
@@ -465,7 +455,7 @@ export function sendAnalytics (data) {
     })
 }
 
-export function gotoApp (app, other = '') {
+export function gotoApp (app) {
   // Change the browser location to point to the given app.
   console.log(app)
   const appLocations = {
@@ -474,18 +464,14 @@ export function gotoApp (app, other = '') {
     infostation: '/infostation',
     media_browser: '/media_browser',
     media_player: '/media_player',
+    other: '/other',
     timelapse_viewer: '/timelapse_viewer',
     timeline_explorer: '/timeline_explorer',
     voting_kiosk: '/voting_kiosk',
     word_cloud_input: '/word_cloud/input',
     word_cloud_viewer: '/word_cloud/viewer'
   }
-  console.log(config, app, other)
-  if (other !== '') {
-    window.location = config.helperAddress + '/' + other
-  } else {
-    window.location = config.helperAddress + appLocations[app]
-  }
+  window.location = config.helperAddress + appLocations[app]
 }
 
 export async function getAvailableDefinitions (appID = '') {

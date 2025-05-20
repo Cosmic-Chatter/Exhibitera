@@ -8,6 +8,10 @@ _Exhibitera Hub and Apps must all be upgraded to version 6 at the same time._
 
 ## Apps
 
+### Other Apps
+- New Basic App option turns a simple HTML file into an app without using the Exhibitera APIs
+- New URL option enables you to embed a webpage into your exhibition (limitations apply)
+
 ### Word Cloud
 - Switched profanity filtering library, so please check your word clouds
 

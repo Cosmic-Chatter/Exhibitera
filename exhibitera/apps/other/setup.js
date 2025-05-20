@@ -21,7 +21,10 @@ async function clearDefinitionInput (full = true) {
   document.getElementById('definitionNameInput').value = ''
   document.getElementById('definitionModeInput').value = 'basic'
   document.getElementById('appFileSelect').innerText = 'Select file'
-  document.getElementById('keyList').innerHTML = ''
+  document.getElementById('keyList').innerText = ''
+  document.getElementById('appURLInput').value = ''
+
+  configureOptions()
 }
 
 function editDefinition (uuid = '') {
@@ -31,9 +34,10 @@ function editDefinition (uuid = '') {
   const def = exSetup.getDefinitionByUUID(uuid)
   exSetup.config.initialDefinition = structuredClone(def)
   exSetup.config.workingDefinition = structuredClone(def)
-
+  console.log(def)
   document.getElementById('definitionNameInput').value = def.name
   document.getElementById('definitionModeInput').value = def?.mode ?? 'basic'
+  document.getElementById('appURLInput').value = def?.url ?? ''
 
   document.getElementById('appFileSelect').innerText = def?.path ?? 'Select file'
 
@@ -44,6 +48,7 @@ function editDefinition (uuid = '') {
   } else {
     document.getElementById('previewFrame').style.display = 'none'
   }
+  configureOptions()
   exSetup.previewDefinition()
 }
 
@@ -93,6 +98,38 @@ function rebuildPropertyDict () {
   exSetup.updateWorkingDefinition(['properties'], dict)
 }
 
+function configureOptions () {
+  // Configure which inputs to show based on the mode we are in.
+
+  const mode = document.getElementById('definitionModeInput').value
+
+  const appFileSelectGroup = document.getElementById('appFileSelectGroup')
+  const keyListGroup = document.getElementById('keyListGroup')
+  const appURLGroup = document.getElementById('appURLGroup')
+  const appFileSelectHint = document.getElementById('appFileSelectHint')
+  const appAPIHint = document.getElementById('appAPIHint')
+
+  if (mode === 'basic') {
+    appFileSelectGroup.style.display = 'block'
+    appFileSelectHint.style.display = 'block'
+    appURLGroup.style.display = 'none'
+    keyListGroup.style.display = 'none'
+    appAPIHint.style.display = 'none'
+  } else if (mode === 'advanced') {
+    appFileSelectGroup.style.display = 'block'
+    appFileSelectHint.style.display = 'block'
+    appURLGroup.style.display = 'none'
+    keyListGroup.style.display = 'block'
+    appAPIHint.style.display = 'block'
+  } else if (mode === 'url') {
+    appFileSelectGroup.style.display = 'none'
+    appFileSelectHint.style.display = 'none'
+    appURLGroup.style.display = 'block'
+    keyListGroup.style.display = 'none'
+    appAPIHint.style.display = 'none'
+  }
+}
+
 // Set helperAddress for calls to exCommon.makeHelperRequest
 exCommon.config.helperAddress = window.location.origin
 
@@ -102,6 +139,11 @@ exCommon.config.helperAddress = window.location.origin
 // Settings
 document.getElementById('definitionModeInput').addEventListener('change', (event) => {
   exSetup.updateWorkingDefinition(['mode'], event.target.value)
+  configureOptions()
+  exSetup.previewDefinition()
+})
+document.getElementById('appURLInput').addEventListener('change', (event) => {
+  exSetup.updateWorkingDefinition(['url'], event.target.value)
   exSetup.previewDefinition()
 })
 document.getElementById('appFileSelect').addEventListener('click', (event) => {

@@ -203,18 +203,42 @@
                   <select class="form-select" id="definitionModeInput">
                     <option value="basic">Basic</option>
                     <option value="advanced">Advanced</opttion>
+                      <option value="url">URL</opttion>
                   </select>
                 </div>
-                <div class="col-12 col-md-6 col-lg-4">
-                  <label for="appFileSelect" class="form-label">Mode</label>
-                  <button id="appFileSelect" class="btn btn-outline-primary w-100">Select file</button>
-                </div>
-              </div>
+              </div> 
 
               <!-- Content -->
               <h3 class="mt-2">Content</h3>
-              <i>Add custom key-value pairs to control the app. These will be stored as a dictionary in the 'properties' field of the definition. </i>
               <div class="row gy-2 mt-2">
+                <div id="appURLGroup" class="col-12">
+                  <label for="appURLInput" class="form-label">
+                    App URL
+                    <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="This can be an address on the internet or local network." style="font-size: 0.55em;">?</span>
+                  </label>
+                  <input id="appURLInput" class="form-control w-100"></input>
+                  <div class="alert alert-info mt-2">Most websites block embedding as a security measure, so don't be surprised if your URL doesn't load. If you control the website you're linking to, ensure cross-origin requests (CORS) are allowed.</div>
+                </div>
+                <div id="appAPIHint" class="col-12">
+                  <div class="alert alert-info"><b>Advanced apps must implement the Exhibitera Core API.</b> If you don't implement the Core API, you will not be able to control the app from Hub once it is loaded or switch to another app.</div>
+                </div>
+                <div id="appFileSelectGroup" class="col-12 col-lg-6">
+                  <label for="appFileSelect" class="form-label">
+                    App file
+                    <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="An HTML file that defines the app." style="font-size: 0.55em;">?</span>
+                  </label>
+                  <button id="appFileSelect" class="btn btn-outline-primary text-break w-100">Select file</button>
+                </div>
+                <div id="appFileSelectHint" class="col-12">
+                  <div class="alert alert-info">Need to bulk upload files? Navigate to the <code>static</code> directory inside your Exhibitera Apps folder.</div>
+                </div>
+                
+              </div>
+              
+              <div id="keyListGroup" class="row gy-2">
+                <div class="col-12">
+                  <i>Add custom key-value pairs to control the app. These will be stored as a dictionary in the 'properties' field of the definition. </i>
+                </div>
                 <div class="col-12 col-md-3">
                   <button id="addKeyButton" class="btn btn-primary w-100">Add key</button>
                 </div>
@@ -233,6 +257,7 @@
       </div>
     </div>
 
+    
   <script type="text/javascript" src="../js/bootstrap_5_3/bootstrap.bundle.min.js"></script>
   <script type="text/javascript" src="../js/showdown.min.js"></script>
   <script type="text/javascript" src="../js/platform.js"></script>
