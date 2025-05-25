@@ -13,6 +13,9 @@ _Exhibitera Hub and Apps must all be upgraded to version 6 at the same time._
 - New URL option enables you to embed a webpage into your exhibition (limitations apply)
 - Guided setup makes things easier than ever
 
+### Media Player
+- Adjust the opacity of watermarks
+
 ### Word Cloud
 - Switched profanity filtering library, so please check your word clouds
 

@@ -38,6 +38,7 @@ function loadDefinition (def) {
     watermarkEl.style.left = String(def?.watermark?.x_position ?? 80) + 'vw'
     watermarkEl.style.top = String(def?.watermark?.y_position ?? 80) + 'vh'
     watermarkEl.style.height = String(def?.watermark?.size ?? 10) + 'vh'
+    watermarkEl.style.opacity = parseFloat(def?.watermark?.opacity) / 100 ?? 1
   } else {
     watermarkEl.style.display = 'none'
   }

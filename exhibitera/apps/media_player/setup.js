@@ -53,6 +53,7 @@ async function clearDefinitionInput (full = true) {
   document.getElementById('watermarkXPos').value = '80'
   document.getElementById('watermarkYPos').value = '80'
   document.getElementById('watermarkSize').value = '10'
+  document.getElementById('watermarkOpacity').value = '100'
 }
 
 function editDefinition (uuid = '') {
@@ -81,6 +82,7 @@ function editDefinition (uuid = '') {
   document.getElementById('watermarkXPos').value = def?.watermark?.x_position ?? '80'
   document.getElementById('watermarkYPos').value = def?.watermark?.y_position ?? '80'
   document.getElementById('watermarkSize').value = def?.watermark?.size ?? '10'
+  document.getElementById('watermarkOpacity').value = def?.watermark?.opacity ?? '100'
 
   // Configure the preview frame
   document.getElementById('previewFrame').src = 'index.html?standalone=true&definition=' + def.uuid
@@ -1238,6 +1240,7 @@ Array.from(document.querySelectorAll('.watermark-slider')).forEach((el) => {
   el.addEventListener('input', (event) => {
     const field = event.target.getAttribute('data-field')
     exSetup.updateWorkingDefinition(['watermark', field], event.target.value)
+    console.log(exSetup.config.workingDefinition)
     exSetup.previewDefinition(true)
   })
 })
