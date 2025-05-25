@@ -13,7 +13,18 @@
     <link rel="stylesheet" href="../css/bootstrap_5_3/bootstrap.min.css">
     <link rel="stylesheet" href="../css/setup.css">
 
-    <title>Other App Setup</title>
+    <title>Custom App Setup</title>
+
+    <style>
+      .radio-wrapper {
+        border-radius: 0.375rem;
+        outline: 1px solid #6c757d;
+      }
+
+      .radio-wrapper:has(.form-check-input:checked) {
+        outline: 3px solid #0d6efd;
+      }
+    </style>
 
   </head>
 
@@ -75,10 +86,180 @@
         </div>
       </div>
 
+      <!-- Welcome modal -->
+      <div id="appWelcomeModal" class="modal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Configure a Custom App</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body"  style="max-height: 70vh; overflow-y: auto;">
+              <div class="row gy-2 row-cols-1 row-cols-md-2">
+                <div class="col">
+                  <div class="card h-100">
+                    <div class="card-body d-flex flex-column">
+                      <h5 class="card-title text-center">Guided Setup</h5>
+                      <p class="card-text">Get started with step-by-step instructions. You can always fine-tune things afterwards.</p>
+                      <button id="appWelcomeModalWizardButton" class="btn btn-primary w-100 mt-auto">Start Guided Setup</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="col">
+                  <div class="card h-100">
+                    <div class="card-body d-flex flex-column">
+                      <h5 class="card-title text-center">Custom Setup</h5>
+                      <p class="card-text">Fully control all attributes from the beginning. <span class='badge text-bg-secondary'>Advanced</span></p>
+                      <button class="btn btn-primary w-100 mt-auto" data-bs-dismiss="modal">Start Custom Setup</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Setup wizard modal -->
+      <div id="setupWizardModal" class="modal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Create a new definition</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div id="setupWizardModalBody" class="modal-body">
+
+              <!-- Welcome -->
+              <div id="wizardPane_Welcome" class="row wizard-pane">
+                <div class="col-12 col-lg-10 offset-lg-1 mt-3">
+                  <H4 class="text-center">Custom App Configuration</H4>
+                  <i>
+                    <p>
+                      Custom App setup enables you to connect a web app or website to Exhibitera Hub and include it in your exhibitions.
+                      <div class="alert alert-info">
+                        If you're not using Exhibitera Hub, Custom App setup might not be the easiest option. Instead, consider setting up Kiosk Mode in a browser of your choice.
+                      </div>
+                    </p>
+                    <p>
+                      To set up a custom app, you will need one of:
+                      <ul>
+                        <li>The source files for your web app;</li>
+                        <li>A URL to the app or website.</li>
+                      </ul>
+                    </p>
+                  </i>
+                  <div class="row">
+                    <div class="col-6 offset-3">
+                      <label class="form-label" for="wizardDefinitionNameInput">Definition name</label>
+                      <input class="form-control" id="wizardDefinitionNameInput" type="text">
+                    </div>
+                    <div id="wizardDefinitionNameBlankWarning" class="col-12 text-warning mt-2" style="display: none;">
+                      Definition name must not be blank.
+                    </div>
+                  </div>
+                  <div class="text-center mt-4">
+                    <button class="btn btn-primary wizard-forward" data-current-page="Welcome">Get started</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Mode -->
+              <div id="wizardPane_Mode" class="row wizard-pane">
+                <div class="col-12 col-lg-10 offset-lg-1 mt-3">
+                  <H4 class="text-center">Select Custom App mode</H4>
+
+                  <div class="radio-wrapper form-check py-3 px-3 mt-2">
+                    <input class="form-check-input d-none" type="radio" name="wizardAppMode" id="wizardAppModeBasic" checked value="basic">
+                    <label class="form-check-label" for="wizardAppModeBasic">
+                      <div class="row">
+                        <div class="col-12 col-md-3 col-lg-2 d-flex justify-content-center align-items-center">
+                          <b>Basic</b>
+                        </div>
+                        <div class="col-12 col-md-9 col-lg-10">
+                          Your web app doesn't need to know anything about Exhibitera. As long as it is a collection of <code>HTML</code>, <code>JavaScript</code>, <code>CSS</code>, and media files, Exhibitera Apps can load it and connect to Hub.
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+                  <div class="radio-wrapper form-check py-3 px-3 mt-2">
+                    <input class="form-check-input d-none" type="radio" name="wizardAppMode" id="wizardAppModeAdvanced" value="advanced">
+                    <label class="form-check-label" for="wizardAppModeAdvanced">
+                      <div class="row">
+                        <div class="col-12 col-md-3 col-lg-2 d-flex justify-content-center align-items-center">
+                          <b>Advanced</b>
+                        </div>
+                        <div class="col-12 col-md-9 col-lg-10">
+                          Your web app implements the Exhibitera Core API so that it can utilize Exhibitera features like writing data or configuring with definitions.
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+                  <div class="radio-wrapper form-check py-3 px-3 mt-2">
+                    <input class="form-check-input d-none" type="radio" name="wizardAppMode" id="wizardAppModeURL" value="url">
+                    <label class="form-check-label" for="wizardAppModeURL">
+                      <div class="row">
+                        <div class="col-12 col-md-3 col-lg-2 d-flex justify-content-center align-items-center">
+                          <b>URL</b>
+                        </div>
+                        <div class="col-12 col-md-9 col-lg-10">
+                          Exhibitera Apps will load your URL as a basic app. <b>Note that many public websites block being embedded for security reasons.</b>
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+                  <div class="text-center mt-4">
+                    <button class="btn btn-secondary me-4 wizard-back" data-current-page="Mode">Back</button>
+                    <button class="btn btn-primary ms-4 wizard-forward" data-current-page="Mode">Next</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Source -->
+              <div id="wizardPane_Source" class="row wizard-pane">
+                <div class="col-8 offset-2 mt-3">
+                  <H4 id="wizardSourceHeader" class="text-center">Upload your app files</H4>
+                  
+                  <div id="wizardSourceFilesGroup" class="col-12">
+                    <p>
+                      Click the button below to upload your app's files, then choose the root HTML file.
+                    </p>
+                    <div class="text-center">
+                      <button id="wizardSourceAppFileSelect" class="btn btn-outline-primary text-break">Upload and select</button>
+                    </div>
+                    <div id="wizardPathBlankErrorAlert" class="alert alert-warning mt-2">You must select an HTML file as the root of your app.</div>
+                    <div id="wizardSourceAppFileSelectHint" class="col-12 mt-3">
+                      <div class="alert alert-info">Need to bulk upload files or upload nested folders? Navigate to the <code>static</code> directory inside your Exhibitera Apps folder and copy them there.</div>
+                    </div>
+                  </div>
+
+                  <div id="wizardSourceAppURLGroup" class="col-12">
+                    <label for="wizardAppURLInput" class="form-label">
+                      App URL
+                      <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="This can be an address on the internet or local network." style="font-size: 0.55em;">?</span>
+                    </label>
+                    <input id="wizardAppURLInput" class="form-control w-100"></input>
+                    <div id="wizardCORSErrorAlert" class="alert alert-danger mt-2">This URL blocks embedding and cannot be loaded.</div>
+                    <div id="wizardURLBlankErrorAlert" class="alert alert-warning mt-2">URL must not be blank.</div>
+                    <div class="alert alert-info mt-2">Most websites block embedding as a security measure, so don't be surprised if your URL doesn't load. If you control the website you're linking to, ensure cross-origin requests (CORS) are allowed.</div>
+                  </div>
+
+                  <div class="text-center mt-4">
+                    <button class="btn btn-secondary me-4 wizard-back" data-current-page="Source">Back</button>
+                    <button class="btn btn-primary ms-4 wizard-forward" data-current-page="Source">Finish</button>
+                  </div>
+                </div>
+              </div>
+              
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="row">
         <div class="col-10" id="setupHeader">
-          <H2>Other App Setup</H2>
-          Use this utility to connect Hub with an external app that uses the Cosntellation API.
+          <H2>Custom App Setup</H2>
+          Use this utility to connect Hub with an app you have developed.
         </div>
 
         <div class="col-2">
@@ -132,6 +313,9 @@
               <span class="d-none d-sm-inline d-lg-none">New</span>
             </button>
             <ul class="dropdown-menu">
+              <li><h6 class="dropdown-header">Basic</h6></li>
+              <li><a id="showWizardButton" class="dropdown-item" href="#">Guided setup</a></li>
+              <li><h6 class="dropdown-header">Advanced</h6></li>
               <li><a id="newDefinitionButton" class="dropdown-item" href="#">Create blank definition</a></li>
               <li><a id="cloneDefinitionButton" class="dropdown-item" href="#">Clone selected definition</a></li>
             </ul>
@@ -189,61 +373,83 @@
       </div>
       <div class="row align-items-start">
         <div id='editPane' class="col-6 col-lg-7">
-          <div class="row gy-2">
-            <div class="col-12 mt-2">
 
-              <h3>Settings</h3>
-              <div class="row gy-2">
-                <div class="col-12 col-md-6 col-lg-4">
-                  <label for="definitionNameInput" class="form-label">Definition name</label>
-                  <input type="text" class="form-control" id="definitionNameInput">
+          <div class="accordion mt-3" id="topLevelAccordion">
+            <!-- Basic details -->
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#basicDetails" aria-expanded="true" aria-controls="basicDetails">
+                  Basic details
+                  <div class="accordion-detail">Choose what kind of other app you are connecting.</div>
+                </button>
+              </h2>
+              <div id="basicDetails" class="accordion-collapse collapse show" data-bs-parent="#topLevelAccordion">
+                <div class="accordion-body">
+                  <div class="row gy-2">
+                    <div class="col-12 col-md-6 col-lg-4">
+                      <label for="definitionNameInput" class="form-label">Definition name</label>
+                      <input type="text" class="form-control" id="definitionNameInput">
+                    </div>
+                    <div class="col-12 col-md-6 col-lg-4">
+                      <label for="definitionModeInput" class="form-label">Mode</label>
+                      <select class="form-select" id="definitionModeInput">
+                        <option value="basic">Basic</option>
+                        <option value="advanced">Advanced</opttion>
+                          <option value="url">URL</opttion>
+                      </select>
+                    </div>
+                  </div>
                 </div>
-                <div class="col-12 col-md-6 col-lg-4">
-                  <label for="definitionModeInput" class="form-label">Mode</label>
-                  <select class="form-select" id="definitionModeInput">
-                    <option value="basic">Basic</option>
-                    <option value="advanced">Advanced</opttion>
-                      <option value="url">URL</opttion>
-                  </select>
-                </div>
-              </div> 
-
-              <!-- Content -->
-              <h3 class="mt-2">Content</h3>
-              <div class="row gy-2 mt-2">
-                <div id="appURLGroup" class="col-12">
-                  <label for="appURLInput" class="form-label">
-                    App URL
-                    <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="This can be an address on the internet or local network." style="font-size: 0.55em;">?</span>
-                  </label>
-                  <input id="appURLInput" class="form-control w-100"></input>
-                  <div class="alert alert-info mt-2">Most websites block embedding as a security measure, so don't be surprised if your URL doesn't load. If you control the website you're linking to, ensure cross-origin requests (CORS) are allowed.</div>
-                </div>
-                <div id="appAPIHint" class="col-12">
-                  <div class="alert alert-info"><b>Advanced apps must implement the Exhibitera Core API.</b> If you don't implement the Core API, you will not be able to control the app from Hub once it is loaded or switch to another app.</div>
-                </div>
-                <div id="appFileSelectGroup" class="col-12 col-lg-6">
-                  <label for="appFileSelect" class="form-label">
-                    App file
-                    <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="An HTML file that defines the app." style="font-size: 0.55em;">?</span>
-                  </label>
-                  <button id="appFileSelect" class="btn btn-outline-primary text-break w-100">Select file</button>
-                </div>
-                <div id="appFileSelectHint" class="col-12">
-                  <div class="alert alert-info">Need to bulk upload files? Navigate to the <code>static</code> directory inside your Exhibitera Apps folder.</div>
-                </div>
-                
               </div>
-              
-              <div id="keyListGroup" class="row gy-2">
-                <div class="col-12">
-                  <i>Add custom key-value pairs to control the app. These will be stored as a dictionary in the 'properties' field of the definition. </i>
-                </div>
-                <div class="col-12 col-md-3">
-                  <button id="addKeyButton" class="btn btn-primary w-100">Add key</button>
-                </div>
-                <div class="col-12">
-                  <div id="keyList" class="row"></div>
+            </div>
+
+            <!-- Content -->
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#content" aria-expanded="false" aria-controls="content">
+                  Content
+                  <div class="accordion-detail">Add your app's files or URL and configure any properties.</div>
+                </button>
+              </h2>
+              <div id="content" class="accordion-collapse collapse" data-bs-parent="#topLevelAccordion">
+                <div class="accordion-body">
+                  <div class="row gy-2">
+                    <div id="appURLGroup" class="col-12">
+                      <label for="appURLInput" class="form-label">
+                        App URL
+                        <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="This can be an address on the internet or local network." style="font-size: 0.55em;">?</span>
+                      </label>
+                      <input id="appURLInput" class="form-control w-100"></input>
+                      <div id="CORSErrorAlert" class="alert alert-danger mt-2">This URL blocks embedding and cannot be loaded.</div>
+                      <div class="alert alert-info mt-2">Most websites block embedding as a security measure, so don't be surprised if your URL doesn't load. If you control the website you're linking to, ensure cross-origin requests (CORS) are allowed.</div>
+                    </div>
+                    <div id="appAPIHint" class="col-12">
+                      <div class="alert alert-info"><b>Advanced apps must implement the Exhibitera Core API.</b> If you don't implement the Core API, you will not be able to control the app from Hub once it is loaded or switch to another app.</div>
+                    </div>
+                    <div id="appFileSelectGroup" class="col-12 col-lg-6">
+                      <label for="appFileSelect" class="form-label">
+                        App file
+                        <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="An HTML file that defines the app." style="font-size: 0.55em;">?</span>
+                      </label>
+                      <button id="appFileSelect" class="btn btn-outline-primary text-break w-100">Select file</button>
+                    </div>
+                    <div id="appFileSelectHint" class="col-12">
+                      <div class="alert alert-info">Need to bulk upload files? Navigate to the <code>static</code> directory inside your Exhibitera Apps folder and copy them there.</div>
+                    </div>
+                    
+                  </div>
+                  
+                  <div id="keyListGroup" class="row gy-2">
+                    <div class="col-12">
+                      <i>Add custom key-value pairs to control the app. These will be stored as a dictionary in the <code>properties</code> field of the definition. </i>
+                    </div>
+                    <div class="col-12 col-md-3">
+                      <button id="addKeyButton" class="btn btn-primary w-100">Add key</button>
+                    </div>
+                    <div class="col-12">
+                      <div id="keyList" class="row"></div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

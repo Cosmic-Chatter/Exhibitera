@@ -295,7 +295,7 @@ export function configureFromQueryString () {
     if (config.clearDefinition != null) config.clearDefinition()
     if (config.loggedIn) {
       const modal = document.getElementById('appWelcomeModal')
-      if (modal) exUtilities.showModal()
+      if (modal) exUtilities.showModal(modal)
     }
   }
 }
@@ -333,6 +333,15 @@ async function showSetupWizard () {
 
   await config.initializeWizard()
   exUtilities.showModal('#setupWizardModal')
+}
+
+export function wizardGoTo (page) {
+  // Navigate to the given wizard page, hiding all other pages.
+
+  for (const el of document.querySelectorAll('.wizard-pane')) {
+    el.style.display = 'none'
+  }
+  document.getElementById('wizardPane_' + page).style.display = 'block'
 }
 
 export function addWizardLanguage () {

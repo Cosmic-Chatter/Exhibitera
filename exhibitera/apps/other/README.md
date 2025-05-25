@@ -1,7 +1,7 @@
-# Other App
+# Custom App
 While Exhibitera provides a broad suite of app options, it might not cover your specific need. In that case, you can connect a custom web app to Exhibitera Hub to include it in your exhibitions.
 
-_**Good to know**: If you're not using Exhibitera Hub, using Exhibitera App's Other App functionality might not be the easiest option. Instead, consider setting up Kiosk Mode in a browser of your choice._
+_**Good to know**: If you're not using Exhibitera Hub, using Exhibitera App's Custom App functionality might not be the easiest option. Instead, consider setting up Kiosk Mode in a browser of your choice._
 
 ## Modes
 ### Basic
@@ -13,7 +13,7 @@ If you need to utilize any of the Exhibitera APIs, you should set up your web ap
 **For your advanced app to work correctly, you must implement the Exhibitera Core API.** If you don't implement the Core API, your app will not correctly respond to commands from Hub.
 
 #### Key-value pairs
-When creating your Other App definition as an advanced app, you have the option to create key-value pairs. This allows you to pass your app details specific to this definition. 
+When creating your Custom App definition as an advanced app, you have the option to create key-value pairs. This allows you to pass your app details specific to this definition. 
 
 These key-value pairs are stored in a dictionary under the `properties` field of the definition. An advanced app definition will look like this:
 
@@ -50,6 +50,6 @@ Websites can choose to disable embedding as a security measure. For instance, a 
 _**Good to know**: If you control the webpage you're trying to load, you can enable embedding by ensuring you allow cross-origin requests (CORS)._
 
 ## Uploading files
-Simple apps containing only a few files in a single directory can easily uploaded via the Other App setup page. However, if your app contains many files or files in subdirectories, you will need to copy the files manually into Exhibitera Apps.
+Simple apps containing only a few files in a single directory can easily uploaded via the Custom App setup page. However, if your app contains many files or files in subdirectories, you will need to copy the files manually into Exhibitera Apps.
 
 To do this, navigate to your Exhibitera Apps directory and find the `static` subdirectory inside. There, you can place your files and folders, which you can then select from the setup page.

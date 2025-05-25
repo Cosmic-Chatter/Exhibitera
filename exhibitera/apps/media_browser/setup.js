@@ -36,24 +36,24 @@ async function wizardForward (currentPage) {
     const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
     if (defName !== '') {
       document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'none'
-      wizardGoTo('Languages')
+      exSetup.wizardGoTo('Languages')
     } else {
       document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'block'
     }
   } else if (currentPage === 'Languages') {
     if (document.getElementById('wizardLanguages').children.length > 0) {
       document.getElementById('wizardLanguagesBlankWarning').style.display = 'none'
-      wizardGoTo('MediaInfo')
+      exSetup.wizardGoTo('MediaInfo')
     } else {
       document.getElementById('wizardLanguagesBlankWarning').style.display = 'block'
     }
   } else if (currentPage === 'MediaInfo') {
-    wizardGoTo('Spreadsheet')
+    exSetup.wizardGoTo('Spreadsheet')
   } else if (currentPage === 'Spreadsheet') {
     const selectedFile = document.getElementById('wizardUploadTemplateButton').getAttribute('data-spreadsheet')
     if (selectedFile !== '') {
       document.getElementById('wizardUploadTemplateBlankWarning').style.display = 'none'
-      wizardGoTo('MediaUpload')
+      exSetup.wizardGoTo('MediaUpload')
     } else {
       document.getElementById('wizardUploadTemplateBlankWarning').style.display = 'block'
     }
@@ -74,7 +74,7 @@ async function wizardForward (currentPage) {
     if (missing.length === 0) {
       document.getElementById('wizardUploadMediaMissingWarning').style.display = 'none'
       document.getElementById('wizardUploadMediaMissingRow').style.display = 'none'
-      wizardGoTo('Layout')
+      exSetup.wizardGoTo('Layout')
     } else {
       const missingRow = document.getElementById('wizardUploadMediaMissingRow')
       missingRow.innerHTML = ''
@@ -97,24 +97,16 @@ function wizardBack (currentPage) {
   // Move the wizard back one page
 
   if (currentPage === 'Languages') {
-    wizardGoTo('Welcome')
+    exSetup.wizardGoTo('Welcome')
   } else if (currentPage === 'MediaInfo') {
-    wizardGoTo('Languages')
+    exSetup.wizardGoTo('Languages')
   } else if (currentPage === 'Spreadsheet') {
-    wizardGoTo('MediaInfo')
+    exSetup.wizardGoTo('MediaInfo')
   } else if (currentPage === 'MediaUpload') {
-    wizardGoTo('Spreadsheet')
+    exSetup.wizardGoTo('Spreadsheet')
   } else if (currentPage === 'Layout') {
-    wizardGoTo('MediaUpload')
+    exSetup.wizardGoTo('MediaUpload')
   }
-}
-
-function wizardGoTo (page) {
-  Array.from(document.querySelectorAll('.wizard-pane')).forEach((el) => {
-    el.style.display = 'none'
-  })
-  document.getElementById('wizardPane_' + page).style.display = 'block'
-  console.log('wizardPane_' + page)
 }
 
 async function wizardCreateDefinition () {

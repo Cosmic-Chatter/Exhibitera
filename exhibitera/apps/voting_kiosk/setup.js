@@ -1,4 +1,4 @@
-/* global Coloris, bootstrap */
+/* global bootstrap */
 
 import * as exUtilities from '../../common/utilities.js'
 import * as exCommon from '../js/exhibitera_app_common.js'
@@ -29,12 +29,12 @@ async function wizardForward (currentPage) {
     const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
     if (defName !== '') {
       document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'none'
-      wizardGoTo('Question')
+      exSetup.wizardGoTo('Question')
     } else {
       document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'block'
     }
   } else if (currentPage === 'Question') {
-    wizardGoTo('Answers')
+    exSetup.wizardGoTo('Answers')
   } else if (currentPage === 'Answers') {
     const answers = document.querySelectorAll('.wizard-answer-option')
     const answersType = document.getElementById('wizardAnswerTypeSelect').value
@@ -66,17 +66,10 @@ function wizardBack (currentPage) {
   // Move the wizard back one page
 
   if (currentPage === 'Question') {
-    wizardGoTo('Welcome')
+    exSetup.wizardGoTo('Welcome')
   } else if (currentPage === 'Answers') {
-    wizardGoTo('Question')
+    exSetup.wizardGoTo('Question')
   }
-}
-
-function wizardGoTo (page) {
-  Array.from(document.querySelectorAll('.wizard-pane')).forEach((el) => {
-    el.style.display = 'none'
-  })
-  document.getElementById('wizardPane_' + page).style.display = 'block'
 }
 
 async function wizardCreateDefinition () {
@@ -656,16 +649,16 @@ exCommon.config.helperAddress = window.location.origin
 // Wizard
 
 // Connect the forward and back buttons
-Array.from(document.querySelectorAll('.wizard-forward')).forEach((el) => {
+for (const el of document.querySelectorAll('.wizard-forward')) {
   el.addEventListener('click', () => {
     wizardForward(el.getAttribute('data-current-page'))
   })
-})
-Array.from(document.querySelectorAll('.wizard-back')).forEach((el) => {
+}
+for (const el of document.querySelectorAll('.wizard-back')) {
   el.addEventListener('click', () => {
     wizardBack(el.getAttribute('data-current-page'))
   })
-})
+}
 
 document.getElementById('wizardAnswerTypeSelect').addEventListener('change', (event) => {
   if (event.target.value === 'custom') {

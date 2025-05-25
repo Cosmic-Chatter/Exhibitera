@@ -43,7 +43,7 @@ async function wizardForward (currentPage) {
     const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
     if (defName !== '') {
       document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'none'
-      wizardGoTo('Languages')
+      exSetup.wizardGoTo('Languages')
     } else {
       document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'block'
     }
@@ -65,7 +65,7 @@ async function wizardForward (currentPage) {
         exSetup.updateWorkingDefinition(['languages', code], langDef)
       }
       exSetup.updateWorkingDefinition(['language_order'], langOrder)
-      wizardGoTo('SelectImages')
+      exSetup.wizardGoTo('SelectImages')
     } else {
       document.getElementById('wizardLanguagesBlankWarning').style.display = 'block'
     }
@@ -91,14 +91,14 @@ async function wizardForward (currentPage) {
     }
 
     wizardBuildPairDetailsPage()
-    wizardGoTo('PairDetails')
+    exSetup.wizardGoTo('PairDetails')
   } else if (currentPage === 'PairDetails') {
     const nav = document.getElementById('wizardHomeDetailsNav')
     nav.innerHTML = ''
     const content = document.getElementById('wizardHomeDetailsNavContent')
     content.innerHTML = ''
     createHomeTextLocalizationHTML(nav, content)
-    wizardGoTo('HomeDetails')
+    exSetup.wizardGoTo('HomeDetails')
   } else if (currentPage === 'HomeDetails') {
     wizardCreateDefinition()
   }
@@ -108,21 +108,14 @@ function wizardBack (currentPage) {
   // Move the wizard back one page
 
   if (currentPage === 'Languages') {
-    wizardGoTo('Welcome')
+    exSetup.wizardGoTo('Welcome')
   } else if (currentPage === 'SelectImages') {
-    wizardGoTo('Languages')
+    exSetup.wizardGoTo('Languages')
   } else if (currentPage === 'PairDetails') {
-    wizardGoTo('SelectImages')
+    exSetup.wizardGoTo('SelectImages')
   } else if (currentPage === 'HomeDetails') {
-    wizardGoTo('PairDetails')
+    exSetup.wizardGoTo('PairDetails')
   }
-}
-
-function wizardGoTo (page) {
-  for (const el of document.querySelectorAll('.wizard-pane')) {
-    el.style.display = 'none'
-  }
-  document.getElementById('wizardPane_' + page).style.display = 'block'
 }
 
 async function wizardCreateDefinition () {

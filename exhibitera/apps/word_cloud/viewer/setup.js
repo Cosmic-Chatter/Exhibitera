@@ -29,7 +29,7 @@ async function wizardForward (currentPage) {
     const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
     if (defName !== '') {
       document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'none'
-      wizardGoTo('Collection')
+      exSetup.wizardGoTo('Collection')
     } else {
       document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'block'
     }
@@ -37,12 +37,12 @@ async function wizardForward (currentPage) {
     const collection = document.getElementById('wizardCollection').value.trim()
     if (collection !== '') {
       document.getElementById('wizardCollectionBlankWarning').style.display = 'none'
-      wizardGoTo('Question')
+      exSetup.wizardGoTo('Question')
     } else {
       document.getElementById('wizardCollectionBlankWarning').style.display = 'block'
     }
   } else if (currentPage === 'Question') {
-    wizardGoTo('Style')
+    exSetup.wizardGoTo('Style')
     createWordCloud()
   } else if (currentPage === 'Style') {
     wizardCreateDefinition()
@@ -53,19 +53,12 @@ function wizardBack (currentPage) {
   // Move the wizard back one page
 
   if (currentPage === 'Collection') {
-    wizardGoTo('Welcome')
+    exSetup.wizardGoTo('Welcome')
   } else if (currentPage === 'Question') {
-    wizardGoTo('Collection')
+    exSetup.wizardGoTo('Collection')
   } else if (currentPage === 'Style') {
-    wizardGoTo('Question')
+    exSetup.wizardGoTo('Question')
   }
-}
-
-function wizardGoTo (page) {
-  Array.from(document.querySelectorAll('.wizard-pane')).forEach((el) => {
-    el.style.display = 'none'
-  })
-  document.getElementById('wizardPane_' + page).style.display = 'block'
 }
 
 async function wizardCreateDefinition () {
