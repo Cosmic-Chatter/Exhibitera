@@ -627,18 +627,15 @@ export function classifyColor (color) {
 export function setBackground (details, root, defaultColor = '#22222E', setStatusBar = false) {
   // Take the 'background' section of a definition and use it to configure the background
 
+  // Configure the status bar for PWAs to black by default
   if (setStatusBar === true) {
-    // Configure the status bar for PWAs to black by default
-    if (setStatusBar === true) {
-      document.querySelector('meta[name="theme-color"]').setAttribute('content', '#000')
-      document.querySelector('meta[name="msapplication-TileColor"]').setAttribute('content', '#000')
-    }
+    document.querySelector('meta[name="theme-color"]').setAttribute('content', '#000')
+    document.querySelector('meta[name="msapplication-TileColor"]').setAttribute('content', '#000')
   }
 
-  if (details.mode === 'color') {
+  if ((details?.mode ?? 'color') === 'color') {
     // Solid colors
-    let color = defaultColor
-    if ('color' in details) color = details.color
+    const color = details?.color ?? defaultColor
     root.style.setProperty('--background-color', color)
 
     // Configure the status bar for PWAs to match the background
@@ -648,12 +645,9 @@ export function setBackground (details, root, defaultColor = '#22222E', setStatu
     }
   } else if (details.mode === 'gradient') {
     // Gradient
-    let angle = 0
-    if ('gradient_angle' in details) angle = details.gradient_angle
-    let color1 = defaultColor
-    if ('gradient_color_1' in details) color1 = details.gradient_color_1
-    let color2 = defaultColor
-    if ('gradient_color_2' in details) color2 = details.gradient_color_2
+    const angle = details?.gradient_angle ?? 0
+    const color1 = details?.gradient_color_1 ?? defaultColor
+    const color2 = details?.gradient_color_2 ?? defaultColor
 
     const grad = `linear-gradient(${angle}deg, ${color2}, ${color1})`
     root.style.setProperty('--background-color', grad)

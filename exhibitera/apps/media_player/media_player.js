@@ -31,25 +31,13 @@ function loadDefinition (def) {
 
   // Watermark settings
   const watermarkEl = document.getElementById('watermark')
-  if ('watermark' in def && 'file' in def.watermark && def.watermark.file !== '') {
+  if ((def?.watermark?.file ?? '') !== '') {
     watermarkEl.style.display = 'block'
-    watermarkEl.src = 'content/' + def.watermark.file
+    watermarkEl.src = '../content/' + def.watermark.file
 
-    if ('x_position' in def.watermark) {
-      watermarkEl.style.left = String(def.watermark.x_position) + 'vw'
-    } else {
-      watermarkEl.style.left = '80vw'
-    }
-    if ('y_position' in def.watermark) {
-      watermarkEl.style.top = String(def.watermark.y_position) + 'vh'
-    } else {
-      watermarkEl.style.top = '80vh'
-    }
-    if ('size' in def.watermark) {
-      watermarkEl.style.height = String(def.watermark.size) + 'vh'
-    } else {
-      watermarkEl.style.height = '10vh'
-    }
+    watermarkEl.style.left = String(def?.watermark?.x_position ?? 80) + 'vw'
+    watermarkEl.style.top = String(def?.watermark?.y_position ?? 80) + 'vh'
+    watermarkEl.style.height = String(def?.watermark?.size ?? 10) + 'vh'
   } else {
     watermarkEl.style.display = 'none'
   }
@@ -65,10 +53,7 @@ function loadDefinition (def) {
     console.log(def.style.color[key])
     document.documentElement.style.setProperty('--' + key, def.style.color[key])
   })
-
-  if ('style' in def && 'background' in def.style) {
-    exCommon.setBackground(def.style.background, root, '#000', true)
-  }
+  exCommon.setBackground(def?.style?.background ?? {}, root, '#000', true)
 
   // Font
 
