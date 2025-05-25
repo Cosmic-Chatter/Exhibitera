@@ -1,5 +1,6 @@
 /* global Js3dModelViewer */
 import * as exCommon from '../js/exhibitera_app_common.js'
+import * as exMarkdown from '../js/exhibitera_app_markdown.js'
 
 function updateParser (update) {
   // Read updates specific to the media player
@@ -264,12 +265,12 @@ async function changeMedia (source) {
   document.querySelectorAll('.annotation').forEach(function (a) {
     a.remove()
   })
-  if ('annotations' in source) {
-    for (const key of Object.keys(source.annotations)) {
-      const annotation = source.annotations[key]
+  for (const key of Object.keys(source?.annotations ?? {})) {
+    const annotation = source.annotations[key]
+    if (['file', 'url'].includes(annotation.type)) {
       annotation.value = await fetchAnnotation(annotation)
-      createAnnotation(annotation)
-    }
+    } else annotation.value = annotation.text
+    createAnnotation(annotation)
   }
 }
 
@@ -278,18 +279,15 @@ function createAnnotation (details) {
 
   const annotation = document.createElement('div')
   annotation.classList = 'annotation'
-  annotation.innerHTML = details.value
+  annotation.innerHTML = exMarkdown.formatText(String(details.value), { removeParagraph: true, string: true })
   annotation.style.position = 'absolute'
 
-  let xPos, ypos
-  if ('x_position' in details) {
-    xPos = details.x_position
-  } else xPos = 50
+  const xPos = details?.x_position ?? 50
   annotation.style.left = xPos + 'vw'
-  if ('y_position' in details) {
-    ypos = details.y_position
-  } else ypos = 50
+
+  const ypos = details?.y_position ?? 50
   annotation.style.top = ypos + 'vh'
+
   if ('align' in details) {
     if (details.align === 'center') annotation.classList.add('align-center')
     if (details.align === 'right') annotation.classList.add('align-right')
@@ -321,6 +319,7 @@ function fetchAnnotation (details) {
     if (details.type === 'file') {
       exCommon.makeHelperRequest({
         method: 'GET',
+        api: '',
         endpoint: '/content/' + details.file,
         noCache: true
       })
@@ -329,7 +328,7 @@ function fetchAnnotation (details) {
           for (const key of details.path) {
             subset = subset[key]
           }
-          resolve(subset)
+          resolve(String(subset))
         })
         .catch(() => {
           reject(new Error('Bad file fetch'))
@@ -345,7 +344,7 @@ function fetchAnnotation (details) {
           for (const key of details.path) {
             subset = subset[key]
           }
-          resolve(subset)
+          resolve(String(subset))
         })
         .catch(error => {
           console.error('Error fetching JSON:', error)

@@ -1,4 +1,4 @@
-/* global bootstrap, Coloris */
+/* global bootstrap */
 
 import exConfig from '../../common/config.js'
 import * as exFiles from '../../common/files.js'
@@ -6,6 +6,7 @@ import * as exUtilities from '../../common/utilities.js'
 import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exFileSelect from '../js/exhibitera_file_select_modal.js'
 import * as exSetup from '../js/exhibitera_setup_common.js'
+import * as exMarkdown from '../js/exhibitera_setup_markdown.js'
 
 async function initializeWizard () {
   // Set up the wizard
@@ -234,7 +235,7 @@ function createItemHTML (item, num) {
 
   const orderButtonLeft = document.createElement('button')
   orderButtonLeft.classList = 'btn btn-info btn-sm w-100'
-  orderButtonLeft.innerHTML = '◀'
+  orderButtonLeft.innerHTML = '▲'
   orderButtonLeft.addEventListener('click', (event) => {
     changeItemOrder(item.uuid, -1)
   })
@@ -246,7 +247,7 @@ function createItemHTML (item, num) {
 
   const orderButtonRight = document.createElement('button')
   orderButtonRight.classList = 'btn btn-info btn-sm w-100'
-  orderButtonRight.innerHTML = '▶'
+  orderButtonRight.innerHTML = '▼'
   orderButtonRight.addEventListener('click', (event) => {
     changeItemOrder(item.uuid, 1)
   })
@@ -439,13 +440,42 @@ function createItemHTML (item, num) {
   annotateCol.classList = 'col-12'
   modifyRow.appendChild(annotateCol)
 
-  const annotateButton = document.createElement('button')
-  annotateButton.classList = 'btn btn-primary w-100'
-  annotateButton.innerHTML = 'Add annotation'
-  annotateButton.addEventListener('click', () => {
+  const annotateDropdown = document.createElement('div')
+  annotateDropdown.classList = 'dropdown w-100'
+  annotateCol.appendChild(annotateDropdown)
+
+  const annotatebutton = document.createElement('button')
+  annotatebutton.classList = 'btn btn-primary dropdown-toggle w-100'
+  annotatebutton.setAttribute('type', 'button')
+  annotatebutton.setAttribute('data-bs-toggle', 'dropdown')
+  annotatebutton.setAttribute('aria-expanded', false)
+  annotatebutton.innerHTML = 'Add annotation'
+  annotateDropdown.appendChild(annotatebutton)
+
+  const annotateMenu = document.createElement('ul')
+  annotateMenu.classList = 'dropdown-menu'
+  annotateDropdown.appendChild(annotateMenu)
+
+  const annotateLi1 = document.createElement('li')
+  const annotateLi2 = document.createElement('li')
+  annotateMenu.appendChild(annotateLi1)
+  annotateMenu.appendChild(annotateLi2)
+
+  const annotateTextAction = document.createElement('button')
+  annotateTextAction.classList = 'dropdown-item'
+  annotateTextAction.innerHTML = 'Enter text'
+  annotateTextAction.addEventListener('click', () => {
+    addTextAnnotation(item.uuid)
+  })
+  annotateLi2.appendChild(annotateTextAction)
+
+  const annotateJSONAction = document.createElement('button')
+  annotateJSONAction.classList = 'dropdown-item'
+  annotateJSONAction.innerHTML = 'From JSON'
+  annotateJSONAction.addEventListener('click', () => {
     showAnnotateFromJSONModal(item.uuid)
   })
-  annotateCol.appendChild(annotateButton)
+  annotateLi2.appendChild(annotateJSONAction)
 
   const previewCol = document.createElement('div')
   previewCol.classList = 'col-12 col-md-6'
@@ -499,10 +529,8 @@ function createItemHTML (item, num) {
   document.getElementById('itemList').appendChild(itemCol)
 
   // Annotations
-  if ('annotations' in item) {
-    for (const key of Object.keys(item.annotations)) {
-      createAnnoationHTML(item.uuid, item.annotations[key])
-    }
+  for (const key of Object.keys(item?.annotations ?? {})) {
+    createAnnoationHTML(item.uuid, item.annotations[key])
   }
 
   // Activate tooltips
@@ -678,6 +706,24 @@ function selectAnnotationJSONPath (path) {
   el.dataset.path = JSON.stringify(path)
 }
 
+function addTextAnnotation (itemUUID) {
+  // Create a blank text annotation
+
+  const annotationUUID = exUtilities.uuid()
+  const annotation = {
+    uuid: annotationUUID,
+    text: '',
+    type: 'text'
+  }
+  createAnnoationHTML(itemUUID, annotation)
+
+  const annotations = exSetup.config.workingDefinition?.content?.[itemUUID]?.annotations ?? {}
+  annotations[annotationUUID] = annotation
+
+  exSetup.updateWorkingDefinition(['content', itemUUID, 'annotations'], annotations)
+  exSetup.previewDefinition(true)
+}
+
 function addAnnotationFromModal () {
   // Collect the needed information and add the annotation.
 
@@ -719,7 +765,7 @@ function addAnnotationFromModal () {
   exUtilities.hideModal('#annotateFromJSONModal')
 }
 
-function createAnnoationHTML (itemUUID, details) {
+async function createAnnoationHTML (itemUUID, details) {
   // Create the HTML represetnation of an annotation and add it to the item.
 
   const col = document.createElement('div')
@@ -733,8 +779,41 @@ function createAnnoationHTML (itemUUID, details) {
   const title = document.createElement('div')
   title.classList = 'col-12 text-center'
   title.setAttribute('id', 'Annotation' + details.uuid + 'Title')
-  title.innerHTML = '<b>Annotation: </b>' + details.path.slice(-1)
+  let titleText
+  if (details.type === 'text') {
+    titleText = '<b>Text Annotation: </b>' + exMarkdown.formatText(details.text, { removeParagraph: true, string: true })
+  } else titleText = '<b>JSON Annotation: </b>' + details.path.slice(-1)
+  title.innerHTML = titleText
   row.appendChild(title)
+
+  if (details.type === 'text') {
+    const textCol = document.createElement('div')
+    textCol.classList = 'col-12'
+    row.appendChild(textCol)
+
+    const textLabel = document.createElement('label')
+    textLabel.classList = 'form-label'
+    textLabel.innerText = 'Text'
+    textCol.appendChild(textLabel)
+
+    const textCommandBar = document.createElement('div')
+    textCol.appendChild(textCommandBar)
+
+    const textInput = document.createElement('div')
+    textCol.appendChild(textInput)
+
+    const textEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+      content: details?.text ?? '',
+      editorDiv: textInput,
+      commandDiv: textCommandBar,
+      commands: ['basic'],
+      callback: (content) => {
+        exSetup.updateWorkingDefinition(['content', itemUUID, 'annotations', details.uuid, 'text'], content)
+        exSetup.previewDefinition(true)
+        title.innerHTML = '<b>Annotation: </b>' + exMarkdown.formatText(content, { removeParagraph: true, string: true })
+      }
+    })
+  }
 
   const xPosCol = document.createElement('div')
   xPosCol.classList = 'col-12 col-md-6 col-lg-3 d-flex align-items-end'
@@ -757,11 +836,8 @@ function createAnnoationHTML (itemUUID, details) {
   xPosInput.setAttribute('min', '0')
   xPosInput.setAttribute('max', '100')
   xPosInput.setAttribute('step', '1')
-  if ('x_position' in details) {
-    xPosInput.value = details.x_position
-  } else {
-    xPosInput.value = 50
-  }
+  xPosInput.value = details?.x_position ?? 50
+
   xPosInput.addEventListener('change', (event) => {
     exSetup.updateWorkingDefinition(['content', itemUUID, 'annotations', details.uuid, 'x_position'], event.target.value)
     exSetup.previewDefinition(true)
@@ -789,11 +865,8 @@ function createAnnoationHTML (itemUUID, details) {
   yPosInput.setAttribute('min', '0')
   yPosInput.setAttribute('max', '100')
   yPosInput.setAttribute('step', '1')
-  if ('y_position' in details) {
-    yPosInput.value = details.y_position
-  } else {
-    yPosInput.value = 50
-  }
+  yPosInput.value = details?.y_position ?? 50
+
   yPosInput.addEventListener('change', (event) => {
     exSetup.updateWorkingDefinition(['content', itemUUID, 'annotations', details.uuid, 'y_position'], event.target.value)
     exSetup.previewDefinition(true)
@@ -819,9 +892,8 @@ function createAnnoationHTML (itemUUID, details) {
   alignSelect.appendChild(new Option('Left', 'left'))
   alignSelect.appendChild(new Option('Center', 'center'))
   alignSelect.appendChild(new Option('Right', 'right'))
-  if ('align' in details) {
-    alignSelect.value = details.align
-  }
+  alignSelect.value = details?.align ?? 'left'
+
   alignSelect.addEventListener('change', (event) => {
     exSetup.updateWorkingDefinition(['content', itemUUID, 'annotations', details.uuid, 'align'], event.target.value)
     exSetup.previewDefinition(true)
@@ -847,11 +919,8 @@ function createAnnoationHTML (itemUUID, details) {
   fontSizeInput.setAttribute('id', 'fontSizeInput' + details.uuid)
   fontSizeInput.setAttribute('min', '1')
   fontSizeInput.setAttribute('step', '1')
-  if ('font_size' in details) {
-    fontSizeInput.value = details.font_size
-  } else {
-    fontSizeInput.value = 20
-  }
+  fontSizeInput.value = details?.font_size ?? 20
+
   fontSizeInput.addEventListener('change', (event) => {
     exSetup.updateWorkingDefinition(['content', itemUUID, 'annotations', details.uuid, 'font_size'], event.target.value)
     exSetup.previewDefinition(true)
@@ -875,17 +944,14 @@ function createAnnoationHTML (itemUUID, details) {
   fontColorInput.classList = 'coloris'
   fontColorInput.style.height = '35px'
   fontColorInput.setAttribute('id', 'fontColorInput' + details.uuid)
-  if ('color' in details) {
-    fontColorInput.value = details.color
-  } else {
-    fontColorInput.value = 'black'
-  }
+  fontColorInput.value = details?.color ?? 'black'
+
   fontColorInput.addEventListener('change', (event) => {
     exSetup.updateWorkingDefinition(['content', itemUUID, 'annotations', details.uuid, 'color'], event.target.value)
     exSetup.previewDefinition(true)
   })
   fontColorDiv.appendChild(fontColorInput)
-  setTimeout(setUpColorPickers, 100)
+  setTimeout(exSetup.setUpColorPickers, 200)
 
   const fontFaceCol = document.createElement('div')
   fontFaceCol.classList = 'col-12 col-md-6'
@@ -916,14 +982,16 @@ function createAnnoationHTML (itemUUID, details) {
   actionMenu.appendChild(li1)
   actionMenu.appendChild(li2)
 
-  const editAction = document.createElement('a')
-  editAction.classList = 'dropdown-item text-info'
-  editAction.innerHTML = 'Edit JSON field'
-  editAction.style.cursor = 'pointer'
-  editAction.addEventListener('click', () => {
-    showAnnotateFromJSONModal(itemUUID, details.uuid)
-  })
-  li1.appendChild(editAction)
+  if (['file', 'url'].includes(details.type)) {
+    const editAction = document.createElement('a')
+    editAction.classList = 'dropdown-item text-info'
+    editAction.innerHTML = 'Edit JSON field'
+    editAction.style.cursor = 'pointer'
+    editAction.addEventListener('click', () => {
+      showAnnotateFromJSONModal(itemUUID, details.uuid)
+    })
+    li1.appendChild(editAction)
+  }
 
   const deleteAction = document.createElement('a')
   deleteAction.classList = 'dropdown-item text-danger'
@@ -937,7 +1005,6 @@ function createAnnoationHTML (itemUUID, details) {
   li1.appendChild(deleteAction)
 
   document.getElementById('annotationRow_' + itemUUID).appendChild(col)
-
   // Must be after we had the main element to the DOM
   exSetup.createAdvancedFontPicker({
     parent: fontFaceCol,
@@ -945,7 +1012,11 @@ function createAnnoationHTML (itemUUID, details) {
     path: `content>${itemUUID}>annotations>${details.uuid}>font`,
     default: 'OpenSans-Regular.ttf'
   })
-  exSetup.refreshAdvancedFontPickers()
+  const font = details.font
+  await exSetup.refreshAdvancedFontPickers()
+  if (font) {
+    exSetup.updateAdvancedFontPickers({ font }, `content>${itemUUID}>annotations>${details.uuid}`)
+  }
 }
 
 function showChooseURLModal (uuid) {
@@ -1240,7 +1311,6 @@ Array.from(document.querySelectorAll('.watermark-slider')).forEach((el) => {
   el.addEventListener('input', (event) => {
     const field = event.target.getAttribute('data-field')
     exSetup.updateWorkingDefinition(['watermark', field], event.target.value)
-    console.log(exSetup.config.workingDefinition)
     exSetup.previewDefinition(true)
   })
 })

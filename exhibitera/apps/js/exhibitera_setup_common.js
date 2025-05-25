@@ -876,7 +876,9 @@ export function createAdvancedFontPicker (details) {
     <select id="AFPSelect_${id}" class="form-select AFP-select" data-default="${details.default}"></select>
   `
   const el = document.getElementById(`AFPSelect_${id}`)
-  el.setAttribute('data-path', details.path)
+  el.dataset.path = details.path
+  if (details.value) el.value = details.value
+
   // Add event listeners
   el.addEventListener('change', (event) => {
     _onAdvancedFontPickerChange(event.target)
@@ -1018,11 +1020,12 @@ function _onAdvancedFontPickerChange (el, saveChange = true) {
   el.style.fontFamily = safeName
 }
 
-export function updateAdvancedFontPickers (fonts) {
+export function updateAdvancedFontPickers (fonts, path = 'style>font') {
   // Take a dictionary of fonts and update the corresponding font pickers
 
+  if (fonts == null) return
   for (const key of Object.keys(fonts)) {
-    const picker = document.querySelector(`.AFP-select[data-path="style>font>${key}"`)
+    const picker = document.querySelector(`.AFP-select[data-path="${path}>${key}"`)
     if (picker != null) setAdvancedFontPicker(picker, fonts[key])
   }
 }

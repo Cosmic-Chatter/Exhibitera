@@ -10,10 +10,10 @@ export function formatText (inputStr, options = {}) {
   const outputStr = markdownConverter.makeHtml(inputStr)
   let el = document.createElement('div')
   el.innerHTML = outputStr
-  if ((options?.removeParagraph || false) === true) {
-    el = el?.firstElementChild || el
+  if ((options?.removeParagraph ?? false) === true) {
+    el = el?.firstElementChild ?? el
   }
-  if ((options?.string || false) === true) return el.innerHTML
+  if ((options?.string ?? false) === true) return el.innerHTML
   return el
 }
 
