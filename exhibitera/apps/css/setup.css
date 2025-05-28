@@ -17,6 +17,22 @@
     border-width: 1px;
     border-style: solid;
 }
+.exAS_number {
+    font-size: 0.75rem;
+    padding: .25rem;
+    text-align: center;
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+.exAS_label {
+    font-size: 0.75rem;
+    padding: .25rem;
+}
+.exAS_number::-webkit-inner-spin-button,
+.exAS_number::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
 #previewContainer {
     width: 100%;
     height: 100%;

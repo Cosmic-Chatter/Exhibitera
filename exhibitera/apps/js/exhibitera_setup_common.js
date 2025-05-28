@@ -132,6 +132,7 @@ export async function configure (options) {
 
   createAdvancedColorPickers()
   createAdvancedFontPickers(userFonts)
+  createAdvancedSliders()
   createDefinitionDeletePopup()
   createLoginEventListeners()
   createEventListeners()
@@ -715,7 +716,7 @@ function _createAdvancedColorPicker (el, name, path) {
   // 'name' is the name of the picker to be displayed in the label
   // 'path' is the definition path to be prepended to the elements.
 
-  const id = String(Math.round(Math.random() * 1e10))
+  const id = exUtilities.uuid()
   el.setAttribute('data-constACP-id', id)
 
   el.innerHTML = `
@@ -1051,6 +1052,71 @@ export function resetAdvancedFontPickers () {
   Array.from(document.querySelectorAll('.AFP-select')).forEach((el) => {
     const defaultFont = '/_fonts/' + el.getAttribute('data-default')
     setAdvancedFontPicker(el, defaultFont)
+  })
+}
+
+export function createAdvancedSliders () {
+  // Create an Advanced Slider at each marked point
+
+  for (const el of document.querySelectorAll('.advanced-slider')) {
+    createAdvancedSlider(el)
+  }
+}
+
+export function createAdvancedSlider (el, value = null) {
+  // Create the HTML for an Advanced Slider based on the data properties of
+  // the given element and a possible current value
+
+  // Reset the element in case we're updating an existing slider
+  el.innerHTML = ''
+
+  const id = exUtilities.uuid()
+  el.dataset.exASID = id
+
+  const path = el.dataset.path.split('>')
+
+  let labelHTML = ''
+  let sliderWidth = '8'
+  let numberWidth = '4'
+  if ((el.dataset?.unit ?? '') !== '') {
+    labelHTML = `<span class="input-group-text exAS_label">${el.dataset.unit}</span>`
+    sliderWidth = '7'
+    numberWidth = '5'
+  }
+  el.innerHTML = `
+      <label class="form-label">${el.dataset.name}</label>
+      <div class="row">
+        <div class="col-${sliderWidth} pe-0 d-flex align-items-middle">
+          <input type="range" id="exAS_slider_${id}" class="form-input w-100 exAS_slider" min="${el.dataset.min}" max="${el.dataset.max}" start="${value ?? el.dataset.start}" step="${el.dataset.step}">
+          </input>
+        </div>
+        <div class="col-${numberWidth} ps-1">
+          <div class='input-group'>
+            <input type="number" id="exAS_number_${id}" class="form-control exAS_number" min="${el.dataset.min}" max="${el.dataset.max}" start="${value ?? el.dataset.start}" step="${el.dataset.step}">
+            ${labelHTML}
+          </div>
+          
+          </input>
+        </div>
+      </div>
+  `
+
+  const slider = document.getElementById(`exAS_slider_${id}`)
+  const number = document.getElementById(`exAS_number_${id}`)
+
+  number.value = value ?? el.dataset.start
+  slider.value = value ?? el.dataset.start
+
+  // Add event listeners
+  slider.addEventListener('input', (event) => {
+    updateWorkingDefinition([...path], event.target.value)
+    number.value = event.target.value
+    previewDefinition(true)
+  })
+  number.addEventListener('input', (event) => {
+    updateWorkingDefinition([...path], event.target.value)
+    slider.value = event.target.value
+    previewDefinition(true)
   })
 }
 

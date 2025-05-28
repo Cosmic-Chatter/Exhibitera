@@ -51,10 +51,7 @@ async function clearDefinitionInput (full = true) {
   const watermarkSelect = document.getElementById('watermarkSelect')
   watermarkSelect.innerHTML = 'Select file'
   watermarkSelect.setAttribute('data-filename', '')
-  document.getElementById('watermarkXPos').value = '80'
-  document.getElementById('watermarkYPos').value = '80'
-  document.getElementById('watermarkSize').value = '10'
-  document.getElementById('watermarkOpacity').value = '100'
+  exSetup.createAdvancedSliders()
 }
 
 function editDefinition (uuid = '') {
@@ -80,10 +77,10 @@ function editDefinition (uuid = '') {
     watermarkSelect.innerHTML = def.watermark.file
     watermarkSelect.setAttribute('data-filename', def.watermark.file)
   }
-  document.getElementById('watermarkXPos').value = def?.watermark?.x_position ?? '80'
-  document.getElementById('watermarkYPos').value = def?.watermark?.y_position ?? '80'
-  document.getElementById('watermarkSize').value = def?.watermark?.size ?? '10'
-  document.getElementById('watermarkOpacity').value = def?.watermark?.opacity ?? '100'
+  exSetup.createAdvancedSlider(document.getElementById('watermarkXPos'), def?.watermark?.x_position)
+  exSetup.createAdvancedSlider(document.getElementById('watermarkYPos'), def?.watermark?.y_position)
+  exSetup.createAdvancedSlider(document.getElementById('watermarkSize'), def?.watermark?.size)
+  exSetup.createAdvancedSlider(document.getElementById('watermarkOpacity'), def?.watermark?.opacity)
 
   // Configure the preview frame
   document.getElementById('previewFrame').src = 'index.html?standalone=true&definition=' + def.uuid
