@@ -327,7 +327,7 @@
                   </div>
                 </div>
               </div>
-              <div class="row mt-2 gy-2">
+              <div id="attractorRow" class="row mt-2 gy-2">
                 <div class="col-12 col-md-6 col-lg-3">
                   <label for="attractorInput_attractor_timeout" class="form-label">
                     Timeout
@@ -336,15 +336,13 @@
                   <input type="number" min="5" value="30" class="form-control attractor-input" id="attractorInput_attractor_timeout" data-property="attractor_timeout">
                 </div>
                 <div class="col-12 col-md-6 col-lg-4">
-                  <label for="attractorInput_attractor_height" class="form-label">Height</label>
-                  <input id="attractorInput_attractor_height" type="range" class="form-range attractor-input realtime-slider" data-property="attractor_height" min="0", max="100" start="40" step="5">
+                  <div id="attractorInput_attractor_height" class="advanced-slider" data-name="Height" data-path="attractor>attractor_height" data-min="0" data-max="100" data-start="40" data-step="1" data-unit="%" data-note="The amount of vertical space covered by the attractor."></div>
                 </div>
                 <div class="col-12 col-lg-5">
                   <label for="attractorInput_text" class="form-label">Text</label>
                   <input type="text" class="form-control attractor-input" id="attractorInput_text" data-property="text">
                 </div>
-              </div>
-              <div class="row mt-2 gy-2">
+
                 <div class="col-12 col-md-6 col-lg-4">
                   <label for="attractorInput_font_adjust" class="form-label">Text size</label>
                   <input id="attractorInput_font_adjust" type="range" class="form-range attractor-input realtime-slider" data-property="font_adjust" min="-2", max="4" start="0" step="0.5">

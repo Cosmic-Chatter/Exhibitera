@@ -271,12 +271,10 @@ async function clearDefinitionInput (full = true) {
   document.getElementById('missingContentWarningField').innerHTML = ''
 
   // Reset layout options
+  exSetup.createAdvancedSliders()
   // document.getElementById('showSearchPaneCheckbox').checked = false
   document.getElementById('itemsPerPageInput').value = 6
   document.getElementById('numColsSelect').value = 3
-  document.getElementById('imageHeightSlider').value = 80
-  document.getElementById('titleHeightSlider').value = 100
-  document.getElementById('cornerRadiusSlider').value = 0
   document.getElementById('imageShapeSelect').value = 'original'
 
   // Reset style options
@@ -339,14 +337,14 @@ function editDefinition (uuid = '') {
   // Set the layout options
   document.getElementById('itemsPerPageInput').value = def?.style?.layout?.items_per_page ?? 12
   document.getElementById('numColsSelect').value = def?.style?.layout?.num_columns ?? 6
-  document.getElementById('imageHeightSlider').value = def?.style?.layout?.image_height ?? 70
-  document.getElementById('titleHeightSlider').value = def?.style?.layout?.title_height ?? 50
-  document.getElementById('cornerRadiusSlider').value = def?.style?.layout?.corner_radius ?? 0
+  exSetup.createAdvancedSlider(document.getElementById('imageHeightSlider'), def?.style?.layout?.image_height)
+  exSetup.createAdvancedSlider(document.getElementById('titleHeightSlider'), def?.style?.layout?.title_height)
+  exSetup.createAdvancedSlider(document.getElementById('cornerRadiusSlider'), def?.style?.layout?.corner_radius)
   document.getElementById('imageShapeSelect').value = def?.style?.layout?.thumbnail_shape ?? 'original'
 
-  document.getElementById('lightboxTitleHeightSlider').value = def.style.layout.lightbox_title_height
-  document.getElementById('lightboxCaptionHeightSlider').value = def.style.layout.lightbox_caption_height
-  document.getElementById('lightboxCreditHeightSlider').value = def.style.layout.lightbox_credit_height
+  exSetup.createAdvancedSlider(document.getElementById('lightboxTitleHeightSlider'), def?.style?.layout?.lightbox_title_height)
+  exSetup.createAdvancedSlider(document.getElementById('lightboxCaptionHeightSlider'), def?.style?.layout?.lightbox_caption_height)
+  exSetup.createAdvancedSlider(document.getElementById('lightboxCreditHeightSlider'), def?.style?.layout?.lightbox_credit_height)
 
   exSetup.updateAdvancedColorPicker('style>background', def?.style?.background)
   exSetup.updateColorPickers(def?.style?.color ?? {})
@@ -964,32 +962,33 @@ document.getElementById('numColsSelect').addEventListener('change', (event) => {
   exSetup.updateWorkingDefinition(['style', 'layout', 'num_columns'], parseInt(event.target.value))
   exSetup.previewDefinition(true)
 })
-document.getElementById('imageHeightSlider').addEventListener('input', (event) => {
-  exSetup.updateWorkingDefinition(['style', 'layout', 'image_height'], parseInt(event.target.value))
-  exSetup.previewDefinition(true)
-})
-document.getElementById('titleHeightSlider').addEventListener('input', (event) => {
-  exSetup.updateWorkingDefinition(['style', 'layout', 'title_height'], parseInt(event.target.value))
-  exSetup.previewDefinition(true)
-})
-document.getElementById('cornerRadiusSlider').addEventListener('input', (event) => {
-  exSetup.updateWorkingDefinition(['style', 'layout', 'corner_radius'], parseInt(event.target.value))
-  exSetup.previewDefinition(true)
-})
+// document.getElementById('imageHeightSlider').addEventListener('input', (event) => {
+//   exSetup.updateWorkingDefinition(['style', 'layout', 'image_height'], parseInt(event.target.value))
+//   exSetup.previewDefinition(true)
+// })
+// document.getElementById('titleHeightSlider').addEventListener('input', (event) => {
+//   exSetup.updateWorkingDefinition(['style', 'layout', 'title_height'], parseInt(event.target.value))
+//   exSetup.previewDefinition(true)
+// })
+// document.getElementById('cornerRadiusSlider').addEventListener('input', (event) => {
+//   exSetup.updateWorkingDefinition(['style', 'layout', 'corner_radius'], parseInt(event.target.value))
+//   exSetup.previewDefinition(true)
+// })
 document.getElementById('imageShapeSelect').addEventListener('change', (event) => {
   exSetup.updateWorkingDefinition(['style', 'layout', 'thumbnail_shape'], event.target.value)
   exSetup.previewDefinition(true)
 })
 
-Array.from(document.querySelectorAll('.height-slider')).forEach((el) => {
+Array.from(document.querySelectorAll('.lightbox-slider')).forEach((el) => {
   el.addEventListener('input', () => {
-    const titleHeight = parseInt(document.getElementById('lightboxTitleHeightSlider').value)
-    const captionHeight = parseInt(document.getElementById('lightboxCaptionHeightSlider').value)
-    const creditHeight = parseInt(document.getElementById('lightboxCreditHeightSlider').value)
+    // Calculate the amount of space left for the lightbox image based on the values
+    // of the other fields.
+
+    const titleHeight = parseInt(document.getElementById('lightboxTitleHeightSlider').querySelector('input').value)
+    const captionHeight = parseInt(document.getElementById('lightboxCaptionHeightSlider').querySelector('input').value)
+    const creditHeight = parseInt(document.getElementById('lightboxCreditHeightSlider').querySelector('input').value)
+
     const imageHeight = 100 - titleHeight - captionHeight - creditHeight
-    exSetup.updateWorkingDefinition(['style', 'layout', 'lightbox_title_height'], titleHeight)
-    exSetup.updateWorkingDefinition(['style', 'layout', 'lightbox_caption_height'], captionHeight)
-    exSetup.updateWorkingDefinition(['style', 'layout', 'lightbox_credit_height'], creditHeight)
     exSetup.updateWorkingDefinition(['style', 'layout', 'lightbox_image_height'], imageHeight)
     exSetup.previewDefinition(true)
   })

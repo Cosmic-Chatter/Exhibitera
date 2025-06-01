@@ -212,7 +212,7 @@ export class ExhibiteraMarkdownEditor {
       const alignment = document.getElementById('exMarkdownSelectImageAlignmentSelect').value
       const size = document.getElementById('exMarkdownSelectImageSizeSelect').value
 
-      this.tinyMDE.paste(`![${alignment} ${size}](content/${filename} "${caption}")`, anchor, focus)
+      this.tinyMDE.paste(`![${alignment} ${size}](/content/${filename} "${caption}")`, anchor, focus)
       modalInstance.hide()
       modalElement.remove()
     })

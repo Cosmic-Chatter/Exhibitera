@@ -1067,6 +1067,8 @@ export function createAdvancedSlider (el, value = null) {
   // Create the HTML for an Advanced Slider based on the data properties of
   // the given element and a possible current value
 
+  if (el == null) return
+
   // Reset the element in case we're updating an existing slider
   el.innerHTML = ''
 
@@ -1076,21 +1078,31 @@ export function createAdvancedSlider (el, value = null) {
   const path = el.dataset.path.split('>')
 
   let labelHTML = ''
-  let sliderWidth = '8'
-  let numberWidth = '4'
-  if ((el.dataset?.unit ?? '') !== '') {
+  let sliderWidth = 8
+  let numberWidth = 4
+  if (el.dataset?.unit) {
     labelHTML = `<span class="input-group-text exAS_label">${el.dataset.unit}</span>`
-    sliderWidth = '7'
-    numberWidth = '5'
+    sliderWidth = 7
+    numberWidth = 5
+  }
+  let noteHTML = ''
+  if (el.dataset?.note) {
+    noteHTML =
+    `
+    <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="${el.dataset.note}" style="font-size: 0.55em;">?</span>
+    `
   }
   el.innerHTML = `
-      <label class="form-label">${el.dataset.name}</label>
+      <label class="form-label">
+        ${el.dataset.name}
+        ${noteHTML}
+      </label>
       <div class="row">
-        <div class="col-${sliderWidth} pe-0 d-flex align-items-middle">
-          <input type="range" id="exAS_slider_${id}" class="form-input w-100 exAS_slider" min="${el.dataset.min}" max="${el.dataset.max}" start="${value ?? el.dataset.start}" step="${el.dataset.step}">
+        <div class="col-${String(sliderWidth + 1)} col-sm-${String(sliderWidth)} col-xl-${String(sliderWidth + 1)}  pe-0 d-flex align-items-center">
+          <input type="range" id="exAS_slider_${id}" class="form-range w-100 exAS_slider" min="${el.dataset.min}" max="${el.dataset.max}" start="${value ?? el.dataset.start}" step="${el.dataset.step}">
           </input>
         </div>
-        <div class="col-${numberWidth} ps-1">
+        <div class="col-${String(numberWidth - 1)} col-sm-${String(numberWidth)} col-xl-${String(numberWidth - 1)} ps-1 d-flex align-items-center">
           <div class='input-group'>
             <input type="number" id="exAS_number_${id}" class="form-control exAS_number" min="${el.dataset.min}" max="${el.dataset.max}" start="${value ?? el.dataset.start}" step="${el.dataset.step}">
             ${labelHTML}
@@ -1106,6 +1118,12 @@ export function createAdvancedSlider (el, value = null) {
 
   number.value = value ?? el.dataset.start
   slider.value = value ?? el.dataset.start
+
+  // Activate tooltips
+  const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+  tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl)
+  })
 
   // Add event listeners
   slider.addEventListener('input', (event) => {

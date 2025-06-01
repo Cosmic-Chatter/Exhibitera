@@ -340,47 +340,6 @@
         </div>
       </div>
 
-      <!-- Optimize content modal -->
-      <!-- <div id="optimizeContentModal" class="modal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered mw-100 w-75">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title">Optimize content</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body"  style="max-height: 70vh; overflow-y: auto;">
-              <div class="row align-items-center">
-                <div class="col-12">
-                  This tool optimizes the resolution of your content to maximize performance. It accounts for the resolution of your screen, as well as the number of items per page. If you change these elements, you should re-optimize your content. The original files remain unaltered.
-                </div>
-                <div class="col-6">
-                  <label for="resolutionSelect" class="form-label mt-2">Display resolution</label>
-                  <select id="resolutionSelect" class="form-select">
-                    <option value="3840_2160">4K landscape (3840x2160)</option>
-                    <option value="2160_3840">4K portrait (2160x3840)</option>
-                    <option value="1920_1080">2K landscape (1920x1080)</option>
-                    <option value="1080_1920">2K portrait (1080x1920)</option>
-                    <option value="2732_2048">iPad landscape (2732x2048)</option>
-                    <option value="2048_2732">iPad portrait (2048x2732)</option>
-                  </select>
-                </div>
-                <div class="col-12 mt-3">
-                  <div id="optimizeContentProgressBarDiv" class="progress" role="progressbar" aria-label="Optimization progress" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
-                    <div id="optimizeContentProgressBar" class="progress-bar bg-primary" style="width: 0%"></div>
-                  </div>
-                </div>
-                <div class="col-12 mt-3">
-                  <button id="optimizeContentBeginButton" class="btn btn-primary">Optimize</button>
-                </div>
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
-          </div>
-        </div>
-      </div> -->
-
       <div class="row">
         <div class="col-10" id="setupHeader">
           <H2>Media Browser  Setup</H2>
@@ -587,9 +546,6 @@
                       <div class="col-12 col-lg-6 col-xl-4">
                         <button id="showCheckContentButton" class="btn btn-info w-100">Check content</button>
                       </div>
-                      <!-- <div class="col-12 col-lg-6 col-xl-4">
-                        <button id="optimizeContentButton" class="btn btn-info w-100">Optimize content</button>
-                      </div> -->
                       <H5 class="mt-2">Add a langauge</H5>
                       <i>For each language you suppot, you need to match columns in your spreadsheet to properties of the browser.</i>
                       <div id="language-picker"></div>
@@ -637,26 +593,6 @@
                           </select>
                         </div>
                         <div class="col-12 col-md-6 col-lg-4 col-xxl-3">
-                          <label for="imageHeightSlider" class="form-label">
-                            Image height
-                            <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="How much of each item's vertical space should be used by the image." style="font-size: 0.55em;">?</span>
-                          </label>
-                          <input id="imageHeightSlider" type="range" class="form-range layout-property-int" data-property="image_height" min="10" max="100" step="5" value="70">
-                        </div>
-                        <div class="col-12 col-md-6 col-lg-4 col-xxl-3">
-                          <label for="titleHeightSlider" class="form-label">
-                            Title height
-                            <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="How much of each item's vertical space that is not used by the image should be used by the title. Titles that do not fit this space will have their text shrunk until they do." style="font-size: 0.55em;">?</span>
-                          </label>
-                          <input id="titleHeightSlider" type="range" class="form-range layout-property-int" data-property="title_height" min="10" max="100" step="5" value="50">
-                        </div>
-                        <div class="col-12 col-md-6 col-lg-4 col-xxl-3">
-                          <label for="cornerRadiusSlider" class="form-label">
-                            Round image corners
-                          </label>
-                          <input id="cornerRadiusSlider" type="range" class="form-range layout-property-int" data-property="corner_radius" min="0" max="50" step="1" value="0">
-                        </div>
-                        <div class="col-12 col-md-6 col-lg-4 col-xxl-3">
                           <label for="imageShapeSelect" class="form-label">
                             Image shape
                           </label>
@@ -667,27 +603,27 @@
                             <option value="anti-viewport">Opposite display</option>
                           </select>
                         </div>
+                        <div class="col-12 col-md-6 col-lg-4 col-xxl-3 d-flex align-items-end">
+                          <div id="imageHeightSlider" class="advanced-slider" data-name="Image height" data-path="style>layout>image_height" data-min="10" data-max="100" data-start="70" data-step="1" data-unit="%" data-note="How much of each item's vertical space should be used by the image."></div>
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-4 col-xxl-3 d-flex align-items-end">
+                          <div id="titleHeightSlider" class="advanced-slider" data-name="Title height" data-path="style>layout>title_height" data-min="10" data-max="100" data-start="50" data-step="1" data-unit="%" data-note="How much of each item's vertical space that is not used by the image should be used by the title. Titles that do not fit this space will have their text shrunk until they do."></div>
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-4 col-xxl-3 d-flex align-items-end">
+                          <div id="cornerRadiusSlider" class="advanced-slider" data-name="Corner radius" data-path="style>layout>corner_radius" data-min="0" data-max="50" data-start="0" data-step="1" data-unit="%" data-note="How much to round the corners of the thumbnail."></div>
+                        </div>
                       </div>
 
                       <h4>Lightbox layout</h4>
                       <div class="row gy-2 mb-3">
                         <div class="col-12 col-md-6 col-lg-4">
-                          <label for="lightboxTitleHeightSlider" class="form-label">
-                            Title height
-                          </label>
-                          <input id="lightboxTitleHeightSlider" type="range" class="form-range height-slider" min="0", max="21" start="9" step="3">
+                          <div id="lightboxTitleHeightSlider" class="advanced-slider lightbox-slider" data-name="Title height" data-path="style>layout>lightbox_title_height" data-min="0" data-max="25" data-start="9" data-step="1" data-unit="%" data-note="How much of the lightbox's vertical space should be used for the title."></div>
                         </div>
                         <div class="col-12 col-md-6 col-lg-4">
-                          <label for="lightboxCaptionHeightSlider" class="form-label">
-                            Caption height
-                          </label>
-                          <input id="lightboxCaptionHeightSlider" type="range" class="form-range height-slider" min="0", max="25" start="15" step="5">
+                          <div id="lightboxCaptionHeightSlider" class="advanced-slider lightbox-slider" data-name="Caption height" data-path="style>layout>lightbox_caption_height" data-min="0" data-max="25" data-start="15" data-step="1" data-unit="%" data-note="How much of the lightbox's vertical space should be used for the caption."></div>
                         </div>
                         <div class="col-12 col-md-6 col-lg-4">
-                          <label for="lightboxCreditHeightSlider" class="form-label">
-                            Credit height
-                          </label>
-                          <input id="lightboxCreditHeightSlider" type="range" class="form-range height-slider" min="0", max="15" start="6" step="3">
+                          <div id="lightboxCreditHeightSlider" class="advanced-slider lightbox-slider" data-name="Credit height" data-path="style>layout>lightbox_credit_height" data-min="0" data-max="15" data-start="6" data-step="1" data-unit="%" data-note="How much of the lightbox's vertical space should be used for the credit line."></div>
                         </div>
                       </div>
 

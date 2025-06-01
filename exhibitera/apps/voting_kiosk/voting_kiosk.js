@@ -29,7 +29,7 @@ function buildLayout (definition) {
   cardRow.classList.add(rowClass)
 
   // Iterate through the buttons and build their HTML
-  buttons.forEach((item) => {
+  for (const item of buttons) {
     const buttonDef = definition.options[item]
     let value
     if (buttonDef.value != null && buttonDef.value.trim() !== '') {
@@ -73,7 +73,7 @@ function buildLayout (definition) {
       title.innerHTML = exMarkdown.formatText(buttonDef.label, { removeParagraph: true, string: true })
       text.append(title)
     }
-  })
+  }
 
   // Make sure all the buttons are the same height
   const height = Math.floor((100 - nRows) / nRows)
@@ -185,7 +185,7 @@ function checkConnection () {
 function updateFunc (update) {
   // Read updates for voting kiosk-specific actions and act on them
 
-  if ('definition' in update && update.definition !== currentDefintion) {
+  if (update.definition && update.definition !== currentDefintion) {
     currentDefintion = update.definition
     exCommon.loadDefinition(currentDefintion)
       .then((result) => {
@@ -243,10 +243,10 @@ function loadDefinition (definition) {
   // Then, apply the definition settings
 
   // Color settings
-  Object.keys(definition.style.color).forEach((key) => {
+  for (const key of Object.keys(definition.style.color)) {
     const value = definition.style.color[key]
     root.style.setProperty('--' + key, value)
-  })
+  }
 
   // Backgorund settings
   if ('background' in definition.style) {
@@ -263,11 +263,11 @@ function loadDefinition (definition) {
   root.style.setProperty('--button-font', 'button-default')
 
   // Then, apply the definition settings
-  Object.keys(definition.style.font).forEach((key) => {
+  for (const key of Object.keys(definition.style.font)) {
     const font = new FontFace(key, 'url(' + encodeURI(definition.style.font[key]) + ')')
     document.fonts.add(font)
     root.style.setProperty('--' + key + '-font', key)
-  })
+  }
 
   // Text size settings
 
@@ -279,65 +279,29 @@ function loadDefinition (definition) {
   root.style.setProperty('--button-font-adjust', 0)
 
   // Then, apply the definition settings
-  Object.keys(definition.style.text_size).forEach((key) => {
+  for (const key of Object.keys(definition.style.text_size)) {
     const value = definition.style.text_size[key]
     root.style.setProperty('--' + key + '-font-adjust', value)
-  })
+  }
 
   // Behavior settings
-  if ('recording_interval' in definition.behavior) {
-    clearInterval(voteCounter)
-    recordingInterval = parseFloat(definition.behavior.recording_interval)
-    voteCounter = setInterval(sendData, recordingInterval * 1000)
-  } else {
-    clearInterval(voteCounter)
-    recordingInterval = 60
-    voteCounter = setInterval(sendData, recordingInterval * 1000)
-  }
-  if ('touch_cooldown' in definition.behavior) {
-    touchCooldown = parseFloat(definition.behavior.touch_cooldown)
-  } else {
-    touchCooldown = 2
-  }
+  clearInterval(voteCounter)
+  recordingInterval = parseFloat(definition?.behavior?.recording_interval ?? 60)
+  voteCounter = setInterval(sendData, recordingInterval * 1000)
+  touchCooldown = parseFloat(definition.behavior.touch_cooldown ?? 2)
 
-  if ('top_height' in definition.style.layout) {
-    document.getElementById('topRow').style.height = definition.style.layout.top_height + 'vh'
-  } else {
-    document.getElementById('topRow').style.height = '20vh'
-  }
-  if ('header_padding' in definition.style.layout) {
-    document.getElementById('topRow').style.paddingTop = definition.style.layout.header_padding + 'vh'
-  } else {
-    document.getElementById('topRow').style.top_padding = '5vh'
-  }
-  if ('button_height' in definition.style.layout) {
-    document.getElementById('cardRow').style.height = definition.style.layout.button_height + 'vh'
-  } else {
-    document.getElementById('cardRow').style.height = '60vh'
-  }
-  if ('button_padding' in definition.style.layout) {
-    document.getElementById('cardRow').style.paddingTop = definition.style.layout.button_padding / 2 + 'vh'
-    document.getElementById('cardRow').style.paddingBottom = definition.style.layout.button_padding / 2 + 'vh'
-  } else {
-    document.getElementById('cardRow').style.paddingTop = '5vh'
-    document.getElementById('cardRow').style.paddingBottom = '5vh'
-  }
-  if ('bottom_height' in definition.style.layout) {
-    document.getElementById('bottomRow').style.height = definition.style.layout.bottom_height + 'vh'
-  } else {
-    document.getElementById('bottomRow').style.height = '20vh'
-  }
-  if ('footer_padding' in definition.style.layout) {
-    document.getElementById('bottomRow').style.paddingBottom = definition.style.layout.footer_padding + 'vh'
-  } else {
-    document.getElementById('bottomRow').style.paddingBottom = '5vh'
-  }
-  if ('image_height' in definition.style.layout) {
-    const value = definition.style.layout.image_height
-    root.style.setProperty('--image-height', value)
-  } else {
-    root.style.setProperty('--image-height', '90')
-  }
+  const topRow = document.getElementById('topRow')
+  const cardRow = document.getElementById('cardRow')
+  const bottomRow = document.getElementById('bottomRow')
+
+  topRow.style.height = String(definition?.style?.layout?.top_height ?? 20) + 'vh'
+  topRow.style.paddingTop = String(definition?.style?.layout?.header_padding ?? 5) + 'vh'
+  cardRow.style.height = String(definition?.style?.layout?.button_height ?? 60) + 'vh'
+  cardRow.style.paddingTop = String((definition?.style?.layout?.button_padding ?? 5) / 2) + 'vh'
+  cardRow.style.paddingBottom = String((definition?.style?.layout?.button_padding ?? 5) / 2) + 'vh'
+  bottomRow.style.height = String(definition?.style?.layout?.bottom_height ?? 20) + 'vh'
+  bottomRow.style.paddingBottom = String(definition?.style?.layout?.footer_padding ?? 5) + 'vh'
+  root.style.setProperty('--image-height', String(definition?.style?.layout?.image_height ?? 90))
 
   buildLayout(definition)
 
@@ -366,13 +330,13 @@ function sendData () {
   resultDict.Date = dateStr
 
   let totalVotes = 0
-  Object.keys(voteCounts).forEach((entry) => {
+  for (const entry of Object.keys(voteCounts)) {
     resultDict[entry] = voteCounts[entry]
     totalVotes += voteCounts[entry]
 
     // Reset votes
     voteCounts[entry] = 0
-  })
+  }
 
   // If there are no votes to record, bail out.
   if (totalVotes === 0) {

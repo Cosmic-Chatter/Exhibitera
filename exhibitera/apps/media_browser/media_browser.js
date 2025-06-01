@@ -14,7 +14,7 @@ function changePage (val) {
     case 1:
       currentPage += 1
       if (currentPage * cardsPerPage >= spreadsheet.length) {
-        if (('behavior' in exCommon.config.definition) && ('loop_results' in exCommon.config.definition.behavior) && (exCommon.config.definition.behavior.loop_results === false)) {
+        if ((exCommon.config.definition?.behavior?.loop_results ?? true) === false) {
           currentPage -= 1
         } else {
           // If there are not more cards to show, go page to the first page.
@@ -25,7 +25,7 @@ function changePage (val) {
     case -1:
       currentPage -= 1
       if (currentPage < 0) {
-        if (('behavior' in exCommon.config.definition) && ('loop_results' in exCommon.config.definition.behavior) && (exCommon.config.definition.behavior.loop_results === false)) {
+        if ((exCommon.config.definition?.behavior?.loop_results ?? true) === false) {
           currentPage = 0
         } else {
           // Loop back to last page
@@ -92,12 +92,7 @@ function createCard (obj) {
 
   const imgCol = document.createElement('div')
   imgCol.classList = 'col col-12 d-flex justify-content-center align-items-end'
-
-  if ('image_height' in def.style.layout) {
-    imgCol.style.height = String(def.style.layout.image_height) + '%'
-  } else {
-    imgCol.style.height = '70%'
-  }
+  imgCol.style.height = String(def?.style?.layout?.image_height ?? 70) + '%'
   card.appendChild(imgCol)
 
   const img = document.createElement('img')
@@ -105,17 +100,15 @@ function createCard (obj) {
   img.src = thumb
   img.setAttribute('id', 'Entry_' + id)
 
-  if ('corner_radius' in def.style.layout) {
-    img.style.borderRadius = String(def.style.layout.corner_radius) + '%'
-  } else {
-    img.style.borderRadius = '0%'
-  }
-  if ('thumbnail_shape' in def.style.layout) {
-    if (def.style.layout.thumbnail_shape === 'orignal') {
+  img.style.borderRadius = String(def?.style?.layout?.corner_radius ?? 0) + '%'
+
+  const thumbShape = def.style.layout.thumbnail_shape
+  if (thumbShape) {
+    if (thumbShape === 'orignal') {
       img.style.aspectRatio = ''
-    } else if (def.style.layout.thumbnail_shape === 'square') {
+    } else if (thumbShape === 'square') {
       img.style.aspectRatio = 1
-    } else if (def.style.layout.thumbnail_shape === 'viewport') {
+    } else if (thumbShape === 'viewport') {
       const height = window.innerHeight
       const width = window.innerWidth
       if (width >= height) {
@@ -123,7 +116,7 @@ function createCard (obj) {
       } else {
         img.style.aspectRatio = String(height / width)
       }
-    } else if (def.style.layout.thumbnail_shape === 'anti-viewport') {
+    } else if (thumbShape === 'anti-viewport') {
       const height = window.innerHeight
       const width = window.innerWidth
       if (width >= height) {
@@ -139,14 +132,13 @@ function createCard (obj) {
   imgCol.appendChild(img)
 
   let titleSpan
-  if (('image_height' in def.style.layout && def.style.layout.image_height < 100) || !('image_height' in def.style.layout)) {
+  if ((def.style.layout.image_height && def.style.layout.image_height < 100) || !def.style.layout.image_height) {
     const titleCol = document.createElement('div')
     titleCol.classList = 'col col-12 text-center cardTitleContainer'
 
-    let imageHeight = 70
-    if ('image_height' in def.style.layout) imageHeight = def.style.layout.image_height
+    const imageHeight = def?.style?.layout?.image_height ?? 70
 
-    if ('title_height' in def.style.layout) {
+    if (def?.style?.layout?.title_height) {
       titleCol.style.height = String(Math.round((100 - imageHeight) * def.style.layout.title_height / 100)) + '%'
     } else {
       titleCol.style.height = '50%'
@@ -288,10 +280,10 @@ function _populateResultsRow (currentKey) {
 
   // Iterate through the remaining data and make sure it matches at least
   // one filtered value.
-  spreadsheet.forEach((item) => {
+  for (const item of spreadsheet) {
     filterMathces = {}
-    filters.forEach((filter) => {
-      thisKey = filter.getAttribute('data-key')
+    for (const filter of filters) {
+      thisKey = filter.dataset.key
       filterMathces[thisKey] = 0
 
       selectedValue = filter.value // Can only select one for now
@@ -304,19 +296,15 @@ function _populateResultsRow (currentKey) {
         // If no values are selected for this filter, pass all matches through
         filterMathces[thisKey] = 1
       }
-    })
+    }
 
     // Iterate through the matches to make sure we've matched on every filter
     let totalMathces = 0
     for (const [matchKey, matchValue] of Object.entries(filterMathces)) {
-      if (matchValue === 1) {
-        totalMathces += 1
-      }
+      if (matchValue === 1) totalMathces += 1
     }
-    if (totalMathces === filters.length) {
-      filteredData.push(item)
-    }
-  })
+    if (totalMathces === filters.length) filteredData.push(item)
+  }
 
   // Sort by the number of matches, so better results rise to the top.
   filteredData.sort((a, b) => b.matchCount - a.matchCount)
@@ -334,9 +322,9 @@ function _populateResultsRow (currentKey) {
   const displayedResults = filteredData.slice(cardsPerPage * currentPage, cardsPerPage * (currentPage + 1))
 
   // Create a card for each item and add it to the display
-  displayedResults.forEach((item, i) => {
+  for (const item of displayedResults) {
     createCard(item)
-  })
+  }
 
   // Adjust card title font size to avoid overflows
   // Don't allow text to get larger than wha the user has set.
@@ -384,7 +372,7 @@ function displayMedia (id) {
 function updateParser (update) {
   // Read updates specific to the media browser
 
-  if ('definition' in update && update.definition !== currentDefinition) {
+  if (update.definition && update.definition !== currentDefinition) {
     currentDefinition = update.definition
     exCommon.loadDefinition(currentDefinition)
       .then((result) => {
@@ -392,7 +380,7 @@ function updateParser (update) {
       })
   }
 
-  if ('permissions' in update && 'audio' in update.permissions) {
+  if (update?.permissions?.audio) {
     document.getElementById('mediaLightboxVideo').muted = !update.permissions.audio
   }
 }
@@ -439,37 +427,22 @@ function loadDefinition (def) {
     hideAttractor()
     attractorAvailable = false
   }
-  console.log(def)
-  if ('num_columns' in def.style.layout) {
+
+  if (def.style.layout.num_columns) {
     document.getElementById('resultsRow').classList = 'h-100 row row-cols-' + String(def.style.layout.num_columns)
     numCols = def.style.layout.num_columns
   } else {
     document.getElementById('resultsRow').classList = 'h-100 row row-cols-3'
     numCols = 3
   }
-  if ('items_per_page' in def.style.layout) {
-    cardsPerPage = parseInt(def.style.layout.items_per_page)
-  } else {
-    cardsPerPage = 6
-  }
+  cardsPerPage = parseInt(def?.style?.layout?.items_per_page ?? 6)
   numRows = Math.ceil(cardsPerPage / numCols)
 
-  if ('lightbox_title_height' in def.style.layout) {
-    document.getElementById('mediaLightboxTitle').style.height = String(def.style.layout.lightbox_title_height) + '%'
-  } else {
-    document.getElementById('mediaLightboxTitle').style.height = '9%'
-  }
-  if ('lightbox_caption_height' in def.style.layout) {
-    document.getElementById('mediaLightboxCaption').style.height = String(def.style.layout.lightbox_caption_height) + '%'
-  } else {
-    document.getElementById('mediaLightboxCaption').style.height = '15%'
-  }
-  if ('lightbox_credit_height' in def.style.layout) {
-    document.getElementById('mediaLightboxCredit').style.height = String(def.style.layout.lightbox_credit_height) + '%'
-  } else {
-    document.getElementById('mediaLightboxCredit').style.height = '6%'
-  }
-  if ('lightbox_image_height' in def.style.layout) {
+  document.getElementById('mediaLightboxTitle').style.height = String(def?.style?.layout?.lightbox_title_height ?? 9) + '%'
+  document.getElementById('mediaLightboxCaption').style.height = String(def?.style?.layout?.lightbox_caption_height ?? 15) + '%'
+  document.getElementById('mediaLightboxCredit').style.height = String(def?.style?.layout?.lightbox_credit_height ?? 6) + '%'
+
+  if (def.style.layout.lightbox_image_height) {
     document.getElementById('mediaLightboxImage').style.height = String(def.style.layout.lightbox_image_height) + '%'
     document.getElementById('mediaLightboxVideo').style.height = String(def.style.layout.lightbox_image_height) + '%'
   } else {
@@ -487,17 +460,14 @@ function loadDefinition (def) {
   root.style.setProperty('--filterTextColor', 'black')
 
   // Then, apply the definition settings
-  Object.keys(def.style.color).forEach((key) => {
+  for (let key of Object.keys(def.style.color)) {
     // Fix for change from backgroundColor to background-color in v4
     if (key === 'backgroundColor') key = 'background-color'
-
     document.documentElement.style.setProperty('--' + key, def.style.color[key])
-  })
+  }
 
   // Backgorund settings
-  if ('background' in def.style) {
-    exCommon.setBackground(def.style.background, root, '#fff', true)
-  }
+  exCommon.setBackground(def?.style?.background, root, '#fff', true)
 
   // Set icon colors based on the background color.
   let backgroundClassification = 'dark'
@@ -528,11 +498,11 @@ function loadDefinition (def) {
   root.style.setProperty('--filter_text-font', 'filter_text-default')
 
   // Then, apply the definition settings
-  Object.keys(def.style.font).forEach((key) => {
+  for (const key of Object.keys(def.style.font)) {
     const font = new FontFace(key, 'url(' + encodeURI(def.style.font[key]) + ')')
     document.fonts.add(font)
     root.style.setProperty('--' + key + '-font', key)
-  })
+  }
 
   // Text size settings
 
@@ -546,19 +516,19 @@ function loadDefinition (def) {
   root.style.setProperty('--filter_text-font-adjust', 0)
 
   // Then, apply the definition settings
-  Object.keys(def.style.text_size).forEach((key) => {
+  for (const key of Object.keys(def.style.text_size)) {
     const value = def.style.text_size[key]
     root.style.setProperty('--' + key + '-font-adjust', value)
-  })
+  }
 
   // Find the default language
-  if ('language_order' in def) {
+  if (def.language_order) {
     defaultLang = def.language_order[0]
   } else {
     // Deprecated in Ex5.3
-    Object.keys(def.languages).forEach((lang) => {
+    for (const lang of Object.keys(def.languages)) {
       if (def.languages[lang].default === true) defaultLang = lang
-    })
+    }
   }
 
   // Load the CSV file containing the items ad build the results row
@@ -584,33 +554,13 @@ function localize (lang) {
 
   const definition = exCommon.config.definition
 
-  if ('media_key' in definition.languages[lang]) {
-    mediaKey = definition.languages[lang].media_key
-  } else {
-    mediaKey = null
-  }
-  if ('thumbnail_key' in definition.languages[lang]) {
-    thumbnailKey = definition.languages[lang].thumbnail_key
-  } else {
-    thumbnailKey = null
-  }
-  if ('title_key' in definition.languages[lang]) {
-    titleKey = definition.languages[lang].title_key
-  } else {
-    titleKey = null
-  }
-  if ('caption_key' in definition.languages[lang]) {
-    captionKey = definition.languages[lang].caption_key
-  } else {
-    captionKey = null
-  }
-  if ('credit_key' in definition.languages[lang]) {
-    creditKey = definition.languages[lang].credit_key
-  } else {
-    creditKey = null
-  }
+  mediaKey = definition?.languages?.[lang]?.media_key
+  thumbnailKey = definition?.languages?.[lang]?.thumbnail_key
+  titleKey = definition?.languages?.[lang]?.title_key
+  captionKey = definition?.languages?.[lang]?.caption_key
+  creditKey = definition?.languages?.[lang]?.credit_key
 
-  if ('filter_order' in definition.languages[lang] && definition.languages[lang].filter_order.length > 0) {
+  if ((definition?.languages?.[lang]?.filter_order.length ?? 0) > 0) {
     // Show the filter icon
     document.getElementById('filterDropdown').style.display = 'block'
     populateFilterOptions(definition.languages[lang].filter_order, definition.languages[lang].filters)
@@ -739,15 +689,15 @@ function fixLightboxTextSize (titleDiv, creditDiv) {
   titleDiv.style.whiteSpace = 'normal'
   creditDiv.style.whiteSpace = 'normal'
 
-  if ('layout' in def.style) {
-    if ('lightbox_title_height' in def.style.layout && def.style.layout.lightbox_title_height > 0) {
+  if (def.style.layout) {
+    if ((def?.style?.layout?.lightbox_title_height ?? 0) > 0) {
       try {
         textFit(titleDiv, { maxFontSize: titleFontSize })
       } catch {
         // Ignore a failed resize
       }
     }
-    if ('lightbox_credit_height' in def.style.layout && def.style.layout.lightbox_credit_height > 0) {
+    if ((def?.style?.layout?.lightbox_credit_height ?? 0) > 0) {
       try {
         textFit(creditDiv, { maxFontSize: creditFontSize })
       } catch {

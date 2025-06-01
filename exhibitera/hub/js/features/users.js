@@ -407,6 +407,9 @@ export function loginFromDropdown () {
         location.reload()
       }
     })
+    .catch((error) => {
+      console.error('Network or server error:', error)
+    })
 }
 
 export function authenticateUser () {

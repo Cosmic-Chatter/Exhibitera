@@ -33,7 +33,7 @@ async function clearDefinitionInput (full = true) {
   document.getElementById('attractorCheck_use_attractor').checked = false
   disableAttractorOptions(true)
   document.getElementById('attractorCheck_use_finger_animation').checked = true
-  document.getElementById('attractorInput_attractor_height').value = 40
+
   document.getElementById('attractorInput_text').value = ''
   document.getElementById('attractorInput_font_adjust').value = 0
   document.getElementById('attractorInput_attractor_background').value = 'rgba(0, 0, 0, 0.2)'
@@ -41,6 +41,7 @@ async function clearDefinitionInput (full = true) {
   document.getElementById('attractorInput_text_color').value = '#fff'
   document.querySelector('#attractorInput_text_color').dispatchEvent(new Event('input', { bubbles: true }))
   exSetup.resetAdvancedFontPickers()
+  exSetup.createAdvancedSliders()
 
   // Appearance details
   exSetup.updateAdvancedColorPicker('style>background', {
@@ -108,8 +109,12 @@ function editDefinition (uuid = '') {
 function disableAttractorOptions (disable) {
   // Set the disabled property for the attractor options
 
-  for (const match of document.getElementsByClassName('attractor-input')) {
-    match.disabled = disable
+  const attractorRow = document.getElementById('attractorRow')
+
+  if (disable) {
+    attractorRow.style.display = 'none'
+  } else {
+    attractorRow.style.display = 'flex'
   }
 }
 
@@ -324,13 +329,13 @@ document.getElementById('patternGeneratorModalSubmitButton').addEventListener('c
 })
 
 // Attractor
-Array.from(document.getElementsByClassName('attractor-input')).forEach((el) => {
+for (const el of document.getElementsByClassName('attractor-input')) {
   el.addEventListener('change', (event) => {
     const property = event.target.getAttribute('data-property')
     exSetup.updateWorkingDefinition(['attractor', property], event.target.value)
     exSetup.previewDefinition(true)
   })
-})
+}
 
 Array.from(document.getElementsByClassName('attractor-check')).forEach((el) => {
   el.addEventListener('change', (event) => {

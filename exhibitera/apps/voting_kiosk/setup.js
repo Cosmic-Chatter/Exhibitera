@@ -329,12 +329,7 @@ async function clearDefinitionInput (full = true) {
 
   // Reset layout options
   document.getElementById('columnCountSelect').value = 'auto'
-  document.getElementById('headerToButtonsSlider').value = 20
-  document.getElementById('headerPaddingHeightSlider').value = 5
-  document.getElementById('buttonsToFooterSlider').value = 20
-  document.getElementById('footerPaddingHeightSlider').value = 5
-  document.getElementById('buttonPaddingHeightSlider').value = 10
-  document.getElementById('imageHeightSlider').value = 90
+  exSetup.createAdvancedSliders()
 }
 
 function editDefinition (uuid = '') {
@@ -392,12 +387,12 @@ function editDefinition (uuid = '') {
 
   // Set the appropriate values for the layout options
   document.getElementById('columnCountSelect').value = def?.style?.layout?.num_columns ?? 'auto'
-  document.getElementById('headerToButtonsSlider').value = def?.style?.layout?.top_height ?? 20
-  document.getElementById('headerPaddingHeightSlider').value = def?.style?.layout?.header_padding ?? 5
-  document.getElementById('buttonsToFooterSlider').value = def?.style?.layout?.bottom_height ?? 20
-  document.getElementById('footerPaddingHeightSlider').value = def?.style?.layout?.footer_padding ?? 5
-  document.getElementById('buttonPaddingHeightSlider').value = def?.style?.layout?.button_padding ?? 10
-  document.getElementById('imageHeightSlider').value = def.style.layout.image_height ?? 90
+  exSetup.createAdvancedSlider(document.getElementById('headerToButtonsSlider'), def?.style?.layout?.top_height)
+  exSetup.createAdvancedSlider(document.getElementById('headerPaddingHeightSlider'), def?.style?.layout?.header_padding)
+  exSetup.createAdvancedSlider(document.getElementById('buttonsToFooterSlider'), def?.style?.layout?.bottom_height)
+  exSetup.createAdvancedSlider(document.getElementById('footerPaddingHeightSlider'), def?.style?.layout?.footer_padding)
+  exSetup.createAdvancedSlider(document.getElementById('buttonPaddingHeightSlider'), def?.style?.layout?.button_padding)
+  exSetup.createAdvancedSlider(document.getElementById('imageHeightSlider'), def.style.layout.image_height)
 
   // Configure the preview frame
   document.getElementById('previewFrame').src = 'index.html?standalone=true&definition=' + def.uuid
@@ -756,19 +751,11 @@ document.getElementById('columnCountSelect').addEventListener('change', (event) 
 })
 for (const el of document.querySelectorAll('.height-slider')) {
   el.addEventListener('input', () => {
-    const headerHeight = parseInt(document.getElementById('headerToButtonsSlider').value)
-    const footerHeight = parseInt(document.getElementById('buttonsToFooterSlider').value)
+    const headerHeight = parseInt(document.getElementById('headerToButtonsSlider').querySelector('input').value)
+    const footerHeight = parseInt(document.getElementById('buttonsToFooterSlider').querySelector('input').value)
     const buttonHeight = 100 - headerHeight - footerHeight
-    exSetup.updateWorkingDefinition(['style', 'layout', 'top_height'], headerHeight)
+
     exSetup.updateWorkingDefinition(['style', 'layout', 'button_height'], buttonHeight)
-    exSetup.updateWorkingDefinition(['style', 'layout', 'bottom_height'], footerHeight)
-    exSetup.previewDefinition(true)
-  })
-}
-for (const el of document.querySelectorAll('.padding-slider')) {
-  el.addEventListener('input', (event) => {
-    const property = event.target.getAttribute('data-property')
-    exSetup.updateWorkingDefinition(['style', 'layout', property], parseInt(event.target.value))
     exSetup.previewDefinition(true)
   })
 }
