@@ -227,6 +227,7 @@ export function showAppHelpModal (app) {
     media_browser: '/media_browser/',
     media_player: '/media_player/',
     other: '/other/',
+    survey_kiosk: '/survey_kiosk/',
     timelapse_viewer: '/timelapse_viewer/',
     timeline_explorer: '/timeline_explorer/',
     voting_kiosk: '/voting_kiosk/',

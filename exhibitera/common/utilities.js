@@ -107,7 +107,7 @@ export function showModal (modal) {
   // Show the given Bootstrap modal
   // Modal can either be a string starting with # (e.g., '#myID') or a DOM element
 
-  const myModal = new bootstrap.Modal(modal)
+  const myModal = bootstrap.Modal.getOrCreateInstance(modal)
   myModal.show()
 }
 
@@ -115,7 +115,7 @@ export function hideModal (modal) {
   // Hide the given Bootstrap modal
   // Modal can either be a string starting with # (e.g., '#myID') or a DOM element
 
-  const myModal = bootstrap.Modal.getInstance(modal)
+  const myModal = bootstrap.Modal.getOrCreateInstance(modal)
   myModal.hide()
 }
 

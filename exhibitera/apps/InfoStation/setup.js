@@ -43,9 +43,9 @@ async function clearDefinitionInput (full = true) {
     el.dispatchEvent(new Event('input', { bubbles: true }))
   })
 
-  Array.from(document.querySelectorAll('.layout-slider')).forEach((el) => {
-    el.value = el.getAttribute('start')
-  })
+  // Array.from(document.querySelectorAll('.layout-slider')).forEach((el) => {
+  //   el.value = el.getAttribute('start')
+  // })
 
   exSetup.updateAdvancedColorPicker('style>background', {
     mode: 'color',
@@ -53,6 +53,8 @@ async function clearDefinitionInput (full = true) {
     gradient_color_1: '#719abf',
     gradient_color_2: '#719abf'
   })
+
+  exSetup.createAdvancedSliders()
 
   exSetup.resetAdvancedFontPickers()
 
@@ -84,10 +86,11 @@ function editDefinition (uuid = '') {
 
   // Layout fields
   const buttonSizeSlider = document.getElementById('buttonSizeSlider')
-  buttonSizeSlider.value = def?.style?.layout?.button_size ?? buttonSizeSlider.getAttribute('start')
+  exSetup.createAdvancedSlider(buttonSizeSlider, def?.style?.layout?.button_size)
+  // buttonSizeSlider.value = def?.style?.layout?.button_size ?? buttonSizeSlider.getAttribute('start')
 
   const headerSizeSlider = document.getElementById('headerSizeSlider')
-  headerSizeSlider.value = def?.style?.layout?.header_height ?? headerSizeSlider.getAttribute('start')
+  exSetup.createAdvancedSlider(headerSizeSlider, def?.style?.layout?.header_height)
 
   exSetup.updateAdvancedColorPicker('style>background',
     def?.style?.background,
@@ -452,15 +455,15 @@ document.getElementById('inactivityTimeoutField').addEventListener('change', (ev
 })
 
 // Style fields
-document.getElementById('buttonSizeSlider').addEventListener('change', (event) => {
-  exSetup.updateWorkingDefinition(['style', 'layout', 'button_size'], event.target.value)
-  exSetup.previewDefinition(true)
-})
+// document.getElementById('buttonSizeSlider').addEventListener('change', (event) => {
+//   exSetup.updateWorkingDefinition(['style', 'layout', 'button_size'], event.target.value)
+//   exSetup.previewDefinition(true)
+// })
 
-document.getElementById('headerSizeSlider').addEventListener('change', (event) => {
-  exSetup.updateWorkingDefinition(['style', 'layout', 'header_height'], event.target.value)
-  exSetup.previewDefinition(true)
-})
+// document.getElementById('headerSizeSlider').addEventListener('change', (event) => {
+//   exSetup.updateWorkingDefinition(['style', 'layout', 'header_height'], event.target.value)
+//   exSetup.previewDefinition(true)
+// })
 
 const colorInputs = document.querySelectorAll('.coloris')
 for (const input of colorInputs) {

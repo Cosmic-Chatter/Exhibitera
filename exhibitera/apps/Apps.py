@@ -86,6 +86,9 @@ app.mount("/media_browser",
 app.mount("/media_player",
           StaticFiles(directory=ex_files.get_path(["media_player"]), html=True),
           name="media_player")
+app.mount("/survey_kiosk",
+          StaticFiles(directory=ex_files.get_path(["survey_kiosk"]), html=True),
+          name="survey_kiosk")
 app.mount("/timelapse_viewer",
           StaticFiles(directory=ex_files.get_path(["timelapse_viewer"]), html=True),
           name="timelapse_viewer")
@@ -346,6 +349,9 @@ def run():
                                               webview_menu.MenuAction('Other App',
                                                                       partial(apps_webview.show_webview_window,
                                                                               'other_setup')),
+                                              webview_menu.MenuAction('Survey Kiosk',
+                                                                      partial(apps_webview.show_webview_window,
+                                                                              'survey_kiosk_setup')),
                                               webview_menu.MenuAction('Timelapse Viewer',
                                                                       partial(apps_webview.show_webview_window,
                                                                               'timelapse_viewer_setup')),

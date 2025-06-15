@@ -465,6 +465,7 @@ export function gotoApp (app) {
     media_browser: '/media_browser',
     media_player: '/media_player',
     other: '/other',
+    survey_kiosk: '/survey_kiosk',
     timelapse_viewer: '/timelapse_viewer',
     timeline_explorer: '/timeline_explorer',
     voting_kiosk: '/voting_kiosk',
@@ -533,6 +534,8 @@ export function createLanguageSwitcher (def, localize) {
   // localize is the name of a function that handles implementing the change in language
   // based on the provided language code.
 
+  if (!def.languages) return
+
   const langs = Object.keys(def.languages)
 
   const langSwitchDropdown = document.getElementById('langSwitchDropdown')
@@ -547,10 +550,10 @@ export function createLanguageSwitcher (def, localize) {
   langSwitchDropdown.style.display = 'flex'
 
   // Cycle the languages and build an entry for each
-  const langOrder = def?.language_order || langs
+  const langOrder = def?.language_order ?? langs
   langSwitchOptions.innerHTML = ''
 
-  langOrder.forEach((code) => {
+  for (const code of langOrder) {
     const name = def.languages[code].display_name
 
     const li = document.createElement('li')
@@ -582,7 +585,7 @@ export function createLanguageSwitcher (def, localize) {
     button.appendChild(span)
 
     langSwitchOptions.appendChild(li)
-  })
+  }
 }
 
 export function getColorAsRGBA (el, prop) {
