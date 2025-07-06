@@ -6,6 +6,7 @@ async function buildLayout (index) {
   // Take a layout defition in the form of a dictionary of dictionaries and
   // create cards for each element
 
+  currentIndex = index
   updateProgress(index)
   const uuid = currentDefinition.item_order[index]
   const thisItem = currentDefinition.items[uuid]
@@ -13,10 +14,8 @@ async function buildLayout (index) {
 
   // Clear the exisiting layout
   itemPane.style.height = 0
-  itemPane.style.marginTop = '30vh'
+  itemPane.style.marginTop = '45vh'
   itemPane.style.opacity = 0
-  itemPane.style.paddingTop = 0
-  itemPane.style.paddingBottom = 0
   await sleep(500)
   itemPane.innerText = ''
 
@@ -42,7 +41,7 @@ function buildLayoutVote (index) {
 
   const question = document.createElement('div')
   question.classList = 'text-center question'
-  question.innerText = thisItem.question.text
+  question.innerText = currentDefinition.languages?.[currentLang]?.items?.[uuid]?.question?.text
   itemPane.appendChild(question)
 
   let nCols
@@ -67,6 +66,7 @@ function buildLayoutVote (index) {
   // Iterate through the buttons and build their HTML
   for (const option of options) {
     const buttonDef = thisItem.options[option]
+    const buttonLang = currentDefinition.languages?.[currentLang]?.items?.[uuid]?.options?.[option]
     // Get a string for the column name, in order of preference
     const value = buttonDef?.value || buttonDef?.text || option
 
@@ -92,7 +92,7 @@ function buildLayoutVote (index) {
       card.appendChild(img)
     }
 
-    if (buttonDef.text && buttonDef.text.trim() !== '') {
+    if (buttonLang?.text && buttonLang.text.trim() !== '') {
       const text = document.createElement('div')
       text.classList = 'd-flex align-items-center justify-content-center'
       card.appendChild(text)
@@ -100,7 +100,7 @@ function buildLayoutVote (index) {
       const title = document.createElement('div')
       title.classList = 'card-title my-0 noselect'
 
-      title.innerHTML = exMarkdown.formatText(buttonDef.text, { removeParagraph: true, string: true })
+      title.innerHTML = exMarkdown.formatText(buttonLang.text, { removeParagraph: true, string: true })
       text.append(title)
     }
   }
@@ -114,7 +114,7 @@ function buildLayoutVote (index) {
 
   if (thisItem.type === 'multiple_vote') {
     const nextButton = document.createElement('button')
-    nextButton.innerHTML = thisItem?.next_button?.text ?? 'Next'
+    nextButton.innerHTML = currentDefinition.languages?.[currentLang]?.items?.[uuid]?.next_button?.text ?? 'Next'
     nextButton.classList = 'btn btn-success noselect next-button disabled'
     nextButton.style.opacity = 0
     nextButton.addEventListener('click', () => {
@@ -133,17 +133,17 @@ function buildLayoutText (index) {
 
   const header = document.createElement('div')
   header.classList = 'text-center question'
-  header.innerHTML = thisItem?.header?.text ?? ''
+  header.innerHTML = currentDefinition.languages?.[currentLang]?.items?.[uuid]?.header?.text ?? ''
   itemPane.appendChild(header)
 
   const body = document.createElement('div')
   body.classList = 'card-text'
-  body.innerHTML = thisItem?.body?.text ?? ''
+  body.innerHTML = currentDefinition.languages?.[currentLang]?.items?.[uuid]?.body?.text ?? ''
   body.style.height = '100%'
   itemPane.appendChild(body)
 
   const nextButton = document.createElement('button')
-  nextButton.innerHTML = thisItem?.next_button?.text ?? 'Next'
+  nextButton.innerHTML = currentDefinition.languages?.[currentLang]?.items?.[uuid]?.next_button?.text ?? 'Next'
   nextButton.classList = 'btn btn-success noselect next-button'
   nextButton.addEventListener('click', () => {
     nextButtonTouched(index)
@@ -388,9 +388,9 @@ function loadDefinition (definition) {
   }
 
   // Behavior settings
-  const topRow = document.getElementById('topRow')
-  const itemDiv = document.getElementById('itemDiv')
-  const bottomRow = document.getElementById('bottomRow')
+  // const topRow = document.getElementById('topRow')
+  // const itemDiv = document.getElementById('itemDiv')
+  // const bottomRow = document.getElementById('bottomRow')
 
   // topRow.style.height = String(definition?.style?.layout?.top_height ?? 20) + 'vh'
   // topRow.style.paddingTop = String(definition?.style?.layout?.header_padding ?? 5) + 'vh'
@@ -427,14 +427,17 @@ function loadDefinition (definition) {
 
   exCommon.createLanguageSwitcher(definition, localize)
 
-  buildLayout(0)
+  localize(definition.language_order[0])
 
   // Send a thumbnail to the helper
   setTimeout(() => exCommon.saveScreenshotAsThumbnail(definition.uuid + '.png'), 100)
 }
 
-function localize () {
+function localize (lang) {
+  // Update the GUi to reflect the given language
 
+  currentLang = lang
+  buildLayout(currentIndex)
 }
 
 function sendData () {
@@ -494,6 +497,7 @@ function restartSession () {
   clearTimeout(restartTimer)
   response = {}
   exUtilities.hideModal('#inactivityModal')
+  currentLang = currentDefinition.language_order[0]
   buildLayout(0)
 }
 
@@ -572,6 +576,8 @@ const restartTimeout = 5000 // ms
 let configurationName = 'default'
 let currentDefinition = {}
 let currentDefintionUUID = ''
+let currentLang = ''
+let currentIndex = 0
 let response = {}
 
 setInterval(exCommon.checkForHelperUpdates, 1000)

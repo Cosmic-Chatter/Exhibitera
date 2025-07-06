@@ -365,19 +365,15 @@
                       <input type="text" class="form-control" id="definitionNameInput">
                     </div>
                     <div class="col-12 col-md-6 col-lg-4">
-                      <label for="behaviorInput_recording_interval" class="form-label">
-                        Recording interval
-                        <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="The interval in seconds that votes are batched and sent to Hub." style="font-size: 0.55em;">?</span>
+                      <label for="behaviorInput_inactivity_timeout" class="form-label">
+                        Inactivity timeout
+                        <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="The number of seconds to wait before resetting a survey that has been left incomplete." style="font-size: 0.55em;">?</span>
                       </label>
-                      <input type="number" min="5" value="60" class="form-control behavior-input" data-property="recording_interval" id="behaviorInput_recording_interval">
+                      <input type="number" min="5" value="10" class="form-control behavior-input" data-property="inactivity_timeout" id="behaviorInput_inactivity_timeout">
                     </div>
-                    <div class="col-12 col-md-6 col-lg-4">
-                      <label for="behaviorInput_touch_cooldown" class="form-label">
-                        Touch cooldown
-                        <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="The interval in seconds to wait before accepting another vote (helps to defeat spamming)." style="font-size: 0.55em;">?</span>
-                      </label>
-                      <input type="number" min="0" value="2" class="form-control behavior-input" id="behaviorInput_touch_cooldown" data-property="touch_cooldown">
-                    </div>
+                    <H5 class="mt-3">Add a langauge</H5>
+                      <i>You must add at least one language.</i>
+                      <div id="language-picker"></div>
                   </div>
                 </div>
               </div>
@@ -388,102 +384,51 @@
               <h2 class="accordion-header">
                 <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#content" aria-expanded="false" aria-controls="content">
                   Question and answer options
-                  <div class="accordion-detail">Set up the question you want to ask and the available answers.</div>
+                  <div class="accordion-detail">Set up the questions you want to ask and the available answers.</div>
                 </button>
               </h2>
               <div id="content" class="accordion-collapse collapse" data-bs-parent="#topLevelAccordion">
                 <div class="accordion-body">
-                  <h4>Question</h4>
-                  <div class="row gy-2">
-                    <div class="col-12 col-md-6">
-                      <label for="headerInput" class="form-label">Header</label>
-                      <div id="headerInputCommandBar"></div>
-                      <div id="headerInput"></div>
-                    </div>
-                    <div class="col-12 col-md-6">
-                      <label for="subheaderInput" class="form-label">Subheader</label>
-                      <div id="subheaderInputCommandBar"></div>
-                      <div id="subheaderInput"></div>
-                    </div>
-                    <div class="col-12 col-md-6">
-                      <label for="footerInput" class="form-label">Footer</label>
-                      <div id="footerInputCommandBar"></div>
-                      <div id="footerInput"></div>
-                    </div>
-                    <div class="col-12 col-md-6">
-                      <label for="subfooterInput" class="form-label">Subfooter</label>
-                      <div id="subfooterInputCommandBar"></div>
-                      <div id="subfooterInput"></div>
-                    </div>
-                    <div class="col-12 col-md-6">
-                      <label for="success_messageInput" class="form-label">
-                        Success message
-                        <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="The success message appears after a button is pressed." style="font-size: 0.55em;">?</span>
-                      </label>
-                      <div id="success_messageInputCommandBar"></div>
-                      <div id="success_messageInput"></div>
-                    </div>
-                  </div>
+                  <button class="btn btn-primary">Add item</button>
+                  <h4 class="mt-3">Items</h4>
+                  
+                  <div class="accordion" id="surveryItems">
+                    <div class="accordion-item">
+                      <h2 class="accordion-header">
+                        <div
+                          class="accordion-button d-flex align-items-center"
+                          style="cursor: pointer;"
+                          data-bs-toggle="collapse"
+                          data-bs-target="#collapseOne"
+                          aria-expanded="true"
+                          aria-controls="collapseOne"
+                        >
+                          <button
+                            type="button"
+                            class="btn btn-sm btn-outline-info"
+                            onclick="doSomething(event)"
+                          >
+                          ▲
+                          </button>
+                          <button
+                            type="button"
+                            class="btn btn-sm btn-outline-info ms-1"
+                            onclick="doSomething(event)"
+                          >
+                          ▼
+                          </button>
+                          <span class="ms-2">Accordion Item #1</span>
 
-                  <H4 class="mt-2">Answer options</H4>
-                  <div class="fst-italic">Add a button for each option in the survey.</div>
-                  <button id="addOptionButton" class="btn btn-primary mt-2">Add option</button>
-                  <div class="row">
-                    <div class="col-6">
-                      <div id="optionRow" class="row gy-2 gx-2 mt-2"></div>
-                    </div>
-                    <div class="col-6">
-                      <div id="optionEditor" class="row border-start border-end py-2 gy-2">
-                        <div class="col-12">
-                          <label for="optionInput_label" class="form-label">Label</label>
-                          <div id="optionInputCommandBar_label"></div>
-                          <div id="optionInput_label"></div>
                         </div>
-                        <div class="col-12">
-                          <label for="optionInput_value" class="form-label">
-                            Value
-                            <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="Value will be the name of the column in the voting data spreadsheet." style="font-size: 0.55em;">?</span>
-                          </label>
-                          <input type="text" class="form-control option-input" data-field="value" id="optionInput_value">
-                        </div>
-                        <div class="col-12">
-                          <label for="optionInput_icon" class="form-label">Icon</label>
-                          <select class="form-select option-input" id="optionInput_icon" data-field="icon">
-                            <option value="">No icon</option>
-                            <option value="user">User-provided</option>
-                            <option disabled>Built-in</option>
-                            <option value="1-star_black">1 star (black)</option>
-                            <option value="1-star_white">1 star (white)</option>
-                            <option value="2-star_black">2 star (black)</option>
-                            <option value="2-star_white">2 star (white)</option>
-                            <option value="3-star_black">3 star (black)</option>
-                            <option value="3-star_white">3 star (white)</option>
-                            <option value="4-star_black">4 star (black)</option>
-                            <option value="4-star_white">4 star (white)</option>
-                            <option value="5-star_black">5 star (black)</option>
-                            <option value="5-star_white">5 star (white)</option>
-                            <option value="thumbs-down_black">Thumbs down (black)</option>
-                            <option value="thumbs-down_red">Thumbs down (red)</option>
-                            <option value="thumbs-down_white">Thumbs down (white)</option>
-                            <option value="thumbs-up_black">Thumbs up (black)</option>
-                            <option value="thumbs-up_green">Thumbs up (green)</option>
-                            <option value="thumbs-up_white">Thumbs up (white)</option>
-                          </select>
-                        </div>
-                        <div class="col-12">
-                          <div class="row">
-                            <div id="optionInput_icon_user_file_Col" class="col-12">
-                              <button id="optionInput_icon_user_file" class='btn btn-outline-primary w-100 text-break' data-field="icon_user_file">Select file</button>
-                            </div>
-                            <div id="optionInput_icon_user_file_DeleteButtonCol" class="col-12 col-lg-3 ps-lg-0 mt-2 mt-lg-0" style="display: none;">
-                              <button id="optionInput_icon_user_file_DeleteButton" class="btn btn-danger w-100 h-100"><span class='d-block d-lg-none'>Clear file</span><span class='d-none d-lg-block'>✕</span></button>
-                            </div>
-                          </div>
-                          
+                      </h2>
+                      <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#accordionExample">
+                        <div class="accordion-body">
+                          <strong>This is the first item’s accordion body.</strong> It is shown by default, until the collapse plugin adds the appropriate classes that we use to style each element. These classes control the overall appearance, as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or overriding our default variables. It’s also worth noting that just about any HTML can go within the <code>.accordion-body</code>, though the transition does limit overflow.
                         </div>
                       </div>
                     </div>
                   </div>
+                  
                 </div>
               </div>
             </div>

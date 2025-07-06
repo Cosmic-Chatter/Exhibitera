@@ -3,6 +3,7 @@
 import * as exUtilities from '../../common/utilities.js'
 import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exFileSelect from '../js/exhibitera_file_select_modal.js'
+import * as exLang from '../js/exhibitera_setup_languages.js'
 import * as exSetup from '../js/exhibitera_setup_common.js'
 import * as exMarkdown from '../js/exhibitera_setup_markdown.js'
 
@@ -263,8 +264,7 @@ async function clearDefinitionInput (full = true) {
 
   // Definition details
   document.getElementById('definitionNameInput').value = ''
-  document.getElementById('behaviorInput_recording_interval').value = 60
-  document.getElementById('behaviorInput_touch_cooldown').value = 2
+  document.getElementById('behaviorInput_inactivity_timeout').value = 10
 
   // Markdown fields
   for (const item of ['header', 'subheader', 'footer', 'subfooter']) {
@@ -393,6 +393,13 @@ function editDefinition (uuid = '') {
   exSetup.createAdvancedSlider(document.getElementById('footerPaddingHeightSlider'), def?.style?.layout?.footer_padding)
   exSetup.createAdvancedSlider(document.getElementById('buttonPaddingHeightSlider'), def?.style?.layout?.button_padding)
   exSetup.createAdvancedSlider(document.getElementById('imageHeightSlider'), def.style.layout.image_height)
+
+  const langSelect = document.getElementById('language-picker')
+  exLang.createLanguagePicker(langSelect,
+    {
+      // onLanguageRebuild: rebuildLanguageElements
+    }
+  )
 
   // Configure the preview frame
   document.getElementById('previewFrame').src = 'index.html?standalone=true&definition=' + def.uuid
@@ -685,40 +692,6 @@ Array.from(document.querySelectorAll('.definition-text-input')).forEach((el) => 
 })
 
 // Option fields
-document.getElementById('addOptionButton').addEventListener('click', () => {
-  createSurveyOption(null, true)
-})
-document.getElementById('optionInput_icon_user_file').addEventListener('click', (event) => {
-  exFileSelect.createFileSelectionModal({ multiple: false, filetypes: ['image'] })
-    .then((result) => {
-      if (result != null && result.length > 0) {
-        const id = document.getElementById('optionEditor').getAttribute('data-option-id')
-        exSetup.updateWorkingDefinition(['options', id, 'icon_user_file'], result[0])
-        document.getElementById('optionInput_icon').value = 'user'
-        exSetup.updateWorkingDefinition(['options', id, 'icon'], 'user')
-        setIconUserFile(result[0])
-        exSetup.previewDefinition(true)
-      }
-    })
-})
-document.getElementById('optionInput_icon_user_file_DeleteButton').addEventListener('click', () => {
-  const id = document.getElementById('optionEditor').getAttribute('data-option-id')
-  exSetup.updateWorkingDefinition(['options', id, 'icon_user_file'], '')
-  setIconUserFile('')
-  document.getElementById('optionInput_icon').value = ''
-  exSetup.updateWorkingDefinition(['options', id, 'icon'], '')
-  exSetup.previewDefinition(true)
-})
-for (const el of document.getElementsByClassName('option-input')) {
-  el.addEventListener('change', (event) => {
-    const id = document.getElementById('optionEditor').getAttribute('data-option-id')
-    const field = event.target.getAttribute('data-field')
-    if (id == null) return
-    exSetup.updateWorkingDefinition(['options', id, field], event.target.value)
-    document.getElementById('OptionHeaderText_' + id).innerHTML = formatOptionHeader(exSetup.config.workingDefinition.options[id])
-    exSetup.previewDefinition(true)
-  })
-}
 
 // Style fields
 for (const el of document.querySelectorAll('.color-picker')) {
