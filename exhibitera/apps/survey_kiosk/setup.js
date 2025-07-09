@@ -267,7 +267,7 @@ async function clearDefinitionInput (full = true) {
   document.getElementById('behaviorInput_inactivity_timeout').value = 10
 
   // Markdown fields
-  for (const item of ['header', 'subheader', 'footer', 'subfooter']) {
+  for (const item of []) {
     const editor = new exMarkdown.ExhibiteraMarkdownEditor({
       content: '',
       editorDiv: document.getElementById(item + 'Input'),
@@ -280,30 +280,16 @@ async function clearDefinitionInput (full = true) {
     })
   }
 
-  const successEditor = new exMarkdown.ExhibiteraMarkdownEditor({
-    content: 'Thank you!',
-    editorDiv: document.getElementById('success_messageInput'),
-    commandDiv: document.getElementById('success_messageInputCommandBar'),
-    commands: ['basic'],
-    callback: (content) => {
-      exSetup.updateWorkingDefinition(['text', 'success_message'], content)
-      exSetup.previewDefinition(true)
-    }
-  })
-
-  // Reset option edit fields
-  document.getElementById('optionRow').innerHTML = ''
-  const editor = new exMarkdown.ExhibiteraMarkdownEditor({
-    content: '',
-    editorDiv: document.getElementById('optionInput_label'),
-    commandDiv: document.getElementById('optionInputCommandBar_label'),
-    commands: ['basic'],
-    callback: (content) => {
-    }
-  })
-  document.getElementById('optionInput_value').value = ''
-  document.getElementById('optionInput_icon').value = ''
-  setIconUserFile('')
+  // const successEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+  //   content: 'Thank you!',
+  //   editorDiv: document.getElementById('success_messageInput'),
+  //   commandDiv: document.getElementById('success_messageInputCommandBar'),
+  //   commands: ['basic'],
+  //   callback: (content) => {
+  //     exSetup.updateWorkingDefinition(['text', 'success_message'], content)
+  //     exSetup.previewDefinition(true)
+  //   }
+  // })
 
   // Reset color options
   const colorInputs = ['button-color', 'button-touched-color', 'success-message-color', 'header-color', 'subheader-color', 'footer-color', 'subfooter-color', 'button-text-color']
@@ -349,7 +335,7 @@ function editDefinition (uuid = '') {
   }
 
   // Markdown fields
-  for (const item of ['header', 'subheader', 'footer', 'subfooter']) {
+  for (const item of []) {
     const editor = new exMarkdown.ExhibiteraMarkdownEditor({
       content: def?.text?.[item] ?? '',
       editorDiv: document.getElementById(item + 'Input'),
@@ -362,23 +348,16 @@ function editDefinition (uuid = '') {
     })
   }
 
-  const successEditor = new exMarkdown.ExhibiteraMarkdownEditor({
-    content: def?.text?.success_message ?? 'Thank you!',
-    editorDiv: document.getElementById('success_messageInput'),
-    commandDiv: document.getElementById('success_messageInputCommandBar'),
-    commands: ['basic'],
-    callback: (content) => {
-      exSetup.updateWorkingDefinition(['text', 'success_message'], content)
-      exSetup.previewDefinition(true)
-    }
-  })
-
-  // Create any existing options
-  document.getElementById('optionRow').innerHTML = ''
-  for (const optionUUID of def?.option_order ?? []) {
-    const option = def.options[optionUUID]
-    createSurveyOption(option)
-  }
+  // const successEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+  //   content: def?.text?.success_message ?? 'Thank you!',
+  //   editorDiv: document.getElementById('success_messageInput'),
+  //   commandDiv: document.getElementById('success_messageInputCommandBar'),
+  //   commands: ['basic'],
+  //   callback: (content) => {
+  //     exSetup.updateWorkingDefinition(['text', 'success_message'], content)
+  //     exSetup.previewDefinition(true)
+  //   }
+  // })
 
   exSetup.updateAdvancedColorPicker('style>background', def?.style?.background, { mode: 'color', color: '#22222E' })
   exSetup.updateColorPickers(def?.style?.color ?? {})
@@ -397,13 +376,101 @@ function editDefinition (uuid = '') {
   const langSelect = document.getElementById('language-picker')
   exLang.createLanguagePicker(langSelect,
     {
-      // onLanguageRebuild: rebuildLanguageElements
+      onLanguageRebuild: rebuildItems
     }
   )
 
   // Configure the preview frame
   document.getElementById('previewFrame').src = 'index.html?standalone=true&definition=' + def.uuid
   exSetup.previewDefinition()
+}
+
+function rebuildItems () {
+  // Rebuild the item interface
+
+  document.getElementById('surveryItems').innerText = ''
+  for (const uuid of exSetup.config.workingDefinition?.item_order ?? []) {
+    const item = exSetup.config.workingDefinition?.items?.[uuid]
+    if (item) createSurveyItem(item)
+  }
+  exSetup.previewDefinition(true)
+}
+
+function createSurveyItem (item) {
+  // Create the GUI representation of an item in the survey
+
+  const def = exSetup.config.workingDefinition
+  const surveryItems = document.getElementById('surveryItems')
+
+  const html = `
+    <div class="accordion-item">
+      <h2 class="accordion-header">
+        <div
+          class="accordion-button d-flex align-items-center collapsed"
+          style="cursor: pointer;"
+          data-bs-toggle="collapse"
+          data-bs-target="#${item.uuid}_accordion"
+          aria-expanded="false"
+          aria-controls="${item.uuid}_accordion"
+        >
+        ${def.languages?.[def.language_order[0]]?.items?.[item.uuid]?.header?.text ?? ''}
+
+        </div>
+      </h2>
+      <div id="${item.uuid}_accordion" class="accordion-collapse collapse " data-bs-parent="#surveryItems">
+        <div class="accordion-body">
+        <button
+            id="${item.uuid}_accordion_moveUpButton"
+            type="button"
+            class="btn btn-sm btn-outline-info"
+          >
+          ▲
+          </button>
+          <button
+            id="${item.uuid}_accordion_moveDownButton"
+            type="button"
+            class="btn btn-sm btn-outline-info ms-1"
+          >
+          ▼
+          </button>
+          <br>
+          Item details
+        </div>
+      </div>
+    </div>
+  `
+  surveryItems.insertAdjacentHTML('beforeend', html)
+  document.getElementById(item.uuid + '_accordion_moveUpButton').addEventListener('click', (ev) => {
+    changeItemOrder(item.uuid, 'up')
+  })
+  document.getElementById(item.uuid + '_accordion_moveDownButton').addEventListener('click', (ev) => {
+    changeItemOrder(item.uuid, 'down')
+  })
+}
+
+function changeItemOrder (uuid, dir) {
+  // Move the item with the given UUID one place in the given direction
+
+  const order = exSetup.config.workingDefinition.item_order
+  const index = order.indexOf(uuid)
+
+  // If item not found or already at the edge, do nothing
+  if (index === -1) return
+
+  const newIndex = dir === 'up'
+    ? index - 1
+    : dir === 'down'
+      ? index + 1
+      : index
+
+  if (newIndex < 0 || newIndex >= order.length) return
+
+  // Swap the items
+  const temp = order[newIndex]
+  order[newIndex] = order[index]
+  order[index] = temp
+
+  rebuildItems()
 }
 
 function formatOptionHeader (details) {
@@ -739,9 +806,10 @@ exSetup.configure({
   initializeWizard,
   loadDefinition: editDefinition,
   blankDefinition: {
-    options: {},
-    option_order: [],
-    text: {},
+    items: {},
+    item_order: [],
+    languages: {},
+    language_order: [],
     style: {
       background: {
         mode: 'color',

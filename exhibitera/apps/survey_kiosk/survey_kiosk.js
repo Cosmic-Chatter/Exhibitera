@@ -3,9 +3,10 @@ import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exMarkdown from '../js/exhibitera_app_markdown.js'
 
 async function buildLayout (index) {
-  // Take a layout defition in the form of a dictionary of dictionaries and
+  // Take a layout definition in the form of a dictionary of dictionaries and
   // create cards for each element
 
+  if (index > currentDefinition.item_order.length - 1) return
   currentIndex = index
   updateProgress(index)
   const uuid = currentDefinition.item_order[index]
@@ -41,7 +42,7 @@ function buildLayoutVote (index) {
 
   const question = document.createElement('div')
   question.classList = 'text-center question'
-  question.innerText = currentDefinition.languages?.[currentLang]?.items?.[uuid]?.question?.text
+  question.innerText = currentDefinition.languages?.[currentLang]?.items?.[uuid]?.header?.text
   itemPane.appendChild(question)
 
   let nCols
@@ -155,6 +156,7 @@ function updateProgress (index) {
   // Update the progress indicator to show the current progress
 
   const dots = document.querySelectorAll('.survey-dot')
+  if (dots.length === 0) return
   for (const dot of dots) dot.classList.remove('active')
 
   dots[index].classList.add('active')
@@ -404,6 +406,7 @@ function loadDefinition (definition) {
   // Create tne progress indicators
   const progressIndicator = document.getElementById('progressIndicator')
   progressIndicator.innerText = ''
+
   for (let i = 0; i < definition.item_order.length; i++) {
     const dot = document.createElement('div')
     dot.classList = 'survey-dot'
