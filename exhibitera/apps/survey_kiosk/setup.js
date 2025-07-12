@@ -413,7 +413,9 @@ function createSurveyItem (item) {
           aria-expanded="false"
           aria-controls="${item.uuid}_accordion"
         >
-        ${def.languages?.[def.language_order[0]]?.items?.[item.uuid]?.header?.text ?? ''}
+        <span id="${item.uuid}_accordionName">
+        ${exMarkdown.formatText(def.languages?.[def.language_order[0]]?.items?.[item.uuid]?.header?.text ?? '', { string: true, removeParagraph: true })}
+        </span>
 
         </div>
       </h2>
@@ -433,8 +435,11 @@ function createSurveyItem (item) {
           >
           ▼
           </button>
-          <br>
-          Item details
+          <nav class="mt-3">
+            <div id="${item.uuid}_accordion_tabs" class="nav nav-tabs" role="tablist">
+            </div>
+          </nav>
+          <div class="tab-content" id="${item.uuid}_accordion_content">
         </div>
       </div>
     </div>
@@ -446,6 +451,322 @@ function createSurveyItem (item) {
   document.getElementById(item.uuid + '_accordion_moveDownButton').addEventListener('click', (ev) => {
     changeItemOrder(item.uuid, 'down')
   })
+
+  if (item.type === 'text') {
+    createSurveyItemText(item)
+  } else if (['single_vote', 'multiple_vote'].includes(item.type)) {
+    createSurveyItemVote(item)
+  }
+}
+
+function createSurveyItemText (item) {
+  // Create GUI elements for a text survey item
+
+  const nav = document.getElementById(item.uuid + '_accordion_tabs')
+  const pane = document.getElementById(item.uuid + '_accordion_content')
+
+  let first = true
+  for (const code of exSetup.config.workingDefinition?.language_order ?? []) {
+    // Create the tab button
+    const tabButton = document.createElement('button')
+    tabButton.classList = 'nav-link language-tab'
+    tabButton.setAttribute('id', item.uuid + '_accordion_contentTab_' + code)
+    tabButton.setAttribute('data-bs-toggle', 'tab')
+    tabButton.setAttribute('data-bs-target', '#' + item.uuid + '_accordion_contentPane_' + code)
+    tabButton.setAttribute('type', 'button')
+    tabButton.setAttribute('role', 'tab')
+    tabButton.innerHTML = exLang.getLanguageDisplayName(code, true)
+    nav.appendChild(tabButton)
+
+    // Create corresponding pane
+    const tabPane = document.createElement('div')
+    tabPane.classList = 'tab-pane fade'
+    tabPane.setAttribute('id', item.uuid + '_accordion_contentPane_' + code)
+    tabPane.setAttribute('role', 'tabpanel')
+    tabPane.setAttribute('aria-labelledby', '#' + item.uuid + '_accordion_contentTab_' + code)
+    pane.appendChild(tabPane)
+
+    const row = document.createElement('div')
+    row.classList = 'row gy-2 mt-2'
+    tabPane.appendChild(row)
+
+    const headerCol = document.createElement('div')
+    headerCol.classList = 'col-6'
+    row.appendChild(headerCol)
+
+    const headerLabel = document.createElement('label')
+    headerLabel.classList = 'form-label'
+    headerLabel.innerHTML = 'Header'
+    headerCol.appendChild(headerLabel)
+
+    const headerCommandBar = document.createElement('div')
+    headerCol.appendChild(headerCommandBar)
+
+    const headerInput = document.createElement('div')
+    headerCol.appendChild(headerInput)
+
+    const headerEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+      content: exSetup.config.workingDefinition.languages?.[code]?.items?.[item.uuid].header?.text ?? '',
+      editorDiv: headerInput,
+      commandDiv: headerCommandBar,
+      commands: ['basic'],
+      callback: (content) => {
+        exSetup.updateWorkingDefinition(['languages', code, 'items', item.uuid, 'header', 'text'], content)
+        if (code === exSetup.config.workingDefinition.language_order[0]) {
+          console.log(document.getElementById(item.uuid + '_accordionName'))
+          document.getElementById(item.uuid + '_accordionName').innerHTML = exMarkdown.formatText(content, { string: true, removeParagraph: true })
+        }
+        exSetup.previewDefinition(true)
+      }
+    })
+
+    const nextButtonCol = document.createElement('div')
+    nextButtonCol.classList = 'col-6'
+    row.appendChild(nextButtonCol)
+
+    const nextButtonLabel = document.createElement('label')
+    nextButtonLabel.classList = 'form-label'
+    nextButtonLabel.innerHTML = 'Next button text'
+    nextButtonCol.appendChild(nextButtonLabel)
+
+    const nextButtonInput = document.createElement('input')
+    nextButtonInput.setAttribute('type', 'text')
+    nextButtonInput.setAttribute('placeholder', 'Next')
+    nextButtonInput.classList = 'form-control'
+    nextButtonInput.value = exSetup.config.workingDefinition.languages?.[code]?.items?.[item.uuid]?.next_button?.text ?? ''
+    nextButtonInput.addEventListener('change', () => {
+      exSetup.updateWorkingDefinition(['languages', code, 'items', item.uuid, 'next_button', 'text'], nextButtonInput.value.trim())
+      exSetup.previewDefinition(true)
+    })
+    nextButtonCol.appendChild(nextButtonInput)
+
+    const bodyCol = document.createElement('div')
+    bodyCol.classList = 'col-12'
+    row.appendChild(bodyCol)
+
+    const bodyLabel = document.createElement('label')
+    bodyLabel.classList = 'form-label'
+    bodyLabel.innerHTML = 'Body'
+    bodyCol.appendChild(bodyLabel)
+
+    const bodyCommandBar = document.createElement('div')
+    bodyCol.appendChild(bodyCommandBar)
+
+    const bodyInput = document.createElement('div')
+    bodyCol.appendChild(bodyInput)
+
+    const bodyEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+      content: exSetup.config.workingDefinition.languages?.[code]?.items?.[item.uuid]?.body?.text ?? '',
+      editorDiv: bodyInput,
+      commandDiv: bodyCommandBar,
+      callback: (content) => {
+        exSetup.updateWorkingDefinition(['languages', code, 'items', item.uuid, 'body', 'text'], content)
+        exSetup.previewDefinition(true)
+      }
+    })
+
+    if (first) {
+      tabButton.click()
+      first = false
+    }
+  }
+}
+
+function createSurveyItemVote (item) {
+  // Create GUI elements for a voting survey item
+
+  const nav = document.getElementById(item.uuid + '_accordion_tabs')
+  const pane = document.getElementById(item.uuid + '_accordion_content')
+
+  let first = true
+  for (const code of exSetup.config.workingDefinition?.language_order ?? []) {
+    // Create the tab button
+    const tabButton = document.createElement('button')
+    tabButton.classList = 'nav-link language-tab'
+    tabButton.setAttribute('id', item.uuid + '_accordion_contentTab_' + code)
+    tabButton.setAttribute('data-bs-toggle', 'tab')
+    tabButton.setAttribute('data-bs-target', '#' + item.uuid + '_accordion_contentPane_' + code)
+    tabButton.setAttribute('type', 'button')
+    tabButton.setAttribute('role', 'tab')
+    tabButton.innerHTML = exLang.getLanguageDisplayName(code, true)
+    nav.appendChild(tabButton)
+
+    // Create corresponding pane
+    const tabPane = document.createElement('div')
+    tabPane.classList = 'tab-pane fade'
+    tabPane.setAttribute('id', item.uuid + '_accordion_contentPane_' + code)
+    tabPane.setAttribute('role', 'tabpanel')
+    tabPane.setAttribute('aria-labelledby', '#' + item.uuid + '_accordion_contentTab_' + code)
+    pane.appendChild(tabPane)
+
+    const row = document.createElement('div')
+    row.classList = 'row gy-2 mt-2'
+    tabPane.appendChild(row)
+
+    const headerCol = document.createElement('div')
+    headerCol.classList = 'col-6'
+    row.appendChild(headerCol)
+
+    const headerLabel = document.createElement('label')
+    headerLabel.classList = 'form-label'
+    headerLabel.innerHTML = 'Header'
+    headerCol.appendChild(headerLabel)
+
+    const headerCommandBar = document.createElement('div')
+    headerCol.appendChild(headerCommandBar)
+
+    const headerInput = document.createElement('div')
+    headerCol.appendChild(headerInput)
+
+    const headerEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+      content: exSetup.config.workingDefinition.languages?.[code]?.items?.[item.uuid]?.header?.text ?? '',
+      editorDiv: headerInput,
+      commandDiv: headerCommandBar,
+      commands: ['basic'],
+      callback: (content) => {
+        exSetup.updateWorkingDefinition(['languages', code, 'items', item.uuid, 'header', 'text'], content)
+        if (code === exSetup.config.workingDefinition.language_order[0]) {
+          console.log(document.getElementById(item.uuid + '_accordionName'))
+          document.getElementById(item.uuid + '_accordionName').innerHTML = exMarkdown.formatText(content, { string: true, removeParagraph: true })
+        }
+        exSetup.previewDefinition(true)
+      }
+    })
+
+    const nextButtonCol = document.createElement('div')
+    nextButtonCol.classList = 'col-6'
+    row.appendChild(nextButtonCol)
+
+    const nextButtonLabel = document.createElement('label')
+    nextButtonLabel.classList = 'form-label'
+    nextButtonLabel.innerHTML = 'Next button text'
+    nextButtonCol.appendChild(nextButtonLabel)
+
+    const nextButtonInput = document.createElement('input')
+    nextButtonInput.setAttribute('type', 'text')
+    nextButtonInput.setAttribute('placeholder', 'Next')
+    nextButtonInput.classList = 'form-control'
+    nextButtonInput.value = exSetup.config.workingDefinition.languages?.[code]?.items?.[item.uuid]?.next_button?.text ?? ''
+    nextButtonInput.addEventListener('change', () => {
+      exSetup.updateWorkingDefinition(['languages', code, 'items', item.uuid, 'next_button', 'text'], nextButtonInput.value.trim())
+      exSetup.previewDefinition(true)
+    })
+    nextButtonCol.appendChild(nextButtonInput)
+
+    const optionsCol = document.createElement('div')
+    optionsCol.classList = 'col-12'
+    row.appendChild(optionsCol)
+
+    const optionsLabel = document.createElement('label')
+    optionsLabel.classList = 'form-label'
+    optionsLabel.innerText = 'Options'
+    optionsCol.appendChild(optionsLabel)
+
+    optionsCol.innerHTML += '<br>'
+
+    const addOptionButton = document.createElement('button')
+    addOptionButton.classList = 'btn btn-primary'
+    addOptionButton.innerText = 'Add option'
+    optionsCol.appendChild(addOptionButton)
+
+    optionsCol.innerHTML += '<br>'
+
+    const defLang = exSetup.config.workingDefinition?.languages?.[code]?.items?.[item.uuid]?.options ?? {}
+
+    // Create main accordion container
+    const accord = document.createElement('div')
+    accord.className = 'accordion mt-3'
+    accord.id = `itemAccordion_${item.uuid}_${code}`
+    optionsCol.appendChild(accord)
+
+    for (const optionUUID of item.option_order) {
+      const optionText = exMarkdown.formatText(
+        defLang?.[optionUUID]?.text ?? '',
+        { string: true, removeParagraph: true }
+      )
+
+      // Create accordion-item
+      const accordItem = document.createElement('div')
+      accordItem.className = 'accordion-item'
+      accord.appendChild(accordItem)
+
+      // --- Header ---
+      const header = document.createElement('h2')
+      header.className = 'accordion-header'
+
+      const button = document.createElement('button')
+      button.className = 'accordion-button collapsed d-flex align-items-center'
+      button.type = 'button'
+      button.setAttribute('data-bs-toggle', 'collapse')
+      button.setAttribute('data-bs-target', `#itemOption_${optionUUID}_${code}`)
+      button.setAttribute('aria-expanded', 'false')
+      button.setAttribute('aria-controls', `itemOption_${optionUUID}_${code}`)
+
+      const nameSpan = document.createElement('span')
+      nameSpan.setAttribute('id', `itemOptionName_${optionUUID}_${code}`)
+      nameSpan.innerHTML = optionText
+      button.appendChild(nameSpan)
+
+      header.appendChild(button)
+      accordItem.appendChild(header)
+
+      const collapse = document.createElement('div')
+      collapse.className = 'accordion-collapse collapse'
+      collapse.id = `itemOption_${optionUUID}_${code}`
+      collapse.setAttribute('data-bs-parent', `#itemAccordion_${item.uuid}_${code}`)
+      accordItem.appendChild(collapse)
+
+      const body = document.createElement('div')
+      body.className = 'accordion-body'
+      collapse.appendChild(body)
+
+      // Widgets for editing the various parts of the option
+
+      const row = document.createElement('div')
+      row.classList = 'row gy-2 mt-2'
+      body.appendChild(row)
+
+      const textCol = document.createElement('div')
+      textCol.classList = 'col-6'
+      row.appendChild(textCol)
+
+      const textLabel = document.createElement('label')
+      textLabel.classList = 'form-label'
+      textLabel.innerHTML = 'Button text'
+      textCol.appendChild(textLabel)
+
+      const textCommandBar = document.createElement('div')
+      textCol.appendChild(textCommandBar)
+
+      const textInput = document.createElement('div')
+      textCol.appendChild(textInput)
+
+      const headerEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+        content: exSetup.config.workingDefinition.languages?.[code]?.items?.[item.uuid]?.options?.[optionUUID]?.text ?? '',
+        editorDiv: textInput,
+        commandDiv: textCommandBar,
+        commands: ['basic'],
+        callback: (content) => {
+          exSetup.updateWorkingDefinition(['languages', code, 'items', item.uuid, 'options', optionUUID, 'text'], content)
+          document.getElementById(`itemOptionName_${optionUUID}_${code}`).innerHTML = exMarkdown.formatText(content, { string: true, removeParagraph: true })
+          exSetup.previewDefinition(true)
+        }
+      })
+
+      const backgroundCol = document.createElement('div')
+      backgroundCol.classList = 'col-12 advanced-color-picker'
+      backgroundCol.setAttribute('data-constACP-name', 'Background')
+      backgroundCol.setAttribute('data-constACP-path', `items>${item.uuid}>options>${optionUUID}>background`)
+      row.appendChild(backgroundCol)
+      exSetup.createAdvancedColorPickers()
+      exSetup.updateAdvancedColorPicker(`items>${item.uuid}>options>${optionUUID}>background`, item?.options?.[optionUUID]?.background)
+    }
+
+    if (first) {
+      tabButton.click()
+      first = false
+    }
+  }
 }
 
 function changeItemOrder (uuid, dir) {

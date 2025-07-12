@@ -42,7 +42,7 @@ function buildLayoutVote (index) {
 
   const question = document.createElement('div')
   question.classList = 'text-center question'
-  question.innerText = currentDefinition.languages?.[currentLang]?.items?.[uuid]?.header?.text
+  question.innerHTML = exMarkdown.formatText(currentDefinition.languages?.[currentLang]?.items?.[uuid]?.header?.text, { string: true, removeParagraph: true })
   itemPane.appendChild(question)
 
   let nCols
@@ -79,6 +79,9 @@ function buildLayoutVote (index) {
     const card = document.createElement('div')
     card.classList = 'card card-inactive mb-0 h-100 justify-content-center'
     card.dataset.value = value
+    if (buttonDef.background) {
+      exCommon.setELementBackground(buttonDef.background, card)
+    }
     div.appendChild(card)
 
     if ('icon' in buttonDef && buttonDef.icon.trim() !== '') {
@@ -134,17 +137,20 @@ function buildLayoutText (index) {
 
   const header = document.createElement('div')
   header.classList = 'text-center question'
-  header.innerHTML = currentDefinition.languages?.[currentLang]?.items?.[uuid]?.header?.text ?? ''
+  header.innerHTML = exMarkdown.formatText(currentDefinition.languages?.[currentLang]?.items?.[uuid]?.header?.text ?? '', { string: true, removeParagraph: true })
   itemPane.appendChild(header)
 
   const body = document.createElement('div')
   body.classList = 'card-text'
-  body.innerHTML = currentDefinition.languages?.[currentLang]?.items?.[uuid]?.body?.text ?? ''
+  const bodyText = exMarkdown.formatText(currentDefinition.languages?.[currentLang]?.items?.[uuid]?.body?.text ?? '')
+  exMarkdown.formatMarkdownImages(bodyText)
+  body.appendChild(bodyText)
+
   body.style.height = '100%'
   itemPane.appendChild(body)
 
   const nextButton = document.createElement('button')
-  nextButton.innerHTML = currentDefinition.languages?.[currentLang]?.items?.[uuid]?.next_button?.text ?? 'Next'
+  nextButton.innerHTML = currentDefinition.languages?.[currentLang]?.items?.[uuid]?.next_button?.text || 'Next' // Convert empty string '' to 'Next' too
   nextButton.classList = 'btn btn-success noselect next-button'
   nextButton.addEventListener('click', () => {
     nextButtonTouched(index)

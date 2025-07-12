@@ -702,7 +702,7 @@ export function previewDefinition (automatic = false) {
     })
 }
 
-function createAdvancedColorPickers () {
+export function createAdvancedColorPickers () {
   // Look for advanced-color-picker elements and fill them with the combo widget.
 
   Array.from(document.querySelectorAll('.advanced-color-picker')).forEach((el) => {
@@ -826,6 +826,7 @@ export function updateAdvancedColorPicker (path,
   const solidColorPicker = el.querySelector('.constACP-color')
   solidColorPicker.value = details?.color ?? defaults?.color
   solidColorPicker.dispatchEvent(new Event('input', { bubbles: true }))
+  console.log(details?.color ?? defaults?.color)
 
   const gradientPicker1 = el.querySelector('.constACP-gradient1')
   gradientPicker1.value = details?.gradient_color_1 ?? defaults?.gradient_color_1

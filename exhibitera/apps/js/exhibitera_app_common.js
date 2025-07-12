@@ -660,6 +660,30 @@ export function setBackground (details, root, defaultColor = '#22222E', setStatu
   }
 }
 
+export function setELementBackground (details, el, defaultColor = '#22222E') {
+  // Set the background of the given element based on an Advanced Color Picker definition.
+
+  if (typeof el === 'string') el = document.getElementById(el)
+  if (el == null) return
+
+  if ((details?.mode ?? 'color') === 'color') {
+    // Solid colors
+    const color = details?.color ?? defaultColor
+    el.style.background = color
+  } else if (details.mode === 'gradient') {
+    // Gradient
+    const angle = details?.gradient_angle ?? 0
+    const color1 = details?.gradient_color_1 ?? defaultColor
+    const color2 = details?.gradient_color_2 ?? defaultColor
+
+    const grad = `linear-gradient(${angle}deg, ${color2}, ${color1})`
+    el.style.background = grad
+  } else if (details.mode === 'image') {
+    // Image
+    el.style.background = `url(../content/${details.image})`
+  }
+}
+
 export function createFont (name, font) {
   // Create the desired font, if it doesn't already exist.
 
