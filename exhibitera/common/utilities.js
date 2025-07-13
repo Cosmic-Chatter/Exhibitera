@@ -196,6 +196,20 @@ export function setObjectProperty (obj, keys, val) {
   lastObj[lastKey] = val
 }
 
+export function getObjectProperty (obj, keys) {
+  // Return the value of the location given by keys, or undefined
+  // if that location does not exist
+  // E.g., keys = ['prop1', 'prop2', 'prop3'] gets obj.prop1.prop2.prop3
+
+  return keys.reduce((acc, key) => {
+    if (acc && typeof acc === 'object' && key in acc) {
+      return acc[key]
+    } else {
+      return undefined
+    }
+  }, obj)
+}
+
 export function sortAlphabetically (array) {
   // Sort the given array alphabetically
 

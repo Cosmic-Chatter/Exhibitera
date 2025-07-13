@@ -449,7 +449,6 @@ export function updateWorkingDefinition (property, value) {
 
   if (property && property[0].length <= 1) {
     // occasionally the color library is providing a property with a large amount of single entries that clog up the definition json
-    console.log(`skipping ${property}`)
     return
   }
   exUtilities.setObjectProperty(config.workingDefinition, property, value)
@@ -704,15 +703,16 @@ export function previewDefinition (automatic = false) {
 
 export function createAdvancedColorPickers () {
   // Look for advanced-color-picker elements and fill them with the combo widget.
+  // Note that this will replace existing ACPs, resetting them to the detaul values.
 
   Array.from(document.querySelectorAll('.advanced-color-picker')).forEach((el) => {
     const name = el.getAttribute('data-constACP-name')
     const path = el.getAttribute('data-constACP-path').split('>')
-    _createAdvancedColorPicker(el, name, path)
+    createAdvancedColorPicker(el, name, path)
   })
 }
 
-function _createAdvancedColorPicker (el, name, path) {
+export function createAdvancedColorPicker (el, name, path) {
   // Create the GUI for an advanced color picker
   // 'name' is the name of the picker to be displayed in the label
   // 'path' is the definition path to be prepended to the elements.
@@ -756,11 +756,18 @@ function _createAdvancedColorPicker (el, name, path) {
 
   // Add event listeners
   document.getElementById(`ACPModeSelect_${id}`).addEventListener('change', (event) => {
-    _onAdvancedColorPickerModeChange(id, path, event.target.value)
+    const els = getAdvancedColorPickersByPath(path.join('>'))
+    for (const el of els) {
+      // Make sure all ACPs for this path are updated to stay in sync
+      _onAdvancedColorPickerModeChange(el.getAttribute('data-constACP-id'), path, event.target.value)
+    }
   })
 
   document.getElementById(`ACPColor_${id}`).addEventListener('change', (event) => {
     updateWorkingDefinition([...path, 'color'], event.target.value)
+
+    // Make sure all ACPs for this path are updated to stay in sync
+    updateAdvancedColorPicker(path.join('>'), exUtilities.getObjectProperty(config.workingDefinition, path))
     previewDefinition(true)
   })
 
@@ -769,21 +776,34 @@ function _createAdvancedColorPicker (el, name, path) {
       .then((result) => {
         if (result != null && result.length > 0) {
           updateWorkingDefinition([...path, 'image'], result[0])
-          event.target.innerHTML = result[0]
+          const els = getAdvancedColorPickersByPath(path.join('>'))
+          for (const el of els) {
+            // Make sure all ACPs for this path are updated to stay in sync
+            el.querySelector('.constACP-image').innerText = result[0]
+          }
           previewDefinition(true)
         }
       })
   })
   document.getElementById(`ACPGradient_gradient1_${id}`).addEventListener('change', (event) => {
     updateWorkingDefinition([...path, 'gradient_color_1'], event.target.value)
+    // Make sure all ACPs for this path are updated to stay in sync
+    updateAdvancedColorPicker(path.join('>'), exUtilities.getObjectProperty(config.workingDefinition, path))
+
     previewDefinition(true)
   })
   document.getElementById(`ACPGradient_gradient2_${id}`).addEventListener('change', (event) => {
     updateWorkingDefinition([...path, 'gradient_color_2'], event.target.value)
+    // Make sure all ACPs for this path are updated to stay in sync
+    updateAdvancedColorPicker(path.join('>'), exUtilities.getObjectProperty(config.workingDefinition, path))
+
     previewDefinition(true)
   })
   document.getElementById(`ACPAnglePicker_${id}`).addEventListener('change', (event) => {
     updateWorkingDefinition([...path, 'gradient_angle'], event.target.value % 360)
+    // Make sure all ACPs for this path are updated to stay in sync
+    updateAdvancedColorPicker(path.join('>'), exUtilities.getObjectProperty(config.workingDefinition, path))
+
     previewDefinition(true)
   })
 }
@@ -817,31 +837,40 @@ export function updateAdvancedColorPicker (path,
   defaults = { mode: 'color', color: '#fff' }) {
   // Update the color picker defined by path using the values in details.
 
-  const el = document.querySelector(`.advanced-color-picker[data-constACP-path="${path}"]`)
-  if (el == null) return
-  if (el.childNodes.length === 0) return
+  // We may have multiple ACPs that coorespond to the same path
+  const els = getAdvancedColorPickersByPath(path)
+  if (els.length === 0) return
 
-  el.querySelector('.constACP-mode').value = details?.mode ?? defaults?.mode
+  for (const el of els) {
+    if (el.childNodes.length === 0) return
 
-  const solidColorPicker = el.querySelector('.constACP-color')
-  solidColorPicker.value = details?.color ?? defaults?.color
-  solidColorPicker.dispatchEvent(new Event('input', { bubbles: true }))
-  console.log(details?.color ?? defaults?.color)
+    el.querySelector('.constACP-mode').value = details?.mode ?? defaults?.mode
 
-  const gradientPicker1 = el.querySelector('.constACP-gradient1')
-  gradientPicker1.value = details?.gradient_color_1 ?? defaults?.gradient_color_1
-  gradientPicker1.dispatchEvent(new Event('input', { bubbles: true }))
+    const solidColorPicker = el.querySelector('.constACP-color')
+    solidColorPicker.value = details?.color ?? defaults?.color
+    solidColorPicker.dispatchEvent(new Event('input', { bubbles: true }))
 
-  const gradientPicker2 = el.querySelector('.constACP-gradient2')
-  gradientPicker2.value = details?.gradient_color_2 ?? defaults?.gradient_color_2
-  gradientPicker2.dispatchEvent(new Event('input', { bubbles: true }))
+    const gradientPicker1 = el.querySelector('.constACP-gradient1')
+    gradientPicker1.value = details?.gradient_color_1 ?? defaults?.gradient_color_1
+    gradientPicker1.dispatchEvent(new Event('input', { bubbles: true }))
 
-  el.querySelector('.constACP-angle').value = details?.gradient_angle ?? defaults?.gradient_angle
+    const gradientPicker2 = el.querySelector('.constACP-gradient2')
+    gradientPicker2.value = details?.gradient_color_2 ?? defaults?.gradient_color_2
+    gradientPicker2.dispatchEvent(new Event('input', { bubbles: true }))
 
-  el.querySelector('.constACP-image').innerHTML = details?.image ?? defaults?.image
+    el.querySelector('.constACP-angle').value = details?.gradient_angle ?? defaults?.gradient_angle
 
-  const id = el.getAttribute('data-constACP-id')
-  _onAdvancedColorPickerModeChange(id, path, details?.mode ?? defaults.mode)
+    el.querySelector('.constACP-image').innerHTML = details?.image ?? defaults?.image
+
+    const id = el.getAttribute('data-constACP-id')
+    _onAdvancedColorPickerModeChange(id, path, details?.mode ?? defaults.mode)
+  }
+}
+
+function getAdvancedColorPickersByPath (path) {
+  // Return a NodeList of ACPs that match the given path
+
+  return document.querySelectorAll(`.advanced-color-picker[data-constACP-path="${path}"]`)
 }
 
 export function updateColorPickers (colors) {

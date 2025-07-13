@@ -681,6 +681,9 @@ export function setELementBackground (details, el, defaultColor = '#22222E') {
   } else if (details.mode === 'image') {
     // Image
     el.style.background = `url(../content/${details.image})`
+    el.style.backgroundPosition = 'center center'
+    el.style.backgroundRepeat = 'no-repeat'
+    el.style.backgroundSize = 'cover'
   }
 }
 

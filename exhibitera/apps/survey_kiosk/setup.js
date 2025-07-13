@@ -758,7 +758,8 @@ function createSurveyItemVote (item) {
       backgroundCol.setAttribute('data-constACP-name', 'Background')
       backgroundCol.setAttribute('data-constACP-path', `items>${item.uuid}>options>${optionUUID}>background`)
       row.appendChild(backgroundCol)
-      exSetup.createAdvancedColorPickers()
+      exSetup.createAdvancedColorPicker(backgroundCol, 'Background', ['items', item.uuid, 'options', optionUUID, 'background'])
+
       exSetup.updateAdvancedColorPicker(`items>${item.uuid}>options>${optionUUID}>background`, item?.options?.[optionUUID]?.background)
     }
 
