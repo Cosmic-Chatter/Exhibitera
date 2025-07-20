@@ -753,6 +753,28 @@ function createSurveyItemVote (item) {
         }
       })
 
+      const valueCol = document.createElement('div')
+      valueCol.classList = 'col-6'
+      row.appendChild(valueCol)
+
+      const valueLabel = document.createElement('label')
+      valueLabel.classList = 'form-label'
+      valueLabel.innerHTML = `
+        Value
+        <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="How this option should appear in your data spreadsheet. E.g., 'two_stars'." style="font-size: 0.55em;">?</span>
+        `
+      valueCol.appendChild(valueLabel)
+
+      const valueInput = document.createElement('input')
+      valueInput.classList = 'form-control'
+      valueInput.setAttribute('type', 'text')
+      valueInput.value = item?.options?.[optionUUID]?.value ?? ''
+      valueInput.addEventListener('change', (ev) => {
+        exSetup.updateWorkingDefinition(['items', item.uuid, 'options', optionUUID, 'value'], ev.target.value)
+        exSetup.previewDefinition(true)
+      })
+      valueCol.appendChild(valueInput)
+
       const backgroundCol = document.createElement('div')
       backgroundCol.classList = 'col-12 advanced-color-picker'
       backgroundCol.setAttribute('data-constACP-name', 'Background')
@@ -761,13 +783,112 @@ function createSurveyItemVote (item) {
       exSetup.createAdvancedColorPicker(backgroundCol, 'Background', ['items', item.uuid, 'options', optionUUID, 'background'])
 
       exSetup.updateAdvancedColorPicker(`items>${item.uuid}>options>${optionUUID}>background`, item?.options?.[optionUUID]?.background)
+
+      const iconCol = document.createElement('div')
+      iconCol.classList = 'col-12'
+      row.appendChild(iconCol)
+
+      const iconLabel = document.createElement('label')
+      iconLabel.classList = 'form-label'
+      iconLabel.innerHTML = 'Icon'
+      iconCol.appendChild(iconLabel)
+
+      const iconRow = document.createElement('div')
+      iconRow.classList = 'row gy-2'
+      iconCol.appendChild(iconRow)
+
+      const iconSelectCol = document.createElement('div')
+      iconSelectCol.classList = 'col-12 col-md-6'
+      iconRow.appendChild(iconSelectCol)
+
+      const iconSelect = document.createElement('select')
+      iconSelect.classList = 'form-select icon-select'
+      iconSelect.dataset.optionuuid = optionUUID
+      iconSelect.innerHTML = `
+        <option value="">No icon</option>
+        <option value="user">User-provided</option>
+        <option disabled>Built-in</option>
+        <option value="1-star_black">1 star (black)</option>
+        <option value="1-star_white">1 star (white)</option>
+        <option value="2-star_black">2 star (black)</option>
+        <option value="2-star_white">2 star (white)</option>
+        <option value="3-star_black">3 star (black)</option>
+        <option value="3-star_white">3 star (white)</option>
+        <option value="4-star_black">4 star (black)</option>
+        <option value="4-star_white">4 star (white)</option>
+        <option value="5-star_black">5 star (black)</option>
+        <option value="5-star_white">5 star (white)</option>
+        <option value="thumbs-down_black">Thumbs down (black)</option>
+        <option value="thumbs-down_red">Thumbs down (red)</option>
+        <option value="thumbs-down_white">Thumbs down (white)</option>
+        <option value="thumbs-up_black">Thumbs up (black)</option>
+        <option value="thumbs-up_green">Thumbs up (green)</option>
+        <option value="thumbs-up_white">Thumbs up (white)</option>
+      `
+      iconSelect.addEventListener('change', (ev) => {
+        setItemIcon(item.uuid, optionUUID, { icon: ev.target.value, icon_user_file: item?.options?.[optionUUID]?.icon_user_file ?? '' })
+      })
+      iconSelectCol.appendChild(iconSelect)
+
+      const iconInputCol = document.createElement('div')
+      iconInputCol.classList = 'col-12 col-md-6'
+      iconRow.appendChild(iconInputCol)
+
+      const iconFileInput = document.createElement('button')
+      iconFileInput.classList = 'btn btn-outline-primary w-100 icon-file-input'
+      iconFileInput.dataset.optionuuid = optionUUID
+      iconFileInput.innerText = 'Select file'
+      iconFileInput.addEventListener('click', () => {
+        exFileSelect.createFileSelectionModal({ multiple: false, filetypes: ['image'] })
+          .then((result) => {
+            if (result != null && result.length > 0) {
+              setItemIcon(item.uuid, optionUUID, { icon: 'user', icon_user_file: result[0] })
+            }
+          })
+      })
+      iconInputCol.appendChild(iconFileInput)
+      setItemIcon(item.uuid, optionUUID, {
+        icon: item?.options?.[optionUUID]?.icon ?? '',
+        icon_user_file: item?.options?.[optionUUID]?.icon_user_file
+      })
     }
+
+    // Activate tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
 
     if (first) {
       tabButton.click()
       first = false
     }
   }
+}
+
+function setItemIcon (itemUUID, optionUUID, details = {}) {
+  // Set the given filename as the icon and configure the GUI to match.
+  // details should be of the form {icon, icon_user_file}
+
+  const inputs = document.querySelectorAll(`.icon-file-input[data-optionuuid="${optionUUID}"]`)
+  for (const el of inputs) {
+    if (details.icon === 'user') {
+      el.style.display = 'block'
+      el.innerText = details?.icon_user_file || 'Select file' // default on '' too
+    } else {
+      el.style.display = 'none'
+      el.innerText = 'Select file'
+    }
+  }
+
+  const selects = document.querySelectorAll(`.icon-select[data-optionuuid="${optionUUID}"]`)
+  for (const el of selects) {
+    el.value = details.icon
+  }
+
+  exSetup.updateWorkingDefinition(['items', itemUUID, 'options', optionUUID, 'icon_user_file'], details.icon_user_file)
+  exSetup.updateWorkingDefinition(['items', itemUUID, 'options', optionUUID, 'icon'], details.icon)
+  exSetup.previewDefinition(true)
 }
 
 function changeItemOrder (uuid, dir) {

@@ -52,6 +52,7 @@ body {
 .card-img-top {
     width: 100%;
     max-height: calc(var(--image-height) * 1%);
+    /* max-height: 10%; */
     object-fit: contain;
     padding: 5%;
 }
