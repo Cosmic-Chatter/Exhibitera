@@ -22,13 +22,13 @@ body {
 .card {
     font-family: var(--button-font);
     border-radius: 2vmin!important;
+    background: var(--button-color);
 }
 .card-inactive {
-    background-color: var(--button-color);
     transition: .5s ease-in-out all;
 }
 .card-active {
-    background-color: var(--button-touched-color);
+    outline: solid 0.5vmin white;
     transition: .1s ease-in-out all;
 }
 .card-body-full-landscape {

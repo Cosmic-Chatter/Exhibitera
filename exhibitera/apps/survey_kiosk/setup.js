@@ -653,23 +653,64 @@ function createSurveyItemVote (item) {
     })
     nextButtonCol.appendChild(nextButtonInput)
 
-    const optionsCol = document.createElement('div')
-    optionsCol.classList = 'col-12'
-    row.appendChild(optionsCol)
+    const addOptionCol = document.createElement('div')
+    addOptionCol.classList = 'col-12 col-md-4'
+    row.appendChild(addOptionCol)
 
     const optionsLabel = document.createElement('label')
     optionsLabel.classList = 'form-label'
     optionsLabel.innerText = 'Options'
-    optionsCol.appendChild(optionsLabel)
+    addOptionCol.appendChild(optionsLabel)
 
-    optionsCol.innerHTML += '<br>'
+    addOptionCol.innerHTML += '<br>'
 
     const addOptionButton = document.createElement('button')
     addOptionButton.classList = 'btn btn-primary'
     addOptionButton.innerText = 'Add option'
-    optionsCol.appendChild(addOptionButton)
+    addOptionCol.appendChild(addOptionButton)
 
-    optionsCol.innerHTML += '<br>'
+    const optionsMultiCol = document.createElement('div')
+    optionsMultiCol.classList = 'col-12 col-md-8 d-flex align-items-end'
+    row.appendChild(optionsMultiCol)
+
+    const optionsMutliCheckGroup = document.createElement('div')
+    optionsMutliCheckGroup.classList = 'form-check ms-auto'
+    optionsMultiCol.appendChild(optionsMutliCheckGroup)
+
+    const optionsMutliCheck = document.createElement('input')
+    optionsMutliCheck.classList = 'form-check-input mutli-checkbox'
+    optionsMutliCheck.setAttribute('type', 'checkbox')
+    optionsMutliCheck.value = ''
+    optionsMutliCheck.id = 'optionsMutliCheck_' + item.uuid + '_' + code
+    optionsMutliCheck.dataset.itemuuid = item.uuid
+    optionsMutliCheck.checked = item?.type === 'multiple_vote'
+    optionsMutliCheckGroup.appendChild(optionsMutliCheck)
+    optionsMutliCheck.addEventListener('change', (ev) => {
+      if (ev.target.checked) {
+        exSetup.updateWorkingDefinition(['items', item.uuid, 'type'], 'multiple_vote')
+      } else exSetup.updateWorkingDefinition(['items', item.uuid, 'type'], 'single_vote')
+
+      // Sync the same checkbox for other languages
+      const inputs = document.querySelectorAll(`.mutli-checkbox[data-itemuuid="${item.uuid}"]`)
+      for (const el of inputs) {
+        el.checked = ev.target.checked
+      }
+
+      exSetup.previewDefinition(true)
+    })
+
+    const optionsMutliCheckLabel = document.createElement('label')
+    optionsMutliCheckLabel.classList = 'form-check-label'
+    optionsMutliCheckLabel.setAttribute('for', 'optionsMutliCheck_' + item.uuid + '_' + code)
+    optionsMutliCheckLabel.innerHTML = `
+      Alllow multiple selections
+      <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Allow the user to select multiple options." style="font-size: 0.55em;">?</span>
+    `
+    optionsMutliCheckGroup.appendChild(optionsMutliCheckLabel)
+
+    const optionsCol = document.createElement('div')
+    optionsCol.classList = 'col-12'
+    row.appendChild(optionsCol)
 
     const defLang = exSetup.config.workingDefinition?.languages?.[code]?.items?.[item.uuid]?.options ?? {}
 

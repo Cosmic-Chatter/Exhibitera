@@ -261,7 +261,6 @@ function nextButtonTouched (index) {
     const answers = []
     for (const el of selected) answers.push(el.dataset.value)
     response[thisItem.value] = answers
-    console.log(response)
   }
   if (lastItem === false) buildLayout(index + 1)
 }
