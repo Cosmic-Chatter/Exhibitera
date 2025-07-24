@@ -385,18 +385,76 @@ function editDefinition (uuid = '') {
   exSetup.previewDefinition()
 }
 
+function createItem (itemType) {
+  // Add an item of the given type to the working definitino and rebuild the GUI.
+  console.log('here')
+  const item = {
+    type: itemType,
+    uuid: exUtilities.uuid()
+  }
+
+  // Add to the working definition
+  const items = exSetup.config.workingDefinition?.items ?? {}
+  items[item.uuid] = item
+  exSetup.updateWorkingDefinition(['items'], items)
+
+  const itemOrder = exSetup.config.workingDefinition?.item_order ?? []
+  itemOrder.push(item.uuid)
+  exSetup.updateWorkingDefinition(['item_order'], itemOrder)
+
+  const languages = exSetup.config.workingDefinition?.languages ?? {}
+  for (const langCode of Object.keys(languages)) {
+    const lang = languages[langCode]
+    if (!lang.items) lang.items = {}
+    lang.items[item.uuid] = { header: { text: 'New item' } }
+  }
+  exSetup.updateWorkingDefinition(['languages'], languages)
+  rebuildItems()
+}
+
+function deleteItem (uuidToRemove) {
+  // Remove the given item from the working definition and rebuild the GUI.
+
+  const data = exSetup.config.workingDefinition
+
+  // Remove from item_order array
+  data.item_order = data.item_order.filter(uuid => uuid !== uuidToRemove)
+  exSetup.updateWorkingDefinition(['item_order'], data.item_order)
+
+  // Remove from items object
+  delete data.items[uuidToRemove]
+  exSetup.updateWorkingDefinition(['items'], data.items)
+
+  // Remove from each language's items
+  for (const lang of Object.keys(data?.languages ?? {})) {
+    if (
+      data.languages[lang].items &&
+        data.languages[lang].items[uuidToRemove]
+    ) {
+      delete data.languages[lang].items[uuidToRemove]
+    }
+  }
+  exSetup.updateWorkingDefinition(['languages'], data?.languages ?? {})
+  rebuildItems()
+}
+
 function rebuildItems () {
   // Rebuild the item interface
 
   document.getElementById('surveryItems').innerText = ''
   for (const uuid of exSetup.config.workingDefinition?.item_order ?? []) {
     const item = exSetup.config.workingDefinition?.items?.[uuid]
-    if (item) createSurveyItem(item)
+    if (item) createSurveyItemGUI(item)
   }
   exSetup.previewDefinition(true)
 }
 
-function createSurveyItem (item) {
+function rebuildOptions (itemUUID) {
+  // Rebuild the options GUI for the given item.
+
+}
+
+function createSurveyItemGUI (item) {
   // Create the GUI representation of an item in the survey
 
   const def = exSetup.config.workingDefinition
@@ -421,20 +479,30 @@ function createSurveyItem (item) {
       </h2>
       <div id="${item.uuid}_accordion" class="accordion-collapse collapse " data-bs-parent="#surveryItems">
         <div class="accordion-body">
-        <button
+          <div class="d-flex">
+            <button
             id="${item.uuid}_accordion_moveUpButton"
             type="button"
             class="btn btn-sm btn-outline-info"
-          >
-          ▲
-          </button>
-          <button
-            id="${item.uuid}_accordion_moveDownButton"
-            type="button"
-            class="btn btn-sm btn-outline-info ms-1"
-          >
-          ▼
-          </button>
+            >
+            ▲
+            </button>
+            <button
+              id="${item.uuid}_accordion_moveDownButton"
+              type="button"
+              class="btn btn-sm btn-outline-info ms-1"
+            >
+            ▼
+            </button>
+            <button
+              id="${item.uuid}_accordion_deleteButton"
+              type="button"
+              class="btn btn-sm btn-outline-danger ms-auto"
+            >
+            Delete
+            </button>
+          </div>
+          
           <nav class="mt-3">
             <div id="${item.uuid}_accordion_tabs" class="nav nav-tabs" role="tablist">
             </div>
@@ -451,15 +519,18 @@ function createSurveyItem (item) {
   document.getElementById(item.uuid + '_accordion_moveDownButton').addEventListener('click', (ev) => {
     changeItemOrder(item.uuid, 'down')
   })
+  document.getElementById(item.uuid + '_accordion_deleteButton').addEventListener('click', (ev) => {
+    deleteItem(item.uuid)
+  })
 
   if (item.type === 'text') {
-    createSurveyItemText(item)
+    createSurveyItemGUIText(item)
   } else if (['single_vote', 'multiple_vote'].includes(item.type)) {
-    createSurveyItemVote(item)
+    createSurveyItemGUIVote(item)
   }
 }
 
-function createSurveyItemText (item) {
+function createSurveyItemGUIText (item) {
   // Create GUI elements for a text survey item
 
   const nav = document.getElementById(item.uuid + '_accordion_tabs')
@@ -506,7 +577,7 @@ function createSurveyItemText (item) {
     headerCol.appendChild(headerInput)
 
     const headerEditor = new exMarkdown.ExhibiteraMarkdownEditor({
-      content: exSetup.config.workingDefinition.languages?.[code]?.items?.[item.uuid].header?.text ?? '',
+      content: exSetup.config.workingDefinition.languages?.[code]?.items?.[item.uuid]?.header?.text ?? '',
       editorDiv: headerInput,
       commandDiv: headerCommandBar,
       commands: ['basic'],
@@ -572,7 +643,7 @@ function createSurveyItemText (item) {
   }
 }
 
-function createSurveyItemVote (item) {
+function createSurveyItemGUIVote (item) {
   // Create GUI elements for a voting survey item
 
   const nav = document.getElementById(item.uuid + '_accordion_tabs')
@@ -720,7 +791,7 @@ function createSurveyItemVote (item) {
     accord.id = `itemAccordion_${item.uuid}_${code}`
     optionsCol.appendChild(accord)
 
-    for (const optionUUID of item.option_order) {
+    for (const optionUUID of item?.option_order ?? []) {
       const optionText = exMarkdown.formatText(
         defLang?.[optionUUID]?.text ?? '',
         { string: true, removeParagraph: true }
@@ -766,6 +837,40 @@ function createSurveyItemVote (item) {
       const row = document.createElement('div')
       row.classList = 'row gy-2 mt-2'
       body.appendChild(row)
+
+      const toolsCol = document.createElement('div')
+      toolsCol.classList = 'col-12 d-flex'
+      toolsCol.innerHTML = `
+        <button
+        id="${item.uuid}_option_${optionUUID}_${code}_moveUpButton"
+        type="button"
+        class="btn btn-sm btn-outline-info"
+        >
+        ▲
+        </button>
+        <button
+          id="${item.uuid}_option_${optionUUID}_${code}_moveDownButton"
+          type="button"
+          class="btn btn-sm btn-outline-info ms-1"
+        >
+        ▼
+        </button>
+        <button
+          id="${item.uuid}_option_${optionUUID}_${code}_deleteButton"
+          type="button"
+          class="btn btn-sm btn-outline-danger ms-auto"
+        >
+        Delete
+        </button>
+      `
+      row.appendChild(toolsCol)
+
+      document.getElementById(`${item.uuid}_option_${optionUUID}_${code}_moveUpButton`).addEventListener('click', (ev) => {
+        changeOptionOrder(item.uuid, optionUUID, 'up')
+      })
+      document.getElementById(`${item.uuid}_option_${optionUUID}_${code}_moveDownButton`).addEventListener('click', (ev) => {
+        changeOptionOrder(item.uuid, optionUUID, 'down')
+      })
 
       const textCol = document.createElement('div')
       textCol.classList = 'col-6'
@@ -954,7 +1059,34 @@ function changeItemOrder (uuid, dir) {
   order[newIndex] = order[index]
   order[index] = temp
 
+  exSetup.updateWorkingDefinition(['item_order'], order)
   rebuildItems()
+}
+
+function changeOptionOrder (itemUUID, optionUUID, dir) {
+  // Move the given option for the given item one place in the given direction
+
+  const order = exSetup.config.workingDefinition?.items?.[itemUUID]?.option_order
+  const index = order.indexOf(optionUUID)
+
+  // If item not found or already at the edge, do nothing
+  if (index === -1) return
+
+  const newIndex = dir === 'up'
+    ? index - 1
+    : dir === 'down'
+      ? index + 1
+      : index
+
+  if (newIndex < 0 || newIndex >= order.length) return
+
+  // Swap the items
+  const temp = order[newIndex]
+  order[newIndex] = order[index]
+  order[index] = temp
+
+  exSetup.updateWorkingDefinition(['items', itemUUID, 'option_order'], order)
+  rebuildOptions(itemUUID)
 }
 
 function formatOptionHeader (details) {
@@ -968,7 +1100,7 @@ function formatOptionHeader (details) {
   return 'New Option'
 }
 
-function createSurveyOption (userDetails, populateEditor = false) {
+function createSurveyOptionGUI (userDetails, populateEditor = false) {
   // Create the HTML representation of a survey question and add it to the row.
 
   const optionOrder = exSetup.config.workingDefinition.option_order
@@ -1090,73 +1222,6 @@ function createSurveyOption (userDetails, populateEditor = false) {
   })
 }
 
-function deleteOption (uuid, wizard = false) {
-  // Delete an option and rebuild the GUI
-
-  const def = exSetup.config.workingDefinition
-
-  // Delete from the options dictionary
-  delete def.options[uuid]
-
-  // Delete from option order array
-  const searchFunc = (el) => el === uuid
-  const index = def.option_order.findIndex(searchFunc)
-  if (index > -1) { // only splice array when item is found
-    def.option_order.splice(index, 1)
-  }
-
-  // Rebuild the options GUI
-  if (wizard) {
-    document.getElementById('wizardCustomAnswersRow').innerHTML = ''
-    for (const optionUUID of def?.option_order ?? []) {
-      const option = def.options[optionUUID]
-      wizardCreateAnswerOption(option)
-    }
-  } else {
-    document.getElementById('optionRow').innerHTML = ''
-    for (const optionUUID of def?.option_order ?? []) {
-      const option = def.options[optionUUID]
-      createSurveyOption(option)
-    }
-    exSetup.previewDefinition(true)
-  }
-}
-
-function changeOptionOrder (uuid, direction, wizard = false) {
-  // Move the option given by uuid in the direction specified
-  // direction should be -1 or 1
-
-  const def = exSetup.config.workingDefinition
-  const searchFunc = (el) => el === uuid
-  const currentIndex = def.option_order.findIndex(searchFunc)
-
-  // Handle the edge cases
-  if (currentIndex === 0 && direction < 0) return
-  if (currentIndex === def.option_order.length - 1 && direction > 0) return
-
-  // Handle middle cases
-  const newIndex = currentIndex + direction
-  const currentValueOfNewIndex = def.option_order[newIndex]
-  def.option_order[newIndex] = uuid
-  def.option_order[currentIndex] = currentValueOfNewIndex
-
-  // Rebuild the options GUI
-  if (wizard) {
-    document.getElementById('wizardCustomAnswersRow').innerHTML = ''
-    for (const optionUUID of def?.option_order ?? []) {
-      const option = def.options[optionUUID]
-      wizardCreateAnswerOption(option)
-    }
-  } else {
-    document.getElementById('optionRow').innerHTML = ''
-    for (const optionUUID of def?.option_order ?? []) {
-      const option = def.options[optionUUID]
-      createSurveyOption(option)
-    }
-    exSetup.previewDefinition(true)
-  }
-}
-
 function populateOptionEditor (id) {
   // Take the details from an option and fill in the editor GUI
 
@@ -1242,7 +1307,14 @@ Array.from(document.querySelectorAll('.definition-text-input')).forEach((el) => 
   })
 })
 
-// Option fields
+// Item fields
+
+for (const el of document.querySelectorAll('.createItemButton')) {
+  el.addEventListener('click', (ev) => {
+    const itemType = ev.target.dataset.type
+    createItem(itemType)
+  })
+}
 
 // Style fields
 for (const el of document.querySelectorAll('.color-picker')) {

@@ -37,8 +37,8 @@ function buildLayoutVote (index) {
   // Build the layout for a voting question
 
   const uuid = currentDefinition.item_order[index]
-  const thisItem = currentDefinition.items[uuid]
-  const options = currentDefinition.items[uuid].option_order
+  const thisItem = currentDefinition?.items?.[uuid] ?? {}
+  const options = currentDefinition?.items?.[uuid]?.option_order ?? []
   const itemPane = document.getElementById('itemPane')
 
   const question = document.createElement('div')
