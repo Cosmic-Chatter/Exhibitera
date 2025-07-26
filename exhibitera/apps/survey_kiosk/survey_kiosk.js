@@ -1,3 +1,5 @@
+/* global textFit */
+
 import exConfig from '../../common/config.js'
 import * as exUtilities from '../../common/utilities.js'
 import * as exCommon from '../js/exhibitera_app_common.js'
@@ -70,6 +72,18 @@ function buildLayoutVote (index) {
   cardRow.classList = 'row w-100 mx-0 align-items-center d-flex justify-content-center ' + rowClass
   itemPane.appendChild(cardRow)
 
+  // The layout of the card will depend on whether any of the options
+  // have an image/icon or text. So, first, iterate through and check
+  let imagePresent = false
+  let textPresent = false
+
+  for (const option of options) {
+    const buttonDef = thisItem.options[option]
+    const buttonLang = currentDefinition.languages?.[currentLang]?.items?.[uuid]?.options?.[option]
+    imagePresent = (buttonDef?.icon ?? '') !== ''
+    textPresent = (buttonLang?.text ?? '').trim() !== ''
+  }
+
   // Iterate through the buttons and build their HTML
   for (const option of options) {
     const buttonDef = thisItem.options[option]
@@ -83,14 +97,36 @@ function buildLayoutVote (index) {
     cardRow.appendChild(div)
 
     const card = document.createElement('div')
-    card.classList = 'card card-inactive mb-0 h-100 justify-content-center'
+    card.classList = 'card card-inactive h-100 d-flex flex-column align-items-center'
+    if (imagePresent) {
+      card.classList.add('justify-content-between')
+    } else card.classList.add('justify-content-center')
     card.dataset.value = value
     if (buttonDef.background) {
       exCommon.setELementBackground(buttonDef.background, card)
     }
     div.appendChild(card)
 
-    if ('icon' in buttonDef && buttonDef.icon.trim() !== '') {
+    const thisTextPresent = (buttonLang?.text ?? '').trim() !== ''
+
+    if (imagePresent && thisTextPresent) {
+      // If there is an image, we are going to add an invisible copy of the text
+      // above any image so that the flex column lays everything out correctly
+
+      const text = document.createElement('div')
+      text.classList = 'd-flex align-items-center justify-content-center'
+      text.style.height = '20%'
+      card.appendChild(text)
+
+      const title = document.createElement('div')
+      title.classList = 'option-text noselect'
+      title.style.opacity = 0
+
+      title.innerHTML = exMarkdown.formatText(buttonLang.text, { removeParagraph: true, string: true })
+      text.appendChild(title)
+    }
+
+    if ((buttonDef?.icon ?? '') !== '') {
       const img = document.createElement('img')
       if (buttonDef.icon === 'user') {
         img.src = getIcon(buttonDef.icon_user_file)
@@ -98,20 +134,41 @@ function buildLayoutVote (index) {
         // The user has selected one of the provided icons
         img.src = getIcon(buttonDef.icon)
       }
-      img.classList = 'card-img-top'
+      if (textPresent) {
+        img.style.height = '60%'
+      } else img.style.height = '100%'
+      img.classList = 'option-image'
       card.appendChild(img)
     }
 
-    if (buttonLang?.text && buttonLang.text.trim() !== '') {
+    if (thisTextPresent) {
       const text = document.createElement('div')
-      text.classList = 'd-flex align-items-center justify-content-center'
+      text.classList = 'd-flex align-items-center justify-content-center w-100'
+      text.style.height = '20%'
       card.appendChild(text)
 
       const title = document.createElement('div')
-      title.classList = 'card-title my-0 noselect'
+      title.classList = 'option-text noselect'
 
       title.innerHTML = exMarkdown.formatText(buttonLang.text, { removeParagraph: true, string: true })
-      text.append(title)
+      text.appendChild(title)
+    }
+  }
+
+  // Adjust button text font size to avoid overflows
+  // Don't allow text to get larger than wha the user has set.
+  const optionTexts = document.getElementsByClassName('option-text')
+  if (optionTexts.length > 0) {
+    const fontSize = parseFloat(window.getComputedStyle(optionTexts[0], null).getPropertyValue('font-size'))
+    console.log(fontSize)
+    try {
+      textFit(optionTexts, { maxFontSize: fontSize })
+      // Sometimes need to run twice on first load
+      setTimeout(() => {
+        textFit(optionTexts, { maxFontSize: fontSize })
+      }, 10)
+    } catch {
+      // Ignore failed resize
     }
   }
 
@@ -147,7 +204,7 @@ function buildLayoutText (index) {
   itemPane.appendChild(header)
 
   const body = document.createElement('div')
-  body.classList = 'card-text'
+  body.classList = 'card-text text-item'
   const bodyText = exMarkdown.formatText(currentDefinition.languages?.[currentLang]?.items?.[uuid]?.body?.text ?? '')
   exMarkdown.formatMarkdownImages(bodyText)
   body.appendChild(bodyText)
@@ -323,7 +380,6 @@ function loadDefinition (definition) {
   // If there are responses left for the old survey, make sure they are recorded
   sendData()
   currentDefinition = definition
-  console.log(currentDefinition)
   configurationName = definition.name
 
   response = {}
@@ -403,19 +459,9 @@ function loadDefinition (definition) {
     root.style.setProperty('--' + key + '-font-adjust', value)
   }
 
-  // Behavior settings
-  // const topRow = document.getElementById('topRow')
-  // const itemDiv = document.getElementById('itemDiv')
-  // const bottomRow = document.getElementById('bottomRow')
-
-  // topRow.style.height = String(definition?.style?.layout?.top_height ?? 20) + 'vh'
-  // topRow.style.paddingTop = String(definition?.style?.layout?.header_padding ?? 5) + 'vh'
-  // itemDiv.style.height = String(definition?.style?.layout?.button_height ?? 90) + 'vh'
-  // itemDiv.style.paddingTop = String((definition?.style?.layout?.button_padding ?? 5) / 2) + 'vh'
-  // itemDiv.style.paddingBottom = String((definition?.style?.layout?.button_padding ?? 5) / 2) + 'vh'
-  // bottomRow.style.height = String(definition?.style?.layout?.bottom_height ?? 10) + 'vh'
-  // bottomRow.style.paddingBottom = String(definition?.style?.layout?.footer_padding ?? 2) + 'vh'
+  // Layout settings
   root.style.setProperty('--image-height', String(definition?.style?.layout?.image_height ?? 90))
+  root.style.setProperty('--text-margin', String(definition?.style?.layout?.text_margin ?? 10))
 
   // Create tne progress indicators
   const progressIndicator = document.getElementById('progressIndicator')

@@ -313,8 +313,6 @@ async function clearDefinitionInput (full = true) {
   document.getElementById('subfooterTextSizeSlider').value = 0
   document.getElementById('buttonTextSizeSlider').value = 0
 
-  // Reset layout options
-  document.getElementById('columnCountSelect').value = 'auto'
   exSetup.createAdvancedSliders()
 }
 
@@ -365,7 +363,6 @@ function editDefinition (uuid = '') {
   exSetup.updateTextSizeSliders(def?.style?.text_size ?? {})
 
   // Set the appropriate values for the layout options
-  document.getElementById('columnCountSelect').value = def?.style?.layout?.num_columns ?? 'auto'
   exSetup.createAdvancedSlider(document.getElementById('headerToButtonsSlider'), def?.style?.layout?.top_height)
   exSetup.createAdvancedSlider(document.getElementById('headerPaddingHeightSlider'), def?.style?.layout?.header_padding)
   exSetup.createAdvancedSlider(document.getElementById('buttonsToFooterSlider'), def?.style?.layout?.bottom_height)
@@ -1306,10 +1303,6 @@ Array.from(document.querySelectorAll('.text-size-slider')).forEach((el) => {
 })
 
 // Layout fields
-document.getElementById('columnCountSelect').addEventListener('change', (event) => {
-  exSetup.updateWorkingDefinition(['style', 'layout', 'num_columns'], event.target.value)
-  exSetup.previewDefinition(true)
-})
 for (const el of document.querySelectorAll('.height-slider')) {
   el.addEventListener('input', () => {
     const headerHeight = parseInt(document.getElementById('headerToButtonsSlider').querySelector('input').value)

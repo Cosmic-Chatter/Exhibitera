@@ -49,25 +49,28 @@ body {
     height: 0vh;
 }
 
-.card-img-top {
+.option-image {
     width: 100%;
-    max-height: calc(var(--image-height) * 1%);
-    /* max-height: 10%; */
     object-fit: contain;
     padding: 5%;
 }
 
 .card-text {
     font-size: 2vmax;
-    padding-left: 2vmin;
-    padding-right: 2vmin;
+    padding-left: 5%;
+    padding-right: 5%;
     overflow: hidden;
 }
 
-.card-title {
+.option-text {
     font-size: calc(3vmax + var(--button-font-adjust)*1vmax);
     text-align: center;
     color: var(--button-text-color);
+    height: 8.3vmin;
+    width: 100%;
+    padding-left: 5%;
+    padding-right: 5%;
+    overflow: hidden;
 }
 
 .next-button {
@@ -108,6 +111,11 @@ body {
   margin: 0.2vmin;
   /* border-radius: 10px; */
   background-color: #0d6efd; /* Bootstrap primary color */
+}
+
+.text-item {
+    margin-left: calc(var(--text-margin) * 1vw);
+    margin-right: calc(var(--text-margin) * 1vw);
 }
 
 #bottomRow {
