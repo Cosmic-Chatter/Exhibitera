@@ -449,9 +449,292 @@ function rebuildItems () {
   exSetup.previewDefinition(true)
 }
 
-function rebuildOptions (itemUUID) {
+function createOption (itemUUID) {
+  // Create a new option and add it to the given item in the working definition.
+
+  const newOption = { uuid: exUtilities.uuid(), value: '' }
+
+  const options = exSetup.config.workingDefinition?.items?.[itemUUID]?.options ?? {}
+  options[newOption.uuid] = newOption
+  exSetup.updateWorkingDefinition(['items', itemUUID, 'options'], options)
+
+  const optionOrder = exSetup.config.workingDefinition?.items?.[itemUUID]?.option_order ?? []
+  optionOrder.push(newOption.uuid)
+  exSetup.updateWorkingDefinition(['items', itemUUID, 'option_order'], optionOrder)
+
+  for (const code of exSetup.config.workingDefinition?.language_order ?? []) {
+    const lang = exSetup.config.workingDefinition.languages[code]
+
+    const langOptions = lang.items[itemUUID]?.options ?? {}
+    langOptions[newOption.uuid] = { text: '' }
+    exSetup.updateWorkingDefinition(['languages', code, 'items', itemUUID, 'options'], langOptions)
+    rebuildOptions(itemUUID, code)
+  }
+}
+
+function deleteOption (itemUUID, optionUUID) {
+  // Remove the given option from the working definition and rebuild the GUI.
+
+  const data = exSetup.config.workingDefinition.items?.[itemUUID]
+  if (data == null) return
+
+  // Remove from option_order array
+  data.option_order = data.option_order.filter(uuid => uuid !== optionUUID)
+  exSetup.updateWorkingDefinition(['items', itemUUID, 'option_order'], data.option_order)
+
+  // Remove from options object
+  delete data.options[optionUUID]
+  exSetup.updateWorkingDefinition(['items', itemUUID, 'options'], data.options)
+
+  // Remove from each language
+  const langData = exSetup.config.workingDefinition?.languages ?? {}
+  for (const lang of exSetup.config.workingDefinition?.language_order ?? []) {
+    if (
+      langData[lang]?.items?.[itemUUID]?.options &&
+        langData[lang]?.items?.[itemUUID]?.options[optionUUID]
+    ) {
+      delete langData[lang].items[itemUUID].options[optionUUID]
+    }
+  }
+  exSetup.updateWorkingDefinition(['languages'], langData)
+
+  for (const lang of exSetup.config.workingDefinition?.language_order ?? []) {
+    rebuildOptions(itemUUID, lang)
+  }
+}
+
+function rebuildOptions (itemUUID, lang) {
   // Rebuild the options GUI for the given item.
 
+  const item = exSetup.config.workingDefinition.items[itemUUID]
+  if (item == null) return
+
+  const defLang = exSetup.config.workingDefinition?.languages?.[lang]?.items?.[item.uuid]?.options ?? {}
+
+  const accord = document.getElementById(`itemAccordion_${itemUUID}_${lang}`)
+  accord.innerText = ''
+
+  for (const optionUUID of item?.option_order ?? []) {
+    const optionText = exMarkdown.formatText(
+      defLang?.[optionUUID]?.text ?? '',
+      { string: true, removeParagraph: true }
+    )
+
+    // Create accordion-item
+    const accordItem = document.createElement('div')
+    accordItem.className = 'accordion-item'
+    accord.appendChild(accordItem)
+
+    // --- Header ---
+    const header = document.createElement('h2')
+    header.className = 'accordion-header'
+
+    const button = document.createElement('button')
+    button.className = 'accordion-button collapsed d-flex align-items-center'
+    button.type = 'button'
+    button.setAttribute('data-bs-toggle', 'collapse')
+    button.setAttribute('data-bs-target', `#itemOption_${optionUUID}_${lang}`)
+    button.setAttribute('aria-expanded', 'false')
+    button.setAttribute('aria-controls', `itemOption_${optionUUID}_${lang}`)
+
+    const nameSpan = document.createElement('span')
+    nameSpan.setAttribute('id', `itemOptionName_${optionUUID}_${lang}`)
+    nameSpan.innerHTML = optionText
+    button.appendChild(nameSpan)
+
+    header.appendChild(button)
+    accordItem.appendChild(header)
+
+    const collapse = document.createElement('div')
+    collapse.className = 'accordion-collapse collapse'
+    collapse.id = `itemOption_${optionUUID}_${lang}`
+    collapse.setAttribute('data-bs-parent', `#itemAccordion_${item.uuid}_${lang}`)
+    accordItem.appendChild(collapse)
+
+    const body = document.createElement('div')
+    body.className = 'accordion-body'
+    collapse.appendChild(body)
+
+    // Widgets for editing the various parts of the option
+
+    const row = document.createElement('div')
+    row.classList = 'row gy-2 mt-2'
+    body.appendChild(row)
+
+    const toolsCol = document.createElement('div')
+    toolsCol.classList = 'col-12 d-flex'
+    toolsCol.innerHTML = `
+        <button
+        id="${item.uuid}_option_${optionUUID}_${lang}_moveUpButton"
+        type="button"
+        class="btn btn-sm btn-outline-info"
+        >
+        ▲
+        </button>
+        <button
+          id="${item.uuid}_option_${optionUUID}_${lang}_moveDownButton"
+          type="button"
+          class="btn btn-sm btn-outline-info ms-1"
+        >
+        ▼
+        </button>
+        <button
+          id="${item.uuid}_option_${optionUUID}_${lang}_deleteButton"
+          type="button"
+          class="btn btn-sm btn-outline-danger ms-auto"
+        >
+        Delete
+        </button>
+      `
+    row.appendChild(toolsCol)
+
+    document.getElementById(`${item.uuid}_option_${optionUUID}_${lang}_moveUpButton`).addEventListener('click', (ev) => {
+      changeOptionOrder(item.uuid, optionUUID, 'up')
+    })
+    document.getElementById(`${item.uuid}_option_${optionUUID}_${lang}_moveDownButton`).addEventListener('click', (ev) => {
+      changeOptionOrder(item.uuid, optionUUID, 'down')
+    })
+    document.getElementById(`${item.uuid}_option_${optionUUID}_${lang}_deleteButton`).addEventListener('click', () => {
+      deleteOption(item.uuid, optionUUID)
+    })
+
+    const textCol = document.createElement('div')
+    textCol.classList = 'col-6'
+    row.appendChild(textCol)
+
+    const textLabel = document.createElement('label')
+    textLabel.classList = 'form-label'
+    textLabel.innerHTML = 'Button text'
+    textCol.appendChild(textLabel)
+
+    const textCommandBar = document.createElement('div')
+    textCol.appendChild(textCommandBar)
+
+    const textInput = document.createElement('div')
+    textCol.appendChild(textInput)
+
+    const headerEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+      content: exSetup.config.workingDefinition.languages?.[lang]?.items?.[item.uuid]?.options?.[optionUUID]?.text ?? '',
+      editorDiv: textInput,
+      commandDiv: textCommandBar,
+      commands: ['basic'],
+      callback: (content) => {
+        exSetup.updateWorkingDefinition(['languages', lang, 'items', item.uuid, 'options', optionUUID, 'text'], content)
+        document.getElementById(`itemOptionName_${optionUUID}_${lang}`).innerHTML = exMarkdown.formatText(content, { string: true, removeParagraph: true })
+        exSetup.previewDefinition(true)
+      }
+    })
+
+    const valueCol = document.createElement('div')
+    valueCol.classList = 'col-6'
+    row.appendChild(valueCol)
+
+    const valueLabel = document.createElement('label')
+    valueLabel.classList = 'form-label'
+    valueLabel.innerHTML = `
+        Value
+        <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="How this option should appear in your data spreadsheet. E.g., 'two_stars'." style="font-size: 0.55em;">?</span>
+        `
+    valueCol.appendChild(valueLabel)
+
+    const valueInput = document.createElement('input')
+    valueInput.classList = 'form-control option-value-input'
+    valueInput.setAttribute('type', 'text')
+    valueInput.dataset.optionuuid = optionUUID
+    valueInput.value = item?.options?.[optionUUID]?.value ?? ''
+    valueInput.addEventListener('change', (ev) => {
+      exSetup.updateWorkingDefinition(['items', item.uuid, 'options', optionUUID, 'value'], ev.target.value)
+      // Make sure other languages are in sync
+      for (const el of document.querySelectorAll('.option-value-input')) {
+        if (el.dataset.optionuuid === optionUUID) el.value = ev.target.value
+      }
+      exSetup.previewDefinition(true)
+    })
+    valueCol.appendChild(valueInput)
+
+    const backgroundCol = document.createElement('div')
+    backgroundCol.classList = 'col-12 advanced-color-picker'
+    backgroundCol.setAttribute('data-constACP-name', 'Background')
+    backgroundCol.setAttribute('data-constACP-path', `items>${item.uuid}>options>${optionUUID}>background`)
+    row.appendChild(backgroundCol)
+    exSetup.createAdvancedColorPicker(backgroundCol, 'Background', ['items', item.uuid, 'options', optionUUID, 'background'])
+
+    exSetup.updateAdvancedColorPicker(`items>${item.uuid}>options>${optionUUID}>background`, item?.options?.[optionUUID]?.background)
+
+    const iconCol = document.createElement('div')
+    iconCol.classList = 'col-12'
+    row.appendChild(iconCol)
+
+    const iconLabel = document.createElement('label')
+    iconLabel.classList = 'form-label'
+    iconLabel.innerHTML = 'Icon'
+    iconCol.appendChild(iconLabel)
+
+    const iconRow = document.createElement('div')
+    iconRow.classList = 'row gy-2'
+    iconCol.appendChild(iconRow)
+
+    const iconSelectCol = document.createElement('div')
+    iconSelectCol.classList = 'col-12 col-md-6'
+    iconRow.appendChild(iconSelectCol)
+
+    const iconSelect = document.createElement('select')
+    iconSelect.classList = 'form-select icon-select'
+    iconSelect.dataset.optionuuid = optionUUID
+    iconSelect.innerHTML = `
+        <option value="">No icon</option>
+        <option value="user">User-provided</option>
+        <option disabled>Built-in</option>
+        <option value="1-star_black">1 star (black)</option>
+        <option value="1-star_white">1 star (white)</option>
+        <option value="2-star_black">2 star (black)</option>
+        <option value="2-star_white">2 star (white)</option>
+        <option value="3-star_black">3 star (black)</option>
+        <option value="3-star_white">3 star (white)</option>
+        <option value="4-star_black">4 star (black)</option>
+        <option value="4-star_white">4 star (white)</option>
+        <option value="5-star_black">5 star (black)</option>
+        <option value="5-star_white">5 star (white)</option>
+        <option value="thumbs-down_black">Thumbs down (black)</option>
+        <option value="thumbs-down_red">Thumbs down (red)</option>
+        <option value="thumbs-down_white">Thumbs down (white)</option>
+        <option value="thumbs-up_black">Thumbs up (black)</option>
+        <option value="thumbs-up_green">Thumbs up (green)</option>
+        <option value="thumbs-up_white">Thumbs up (white)</option>
+      `
+    iconSelect.addEventListener('change', (ev) => {
+      setItemIcon(item.uuid, optionUUID, { icon: ev.target.value, icon_user_file: item?.options?.[optionUUID]?.icon_user_file ?? '' })
+    })
+    iconSelectCol.appendChild(iconSelect)
+
+    const iconInputCol = document.createElement('div')
+    iconInputCol.classList = 'col-12 col-md-6'
+    iconRow.appendChild(iconInputCol)
+
+    const iconFileInput = document.createElement('button')
+    iconFileInput.classList = 'btn btn-outline-primary w-100 icon-file-input'
+    iconFileInput.dataset.optionuuid = optionUUID
+    iconFileInput.innerText = 'Select file'
+    iconFileInput.addEventListener('click', () => {
+      exFileSelect.createFileSelectionModal({ multiple: false, filetypes: ['image'] })
+        .then((result) => {
+          if (result != null && result.length > 0) {
+            setItemIcon(item.uuid, optionUUID, { icon: 'user', icon_user_file: result[0] })
+          }
+        })
+    })
+    iconInputCol.appendChild(iconFileInput)
+    setItemIcon(item.uuid, optionUUID, {
+      icon: item?.options?.[optionUUID]?.icon ?? '',
+      icon_user_file: item?.options?.[optionUUID]?.icon_user_file
+    })
+  }
+
+  // Activate tooltips
+  const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+  tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl)
+  })
 }
 
 function createSurveyItemGUI (item) {
@@ -738,6 +1021,9 @@ function createSurveyItemGUIVote (item) {
     const addOptionButton = document.createElement('button')
     addOptionButton.classList = 'btn btn-primary'
     addOptionButton.innerText = 'Add option'
+    addOptionButton.addEventListener('click', () => {
+      createOption(item.uuid)
+    })
     addOptionCol.appendChild(addOptionButton)
 
     const optionsMultiCol = document.createElement('div')
@@ -783,227 +1069,13 @@ function createSurveyItemGUIVote (item) {
     optionsCol.classList = 'col-12'
     row.appendChild(optionsCol)
 
-    const defLang = exSetup.config.workingDefinition?.languages?.[code]?.items?.[item.uuid]?.options ?? {}
-
     // Create main accordion container
     const accord = document.createElement('div')
     accord.className = 'accordion mt-3'
     accord.id = `itemAccordion_${item.uuid}_${code}`
     optionsCol.appendChild(accord)
 
-    for (const optionUUID of item?.option_order ?? []) {
-      const optionText = exMarkdown.formatText(
-        defLang?.[optionUUID]?.text ?? '',
-        { string: true, removeParagraph: true }
-      )
-
-      // Create accordion-item
-      const accordItem = document.createElement('div')
-      accordItem.className = 'accordion-item'
-      accord.appendChild(accordItem)
-
-      // --- Header ---
-      const header = document.createElement('h2')
-      header.className = 'accordion-header'
-
-      const button = document.createElement('button')
-      button.className = 'accordion-button collapsed d-flex align-items-center'
-      button.type = 'button'
-      button.setAttribute('data-bs-toggle', 'collapse')
-      button.setAttribute('data-bs-target', `#itemOption_${optionUUID}_${code}`)
-      button.setAttribute('aria-expanded', 'false')
-      button.setAttribute('aria-controls', `itemOption_${optionUUID}_${code}`)
-
-      const nameSpan = document.createElement('span')
-      nameSpan.setAttribute('id', `itemOptionName_${optionUUID}_${code}`)
-      nameSpan.innerHTML = optionText
-      button.appendChild(nameSpan)
-
-      header.appendChild(button)
-      accordItem.appendChild(header)
-
-      const collapse = document.createElement('div')
-      collapse.className = 'accordion-collapse collapse'
-      collapse.id = `itemOption_${optionUUID}_${code}`
-      collapse.setAttribute('data-bs-parent', `#itemAccordion_${item.uuid}_${code}`)
-      accordItem.appendChild(collapse)
-
-      const body = document.createElement('div')
-      body.className = 'accordion-body'
-      collapse.appendChild(body)
-
-      // Widgets for editing the various parts of the option
-
-      const row = document.createElement('div')
-      row.classList = 'row gy-2 mt-2'
-      body.appendChild(row)
-
-      const toolsCol = document.createElement('div')
-      toolsCol.classList = 'col-12 d-flex'
-      toolsCol.innerHTML = `
-        <button
-        id="${item.uuid}_option_${optionUUID}_${code}_moveUpButton"
-        type="button"
-        class="btn btn-sm btn-outline-info"
-        >
-        ▲
-        </button>
-        <button
-          id="${item.uuid}_option_${optionUUID}_${code}_moveDownButton"
-          type="button"
-          class="btn btn-sm btn-outline-info ms-1"
-        >
-        ▼
-        </button>
-        <button
-          id="${item.uuid}_option_${optionUUID}_${code}_deleteButton"
-          type="button"
-          class="btn btn-sm btn-outline-danger ms-auto"
-        >
-        Delete
-        </button>
-      `
-      row.appendChild(toolsCol)
-
-      document.getElementById(`${item.uuid}_option_${optionUUID}_${code}_moveUpButton`).addEventListener('click', (ev) => {
-        changeOptionOrder(item.uuid, optionUUID, 'up')
-      })
-      document.getElementById(`${item.uuid}_option_${optionUUID}_${code}_moveDownButton`).addEventListener('click', (ev) => {
-        changeOptionOrder(item.uuid, optionUUID, 'down')
-      })
-
-      const textCol = document.createElement('div')
-      textCol.classList = 'col-6'
-      row.appendChild(textCol)
-
-      const textLabel = document.createElement('label')
-      textLabel.classList = 'form-label'
-      textLabel.innerHTML = 'Button text'
-      textCol.appendChild(textLabel)
-
-      const textCommandBar = document.createElement('div')
-      textCol.appendChild(textCommandBar)
-
-      const textInput = document.createElement('div')
-      textCol.appendChild(textInput)
-
-      const headerEditor = new exMarkdown.ExhibiteraMarkdownEditor({
-        content: exSetup.config.workingDefinition.languages?.[code]?.items?.[item.uuid]?.options?.[optionUUID]?.text ?? '',
-        editorDiv: textInput,
-        commandDiv: textCommandBar,
-        commands: ['basic'],
-        callback: (content) => {
-          exSetup.updateWorkingDefinition(['languages', code, 'items', item.uuid, 'options', optionUUID, 'text'], content)
-          document.getElementById(`itemOptionName_${optionUUID}_${code}`).innerHTML = exMarkdown.formatText(content, { string: true, removeParagraph: true })
-          exSetup.previewDefinition(true)
-        }
-      })
-
-      const valueCol = document.createElement('div')
-      valueCol.classList = 'col-6'
-      row.appendChild(valueCol)
-
-      const valueLabel = document.createElement('label')
-      valueLabel.classList = 'form-label'
-      valueLabel.innerHTML = `
-        Value
-        <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="How this option should appear in your data spreadsheet. E.g., 'two_stars'." style="font-size: 0.55em;">?</span>
-        `
-      valueCol.appendChild(valueLabel)
-
-      const valueInput = document.createElement('input')
-      valueInput.classList = 'form-control'
-      valueInput.setAttribute('type', 'text')
-      valueInput.value = item?.options?.[optionUUID]?.value ?? ''
-      valueInput.addEventListener('change', (ev) => {
-        exSetup.updateWorkingDefinition(['items', item.uuid, 'options', optionUUID, 'value'], ev.target.value)
-        exSetup.previewDefinition(true)
-      })
-      valueCol.appendChild(valueInput)
-
-      const backgroundCol = document.createElement('div')
-      backgroundCol.classList = 'col-12 advanced-color-picker'
-      backgroundCol.setAttribute('data-constACP-name', 'Background')
-      backgroundCol.setAttribute('data-constACP-path', `items>${item.uuid}>options>${optionUUID}>background`)
-      row.appendChild(backgroundCol)
-      exSetup.createAdvancedColorPicker(backgroundCol, 'Background', ['items', item.uuid, 'options', optionUUID, 'background'])
-
-      exSetup.updateAdvancedColorPicker(`items>${item.uuid}>options>${optionUUID}>background`, item?.options?.[optionUUID]?.background)
-
-      const iconCol = document.createElement('div')
-      iconCol.classList = 'col-12'
-      row.appendChild(iconCol)
-
-      const iconLabel = document.createElement('label')
-      iconLabel.classList = 'form-label'
-      iconLabel.innerHTML = 'Icon'
-      iconCol.appendChild(iconLabel)
-
-      const iconRow = document.createElement('div')
-      iconRow.classList = 'row gy-2'
-      iconCol.appendChild(iconRow)
-
-      const iconSelectCol = document.createElement('div')
-      iconSelectCol.classList = 'col-12 col-md-6'
-      iconRow.appendChild(iconSelectCol)
-
-      const iconSelect = document.createElement('select')
-      iconSelect.classList = 'form-select icon-select'
-      iconSelect.dataset.optionuuid = optionUUID
-      iconSelect.innerHTML = `
-        <option value="">No icon</option>
-        <option value="user">User-provided</option>
-        <option disabled>Built-in</option>
-        <option value="1-star_black">1 star (black)</option>
-        <option value="1-star_white">1 star (white)</option>
-        <option value="2-star_black">2 star (black)</option>
-        <option value="2-star_white">2 star (white)</option>
-        <option value="3-star_black">3 star (black)</option>
-        <option value="3-star_white">3 star (white)</option>
-        <option value="4-star_black">4 star (black)</option>
-        <option value="4-star_white">4 star (white)</option>
-        <option value="5-star_black">5 star (black)</option>
-        <option value="5-star_white">5 star (white)</option>
-        <option value="thumbs-down_black">Thumbs down (black)</option>
-        <option value="thumbs-down_red">Thumbs down (red)</option>
-        <option value="thumbs-down_white">Thumbs down (white)</option>
-        <option value="thumbs-up_black">Thumbs up (black)</option>
-        <option value="thumbs-up_green">Thumbs up (green)</option>
-        <option value="thumbs-up_white">Thumbs up (white)</option>
-      `
-      iconSelect.addEventListener('change', (ev) => {
-        setItemIcon(item.uuid, optionUUID, { icon: ev.target.value, icon_user_file: item?.options?.[optionUUID]?.icon_user_file ?? '' })
-      })
-      iconSelectCol.appendChild(iconSelect)
-
-      const iconInputCol = document.createElement('div')
-      iconInputCol.classList = 'col-12 col-md-6'
-      iconRow.appendChild(iconInputCol)
-
-      const iconFileInput = document.createElement('button')
-      iconFileInput.classList = 'btn btn-outline-primary w-100 icon-file-input'
-      iconFileInput.dataset.optionuuid = optionUUID
-      iconFileInput.innerText = 'Select file'
-      iconFileInput.addEventListener('click', () => {
-        exFileSelect.createFileSelectionModal({ multiple: false, filetypes: ['image'] })
-          .then((result) => {
-            if (result != null && result.length > 0) {
-              setItemIcon(item.uuid, optionUUID, { icon: 'user', icon_user_file: result[0] })
-            }
-          })
-      })
-      iconInputCol.appendChild(iconFileInput)
-      setItemIcon(item.uuid, optionUUID, {
-        icon: item?.options?.[optionUUID]?.icon ?? '',
-        icon_user_file: item?.options?.[optionUUID]?.icon_user_file
-      })
-    }
-
-    // Activate tooltips
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-    tooltipTriggerList.map(function (tooltipTriggerEl) {
-      return new bootstrap.Tooltip(tooltipTriggerEl)
-    })
+    rebuildOptions(item.uuid, code)
 
     if (first) {
       tabButton.click()
@@ -1086,175 +1158,8 @@ function changeOptionOrder (itemUUID, optionUUID, dir) {
   order[index] = temp
 
   exSetup.updateWorkingDefinition(['items', itemUUID, 'option_order'], order)
-  rebuildOptions(itemUUID)
-}
-
-function formatOptionHeader (details) {
-  // Return a string that labels the option with the best information we have
-  if (details.label !== '') return details.label
-  if (details.value !== '') return details.value
-  if (details.icon !== '') {
-    if (details.icon === 'user' && details.icon_user_file !== '') return details.icon_user_file
-    return details.icon
-  }
-  return 'New Option'
-}
-
-function createSurveyOptionGUI (userDetails, populateEditor = false) {
-  // Create the HTML representation of a survey question and add it to the row.
-
-  const optionOrder = exSetup.config.workingDefinition.option_order
-
-  const defaults = {
-    uuid: exUtilities.uuid(),
-    label: '',
-    value: '',
-    icon: '',
-    icon_user_file: ''
-  }
-  // Merge in user details
-  const details = { ...defaults, ...userDetails }
-
-  if (optionOrder.includes(details.uuid) === false) {
-    optionOrder.push(details.uuid)
-    exSetup.updateWorkingDefinition(['option_order', optionOrder])
-    for (const key of Object.keys(defaults)) {
-      exSetup.updateWorkingDefinition(['options', details.uuid, key], details[key])
-    }
-  }
-
-  const col = document.createElement('div')
-  col.setAttribute('id', 'Option_' + details.uuid)
-  col.classList = 'col col-12 mt-2'
-
-  const container = document.createElement('div')
-  container.classList = 'mx-3'
-  col.appendChild(container)
-
-  const topRow = document.createElement('div')
-  topRow.classList = 'row'
-  container.appendChild(topRow)
-
-  const headerCol = document.createElement('div')
-  headerCol.classList = 'col-12 bg-secondary rounded-top'
-  topRow.appendChild(headerCol)
-
-  const headerText = document.createElement('div')
-  headerText.setAttribute('id', 'OptionHeaderText_' + details.uuid)
-  headerText.classList = 'text-light w-100 text-center font-weight-bold'
-  headerText.innerHTML = formatOptionHeader(details) || 'New option'
-  headerCol.appendChild(headerText)
-
-  const bottomRow = document.createElement('div')
-  bottomRow.classList = 'row'
-  container.appendChild(bottomRow)
-
-  const editCol = document.createElement('div')
-  editCol.classList = 'col-12 col-sm-6 col-lg-3 mx-0 px-0'
-  bottomRow.appendChild(editCol)
-
-  const editButton = document.createElement('button')
-  editButton.classList = 'btn btn-sm rounded-0 text-light bg-info w-100 h-100 justify-content-center d-flex pl-1'
-  editButton.style.cursor = 'pointer'
-  editButton.innerHTML = 'Edit'
-  editButton.addEventListener('click', () => {
-    populateOptionEditor(details.uuid)
-  })
-  editCol.appendChild(editButton)
-
-  const deleteCol = document.createElement('div')
-  deleteCol.classList = 'col-12 col-sm-6 col-lg-3 mx-0 px-0'
-  bottomRow.appendChild(deleteCol)
-
-  const deleteButton = document.createElement('button')
-  deleteButton.classList = 'btn btn-sm rounded-0 text-light bg-danger w-100 h-100 justify-content-center d-flex pl-1'
-  deleteButton.style.cursor = 'pointer'
-  deleteButton.innerHTML = 'Delete'
-  deleteButton.setAttribute('data-bs-toggle', 'popover')
-  deleteButton.setAttribute('title', 'Are you sure?')
-  deleteButton.setAttribute('data-bs-content', `<a id="DeleteOptionPopover_${details.uuid}" class="btn btn-danger w-100">Confirm</a>`)
-  deleteButton.setAttribute('data-bs-trigger', 'focus')
-  deleteButton.setAttribute('data-bs-html', 'true')
-  document.addEventListener('click', (event) => {
-    if (event?.target?.id === 'DeleteOptionPopover_' + details.uuid) {
-      deleteOption(details.uuid)
-    }
-  })
-  deleteButton.addEventListener('click', function () { deleteButton.focus() })
-  deleteCol.appendChild(deleteButton)
-
-  const leftArrowCol = document.createElement('div')
-  leftArrowCol.classList = 'col-6 col-lg-3 mx-0 px-0'
-  bottomRow.appendChild(leftArrowCol)
-
-  const leftArrowButton = document.createElement('button')
-  leftArrowButton.classList = 'btn btn-sm rounded-0 text-light bg-primary w-100 h-100 justify-content-center d-flex'
-  leftArrowButton.style.cursor = 'pointer'
-  leftArrowButton.innerHTML = '▲'
-  leftArrowButton.addEventListener('click', () => {
-    changeOptionOrder(details.uuid, -1)
-  })
-  leftArrowCol.appendChild(leftArrowButton)
-
-  const RightArrowCol = document.createElement('div')
-  RightArrowCol.classList = 'col-6 col-lg-3 mx-0 px-0'
-  bottomRow.appendChild(RightArrowCol)
-
-  const rightArrowButton = document.createElement('button')
-  rightArrowButton.classList = 'btn btn-sm rounded-0 text-light bg-primary w-100 h-100 justify-content-center d-flex'
-  rightArrowButton.style.cursor = 'pointer'
-  rightArrowButton.innerHTML = '▼'
-  rightArrowButton.addEventListener('click', () => {
-    changeOptionOrder(details.uuid, 1)
-  })
-  RightArrowCol.appendChild(rightArrowButton)
-
-  document.getElementById('optionRow').appendChild(col)
-
-  if (populateEditor === true) {
-    populateOptionEditor(details.uuid)
-  }
-
-  // Activate the popover
-  const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
-  popoverTriggerList.map(function (popoverTriggerEl) {
-    return new bootstrap.Popover(popoverTriggerEl)
-  })
-}
-
-function populateOptionEditor (id) {
-  // Take the details from an option and fill in the editor GUI
-
-  const workingDefinition = exSetup.config.workingDefinition
-  const details = workingDefinition.options[id]
-  document.getElementById('optionEditor').setAttribute('data-option-id', id)
-
-  // Fill in the input fields
-  const editor = new exMarkdown.ExhibiteraMarkdownEditor({
-    content: details?.label ?? '',
-    editorDiv: document.getElementById('optionInput_label'),
-    commandDiv: document.getElementById('optionInputCommandBar_label'),
-    commands: ['basic'],
-    callback: (content) => {
-      exSetup.updateWorkingDefinition(['options', id, 'label'], content)
-      exSetup.previewDefinition(true)
-    }
-  })
-  document.getElementById('optionInput_value').value = details.value
-  document.getElementById('optionInput_icon').value = details.icon
-  setIconUserFile(details.icon_user_file)
-}
-
-function setIconUserFile (file = '') {
-  // Set the icon_user_file style option and format the GUI to match.
-  if (file !== '') {
-    document.getElementById('optionInput_icon_user_file').innerHTML = file
-    document.getElementById('optionInput_icon_user_file_DeleteButtonCol').style.display = 'block'
-    document.getElementById('optionInput_icon_user_file_Col').classList.add('col-lg-9')
-  } else {
-    document.getElementById('optionInput_icon_user_file').innerHTML = 'Select file'
-    document.getElementById('optionInput_icon_user_file_DeleteButtonCol').style.display = 'none'
-    document.getElementById('optionInput_icon_user_file_Col').classList.remove('col-lg-9')
+  for (const code of exSetup.config.workingDefinition?.language_order ?? []) {
+    rebuildOptions(itemUUID, code)
   }
 }
 
