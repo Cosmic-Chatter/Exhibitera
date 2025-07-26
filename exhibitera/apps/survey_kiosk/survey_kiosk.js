@@ -41,18 +41,23 @@ function buildLayoutVote (index) {
   const options = currentDefinition?.items?.[uuid]?.option_order ?? []
   const itemPane = document.getElementById('itemPane')
 
+  if (thisItem?.randomize_options ?? false) {
+    // Shuffle the array
+    for (let i = options.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      // Swap elements i and j
+      [options[i], options[j]] = [options[j], options[i]]
+    }
+  }
+
   const question = document.createElement('div')
   question.classList = 'text-center question'
   question.innerHTML = exMarkdown.formatText(currentDefinition.languages?.[currentLang]?.items?.[uuid]?.header?.text, { string: true, removeParagraph: true })
   itemPane.appendChild(question)
 
   let nCols
-  if ('num_columns' in currentDefinition.style.layout) {
-    if (currentDefinition.style.layout.num_columns !== 'auto') {
-      nCols = parseInt(currentDefinition.style.layout.num_columns)
-    } else {
-      nCols = calculateButtonRows(options)
-    }
+  if ((thisItem?.num_columns ?? 'auto') !== 'auto') {
+    nCols = parseInt(thisItem.num_columns)
   } else {
     nCols = calculateButtonRows(options)
   }

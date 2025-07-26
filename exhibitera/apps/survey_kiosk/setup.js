@@ -930,8 +930,68 @@ function createSurveyItemGUIVote (item) {
   // Create GUI elements for a voting survey item
 
   const nav = document.getElementById(item.uuid + '_accordion_tabs')
+  nav.classList.add('mt-3')
   const pane = document.getElementById(item.uuid + '_accordion_content')
 
+  // First, insert language-independant options before the nav.
+  const row = document.createElement('div')
+  row.classList = 'row gy-2 mt-2'
+  nav.parentElement.insertBefore(row, nav)
+
+  const layoutCol = document.createElement('div')
+  layoutCol.classList = 'col-12 col-md-6'
+  row.appendChild(layoutCol)
+
+  const layoutLabel = document.createElement('label')
+  layoutLabel.classList = 'form-label'
+  layoutLabel.innerHTML = 'Options per row'
+  layoutCol.appendChild(layoutLabel)
+
+  const layoutSelect = document.createElement('select')
+  layoutSelect.classList = 'form-select'
+  layoutSelect.addEventListener('change', (ev) => {
+    exSetup.updateWorkingDefinition(['items', item.uuid, 'num_columns'], ev.target.value)
+    exSetup.previewDefinition(true)
+  })
+  layoutCol.appendChild(layoutSelect)
+
+  const autoOption = new Option('Automatic', 'auto')
+  layoutSelect.appendChild(autoOption)
+
+  for (const op of ['1', '2', '3', '4', '5', '6', '7', '8']) {
+    layoutSelect.appendChild(new Option(op))
+  }
+  layoutSelect.value = item?.num_columns ?? 'auto'
+
+  const randomCol = document.createElement('div')
+  randomCol.classList = 'col-12 col-md-6'
+  row.appendChild(randomCol)
+
+  const randomCheckGroup = document.createElement('div')
+  randomCheckGroup.classList = 'form-check'
+  randomCol.appendChild(randomCheckGroup)
+
+  const randomCheck = document.createElement('input')
+  randomCheck.classList = 'form-check-input mutli-checkbox'
+  randomCheck.setAttribute('type', 'checkbox')
+  randomCheck.value = ''
+  randomCheck.id = 'randomCheck_' + item.uuid
+  randomCheck.dataset.itemuuid = item.uuid
+  randomCheck.checked = item?.randomize_options ?? false
+  randomCheckGroup.appendChild(randomCheck)
+  randomCheck.addEventListener('change', (ev) => {
+    exSetup.updateWorkingDefinition(['items', item.uuid, 'randomize_options'], ev.target.checked)
+    exSetup.previewDefinition(true)
+  })
+
+  const randomCheckLabel = document.createElement('label')
+  randomCheckLabel.classList = 'form-check-label'
+  randomCheckLabel.setAttribute('for', 'randomCheck_' + item.uuid)
+  randomCheckLabel.innerHTML = 'Randomize options'
+
+  randomCheckGroup.appendChild(randomCheckLabel)
+
+  // Build out the nav and pane for each language
   let first = true
   for (const code of exSetup.config.workingDefinition?.language_order ?? []) {
     // Create the tab button
