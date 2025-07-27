@@ -4,13 +4,11 @@
     --button-touched-color: #706F8E;
     --success-message-color: #393A5A;
     --header-color: white;
-    --footer-color: white;
     --button-text-color: white;
     --header-font: 'header-default';
     --footer-font: 'footer-default';
     --button-font: "button-default";
     --header-font-adjust: 0;
-    --footer-font-adjust: 0;
     --button-font-adjust: 0;
     --image-height: 90;
     --text-margin: 10;
@@ -18,10 +16,6 @@
 
 @font-face {
     font-family: "header-default";
-    src: url("../_fonts/OpenSans-Bold.ttf");
-}
-@font-face {
-    font-family: "footer-default";
     src: url("../_fonts/OpenSans-Bold.ttf");
 }
 @font-face {

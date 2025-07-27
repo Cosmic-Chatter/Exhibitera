@@ -19,39 +19,31 @@ body {
     max-height: 100%;
 }
 
-.card {
+.option {
     font-family: var(--button-font);
     border-radius: 2vmin!important;
     background: var(--button-color);
 }
-.card-inactive {
+.option-inactive {
     transition: .5s ease-in-out all;
 }
-.card-active {
+.option-active {
     outline: solid 0.5vmin white;
     transition: .1s ease-in-out all;
 }
-.card-body-full-landscape {
-    min-height: 15vh;
-    color: var(--button-text-color);
-}
-
-.card-body-full-portrait {
-    min-height: 10vh;
-    color: var(--button-text-color);
-}
-
-.card-body-empty {
-    height: 0vh;
-}
-
-.card-img-empty {
-    height: 0vh;
-}
-
 .option-image {
+    max-width: 100%;
+    max-height: 100%;
+    height: auto;
     width: 100%;
     object-fit: contain;
+}
+.option-image-container {
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     padding: 5%;
 }
 
@@ -88,8 +80,9 @@ body {
                                     supported by Chrome, Edge, Opera and Firefox */
 }
 .question {
-    color: white;
-    font-size: 5vmin;
+    color: var(--header-color);
+    font-size: calc(5vmin + var(--header-font-adjust)*1vmin);
+    font-family: var(--header-font);
     padding-top: 2vmin;
     padding-bottom: 2vmin;
 }
@@ -151,24 +144,6 @@ body {
     opacity: 0;
 }
 
-#footer {
-    text-align: center;
-    width: 100%;
-    font-size: calc(3vmax + var(--footer-font-adjust)*1vmax);
-    font-weight: bold;
-    color: var(--footer-color);
-    font-family: var(--footer-font);
-}
-
-#header {
-    text-align: center;
-    width: 100%;
-    font-size: calc(5vmax + var(--header-font-adjust)*1vmax);
-    font-weight: bold;
-    color: var(--header-color);
-    font-family: var(--header-font);
-}
-
 #inactivityHeader {
     font-size: 4vmin;
 }
@@ -193,11 +168,17 @@ body {
 }
 
 @media (orientation: portrait) {
+    .question {
+        height: 10%;
+    }
     #bottomRow {
         height: 6vh;
     }
     #itemDiv {
         height: 94vh;
+    }
+    #cardRow {
+        height: 90%;
     }
   }
   

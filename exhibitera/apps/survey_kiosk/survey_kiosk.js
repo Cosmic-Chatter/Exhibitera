@@ -52,10 +52,13 @@ function buildLayoutVote (index) {
     }
   }
 
+  const questionDiv = document.createElement('div')
+  questionDiv.classList = 'text-center question d-flex align-items-center justify-content-center'
+  itemPane.appendChild(questionDiv)
+
   const question = document.createElement('div')
-  question.classList = 'text-center question'
   question.innerHTML = exMarkdown.formatText(currentDefinition.languages?.[currentLang]?.items?.[uuid]?.header?.text, { string: true, removeParagraph: true })
-  itemPane.appendChild(question)
+  questionDiv.appendChild(question)
 
   let nCols
   if ((thisItem?.num_columns ?? 'auto') !== 'auto') {
@@ -80,8 +83,8 @@ function buildLayoutVote (index) {
   for (const option of options) {
     const buttonDef = thisItem.options[option]
     const buttonLang = currentDefinition.languages?.[currentLang]?.items?.[uuid]?.options?.[option]
-    imagePresent = (buttonDef?.icon ?? '') !== ''
-    textPresent = (buttonLang?.text ?? '').trim() !== ''
+    if ((buttonDef?.icon ?? '') !== '') imagePresent = true
+    if ((buttonLang?.text ?? '').trim() !== '') textPresent = true
   }
 
   // Iterate through the buttons and build their HTML
@@ -90,6 +93,7 @@ function buildLayoutVote (index) {
     const buttonLang = currentDefinition.languages?.[currentLang]?.items?.[uuid]?.options?.[option]
     // Get a string for the column name, in order of preference
     const value = buttonDef?.value || buttonDef?.text || option
+    const thisTextPresent = (buttonLang?.text ?? '').trim() !== ''
 
     const div = document.createElement('div')
     div.classList = 'button-col mx-0 px-1 col'
@@ -97,9 +101,11 @@ function buildLayoutVote (index) {
     cardRow.appendChild(div)
 
     const card = document.createElement('div')
-    card.classList = 'card card-inactive h-100 d-flex flex-column align-items-center'
+    card.classList = 'option option-inactive h-100 d-flex flex-column align-items-center'
     if (imagePresent) {
-      card.classList.add('justify-content-between')
+      if (thisTextPresent) {
+        card.classList.add('justify-content-end')
+      } else card.classList.add('justify-content-center')
     } else card.classList.add('justify-content-center')
     card.dataset.value = value
     if (buttonDef.background) {
@@ -107,27 +113,17 @@ function buildLayoutVote (index) {
     }
     div.appendChild(card)
 
-    const thisTextPresent = (buttonLang?.text ?? '').trim() !== ''
-
-    if (imagePresent && thisTextPresent) {
-      // If there is an image, we are going to add an invisible copy of the text
-      // above any image so that the flex column lays everything out correctly
-
-      const text = document.createElement('div')
-      text.classList = 'd-flex align-items-center justify-content-center'
-      text.style.height = '20%'
-      card.appendChild(text)
-
-      const title = document.createElement('div')
-      title.classList = 'option-text noselect'
-      title.style.opacity = 0
-
-      title.innerHTML = exMarkdown.formatText(buttonLang.text, { removeParagraph: true, string: true })
-      text.appendChild(title)
-    }
-
     if ((buttonDef?.icon ?? '') !== '') {
+      const imgDiv = document.createElement('div')
+      imgDiv.classList = 'option-image-container'
+
+      const imgDiv2 = document.createElement('div')
+      imgDiv2.classList = 'h-100 d-flex justify-content-center'
+      imgDiv.appendChild(imgDiv2)
+
       const img = document.createElement('img')
+      img.classList = 'option-image'
+      imgDiv2.appendChild(img)
       if (buttonDef.icon === 'user') {
         img.src = getIcon(buttonDef.icon_user_file)
       } else {
@@ -135,10 +131,9 @@ function buildLayoutVote (index) {
         img.src = getIcon(buttonDef.icon)
       }
       if (textPresent) {
-        img.style.height = '60%'
-      } else img.style.height = '100%'
-      img.classList = 'option-image'
-      card.appendChild(img)
+        imgDiv.style.height = '60%'
+      }
+      card.appendChild(imgDiv)
     }
 
     if (thisTextPresent) {
@@ -160,7 +155,6 @@ function buildLayoutVote (index) {
   const optionTexts = document.getElementsByClassName('option-text')
   if (optionTexts.length > 0) {
     const fontSize = parseFloat(window.getComputedStyle(optionTexts[0], null).getPropertyValue('font-size'))
-    console.log(fontSize)
     try {
       textFit(optionTexts, { maxFontSize: fontSize })
       // Sometimes need to run twice on first load
@@ -286,21 +280,21 @@ function buttonTouched (button, name, index) {
 
   setActive()
 
-  const card = button.querySelector('.card')
-  card.classList.toggle('card-inactive')
-  card.classList.toggle('card-active')
+  const card = button.querySelector('.option')
+  card.classList.toggle('option-inactive')
+  card.classList.toggle('option-active')
 
   if (thisItem.type === 'single_vote') {
     setTimeout(() => {
-      card.classList.toggle('card-active')
-      card.classList.toggle('card-inactive')
+      card.classList.toggle('option-active')
+      card.classList.toggle('option-inactive')
     }, 500)
     response[thisItem.value] = name
     if (lastItem === false) buildLayout(index + 1)
   } else {
     // Enable/disable the next button
     const nextButton = itemPane.querySelector('.next-button')
-    if (itemPane.querySelectorAll('.card-active').length > 0) {
+    if (itemPane.querySelectorAll('.option-active').length > 0) {
       nextButton.classList.remove('disabled')
       nextButton.style.opacity = 1
     } else {
@@ -319,7 +313,7 @@ function nextButtonTouched (index) {
   const itemPane = document.getElementById('itemPane')
 
   if (thisItem.type === 'multiple_vote') {
-    const selected = itemPane.querySelectorAll('.card-active')
+    const selected = itemPane.querySelectorAll('.option-active')
     const answers = []
     for (const el of selected) answers.push(el.dataset.value)
     response[thisItem.value] = answers
