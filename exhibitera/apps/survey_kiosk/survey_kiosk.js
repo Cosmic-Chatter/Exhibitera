@@ -176,7 +176,7 @@ function buildLayoutVote (index) {
   if (thisItem.type === 'multiple_vote') {
     const nextButton = document.createElement('button')
     nextButton.innerHTML = currentDefinition.languages?.[currentLang]?.items?.[uuid]?.next_button?.text ?? 'Next'
-    nextButton.classList = 'btn btn-success noselect next-button disabled'
+    nextButton.classList = 'btn noselect next-button disabled'
     nextButton.style.opacity = 0
     nextButton.addEventListener('click', () => {
       nextButtonTouched(index)
@@ -208,7 +208,7 @@ function buildLayoutText (index) {
 
   const nextButton = document.createElement('button')
   nextButton.innerHTML = currentDefinition.languages?.[currentLang]?.items?.[uuid]?.next_button?.text || 'Next' // Convert empty string '' to 'Next' too
-  nextButton.classList = 'btn btn-success noselect next-button'
+  nextButton.classList = 'btn noselect next-button'
   nextButton.addEventListener('click', () => {
     nextButtonTouched(index)
   })
@@ -430,8 +430,9 @@ function loadDefinition (definition) {
 
   // First, reset to defaults (in case a style option doesn't exist in the definition)
   root.style.setProperty('--header-font', 'header-default')
-  root.style.setProperty('--footer-font', 'footer-default')
+  root.style.setProperty('--body-font', 'body-default')
   root.style.setProperty('--button-font', 'button-default')
+  root.style.setProperty('--next-font', 'next-default')
 
   // Then, apply the definition settings
   for (const key of Object.keys(definition.style.font)) {
@@ -444,7 +445,6 @@ function loadDefinition (definition) {
 
   // First, reset to defaults (in case a style option doesn't exist in the definition)
   root.style.setProperty('--header-font-adjust', 0)
-  root.style.setProperty('--footer-font-adjust', 0)
   root.style.setProperty('--button-font-adjust', 0)
 
   // Then, apply the definition settings

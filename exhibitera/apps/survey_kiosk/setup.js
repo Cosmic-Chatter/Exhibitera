@@ -292,12 +292,12 @@ async function clearDefinitionInput (full = true) {
   // })
 
   // Reset color options
-  const colorInputs = ['button-color', 'button-touched-color', 'success-message-color', 'header-color', 'subheader-color', 'footer-color', 'subfooter-color', 'button-text-color']
-  colorInputs.forEach((input) => {
+  const colorInputs = ['button-color', 'button-selected-color', 'next-button-color', 'header-color', 'button-text-color', 'next-button-text-color', 'body-text-color', 'active-dot-color', 'inactive-dot-color']
+  for (const input of colorInputs) {
     const el = document.getElementById('colorPicker_' + input)
     el.value = el.dataset.default
     el.dispatchEvent(new Event('input', { bubbles: true }))
-  })
+  }
   exSetup.updateAdvancedColorPicker('style>background', {
     mode: 'color',
     color: '#22222E'
@@ -308,10 +308,8 @@ async function clearDefinitionInput (full = true) {
 
   // Reset text size options
   document.getElementById('headerTextSizeSlider').value = 0
-  document.getElementById('subheaderTextSizeSlider').value = 0
-  document.getElementById('footerTextSizeSlider').value = 0
-  document.getElementById('subfooterTextSizeSlider').value = 0
   document.getElementById('buttonTextSizeSlider').value = 0
+  document.getElementById('nextButtonTextSizeSlider').value = 0
 
   exSetup.createAdvancedSliders()
 }

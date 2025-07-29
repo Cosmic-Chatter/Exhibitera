@@ -28,7 +28,7 @@ body {
     transition: .5s ease-in-out all;
 }
 .option-active {
-    outline: solid 0.5vmin white;
+    outline: solid 0.5vmin var(--button-selected-color);
     transition: .1s ease-in-out all;
 }
 .option-image {
@@ -47,13 +47,6 @@ body {
     padding: 5%;
 }
 
-.card-text {
-    font-size: 2vmax;
-    padding-left: 5%;
-    padding-right: 5%;
-    overflow: hidden;
-}
-
 .option-text {
     font-size: calc(3vmax + var(--button-font-adjust)*1vmax);
     text-align: center;
@@ -67,7 +60,21 @@ body {
 
 .next-button {
     margin-bottom: 2vmin;
-    font-size: 2vmax;
+    font-size: calc(2vmax + var(--next-font-adjust)*1vmax);
+    text-align: center;
+    color: var(--next-button-text-color);
+    background-color: var(--next-button-color);
+    font-family: var(--next-font);
+}
+.next-button:hover {
+    filter: brightness(90%);
+    background-color: var(--next-button-color);
+    color: var(--next-button-text-color);
+}
+.next-button:active {
+    filter: brightness(80%);
+    background-color: var(--next-button-color);
+    color: var(--next-button-text-color);
 }
 
 .noselect {
@@ -93,7 +100,7 @@ body {
   width: 1.5vmin;
   height: 1.5vmin;
   border-radius: 50%;
-  background-color: #6c757d; /* Bootstrap secondary color */
+  background-color: var(--inactive-dot-color);
   margin: 0.95vmin;
   transition: all 0.3s ease;
 }
@@ -103,12 +110,16 @@ body {
   height: 3vmin;
   margin: 0.2vmin;
   /* border-radius: 10px; */
-  background-color: #0d6efd; /* Bootstrap primary color */
+  background-color: var(--active-dot-color);
 }
 
 .text-item {
     margin-left: calc(var(--text-margin) * 1vw);
     margin-right: calc(var(--text-margin) * 1vw);
+    color: var(--body-text-color);
+    font-family: var(--body-font);
+    font-size: 2vmax;
+    overflow-y: auto;
 }
 
 #bottomRow {

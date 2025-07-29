@@ -1,16 +1,21 @@
 :root {
     --background-color: #22222E;
     --button-color: #393A5A;
-    --button-touched-color: #706F8E;
-    --success-message-color: #393A5A;
+    --next-button-color: #198754;
+    --body-text-color: #fff;
+    --button-selected-color: #fff;
     --header-color: white;
     --button-text-color: white;
+    --next-button-text-color: white;
+    --active-dot-color: #0d6efd;
+    --inactive-dot-color: #6c757d;
     --header-font: 'header-default';
-    --footer-font: 'footer-default';
+    --body-font: 'body-default';
     --button-font: "button-default";
+    --button-font: "next-default";
     --header-font-adjust: 0;
     --button-font-adjust: 0;
-    --image-height: 90;
+    --next-font-adjust: 0;
     --text-margin: 10;
 }
 
@@ -21,4 +26,12 @@
 @font-face {
     font-family: "button-default";
     src: url("../_fonts/OpenSans-Bold.ttf");
+}
+@font-face {
+    font-family: "body-default";
+    src: url("../_fonts/OpenSans-Regular.ttf");
+}
+@font-face {
+    font-family: "next-default";
+    src: url("../_fonts/OpenSans-Regular.ttf");
 }
