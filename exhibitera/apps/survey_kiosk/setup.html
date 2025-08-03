@@ -461,7 +461,8 @@
                    
                   <h4>Colors</h4>
                   <div class="row gy-2 mb-3">
-                    <div class="col-12 col-lg-8 advanced-color-picker" data-constACP-name="Background" data-constACP-path="style>background"></div>
+                    <div class="col-12 col-lg-8 advanced-color-picker" data-constACP-name="App background" data-constACP-path="style>background"></div>
+                    <div class="col-12 col-lg-8 advanced-color-picker" data-constACP-name="Survey item background" data-constACP-path="style>item_background"></div>
                     <div class="col-12 col-sm-6 col-lg-4">
                       <label for="colorPicker_button-color" class="form-label">Button detault</label>
                       <div>
@@ -477,7 +478,13 @@
                     <div class="col-12 col-sm-6 col-lg-4">
                       <label for="colorPicker_next-button-color" class="form-label">Next button</label>
                       <div>
-                        <input id="colorPicker_next-button-color" type="text" class="coloris color-picker form-control" value="#528e54" data-property="next-button-color" data-default="#198754">
+                        <input id="colorPicker_next-button-color" type="text" class="coloris color-picker form-control" value="#198754" data-property="next-button-color" data-default="#198754">
+                      </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-lg-4">
+                      <label for="colorPicker_restart-button-color" class="form-label">Restart button</label>
+                      <div>
+                        <input id="colorPicker_restart-button-color" type="text" class="coloris color-picker form-control" value="#6c757d" data-property="restart-button-color" data-default="#6c757d">
                       </div>
                     </div>
                     <div class="col-12 col-sm-6 col-lg-4">
@@ -496,6 +503,12 @@
                       <label for="colorPicker_next-button-text-color" class="form-label">Next button text</label>
                       <div>
                         <input id="colorPicker_next-button-text-color" type="text" class="coloris color-picker form-control" value="#fff" data-property="next-button-text-color" data-default="#fff">
+                      </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-lg-4">
+                      <label for="colorPicker_restart-button-text-color" class="form-label">Restart button text</label>
+                      <div>
+                        <input id="colorPicker_restart-button-text-color" type="text" class="coloris color-picker form-control" value="#fff" data-property="restart-button-text-color" data-default="#fff">
                       </div>
                     </div>
                     <div class="col-12 col-sm-6 col-lg-4">
@@ -532,6 +545,8 @@
                     <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Body text" data-constAFP-path="style>font>body" data-default="OpenSans-Regular.ttf"></div>
 
                     <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Next button" data-constAFP-path="style>font>next" data-default="OpenSans-Regular.ttf"></div>
+
+                    <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Restart button" data-constAFP-path="style>font>restart" data-default="OpenSans-Regular.ttf"></div>
                   </div>
 
                   <h4 class="mt-2">Text size</h4>
@@ -547,6 +562,10 @@
                     <div class="col-12 col-md-6 col-lg-4">
                       <label for="nextButtonTextSizeSlider" class="form-label">Next button</label>
                       <input id="nextButtonTextSizeSlider" type="range" class="form-range text-size-slider" data-property="next" min="-1", max="3" start="0" step="0.5">
+                    </div>
+                    <div class="col-12 col-md-6 col-lg-4">
+                      <label for="restartButtonTextSizeSlider" class="form-label">Restart button</label>
+                      <input id="restartButtonTextSizeSlider" type="range" class="form-range text-size-slider" data-property="restart" min="-1", max="1" start="0" step="0.5">
                     </div>
                   </div>
                 </div>

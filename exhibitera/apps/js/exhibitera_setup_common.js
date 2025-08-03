@@ -705,11 +705,11 @@ export function createAdvancedColorPickers () {
   // Look for advanced-color-picker elements and fill them with the combo widget.
   // Note that this will replace existing ACPs, resetting them to the detaul values.
 
-  Array.from(document.querySelectorAll('.advanced-color-picker')).forEach((el) => {
+  for (const el of document.querySelectorAll('.advanced-color-picker')) {
     const name = el.getAttribute('data-constACP-name')
     const path = el.getAttribute('data-constACP-path').split('>')
     createAdvancedColorPicker(el, name, path)
-  })
+  }
 }
 
 export function createAdvancedColorPicker (el, name, path) {

@@ -146,6 +146,7 @@ body {
     margin-right: 2vmin;
     opacity: 1;
     overflow: hidden;
+    background: var(--item_background)
 }
 
 .item-collapsed {
@@ -165,7 +166,21 @@ body {
 }
 
 #restartButton {
-    font-size: 2vmax;
+    font-size: calc(2vmax + var(--restart-font-adjust)*1vmax);
+    text-align: center;
+    color: var(--restart-button-text-color);
+    background-color: var(--restart-button-color);
+    font-family: var(--restart-font);
+}
+#restartButton:hover {
+    filter: brightness(90%);
+    background-color: var(--restart-button-color);
+    color: var(--restart-button-text-color);
+}
+#restartButton:active {
+    filter: brightness(80%);
+    background-color: var(--restart-button-color);
+    color: var(--restart-button-text-color);
 }
 
 #successMessageBody {

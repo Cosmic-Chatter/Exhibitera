@@ -292,13 +292,17 @@ async function clearDefinitionInput (full = true) {
   // })
 
   // Reset color options
-  const colorInputs = ['button-color', 'button-selected-color', 'next-button-color', 'header-color', 'button-text-color', 'next-button-text-color', 'body-text-color', 'active-dot-color', 'inactive-dot-color']
+  const colorInputs = ['button-color', 'button-selected-color', 'next-button-color', 'restart-button-color', 'header-color', 'button-text-color', 'next-button-text-color', 'restart-button-text-color', 'body-text-color', 'active-dot-color', 'inactive-dot-color']
   for (const input of colorInputs) {
     const el = document.getElementById('colorPicker_' + input)
     el.value = el.dataset.default
     el.dispatchEvent(new Event('input', { bubbles: true }))
   }
   exSetup.updateAdvancedColorPicker('style>background', {
+    mode: 'color',
+    color: '#fff'
+  })
+  exSetup.updateAdvancedColorPicker('style>item_background', {
     mode: 'color',
     color: '#22222E'
   })
@@ -355,7 +359,8 @@ function editDefinition (uuid = '') {
   //   }
   // })
 
-  exSetup.updateAdvancedColorPicker('style>background', def?.style?.background, { mode: 'color', color: '#22222E' })
+  exSetup.updateAdvancedColorPicker('style>background', def?.style?.background, { mode: 'color', color: '#fff' })
+  exSetup.updateAdvancedColorPicker('style>item_background', def?.style?.item_background, { mode: 'color', color: '#22222E' })
   exSetup.updateColorPickers(def?.style?.color ?? {})
   exSetup.updateAdvancedFontPickers(def?.style?.font ?? {})
   exSetup.updateTextSizeSliders(def?.style?.text_size ?? {})

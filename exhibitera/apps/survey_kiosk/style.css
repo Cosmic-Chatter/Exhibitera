@@ -1,21 +1,26 @@
 :root {
-    --background-color: #22222E;
+    --background-color: #fff;
+    --item_background: #22222E;
     --button-color: #393A5A;
     --next-button-color: #198754;
+    --restart-button-color: #6c757d;
     --body-text-color: #fff;
     --button-selected-color: #fff;
     --header-color: white;
     --button-text-color: white;
     --next-button-text-color: white;
+    --restart-button-text-color: white;
     --active-dot-color: #0d6efd;
     --inactive-dot-color: #6c757d;
     --header-font: 'header-default';
     --body-font: 'body-default';
     --button-font: "button-default";
-    --button-font: "next-default";
+    --next-font: "next-default";
+    --restart-font: "restart-default";
     --header-font-adjust: 0;
     --button-font-adjust: 0;
     --next-font-adjust: 0;
+    --restart-font-adjust: 0;
     --text-margin: 10;
 }
 
@@ -33,5 +38,9 @@
 }
 @font-face {
     font-family: "next-default";
+    src: url("../_fonts/OpenSans-Regular.ttf");
+}
+@font-face {
+    font-family: "restart-default";
     src: url("../_fonts/OpenSans-Regular.ttf");
 }

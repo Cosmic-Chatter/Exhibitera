@@ -406,6 +406,7 @@ function loadDefinition (definition) {
 
   // First, reset to defaults (in case a style option doesn't exist in the definition)
   root.style.setProperty('--background-color', '#22222E')
+  root.style.setProperty('--item_background', '#6c757d')
   root.style.setProperty('--button-color', '#393A5A')
   root.style.setProperty('--button-touched-color', '#706F8E')
   root.style.setProperty('--success-message-color', '#393A5A')
@@ -424,6 +425,9 @@ function loadDefinition (definition) {
   // Backgorund settings
   if ('background' in definition.style) {
     exCommon.setBackground(definition.style.background, root, '#22222E', true)
+  }
+  if ('item_background' in definition.style) {
+    exCommon.setELementBackground(definition.style.item_background, document.getElementById('itemPane'), '#6c757d')
   }
 
   // Font settings
