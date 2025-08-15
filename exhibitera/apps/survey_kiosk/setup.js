@@ -401,6 +401,7 @@ function createItem (itemType) {
   const itemOrder = exSetup.config.workingDefinition?.item_order ?? []
   itemOrder.push(item.uuid)
   exSetup.updateWorkingDefinition(['item_order'], itemOrder)
+  sortEndScreen()
 
   const languages = exSetup.config.workingDefinition?.languages ?? {}
   for (const langCode of Object.keys(languages)) {
@@ -743,21 +744,30 @@ function createSurveyItemGUI (item) {
   const def = exSetup.config.workingDefinition
   const surveryItems = document.getElementById('surveryItems')
 
+  let badgeText = 'Question'
+  if (item.type === 'text') {
+    if (item?.end_screen) {
+      badgeText = 'End screen'
+    } else badgeText = 'Text'
+  }
+
   const html = `
     <div class="accordion-item">
       <h2 class="accordion-header">
         <div
-          class="accordion-button d-flex align-items-center collapsed"
+          class="accordion-button d-flex justify-content-between align-items-center collapsed"
           style="cursor: pointer;"
           data-bs-toggle="collapse"
           data-bs-target="#${item.uuid}_accordion"
           aria-expanded="false"
           aria-controls="${item.uuid}_accordion"
         >
-        <span id="${item.uuid}_accordionName">
-        ${exMarkdown.formatText(def.languages?.[def.language_order[0]]?.items?.[item.uuid]?.header?.text ?? '', { string: true, removeParagraph: true })}
-        </span>
-
+          <span class='flex-grow-1' id="${item.uuid}_accordionName">
+          ${exMarkdown.formatText(def.languages?.[def.language_order[0]]?.items?.[item.uuid]?.header?.text ?? '', { string: true, removeParagraph: true })}
+          </span>
+          <small>
+            <span class='badge rounded-pill border me-2'>${badgeText}</span>
+          </small>
         </div>
       </h2>
       <div id="${item.uuid}_accordion" class="accordion-collapse collapse " data-bs-parent="#surveryItems">
@@ -785,6 +795,7 @@ function createSurveyItemGUI (item) {
             Delete
             </button>
           </div>
+          <hr>
           
           <nav class="mt-3">
             <div id="${item.uuid}_accordion_tabs" class="nav nav-tabs" role="tablist">
@@ -807,6 +818,10 @@ function createSurveyItemGUI (item) {
   })
 
   if (item.type === 'text') {
+    if (item?.end_screen === true) {
+      document.getElementById(item.uuid + '_accordion_moveUpButton').remove()
+      document.getElementById(item.uuid + '_accordion_moveDownButton').remove()
+    }
     createSurveyItemGUIText(item)
   } else if (['single_vote', 'multiple_vote'].includes(item.type)) {
     createSurveyItemGUIVote(item)
@@ -818,6 +833,86 @@ function createSurveyItemGUIText (item) {
 
   const nav = document.getElementById(item.uuid + '_accordion_tabs')
   const pane = document.getElementById(item.uuid + '_accordion_content')
+  nav.classList.add('mt-3')
+
+  // First, insert language-independant options before the nav.
+  const row = document.createElement('div')
+  row.classList = 'row gy-2'
+  nav.parentElement.insertBefore(row, nav)
+
+  const positionCol = document.createElement('div')
+  positionCol.classList = 'col-6'
+  row.appendChild(positionCol)
+
+  const positionLabel = document.createElement('label')
+  positionLabel.classList = 'form-label'
+  positionLabel.innerText = 'Text position'
+  positionCol.appendChild(positionLabel)
+
+  const positionSelect = document.createElement('select')
+  positionSelect.classList = 'form-select'
+  positionSelect.appendChild(new Option('Top', 'top'))
+  positionSelect.appendChild(new Option('Middle', 'middle'))
+  positionSelect.value = item?.text_position ?? 'top'
+  positionSelect.addEventListener('change', (ev) => {
+    exSetup.updateWorkingDefinition(['items', item.uuid, 'text_position'], ev.target.value)
+    exSetup.previewDefinition(true)
+  })
+  positionCol.appendChild(positionSelect)
+
+  const endCol = document.createElement('div')
+  endCol.classList = 'col-6'
+  row.appendChild(endCol)
+
+  const endCheckGroup = document.createElement('div')
+  endCheckGroup.classList = 'form-check'
+  endCol.appendChild(endCheckGroup)
+
+  const endCheck = document.createElement('input')
+  endCheck.classList = 'form-check-input end-check'
+  endCheck.setAttribute('type', 'checkbox')
+  endCheck.value = ''
+  endCheck.id = 'endCheck_' + item.uuid
+  endCheck.dataset.itemuuid = item.uuid
+  endCheck.checked = item?.end_screen ?? false
+  endCheckGroup.appendChild(endCheck)
+  endCheck.addEventListener('change', (ev) => {
+    setEndScreen(item.uuid, ev.target.checked)
+    exSetup.previewDefinition(true)
+  })
+
+  const endCheckLabel = document.createElement('label')
+  endCheckLabel.classList = 'form-check-label'
+  endCheckLabel.setAttribute('for', 'endCheck_' + item.uuid)
+  endCheckLabel.innerHTML = `
+        End screen
+        <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="This text item will appear automatically after the user submits their survey responses." style="font-size: 0.55em;">?</span>
+        `
+  endCheckGroup.appendChild(endCheckLabel)
+
+  const endDurationCol = document.createElement('div')
+  endDurationCol.classList = 'col-6'
+  row.appendChild(endDurationCol)
+
+  endDurationCol.innerHTML = `
+    <div 
+      id="endScreenDuration_${item.uuid}"
+      class="advanced-slider" 
+      data-name="End screen duration" 
+      data-path="items>${item.uuid}>end_screen_duration" 
+      data-min="1" 
+      data-max="15" 
+      data-start="${item?.end_screen_duration ?? 3}" 
+      data-step="1" 
+      data-unit="sec" 
+      data-note="How long to display the end screen."
+    ></div>
+  `
+  const endDurationEl = document.getElementById('endScreenDuration_' + item.uuid)
+  exSetup.createAdvancedSlider(endDurationEl)
+  if (!(item?.end_screen === true)) endDurationEl.style.display = 'none'
+
+  // Then, add the language-specific options
 
   let first = true
   for (const code of exSetup.config.workingDefinition?.language_order ?? []) {
@@ -874,25 +969,27 @@ function createSurveyItemGUIText (item) {
       }
     })
 
-    const nextButtonCol = document.createElement('div')
-    nextButtonCol.classList = 'col-6'
-    row.appendChild(nextButtonCol)
+    if ((item?.end_screen ?? false) === false) {
+      const nextButtonCol = document.createElement('div')
+      nextButtonCol.classList = 'col-6'
+      row.appendChild(nextButtonCol)
 
-    const nextButtonLabel = document.createElement('label')
-    nextButtonLabel.classList = 'form-label'
-    nextButtonLabel.innerHTML = 'Next button text'
-    nextButtonCol.appendChild(nextButtonLabel)
+      const nextButtonLabel = document.createElement('label')
+      nextButtonLabel.classList = 'form-label'
+      nextButtonLabel.innerHTML = 'Next button text'
+      nextButtonCol.appendChild(nextButtonLabel)
 
-    const nextButtonInput = document.createElement('input')
-    nextButtonInput.setAttribute('type', 'text')
-    nextButtonInput.setAttribute('placeholder', 'Next')
-    nextButtonInput.classList = 'form-control'
-    nextButtonInput.value = exSetup.config.workingDefinition.languages?.[code]?.items?.[item.uuid]?.next_button?.text ?? ''
-    nextButtonInput.addEventListener('change', () => {
-      exSetup.updateWorkingDefinition(['languages', code, 'items', item.uuid, 'next_button', 'text'], nextButtonInput.value.trim())
-      exSetup.previewDefinition(true)
-    })
-    nextButtonCol.appendChild(nextButtonInput)
+      const nextButtonInput = document.createElement('input')
+      nextButtonInput.setAttribute('type', 'text')
+      nextButtonInput.setAttribute('placeholder', 'Next')
+      nextButtonInput.classList = 'form-control'
+      nextButtonInput.value = exSetup.config.workingDefinition.languages?.[code]?.items?.[item.uuid]?.next_button?.text ?? ''
+      nextButtonInput.addEventListener('change', () => {
+        exSetup.updateWorkingDefinition(['languages', code, 'items', item.uuid, 'next_button', 'text'], nextButtonInput.value.trim())
+        exSetup.previewDefinition(true)
+      })
+      nextButtonCol.appendChild(nextButtonInput)
+    }
 
     const bodyCol = document.createElement('div')
     bodyCol.classList = 'col-12'
@@ -926,6 +1023,43 @@ function createSurveyItemGUIText (item) {
   }
 }
 
+function setEndScreen (itemUUID, value = true) {
+  // Set the given text item to be the end screen.
+
+  // Set the given item as the end screen
+  exSetup.updateWorkingDefinition(['items', itemUUID, 'end_screen'], value)
+
+  if (value === true) {
+  // Move this item to the end of the items
+    const itemOrder = exSetup.config.workingDefinition.item_order
+    itemOrder.push(itemOrder.splice(itemOrder.indexOf(itemUUID), 1)[0])
+    exSetup.updateWorkingDefinition(['item_order', itemOrder])
+
+    // Ensure no other item is the end screen
+    for (const el of document.querySelectorAll('.end-check')) {
+      if (el.dataset.itemuuid === itemUUID) continue
+      if (el.checked) {
+        el.checked = false
+        exSetup.updateWorkingDefinition(['items', el.dataset.itemuuid, 'end_screen'], false)
+      }
+    }
+  }
+  rebuildItems()
+}
+
+function sortEndScreen () {
+  // Ensure that if an end screen exists, it's the last item
+
+  const itemOrder = exSetup.config.workingDefinition.item_order
+  for (const uuid of itemOrder) {
+    if (exSetup.config.workingDefinition.items[uuid]?.end_screen === true) {
+      itemOrder.push(itemOrder.splice(itemOrder.indexOf(uuid), 1)[0])
+      break // There can be only one end screen
+    }
+  }
+  exSetup.updateWorkingDefinition(['item_order', itemOrder])
+}
+
 function createSurveyItemGUIVote (item) {
   // Create GUI elements for a voting survey item
 
@@ -937,6 +1071,28 @@ function createSurveyItemGUIVote (item) {
   const row = document.createElement('div')
   row.classList = 'row gy-2 mt-2'
   nav.parentElement.insertBefore(row, nav)
+
+  const valueCol = document.createElement('div')
+  valueCol.classList = 'col-6'
+  row.appendChild(valueCol)
+
+  const valueLabel = document.createElement('label')
+  valueLabel.classList = 'form-label'
+  valueLabel.innerHTML = `
+        Value
+        <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="How this item should appear in your data spreadsheet. E.g., 'favorite_gallery'." style="font-size: 0.55em;">?</span>
+        `
+  valueCol.appendChild(valueLabel)
+
+  const valueInput = document.createElement('input')
+  valueInput.classList = 'form-control'
+  valueInput.setAttribute('type', 'text')
+  valueInput.value = item?.value ?? ''
+  valueInput.addEventListener('change', (ev) => {
+    exSetup.updateWorkingDefinition(['items', item.uuid, 'value'], ev.target.value)
+    exSetup.previewDefinition(true)
+  })
+  valueCol.appendChild(valueInput)
 
   const layoutCol = document.createElement('div')
   layoutCol.classList = 'col-12 col-md-6'
@@ -972,7 +1128,7 @@ function createSurveyItemGUIVote (item) {
   randomCol.appendChild(randomCheckGroup)
 
   const randomCheck = document.createElement('input')
-  randomCheck.classList = 'form-check-input mutli-checkbox'
+  randomCheck.classList = 'form-check-input random-checkbox'
   randomCheck.setAttribute('type', 'checkbox')
   randomCheck.value = ''
   randomCheck.id = 'randomCheck_' + item.uuid
@@ -1192,6 +1348,10 @@ function changeItemOrder (uuid, dir) {
   order[index] = temp
 
   exSetup.updateWorkingDefinition(['item_order'], order)
+
+  // Make sure any end screen is still at the end
+  sortEndScreen()
+
   rebuildItems()
 }
 

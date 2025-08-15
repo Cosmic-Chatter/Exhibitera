@@ -91,9 +91,10 @@ function buildLayoutVote (index) {
   for (const option of options) {
     const buttonDef = thisItem.options[option]
     const buttonLang = currentDefinition.languages?.[currentLang]?.items?.[uuid]?.options?.[option]
-    // Get a string for the column name, in order of preference
-    const value = buttonDef?.value || buttonDef?.text || option
     const thisTextPresent = (buttonLang?.text ?? '').trim() !== ''
+
+    // Get a string for the column name, in order of preference
+    const value = buttonDef?.value || buttonLang?.text || option
 
     const div = document.createElement('div')
     div.classList = 'button-col mx-0 px-1 col'
@@ -189,7 +190,7 @@ function buildLayoutText (index) {
   // Build the GUI for a text panel.
 
   const uuid = currentDefinition.item_order[index]
-  const thisItem = currentDefinition.items[uuid]
+  const item = currentDefinition.items[uuid]
   const itemPane = document.getElementById('itemPane')
 
   const header = document.createElement('div')
@@ -203,16 +204,21 @@ function buildLayoutText (index) {
   exMarkdown.formatMarkdownImages(bodyText)
   body.appendChild(bodyText)
 
-  body.style.height = '100%'
+  if ((item?.text_position ?? 'top') === 'top') body.style.height = '100%'
   itemPane.appendChild(body)
 
-  const nextButton = document.createElement('button')
-  nextButton.innerHTML = currentDefinition.languages?.[currentLang]?.items?.[uuid]?.next_button?.text || 'Next' // Convert empty string '' to 'Next' too
-  nextButton.classList = 'btn noselect next-button'
-  nextButton.addEventListener('click', () => {
-    nextButtonTouched(index)
-  })
-  itemPane.appendChild(nextButton)
+  if ((item?.end_screen ?? false) === false) {
+    const nextButton = document.createElement('button')
+    nextButton.innerHTML = currentDefinition.languages?.[currentLang]?.items?.[uuid]?.next_button?.text || 'Next' // Convert empty string '' to 'Next' too
+    nextButton.classList = 'btn noselect next-button'
+    nextButton.addEventListener('click', () => {
+      nextButtonTouched(index)
+    })
+    itemPane.appendChild(nextButton)
+  } else {
+    sendData()
+    setTimeout(restartSession, parseFloat(item?.end_screen_duration ?? '3') * 1000)
+  }
 }
 
 function updateProgress (index) {
@@ -266,32 +272,36 @@ function calculateButtonRows (buttons) {
 }
 
 function buttonTouched (button, name, index) {
-  // Respond to the touch of a button by changing color, logging the response,
-  // and moving to the next question
-  // button is the DOM element of the touched button
-  // name is the name of the data column
-  // index is the index of the current question
-  // lastItem is a boolean value for whether this was the last question
+  // Respond to the touch of a button by logging the response
+  // and moving to the next question.
+  //
+  // `button` is the DOM element of the touched button
+  // `name` is the name of the data column
+  // `index` is the index of the current question
+
+  setActive()
 
   const uuid = currentDefinition.item_order[index]
   const lastItem = index === currentDefinition.item_order.length - 1
   const thisItem = currentDefinition.items[uuid]
   const itemPane = document.getElementById('itemPane')
 
-  setActive()
-
-  const card = button.querySelector('.option')
-  card.classList.toggle('option-inactive')
-  card.classList.toggle('option-active')
+  const questionText = currentDefinition.languages[currentDefinition.language_order[0]]?.items[thisItem.uuid]?.header?.text
+  const itemValue = thisItem?.value || questionText || thisItem.uuid
 
   if (thisItem.type === 'single_vote') {
-    setTimeout(() => {
-      card.classList.toggle('option-active')
-      card.classList.toggle('option-inactive')
-    }, 500)
-    response[thisItem.value] = name
-    if (lastItem === false) buildLayout(index + 1)
+    response[itemValue] = name
+    if (lastItem === false) {
+      buildLayout(index + 1)
+    } else {
+      sendData()
+      restartSession()
+    }
   } else {
+    const card = button.querySelector('.option')
+    card.classList.toggle('option-inactive')
+    card.classList.toggle('option-active')
+
     // Enable/disable the next button
     const nextButton = itemPane.querySelector('.next-button')
     if (itemPane.querySelectorAll('.option-active').length > 0) {
@@ -302,23 +312,35 @@ function buttonTouched (button, name, index) {
       nextButton.style.opacity = 0
     }
   }
+  console.log(response)
 }
 
 function nextButtonTouched (index) {
   // Handle a next button being touched
+
+  setActive()
 
   const uuid = currentDefinition.item_order[index]
   const lastItem = index === currentDefinition.item_order.length - 1
   const thisItem = currentDefinition.items[uuid]
   const itemPane = document.getElementById('itemPane')
 
+  const questionText = currentDefinition.languages[currentDefinition.language_order[0]]?.items[thisItem.uuid]?.header?.text
+  const itemValue = thisItem?.value || questionText || thisItem.uuid
+
   if (thisItem.type === 'multiple_vote') {
     const selected = itemPane.querySelectorAll('.option-active')
     const answers = []
     for (const el of selected) answers.push(el.dataset.value)
-    response[thisItem.value] = answers
+    response[itemValue] = answers
   }
-  if (lastItem === false) buildLayout(index + 1)
+  if (lastItem === false) {
+    buildLayout(index + 1)
+  } else {
+    sendData()
+    restartSession()
+  }
+  console.log(response)
 }
 
 function setActive () {
@@ -371,8 +393,6 @@ function updateFunc (update) {
 function loadDefinition (definition) {
   // Clean up the old survey, then create the new one.
 
-  // If there are responses left for the old survey, make sure they are recorded
-  sendData()
   currentDefinition = definition
   configurationName = definition.name
 
@@ -524,27 +544,19 @@ function sendData () {
   response.Date = dateStr
 
   const requestDict = {
-    data: response
+    method: 'POST',
+    endpoint: '/data/' + configurationName + '/append',
+    params: { data: response }
   }
 
   // Submit the data to Hub or the helper, depending on if we're standalone
   if (exCommon.config.standalone === true) {
-    exCommon.makeHelperRequest(
-      {
-        method: 'POST',
-        endpoint: '/data/' + configurationName + '/append',
-        params: requestDict
-      })
+    exCommon.makeHelperRequest(requestDict)
       .then(() => {
         response = {}
       })
   } else {
-    exCommon.makeServerRequest(
-      {
-        method: 'POST',
-        endpoint: '/data/' + configurationName + '/append',
-        params: requestDict
-      })
+    exCommon.makeServerRequest(requestDict)
       .then(() => {
         response = {}
       })
@@ -574,33 +586,6 @@ function resetActivityTimer () {
 
   clearTimeout(inactivityTimer)
   inactivityTimer = setTimeout(showInactivityWarning, inactivityTimeout)
-}
-
-function showSuccessMessage () {
-  // Animate the success message to briefly appear
-
-  const successMessage = document.getElementById('successMessage')
-
-  // Show the element and set initial opacity
-  successMessage.style.display = 'flex'
-  successMessage.style.opacity = 0
-
-  // Fade in
-  requestAnimationFrame(() => {
-    successMessage.style.transition = 'opacity 100ms'
-    successMessage.style.opacity = 1
-
-    // Delay before fade out
-    setTimeout(() => {
-      successMessage.style.transition = 'opacity 1000ms'
-      successMessage.style.opacity = 0
-
-      // After fade out, hide the element
-      setTimeout(() => {
-        successMessage.style.display = 'none'
-      }, 1000) // match fade-out duration
-    }, 500) // initial delay after fade-in
-  })
 }
 
 // Disable pinch-to-zoom for browsers the ignore the viewport setting
