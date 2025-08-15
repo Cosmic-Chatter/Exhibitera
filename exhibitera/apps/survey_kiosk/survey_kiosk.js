@@ -140,11 +140,17 @@ function buildLayoutVote (index) {
     if (thisTextPresent) {
       const text = document.createElement('div')
       text.classList = 'd-flex align-items-center justify-content-center w-100'
-      text.style.height = '20%'
       card.appendChild(text)
 
       const title = document.createElement('div')
       title.classList = 'option-text noselect'
+
+      if (imagePresent) {
+        text.style.height = '20%'
+        title.style.height = '8.3vmin'
+      } else {
+        text.style.height = '100%'
+      }
 
       title.innerHTML = exMarkdown.formatText(buttonLang.text, { removeParagraph: true, string: true })
       text.appendChild(title)
@@ -163,6 +169,7 @@ function buildLayoutVote (index) {
         textFit(optionTexts, { maxFontSize: fontSize })
       }, 10)
     } catch {
+      console.log('textFit: resize failed')
       // Ignore failed resize
     }
   }
@@ -312,7 +319,6 @@ function buttonTouched (button, name, index) {
       nextButton.style.opacity = 0
     }
   }
-  console.log(response)
 }
 
 function nextButtonTouched (index) {

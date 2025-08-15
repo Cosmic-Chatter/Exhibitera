@@ -266,6 +266,14 @@ async function clearDefinitionInput (full = true) {
   document.getElementById('definitionNameInput').value = ''
   document.getElementById('behaviorInput_inactivity_timeout').value = 10
 
+  // Reset langauges
+  const langSelect = document.getElementById('language-picker')
+  exLang.createLanguagePicker(langSelect,
+    {
+      onLanguageRebuild: rebuildItems
+    }
+  )
+
   // Markdown fields
   for (const item of []) {
     const editor = new exMarkdown.ExhibiteraMarkdownEditor({
@@ -280,17 +288,6 @@ async function clearDefinitionInput (full = true) {
     })
   }
 
-  // const successEditor = new exMarkdown.ExhibiteraMarkdownEditor({
-  //   content: 'Thank you!',
-  //   editorDiv: document.getElementById('success_messageInput'),
-  //   commandDiv: document.getElementById('success_messageInputCommandBar'),
-  //   commands: ['basic'],
-  //   callback: (content) => {
-  //     exSetup.updateWorkingDefinition(['text', 'success_message'], content)
-  //     exSetup.previewDefinition(true)
-  //   }
-  // })
-
   // Reset color options
   const colorInputs = ['button-color', 'button-selected-color', 'next-button-color', 'restart-button-color', 'header-color', 'button-text-color', 'next-button-text-color', 'restart-button-text-color', 'body-text-color', 'active-dot-color', 'inactive-dot-color']
   for (const input of colorInputs) {
@@ -304,7 +301,7 @@ async function clearDefinitionInput (full = true) {
   })
   exSetup.updateAdvancedColorPicker('style>item_background', {
     mode: 'color',
-    color: '#22222E'
+    color: '#6c757d'
   })
 
   // Reset font face options
@@ -316,6 +313,9 @@ async function clearDefinitionInput (full = true) {
   document.getElementById('nextButtonTextSizeSlider').value = 0
 
   exSetup.createAdvancedSliders()
+
+  // Clear any created items
+  document.getElementById('surveryItems').innerText = ''
 }
 
 function editDefinition (uuid = '') {
@@ -348,19 +348,8 @@ function editDefinition (uuid = '') {
     })
   }
 
-  // const successEditor = new exMarkdown.ExhibiteraMarkdownEditor({
-  //   content: def?.text?.success_message ?? 'Thank you!',
-  //   editorDiv: document.getElementById('success_messageInput'),
-  //   commandDiv: document.getElementById('success_messageInputCommandBar'),
-  //   commands: ['basic'],
-  //   callback: (content) => {
-  //     exSetup.updateWorkingDefinition(['text', 'success_message'], content)
-  //     exSetup.previewDefinition(true)
-  //   }
-  // })
-
   exSetup.updateAdvancedColorPicker('style>background', def?.style?.background, { mode: 'color', color: '#fff' })
-  exSetup.updateAdvancedColorPicker('style>item_background', def?.style?.item_background, { mode: 'color', color: '#22222E' })
+  exSetup.updateAdvancedColorPicker('style>item_background', def?.style?.item_background, { mode: 'color', color: '#6c757d' })
   exSetup.updateColorPickers(def?.style?.color ?? {})
   exSetup.updateAdvancedFontPickers(def?.style?.font ?? {})
   exSetup.updateTextSizeSliders(def?.style?.text_size ?? {})
@@ -600,7 +589,7 @@ function rebuildOptions (itemUUID, lang) {
     })
 
     const textCol = document.createElement('div')
-    textCol.classList = 'col-6'
+    textCol.classList = 'col-12 col-lg-6'
     row.appendChild(textCol)
 
     const textLabel = document.createElement('label')
@@ -627,7 +616,7 @@ function rebuildOptions (itemUUID, lang) {
     })
 
     const valueCol = document.createElement('div')
-    valueCol.classList = 'col-6'
+    valueCol.classList = 'col-12 col-lg-6'
     row.appendChild(valueCol)
 
     const valueLabel = document.createElement('label')
@@ -676,7 +665,7 @@ function rebuildOptions (itemUUID, lang) {
     iconCol.appendChild(iconRow)
 
     const iconSelectCol = document.createElement('div')
-    iconSelectCol.classList = 'col-12 col-md-6'
+    iconSelectCol.classList = 'col-12 col-lg-6'
     iconRow.appendChild(iconSelectCol)
 
     const iconSelect = document.createElement('select')
@@ -709,7 +698,7 @@ function rebuildOptions (itemUUID, lang) {
     iconSelectCol.appendChild(iconSelect)
 
     const iconInputCol = document.createElement('div')
-    iconInputCol.classList = 'col-12 col-md-6'
+    iconInputCol.classList = 'col-12 col-lg-6'
     iconRow.appendChild(iconInputCol)
 
     const iconFileInput = document.createElement('button')
@@ -1073,7 +1062,7 @@ function createSurveyItemGUIVote (item) {
   nav.parentElement.insertBefore(row, nav)
 
   const valueCol = document.createElement('div')
-  valueCol.classList = 'col-6'
+  valueCol.classList = 'col-12 col-md-6'
   row.appendChild(valueCol)
 
   const valueLabel = document.createElement('label')
@@ -1120,7 +1109,7 @@ function createSurveyItemGUIVote (item) {
   layoutSelect.value = item?.num_columns ?? 'auto'
 
   const randomCol = document.createElement('div')
-  randomCol.classList = 'col-12 col-md-6'
+  randomCol.classList = 'col-12 col-lg-6'
   row.appendChild(randomCol)
 
   const randomCheckGroup = document.createElement('div')
@@ -1174,7 +1163,7 @@ function createSurveyItemGUIVote (item) {
     tabPane.appendChild(row)
 
     const headerCol = document.createElement('div')
-    headerCol.classList = 'col-6'
+    headerCol.classList = 'col-12 col-lg-6'
     row.appendChild(headerCol)
 
     const headerLabel = document.createElement('label')
@@ -1204,7 +1193,7 @@ function createSurveyItemGUIVote (item) {
     })
 
     const nextButtonCol = document.createElement('div')
-    nextButtonCol.classList = 'col-6'
+    nextButtonCol.classList = 'col-12 col-lg-6'
     row.appendChild(nextButtonCol)
 
     const nextButtonLabel = document.createElement('label')
@@ -1224,7 +1213,7 @@ function createSurveyItemGUIVote (item) {
     nextButtonCol.appendChild(nextButtonInput)
 
     const addOptionCol = document.createElement('div')
-    addOptionCol.classList = 'col-12 col-md-4'
+    addOptionCol.classList = 'col-12 col-lg-4'
     row.appendChild(addOptionCol)
 
     const optionsLabel = document.createElement('label')
@@ -1243,11 +1232,11 @@ function createSurveyItemGUIVote (item) {
     addOptionCol.appendChild(addOptionButton)
 
     const optionsMultiCol = document.createElement('div')
-    optionsMultiCol.classList = 'col-12 col-md-8 d-flex align-items-end'
+    optionsMultiCol.classList = 'col-12 col-lg-8 d-flex align-items-end'
     row.appendChild(optionsMultiCol)
 
     const optionsMutliCheckGroup = document.createElement('div')
-    optionsMutliCheckGroup.classList = 'form-check ms-auto'
+    optionsMutliCheckGroup.classList = 'form-check ms-lg-auto'
     optionsMultiCol.appendChild(optionsMutliCheckGroup)
 
     const optionsMutliCheck = document.createElement('input')
