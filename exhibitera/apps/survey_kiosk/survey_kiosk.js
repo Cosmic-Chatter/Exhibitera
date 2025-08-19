@@ -133,7 +133,7 @@ function buildLayoutVote (index) {
       }
       if (textPresent) {
         imgDiv.style.height = '60%'
-      }
+      } else imgDiv.style.height = '80%'
       card.appendChild(imgDiv)
     }
 

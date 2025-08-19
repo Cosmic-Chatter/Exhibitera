@@ -142,7 +142,7 @@ async function wizardCreateDefinition () {
     }
     exSetup.updateWorkingDefinition(['languages', lang], langDef)
   }
-  exSetup.updateWorkingDefinition(['language_older'], langOrder)
+  exSetup.updateWorkingDefinition(['language_order'], langOrder)
 
   // Basics
   exSetup.updateWorkingDefinition(['name'], document.getElementById('wizardDefinitionNameInput').value.trim())

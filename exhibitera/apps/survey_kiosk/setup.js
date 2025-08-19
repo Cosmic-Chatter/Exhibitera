@@ -15,12 +15,8 @@ async function initializeWizard () {
   // Reset fields
   document.getElementById('wizardDefinitionNameInput').value = ''
   document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'none'
-  document.getElementById('wizardHeaderTextInput').value = ''
-  document.getElementById('wizardFooterTextInput').value = ''
-  document.getElementById('wizardAnswerTypeSelect').value = 'thumbs'
-  document.getElementById('wizardCustomAnswersRow').innerHTML = ''
-  document.getElementById('wizardCustomAnswersNoOptionsWarning').style.display = 'none'
-  document.getElementById('wizardCustomAnswersBlankOptionsWarning').style.display = 'none'
+  document.getElementById('wizardQuestionsNoneWarning').style.display = 'none'
+  document.getElementById('wizardQuestionsBlankWarning').style.display = 'none'
 }
 
 async function wizardForward (currentPage) {
@@ -30,35 +26,59 @@ async function wizardForward (currentPage) {
     const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
     if (defName !== '') {
       document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'none'
-      exSetup.wizardGoTo('Question')
+      exSetup.wizardGoTo('Languages')
     } else {
       document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'block'
     }
-  } else if (currentPage === 'Question') {
-    exSetup.wizardGoTo('Answers')
-  } else if (currentPage === 'Answers') {
-    const answers = document.querySelectorAll('.wizard-answer-option')
-    const answersType = document.getElementById('wizardAnswerTypeSelect').value
+  } else if (currentPage === 'Languages') {
+    if (document.getElementById('wizardLanguages').children.length > 0) {
+      document.getElementById('wizardLanguagesBlankWarning').style.display = 'none'
 
-    if (answersType === 'custom') {
-      if (answers.length === 0) {
-        document.getElementById('wizardCustomAnswersNoOptionsWarning').style.display = 'block'
-        return
-      } else {
-        document.getElementById('wizardCustomAnswersNoOptionsWarning').style.display = 'none'
-      }
-      document.getElementById('wizardCustomAnswersBlankOptionsWarning').style.display = 'none'
-      let error = false
-      for (const answer of answers) {
-        if (answer.value.trim() === '') {
-          error = true
+      // Add the selected langauges to the definition
+      const langOrder = []
+      for (const langEl of document.getElementById('wizardLanguages').children) {
+        const lang = langEl.querySelector('select').value
+        if (langOrder.includes(lang) === false) langOrder.push(lang)
+
+        const langDef = {
+          code: lang,
+          display_name: exLang.getLanguageDisplayName(lang),
+          english_name: exLang.getLanguageDisplayName(lang, true),
+          items: {}
         }
+        exSetup.updateWorkingDefinition(['languages', lang], langDef)
       }
-      if (error) {
-        document.getElementById('wizardCustomAnswersBlankOptionsWarning').style.display = 'block'
+      exSetup.updateWorkingDefinition(['language_order'], langOrder)
+
+      document.getElementById('wizardQuestionList').innerText = ''
+      exSetup.updateWorkingDefinition(['item_order'], [])
+      exSetup.wizardGoTo('Questions')
+    } else {
+      document.getElementById('wizardLanguagesBlankWarning').style.display = 'block'
+    }
+  } else if (currentPage === 'Questions') {
+    const questions = document.querySelectorAll('.wizard-question')
+    if (questions.length === 0) {
+      document.getElementById('wizardQuestionsNoneWarning').style.display = 'block'
+      return
+    }
+
+    for (const q of questions) {
+      if (q.value.trim() === '') {
+        document.getElementById('wizardQuestionsBlankWarning').style.display = 'block'
         return
       }
     }
+    document.getElementById('wizardQuestionsNoneWarning').style.display = 'none'
+    document.getElementById('wizardQuestionsBlankWarning').style.display = 'none'
+
+    // Set up the answers page
+    document.getElementById('wizardAnswersList').innerText = ''
+    for (const itemUUID of exSetup.config.workingDefinition.item_order) {
+      wizardCreateAnswers(itemUUID)
+    }
+    exSetup.wizardGoTo('Answers')
+  } else if (currentPage === 'Answers') {
     wizardCreateDefinition()
   }
 }
@@ -66,10 +86,12 @@ async function wizardForward (currentPage) {
 function wizardBack (currentPage) {
   // Move the wizard back one page
 
-  if (currentPage === 'Question') {
+  if (currentPage === 'Languages') {
     exSetup.wizardGoTo('Welcome')
+  } else if (currentPage === 'Questions') {
+    exSetup.wizardGoTo('Languages')
   } else if (currentPage === 'Answers') {
-    exSetup.wizardGoTo('Question')
+    exSetup.wizardGoTo('Questions')
   }
 }
 
@@ -80,99 +102,82 @@ async function wizardCreateDefinition () {
   const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
   exSetup.updateWorkingDefinition(['name'], defName)
 
-  // Header/footer
-  const header = document.getElementById('wizardHeaderTextInput').value.trim()
-  const footer = document.getElementById('wizardFooterTextInput').value.trim()
-  exSetup.updateWorkingDefinition(['text', 'header'], header)
-  exSetup.updateWorkingDefinition(['text', 'footer'], footer)
+  // Cycle the questions and populate the answer options
+  for (const questUUID of exSetup.config.workingDefinition.item_order) {
+    const answersType = document.getElementById('wizardAnswerTypeSelect_' + questUUID).value
 
-  // Answers
-  const answersType = document.getElementById('wizardAnswerTypeSelect').value
-  if (answersType !== 'custom') {
-    // Clear out any custom options that may have been set first
-    exSetup.updateWorkingDefinition(['options'], {})
-    exSetup.updateWorkingDefinition(['option_order'], [])
+    if (answersType === 'thumbs') {
+      const optionOrder = [exUtilities.uuid(), exUtilities.uuid()]
+      exSetup.updateWorkingDefinition(['items', questUUID, 'option_order'], optionOrder)
+      exSetup.updateWorkingDefinition(['items', questUUID, 'options', optionOrder[0]], {
+        icon: 'thumbs-down_red',
+        icon_user_file: '',
+        uuid: optionOrder[0],
+        value: 'Bad'
+      })
+      exSetup.updateWorkingDefinition(['items', questUUID, 'options', optionOrder[1]], {
+        icon: 'thumbs-up_green',
+        icon_user_file: '',
+        uuid: optionOrder[1],
+        value: 'Good'
+      })
+    } else if (answersType === 'threeStars') {
+      const optionOrder = [exUtilities.uuid(), exUtilities.uuid(), exUtilities.uuid()]
+      exSetup.updateWorkingDefinition(['items', questUUID, 'option_order'], optionOrder)
+      exSetup.updateWorkingDefinition(['items', questUUID, 'options', optionOrder[0]], {
+        icon: '1-star_white',
+        icon_user_file: '',
+        uuid: optionOrder[0],
+        value: '1_star'
+      })
+      exSetup.updateWorkingDefinition(['items', questUUID, 'options', optionOrder[1]], {
+        icon: '2-star_white',
+        icon_user_file: '',
+        uuid: optionOrder[1],
+        value: '2_star'
+      })
+      exSetup.updateWorkingDefinition(['items', questUUID, 'options', optionOrder[2]], {
+        icon: '3-star_white',
+        icon_user_file: '',
+        uuid: optionOrder[2],
+        value: '3_star'
+      })
+    } else if (answersType === 'fiveStars') {
+      const optionOrder = [exUtilities.uuid(), exUtilities.uuid(), exUtilities.uuid(), exUtilities.uuid(), exUtilities.uuid()]
+      exSetup.updateWorkingDefinition(['items', questUUID, 'option_order'], optionOrder)
+      exSetup.updateWorkingDefinition(['items', questUUID, 'options', optionOrder[0]], {
+        icon: '1-star_white',
+        icon_user_file: '',
+        uuid: optionOrder[0],
+        value: '1_star'
+      })
+      exSetup.updateWorkingDefinition(['items', questUUID, 'options', optionOrder[1]], {
+        icon: '2-star_white',
+        icon_user_file: '',
+        uuid: optionOrder[1],
+        value: '2_star'
+      })
+      exSetup.updateWorkingDefinition(['items', questUUID, 'options', optionOrder[2]], {
+        icon: '3-star_white',
+        icon_user_file: '',
+        uuid: optionOrder[2],
+        value: '3_star'
+      })
+      exSetup.updateWorkingDefinition(['items', questUUID, 'options', optionOrder[3]], {
+        icon: '4-star_white',
+        icon_user_file: '',
+        uuid: optionOrder[3],
+        value: '4_star'
+      })
+      exSetup.updateWorkingDefinition(['items', questUUID, 'options', optionOrder[4]], {
+        icon: '5-star_white',
+        icon_user_file: '',
+        uuid: optionOrder[4],
+        value: '5_star'
+      })
+    }
   }
-  if (answersType === 'thumbs') {
-    const optionOrder = [exUtilities.uuid(), exUtilities.uuid()]
-    exSetup.updateWorkingDefinition(['option_order'], optionOrder)
-    exSetup.updateWorkingDefinition(['options', optionOrder[0]], {
-      icon: 'thumbs-down_red',
-      icon_user_file: '',
-      label: '',
-      uuid: optionOrder[0],
-      value: 'Bad'
-    })
-    exSetup.updateWorkingDefinition(['options', optionOrder[1]], {
-      icon: 'thumbs-up_green',
-      icon_user_file: '',
-      label: '',
-      uuid: optionOrder[1],
-      value: 'Good'
-    })
-  } else if (answersType === 'threeStars') {
-    const optionOrder = [exUtilities.uuid(), exUtilities.uuid(), exUtilities.uuid()]
-    exSetup.updateWorkingDefinition(['option_order'], optionOrder)
-    exSetup.updateWorkingDefinition(['options', optionOrder[0]], {
-      icon: '1-star_white',
-      icon_user_file: '',
-      label: '',
-      uuid: optionOrder[0],
-      value: '1_star'
-    })
-    exSetup.updateWorkingDefinition(['options', optionOrder[1]], {
-      icon: '2-star_white',
-      icon_user_file: '',
-      label: '',
-      uuid: optionOrder[1],
-      value: '2_star'
-    })
-    exSetup.updateWorkingDefinition(['options', optionOrder[2]], {
-      icon: '3-star_white',
-      icon_user_file: '',
-      label: '',
-      uuid: optionOrder[2],
-      value: '3_star'
-    })
-  } else if (answersType === 'fiveStars') {
-    const optionOrder = [exUtilities.uuid(), exUtilities.uuid(), exUtilities.uuid(), exUtilities.uuid(), exUtilities.uuid()]
-    exSetup.updateWorkingDefinition(['option_order'], optionOrder)
-    exSetup.updateWorkingDefinition(['options', optionOrder[0]], {
-      icon: '1-star_white',
-      icon_user_file: '',
-      label: '',
-      uuid: optionOrder[0],
-      value: '1_star'
-    })
-    exSetup.updateWorkingDefinition(['options', optionOrder[1]], {
-      icon: '2-star_white',
-      icon_user_file: '',
-      label: '',
-      uuid: optionOrder[1],
-      value: '2_star'
-    })
-    exSetup.updateWorkingDefinition(['options', optionOrder[2]], {
-      icon: '3-star_white',
-      icon_user_file: '',
-      label: '',
-      uuid: optionOrder[2],
-      value: '3_star'
-    })
-    exSetup.updateWorkingDefinition(['options', optionOrder[3]], {
-      icon: '4-star_white',
-      icon_user_file: '',
-      label: '',
-      uuid: optionOrder[3],
-      value: '4_star'
-    })
-    exSetup.updateWorkingDefinition(['options', optionOrder[4]], {
-      icon: '5-star_white',
-      icon_user_file: '',
-      label: '',
-      uuid: optionOrder[4],
-      value: '5_star'
-    })
-  }
+
   const uuid = exSetup.config.workingDefinition.uuid
 
   await exSetup.saveDefinition(defName)
@@ -184,10 +189,147 @@ async function wizardCreateDefinition () {
   exUtilities.hideModal('#setupWizardModal')
 }
 
-function wizardCreateAnswerOption (userDetails) {
+function wizarddCreateQuestion (userDetails) {
+  // Create the GUI representation of a new question in the wizard
+
+  const itemOrder = exSetup.config.workingDefinition?.item_order ?? []
+  const defaultLang = exSetup.config.workingDefinition.language_order[0]
+
+  const defaults = {
+    uuid: exUtilities.uuid(),
+    value: '',
+    options: {},
+    option_order: [],
+    type: 'single_vote',
+    randomize_options: false
+  }
+
+  // Merge in user details
+  const details = { ...defaults, ...userDetails }
+
+  if (itemOrder.includes(details.uuid) === false) {
+    itemOrder.push(details.uuid)
+    exSetup.updateWorkingDefinition(['item_order', itemOrder])
+    for (const key of Object.keys(defaults)) {
+      exSetup.updateWorkingDefinition(['items', details.uuid, key], details[key])
+    }
+  }
+
+  const col = document.createElement('div')
+  col.classList = 'col-12'
+  col.setAttribute('id', 'wizardQuestion_' + details.uuid)
+  document.getElementById('wizardQuestionList').appendChild(col)
+
+  const row = document.createElement('div')
+  row.classList = 'row'
+  col.appendChild(row)
+
+  const questionCol = document.createElement('div')
+  questionCol.classList = 'col-10 pe-1'
+  row.appendChild(questionCol)
+
+  const questionText = document.createElement('input')
+  questionText.setAttribute('type', 'text')
+  questionText.classList = 'form-control wizard-question'
+  questionText.value = ''
+  questionText.addEventListener('change', () => {
+    exSetup.updateWorkingDefinition(['languages', defaultLang, 'items', details.uuid, 'header', 'text'], questionText.value.trim())
+  })
+  questionCol.appendChild(questionText)
+
+  const buttonCol = document.createElement('div')
+  buttonCol.classList = 'col-2 ps-1'
+  row.appendChild(buttonCol)
+
+  const deleteButton = document.createElement('button')
+  deleteButton.classList = 'btn btn-danger w-100'
+  deleteButton.innerHTML = '×'
+  deleteButton.addEventListener('click', () => {
+    deleteItem(details.uuid, true)
+  })
+  buttonCol.appendChild(deleteButton)
+}
+
+function wizardCreateAnswers (questionUUID) {
+  // Create a picker to populate answers for the given question.
+
+  const defaultLang = exSetup.config.workingDefinition.language_order[0]
+  const question = exSetup.config.workingDefinition.languages[defaultLang].items[questionUUID].header.text
+
+  const col = document.createElement('div')
+  col.classList = 'col-12'
+  col.innerHTML = `
+  <H3>${question}</H3>
+  <label class="form-label" for="wizardAnswerTypeSelect_${questionUUID}">Choose answer options</label>
+  <select id="wizardAnswerTypeSelect_${questionUUID}" class="form-select">
+    <option value="thumbs">Thumbs-up/down</option>
+    <option value="threeStars">Stars (1 - 3)</option>
+    <option value="fiveStars">Stars (1 - 5)</option>
+    <option value="custom">Write your own answers</option>
+  </select>
+  <div id="wizardCustomAnswersGUI_${questionUUID}" class="row gy-2 mt-2" style="display: none;">
+    <div class="col-12">
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="checkbox" id="wizardRandomizeAnswers_${questionUUID}">
+        <label class="form-check-label" for="wizardRandomizeAnswers_${questionUUID}">Randomize options</label>
+      </div>
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="checkbox" id="wizardMultipleSelect_${questionUUID}">
+        <label class="form-check-label" for="wizardMultipleSelect_${questionUUID}">
+          Allow multiple selections
+          <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Allow the user to select multiple options." style="font-size: 0.55em;">?</span>
+        </label>
+      </div>
+    </div>
+    <div class="col-3">
+      <button id="wizardAddAnswerOptionButton_${questionUUID}" class="btn btn-primary">Add option</button>
+    </div>
+    <div class="col-9">
+      <div id="wizardCustomAnswersRow_${questionUUID}" class="row gy-2"></div>
+    </div>
+    <div id="wizardCustomAnswersNoOptionsWarning_${questionUUID}" class="col-12 text-warning" style="display: none;">
+      You must add at least one answer option.
+    </div>
+    <div id="wizardCustomAnswersBlankOptionsWarning_${questionUUID}" class="col-12 text-warning" style="display: none;">
+      Answer options must not be blank (you can remove text after completing the setup wizard).
+    </div>
+  </div>
+  `
+  document.getElementById('wizardAnswersList').appendChild(col)
+
+  document.getElementById('wizardAnswerTypeSelect_' + questionUUID).addEventListener('change', (event) => {
+    if (event.target.value === 'custom') {
+      document.getElementById('wizardCustomAnswersGUI_' + questionUUID).style.display = 'flex'
+    } else {
+      document.getElementById('wizardCustomAnswersGUI_' + questionUUID).style.display = 'none'
+    }
+  })
+  document.getElementById('wizardAddAnswerOptionButton_' + questionUUID).addEventListener('click', () => {
+    wizardCreateAnswerOption(questionUUID)
+  })
+
+  document.getElementById('wizardMultipleSelect_' + questionUUID).addEventListener('change', (ev) => {
+    if (ev.target.checked) {
+      exSetup.updateWorkingDefinition(['items', questionUUID, 'type'], 'multiple_vote')
+    } else exSetup.updateWorkingDefinition(['items', questionUUID, 'type'], 'single_vote')
+  })
+
+  document.getElementById('wizardRandomizeAnswers_' + questionUUID).addEventListener('change', (ev) => {
+    exSetup.updateWorkingDefinition(['items', questionUUID, 'randomize_options'], ev.target.checked)
+  })
+
+  // Activate tooltips
+  const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+  tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl)
+  })
+}
+
+function wizardCreateAnswerOption (questionUUID, userDetails) {
   // Create the GUI representation of a new answer option in the wizard
 
-  const optionOrder = exSetup.config.workingDefinition.option_order
+  const optionOrder = exSetup.config.workingDefinition.items[questionUUID].option_order
+  const defaultLang = exSetup.config.workingDefinition.language_order[0]
 
   const defaults = {
     uuid: exUtilities.uuid(),
@@ -201,22 +343,23 @@ function wizardCreateAnswerOption (userDetails) {
 
   if (optionOrder.includes(details.uuid) === false) {
     optionOrder.push(details.uuid)
-    exSetup.updateWorkingDefinition(['option_order', optionOrder])
+    exSetup.updateWorkingDefinition(['items', questionUUID, 'option_order', optionOrder])
     for (const key of Object.keys(defaults)) {
-      exSetup.updateWorkingDefinition(['options', details.uuid, key], details[key])
+      exSetup.updateWorkingDefinition(['items', questionUUID, 'options', details.uuid, key], details[key])
     }
   }
 
   const col = document.createElement('div')
   col.classList = 'col-12'
-  document.getElementById('wizardCustomAnswersRow').appendChild(col)
+  col.setAttribute('id', 'wizardAnswerCol_' + questionUUID + '_' + details.uuid)
+  document.getElementById(`wizardCustomAnswersRow_${questionUUID}`).appendChild(col)
 
   const row = document.createElement('div')
   row.classList = 'row'
   col.appendChild(row)
 
   const answerCol = document.createElement('div')
-  answerCol.classList = 'col-7 pe-1'
+  answerCol.classList = 'col-10 pe-1'
   row.appendChild(answerCol)
 
   const answerText = document.createElement('input')
@@ -224,35 +367,19 @@ function wizardCreateAnswerOption (userDetails) {
   answerText.classList = 'form-control wizard-answer-option'
   answerText.value = details.label
   answerText.addEventListener('change', () => {
-    exSetup.updateWorkingDefinition(['options', details.uuid, 'label'], answerText.value)
+    exSetup.updateWorkingDefinition(['languages', defaultLang, 'items', questionUUID, 'options', details.uuid, 'text'], answerText.value.trim())
   })
   answerCol.appendChild(answerText)
 
   const buttonCol = document.createElement('div')
-  buttonCol.classList = 'col-5 ps-1'
+  buttonCol.classList = 'col-2 ps-1'
   row.appendChild(buttonCol)
 
-  const upButton = document.createElement('button')
-  upButton.classList = 'btn btn-info me-1'
-  upButton.innerHTML = '▲'
-  upButton.addEventListener('click', () => {
-    changeOptionOrder(details.uuid, -1, true)
-  })
-  buttonCol.appendChild(upButton)
-
-  const downButton = document.createElement('button')
-  downButton.classList = 'btn btn-info me-1'
-  downButton.innerHTML = '▼'
-  downButton.addEventListener('click', () => {
-    changeOptionOrder(details.uuid, 1, true)
-  })
-  buttonCol.appendChild(downButton)
-
   const deleteButton = document.createElement('button')
-  deleteButton.classList = 'btn btn-danger'
+  deleteButton.classList = 'btn btn-danger w-100'
   deleteButton.innerHTML = '×'
   deleteButton.addEventListener('click', () => {
-    deleteOption(details.uuid, true)
+    deleteOption(questionUUID, details.uuid, true)
   })
   buttonCol.appendChild(deleteButton)
 }
@@ -402,7 +529,7 @@ function createItem (itemType) {
   rebuildItems()
 }
 
-function deleteItem (uuidToRemove) {
+function deleteItem (uuidToRemove, wizard = false) {
   // Remove the given item from the working definition and rebuild the GUI.
 
   const data = exSetup.config.workingDefinition
@@ -425,7 +552,10 @@ function deleteItem (uuidToRemove) {
     }
   }
   exSetup.updateWorkingDefinition(['languages'], data?.languages ?? {})
-  rebuildItems()
+
+  if (wizard) {
+    document.getElementById('wizardQuestion_' + uuidToRemove).remove()
+  } else rebuildItems()
 }
 
 function rebuildItems () {
@@ -462,7 +592,7 @@ function createOption (itemUUID) {
   }
 }
 
-function deleteOption (itemUUID, optionUUID) {
+function deleteOption (itemUUID, optionUUID, wizard = false) {
   // Remove the given option from the working definition and rebuild the GUI.
 
   const data = exSetup.config.workingDefinition.items?.[itemUUID]
@@ -488,8 +618,12 @@ function deleteOption (itemUUID, optionUUID) {
   }
   exSetup.updateWorkingDefinition(['languages'], langData)
 
-  for (const lang of exSetup.config.workingDefinition?.language_order ?? []) {
-    rebuildOptions(itemUUID, lang)
+  if (wizard) {
+    document.getElementById('wizardAnswerCol_' + itemUUID + '_' + optionUUID).remove()
+  } else {
+    for (const lang of exSetup.config.workingDefinition?.language_order ?? []) {
+      rebuildOptions(itemUUID, lang)
+    }
   }
 }
 
@@ -1108,13 +1242,13 @@ function createSurveyItemGUIVote (item) {
   }
   layoutSelect.value = item?.num_columns ?? 'auto'
 
-  const randomCol = document.createElement('div')
-  randomCol.classList = 'col-12 col-lg-6'
-  row.appendChild(randomCol)
+  const checkboxCol = document.createElement('div')
+  checkboxCol.classList = 'col-12 mt-3'
+  row.appendChild(checkboxCol)
 
   const randomCheckGroup = document.createElement('div')
-  randomCheckGroup.classList = 'form-check'
-  randomCol.appendChild(randomCheckGroup)
+  randomCheckGroup.classList = 'form-check form-check-inline'
+  checkboxCol.appendChild(randomCheckGroup)
 
   const randomCheck = document.createElement('input')
   randomCheck.classList = 'form-check-input random-checkbox'
@@ -1135,6 +1269,35 @@ function createSurveyItemGUIVote (item) {
   randomCheckLabel.innerHTML = 'Randomize options'
 
   randomCheckGroup.appendChild(randomCheckLabel)
+
+  const optionsMutliCheckGroup = document.createElement('div')
+  optionsMutliCheckGroup.classList = 'form-check form-check-inline'
+  checkboxCol.appendChild(optionsMutliCheckGroup)
+
+  const optionsMutliCheck = document.createElement('input')
+  optionsMutliCheck.classList = 'form-check-input mutli-checkbox'
+  optionsMutliCheck.setAttribute('type', 'checkbox')
+  optionsMutliCheck.value = ''
+  optionsMutliCheck.id = 'optionsMutliCheck_' + item.uuid
+  optionsMutliCheck.dataset.itemuuid = item.uuid
+  optionsMutliCheck.checked = item?.type === 'multiple_vote'
+  optionsMutliCheckGroup.appendChild(optionsMutliCheck)
+  optionsMutliCheck.addEventListener('change', (ev) => {
+    if (ev.target.checked) {
+      exSetup.updateWorkingDefinition(['items', item.uuid, 'type'], 'multiple_vote')
+    } else exSetup.updateWorkingDefinition(['items', item.uuid, 'type'], 'single_vote')
+
+    exSetup.previewDefinition(true)
+  })
+
+  const optionsMutliCheckLabel = document.createElement('label')
+  optionsMutliCheckLabel.classList = 'form-check-label'
+  optionsMutliCheckLabel.setAttribute('for', 'optionsMutliCheck_' + item.uuid)
+  optionsMutliCheckLabel.innerHTML = `
+      Allow multiple selections
+      <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Allow the user to select multiple options." style="font-size: 0.55em;">?</span>
+    `
+  optionsMutliCheckGroup.appendChild(optionsMutliCheckLabel)
 
   // Build out the nav and pane for each language
   let first = true
@@ -1230,45 +1393,6 @@ function createSurveyItemGUIVote (item) {
       createOption(item.uuid)
     })
     addOptionCol.appendChild(addOptionButton)
-
-    const optionsMultiCol = document.createElement('div')
-    optionsMultiCol.classList = 'col-12 col-lg-8 d-flex align-items-end'
-    row.appendChild(optionsMultiCol)
-
-    const optionsMutliCheckGroup = document.createElement('div')
-    optionsMutliCheckGroup.classList = 'form-check ms-lg-auto'
-    optionsMultiCol.appendChild(optionsMutliCheckGroup)
-
-    const optionsMutliCheck = document.createElement('input')
-    optionsMutliCheck.classList = 'form-check-input mutli-checkbox'
-    optionsMutliCheck.setAttribute('type', 'checkbox')
-    optionsMutliCheck.value = ''
-    optionsMutliCheck.id = 'optionsMutliCheck_' + item.uuid + '_' + code
-    optionsMutliCheck.dataset.itemuuid = item.uuid
-    optionsMutliCheck.checked = item?.type === 'multiple_vote'
-    optionsMutliCheckGroup.appendChild(optionsMutliCheck)
-    optionsMutliCheck.addEventListener('change', (ev) => {
-      if (ev.target.checked) {
-        exSetup.updateWorkingDefinition(['items', item.uuid, 'type'], 'multiple_vote')
-      } else exSetup.updateWorkingDefinition(['items', item.uuid, 'type'], 'single_vote')
-
-      // Sync the same checkbox for other languages
-      const inputs = document.querySelectorAll(`.mutli-checkbox[data-itemuuid="${item.uuid}"]`)
-      for (const el of inputs) {
-        el.checked = ev.target.checked
-      }
-
-      exSetup.previewDefinition(true)
-    })
-
-    const optionsMutliCheckLabel = document.createElement('label')
-    optionsMutliCheckLabel.classList = 'form-check-label'
-    optionsMutliCheckLabel.setAttribute('for', 'optionsMutliCheck_' + item.uuid + '_' + code)
-    optionsMutliCheckLabel.innerHTML = `
-      Alllow multiple selections
-      <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Allow the user to select multiple options." style="font-size: 0.55em;">?</span>
-    `
-    optionsMutliCheckGroup.appendChild(optionsMutliCheckLabel)
 
     const optionsCol = document.createElement('div')
     optionsCol.classList = 'col-12'
@@ -1392,14 +1516,9 @@ for (const el of document.querySelectorAll('.wizard-back')) {
   })
 }
 
-document.getElementById('wizardAnswerTypeSelect').addEventListener('change', (event) => {
-  if (event.target.value === 'custom') {
-    document.getElementById('wizardCustomAnswersGUI').style.display = 'flex'
-  } else {
-    document.getElementById('wizardCustomAnswersGUI').style.display = 'none'
-  }
+document.getElementById('wizardAddQuestionButton').addEventListener('click', (event) => {
+  wizarddCreateQuestion()
 })
-document.getElementById('wizardAddAnswerOptionButton').addEventListener('click', wizardCreateAnswerOption)
 
 // Main buttons
 
