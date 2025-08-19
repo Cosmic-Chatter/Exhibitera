@@ -60,6 +60,9 @@ function editDefinition (uuid = '') {
   exSetup.config.initialDefinition = structuredClone(def)
   exSetup.config.workingDefinition = structuredClone(def)
 
+  // Configure preview behavior
+  exSetup.configurePreviewFromDefinition(def)
+
   document.getElementById('definitionNameInput').value = def.name
   document.getElementById('filePatternInput').value = def.files
   retrieveMatchingFilesCount()

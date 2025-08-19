@@ -134,6 +134,9 @@ function editDefinition (uuid = '') {
   exSetup.config.initialDefinition = structuredClone(def)
   exSetup.config.workingDefinition = structuredClone(def)
 
+  // Configure preview behavior
+  exSetup.configurePreviewFromDefinition(def)
+
   document.getElementById('definitionNameInput').value = def.name
   document.getElementById('collectionNameInput').value = def?.behavior?.collection_name ?? ''
   document.getElementById('enableKeyboardInput').checked = def?.behavior?.enable_keyboard_input ?? false

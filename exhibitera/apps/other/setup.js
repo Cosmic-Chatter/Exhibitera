@@ -124,7 +124,10 @@ function editDefinition (uuid = '') {
   const def = exSetup.getDefinitionByUUID(uuid)
   exSetup.config.initialDefinition = structuredClone(def)
   exSetup.config.workingDefinition = structuredClone(def)
-  console.log(def)
+
+  // Configure preview behavior
+  exSetup.configurePreviewFromDefinition(def)
+
   document.getElementById('definitionNameInput').value = def.name
   document.getElementById('definitionModeInput').value = def?.mode ?? 'basic'
   document.getElementById('appURLInput').value = def?.url ?? ''
