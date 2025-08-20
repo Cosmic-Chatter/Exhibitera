@@ -72,6 +72,9 @@ function editDefinition (uuid = '') {
   exSetup.config.initialDefinition = structuredClone(def)
   exSetup.config.workingDefinition = structuredClone(def)
 
+  // Configure preview behavior
+  exSetup.configurePreviewFromDefinition(def)
+
   document.getElementById('definitionNameInput').value = def.name
 
   // Attractor
@@ -87,10 +90,15 @@ function editDefinition (uuid = '') {
   // Layout fields
   const buttonSizeSlider = document.getElementById('buttonSizeSlider')
   exSetup.createAdvancedSlider(buttonSizeSlider, def?.style?.layout?.button_size)
-  // buttonSizeSlider.value = def?.style?.layout?.button_size ?? buttonSizeSlider.getAttribute('start')
 
   const headerSizeSlider = document.getElementById('headerSizeSlider')
   exSetup.createAdvancedSlider(headerSizeSlider, def?.style?.layout?.header_height)
+
+  const sidebarSizeSlider = document.getElementById('sidebarSizeSlider')
+  exSetup.createAdvancedSlider(sidebarSizeSlider, def?.style?.layout?.sidebar_width)
+
+  const toolbarSizeSlider = document.getElementById('toolbarSizeSlider')
+  exSetup.createAdvancedSlider(toolbarSizeSlider, def?.style?.layout?.toolbar_height)
 
   exSetup.updateAdvancedColorPicker('style>background',
     def?.style?.background,

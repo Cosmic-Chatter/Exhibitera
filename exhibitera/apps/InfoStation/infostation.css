@@ -31,6 +31,8 @@
   --button-rows: 1;
   --button-size: 30;
   --header-height: 10;
+  --sidebar-width: 30;
+  --toolbar-height: 5;
 }
 
 /* Font definitions */
@@ -213,15 +215,12 @@ p {
 }
 #toolbar {
   background-color: var(--footer-color);
-  height: 5vmax;
+  height: calc(var(--toolbar-height) * 1vmax);
   z-index: 1;
 }
 
 /* Handle portrait and landscape orientations */
 @media (orientation: portrait) {
-  /* .float-right, .float-left {
-    max-width: 50%;
-  } */
   .tabButtonCol {
     width: calc(1%*var(--button-size))
   }
@@ -232,7 +231,7 @@ p {
     position: relative;
   }
   #nav-tabContent {
-    height: calc(100vh - 7vh*var(--button-rows) - 5vh - 1vh * var(--header-height));
+    height: calc(100vh - 7vh*var(--button-rows) - var(--toolbar-height) * 1vh - 1vh * var(--header-height));
     width: 100vw;
     overflow-x: hidden;
     overflow-y: auto;
@@ -240,9 +239,6 @@ p {
 }
 
 @media (orientation: landscape) {
-  /* .float-right, .float-left {
-    max-width: 35%;
-  } */
   .tabButtonCol {
     width: 100%;
     height: calc(1%*var(--button-size))
@@ -252,18 +248,18 @@ p {
   }
   #nav-tabContent {
     position: fixed;
-    left: 30vw;
+    left: calc(var(--sidebar-width) * 1vw);
     top: 0vh;
-    width: 70vw;
+    width: calc((100 - var(--sidebar-width))*1vw);
     height: 100vh;
   }
   #buttonRow {
-    width: 30vw;
-    height: calc(100vh - 1vh * var(--header-height) - 5vmax);
+    width: calc(var(--sidebar-width) * 1vw); 
+    height: calc(100vh - 1vh * var(--header-height) - var(--toolbar-height) * 1vmax);
     overflow-y: auto;
     --bs-gutter-y: 0.5rem;
   }
   #toolbar {
-    width: 30vw;
+    width: calc(var(--sidebar-width) * 1vw); 
   }
 }

@@ -9,9 +9,13 @@ _Exhibitera Hub and Apps must all be upgraded to version 6 at the same time._
 ## Apps
 
 ### Custom Apps
-- New Basic App option turns a simple HTML file into an app without using the Exhibitera APIs
+- New Basic App option turns a simple HTML file into an app without needing to implement the Exhibitera APIs
 - New URL option enables you to embed a webpage into your exhibition (limitations apply)
 - Guided setup makes things easier than ever
+
+### InfoStation
+- Adjust the width of the sidebar in landscape view
+- Adjust the height of the toolbar at the bottom
 
 ### Media Player
 - Adjust the opacity of watermarks
