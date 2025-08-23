@@ -2,8 +2,9 @@
 // Create rich markdown editors for setup pages.
 
 import exConfig from '../../common/config.js'
+import * as exFiles from '../../common/files.js'
 import * as exFileSelect from './exhibitera_file_select_modal.js'
-import * as exCommon from './exhibitera_app_common.js'
+import * as appsCommon from './exhibitera_app_common.js'
 
 const markdownConverter = new showdown.Converter({ parseImgDimensions: true })
 
@@ -64,7 +65,7 @@ export class ExhibiteraMarkdownEditor {
         commands.push('blockquote')
         commands.push('|')
       } else if (category === 'image') {
-        commands.push({ name: 'insertImage', action: this.showInsertImageModal.bind(this) })
+        commands.push({ name: 'insertImage', action: this.showInsertMediaModal.bind(this) })
         commands.push('|')
       }
     }
@@ -108,26 +109,35 @@ export class ExhibiteraMarkdownEditor {
     }
   }
 
-  showInsertImageModal () {
-    // Create a modal that allows the user to select an image, style it, and add a caption.
+  showInsertMediaModal () {
+    // Create a modal that allows the user to select an image or video, style it, and add a caption.
 
     // Record the current state of the cursor
     const focus = this.tinyMDE.getSelection()
     const anchor = this.tinyMDE.getSelection(true)
 
     const modalHTML = `
-      <div class="modal" id="dynamicModal" tabindex="-1" aria-labelledby="dynamicModalLabel" aria-hidden="true">
+      <div class="modal" id="insertMediaModal" tabindex="-1" aria-labelledby="insertMediaModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title" id="dynamicModalLabel">Insert an image</h5>
+              <h5 class="modal-title" id="insertMediaModalLabel">Insert media</h5>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
               <div class="row gy-2 d-flex align-items-end">
                 <div class="col-4">
-                  <img class="w-100" id="exMarkdownSelectImage">
-                  <button id="exMarkdownSelectImageButton" class="btn btn-outline-primary w-100 mt-3">Select image</button>
+                  <img class="w-100" id="exMarkdownSelectImage" style="display:none;">
+                  <video class="w-100" autoplay muted loop id="exMarkdownSelectVideo" style="display:none;"></video>
+                  <div class="form-check mt-2" id='exMarkdownSelectMediaLoopGroup' style="display: none;">
+                    <input class="form-check-input" type="checkbox" value="" id="exMarkdownSelectMediaLoop">
+                    <label class="form-check-label" for="exMarkdownSelectMediaLoop">
+                      Loop
+                      <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Display the video as a muted loop, like a classic GIF." style="font-size: 0.55em;">?</span>
+
+                    </label>
+                  </div>
+                  <button id="exMarkdownSelectMediaButton" class="btn btn-outline-primary w-100 mt-3">Select file</button>
                 </div>
                 <div class="col-4">
                   <label for="exMarkdownSelectImageAlignmentSelect" class="form-label">Alignment</label>
@@ -149,20 +159,21 @@ export class ExhibiteraMarkdownEditor {
                   </select>
                 </div>
                 <div class="col-12">
-                  <label class="form-label" for="exMarkdownSelectImageCaption">Caption</label>
-                  <input type="text" class="form-control" id="exMarkdownSelectImageCaption">
-                </div>
+                  <label id="captionLabel" class="form-label">Caption</label>
+                  <div id="captionCommandBar"></div>
+                  <div id="captionInput"></div>
+                </div>            
               </div>
               <div class="col-12 mt-2">
                 <span id="exMarkdownSelectImageNoImageWarning" class="text-warning" style="display: none;">
-                  Select the image you want to insert.
+                  Select the file you want to insert.
                 </span>
               </div>
               
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-              <button id="exMarkdownInsertImageFromModalButton" type="button" class="btn btn-primary">Insert</button>
+              <button id="exMarkdownInsertMediaFromModalButton" type="button" class="btn btn-primary">Insert</button>
             </div>
           </div>
         </div>
@@ -182,37 +193,86 @@ export class ExhibiteraMarkdownEditor {
     // Initialize a new Bootstrap modal instance.
     const modalInstance = new bootstrap.Modal(modalElement)
 
+    // Create the markdown editor for the caption
+    const captionEditor = new ExhibiteraMarkdownEditor({
+      content: '',
+      editorDiv: document.getElementById('captionInput'),
+      commandDiv: document.getElementById('captionCommandBar'),
+      commands: ['basic'],
+      callback: (content) => {
+        document.getElementById('captionLabel').dataset.text = content
+      }
+    })
+
     // Bind event listeners
-    document.getElementById('exMarkdownSelectImageButton').addEventListener('click', () => {
+    document.getElementById('exMarkdownSelectMediaButton').addEventListener('click', () => {
       exFileSelect
         .createFileSelectionModal({
-          filetypes: ['image'],
+          filetypes: ['image', 'video'],
           manage: false,
           multiple: false
         })
         .then((files) => {
-          if (files.length !== 0) {
-            const exMarkdownSelectImage = document.getElementById('exMarkdownSelectImage')
-            exMarkdownSelectImage.src = exCommon.config.helperAddress + exConfig.api + '/files/' + files[0] + '/thumbnail'
-            exMarkdownSelectImage.setAttribute('data-filename', files[0])
+          if (files.length === 0) return
+          const exMarkdownSelectImage = document.getElementById('exMarkdownSelectImage')
+          const exMarkdownSelectVideo = document.getElementById('exMarkdownSelectVideo')
+          const exMarkdownSelectLoop = document.getElementById('exMarkdownSelectMediaLoopGroup')
+          const insertMediaModal = document.getElementById('insertMediaModal')
+          insertMediaModal.dataset.filename = files[0]
+
+          if (exFiles.guessMimetype(files[0]) === 'image') {
+            exMarkdownSelectImage.style.display = 'block'
+            exMarkdownSelectVideo.style.display = 'none'
+            exMarkdownSelectLoop.style.display = 'none'
+
+            exMarkdownSelectImage.src = appsCommon.config.helperAddress + exConfig.api + '/files/' + files[0] + '/thumbnail'
+          } else {
+            exMarkdownSelectImage.style.display = 'none'
+            exMarkdownSelectVideo.style.display = 'block'
+            exMarkdownSelectLoop.style.display = 'block'
+
+            exMarkdownSelectVideo.src = appsCommon.config.helperAddress + exConfig.api + '/files/' + files[0] + '/thumbnail'
           }
         })
     })
 
-    document.getElementById('exMarkdownInsertImageFromModalButton').addEventListener('click', () => {
+    document.getElementById('exMarkdownSelectImageSizeSelect').addEventListener('change', (ev) => {
+      const alignment = document.getElementById('exMarkdownSelectImageAlignmentSelect')
+
+      if (ev.target.value === '100%') {
+        alignment.value = 'middle'
+        alignment.disabled = true
+      } else {
+        alignment.disabled = false
+      }
+    })
+
+    document.getElementById('exMarkdownInsertMediaFromModalButton').addEventListener('click', () => {
       // Collect the details and format the Markdown image string
-      const filename = document.getElementById('exMarkdownSelectImage').getAttribute('data-filename')
+      const filename = document.getElementById('insertMediaModal').dataset.filename
 
       if ((filename == null) || filename === '') {
         document.getElementById('exMarkdownSelectImageNoImageWarning').style.display = 'block'
         return
       }
 
-      const caption = document.getElementById('exMarkdownSelectImageCaption').value
+      const caption = document.getElementById('captionLabel').dataset.text
       const alignment = document.getElementById('exMarkdownSelectImageAlignmentSelect').value
       const size = document.getElementById('exMarkdownSelectImageSizeSelect').value
+      const loop = document.getElementById('exMarkdownSelectMediaLoop').checked
 
-      this.tinyMDE.paste(`![${alignment} ${size}](/content/${filename} "${caption}")`, anchor, focus)
+      let mediaString
+      if (exFiles.guessMimetype(filename) === 'image') {
+        mediaString = `![${alignment} ${size}](/content/${filename} "${caption}")`
+      } else {
+        if (loop) {
+          mediaString = `![${alignment} ${size} loop](/content/${filename} "${caption}")`
+        } else {
+          mediaString = `![${alignment} ${size}](/content/${filename} "${caption}")`
+        }
+      }
+      this.tinyMDE.paste(mediaString, anchor, focus)
+
       modalInstance.hide()
       modalElement.remove()
     })
@@ -221,6 +281,12 @@ export class ExhibiteraMarkdownEditor {
     modalElement.addEventListener('hidden.bs.modal', () => {
       this.tinyMDE.setSelection(focus)
       modalElement.remove()
+    })
+
+    // Activate tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl)
     })
 
     // Show the modal.

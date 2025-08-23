@@ -7,37 +7,93 @@
     padding-top: 2%;
     text-align: center;
 }
-.markdown-image-caption {
+.markdown-video {
+    width: 100%;
+    height: auto;
+    padding-bottom: 2%;
+    padding-top: 2%;
     text-align: center;
 }
-.markdown-image-middle {
+ .markdown-video-wrapper {
+    position: relative;
+}
+.markdown-video-wrapper video {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+/* the overlay sits on top of the video */
+.markdown-video-play-button {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  opacity: 1;
+  transition: opacity .2s ease;
+  pointer-events: none; /* clicks pass through to the video/controls */
+}
+
+/* circular button */
+.markdown-video-play-button::before {
+  content: "";
+  width: 30%;
+  aspect-ratio: 1 / 1;
+  max-width: 9vmax;
+  border-radius: 50%;
+  background: rgba(0,0,0,.75);
+  box-shadow: 0 2px 12px rgba(0,0,0,.35);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* triangle icon */
+.markdown-video-play-button::after {
+  content: "";
+  position: absolute;
+  /* size/position relative to the circle */
+  width: 0;
+  height: 0;
+  border-top: .7em solid transparent;
+  border-bottom: .7em solid transparent;
+  border-left: 1.2em solid white;
+  /* center the triangle within the circle */
+  left: 50%;
+  top: 50%;
+  transform: translate(-40%, -50%);
+}
+.markdown-media-caption {
+    text-align: center;
+}
+.markdown-media-middle {
     margin-left: auto;
     margin-right: auto;
 }
-.markdown-image-left {
+.markdown-media-left {
     float: left;
     padding-right: 2%;
 }
-.markdown-image-right {
+.markdown-media-right {
     float: right;
     padding-left: 2%;
 }
-.markdown-image-25 {
+.markdown-media-25 {
     max-width: 25%!important;
 }
-.markdown-image-33 {
+.markdown-media-33 {
     max-width: 33%!important;
 }
-.markdown-image-50 {
+.markdown-media-50 {
     max-width: 50%!important;
 }
-.markdown-image-67 {
+.markdown-media-67 {
     max-width: 67%!important;
 }
-.markdown-image-75 {
+.markdown-media-75 {
     max-width: 75%!important;
 }
-.markdown-image-100 {
+.markdown-media-100 {
     max-width: 100%!important;
 }
 #langSwitchOptions {

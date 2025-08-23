@@ -34,31 +34,19 @@
       </div>
       <div class="tab-content" id="nav-tabContent"></div>
       <div id='buttonRow' class='row'></div>
-      <footer id='toolbar' class="fixed-bottom">
-        <div class='row h-100'>
-          <div class='col h-100 text-center'>
-            <button id="fontSizeDecreaseButton" type="button" class="btn btn-link h-100">
-              <img src="../_static/icons/font_size_decrease.svg" height="60%">
+      <footer id='toolbar' class="fixed-bottom d-flex">
+        <button id="fontSizeDecreaseButton" type="button" class="btn btn-link h-100">
+          <img src="../_static/icons/font_size_decrease.svg" height="60%">
+        </button>
+        <button id="fontSizeIncreaseButton" type="button" class="btn btn-link h-100">
+          <img src="../_static/icons/font_size_increase.svg" height="60%">
+        </button>
+        <div id="langSwitchDropdown" class="btn-group dropup h-100 text-center ms-auto">
+          <button type="button" class="btn btn-link" data-bs-toggle="dropdown" aria-expanded="false">
+            <img src="../_static/icons/translation-icon_white.svg" height="80%">
           </button>
-          </div>
-          <div class='col h-100 text-center'>
-              <button id="fontSizeIncreaseButton" type="button" class="btn btn-link h-100">
-                  <img src="../_static/icons/font_size_increase.svg" height="60%">
-              </button>
-          </div>
-          <div class="col"></div>
-          <div class="col"></div>
-          <div class="col"></div>
-          <div class="col"></div>
-          <div class='col h-100'>
-              <div id="langSwitchDropdown" class="btn-group dropup w-100 h-100 text-center">
-                  <button type="button" class="btn btn-link" data-bs-toggle="dropdown" aria-expanded="false">
-                    <img src="../_static/icons/translation-icon_white.svg" height="80%">
-                  </button>
-                  <ul id="langSwitchOptions" class="dropdown-menu">
-                  </ul>
-              </div>
-          </div>
+          <ul id="langSwitchOptions" class="dropdown-menu">
+          </ul>
         </div>
       </footer>
     </main>
