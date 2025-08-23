@@ -345,6 +345,15 @@ function setAttractor (filename, fileType) {
 function showAttractor () {
   // Make the attractor layer visible
 
+  // First, make sure there aren't any videos playing (except looping GIFs)
+  const videos = document.querySelectorAll('video')
+  for (const video of videos) {
+    if ((video.paused === false) && (video.autoplay === false)) {
+      resetActivityTimer()
+      return
+    }
+  }
+
   exCommon.config.currentInteraction = false
 
   const attractorOverlay = document.getElementById('attractorOverlay')
