@@ -88,6 +88,51 @@ def check_for_software_update(application: str):
     ex_config.software_update_timer.start()
 
 
+def semantic_version_less_than(input_version: dict[str, int] | str, reference_version: dict[str, int] | str) -> bool:
+    """Return True is input_version is less than reference_version.
+
+    Version format is {"major": 3, "minor": 4, "patch": 0} or "3.4.1"
+    """
+
+    if isinstance(input_version, (float, int)):
+        input_version = str(input_version)
+
+    if isinstance(reference_version, (float, int)):
+        reference_version = str(reference_version)
+
+    if isinstance(input_version, str):
+        split = input_version.split('.')
+        input_version = {"major": int(split[0])}
+        if len(split) > 1:
+            input_version["minor"] = int(split[1])
+        if len(split) > 2:
+            input_version["patch"] = int(split[2])
+
+    if isinstance(reference_version, str):
+        split = reference_version.split('.')
+        reference_version = {"major": int(split[0])}
+        if len(split) > 1:
+            reference_version["minor"] = int(split[1])
+        if len(split) > 2:
+            reference_version["patch"] = int(split[2])
+
+    if input_version.get('major', 0) < reference_version.get('major', 0):
+        return True
+    if input_version.get('major', 0) > reference_version.get('major', 0):
+        return False
+
+    # Major equal, so compare minor
+    if input_version.get('minor', 0) < reference_version.get('minor', 0):
+        return True
+    if input_version.get('minor', 0) > reference_version.get('minor', 0):
+        return False
+
+    # Minor equal, so compare patch
+    if input_version.get('patch', 0) < reference_version.get('patch', 0):
+        return True
+    return False
+
+
 def check_for_outdated_os() -> tuple[bool, str]:
     """Check if the OS release is out of date.
 

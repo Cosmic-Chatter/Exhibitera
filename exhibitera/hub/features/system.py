@@ -82,8 +82,8 @@ def get_webpage_update():
                               "availableExhibits": hub_config.exhibit_list,
                               "galleryName": hub_config.gallery_name,
                               "outdated_os": hub_config.outdated_os,
-                              "softwareVersion": hub_config.software_version,
-                              "softwareVersionAvailable": hub_config.software_update_available_version,
+                              "software_version": hub_config.software_version,
+                              "software_version_available": hub_config.software_update_available_version,
                               "updateAvailable": str(hub_config.software_update_available).lower()}
 
     update_dict["issues"] = {"issueList": [x.details for x in hub_config.issueList],

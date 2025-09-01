@@ -184,6 +184,39 @@ export function formatSemanticVersion (obj) {
   return (String(obj?.major) ?? '?') + '.' + (String(obj?.minor) ?? '?') + '.' + (String(obj?.patch) ?? '?')
 }
 
+export function semanticVersionLessThan (inputVer, referenceVer) {
+  // Return true if the input version is less than the reference version
+  // Supports both strings and dicts
+
+  const input = { major: 0, minor: 0, patch: 0 }
+  if (typeof (inputVer) === 'string') {
+    const split = inputVer.split('.')
+    input.major = parseInt(split[0])
+    if (split.length > 1) input.minor = parseInt(split[1])
+    if (split.length > 2) input.patch = parseInt(split[2])
+  } else Object.assign(input, inputVer)
+
+  const reference = { major: 0, minor: 0, patch: 0 }
+  if (typeof (referenceVer) === 'string') {
+    const split = referenceVer.split('.')
+    reference.major = parseInt(split[0])
+    if (split.length > 1) reference.minor = parseInt(split[1])
+    if (split.length > 2) reference.patch = parseInt(split[2])
+  } else Object.assign(reference, referenceVer)
+
+  // Now compare them
+  if (input.major < reference.major) return true
+  if (input.major > reference.major) return false
+
+  // major is equal, so compare minor
+  if (input.minor < reference.minor) return true
+  if (input.minor > reference.minor) return false
+
+  // minor is equal, so compare patch
+  if (input.patch < reference.patch) return true
+  return false
+}
+
 export function setObjectProperty (obj, keys, val) {
   // Set the location given by the keys to val, creating the path if necessary.
   // E.g., keys = ['prop1', 'prop2', 'prop3'] sets obj.prop1.prop2.prop3 to val

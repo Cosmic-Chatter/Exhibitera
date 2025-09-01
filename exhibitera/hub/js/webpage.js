@@ -589,8 +589,8 @@ function parseUpdate (update) {
       if (update.gallery.updateAvailable === 'true') {
         const notification = {
           update_available: true,
-          current_version: update.gallery.softwareVersion,
-          available_version: update.gallery.softwareVersionAvailable
+          current_version: update.gallery.software_version,
+          available_version: update.gallery.software_version_available
         }
         hubConfig.errorDict.__control_server = {
           software_update: notification

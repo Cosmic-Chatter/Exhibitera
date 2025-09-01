@@ -237,14 +237,7 @@ function configureInterface () {
 function loadVersion () {
   // Load version and update the GUI with the current version
 
-  exCommon.makeServerRequest({
-    api: '',
-    method: 'GET',
-    endpoint: '/_static/semantic_version.json'
-  })
-    .then((response) => {
-      document.getElementById('versionSpan').textContent = exUtilities.formatSemanticVersion(response.version)
-    })
+  document.getElementById('versionSpan').textContent = exUtilities.formatSemanticVersion(exCommon.config.software_version)
 }
 
 function populateAvailableData () {

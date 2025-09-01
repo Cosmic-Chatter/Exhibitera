@@ -26,11 +26,19 @@ export const config = {
   id: 'TEMP ' + String(new Date().getTime()),
   remoteDisplay: false, // false == we are using the webview app, true == browser
   serverAddress: '',
-  softwareVersion: 5.3,
+  software_version: {}, // format of {major: 6, minor: 0, patch: 0}
   standalone: false, // false == we are using Hub
   updateParser: null, // Function used by readUpdate() to parse app-specific updates
   uuid: ''
 }
+
+// Load the current software version
+const VersionResponse = await makeHelperRequest({
+  api: '',
+  method: 'GET',
+  endpoint: '/_static/semantic_version.json'
+})
+config.software_version = VersionResponse.version
 
 // platform.js might not be included in 3rd-party apps
 try {
@@ -106,14 +114,14 @@ export function configureApp (opt = {}) {
 }
 
 export function makeServerRequest (opt) {
-  // Shortcut for making a server request and returning a Promise
+  // Shortcut for making a Hub request and returning a Promise
 
   opt.url = config.serverAddress
   return exUtilities.makeRequest(opt)
 }
 
 export function makeHelperRequest (opt) {
-  // Shortcut for making a server request and returning a Promise
+  // Shortcut for making an Apps request and returning a Promise
 
   opt.url = config.helperAddress
   return exUtilities.makeRequest(opt)
@@ -488,7 +496,7 @@ export async function writeDefinition (definition) {
   // Send the given JSON definition to the helper to write to the content directory.
 
   // Tag the definition with some useful properties
-  definition.exhibitera_version = config.softwareVersion
+  definition.exhibitera_version = config.software_version
   definition.lastEditedDate = new Date().toISOString()
   return makeHelperRequest({
     method: 'POST',
