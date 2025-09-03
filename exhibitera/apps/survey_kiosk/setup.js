@@ -506,7 +506,7 @@ function editDefinition (uuid = '') {
 
 function createItem (itemType) {
   // Add an item of the given type to the working definitino and rebuild the GUI.
-  console.log('here')
+
   const item = {
     type: itemType,
     uuid: exUtilities.uuid()

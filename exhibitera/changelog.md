@@ -14,6 +14,7 @@ _Exhibitera Hub and Apps must all be upgraded to version 6 at the same time._
 - Guided setup makes things easier than ever
 
 ### InfoStation
+- Easily reorder your tabs
 - Embed videos in the same way as images
 - Rich text formatting for media captions
 - Adjust the width of the sidebar in landscape view

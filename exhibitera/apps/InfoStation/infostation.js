@@ -20,14 +20,14 @@ function loadDefinition (definition) {
 
   // Configure the attractor
   attractorAvailable = false
-  if ('attractor' in definition) {
-    const fileType = exFiles.guessMimetype(definition.attractor)
+  if (definition?.behavior?.attractor) {
+    const fileType = exFiles.guessMimetype(definition.behavior.attractor)
     if (['image', 'video'].includes(fileType)) {
-      setAttractor(definition.attractor, fileType)
+      setAttractor(definition.behavior.attractor, fileType)
     }
   }
-  if ('inactivity_timeout' in definition) {
-    timeoutDuration = parseFloat(definition.inactivity_timeout) * 1000
+  if (definition?.behavior?.inactivity_timeout) {
+    timeoutDuration = parseFloat(definition.behavior.inactivity_timeout) * 1000
   } else {
     timeoutDuration = 30000
   }
@@ -95,13 +95,8 @@ function loadDefinition (definition) {
   })
 
   // Find the default language
-  if ('language_order' in definition) {
+  if (definition.language_order) {
     defaultLang = definition.language_order[0]
-  } else {
-    // Deprecated in Ex5.3
-    Object.keys(definition.languages).forEach((lang) => {
-      if (definition.languages[lang].default === true) defaultLang = lang
-    })
   }
   if (defaultLang !== '') localize(defaultLang)
 
@@ -118,25 +113,27 @@ function localize (lang) {
   document.getElementById('buttonRow').innerHTML = ''
   document.getElementById('nav-tabContent').innerHTML = ''
 
-  if (definition && definition.header != null) {
-    document.getElementById('masthead').innerHTML = exMarkdown.formatText(definition.header, { string: true, removeParagraph: true })
+  if (definition?.header?.text) {
+    document.getElementById('masthead').innerHTML = exMarkdown.formatText(definition.header.text, { string: true, removeParagraph: true })
   } else {
     document.getElementById('masthead').innerHTML = ''
   }
 
   // Create the tabs
-  (definition?.tab_order ?? []).forEach((uuid, i) => {
-    const tabDef = definition.tabs[uuid]
-    const tabId = createTextTab(tabDef, i === 0)
+  let i = 0
+  for (const uuid of fullDefinition?.tab_order ?? []) {
+    const tabDef = definition?.tabs?.[uuid]
+    const tabId = createTextTab(tabDef, lang, i === 0)
     if (i === 0) {
       firstTab = tabId
     }
-  })
+    i += 1
+  }
   gotoTab(firstTab)
 
   // Hide tab row if we only have one tab
   const root = document.querySelector(':root')
-  if (definition?.tab_order.length === 1) {
+  if (fullDefinition?.tab_order.length === 1) {
     root.style.setProperty('--button-rows', 0)
   } else {
     root.style.setProperty('--button-rows', 1)
@@ -179,11 +176,11 @@ function createButton (title, id) {
   buttonRow.classList = 'row pt-3 pb-1 mx-1 gx-2 row-cols-' + rowClass
 }
 
-function createTextTab (definition, first = false) {
+function createTextTab (definition, lang, first = false) {
   // Create a pane that displays Markdown-formatted text and images
 
   // First, create the pane
-  const tabId = 'textTab_' + String(definition.uuid)
+  const tabId = 'textTab_' + String(definition.uuid) + '_' + lang
   const pane = document.createElement('div')
   pane.setAttribute('id', tabId)
   let classString = 'tab-pane fade show'
@@ -330,11 +327,11 @@ function setAttractor (filename, fileType) {
 
   attractorAvailable = true
   if (fileType === 'video') {
-    attractorVideo.src = 'content/' + filename
+    attractorVideo.src = '/content/' + filename
     attractorImage.style.display = 'none'
     attractorVideo.style.display = 'block'
   } else if (fileType === 'image') {
-    attractorImage.src = 'content/' + filename
+    attractorImage.src = '/content/' + filename
     attractorImage.style.display = 'block'
     attractorVideo.style.display = 'none'
   } else {
