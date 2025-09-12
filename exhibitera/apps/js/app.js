@@ -46,6 +46,7 @@ document.getElementById('settingsButton').addEventListener('click', (event) => {
 
     exCommon.makeHelperRequest({
       method: 'POST',
+      api: '',
       endpoint: '/app/showWindow/settings',
       params: { reload: true }
     })

@@ -373,7 +373,7 @@ def run():
                 )
             ]
 
-        webview.start(func=start_app, menu=menu_items, private_mode=False)
+        webview.start(func=start_app, menu=menu_items, private_mode=False, storage_path=ex_files.get_path(['webview_storage'], user_file=True))
 
 
 if __name__ == "__main__":

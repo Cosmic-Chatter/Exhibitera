@@ -365,6 +365,7 @@ function gotoAppLink (el) {
     }
     exCommon.makeHelperRequest({
       method: 'POST',
+      api: '',
       endpoint: '/app/showWindow/' + page,
       params: { reload }
     })
