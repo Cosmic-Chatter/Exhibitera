@@ -1,5 +1,6 @@
 distro
 fastapi
+flask==2.2.4
 libusb
 pillow
 psutil
@@ -12,7 +13,7 @@ pyserial
 python-dateutil
 python-multipart
 pyusb
-pywebview; sys_platform != 'linux'
+pywebview==5.4; sys_platform != 'linux'
 requests
 sockio
 uvicorn

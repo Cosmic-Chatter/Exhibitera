@@ -405,7 +405,7 @@ function loadDefinition (def) {
     if (exFiles.guessMimetype(def.attractor) === 'video') {
       attractorType = 'video'
 
-      document.getElementById('attractorVideo').src = 'content/' + def.attractor
+      document.getElementById('attractorVideo').src = '/content/' + def.attractor
       document.getElementById('attractorVideo').style.display = 'block'
       document.getElementById('attractorImage').style.display = 'none'
       document.getElementById('attractorVideo').play()

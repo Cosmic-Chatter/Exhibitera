@@ -8,25 +8,20 @@ source "$1/venv/bin/activate" || exit 1
 cd "$1" || exit 1
 
 pyinstaller --clean --onefile  \
-			--add-data "index.html:."\
-			--add-data "webpage.js:." \
-			--add-data "tracker.html:." \
-			--add-data "tracker.js:." \
-			--add-data "config.js:." \
-			--add-data "version.txt:." \
-			--add-data "exhibitera_dmx.js:." \
-			--add-data "exhibitera_exhibit.js:." \
-			--add-data "exhibitera_group.js:." \
-			--add-data "exhibitera_issues.js:." \
-			--add-data "exhibitera_maintenance.js:." \
-			--add-data "exhibitera_projector.js:." \
-			--add-data "exhibitera_schedule.js:." \
-			--add-data "exhibitera_tools.js:." \
-			--add-data "exhibitera_tracker.js:." \
-			--add-data "exhibitera_users.js:." \
-			--add-data "README.md:." \
-			--add-data "css/:./css/." \
-			--add-data "js/:./js/." \
-			--add-data "icon/:./icon/." \
-			--add-data "images/:./images/." \
+			--add-data "exhibitera/hub/_static/:exhibitera/hub/_static/."\
+			--add-data "exhibitera/hub/api/:exhibitera/hub/api/."\
+			--add-data "exhibitera/hub/css/:exhibitera/hub/css/."\
+			--add-data "exhibitera/hub/features/*.py:exhibitera/hub/features/."\
+			--add-data "exhibitera/hub/js/:exhibitera/hub/js/."\
+			--add-data "exhibitera/hub/__init__.py:exhibitera/hub/."\
+			--add-data "exhibitera/hub/config.js:exhibitera/hub/."\
+			--add-data "exhibitera/hub/config.py:exhibitera/hub/."\
+			--add-data "exhibitera/hub/Hub.py:exhibitera/hub/."\
+			--add-data "exhibitera/hub/index.html:exhibitera/hub/."\
+			--add-data "exhibitera/hub/manifest.json:exhibitera/hub/."\
+			--add-data "exhibitera/hub/README.md:exhibitera/hub/."\
+			--add-data "exhibitera/hub/tools.py:exhibitera/hub/."\
+			--add-data "exhibitera/hub/tracker.html:exhibitera/hub/."\
+			--add-data "exhibitera/common/:exhibitera/common/." \
+			--runtime-tmpdir ./AppData/ \
 		Exhibitera_Hub.py

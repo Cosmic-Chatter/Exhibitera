@@ -33,9 +33,10 @@ export const config = {
 }
 
 // Load the current software version
-const VersionResponse = await makeHelperRequest({
+const VersionResponse = await exUtilities.makeRequest({
   api: '',
   method: 'GET',
+  url: window.location.origin,
   endpoint: '/_static/semantic_version.json'
 })
 config.software_version = VersionResponse.version

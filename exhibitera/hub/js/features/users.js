@@ -442,6 +442,9 @@ export function authenticateUser () {
         }
       }
     })
+    .catch((error) => {
+      console.error('Network or server error:', error)
+    })
 }
 
 function configureUser (userDict, login = true) {

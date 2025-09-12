@@ -857,7 +857,7 @@ document.getElementById('formTest').addEventListener('keydown', function (e) {
     document.getElementById('loginSubmitButton').click() // Trigger form submission programmatically
   }
 })
-document.getElementById('formTest').addEventListener('submit', exUsers.loginFromDropdown)
+document.getElementById('formTest').addEventListener('click', exUsers.loginFromDropdown)
 document.getElementById('logoutButton').addEventListener('click', exUsers.logoutUser)
 document.getElementById('viewUserPreferencesModalButton').addEventListener('click', exUsers.showUserPreferenceModal)
 document.getElementById('userPreferencesModalSaveButton').addEventListener('click', exUsers.submitUserPreferencesFromModal)

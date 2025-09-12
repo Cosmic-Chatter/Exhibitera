@@ -238,6 +238,7 @@ function submitSettings () {
     .then((result) => {
       exCommon.makeHelperRequest({
         method: 'GET',
+        api: '',
         endpoint: '/app/closeSetupWizard'
       })
     })

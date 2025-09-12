@@ -202,168 +202,213 @@
       </div>
       <div class="row align-items-start">
         <div id='editPane' class="col-6 col-lg-7">
-          <h3>Settings</h3>
-          <div class="row gy-2">
-            <div class="col-12 col-md-6">
-              <label for="definitionNameInput" class="form-label">Definition name</label>
-              <input type="text" class="form-control" id="definitionNameInput">
+
+          <div class="accordion mt-3" id="topLevelAccordion">
+            <!-- Basic details -->
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#basicDetails" aria-expanded="true" aria-controls="basicDetails">
+                  Basic details
+                  <div class="accordion-detail">Configure languages, add an attractor, and more.</div>
+                </button>
+              </h2>
+              <div id="basicDetails" class="accordion-collapse collapse show" data-bs-parent="#topLevelAccordion">
+                <div class="accordion-body">
+                  <div class="row gy-2">
+                    <div class="col-12 col-md-6">
+                      <label for="definitionNameInput" class="form-label">Definition name</label>
+                      <input type="text" class="form-control" id="definitionNameInput">
+                    </div>
+                    <div class="col-12 col-md-6">
+                      <div class="row">
+                        <label for="attractorSelect" class="form-label">
+                          Attractor
+                          <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="An attractor is a fullscreen image or video that takes over when the app is idle." style="font-size: 0.55em;">?</span>
+                        </label>
+                        <div class="col-8 col-sm-9 col-md-8 col-lg-9 col-xxl-10 pe-0">
+                          <button id="attractorSelect" class="btn btn-outline-primary w-100 text-break">Select file</button>
+                        </div>
+                        <div class="col-4 col-sm-3 col-md-4 col-lg-3 col-xxl-2">
+                          <button id="attractorSelectClear" class="btn btn-danger align-self-center w-100">✕</button>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-12 col-md-6 col-lg-4 col-xxl-3">
+                      <label for="inactivityTimeoutField" class="form-label">
+                        Inactivity timeout
+                        <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Seconds of inactivity before the attractor is shown." style="font-size: 0.55em;">?</span>
+                      </label>
+                      <input type="number" class="form-control" min="10" value="30" id="inactivityTimeoutField"></select>
+                    </div>
+                    <H5 class="mt-3">Add a langauge</H5>
+                      <i>You must add at least one language.</i>
+                      <div id="languagePicker"></div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div class="col-12 col-md-6">
-              <div class="row">
-                <label for="attractorSelect" class="form-label">
-                  Attractor
-                  <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="An attractor is a fullscreen image or video that takes over when the app is idle." style="font-size: 0.55em;">?</span>
-                </label>
-                <div class="col-8 col-sm-9 col-md-8 col-lg-9 col-xxl-10 pe-0">
-                  <button id="attractorSelect" class="btn btn-outline-primary w-100 text-break">Select file</button>
-                </div>
-                <div class="col-4 col-sm-3 col-md-4 col-lg-3 col-xxl-2">
-                  <button id="attractorSelectClear" class="btn btn-danger align-self-center w-100">✕</button>
+
+            <!-- Content  -->
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#content" aria-expanded="false" aria-controls="content">
+                  Content
+                  <div class="accordion-detail">Create InfoStation tabs and add your content.</div>
+                </button>
+              </h2>
+              <div id="content" class="accordion-collapse collapse" data-bs-parent="#topLevelAccordion">
+                <div class="accordion-body">
+                  <div class="row gy-2 align-items-center">
+                    <div class="col-12 col-md-6 col-lg-4">
+                      <button id="manageContentButton" class="btn btn-primary w-100">Manage content</button>
+                    </div>
+                    <div class="col-12">
+                      <nav  class="mt-3">
+                        <div id="headerInputTabs" class="nav nav-tabs" role="tablist">
+                        </div>
+                      </nav>
+                      <div class="tab-content border-bottom" id="headerInputContent"></div>
+                    </div>
+                    <div class="col-12 mt-3">
+                      <button id="addTabButton" class="btn btn-primary">Add tab</button>
+                    </div>
+                    <div class="col-12 mt-3">
+                      <div class="accordion" id="infoTabs"></div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-            <div class="col-12 col-md-6 col-lg-4 col-xxl-3">
-              <label for="inactivityTimeoutField" class="form-label">
-                Inactivity timeout
-                <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Seconds of inactivity before the attractor is shown." style="font-size: 0.55em;">?</span>
-              </label>
-              <input type="number" class="form-control" min="10" value="30" id="inactivityTimeoutField"></select>
-            </div>
 
-            <div class="col-12 mt-2">
-              <h3>Content</h3>
-              <div class="row gy-2 align-items-center">
-                <div class="col-12 col-md-6 col-lg-4">
-                  <button id="manageContentButton" class="btn btn-primary w-100">Manage content</button>
-                </div>
-                <H5 class="mt-2">Add a langauge</H5>
-                <div id="languagePicker"></div>
-              </div>
-              <H5 class="mt-3">Current langauges</H5>
-              <nav>
-                <div id="languageNav" class="nav nav-tabs" role="tablist">
-                </div>
-              </nav>
-              <div class="tab-content" id="languageNavContent">
-              </div>
-              <h3>Appearance</h3>
-              <h4>Layout</h4>
-              <div class="row gy-2 mb-3"> 
-                <div class="col-12 col-md-6 col-lg-4">
-                  <div id="buttonSizeSlider" class="advanced-slider" data-name="Tab button size" data-path="style>layout>button_size" data-min="5" data-max="100" data-start="30" data-step="1" data-unit="%" data-note="Set the width (portrait view) or height (landscape view) of the tab buttons. The user can swipe to see additional buttons."></div>
-                </div>
-                <div class="col-12 col-md-6 col-lg-4">
-                  <div id="headerSizeSlider" class="advanced-slider" data-name="Header height" data-path="style>layout>header_height" data-min="0" data-max="30" data-start="10" data-step="1" data-unit="%" data-note="The percent of vertical space allocated to the header."></div>
-                </div>
-                <div class="col-12 col-md-6 col-lg-4">
-                  <div id="sidebarSizeSlider" class="advanced-slider" data-name="Sidebar width" data-path="style>layout>sidebar_width" data-min="15" data-max="50" data-start="30" data-step="1" data-unit="%" data-note="In landscape view, the width of the sidebar as a percent of the display width."></div>
-                </div>
-                <div class="col-12 col-md-6 col-lg-4">
-                  <div id="toolbarSizeSlider" class="advanced-slider" data-name="Toolbar height" data-path="style>layout>toolbar_height" data-min="3" data-max="8" data-start="5" data-step="1" data-unit="%" data-note="Height of the toolbar as a percentage of the longest dimension of the display."></div>
-                </div>
-              </div>
-              <h4>Colors</h4>
-              <div class="row gy-2 mb-3">
-                <div class="col-12 col-lg-8 advanced-color-picker" data-constACP-name="Background" data-constACP-path="style>background"></div>
-                <div class="col-12 col-sm-6 col-lg-4">
-                  <label for="colorPicker_text" class="form-label">Body text</label>
-                  <div>
-                    <input id="colorPicker_text" type="text" class="coloris form-control" value="#fff" data-property="text" data-default="#fff">
+            <!-- Appearance -->
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#appearance" aria-expanded="false" aria-controls="appearance">
+                  Appearance
+                  <div class="accordion-detail">Adjust colors, fonts, and text sizes, as well as the size of the buttons.</div>
+                </button>
+              </h2>
+              <div id="appearance" class="accordion-collapse collapse" data-bs-parent="#topLevelAccordion">
+                <div class="accordion-body">
+                  <h4>Layout</h4>
+                  <div class="row gy-2 mb-3"> 
+                    <div class="col-12 col-md-6 col-lg-4">
+                      <div id="buttonSizeSlider" class="advanced-slider" data-name="Tab button size" data-path="style>layout>button_size" data-min="5" data-max="100" data-start="30" data-step="1" data-unit="%" data-note="Set the width (portrait view) or height (landscape view) of the tab buttons. The user can swipe to see additional buttons."></div>
+                    </div>
+                    <div class="col-12 col-md-6 col-lg-4">
+                      <div id="headerSizeSlider" class="advanced-slider" data-name="Header height" data-path="style>layout>header_height" data-min="0" data-max="30" data-start="10" data-step="1" data-unit="%" data-note="The percent of vertical space allocated to the header."></div>
+                    </div>
+                    <div class="col-12 col-md-6 col-lg-4">
+                      <div id="sidebarSizeSlider" class="advanced-slider" data-name="Sidebar width" data-path="style>layout>sidebar_width" data-min="15" data-max="50" data-start="30" data-step="1" data-unit="%" data-note="In landscape view, the width of the sidebar as a percent of the display width."></div>
+                    </div>
+                    <div class="col-12 col-md-6 col-lg-4">
+                      <div id="toolbarSizeSlider" class="advanced-slider" data-name="Toolbar height" data-path="style>layout>toolbar_height" data-min="3" data-max="8" data-start="5" data-step="1" data-unit="%" data-note="Height of the toolbar as a percentage of the longest dimension of the display."></div>
+                    </div>
                   </div>
-                </div>
-                <div class="col-12 col-sm-6 col-lg-4">
-                  <label for="colorPicker_quote" class="form-label">Quote text</label>
-                  <div>
-                    <input id="colorPicker_quote" type="text" class="coloris form-control" value="#fff" data-property="quote" data-default="#fff">
+                  <h4>Colors</h4>
+                  <div class="row gy-2 mb-3">
+                    <div class="col-12 col-lg-8 advanced-color-picker" data-constACP-name="Background" data-constACP-path="style>background"></div>
+                    <div class="col-12 col-sm-6 col-lg-4">
+                      <label for="colorPicker_text" class="form-label">Body text</label>
+                      <div>
+                        <input id="colorPicker_text" type="text" class="coloris form-control" value="#fff" data-property="text" data-default="#fff">
+                      </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-lg-4">
+                      <label for="colorPicker_quote" class="form-label">Quote text</label>
+                      <div>
+                        <input id="colorPicker_quote" type="text" class="coloris form-control" value="#fff" data-property="quote" data-default="#fff">
+                      </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-lg-4">
+                      <label for="colorPicker_header" class="form-label">Header</label>
+                      <div>
+                        <input id="colorPicker_header" type="text" class="coloris form-control" value="#22222E" data-property="header" data-default="#22222E">
+                      </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-lg-4">
+                      <label for="colorPicker_footer" class="form-label">Footer</label>
+                      <div>
+                        <input id="colorPicker_footer" type="text" class="coloris form-control" value="#22222E" data-property="footer" data-default="#22222E">
+                      </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-lg-4">
+                      <label for="colorPicker_section-header" class="form-label">Section header</label>
+                      <div>
+                        <input id="colorPicker_section-header" type="text" class="coloris form-control" value="#fff" data-property="section-header" data-default="#fff">
+                      </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-lg-4">
+                      <label for="colorPicker_section-background" class="form-label">Section background</label>
+                      <div>
+                        <input id="colorPicker_section-background" type="text" class="coloris form-control" value="#393A5A" data-property="section-background" data-default="#393A5A">
+                      </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-lg-4">
+                      <label for="colorPicker_section-border" class="form-label">Section border</label>
+                      <div>
+                        <input id="colorPicker_section-border" type="text" class="coloris form-control" value="#E9E9E9" data-property="section-border" data-default="#E9E9E9">
+                      </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-lg-4">
+                      <label for="colorPicker_section-shadow" class="form-label">Section shadow</label>
+                      <div>
+                        <input id="colorPicker_section-shadow" type="text" class="coloris form-control" value="RGBA(34,34,46, .5)" data-property="section-shadow" data-default="RGBA(34,34,46, .5)">
+                      </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-lg-4">
+                      <label for="colorPicker_tab-button-active" class="form-label">Tab button (active)</label>
+                      <div>
+                        <input id="colorPicker_tab-button-active" type="text" class="coloris form-control" value="#22222E" data-property="tab-button-active" data-default="#22222E">
+                      </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-lg-4">
+                      <label for="colorPicker_tab-button" class="form-label">Tab button (inactive)</label>
+                      <div>
+                        <input id="colorPicker_tab-button" type="text" class="coloris form-control" value="#6c757d" data-property="tab-button" data-default="#6c757d">
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <div class="col-12 col-sm-6 col-lg-4">
-                  <label for="colorPicker_header" class="form-label">Header</label>
-                  <div>
-                    <input id="colorPicker_header" type="text" class="coloris form-control" value="#22222E" data-property="header" data-default="#22222E">
-                  </div>
-                </div>
-                <div class="col-12 col-sm-6 col-lg-4">
-                  <label for="colorPicker_footer" class="form-label">Footer</label>
-                  <div>
-                    <input id="colorPicker_footer" type="text" class="coloris form-control" value="#22222E" data-property="footer" data-default="#22222E">
-                  </div>
-                </div>
-                <div class="col-12 col-sm-6 col-lg-4">
-                  <label for="colorPicker_section-header" class="form-label">Section header</label>
-                  <div>
-                    <input id="colorPicker_section-header" type="text" class="coloris form-control" value="#fff" data-property="section-header" data-default="#fff">
-                  </div>
-                </div>
-                <div class="col-12 col-sm-6 col-lg-4">
-                  <label for="colorPicker_section-background" class="form-label">Section background</label>
-                  <div>
-                    <input id="colorPicker_section-background" type="text" class="coloris form-control" value="#393A5A" data-property="section-background" data-default="#393A5A">
-                  </div>
-                </div>
-                <div class="col-12 col-sm-6 col-lg-4">
-                  <label for="colorPicker_section-border" class="form-label">Section border</label>
-                  <div>
-                    <input id="colorPicker_section-border" type="text" class="coloris form-control" value="#E9E9E9" data-property="section-border" data-default="#E9E9E9">
-                  </div>
-                </div>
-                <div class="col-12 col-sm-6 col-lg-4">
-                  <label for="colorPicker_section-shadow" class="form-label">Section shadow</label>
-                  <div>
-                    <input id="colorPicker_section-shadow" type="text" class="coloris form-control" value="RGBA(34,34,46, .5)" data-property="section-shadow" data-default="RGBA(34,34,46, .5)">
-                  </div>
-                </div>
-                <div class="col-12 col-sm-6 col-lg-4">
-                  <label for="colorPicker_tab-button-active" class="form-label">Tab button (active)</label>
-                  <div>
-                    <input id="colorPicker_tab-button-active" type="text" class="coloris form-control" value="#22222E" data-property="tab-button-active" data-default="#22222E">
-                  </div>
-                </div>
-                <div class="col-12 col-sm-6 col-lg-4">
-                  <label for="colorPicker_tab-button" class="form-label">Tab button (inactive)</label>
-                  <div>
-                    <input id="colorPicker_tab-button" type="text" class="coloris form-control" value="#6c757d" data-property="tab-button" data-default="#6c757d">
-                  </div>
-                </div>
-              </div>
-              <h4>Fonts</h4>
-              <div class="row gy-2">
-                <div class="col-12 col-md-6 col-lg-4 col-xl-3">
-                  <button id="manageFontsButton" class="btn btn-info w-100">Manage fonts</button>
-                </div>
-                <div class="col-0 col-lg-9"></div>
+                  <h4>Fonts</h4>
+                  <div class="row gy-2">
+                    <div class="col-12 col-md-6 col-lg-4 col-xl-3">
+                      <button id="manageFontsButton" class="btn btn-info w-100">Manage fonts</button>
+                    </div>
+                    <div class="col-0 col-lg-9"></div>
 
-                <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Header" data-constAFP-path="style>font>header" data-default="OpenSans-Bold.ttf"></div>
+                    <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Header" data-constAFP-path="style>font>header" data-default="OpenSans-Bold.ttf"></div>
 
-                <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Body text" data-constAFP-path="style>font>body" data-default="OpenSans-Regular.ttf"></div>
-                
-                <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Quote text" data-constAFP-path="style>font>quote" data-default="OpenSans-Regular.ttf"></div>
+                    <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Body text" data-constAFP-path="style>font>body" data-default="OpenSans-Regular.ttf"></div>
+                    
+                    <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Quote text" data-constAFP-path="style>font>quote" data-default="OpenSans-Regular.ttf"></div>
 
-                <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Section header" data-constAFP-path="style>font>section-header" data-default="OpenSans-Bold.ttf"></div>
+                    <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Section header" data-constAFP-path="style>font>section-header" data-default="OpenSans-Bold.ttf"></div>
 
-                <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Tab button" data-constAFP-path="style>font>button" data-default="OpenSans-Regular.ttf"></div>
-              </div>
-              <h4 class="mt-3">Text size</h4>
-              <div class="row gy-2">
-                <div class="col-12 col-md-6 col-lg-4">
-                  <label for="headerTextSizeSlider" class="form-label">Header</label>
-                  <input id="headerTextSizeSlider" type="range" class="form-range text-size-slider" data-property="header" min="-4", max="2" start="0" step="0.5">
-                </div>
-                <div class="col-12 col-md-6 col-lg-4">
-                  <label for="section-headerTextSizeSlider" class="form-label">Section header</label>
-                  <input id="section-headerTextSizeSlider" type="range" class="form-range text-size-slider" data-property="section-header" min="-1", max="1" start="0" step="0.1">
-                </div>
-                <div class="col-12 col-md-6 col-lg-4">
-                  <label for="bodyTextSizeSlider" class="form-label">Body text</label>
-                  <input id="bodyTextSizeSlider" type="range" class="form-range text-size-slider" data-property="body" min="-1", max="1" start="0" step="0.1">
-                </div>
-                <div class="col-12 col-md-6 col-lg-4">
-                  <label for="quoteTextSizeSlider" class="form-label">Quote text</label>
-                  <input id="quoteTextSizeSlider" type="range" class="form-range text-size-slider" data-property="quote" min="-1", max="1" start="0" step="0.1">
-                </div>
-                <div class="col-12 col-md-6 col-lg-4">
-                  <label for="tab-buttonTextSizeSlider" class="form-label">Tab button</label>
-                  <input id="tab-buttonTextSizeSlider" type="range" class="form-range text-size-slider" data-property="tab-button" min="-1", max="1" start="0" step="0.1">
+                    <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Tab button" data-constAFP-path="style>font>button" data-default="OpenSans-Regular.ttf"></div>
+                  </div>
+                  <h4 class="mt-3">Text size</h4>
+                  <div class="row gy-2">
+                    <div class="col-12 col-md-6 col-lg-4">
+                      <label for="headerTextSizeSlider" class="form-label">Header</label>
+                      <input id="headerTextSizeSlider" type="range" class="form-range text-size-slider" data-property="header" min="-4", max="2" start="0" step="0.5">
+                    </div>
+                    <div class="col-12 col-md-6 col-lg-4">
+                      <label for="section-headerTextSizeSlider" class="form-label">Section header</label>
+                      <input id="section-headerTextSizeSlider" type="range" class="form-range text-size-slider" data-property="section-header" min="-1", max="1" start="0" step="0.1">
+                    </div>
+                    <div class="col-12 col-md-6 col-lg-4">
+                      <label for="bodyTextSizeSlider" class="form-label">Body text</label>
+                      <input id="bodyTextSizeSlider" type="range" class="form-range text-size-slider" data-property="body" min="-1", max="1" start="0" step="0.1">
+                    </div>
+                    <div class="col-12 col-md-6 col-lg-4">
+                      <label for="quoteTextSizeSlider" class="form-label">Quote text</label>
+                      <input id="quoteTextSizeSlider" type="range" class="form-range text-size-slider" data-property="quote" min="-1", max="1" start="0" step="0.1">
+                    </div>
+                    <div class="col-12 col-md-6 col-lg-4">
+                      <label for="tab-buttonTextSizeSlider" class="form-label">Tab button</label>
+                      <input id="tab-buttonTextSizeSlider" type="range" class="form-range text-size-slider" data-property="tab-button" min="-1", max="1" start="0" step="0.1">
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
