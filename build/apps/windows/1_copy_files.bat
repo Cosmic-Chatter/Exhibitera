@@ -1,6 +1,7 @@
 @if [%~1]==[] goto :NoPath
 
-@Xcopy /E /I /q /y ..\..\..\apps\* %1\*
+@Xcopy /E /I /q /y ..\..\..\exhibitera %1\exhibitera
+copy ..\..\..\Exhibitera_Apps.py %1\.
 
 @GOTO :END
 
