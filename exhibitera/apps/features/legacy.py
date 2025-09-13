@@ -83,7 +83,7 @@ def update_infostation_definition_format():
             "exhibitera_version": current_version["version"],
             "lastEditedDate": definition.get("lastEditedDate", ""),
             "languages": {},
-            "language_order": definition.get("language_order", []),
+            "language_order": sorted(definition["languages"].keys(), key=lambda k: not definition["languages"][k].get("default", False)),
             "name": definition.get("name", ""),
             "setup": {
                 "auto_refresh": definition.get("auto_refresh", True),
@@ -120,6 +120,9 @@ def update_infostation_definition_format():
                     # Get the old, language-specific uuid for this tab so we can index tabs
                     # But we will be replacing the definition with the corresponding uuid
                     # from the default language
+
+                    # In some old definitions, this UUID is an int, so convert to string
+                    uuid = str(uuid)
                     old_tab_order = definition.get("languages", {}).get(lang, {}).get("tab_order", [])
                     if len(old_tab_order) <= i:
                         new_def["languages"][lang]["tabs"][uuid] = {
@@ -128,7 +131,7 @@ def update_infostation_definition_format():
                             "uuid": uuid}
                         continue
 
-                    old_uuid = old_tab_order[i]
+                    old_uuid = str(old_tab_order[i])
                     tab = definition.get("languages", {}).get(lang, {}).get("tabs", {}).get(old_uuid, {})
                     new_def["tabs"][uuid] = {"type": tab.get("type", "text"), "uuid": uuid}
                     new_def["languages"][lang]["tabs"][uuid] = {
