@@ -133,7 +133,7 @@ function localize (lang) {
 
   // Hide tab row if we only have one tab
   const root = document.querySelector(':root')
-  if (fullDefinition?.tab_order.length === 1) {
+  if (fullDefinition?.tab_order?.length === 1) {
     root.style.setProperty('--button-rows', 0)
   } else {
     root.style.setProperty('--button-rows', 1)

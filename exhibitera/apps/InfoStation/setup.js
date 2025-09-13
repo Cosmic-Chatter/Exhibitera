@@ -17,6 +17,177 @@ async function initializeWizard () {
   document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'none'
 }
 
+async function wizardForward (currentPage) {
+  // Check if the wizard is ready to advance and perform the move
+
+  if (currentPage === 'Welcome') {
+    const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
+    if (defName !== '') {
+      document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'none'
+      exSetup.wizardGoTo('Languages')
+    } else {
+      document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'block'
+    }
+  } else if (currentPage === 'Languages') {
+    if (document.getElementById('wizardLanguages').children.length > 0) {
+      document.getElementById('wizardLanguagesBlankWarning').style.display = 'none'
+
+      // Add the selected langauges to the definition
+      const langOrder = []
+      for (const langEl of document.getElementById('wizardLanguages').children) {
+        const lang = langEl.querySelector('select').value
+        if (langOrder.includes(lang) === false) langOrder.push(lang)
+
+        const langDef = {
+          code: lang,
+          display_name: exLang.getLanguageDisplayName(lang),
+          english_name: exLang.getLanguageDisplayName(lang, true),
+          tabs: {}
+        }
+        exSetup.updateWorkingDefinition(['languages', lang], langDef)
+      }
+      exSetup.updateWorkingDefinition(['language_order'], langOrder)
+
+      document.getElementById('wizardTabList').innerText = ''
+      exSetup.updateWorkingDefinition(['tab_order'], [])
+
+      // Build the Markdown text editor
+      const defaultLang = exSetup.config.workingDefinition.language_order[0]
+      const titleEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+        content: exSetup.config.workingDefinition.languages?.[defaultLang]?.header?.text ?? '',
+        editorDiv: document.getElementById('wizardHeaderInput'),
+        commandDiv: document.getElementById('wizardHeaderCommandBar'),
+        commands: ['basic'],
+        callback: (content) => {
+          exSetup.updateWorkingDefinition(['languages', defaultLang, 'header', 'text'], content)
+        }
+      })
+
+      exSetup.wizardGoTo('Header')
+    } else {
+      document.getElementById('wizardLanguagesBlankWarning').style.display = 'block'
+    }
+  } else if (currentPage === 'Header') {
+    exSetup.wizardGoTo('Topics')
+  } else if (currentPage === 'Topics') {
+    const topics = document.querySelectorAll('.wizard-topic')
+    if (topics.length === 0) {
+      document.getElementById('wizardTabsNoneWarning').style.display = 'block'
+      return
+    }
+
+    for (const t of topics) {
+      if (t.value.trim() === '') {
+        document.getElementById('wizardTabsBlankWarning').style.display = 'block'
+        return
+      }
+    }
+    document.getElementById('wizardTabsNoneWarning').style.display = 'none'
+    document.getElementById('wizardTabsBlankWarning').style.display = 'none'
+
+    exSetup.previewDefinition(true)
+    exSetup.wizardGoTo('Layout')
+  } else if (currentPage === 'Layout') {
+    wizardCreateDefinition()
+  }
+}
+
+function wizardBack (currentPage) {
+  // Move the wizard back one page
+
+  if (currentPage === 'Languages') {
+    exSetup.wizardGoTo('Welcome')
+  } else if (currentPage === 'Questions') {
+    exSetup.wizardGoTo('Languages')
+  } else if (currentPage === 'Answers') {
+    exSetup.wizardGoTo('Questions')
+  }
+}
+
+function wizardCreateTab (userDetails) {
+  // Create the GUI representation of a new question in the wizard
+
+  const tabOrder = exSetup.config.workingDefinition?.tab_order ?? []
+  const defaultLang = exSetup.config.workingDefinition.language_order[0]
+
+  const defaults = {
+    uuid: exUtilities.uuid(),
+    type: 'text'
+  }
+
+  // Merge in user details
+  const details = { ...defaults, ...userDetails }
+
+  if (tabOrder.includes(details.uuid) === false) {
+    tabOrder.push(details.uuid)
+    exSetup.updateWorkingDefinition(['tab_order', tabOrder])
+    for (const key of Object.keys(defaults)) {
+      exSetup.updateWorkingDefinition(['tabs', details.uuid, key], details[key])
+    }
+  }
+
+  const col = document.createElement('div')
+  col.classList = 'col-12'
+  col.setAttribute('id', 'wizardTab_' + details.uuid)
+  document.getElementById('wizardTabList').appendChild(col)
+
+  const row = document.createElement('div')
+  row.classList = 'row'
+  col.appendChild(row)
+
+  const topicCol = document.createElement('div')
+  topicCol.classList = 'col-10 pe-1'
+  row.appendChild(topicCol)
+
+  const topicText = document.createElement('input')
+  topicText.setAttribute('type', 'text')
+  topicText.classList = 'form-control wizard-topic'
+  topicText.value = ''
+  topicText.addEventListener('change', () => {
+    for (const code of exSetup.config.workingDefinition.language_order) {
+      exSetup.updateWorkingDefinition(['languages', code, 'tabs', details.uuid, 'button_text'], topicText.value.trim())
+      exSetup.updateWorkingDefinition(['languages', code, 'tabs', details.uuid, 'text'], `# ${topicText.value.trim()}\nSome basic text\n## Subheader\nSome more text`)
+      exSetup.updateWorkingDefinition(['languages', code, 'tabs', details.uuid, 'uuid'], details.uuid)
+    }
+  })
+  topicCol.appendChild(topicText)
+
+  const buttonCol = document.createElement('div')
+  buttonCol.classList = 'col-2 ps-1'
+  row.appendChild(buttonCol)
+
+  const deleteButton = document.createElement('button')
+  deleteButton.classList = 'btn btn-danger w-100'
+  deleteButton.innerHTML = '×'
+  deleteButton.addEventListener('click', () => {
+    deleteInfoStationTab(details.uuid, true)
+  })
+  buttonCol.appendChild(deleteButton)
+}
+
+async function wizardCreateDefinition () {
+  // Use the provided details to build a definition file.
+
+  // Definition name
+  const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
+  exSetup.updateWorkingDefinition(['name'], defName)
+
+  const orientation = document.getElementById('wizardOrientationSelect').value
+  if (orientation === 'horizontal') {
+    exSetup.configurePreview('16x9', true)
+  } else exSetup.configurePreview('9x16', true)
+
+  const uuid = exSetup.config.workingDefinition.uuid
+
+  await exSetup.saveDefinition(defName)
+  const result = await exCommon.getAvailableDefinitions('infostation')
+  exSetup.populateAvailableDefinitions(result.definitions)
+  document.getElementById('availableDefinitionSelect').value = uuid
+
+  editDefinition(uuid)
+  exUtilities.hideModal('#setupWizardModal')
+}
+
 async function clearDefinitionInput (full = true) {
   // Clear all input related to a defnition
 
@@ -191,7 +362,7 @@ function rebuildTabs () {
 
     const headerInput = document.createElement('div')
     headerCol.appendChild(headerInput)
-    console.log(exSetup.config.workingDefinition)
+
     const titleEditor = new exMarkdown.ExhibiteraMarkdownEditor({
       content: exSetup.config.workingDefinition.languages?.[code]?.header?.text ?? '',
       editorDiv: headerInput,
@@ -421,7 +592,7 @@ function createInfoStationTabGUI (item) {
   }
 }
 
-function addInfoStationTab () {
+function addInfoStationTab (buttonText = null, bodyText = null) {
   // Create a new tab and add it to the definition.
 
   const item = {
@@ -442,13 +613,14 @@ function addInfoStationTab () {
   for (const langCode of Object.keys(languages)) {
     const lang = languages[langCode]
     if (!lang.tabs) lang.tabs = {}
-    lang.tabs[item.uuid] = { button_text: 'New Tab', text: '# Header\nSome basic text\n\n## Subheader\nSome more text', uuid: item.uuid }
+    lang.tabs[item.uuid] = { button_text: buttonText || 'New Tab', text: bodyText || '# Header\nSome basic text\n\n## Subheader\nSome more text', uuid: item.uuid }
   }
   exSetup.updateWorkingDefinition(['languages'], languages)
+
   rebuildTabs()
 }
 
-function deleteInfoStationTab (uuidToRemove) {
+function deleteInfoStationTab (uuidToRemove, wizard = false) {
   // Delete the given InfoStation tab
 
   const data = exSetup.config.workingDefinition
@@ -471,7 +643,10 @@ function deleteInfoStationTab (uuidToRemove) {
     }
   }
   exSetup.updateWorkingDefinition(['languages'], data?.languages ?? {})
-  rebuildTabs()
+
+  if (wizard) {
+    document.getElementById('wizardTab_' + uuidToRemove).remove()
+  } else rebuildTabs()
 }
 
 function onAttractorFileChange () {
@@ -488,6 +663,24 @@ exCommon.config.helperAddress = window.location.origin
 
 // Add event listeners
 // -------------------------------------------------------------
+
+// Wizard
+
+// Connect the forward and back buttons
+for (const el of document.querySelectorAll('.wizard-forward')) {
+  el.addEventListener('click', () => {
+    wizardForward(el.getAttribute('data-current-page'))
+  })
+}
+for (const el of document.querySelectorAll('.wizard-back')) {
+  el.addEventListener('click', () => {
+    wizardBack(el.getAttribute('data-current-page'))
+  })
+}
+
+document.getElementById('wizardAddTabButton').addEventListener('click', (event) => {
+  wizardCreateTab()
+})
 
 // Main buttons
 document.getElementById('manageContentButton').addEventListener('click', (event) => {
@@ -576,7 +769,9 @@ exSetup.configure({
       color: {},
       font: {},
       text_size: {}
-    }
+    },
+    tabs: {},
+    tab_order: []
   }
 })
 

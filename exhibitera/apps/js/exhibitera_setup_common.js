@@ -628,14 +628,10 @@ export function configurePreviewFromDefinition (def) {
   // Use the setup section of def to configur the preview behavior
 
   const behavior = {
-    preview_ratio: '16x9',
-    auto_refresh: true
+    preview_ratio: def?.setup?.preview_ratio ?? '16x9',
+    auto_refresh: def?.setup?.auto_refresh ?? true
   }
 
-  if ('setup' in def) {
-    if ('preview_ratio' in def.setup) behavior.preview_ratio = def.setup.preview_ratio
-    if ('auto_refresh' in def.setup) behavior.auto_refresh = def.setup.auto_refresh
-  }
   configurePreview(behavior.preview_ratio, behavior.auto_refresh)
 }
 

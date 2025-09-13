@@ -18,7 +18,8 @@ _Exhibitera Hub and Apps must all be upgraded to version 6 at the same time._
 - Embed videos in the same way as images
 - Rich text formatting for media captions
 - Adjust the width of the sidebar in landscape view
-- Adjust the height of the toolbar at the bottom
+- Adjust the height of the toolbar at the bottom 
+- Guided setup makes things easier than ever
 
 ### Media Player
 - Adjust the opacity of watermarks
