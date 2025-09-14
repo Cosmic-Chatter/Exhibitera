@@ -5,14 +5,6 @@ import * as exMarkdown from '../js/exhibitera_app_markdown.js'
 function updateParser (update) {
   // Read updates specific to the media player
 
-  if ('definition' in update && update.definition !== currentDefintion) {
-    currentDefintion = update.definition
-    exCommon.loadDefinition(currentDefintion)
-      .then((result) => {
-        loadDefinition(result.definition)
-      })
-  }
-
   if ('permissions' in update && 'audio' in update.permissions) {
     document.getElementById('fullscreenVideo').muted = !update.permissions.audio
     document.getElementById('audioPlayer').muted = !update.permissions.audio
@@ -365,5 +357,5 @@ exCommon.configureApp({
   parseUpdate: updateParser
 })
 
-let currentDefintion = ''
+const currentDefintion = ''
 let sourceAdvanceTimer = null // Will hold reference to a setTimeout instance to move to the next media.

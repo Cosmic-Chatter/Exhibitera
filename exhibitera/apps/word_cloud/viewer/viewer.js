@@ -127,13 +127,6 @@ function getTextUpdateFromServer () {
 function updateFunc (update) {
   // Read updates for word cloud-specific actions and act on them
 
-  if (update.definition && update.definition !== currentDefinition) {
-    currentDefinition = update.definition
-    exCommon.loadDefinition(currentDefinition)
-      .then((result) => {
-        loadDefinition(result.definition)
-      })
-  }
 }
 
 function loadDefinition (definition) {
@@ -257,7 +250,7 @@ const WordCloudOptions = {
   fontFamily: 'words-default'
 }
 
-let currentDefinition = ''
+const currentDefinition = ''
 let collectionName = 'default'
 let textUpdateRate = 15
 let textCase = 'lowercase'

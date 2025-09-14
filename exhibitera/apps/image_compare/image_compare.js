@@ -8,7 +8,7 @@ const overlay = document.getElementById('overlayDiv')
 const base = document.getElementById('baseDiv')
 
 let homeScreenDisabled = false
-let currentDefintion = ''
+const currentDefintion = ''
 let clicked = 0
 let currentLang = null
 let inactivityTimer = 0 // Reference to setTimeout for reseting the view
@@ -497,15 +497,8 @@ function hideAttractor () {
 }
 
 function parseUpdate (update) {
-  // A function to respond to commands from Control Server.
+  // A function to respond to commands from Hub.
 
-  if ('definition' in update && update.definition !== currentDefintion) {
-    currentDefintion = update.definition
-    exCommon.loadDefinition(currentDefintion)
-      .then((result) => {
-        loadDefinition(result.definition)
-      })
-  }
 }
 
 // Bind event handlers

@@ -183,12 +183,11 @@ def close_setup_wizard():
 
 @app.post('/app/showWindow/{window}')
 def show_webview_window(window: str,
-                        reload: bool = Body(description="Should the window be reloaded if it already exists?",
-                                            embed=True,
-                                            default=False)):
+                        parameters: dict[str, str] = Body(description="Query string parameters to append to the URL."),
+                        reload: bool = Body(description="Should the window be reloaded if it already exists?", default=False)):
     """Show the requested webview window"""
 
-    apps_webview.show_webview_window(window, reload=reload)
+    apps_webview.show_webview_window(window, parameters=parameters, reload=reload)
 
 
 @app.post('/app/saveFile')
@@ -328,8 +327,7 @@ def run():
                 webview_menu.Menu(
                     'Settings',
                     [
-                        webview_menu.MenuAction('Show settings', partial(apps_webview.show_webview_window, 'settings',
-                                                                         {'reload': True})),
+                        webview_menu.MenuAction('Show settings', partial(apps_webview.show_webview_window, 'settings', reload=True)),
                         webview_menu.Menu('Configure',
                       [
                           webview_menu.MenuAction('DMX Control',
@@ -347,7 +345,7 @@ def run():
                           webview_menu.MenuAction('Media Player',
                                                   partial(apps_webview.show_webview_window,
                                                           'media_player_setup')),
-                          webview_menu.MenuAction('Other App',
+                          webview_menu.MenuAction('Custom App',
                                                   partial(apps_webview.show_webview_window,
                                                           'other_setup')),
                           webview_menu.MenuAction('Survey Kiosk',

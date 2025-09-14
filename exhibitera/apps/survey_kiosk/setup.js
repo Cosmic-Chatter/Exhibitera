@@ -442,7 +442,7 @@ async function clearDefinitionInput (full = true) {
   exSetup.createAdvancedSliders()
 
   // Clear any created items
-  document.getElementById('surveryItems').innerText = ''
+  document.getElementById('surveyItems').innerText = ''
 }
 
 function editDefinition (uuid = '') {
@@ -564,7 +564,7 @@ function deleteItem (uuidToRemove, wizard = false) {
 function rebuildItems () {
   // Rebuild the item interface
 
-  document.getElementById('surveryItems').innerText = ''
+  document.getElementById('surveyItems').innerText = ''
   for (const uuid of exSetup.config.workingDefinition?.item_order ?? []) {
     const item = exSetup.config.workingDefinition?.items?.[uuid]
     if (item) createSurveyItemGUI(item)
@@ -868,7 +868,7 @@ function createSurveyItemGUI (item) {
   // Create the GUI representation of an item in the survey
 
   const def = exSetup.config.workingDefinition
-  const surveryItems = document.getElementById('surveryItems')
+  const surveyItems = document.getElementById('surveyItems')
 
   let badgeText = 'Question'
   if (item.type === 'text') {
@@ -896,7 +896,7 @@ function createSurveyItemGUI (item) {
           </small>
         </div>
       </h2>
-      <div id="${item.uuid}_accordion" class="accordion-collapse collapse " data-bs-parent="#surveryItems">
+      <div id="${item.uuid}_accordion" class="accordion-collapse collapse " data-bs-parent="#surveyItems">
         <div class="accordion-body">
           <div class="d-flex">
             <button
@@ -932,7 +932,7 @@ function createSurveyItemGUI (item) {
       </div>
     </div>
   `
-  surveryItems.insertAdjacentHTML('beforeend', html)
+  surveyItems.insertAdjacentHTML('beforeend', html)
   document.getElementById(item.uuid + '_accordion_moveUpButton').addEventListener('click', (ev) => {
     changeItemOrder(item.uuid, 'up')
   })

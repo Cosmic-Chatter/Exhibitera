@@ -6,15 +6,8 @@ import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exMarkdown from '../js/exhibitera_app_markdown.js'
 
 function updateFunc (update) {
-  // Read updates for media player-specific actions and act on them
+  // Read updates for timeline explorer-specific actions and act on them
 
-  if ('definition' in update && update.definition !== currentDefintion) {
-    currentDefintion = update.definition
-    exCommon.loadDefinition(currentDefintion)
-      .then((result) => {
-        loadDefinition(result.definition)
-      })
-  }
 }
 
 function loadDefinition (def) {
@@ -346,7 +339,7 @@ exCommon.configureApp({
   parseUpdate: updateFunc
 })
 
-let currentDefintion = ''
+const currentDefintion = ''
 
 adjustFontSize(-100) // Make sure the font modifier is at 1 to start
 hideAttractor()

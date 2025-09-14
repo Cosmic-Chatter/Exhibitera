@@ -13,6 +13,7 @@
     <link rel="icon" type="image/x-icon" href="/_static/favicon.ico">
 
     <link rel="stylesheet" href="css/bootstrap_5_3/bootstrap.min.css">
+    <link rel="stylesheet" href="css/bootstrap-icons.min.css">
 
     <style>
       /* This styles the code snippets in help text */
@@ -62,7 +63,7 @@
   </head>
 
   <body>
-    <div class="container-fluid mb-5">
+    <div class="container mb-5">
 
       <!-- Password change modal -->
       <div class="modal" tabindex="-1" role="dialog" id="passwordChangeModal">
@@ -143,7 +144,8 @@
       <nav>
         <div class="nav nav-tabs" id="nav-tab" role="tablist">
           <a class="nav-item nav-link active" id="nav-settings-tab" data-bs-toggle="tab" href="#nav-settings" role="tab" aria-controls="nav-settings" aria-selected="true">Settings</a>
-          <a class="nav-item nav-link" id="nav-apps-tab" data-bs-toggle="tab" href="#nav-apps" role="tab" aria-controls="nav-apps" aria-selected="false">Apps</a>
+          <a class="nav-item nav-link" id="nav-data-tab" data-bs-toggle="tab" href="#nav-data" role="tab" aria-controls="nav-data" aria-selected="false">Data</a>
+          <a class="nav-item nav-link" id="nav-lighting-tab" data-bs-toggle="tab" href="#nav-lighting" role="tab" aria-controls="nav-lighting" aria-selected="false">Lighting</a>
           <a class="nav-item nav-link" id="nav-help-tab" data-bs-toggle="tab" href="#nav-help" role="tab" aria-controls="nav-help" aria-selected="false">Help</a>
         </div>
       </nav>
@@ -235,42 +237,77 @@
               <button id='launchAppButton' type="button" class="btn btn-success ms-2 app-link" data-app-link="app" data-web-link="/app.html">Launch app</button>
             </div>
           </div>
-          <!-- Basic settings -->
-          <div class="h4 mt-4">Basic settings</div>
-          <div class="row mt-2">
-            <!-- ID -->
-            <div id="IDInputGroup" class="col-6 col-sm-4 col-lg-3 col-xl-2">
-              <div class="mb-3">
-                <label for="IDInput" class="form-label">
-                  ID
-                  <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Every Exhibitera component must have a unique ID." style="font-size: 0.55em; color: black">?</span>
-                </label>
-                <input type="text" class="form-control" id="IDInput">
+
+          <!-- Definition -->
+          <div id="definitionGroup">
+            <div class="h4 mt-4">Definitions</div>
+            <p class="fst-italic">
+              A definition describes the content an app should display. By changing definitions, you can change content or even which app to use.
+            </p>
+            <div class="row gy-2 gx-2 gx-sm-1 gx-md-2">
+              <div id="definitionSelectGroup" class="col-12 col-sm-6 col-lg-5 col-xl-4">
+                <div>
+                  <div class="row">
+                    <div class="col-10 col-sm-9 col-md-10 pe-1">
+                      <select class="form-select" id="definitionSelect"></select>
+                    </div>
+                    <div class="col-2 col-sm-3 col-md-2 ps-0">
+                      <button id="definitionSelectListRefresh" class="btn w-100" style="border: var(--bs-border-width) solid var(--bs-border-color);" data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh list"><span class="bi bi-arrow-clockwise"></span></button>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-            <!-- Definition -->
-            <div id="definitionSelectGroup" class="col-6 col-sm-4 col-lg-3 col-xl-2">
-              <div class="mb-3">
-                <label for="definitionSelect" class="form-label">
-                  Definition
-                  <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="The selected definition sets which app content will be displayed." style="font-size: 0.55em; color: black">?</span>
-                </label>
-                <select class="form-select" id="definitionSelect"></select>
-                <button id="definitionSelectListRefresh" class="btn btn-info w-100 mt-2">Refresh list</button>
+              <div class="col-4 col-sm-2 col-lg-1">
+                <button id="definitionSetButton" class="btn btn-success w-100">Set</button>
               </div>
-            </div>
-            <div class="col-12 col-sm-6 col-lg-5 col-xl-4">
-              <div class="alert alert-primary">
-                <H5>Need to create a new definition?</H5>
-                <span class="fst-italic">Go to the Apps tab to get started.</span>
+              <div class="col-4 col-sm-2 col-lg-1">
+                <button id="definitionEditButton" class="btn btn-info w-100">Edit</button>
+              </div>
+              <div class="col-4 col-sm-2 col-xl-1">
+                <div class="dropdown">
+                  <button class="btn btn-primary w-100 dropdown-toggle" type="button" id="componentInfoModalNewDefinitionButton" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Create
+                  </button>
+                  <div class="dropdown-menu" aria-labelledby="componentInfoModalNewDefinitionButton">
+                    <a class="dropdown-item app-link" href="#" data-app-link="image_compare_setup" data-web-link="/image_compare/setup.html">Image Compare</a>
+                    <a class="dropdown-item app-link" href="#" data-app-link="infostation_setup" data-web-link="/infostation/setup.html">Infostation</a>
+                    <a class="dropdown-item app-link" href="#" data-app-link="media_browser_setup" data-web-link="/media_browser/setup.html">Media Browser</a>
+                    <a class="dropdown-item app-link" href="#" data-app-link="media_player_setup" data-web-link="/media_player/setup.html">Media Player</a>
+                    <a class="dropdown-item app-link" href="#" data-app-link="survey_kiosk_setup" data-web-link="/survey_kiosk/setup.html">Survey Kiosk</a>
+                    <a class="dropdown-item app-link" href="#" data-app-link="timelapse_viewer_setup" data-web-link="/timelapse_viewer/setup.html">Timelapse Viewer</a>
+                    <a class="dropdown-item app-link" href="#" data-app-link="timeline_explorer_setup" data-web-link="/timeline_explorer/setup.html">Timeline Explorer</a>
+                    <a class="dropdown-item app-link" href="#" data-app-link="voting_kiosk_setup" data-web-link="/voting_kiosk/setup.html">Voting Kiosk</a>
+                    <a class="dropdown-item app-link" href="#" data-app-link="word_cloud_input_setup" data-web-link="/word_cloud/input/setup.html">Word Cloud Input</a>
+                    <a class="dropdown-item app-link" href="#" data-app-link="word_cloud_viewer_setup" data-web-link="/word_cloud/viewer/setup.html">Word Cloud Viewer</a>
+                    <a class="dropdown-item app-link" href="#" data-app-link="other_setup" data-web-link="/other/setup.html">Custom app</a>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-
+          
+          
+          <!-- Basic settings -->
+          <div id="IDInputGroup">
+            <div class="h4 mt-4">Basic settings</div>
+            <div class="row mt-2">
+              <!-- ID -->
+              <div class="col-6 col-sm-4 col-lg-3 col-xl-2">
+                <div class="mb-3">
+                  <label for="IDInput" class="form-label">
+                    ID
+                    <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Every Exhibitera component must have a unique ID." style="font-size: 0.55em; color: black">?</span>
+                  </label>
+                  <input type="text" class="form-control" id="IDInput">
+                </div>
+              </div>
+            </div>
+          </div>
+          
           <!-- Hub -->
-          <div class="h4 mt-2">Hub</div>
+          <div class="h4 mt-3">Hub</div>
           <p>
-            <i>Exhibitera Hub helps you configure and control multiple interactives from anywhere in your museum.</i>
+            <i>Exhibitera Hub helps you configure and control multiple interactives from anywhere in your museum. You must have a Hub server running to utilize this option.</i>
           </p>
           <div class="row mt-2">
             <div class="col-7 col-sm-4 col-lg-3 mb-2 d-flex align-items-center">
@@ -443,156 +480,57 @@
           </div>
         </div>
   
-        <div class="tab-pane fade" id="nav-apps" role="tabpanel" aria-labelledby="nav-apps-tab">
-          <div class="row">
+        <div class="tab-pane fade" id="nav-data" role="tabpanel" aria-labelledby="nav-data-tab">
+          <div id="dataGroup">
+            <H2 class="mt-3">Data</H2>
+            <p class="fst-italic">
+              Download data generated by apps such as Voting Kiosk, Survey Kiosk, and Word Cloud.
+            </p>
 
-            <!-- DMX Control -->
-            <div class="col-12 col-sm-6 col-md-4 col-lg-3 mt-3">
-              <div class="card h-100">
-                <!-- <img src="..." class="card-img-top" alt="..."> -->
-                <div class="card-body">
-                  <h3 class="card-title">DMX Control</h3>
-                  <p class="card-text">Control DMX lighting.</p>
-                  <button class="btn btn-primary mt-1 app-link" data-app-link="dmx_control" data-web-link="/dmx_control.html?standalone=true">Launch</button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Image Compare -->
-            <div class="col-12 col-sm-6 col-md-4 col-lg-3 mt-3">
-              <div class="card h-100">
-                <!-- <img src="..." class="card-img-top" alt="..."> -->
-                <div class="card-body">
-                  <h3 class="card-title">Image Compare</h3>
-                  <p class="card-text">Create before/after sliders between pairs of images.</p>
-                  <button data-app-link="image_compare_setup" data-web-link="/image_compare/setup.html" class="btn btn-primary mt-1 app-link">Configure</button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Infostation -->
-            <div class="col-12 col-sm-6 col-md-4 col-lg-3 mt-3">
-              <div class="card h-100">
-                <!-- <img src="..." class="card-img-top" alt="..."> -->
-                <div class="card-body">
-                  <h3 class="card-title">InfoStation</h3>
-                  <p class="card-text">Use a touchscreen to explore digital labels containing a combination of text, images, and videos.</p>
-                  <button data-app-link="infostation_setup" data-web-link="/infostation/setup.html" class="btn btn-primary mt-1 app-link">Configure</button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Media Browser -->
-            <div class="col-12 col-sm-6 col-md-4 col-lg-3  mt-3">
-              <div class="card h-100">
-                <!-- <img src="..." class="card-img-top" alt="..."> -->
-                <div class="card-body">
-                  <h3 class="card-title">Media Browser</h3>
-                  <p class="card-text">Scroll and filter a gallery of images using a touchscreen.</p>
-                  <button data-app-link="media_browser_setup" data-web-link="/media_browser/setup.html" class="btn btn-primary mt-1 app-link">Configure</button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Media Player -->
-            <div class="col-12 col-sm-6 col-md-4 col-lg-3  mt-3">
-              <div class="card  h-100">
-                <!-- <img src="..." class="card-img-top" alt="..."> -->
-                <div class="card-body">
-                  <h3 class="card-title">Media Player</h3>
-                  <p class="card-text">Digital signage app that loops any combination of audio, images, and video.</p>
-                  <button data-app-link="media_player_setup" data-web-link="/media_player/setup.html" class="btn btn-primary mt-1 app-link">Configure</button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Other app -->
-            <div class="col-12 col-sm-6 col-md-4 col-lg-3  mt-3">
-              <div class="card  h-100">
-                <!-- <img src="..." class="card-img-top" alt="..."> -->
-                <div class="card-body">
-                  <h3 class="card-title">Other App</h3>
-                  <p class="card-text">Configure an external app using the Exhibitera API.</p>
-                  <button data-app-link="other_setup" data-web-link="/other/setup.html" class="btn btn-primary mt-1 app-link">Configure</button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Survey Kiosk -->
-            <div class="col-12 col-sm-6 col-md-4 col-lg-3  mt-3">
-              <div class="card  h-100">
-                <!-- <img src="..." class="card-img-top" alt="..."> -->
-                <div class="card-body">
-                  <h3 class="card-title">Survey Kiosk</h3>
-                  <p class="card-text">Collect feedback by creating one or more survey questions.</p>
-                  <button data-app-link="survey_kiosk_setup" data-web-link="/survey_kiosk/setup.html" class="btn btn-primary mt-1 app-link">Configure</button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Timelapse Viewer -->
-            <div class="col-12 col-sm-6 col-md-4 col-lg-3  mt-3">
-              <div class="card h-100">
-                <!-- <img src="..." class="card-img-top" alt="..."> -->
-                <div class="card-body">
-                  <h3 class="card-title">Timelapse Viewer</h3>
-                  <p class="card-text">Use a variety of input devices to animate through a slideshow of timelapse images.</p>
-                  <button data-app-link="timelapse_viewer_setup" data-web-link="/timelapse_viewer/setup.html" class="btn btn-primary mt-1 app-link">Configure</button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Timeline Explorer -->
-            <div class="col-12 col-sm-6 col-md-4 col-lg-3  mt-3">
-              <div class="card h-100">
-                <!-- <img src="..." class="card-img-top" alt="..."> -->
-                <div class="card-body">
-                  <h3 class="card-title">Timeline Explorer</h3>
-                  <p class="card-text">Generate an interactive timeline from a spreadsheet.</p>
-                  <button data-app-link="timeline_explorer_setup" data-web-link="/timeline_explorer/setup.html" class="btn btn-primary mt-1 app-link">Configure</button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Voting Kiosk -->
-            <div class="col-12 col-sm-6 col-md-4 col-lg-3  mt-3">
-              <div class="card h-100">
-                <!-- <img src="..." class="card-img-top" alt="..."> -->
-                <div class="card-body">
-                  <h3 class="card-title">Voting Kiosk</h3>
-                  <p class="card-text">Collect single-question survey responses and store them on Hub.</p>
-                  <button data-app-link="voting_kiosk_setup" data-web-link="/voting_kiosk/setup.html" class="btn btn-primary mt-1 app-link">Configure</button>
-                  <div id="votingKioskCSVDownloadDiv">
-                    <label for="votingKioskCSVDownloadSelect" class="form-label mt-2">
-                      Download data as CSV
-                    </label>
-                    <div class="row gy-2">
-                      <div class="col-12">
-                        <select class="form-select" id="votingKioskCSVDownloadSelect"></select>
-                      </div>
-                      <div class="col-12">
-                        <button id="votingKioskCSVDownloadButton" class="btn btn-info w-100">Download</button>
-                      </div>
+            <div class="row gy-2 gx-2 gx-sm-1 gx-md-2">
+              <div id="" class="col-12 col-sm-9 col-lg-5 col-xl-4">
+                <div>
+                  <div class="row">
+                    <div class="col-10 col-md-10 pe-1">
+                      <select class="form-select" id="dataSelect"></select>
+                    </div>
+                    <div class="col-2 ps-0">
+                      <button id="dataSelectListRefreshButton" class="btn w-100" style="border: var(--bs-border-width) solid var(--bs-border-color);" data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh list"><span class="bi bi-arrow-clockwise"></span></button>
                     </div>
                   </div>
-                  
+                </div>
+              </div>
+              <div class="col-4 col-sm-3 col-md-2">
+                <button id="dataDownloadButton" class="btn btn-primary w-100">Download</button>
+              </div>
+            </div>
+          </div>
+          <div id="dataHubMessage" class="mt-3 fst-italic">When using Hub, download data from the Analytics tab on Hub.</div>
+
+        </div>
+        <div class="tab-pane fade" id="nav-lighting" role="tabpanel" aria-labelledby="nav-lighting-tab">
+          <H2 class="mt-3">Lighting</H2>
+          <p class="fst-italic">
+            Exhibitera Apps enables you to control lights that use the DMX protocol. To enable lightig control, you'll need a uDMX or openDMX hardware adapter.
+          </p>
+          <button id="dmxSetupButton" class="btn btn-primary app-link" data-app-link="dmx_control" data-web-link="/dmx_control/index.html?standalone=true">Set up DMX</button>
+          <H4 class="mt-3">Scenes</H4>
+          <div class="row gy-2 gx-2 gx-sm-1 gx-md-2">
+            <div id="" class="col-12 col-sm-6 col-lg-5 col-xl-4">
+              <div>
+                <div class="row">
+                  <div class="col-10 col-sm-9 col-md-10 pe-1">
+                    <select class="form-select" id="dmxSceneSelect"></select>
+                  </div>
+                  <div class="col-2 col-sm-3 col-md-2 ps-0">
+                    <button id="dmxSceneSelectListRefresh" class="btn w-100" style="border: var(--bs-border-width) solid var(--bs-border-color);" data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh list"><span class="bi bi-arrow-clockwise"></span></button>
+                  </div>
                 </div>
               </div>
             </div>
-
-            <!-- Word Cloud -->
-            <div class="col-12 col-sm-6 col-md-4 col-lg-3  mt-3">
-              <div class="card h-100">
-                <!-- <img src="..." class="card-img-top" alt="..."> -->
-                <div class="card-body">
-                  <h3 class="card-title">Word Cloud</h3>
-                  <p class="card-text">Collect responses and create a word cloud, with profanity checking.</p>
-                  <button data-app-link="word_cloud_input_setup" data-web-link="/word_cloud/input/setup.html" class="btn btn-primary mt-1 app-link">Configure input</button>
-                  <button data-app-link="word_cloud_viewer_setup" data-web-link="/word_cloud/viewer/setup.html" class="btn btn-primary mt-1 app-link">Configure viewer</button>
-                </div>
-              </div>
+            <div class="col-4 col-sm-2 col-lg-1">
+              <button id="dmxSceneSetButton" class="btn btn-success w-100">Set</button>
             </div>
-
           </div>
         </div>
         <div class="tab-pane fade" id="nav-help" role="tabpanel" aria-labelledby="nav-help-tab">

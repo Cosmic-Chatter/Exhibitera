@@ -372,14 +372,6 @@ function displayMedia (id) {
 function updateParser (update) {
   // Read updates specific to the media browser
 
-  if (update.definition && update.definition !== currentDefinition) {
-    currentDefinition = update.definition
-    exCommon.loadDefinition(currentDefinition)
-      .then((result) => {
-        loadDefinition(result.definition)
-      })
-  }
-
   if (update?.permissions?.audio) {
     document.getElementById('mediaLightboxVideo').muted = !update.permissions.audio
   }
@@ -758,7 +750,7 @@ exCommon.configureApp({
   parseUpdate: updateParser
 })
 
-let currentDefinition = ''
+const currentDefinition = ''
 
 let inactivityTimer = null
 let inactivityTimeout = 30000

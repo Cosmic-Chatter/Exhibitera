@@ -445,7 +445,7 @@ function createInfoStationTabGUI (item) {
             </span>
           </div>
         </h2>
-        <div id="${item.uuid}_accordion" class="accordion-collapse collapse " data-bs-parent="#surveryItems">
+        <div id="${item.uuid}_accordion" class="accordion-collapse collapse " data-bs-parent="#infoTabs">
           <div class="accordion-body">
             <div class="d-flex">
               <button

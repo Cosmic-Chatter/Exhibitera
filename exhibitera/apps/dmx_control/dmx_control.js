@@ -1950,12 +1950,11 @@ const universeList = []
 let groupList = []
 
 exCommon.config.debug = true
-let standalone = false
+const standalone = false
 
 const searchParams = exCommon.parseQueryString()
 if (searchParams.has('standalone')) {
   // We are displaying this because it was clicked from the web console DMX tab
-  standalone = true
 } else {
   // We are displaying this as the main app
   exCommon.askForDefaults()

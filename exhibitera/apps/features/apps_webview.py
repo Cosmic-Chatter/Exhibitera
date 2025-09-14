@@ -42,14 +42,17 @@ def on_moved(x, y):
     pass
 
 
-def show_webview_window(app: str, reload: bool = False):
+def show_webview_window(app: str,
+                        parameters: dict[str, str] = None ,
+                        reload: bool = False):
     """Create a window for the given app, or bring it to the front if it already exists.
     If reload=True, reload the window if it already exists.
+    Pass query string parameters as a dict of key/value pairs
     """
 
     endpoints = {
         "app": "/app.html",
-        "dmx_control": "/dmx_control.html",
+        "dmx_control": "/dmx_control/index.html?standalone=true",
         "image_compare_setup": "/image_compare/setup.html",
         "infostation_setup": "/infostation/setup.html",
         "media_browser_setup": "/media_browser/setup.html",
@@ -72,7 +75,7 @@ def show_webview_window(app: str, reload: bool = False):
         "media_browser_setup": "Media Browser",
         "media_player_setup": "Media Player",
         "other_setup": "Other App",
-        "survey_kiosk": "Survey Kiosk",
+        "survey_kiosk_setup": "Survey Kiosk",
         "timelapse_viewer_setup": "Timelapse Viewer",
         "timeline_explorer_setup": "Timeline Explorer",
         "voting_kiosk_setup": "Voting Kiosk",
@@ -97,10 +100,14 @@ def show_webview_window(app: str, reload: bool = False):
         name = "Exhibitera Apps"
     else:
         name = 'Exhibitera Apps - ' + names[app]
-    webview.create_window(name,
-                          height=600,
-                          width=800,
-                          url='http://localhost:' + str(config.defaults["system"]["port"]) + endpoints[app])
+
+    url = 'http://localhost:' + str(config.defaults["system"]["port"]) + endpoints[app]
+    if parameters is not None:
+        url += '?'
+        for key in parameters:
+            url += key + '=' + parameters[key] + '&'
+
+    webview.create_window(name, height=600,width=800, url=url)
 
 
 def save_file(data, default_filename: str):

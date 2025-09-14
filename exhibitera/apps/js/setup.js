@@ -12,6 +12,7 @@ function updateParser (update) {
     if ('id' in update.app) {
       document.getElementById('IDInput').value = update.app.id
     }
+    if (update.app.definition) document.getElementById('definitionSelect').value = update.app.definition
   }
   if ('control_server' in update) {
     if ('ip_address' in update.control_server) {
@@ -173,13 +174,45 @@ function saveConfiguration () {
       el.classList.remove('btn-primary')
       el.innerHTML = 'Error'
       setTimeout(() => {
-        console.log('here')
         el.classList.remove('btn-danger')
         el.classList.add('btn-primary')
         el.innerHTML = 'Save changes'
       }, 2000)
     })
   console.log(defaults)
+}
+
+function setDefinition (uuid = null) {
+  // Set the given definition as the current one. For use when not using Hub
+
+  if (uuid == null) uuid = document.getElementById('definitionSelect').value
+  exCommon.config.definition = uuid
+
+  exCommon.makeHelperRequest({
+    method: 'POST',
+    endpoint: '/system/configuration/update',
+    params: {
+      defaults: {
+        app: {
+          definition: uuid
+        }
+      }
+
+    }
+  })
+}
+
+function setDMXScene (uuid = null) {
+  // Run the given DMX scene
+
+  if (uuid == null) uuid = document.getElementById('dmxSceneSelect').value
+
+  if (uuid === '') return
+
+  exCommon.makeHelperRequest({
+    method: 'GET',
+    endpoint: '/DMX/setScene/' + uuid
+  })
 }
 
 function configureInterface () {
@@ -193,7 +226,9 @@ function configureInterface () {
     document.getElementById('controlServerPortInputGroup').style.display = 'block'
     document.getElementById('smartRestartPane').style.display = 'block'
     document.getElementById('permissionsPane').style.display = 'block'
-    document.getElementById('votingKioskCSVDownloadDiv').style.display = 'none'
+    document.getElementById('definitionGroup').style.display = 'none'
+    document.getElementById('dataGroup').style.display = 'none'
+    document.getElementById('dataHubMessage').style.display = 'block'
   } else {
     document.getElementById('IDInputGroup').style.display = 'none'
     document.getElementById('definitionSelectGroup').style.display = 'block'
@@ -201,7 +236,9 @@ function configureInterface () {
     document.getElementById('controlServerPortInputGroup').style.display = 'none'
     document.getElementById('smartRestartPane').style.display = 'none'
     document.getElementById('permissionsPane').style.display = 'none'
-    document.getElementById('votingKioskCSVDownloadDiv').style.display = 'block'
+    document.getElementById('definitionGroup').style.display = 'block'
+    document.getElementById('dataGroup').style.display = 'block'
+    document.getElementById('dataHubMessage').style.display = 'none'
   }
   // Remote display
   if (document.getElementById('useRemoteDisplayToggle').checked === true) {
@@ -248,7 +285,7 @@ function populateAvailableData () {
     endpoint: '/data/'
   })
     .then((result) => {
-      const select = document.getElementById('votingKioskCSVDownloadSelect')
+      const select = document.getElementById('dataSelect')
       select.innerHTML = ''
 
       result.files.forEach((file) => {
@@ -263,7 +300,7 @@ function populateAvailableData () {
 function downloadDataAsCSV () {
   // Download the currently selected data file as a CSV file.
 
-  const name = document.getElementById('votingKioskCSVDownloadSelect').value
+  const name = document.getElementById('dataSelect').value
   exCommon.makeHelperRequest({
     method: 'GET',
     endpoint: '/data/' + name + '/csv'
@@ -344,7 +381,64 @@ function populateAvailableDefinitions () {
 
         optionsByApp[app].sort().forEach((option) => definitionSelect.appendChild(option))
       })
+
+      definitionSelect.value = exCommon.config.definition
     })
+}
+
+async function populateAvailableDMXScenes () {
+  // Get a list of DMX scenes and populate the select
+
+  const select = document.getElementById('dmxSceneSelect')
+
+  const response = await exCommon.makeHelperRequest({
+    method: 'GET',
+    endpoint: '/DMX/getScenes'
+  })
+
+  if (response.success && response.success === true) {
+    for (const group of response.groups) {
+      const groupName = new Option(group.name, null)
+      groupName.disabled = true
+      select.appendChild(groupName)
+
+      for (const scene of group.scenes) {
+        select.appendChild(new Option(scene.name, scene.uuid))
+      }
+    }
+  }
+}
+
+async function editDefintion (uuid) {
+  // Load the given app setup view, either in the browser or the app
+
+  // First, figure out what app we need
+  const result = await exCommon.makeHelperRequest({
+    method: 'GET',
+    endpoint: '/definitions/' + uuid + '/load'
+  })
+  const appLink = result.definition.app + '_setup'
+  let webLink = '/' + result.definition.app + '/setup.html'
+  if (result.definition.app === 'word_cloud_input') webLink = '/word_cloud/input/setup.html'
+  if (result.definition.app === 'word_cloud_viewer') webLink = '/word_cloud/viewer/setup.html'
+
+  if (exCommon.config.remoteDisplay === true) {
+    // Switch webpages in the browser
+
+    window.open(window.location.origin + webLink + '?definition=' + uuid, '_blank').focus()
+  } else {
+    // Launch the appropriate webview page in the app
+
+    exCommon.makeHelperRequest({
+      method: 'POST',
+      api: '',
+      endpoint: '/app/showWindow/' + appLink,
+      params: {
+        parameters: { definition: uuid },
+        reload: false
+      }
+    })
+  }
 }
 
 function gotoAppLink (el) {
@@ -440,12 +534,14 @@ exCommon.askForDefaults(false)
     } else {
       // Hide the login details
       document.getElementById('loginMenu').style.display = 'none'
+      document.getElementById('helpNewAccountMessage').style.display = 'none'
     }
   })
 loadVersion()
 populateHelpTab()
 populateAvailableData()
 populateAvailableDefinitions()
+populateAvailableDMXScenes()
 
 // Add event handlers
 exSetup.createLoginEventListeners()
@@ -455,6 +551,15 @@ Array.from(document.querySelectorAll('.app-link')).forEach((el) => {
   el.addEventListener('click', (event) => {
     gotoAppLink(event.target)
   })
+})
+
+// Definitoin actions
+document.getElementById('definitionSetButton').addEventListener('click', ev => {
+  setDefinition()
+})
+document.getElementById('definitionEditButton').addEventListener('click', ev => {
+  const def = document.getElementById('definitionSelect').value
+  editDefintion(def)
 })
 
 // Settings page
@@ -478,8 +583,15 @@ document.getElementById('useRemoteDisplayToggle').addEventListener('change', (ev
   document.getElementById('remoteDisplayRestartRequiredWarning').style.display = 'block'
 })
 
-// Apps page
-document.getElementById('votingKioskCSVDownloadButton').addEventListener('click', downloadDataAsCSV)
+// Data page
+document.getElementById('dataDownloadButton').addEventListener('click', downloadDataAsCSV)
+document.getElementById('dataSelectListRefreshButton').addEventListener('click', populateAvailableData)
+
+// Lighting page
+document.getElementById('dmxSceneSelectListRefresh').addEventListener('click', populateAvailableDMXScenes)
+document.getElementById('dmxSceneSetButton').addEventListener('click', () => {
+  setDMXScene()
+})
 
 // Set color mode
 if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {

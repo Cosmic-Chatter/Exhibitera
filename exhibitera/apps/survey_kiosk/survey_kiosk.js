@@ -387,13 +387,6 @@ function checkConnection () {
 function updateFunc (update) {
   // Read updates for survey kiosk-specific actions and act on them
 
-  if (update.definition && update.definition !== currentDefintionUUID) {
-    currentDefintionUUID = update.definition
-    exCommon.loadDefinition(currentDefintionUUID)
-      .then((result) => {
-        loadDefinition(result.definition)
-      })
-  }
 }
 
 function loadDefinition (definition) {
@@ -627,7 +620,7 @@ const restartTimeout = 5000 // ms
 
 let configurationName = 'default'
 let currentDefinition = {}
-let currentDefintionUUID = ''
+const currentDefintionUUID = ''
 let currentLang = ''
 let currentIndex = 0
 let response = {}

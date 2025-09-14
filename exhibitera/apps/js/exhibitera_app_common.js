@@ -33,13 +33,13 @@ export const config = {
 }
 
 // Load the current software version
-const VersionResponse = await exUtilities.makeRequest({
+const versionResponse = await exUtilities.makeRequest({
   api: '',
   method: 'GET',
   url: window.location.origin,
   endpoint: '/_static/semantic_version.json'
 })
-config.software_version = VersionResponse.version
+config.software_version = versionResponse.version
 
 // platform.js might not be included in 3rd-party apps
 try {
@@ -78,8 +78,8 @@ export function configureApp (opt = {}) {
   } else {
     console.log('exhibitera_app_common: configureApp: you must specify the option loadDefinition')
   }
-  if ('name' in opt) config.exhibiteraAppID = opt.name
-  if ('parseUpdate' in opt) config.updateParser = opt.parseUpdate
+  if (opt.name) config.exhibiteraAppID = opt.name
+  if (opt.parseUpdate) config.updateParser = opt.parseUpdate
 
   const searchParams = parseQueryString()
   if (searchParams.has('standalone')) {
@@ -107,6 +107,8 @@ export function configureApp (opt = {}) {
               config.definition = result.definition
               config.definitionLoader(result.definition)
             })
+
+          setInterval(checkForHelperUpdates, 500)
         }
       })
     // Hide the cursor
@@ -243,29 +245,29 @@ function readServerUpdate (update) {
     }
   }
 
-  if ('id' in update) {
+  if (update.id) {
     config.id = update.id
   }
-  if ('group' in update) {
+  if (update.group) {
     config.group = update.group
   }
-  if (('server_ip_address' in update) && ('server_port' in update)) {
+  if ((update.server_ip_address) && (update.server_port)) {
     config.serverAddress = 'http://' + update.server_ip_address + ':' + update.server_port
   }
-  if ('helperAddress' in update) {
+  if (update.helperAddress) {
     config.helperAddress = update.helperAddress
   }
-  if ('current_exhibit' in update) {
+  if (update.current_exhibit) {
     if (update.currentExhibit !== config.currentExhibit) {
       sendUpdate = true
       config.currentExhibit = update.current_exhibit
     }
   }
-  if ('missingContentWarnings' in update) {
+  if (update.missingContentWarnings) {
     config.errorDict.missingContentWarnings = update.missingContentWarnings
   }
 
-  if ('permissions' in update) {
+  if (update.permissions) {
     config.permissions = update.permissions
   }
   if (update?.software_update?.update_available) {
@@ -276,21 +278,30 @@ function readServerUpdate (update) {
   }
 
   // Check the definition file for a changed app.
-  if (config.exhibiteraAppID !== 'dmx_control' && 'definition' in update && update.definition !== config.currentDefinition) {
+  let definitionChanged = false
+  if (config.exhibiteraAppID !== 'dmx_control' && update.definition && update.definition !== config.currentDefinition) {
     config.currentDefinition = update.definition
+    definitionChanged = true
     makeHelperRequest({
       method: 'GET',
       endpoint: '/definitions/' + update.definition + '/load'
     })
       .then((result) => {
-        if ('success' in result && result.success === false) return
+        if (result?.success !== true) return
 
         const def = result.definition
-        if ('app' in def && def.app !== '') {
+        if (def.app && def.app !== '') {
           if (def.app !== config.exhibiteraAppID) {
             gotoApp(def.app)
           }
         }
+      })
+  }
+
+  if (definitionChanged) {
+    loadDefinition(config.currentDefinition)
+      .then((result) => {
+        config.definitionLoader(result.definition)
       })
   }
 
@@ -358,6 +369,8 @@ function readHelperUpdate (update, changeApp = true) {
   }
 
   // After we have saved any updates, see if we should change the app based on the current definition
+
+  let definitionChanged = false
   if (
     changeApp === true &&
     'app' in update &&
@@ -366,12 +379,13 @@ function readHelperUpdate (update, changeApp = true) {
     config.standalone === true
   ) {
     config.currentDefinition = update.app.definition
+    definitionChanged = true
     makeHelperRequest({
       method: 'GET',
       endpoint: '/definitions/' + update.app.definition + '/load'
     })
       .then((result) => {
-        if ('success' in result && result.success === false) return
+        if (result?.success !== true) return
 
         const def = result.definition
         if (def.app && def.app !== '') {
@@ -379,6 +393,13 @@ function readHelperUpdate (update, changeApp = true) {
             gotoApp(def.app)
           }
         }
+      })
+  }
+
+  if (definitionChanged) {
+    loadDefinition(config.currentDefinition)
+      .then((result) => {
+        config.definitionLoader(result.definition)
       })
   }
 
@@ -466,7 +487,7 @@ export function sendAnalytics (data) {
 
 export function gotoApp (app) {
   // Change the browser location to point to the given app.
-  console.log(app)
+
   const appLocations = {
     dmx_control: '/dmx_control',
     image_compare: '/image_compare',

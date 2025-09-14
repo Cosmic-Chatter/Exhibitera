@@ -185,13 +185,6 @@ function checkConnection () {
 function updateFunc (update) {
   // Read updates for voting kiosk-specific actions and act on them
 
-  if (update.definition && update.definition !== currentDefintion) {
-    currentDefintion = update.definition
-    exCommon.loadDefinition(currentDefintion)
-      .then((result) => {
-        loadDefinition(result.definition)
-      })
-  }
 }
 
 function loadDefinition (definition) {
@@ -417,7 +410,7 @@ exCommon.configureApp({
 let badConnection = false
 
 let configurationName = 'default'
-let currentDefintion = ''
+const currentDefintion = ''
 let voteCounts = {}
 let recordingInterval = 60 // Send votes every this many minutes
 let voteCounter = setInterval(sendData, recordingInterval * 1000)

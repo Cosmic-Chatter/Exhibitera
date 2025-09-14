@@ -302,13 +302,6 @@ function updateFunc (update) {
   // Function to read a message from the server and take action based
   // on the contents
 
-  if (update.definition && update.definition !== currentDefintion) {
-    currentDefintion = update.definition
-    exCommon.loadDefinition(currentDefintion)
-      .then((result) => {
-        loadDefinition(result.definition)
-      })
-  }
 }
 
 function resetActivityTimer () {
@@ -389,7 +382,7 @@ let timeoutDuration = 30000 // ms of no activity before the attractor is shown.
 let defaultLang = ''
 let textTabs = [] // Holds ids of textTabs.
 let firstTab = ''
-let currentDefintion = ''
+const currentDefintion = ''
 
 document.addEventListener('touchstart', resetActivityTimer)
 document.addEventListener('click', resetActivityTimer)

@@ -3,13 +3,6 @@ import * as exCommon from '../js/exhibitera_app_common.js'
 function updateFunc (update) {
   // Function to parse timelapse-specific updates
 
-  if ('definition' in update && update.definition !== currentDefintion) {
-    currentDefintion = update.definition
-    exCommon.loadDefinition(currentDefintion)
-      .then((result) => {
-        loadDefinition(result.definition)
-      })
-  }
 }
 
 function loadDefinition (definition) {
@@ -405,7 +398,7 @@ let lastTouchX = null // X cordinate of the last touchmove event
 let currentClick = false
 let stopInput = false
 
-let currentDefintion = ''
+const currentDefintion = ''
 let continueAnimating = true // true when we are animating for the attractor
 let animationFramerate = 30
 let animationStepSize = 1
