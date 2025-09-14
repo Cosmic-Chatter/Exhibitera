@@ -326,6 +326,9 @@ function editTrackerTemplateUpdateProperty (uuid, property, value) {
   if (property === 'name') {
     document.getElementById('editTrackerWidgetNameField_' + uuid).innerHTML = value
   }
+  if (property === 'options') {
+    value = value.split(',').map(s => s.trim()).filter(Boolean)
+  }
 
   const modal = document.getElementById('editTrackerTemplateModal')
   const template = JSON.parse(modal.dataset.template)
@@ -467,7 +470,7 @@ export function editTrackerTemplateModalAddWidget (name, type) {
   if (type === 'dropdown') {
     widgetDef.multiple = false
     widgetDef.options = []
-  } else if (type === 'sider') {
+  } else if (type === 'slider') {
     widgetDef.min = 1
     widgetDef.max = 5
     widgetDef.step = 1
