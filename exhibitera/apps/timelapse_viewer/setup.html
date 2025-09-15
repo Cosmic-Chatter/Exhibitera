@@ -283,7 +283,7 @@
                   <button id="showConvertVideoModal" class='btn btn-info w-100'>Convert video</button>
                 </div>
               </div>
-              <div class="row mt-2">
+              <div class="row gy-2 mt-2">
                 <div class="col-12 col-lg-4 mt-auto">
                   <button id="showPatternGeneratorModal" class='btn btn-primary w-100'>Pattern generator</button>
                 </div>
@@ -299,10 +299,17 @@
                     Number of files
                   </label>
                   <input disabled type="number" id="filenamePatternMatches" class='form-control'>
-                </div>             
+                </div>
+                <div class="col-12 col-lg-6 col-xl-4">
+                  <label class="form-label" for="videoFitModeSelect">Video mode</label>
+                  <select id="behaviorInput_video_mode" class="form-select">
+                    <option value="contain">Show entire video</option>
+                    <option value="cover">Fill entire screen</option>
+                  </select>
+                </div>         
               </div>
 
-              <h3>Appearance</h3>
+              <h3 class="mt-2">Appearance</h3>
               <h4>Colors</h4>
               <div class="row gy-2 mb-3">
                 <div class="col-12 col-lg-8 advanced-color-picker" data-constACP-name="Background" data-constACP-path="style>background"></div>

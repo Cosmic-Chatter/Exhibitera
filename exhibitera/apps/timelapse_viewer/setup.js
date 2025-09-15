@@ -27,6 +27,7 @@ async function clearDefinitionInput (full = true) {
   // Content details
   document.getElementById('filePatternInput').value = ''
   document.getElementById('filenamePatternMatches').value = null
+  document.getElementById('behaviorInput_video_mode').value = 'contain'
 
   // Attractor details
   document.getElementById('attractorInput_attractor_timeout').value = 30
@@ -331,6 +332,11 @@ document.getElementById('patternGeneratorModalSubmitButton').addEventListener('c
   }
 })
 
+// Video mode
+document.getElementById('behaviorInput_video_mode').addEventListener('change', (ev) => {
+  exSetup.updateWorkingDefinition(['behavior', 'video_mode'], ev.target.value)
+  exSetup.previewDefinition(true)
+})
 // Attractor
 for (const el of document.getElementsByClassName('attractor-input')) {
   el.addEventListener('change', (event) => {

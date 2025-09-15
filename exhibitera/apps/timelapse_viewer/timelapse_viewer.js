@@ -18,6 +18,9 @@ function loadDefinition (definition) {
   } else {
     animationCustomDuration = null
   }
+  root.style.setProperty('--video-fit-mode', definition?.behavior?.video_mode ?? 'contain'
+
+  )
   if ('attractor_timeout' in definition.attractor) {
     attractorTimeout = parseFloat(definition.attractor.attractor_timeout * 1000)
   } else {

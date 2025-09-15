@@ -8,6 +8,10 @@ _Exhibitera Hub and Apps must all be upgraded to version 6 at the same time._
 
 ## Apps
 
+### General
+- Creating, editing, and setting definitions is now much easier when not using Hub
+- Easily access DMX lighting scenes when not using Hub 
+
 ### Custom Apps
 - New Basic App option turns a simple HTML file into an app without needing to implement the Exhibitera APIs
 - New URL option enables you to embed a webpage into your exhibition (limitations apply)
@@ -33,6 +37,9 @@ _This brand-new app extends Voting Kiosk to multiple survey questions, with new 
 - Choose to randomize the order of the options for each user
 - Control the appearance of each option
 - Support for multiple languages
+
+### Timelapse Viewer
+- Choose between filling the screen with the video or letterboxing it to show the whole video
 
 ### Word Cloud
 - Switched profanity filtering library, so please check your word clouds
