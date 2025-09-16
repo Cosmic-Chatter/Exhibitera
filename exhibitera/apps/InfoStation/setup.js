@@ -213,10 +213,6 @@ async function clearDefinitionInput (full = true) {
     el.dispatchEvent(new Event('input', { bubbles: true }))
   })
 
-  // Array.from(document.querySelectorAll('.layout-slider')).forEach((el) => {
-  //   el.value = el.getAttribute('start')
-  // })
-
   exSetup.updateAdvancedColorPicker('style>background', {
     mode: 'color',
     color: '#719abf',
@@ -249,13 +245,13 @@ function editDefinition (uuid = '') {
 
   // Attractor
   const attractorSelect = document.getElementById('attractorSelect')
-  if (def.attractor && def.attractor.trim() !== '') {
-    attractorSelect.innerText = def.attractor
+  if (def?.behavior?.attractor && def.behavior.attractor.trim() !== '') {
+    attractorSelect.innerText = def.behavior.attractor
   } else {
     attractorSelect.innerText = 'Select file'
   }
-  attractorSelect.dataset.filename = def.attractor
-  document.getElementById('inactivityTimeoutField').value = def?.inactivity_timeout ?? 30
+  attractorSelect.dataset.filename = def.behavior.attractor
+  document.getElementById('inactivityTimeoutField').value = def?.behavior?.inactivity_timeout ?? 30
 
   // Layout fields
   const buttonSizeSlider = document.getElementById('buttonSizeSlider')
@@ -269,6 +265,9 @@ function editDefinition (uuid = '') {
 
   const toolbarSizeSlider = document.getElementById('toolbarSizeSlider')
   exSetup.createAdvancedSlider(toolbarSizeSlider, def?.style?.layout?.toolbar_height)
+
+  const sectionCornerRadiusSlider = document.getElementById('sectionCornerRadiusSlider')
+  exSetup.createAdvancedSlider(sectionCornerRadiusSlider, def?.style?.layout?.section_corner_radius)
 
   exSetup.updateAdvancedColorPicker('style>background',
     def?.style?.background,
@@ -653,7 +652,7 @@ function onAttractorFileChange () {
   // Called when a new image or video is selected.
 
   const file = document.getElementById('attractorSelect').dataset.filename
-  exSetup.config.workingDefinition.attractor = file
+  exSetup.config.workingDefinition.behavior.attractor = file
 
   exSetup.previewDefinition(true)
 }
@@ -706,7 +705,7 @@ document.getElementById('attractorSelectClear').addEventListener('click', (event
 })
 
 document.getElementById('inactivityTimeoutField').addEventListener('change', (event) => {
-  exSetup.updateWorkingDefinition(['inactivity_timeout'], event.target.value)
+  exSetup.updateWorkingDefinition(['behavior', 'inactivity_timeout'], event.target.value)
   exSetup.previewDefinition(true)
 })
 

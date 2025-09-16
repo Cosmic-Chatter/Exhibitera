@@ -6,6 +6,7 @@
   --tab-button-color: #6c757d;
   --tab-button-active-color: #22222E;
   --text-color: white;
+  --caption-color: #c7c7c7;
   --quote-color: white;
   --section-header-color: white;
   --section-background-color: #393A5A;
@@ -15,7 +16,8 @@
   /* Font faces */
   --header-font: 'header-default';
   --body-font: 'body-default';
-  --body-font: 'quote-default';
+  --caption-font: 'caption-default';
+  --quote-font: 'quote-default';
   --section-header-font: 'section-header-default';
   --button-font: 'button-default';
 
@@ -24,6 +26,7 @@
   --header-font-size-adjust: 0;
   --section-header-font-size-adjust: 0;
   --body-font-size-adjust: 0;
+  --caption-font-size-adjust: 0;
   --quote-font-size-adjust: 0;
   --tab-button-font-size-adjust: 0;
 
@@ -33,6 +36,7 @@
   --header-height: 10;
   --sidebar-width: 30;
   --toolbar-height: 5;
+  --section-corner-radius: 2;
 }
 
 /* Font definitions */
@@ -47,8 +51,13 @@
 }
 
 @font-face {
-  font-family: "body-default";
-  src: url("../../_fonts/OpenSans-Regular.ttf");
+  font-family: "caption-default";
+  src: url("../../_fonts/OpenSans-LightItalic.ttf");
+}
+
+@font-face {
+  font-family: "quote-default";
+  src: url("../../_fonts/OpenSans-SemiboldItalic.ttf");
 }
 
 @font-face {
@@ -89,37 +98,37 @@ H1 {
 }
 H2 {
   color: var(--section-header-color);
-  font-size: max(min(calc((3.2vmax + var(--section-header-font-size-adjust)*1vmax) * var(--font-size-adjust)), 5vmax), calc(3.2vmax + var(--section-header-font-size-adjust)*1vmax));
+  font-size: max(min(calc((2.6vmax + var(--section-header-font-size-adjust)*1vmax) * var(--font-size-adjust)), 5vmax), calc(2.6vmax + var(--section-header-font-size-adjust)*1vmax));
   font-family: var(--section-header-font);
   transition: font-size 0.1s;
 }
 H3 {
   color: var(--section-header-color);
-  font-size: max(min(calc((2.9vmax + var(--section-header-font-size-adjust)*1vmax) * var(--font-size-adjust)), 4.8vmax), calc(2.9vmax + var(--section-header-font-size-adjust)*1vmax));
+  font-size: max(min(calc((2.3vmax + var(--section-header-font-size-adjust)*1vmax) * var(--font-size-adjust)), 4.8vmax), calc(2.3vmax + var(--section-header-font-size-adjust)*1vmax));
   font-family: var(--section-header-font);
   transition: font-size 0.1s;
 }
 H4 {
   color: var(--section-header-color);
-  font-size: max(min(calc((2.6vmax + var(--section-header-font-size-adjust)*1vmax) * var(--font-size-adjust)), 4.5vmax), calc(2.6vmax + var(--section-header-font-size-adjust)*1vmax));
+  font-size: max(min(calc((2vmax + var(--section-header-font-size-adjust)*1vmax) * var(--font-size-adjust)), 4.5vmax), calc(2vmax + var(--section-header-font-size-adjust)*1vmax));
   font-family: var(--section-header-font);
   transition: font-size 0.1s;
 }
 H5 {
   color: var(--section-header-color);
-  font-size: max(min(calc((2.3vmax + var(--section-header-font-size-adjust)*1vmax) * var(--font-size-adjust)), 4.2vmax), calc(2.3vmax + var(--section-header-font-size-adjust)*1vmax));
+  font-size: max(min(calc((1.7vmax + var(--section-header-font-size-adjust)*1vmax) * var(--font-size-adjust)), 4.2vmax), calc(1.7vmax + var(--section-header-font-size-adjust)*1vmax));
   font-family: var(--section-header-font);
   transition: font-size 0.1s;
 }
 H6 {
   color: var(--section-header-color);
-  font-size: max(min(calc((2vmax + var(--section-header-font-size-adjust)*1vmax) * var(--font-size-adjust)), 3.9vmax), calc(2vmax + var(--section-header-font-size-adjust)*1vmax));
+  font-size: max(min(calc((1.4vmax + var(--section-header-font-size-adjust)*1vmax) * var(--font-size-adjust)), 3.9vmax), calc(1.4vmax + var(--section-header-font-size-adjust)*1vmax));
   font-family: var(--section-header-font);
   transition: font-size 0.1s;
 }
 li {
   color: var(--text-color);
-  font-size: max(min(calc((1.6vmax + var(--body-font-size-adjust)*1vmax) * var(--font-size-adjust)), 3.5vmax), calc(1.6vmax + var(--body-font-size-adjust)*1vmax));
+  font-size: max(min(calc((1.1vmax + var(--body-font-size-adjust)*1vmax) * var(--font-size-adjust)), 3.5vmax), calc(1.1vmax + var(--body-font-size-adjust)*1vmax));
   transition: font-size 0.1s;
 }
 p, div {
@@ -140,7 +149,7 @@ p, div {
   padding: 3vmin;
   margin-bottom: 2vmin;
   border-style: solid;
-  border-radius: 1.8vmin;
+  border-radius: calc(1vmin * var(--section-corner-radius));
   border-color: var(--section-border-color);
   border-width: 0.9vmin;
   box-shadow: 1vmin 1vmin var(--section-shadow-color);
@@ -163,6 +172,11 @@ p, div {
 }
 .langSwitch-entry {
   font-size: 3vmin;
+}
+.markdown-media-caption>div>p {
+  color: var(--caption-color);
+  font-family: var(--caption-font);
+  font-size: max(min(calc((1.5vmax + var(--caption-font-size-adjust)*1vmax) * var(--font-size-adjust)), 3.5vmax), calc(1.5vmax + var(--caption-font-size-adjust)*1vmax));;
 }
 .tabButton {
   font-size: calc(2.5vmax + var(--tab-button-font-size-adjust) * 1vmax);

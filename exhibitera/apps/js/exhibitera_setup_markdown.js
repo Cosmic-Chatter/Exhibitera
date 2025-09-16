@@ -256,21 +256,25 @@ export class ExhibiteraMarkdownEditor {
         return
       }
 
-      const caption = document.getElementById('captionLabel').dataset.text
+      const caption = document.getElementById('captionLabel').dataset?.text ?? ''
       const alignment = document.getElementById('exMarkdownSelectImageAlignmentSelect').value
       const size = document.getElementById('exMarkdownSelectImageSizeSelect').value
       const loop = document.getElementById('exMarkdownSelectMediaLoop').checked
 
       let mediaString
       if (exFiles.guessMimetype(filename) === 'image') {
-        mediaString = `![${alignment} ${size}](/content/${filename} "${caption}")`
+        mediaString = `![${alignment} ${size}](/content/${filename}`
       } else {
         if (loop) {
-          mediaString = `![${alignment} ${size} loop](/content/${filename} "${caption}")`
+          mediaString = `![${alignment} ${size} loop](/content/${filename}`
         } else {
-          mediaString = `![${alignment} ${size}](/content/${filename} "${caption}")`
+          mediaString = `![${alignment} ${size}](/content/${filename}`
         }
       }
+      if (caption !== '') {
+        mediaString += ` "${caption}")`
+      } else mediaString += ')'
+
       this.tinyMDE.paste(mediaString, anchor, focus)
 
       modalInstance.hide()

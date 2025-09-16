@@ -481,6 +481,9 @@
                     <div class="col-12 col-md-6 col-lg-4">
                       <div id="toolbarSizeSlider" class="advanced-slider" data-name="Toolbar height" data-path="style>layout>toolbar_height" data-min="3" data-max="8" data-start="5" data-step="1" data-unit="%" data-note="Height of the toolbar as a percentage of the longest dimension of the display."></div>
                     </div>
+                    <div class="col-12 col-md-6 col-lg-4">
+                      <div id="sectionCornerRadiusSlider" class="advanced-slider" data-name="Section corner radius" data-path="style>layout>section_corner_radius" data-min="0" data-max="10" data-start="2" data-step="0.5" data-unit="%" data-note="How rounded the corners of each section appear."></div>
+                    </div>
                   </div>
                   <h4>Colors</h4>
                   <div class="row gy-2 mb-3">
@@ -489,6 +492,12 @@
                       <label for="colorPicker_text" class="form-label">Body text</label>
                       <div>
                         <input id="colorPicker_text" type="text" class="coloris form-control" value="#fff" data-property="text" data-default="#fff">
+                      </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-lg-4">
+                      <label for="colorPicker_caption" class="form-label">Caption text</label>
+                      <div>
+                        <input id="colorPicker_caption" type="text" class="coloris form-control" value="#c7c7c7" data-property="caption" data-default="#c7c7c7">
                       </div>
                     </div>
                     <div class="col-12 col-sm-6 col-lg-4">
@@ -556,8 +565,10 @@
                     <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Header" data-constAFP-path="style>font>header" data-default="OpenSans-Bold.ttf"></div>
 
                     <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Body text" data-constAFP-path="style>font>body" data-default="OpenSans-Regular.ttf"></div>
+
+                    <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Caption text" data-constAFP-path="style>font>caption" data-default="OpenSans-LightItalic.ttf"></div>
                     
-                    <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Quote text" data-constAFP-path="style>font>quote" data-default="OpenSans-Regular.ttf"></div>
+                    <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Quote text" data-constAFP-path="style>font>quote" data-default="OpenSans-SemiboldItalic.ttf"></div>
 
                     <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Section header" data-constAFP-path="style>font>section-header" data-default="OpenSans-Bold.ttf"></div>
 
@@ -576,6 +587,10 @@
                     <div class="col-12 col-md-6 col-lg-4">
                       <label for="bodyTextSizeSlider" class="form-label">Body text</label>
                       <input id="bodyTextSizeSlider" type="range" class="form-range text-size-slider" data-property="body" min="-1", max="1" start="0" step="0.1">
+                    </div>
+                    <div class="col-12 col-md-6 col-lg-4">
+                      <label for="captionTextSizeSlider" class="form-label">Caption text</label>
+                      <input id="captionTextSizeSlider" type="range" class="form-range text-size-slider" data-property="caption" min="-0.5", max="1" start="0" step="0.1">
                     </div>
                     <div class="col-12 col-md-6 col-lg-4">
                       <label for="quoteTextSizeSlider" class="form-label">Quote text</label>

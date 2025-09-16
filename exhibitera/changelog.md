@@ -23,6 +23,8 @@ _Exhibitera Hub and Apps must all be upgraded to version 6 at the same time._
 - Rich text formatting for media captions
 - Adjust the width of the sidebar in landscape view
 - Adjust the height of the toolbar at the bottom 
+- Adjust the corner radius of sections
+- Customize the look of captions
 - Guided setup makes things easier than ever
 
 ### Media Player
