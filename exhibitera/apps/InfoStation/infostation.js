@@ -38,6 +38,7 @@ function loadDefinition (definition) {
   root.style.setProperty('--header-height', definition?.style?.layout?.header_height || 10)
   root.style.setProperty('--sidebar-width', definition?.style?.layout?.sidebar_width || 30)
   root.style.setProperty('--toolbar-height', definition?.style?.layout?.toolbar_height || 5)
+  root.style.setProperty('--section-corner-radius', definition?.style?.layout?.section_corner_radius || 2)
 
   if (parseInt(definition?.style?.layout?.header_height || 10) === 0) {
     document.getElementById('mastheadDiv').style.display = 'none'
@@ -56,6 +57,8 @@ function loadDefinition (definition) {
   root.style.setProperty('--section-border-color', '#E9E9E9')
   root.style.setProperty('--section-shadow-color', 'RGBA(34,34,46, .5)')
   root.style.setProperty('--text-color', 'white')
+  root.style.setProperty('--quote-color', 'white')
+  root.style.setProperty('--caption-color', '#c7c7c7')
   root.style.setProperty('--toolbarButton-color', '#393A5A')
   root.style.setProperty('--header-font', 'header-default')
   root.style.setProperty('--body-font', 'body-default')
@@ -382,7 +385,6 @@ let timeoutDuration = 30000 // ms of no activity before the attractor is shown.
 let defaultLang = ''
 let textTabs = [] // Holds ids of textTabs.
 let firstTab = ''
-const currentDefintion = ''
 
 document.addEventListener('touchstart', resetActivityTimer)
 document.addEventListener('click', resetActivityTimer)
