@@ -24,7 +24,7 @@ export function createFileSelectionModal (userOptions) {
     modal.setAttribute('id', 'exFileSelectModal')
     modal.setAttribute('tabindex', '-1000') // Always on top
     modal.innerHTML = `
-      <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-dialog modal-dialog-centered modal-lg modal-fullscreen-lg-down">
         <div class="modal-content">
           <div class="modal-header">
             <h5 id="exFileSelectModalTitle" class="modal-title">Select Files</h5>
@@ -32,7 +32,7 @@ export function createFileSelectionModal (userOptions) {
           </div>
           <div class="modal-body">
             <div class="row mb-2">
-              <div class='col-4 col-sm-3 col-lg-2'>
+              <div class='col-4 col-sm-3 col-md-2'>
                 <div class="form-check">
                   <input class="form-check-input" type="checkbox" value="" id="exFileSelectModalThumbnailCheckbox" checked>
                   <label class="form-check-label" for="exFileSelectModalThumbnailCheckbox">
@@ -40,7 +40,7 @@ export function createFileSelectionModal (userOptions) {
                   </label>
                 </div>
               </div>
-              <div class='col-4 col-md-3 col-lg-2'>
+              <div class='col-4 col-sm-3 col-md-2'>
                 <div id="selectAllCol" class="dropdown">
                   <button class="btn btn-sm btn-primary w-100 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                     Multiple
@@ -52,20 +52,20 @@ export function createFileSelectionModal (userOptions) {
                   </ul>
                 </div>
               </div>
-              <div class="col-4 col-sm-5 col-md-6 offset-lg-4 col-lg-4">
+              <div class="col-4 col-sm-6 col-md-4 offset-md-3 offset-lg-4">
               <div class="input-group input-group-sm">
                 <input id="exFileSelectModalSearchField" type="text" placeholder="Search" class="form-control" aria-label="Search">
               </div>
                 
               </div>
             </div>
-            <div class="row flex-column-reverse flex-lg-row">
-            <div class="col-12 col-lg-8" style="max-height: 55vh; overflow-y: auto;">
+            <div class="row flex-column-reverse flex-md-row">
+            <div class="col-12 col-md-8" style="max-height: 55vh; overflow-y: auto;">
               <div id="exFileSelectModalFileList"  class='row'></div>
             </div>
-            <div id="exFileSelectModalFilePreview" class="col-12 col-lg-4 mb-3">
+            <div id="exFileSelectModalFilePreview" class="col-12 col-md-4 mb-3">
               <div class="row justify-content-center">
-                <div class='col-6 col-lg-12'>
+                <div class='col-6 col-md-12'>
                   <img id="exFileSelectModalFilePreviewImage" style="width: 100%; height: 200px; object-fit: contain;">
                   <video id="exFileSelectModalFilePreviewVideo" loop autoplay muted disablePictureInPicture="true" webkit-playsinline="true" playsinline="true" style="width: 100%; height: 200px; object-fit: contain;"></video>
                   <div style="height: 200px; display: flex; justify-content: center; align-items: center;">
@@ -76,7 +76,7 @@ export function createFileSelectionModal (userOptions) {
                     <p>The quick brown fox jumps over the lazy dog.</p>
                   </div>
                 </div>
-                <div class='col-6 col-lg-12 mt-2 text-center h6' style="word-wrap: break-word">
+                <div class='col-6 col-md-12 mt-2 text-center h6' style="word-wrap: break-word">
                   <div id="exFileSelectModalFilePreviewFilename" ></div>
                   <div id="exFileSelectModalFilePreviewFilesize" class="text-secondary mt-1 small"></div>
                   <div id="exFileSelectModalFilePreviewEditContainer" class='row align-items-center'>
@@ -111,10 +111,10 @@ export function createFileSelectionModal (userOptions) {
             </div>
           </div>
           <div class="modal-footer">
-            <div class='row w-100 px-0'>
-              <div class='col-12 col-lg-9 ps-0'>
+            <div class='row w-100 gy-2 px-0'>
+              <div class='col-12 col-md-8 col-lg-9 ps-0'>
                 <div id="exFileSelectModalUploadInterface" class="form-group">
-                  <div class="row align-middle d-flex">
+                  <div class="row gy-2 align-middle d-flex">
                     <div class="col-6 col-md-4">
                       <label class="btn btn-outline-secondary w-100">
                         <span id="exFileSelectModalUploadfilename" style="overflow-wrap: break-word!important;">Upload new</span>

@@ -345,7 +345,8 @@ function readHelperUpdate (update, changeApp = true) {
 
   // App settings
   if (update?.app?.id) config.id = update.app.id
-  if (update?.app?.definition) config.definition = update.app.definition
+  if (update?.app?.definition) config.definitionUUID = update.app.definition
+
   if (update?.app?.uuid) config.uuid = update.app.uuid
 
   if ((update?.control_server?.ip_address) && (update?.control_server?.port)) {

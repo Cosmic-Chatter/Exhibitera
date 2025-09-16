@@ -183,8 +183,8 @@ def close_setup_wizard():
 
 @app.post('/app/showWindow/{window}')
 def show_webview_window(window: str,
-                        parameters: dict[str, str] = Body(description="Query string parameters to append to the URL."),
-                        reload: bool = Body(description="Should the window be reloaded if it already exists?", default=False)):
+                        parameters: dict[str, str] = Body(description="Query string parameters to append to the URL.", embed=True),
+                        reload: bool = Body(description="Should the window be reloaded if it already exists?", default=False), embed=True):
     """Show the requested webview window"""
 
     apps_webview.show_webview_window(window, parameters=parameters, reload=reload)

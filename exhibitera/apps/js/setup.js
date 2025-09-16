@@ -186,7 +186,7 @@ function setDefinition (uuid = null) {
   // Set the given definition as the current one. For use when not using Hub
 
   if (uuid == null) uuid = document.getElementById('definitionSelect').value
-  exCommon.config.definition = uuid
+  exCommon.config.definitionUUID = uuid
 
   exCommon.makeHelperRequest({
     method: 'POST',
@@ -382,7 +382,8 @@ function populateAvailableDefinitions () {
         optionsByApp[app].sort().forEach((option) => definitionSelect.appendChild(option))
       })
 
-      definitionSelect.value = exCommon.config.definition
+      console.log(exCommon.config.definition)
+      definitionSelect.value = exCommon.config.definitionUUID
     })
 }
 
@@ -461,7 +462,10 @@ function gotoAppLink (el) {
       method: 'POST',
       api: '',
       endpoint: '/app/showWindow/' + page,
-      params: { reload }
+      params: {
+        parameters: {},
+        reload
+      }
     })
   }
 }
