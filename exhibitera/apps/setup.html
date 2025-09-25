@@ -100,6 +100,27 @@
         </div>
       </div>
 
+      <!-- Delete  data modal -->
+          <div class="modal" tabindex="-1" role="dialog" id="deleteDataModal">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">Are you sure?</h5>
+                </div>
+                <div class="modal-body">
+                  Deleting data cannot be undone. To continue, please retype the name of the data to be deleted:
+                  <div id='deleteDataModalDeletedName' class='h4 mt-1 text-center'>TEST</div>
+                  <input type="text" id='deleteDataModalDeletedInput' class="form-control"></input>
+                  <p id='deleteDataModalSpellingError' class='text-danger mt-2'>Your typed name does not match. Are you sure you want to delete these data?</p>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-danger" id="deleteDataFromModalButton">Delete data</button>
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
       <div class="row my-2">
         <div class='col-10'>
           <H2 class="d-none d-lg-inline">Exhibitera Component Configuration</H2>
@@ -502,6 +523,9 @@
               </div>
               <div class="col-4 col-sm-3 col-md-2">
                 <button id="dataDownloadButton" class="btn btn-primary w-100">Download</button>
+              </div>
+              <div class="col-4 col-sm-3 col-md-2">
+                <button id="dataDeleteShowModalButton" class="btn btn-danger w-100">Delete</button>
               </div>
             </div>
           </div>

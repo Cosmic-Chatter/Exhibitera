@@ -331,6 +331,48 @@ function downloadDataAsCSV () {
     })
 }
 
+function showDeleteDataModal () {
+  // Show a modal confirming the request to delete a specific dataset. To be sure
+  // populate the modal with data for a test.
+
+  const name = document.getElementById('dataSelect').value
+  document.getElementById('deleteDataModalDeletedName').innerText = name
+  document.getElementById('deleteDataModalDeletedInput').value = ''
+  document.getElementById('deleteDataModalSpellingError').style.display = 'none'
+  exUtilities.showModal('#deleteDataModal')
+}
+
+function deleteDataFromModal () {
+  // Check inputed answer and confirm it is correct. If so, ask for the data to
+  // be deleted.
+
+  const name = document.getElementById('deleteDataModalDeletedName').innerText
+  const input = document.getElementById('deleteDataModalDeletedInput').value
+
+  if (name === input) {
+    deleteData()
+  } else {
+    document.getElementById('deleteDataModalSpellingError').style.display = 'block'
+  }
+}
+
+function deleteData () {
+  // Send a message to the helper asking it to delete the currently selected dataset
+
+  const name = document.getElementById('dataSelect').value
+
+  exCommon.makeHelperRequest({
+    method: 'DELETE',
+    endpoint: '/data/' + name
+  })
+    .then((result) => {
+      if (result.success && result.success === true) {
+        exUtilities.hideModal('#deleteDataModal')
+        populateAvailableData()
+      }
+    })
+}
+
 function populateHelpTab () {
   // Load the overall README.md and add its contents to the Help tab
 
@@ -557,7 +599,7 @@ Array.from(document.querySelectorAll('.app-link')).forEach((el) => {
   })
 })
 
-// Definitoin actions
+// Definition actions
 document.getElementById('definitionSetButton').addEventListener('click', ev => {
   setDefinition()
 })
@@ -590,6 +632,8 @@ document.getElementById('useRemoteDisplayToggle').addEventListener('change', (ev
 // Data page
 document.getElementById('dataDownloadButton').addEventListener('click', downloadDataAsCSV)
 document.getElementById('dataSelectListRefreshButton').addEventListener('click', populateAvailableData)
+document.getElementById('dataDeleteShowModalButton').addEventListener('click', showDeleteDataModal)
+document.getElementById('deleteDataFromModalButton').addEventListener('click', deleteDataFromModal)
 
 // Lighting page
 document.getElementById('dmxSceneSelectListRefresh').addEventListener('click', populateAvailableDMXScenes)

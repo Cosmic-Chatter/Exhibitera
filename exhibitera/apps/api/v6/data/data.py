@@ -7,6 +7,7 @@ from fastapi import APIRouter, Body
 
 # Exhibitera modules
 import exhibitera.common.files as ex_files
+import exhibitera.common.config as ex_config
 
 router = APIRouter(prefix='/data')
 
@@ -75,3 +76,19 @@ async def get_tracker_data_csv(name: str):
         return {"success": False, "reason": f"File {name}.txt does not exist!", "csv": ""}
     result = ex_files.create_csv(data_path)
     return {"success": True, "csv": result}
+
+
+@router.delete("/{name}")
+async def delete_data(name: str):
+    """Delete the specified data file."""
+
+    if not ex_files.filename_safe(name):
+        return {"success": False, "reason": "unsafe_filename"}
+
+    if name is None or name.strip() == "":
+        return {"success": False, "reason": "'name' field is blank."}
+
+    data_path = ex_files.get_path(["data", ex_files.with_extension(name, 'txt')], user_file=True)
+
+    with ex_config.text_file_lock:
+        return ex_files.delete_file(data_path)
