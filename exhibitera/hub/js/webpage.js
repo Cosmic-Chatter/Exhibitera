@@ -627,16 +627,12 @@ function parseUpdate (update) {
   if ('components' in update) {
     let numComps = 0
     let numOnline = 0
-    let numStatic = 0
 
     exExhibit.checkForRemovedComponents(update.components)
     for (const component of update.components) {
       numComps += 1
       if ((component.status === hubConfig.STATUS.ONLINE.name) || (component.status === hubConfig.STATUS.STANDBY.name) || (component.status === hubConfig.STATUS['SYSTEM ON'].name) || (component.status === hubConfig.STATUS.STATIC.name)) {
         numOnline += 1
-      }
-      if (component.status === hubConfig.STATUS.STATIC.name) {
-        numStatic += 1
       }
       exExhibit.updateComponentFromServer(component)
     }
@@ -650,14 +646,6 @@ function parseUpdate (update) {
       favicon.href = '_static/icons/red.ico'
     } else {
       favicon.href = '_static/icons/yellow.ico'
-    }
-    // If there are no static components, hide the "SHow STATIC" button
-    const el = document.getElementById('componentsTabSettingsShowStatic').parentElement.parentElement
-    if (numStatic === 0) {
-      el.style.display = 'none'
-      document.getElementById('componentsTabSettingsShowStaticDivider').parentElement.style.display = 'none'
-    } else {
-      el.style.display = 'block'
     }
   }
 

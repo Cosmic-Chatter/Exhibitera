@@ -267,7 +267,7 @@ class BaseComponent {
     }
     // Remove the component from the exhibitComponents list
     const thisInstance = this
-    hubConfig.exhibitComponents = hubConfig.exhibitComponents.filter(el => el.uuid === thisInstance.uuid)
+    hubConfig.exhibitComponents = hubConfig.exhibitComponents.filter(el => el.uuid !== thisInstance.uuid)
 
     // Cancel the pollingFunction
     clearInterval(this.pollingFunction)
