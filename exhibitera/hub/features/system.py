@@ -3,6 +3,7 @@ import os
 import socket
 
 # Exhibitera modules
+import exhibitera.common.config as ex_config
 import exhibitera.hub.config as hub_config
 import exhibitera.common.utilities as ex_utilities
 import exhibitera.common.files as ex_files
@@ -32,8 +33,8 @@ def get_webpage_update():
             temp["content"] = item.config["content"]
         if "definition" in item.config:
             temp["definition"] = item.config["definition"]
-        if "error" in item.config:
-            temp["error"] = item.config["error"]
+        if "notifications" in item.config:
+            temp["notifications"] = item.config["notifications"]
         if "permissions" in item.config:
             temp["permissions"] = item.config["permissions"]
         if "description" in item.config:
@@ -83,8 +84,7 @@ def get_webpage_update():
                               "galleryName": hub_config.gallery_name,
                               "outdated_os": hub_config.outdated_os,
                               "software_version": hub_config.software_version,
-                              "software_version_available": hub_config.software_update_available_version,
-                              "updateAvailable": str(hub_config.software_update_available).lower()}
+                              "software_update": ex_config.software_update}
 
     update_dict["issues"] = {"issueList": [x.details for x in hub_config.issueList],
                              "lastUpdateDate": hub_config.issueList_last_update_date}

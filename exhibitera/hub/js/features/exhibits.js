@@ -176,12 +176,11 @@ class BaseComponent {
     // Build out the dropdown menu options based on the this.permissions.
 
     dropdownMenu.innerHTML = ''
-    const thisId = this.id
     const thisUUID = this.uuid
     let numOptions = 0
 
     if (permission === 'edit') {
-      if ('refresh' in this.permissions && this.permissions.refresh === true) {
+      if (this?.permissions?.refresh === true) {
         numOptions += 1
         const refreshAction = document.createElement('a')
         refreshAction.classList = 'dropdown-item handCursor'
@@ -192,7 +191,7 @@ class BaseComponent {
         dropdownMenu.appendChild(refreshAction)
       }
 
-      if ('sleep' in this.permissions && this.permissions.sleep === true) {
+      if (this?.permissions?.sleep === true) {
         numOptions += 2
         const sleepAction = document.createElement('a')
         sleepAction.classList = 'dropdown-item handCursor'
@@ -211,7 +210,7 @@ class BaseComponent {
         dropdownMenu.appendChild(wakeAction)
       }
 
-      if ('restart' in this.permissions && this.permissions.restart === true) {
+      if (this?.permissions?.restart === true) {
         numOptions += 1
         const restartAction = document.createElement('a')
         restartAction.classList = 'dropdown-item handCursor'
@@ -222,7 +221,7 @@ class BaseComponent {
         dropdownMenu.appendChild(restartAction)
       }
 
-      if ('shutdown' in this.permissions && this.permissions.shutdown === true) {
+      if (this?.permissions?.shutdown === true) {
         numOptions += 1
         const shutdownAction = document.createElement('a')
         shutdownAction.classList = 'dropdown-item handCursor'
@@ -233,7 +232,7 @@ class BaseComponent {
         dropdownMenu.appendChild(shutdownAction)
       }
 
-      if ('power_on' in this.permissions && this.permissions.power_on === true) {
+      if (this?.permissions?.power_on === true) {
         numOptions += 1
         const powerOnAction = document.createElement('a')
         powerOnAction.classList = 'dropdown-item handCursor'
@@ -353,37 +352,25 @@ class BaseComponent {
 
     this.setStatus(update.status, update.maintenance_status)
 
-    if ('uuid' in update) {
-      this.uuid = update.uuid
+    // Update basic keys
+    const fields = ['uuid', 'ip_address', 'description', 'latency', 'lastContactDateTime']
+    for (const key of fields) {
+      if (key in update) {
+        this[key] = update[key]
+      }
     }
+
+    // Handle special cases
     if ('groups' in update && exUtilities.arraysEqual(this.groups, update.groups) === false) {
       this.setGroups(update.groups)
-    }
-    if ('ip_address' in update) {
-      this.ip_address = update.ip_address
     }
     if ('permissions' in update) {
       if (JSON.stringify(this.permissions) !== JSON.stringify(update.permissions)) {
         this.setPermissions(update.permissions)
       }
     }
-    if ('description' in update) {
-      this.description = update.description
-    }
-    if ('latency' in update) {
-      this.latency = update.latency
-    }
-    if ('lastContactDateTime' in update) {
-      this.lastContactDateTime = update.lastContactDateTime
-    }
-    if ('error' in update) {
-      try {
-        const newError = JSON.parse(update.error)
-        hubConfig.errorDict[this.id] = newError
-      } catch (e) {
-        console.log("Error parsing 'error' field from ping. It should be a stringified JSON expression. Received:", update.error)
-        console.log(e)
-      }
+    if ('notifications' in update) {
+      hubConfig.notifications[this.uuid] = update.notifications
       hubTools.rebuildNotificationList()
     }
   }
@@ -398,8 +385,8 @@ class ExhibitComponent extends BaseComponent {
     this.type = 'exhibit_component'
     this.helperAddress = null
     this.state = {}
-    this.exhibiteraAppId = ''
-    this.platformDetails = {}
+    this.exhibiteraAppID = ''
+    this.platform_details = {}
   }
 
   getHelperURL () {
@@ -413,20 +400,18 @@ class ExhibitComponent extends BaseComponent {
 
     super.updateFromServer(update)
 
-    if (update.autoplay_audio) {
-      this.autoplay_audio = update.autoplay_audio
-    }
-    if (update.definition) {
-      this.definition = update.definition
-    }
-    if (update.exhibiteraAppID) {
-      this.exhibiteraAppId = update.exhibiteraAppID
-    }
-    if (update.helperAddress) {
-      this.helperAddress = update.helperAddress
-    }
-    if (update.platform_details) {
-      this.platformDetails = update.platform_details
+    const fields = [
+      'autoplay_audio',
+      'definition',
+      'exhibiteraAppID',
+      'helperAddress',
+      'platform_details'
+    ]
+
+    for (const key of fields) {
+      if (key in update) {
+        this[key] = update[key]
+      }
     }
   }
 }
@@ -439,7 +424,7 @@ export class WakeOnLANComponent extends BaseComponent {
 
     this.type = 'wol_component'
     this.mac_address = macAddress
-    this.exhibiteraAppId = 'wol_only'
+    this.exhibiteraAppID = 'wol_only'
   }
 }
 
@@ -450,7 +435,7 @@ class Projector extends BaseComponent {
     super(uuid, id, groups)
 
     this.type = 'projector'
-    this.exhibiteraAppId = 'projector'
+    this.exhibiteraAppID = 'projector'
     this.password = ''
     this.protocol = 'pjlink'
     this.state = {}
@@ -463,24 +448,26 @@ class Projector extends BaseComponent {
 
     if ('state' in update) {
       const state = update.state
-      if ('model' in state) {
-        this.state.model = state.model
+      const stateFields = ['model', 'power_state', 'lamp_status', 'error_status']
+
+      for (const key of stateFields) {
+        if (key in state) {
+          this.state[key] = state[key]
+        }
       }
-      if ('power_state' in state) {
-        this.state.power_state = state.power_state
-      }
-      if ('lamp_status' in state) {
-        this.state.lamp_status = state.lamp_status
-      }
+
       if ('error_status' in state) {
-        this.state.error_status = state.error_status
-        const errorList = {}
+        const errors = {}
         for (const item of Object.keys(state.error_status)) {
           if ((state.error_status)[item] !== 'ok') {
-            errorList[item] = (state.error_status)[item]
+            errors[item] = {
+              message: (state.error_status)[item],
+              type: 'warning',
+              uuid: item
+            }
           }
         }
-        hubConfig.errorDict[this.id] = errorList
+        hubConfig.notifications[this.uuid] = errors
         hubTools.rebuildNotificationList()
       }
     }
@@ -503,8 +490,7 @@ class ExhibitComponentGroup {
   }
 
   sortComponentList (method) {
-    // Sort the component list by ID and then rebuild the HTML
-    // representation in order
+    // Sort the component list and rebuild the HTML representation
 
     if (method === 'alphabetical') {
       this.components.sort((a, b) => {
@@ -535,6 +521,7 @@ class ExhibitComponentGroup {
 
   getStatus () {
     // Return the most problematic status from the components
+
     let status = hubConfig.STATUS.STATIC
     for (const component of this.components) {
       if (component.status.value > status.value) status = component.status
@@ -543,8 +530,7 @@ class ExhibitComponentGroup {
   }
 
   buildHTML () {
-    // Function to build the HTML representation of this group
-    // and add it to the componentGroupsRow
+    // Build the HTML representation of this group and add it to the componentGroupsRow
 
     // First, make sure we have permission to view this group.
     if (hubUsers.checkUserPermission('components', 'view', this.group) === false) return
@@ -683,7 +669,7 @@ export function createComponentFromUpdate (update) {
   // Use an update dictionary to create a new component
 
   // Make sure this component doesn't already exist
-  const obj = getExhibitComponent(update.uuid)
+  const obj = hubTools.getExhibitComponent(update.uuid)
   if (obj != null) return
 
   // First, make sure the groups exist
@@ -722,7 +708,7 @@ export function updateComponentFromServer (update) {
   // Read the dictionary of component information from Hub
   // and use it to set up the component
 
-  const obj = getExhibitComponent(update.uuid)
+  const obj = hubTools.getExhibitComponent(update.uuid)
 
   if (obj != null) {
     // Update the object with the latest info from the server
@@ -899,7 +885,7 @@ function showExhibitComponentInfo (uuid, groupUUID) {
     document.getElementById('componentInfoModalMaintenanceTabButton').style.display = 'none'
   }
 
-  const obj = getExhibitComponent(uuid)
+  const obj = hubTools.getExhibitComponent(uuid)
   const componentInfoModal = document.getElementById('componentInfoModal')
   componentInfoModal.dataset.id = obj.id
   componentInfoModal.dataset.uuid = obj.uuid
@@ -907,7 +893,7 @@ function showExhibitComponentInfo (uuid, groupUUID) {
   document.getElementById('componentInfoModalTitle').innerText = obj.id
 
   // Set up the upper-right dropdown menu with helpful details
-  document.getElementById('exhibiteraComponentIdButton').innerText = exUtilities.appNameToDisplayName(obj.exhibiteraAppId)
+  document.getElementById('exhibiteraComponentIdButton').innerText = exUtilities.appNameToDisplayName(obj.exhibiteraAppID)
 
   if (obj.ip_address != null && obj.ip_address !== '') {
     document.getElementById('componentInfoModalIPAddress').innerText = obj.ip_address
@@ -927,21 +913,21 @@ function showExhibitComponentInfo (uuid, groupUUID) {
     document.getElementById('componentInfoModalHelperIPAddressGroup').style.display = 'none'
   }
 
-  if (obj.platformDetails) {
-    if (obj.platformDetails.operating_system) {
-      document.getElementById('componentInfoModalOperatingSystem').innerHTML = obj.platformDetails.operating_system.replace('OS X', 'macOS')
+  if (obj.platform_details) {
+    if (obj.platform_details.operating_system) {
+      document.getElementById('componentInfoModalOperatingSystem').innerHTML = obj.platform_details.operating_system.replace('OS X', 'macOS')
       document.getElementById('componentInfoModalOperatingSystemGroup').style.display = 'block'
     } else {
       document.getElementById('componentInfoModalOperatingSystemGroup').style.display = 'none'
     }
-    if (obj.platformDetails.exhibitera_version) {
-      document.getElementById('componentInfoModalExhibtera').innerText = exUtilities.formatSemanticVersion(obj.platformDetails.exhibitera_version)
+    if (obj.platform_details.exhibitera_version) {
+      document.getElementById('componentInfoModalExhibtera').innerText = exUtilities.formatSemanticVersion(obj.platform_details.exhibitera_version)
       document.getElementById('componentInfoModalExhibteraGroup').style.display = 'block'
     } else {
       document.getElementById('componentInfoModalExhibteraGroup').style.display = 'none'
     }
-    if (obj.platformDetails.browser && obj.platformDetails.browser !== 'null null') {
-      document.getElementById('componentInfoModalBrowser').innerHTML = obj.platformDetails.browser
+    if (obj.platform_details.browser && obj.platform_details.browser !== 'null null') {
+      document.getElementById('componentInfoModalBrowser').innerHTML = obj.platform_details.browser
       document.getElementById('componentInfoModalBrowserGroup').style.display = 'block'
     } else {
       document.getElementById('componentInfoModalBrowserGroup').style.display = 'none'
@@ -1594,7 +1580,7 @@ export function removeExhibitComponentFromModal () {
   })
     .then((response) => {
       if (response.success && response.success === true) {
-        getExhibitComponent(uuid).remove()
+        hubTools.getExhibitComponent(uuid).remove()
         exUtilities.hideModal('#componentInfoModal')
       }
     })
@@ -1604,7 +1590,7 @@ async function populateComponentDefinitionList (definitions, permission) {
   // Take a dictionary of definitions and convert it to GUI elements.
 
   const uuid = document.getElementById('componentInfoModal').dataset.uuid
-  const component = getExhibitComponent(uuid)
+  const component = hubTools.getExhibitComponent(uuid)
 
   const componentInfoModalDefinitionList = document.getElementById('componentInfoModalDefinitionList')
   componentInfoModalDefinitionList.innerHTML = ''
@@ -1746,7 +1732,7 @@ async function populateComponentDefinitionList (definitions, permission) {
 function showCopyDefinitionModal (componentUUID, definitionUUID, definitionName) {
   // Set up and show the model for copying a definition from one component to another
 
-  const component = getExhibitComponent(componentUUID)
+  const component = hubTools.getExhibitComponent(componentUUID)
   const modal = document.getElementById('copyDefinitionModal')
   modal.dataset.definition = definitionUUID
   modal.dataset.component = componentUUID
@@ -1933,7 +1919,7 @@ export async function copyDefinitionModalPerformCopy () {
   // Sources
   const definitionUUID = modal.dataset.definition
   const sourceUUID = modal.dataset.component
-  const sourceComponent = getExhibitComponent(sourceUUID)
+  const sourceComponent = hubTools.getExhibitComponent(sourceUUID)
   const filesToCopy = JSON.parse(modal.getAttribute('data-sourceFiles')) ?? []
 
   // Destinations
@@ -1942,7 +1928,7 @@ export async function copyDefinitionModalPerformCopy () {
   for (const el of checkedElements) {
     const destUUID = el.dataset.uuid
     if (destUUID != null) {
-      const destComp = getExhibitComponent(destUUID)
+      const destComp = hubTools.getExhibitComponent(destUUID)
       if (destComp != null) destComponents.push(destComp)
     }
   }
@@ -2050,7 +2036,7 @@ export function submitDefinitionSelectionFromModal () {
 async function updateComponentInfoModalFromHelper (uuid, permission) {
   // Ask the given helper to send an update and use it to update the interface.
 
-  const obj = getExhibitComponent(uuid)
+  const obj = hubTools.getExhibitComponent(uuid)
 
   const url = obj.getHelperURL()
   if (url == null) {
@@ -2237,7 +2223,7 @@ export function submitComponentBasicSettingsChange () {
 export function submitComponentSettingsChange () {
   // Collect the current settings and send them to the component's helper for saving.
 
-  const obj = getExhibitComponent(document.getElementById('componentInfoModal').dataset.uuid)
+  const obj = hubTools.getExhibitComponent(document.getElementById('componentInfoModal').dataset.uuid)
 
   // Update component settings, if allowed
   const settingsAvailable = document.getElementById('componentInfoModalSettingsPermissionsPane').style.display === 'flex'
@@ -2265,15 +2251,6 @@ export function submitComponentSettingsChange () {
         }
       })
   }
-}
-
-export function getExhibitComponent (uuid) {
-  // Function to search the exhibitComponents list for a given uuid
-
-  const result = hubConfig.exhibitComponents.find(obj => {
-    return obj.uuid === uuid
-  })
-  return result
 }
 
 export function checkForRemovedComponents (update) {
@@ -2309,7 +2286,7 @@ export function queueCommand (uuid, cmd) {
   // Function to send a command to Hub that will then
   // be sent to the component the next time it pings the server
 
-  const obj = getExhibitComponent(uuid)
+  const obj = hubTools.getExhibitComponent(uuid)
   if (['shutdown', 'restart'].includes(cmd) && obj.type === 'exhibit_component') {
     // We send these commands directly to the helper
     exUtilities.makeRequest({
@@ -2476,14 +2453,14 @@ async function createExhibitionModificationHTML (mod, exhib) {
 
   const modal = document.getElementById('exhibitModificationsModal')
   const compareRow = document.getElementById('exhibitModificationsModalRow')
-  const component = getExhibitComponent(mod.uuid)
+  const component = hubTools.getExhibitComponent(mod.uuid)
 
   document.getElementById('exhibitModificationsModalSaveButton').style.display = 'none'
   document.getElementById('exhibitModificationsModalCloseButton').innerText = 'Close'
 
   const modDefReq = await exUtilities.makeRequest({
     method: 'GET',
-    url: getExhibitComponent(mod.uuid).getHelperURL(),
+    url: hubTools.getExhibitComponent(mod.uuid).getHelperURL(),
     endpoint: '/definitions/' + mod.definition + '/load'
   })
   const modDef = modDefReq.definition
@@ -2491,7 +2468,7 @@ async function createExhibitionModificationHTML (mod, exhib) {
   const exhibDefUUID = exhib.components.find(obj => obj.uuid === mod.uuid)?.definition ?? 'error'
   const exhibDefReq = await exUtilities.makeRequest({
     method: 'GET',
-    url: getExhibitComponent(mod.uuid).getHelperURL(),
+    url: hubTools.getExhibitComponent(mod.uuid).getHelperURL(),
     endpoint: '/definitions/' + exhibDefUUID + '/load'
   })
   const exhibDef = exhibDefReq.definition

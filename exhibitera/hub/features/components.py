@@ -836,11 +836,11 @@ def update_exhibit_component_status(data: dict[str, Any], ip: str):
 
         for key in permissions:
             component.config["permissions"][key] = permissions[key]
-    if "error" in data:
-        component.config["error"] = data["error"]
+    if "notifications" in data:
+        component.config["notifications"] = data["notifications"]
     else:
-        if "error" in component.config:
-            component.config.pop("error")
+        if "notifications" in component.config:
+            component.config.pop("notifications")
     if "platform_details" in data:
         if isinstance(data["platform_details"], dict):
             component.platform_details.update(data["platform_details"])

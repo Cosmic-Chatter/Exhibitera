@@ -26,8 +26,7 @@ async def send_update(config: apps_config = Depends(get_config)):
     response_dict = {
         "app": config.defaults["app"],
         "commands": config.commandList,
-        "permissions": config.defaults["permissions"],
-        "missingContentWarnings": config.missingContentWarningList
+        "permissions": config.defaults["permissions"]
     }
     return response_dict
 

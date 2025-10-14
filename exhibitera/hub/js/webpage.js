@@ -52,7 +52,7 @@ async function editExhibitCreateComponentHTML (component) {
   bodyRow.classList = 'row gy-2'
   body.appendChild(bodyRow)
 
-  const componentObj = exExhibit.getExhibitComponent(component.uuid)
+  const componentObj = exTools.getExhibitComponent(component.uuid)
 
   const definitionPreviewCol = document.createElement('div')
   definitionPreviewCol.classList = 'col-12 exhibit-thumbnail'
@@ -431,7 +431,7 @@ async function editExhibitActionConfigureValueSelector (action = null, target = 
   if (action === 'set_dmx_scene') {
     let component
     try {
-      component = exExhibit.getExhibitComponent(target.uuid)
+      component = exTools.getExhibitComponent(target.uuid)
     } catch {
       return
     }
@@ -585,23 +585,32 @@ function parseUpdate (update) {
       document.title = update.gallery.galleryName
     }
 
-    if ('updateAvailable' in update.gallery) {
-      if (update.gallery.updateAvailable === 'true') {
-        const notification = {
-          update_available: true,
-          current_version: update.gallery.software_version,
-          available_version: update.gallery.software_version_available
-        }
-        hubConfig.errorDict.__control_server = {
+    if (update?.gallery?.software_update?.update_available) {
+      const notification = {
+        update_available: true,
+        current_version: update.gallery.software_version,
+        available_version: update.gallery.software_version_available
+      }
+      if (hubConfig.notifications.hub) {
+        hubConfig.notifications.hub.software_update = notification
+      } else {
+        hubConfig.notifications.hub = {
           software_update: notification
         }
-        exTools.rebuildNotificationList()
       }
+
+      exTools.rebuildNotificationList()
     }
-    if (update.gallery?.outdated_os ?? false) {
-      hubConfig.errorDict.__control_server = {
-        outdated_os: true
+
+    if (update.gallery?.outdated_os) {
+      if (hubConfig.notifications.hub) {
+        hubConfig.notifications.hub.outdated_os = { outdated_os: true }
+      } else {
+        hubConfig.notifications.hub = {
+          outdated_os: { outdated_os: true }
+        }
       }
+
       exTools.rebuildNotificationList()
     }
     if (update.gallery?.exhibit_modified ?? false) {
@@ -836,6 +845,8 @@ function loadVersion () {
     })
 }
 
+exTools.rebuildNotificationList()
+
 // Bind event listeners
 
 // Login
@@ -942,15 +953,15 @@ document.getElementById('definitionTabThumbnailsCheckbox').addEventListener('cha
 document.getElementById('componentInfoModalDefinitionSaveButton').addEventListener('click', exExhibit.submitDefinitionSelectionFromModal)
 
 document.getElementById('componentInfoModalViewScreenshot').addEventListener('click', () => {
-  const component = exExhibit.getExhibitComponent(document.getElementById('componentInfoModal').dataset.uuid)
+  const component = exTools.getExhibitComponent(document.getElementById('componentInfoModal').dataset.uuid)
   exTools.openMediaInNewTab([component.getHelperURL() + '/system/getScreenshot'], ['image'])
 })
 document.getElementById('componentInfoModalEditDMXButton').addEventListener('click', (event) => {
-  const component = exExhibit.getExhibitComponent(document.getElementById('componentInfoModal').dataset.uuid)
+  const component = exTools.getExhibitComponent(document.getElementById('componentInfoModal').dataset.uuid)
   window.open(component.getHelperURL() + '/dmx_control/?standalone=true', '_blank').focus()
 })
 document.getElementById('componentInfoModalDMXIntroConfigureButton').addEventListener('click', (event) => {
-  const component = exExhibit.getExhibitComponent(document.getElementById('componentInfoModal').dataset.uuid)
+  const component = exTools.getExhibitComponent(document.getElementById('componentInfoModal').dataset.uuid)
   window.open(component.getHelperURL() + '/dmx_control/?standalone=true', '_blank').focus()
 })
 for (const el of document.querySelectorAll('.componentInfoProjectorSetting')) {

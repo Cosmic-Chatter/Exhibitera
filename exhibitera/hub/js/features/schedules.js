@@ -431,7 +431,7 @@ function scheduleTargetToDescription (targetList, action = '') {
     return 'all ' + exTools.getGroupName(target.uuid)
   } else if (target.type === 'component') {
     if ('uuid' in target) {
-      const component = exExhibit.getExhibitComponent(target.uuid)
+      const component = exTools.getExhibitComponent(target.uuid)
       if (component) return component.id
     }
     // Deprecated in Ex5.2
@@ -593,7 +593,7 @@ export async function setScheduleActionValueSelector (action = null, target = nu
   let component
 
   try {
-    component = exExhibit.getExhibitComponent(target.uuid)
+    component = exTools.getExhibitComponent(target.uuid)
   } catch {
     console.log('Cannot connect to component:', target)
     return

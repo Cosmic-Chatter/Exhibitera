@@ -19,11 +19,11 @@ export const config = {
   currentInteraction: false,
   definition: {}, // Holds the current definition
   definitionLoader: null, // A function used by loadDefinition() to set up the specific app.
-  errorDict: {},
   fontCache: {},
   group: 'Default',
   helperAddress: 'http://localhost:8000',
   id: 'TEMP ' + String(new Date().getTime()),
+  notifications: {},
   remoteDisplay: false, // false == we are using the webview app, true == browser
   serverAddress: '',
   software_version: {}, // format of {major: 6, minor: 0, patch: 0}
@@ -48,7 +48,7 @@ try {
     browser: platform.name + ' ' + platform.version
   }
 } catch {
-  console.log('script platform.js not found. Include this script to send additional details to Hub.')
+  console.log('Script platform.js not found. Include this script to send additional details to Hub.')
   config.platformDetails = {}
 }
 
@@ -137,6 +137,32 @@ export function parseQueryString () {
   return new URLSearchParams(queryString)
 }
 
+export function createNotification (message, type = 'info', notificaitonUUID = null) {
+  // Create a notificaiton and add it to config.notifications
+  // `type` should be one of ['error', 'warning', 'info']
+
+  if (!notificaitonUUID) notificaitonUUID = exUtilities.uuid()
+
+  const notificaiton = {
+    message,
+    type,
+    uuid: notificaitonUUID
+  }
+  config.notifications[notificaitonUUID] = notificaiton
+}
+
+export function clearNotifications () {
+  // Clear all stored notifications
+
+  config.notifications = {}
+}
+
+export function clearNotification (notificaitonUUID) {
+  // Clear the given notification
+
+  delete config.notifications[notificaitonUUID]
+}
+
 export function sendPing () {
   // Contact Hub and ask for any updates
 
@@ -151,15 +177,10 @@ export function sendPing () {
       uuid: config.uuid,
       exhibiteraAppID: config.exhibiteraAppID,
       helperAddress: config.helperAddress,
+      notifications: config.notifications,
       permissions: config.permissions,
       platform_details: config.platformDetails,
       currentInteraction: config.currentInteraction
-    }
-
-    // See if there is an error to report
-    const errorString = JSON.stringify(config.errorDict)
-    if (errorString !== '') {
-      requestDict.error = errorString
     }
 
     makeServerRequest(
@@ -214,11 +235,8 @@ export function askForShutdown () {
   })
 }
 
-function readServerUpdate (update) {
-  // Function to read a message from Hub and take action based on the contents
-  // 'update' should be an object
-
-  let sendUpdate = false
+function readUpdate (update) {
+  // Read an dictionary containing updates and act on them
 
   for (const cmd of update?.commands ?? []) {
     if (cmd === 'restart') {
@@ -245,6 +263,23 @@ function readServerUpdate (update) {
     }
   }
 
+  if (update.permissions) {
+    config.permissions = update.permissions
+  }
+
+  if (update?.software_update?.update_available) {
+    config.notifications.software_update = update.software_update
+  }
+}
+
+function readServerUpdate (update) {
+  // Function to read a message from Hub and take action based on the contents
+  // 'update' should be an object
+
+  readUpdate(update)
+
+  let sendUpdate = false
+
   if (update.id) {
     config.id = update.id
   }
@@ -263,16 +298,7 @@ function readServerUpdate (update) {
       config.currentExhibit = update.current_exhibit
     }
   }
-  if (update.missingContentWarnings) {
-    config.errorDict.missingContentWarnings = update.missingContentWarnings
-  }
 
-  if (update.permissions) {
-    config.permissions = update.permissions
-  }
-  if (update?.software_update?.update_available) {
-    config.errorDict.software_update = update.software_update
-  }
   if (sendUpdate) {
     sendConfigUpdate(update)
   }
@@ -316,32 +342,7 @@ function readHelperUpdate (update, changeApp = true) {
   // 'update' should be an object
   // Set changeApp === false to suppress changing the app if the definition has changed
 
-  const sendUpdate = false
-
-  for (const cmd of update?.commands ?? []) {
-    if (cmd === 'restart') {
-      askForRestart()
-    } else if (cmd === 'shutdown' || cmd === 'power_off') {
-      askForShutdown()
-    } else if (cmd === 'sleepDisplay') {
-      sleepDisplay()
-    } else if (cmd === 'wakeDisplay' || cmd === 'power_on') {
-      wakeDisplay()
-    } else if (cmd === 'refresh_page') {
-      if ('refresh' in config.permissions && config.permissions.refresh === true) {
-        location.reload()
-      }
-    } else if (cmd === 'reloadDefaults') {
-      askForDefaults()
-    } else if (cmd.slice(0, 15) === 'set_dmx_scene__') {
-      makeHelperRequest({
-        method: 'GET',
-        endpoint: '/DMX/setScene/' + cmd.slice(15)
-      })
-    } else {
-      console.log(`Command not recognized: ${cmd}`)
-    }
-  }
+  readUpdate(update)
 
   // App settings
   if (update?.app?.id) config.id = update.app.id
@@ -352,21 +353,12 @@ function readHelperUpdate (update, changeApp = true) {
   if ((update?.control_server?.ip_address) && (update?.control_server?.port)) {
     config.serverAddress = 'http://' + update.control_server.ip_address + ':' + update.control_server.port
   }
-  if ('permissions' in update) {
-    config.permissions = update.permissions
-  }
-  if ('software_update' in update) {
-    if (update.software_update.update_available === true) { config.errorDict.software_update = update.software_update }
-  }
+
   if (update?.system?.remote_display) {
     config.remoteDisplay = update.system.remote_display
   }
   if (update?.system?.standalone) {
     config.standalone = update.system.standalone
-  }
-
-  if (sendUpdate) {
-    sendConfigUpdate(update)
   }
 
   // After we have saved any updates, see if we should change the app based on the current definition
