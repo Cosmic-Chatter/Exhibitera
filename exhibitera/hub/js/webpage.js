@@ -577,7 +577,7 @@ function parseUpdate (update) {
 
   if ('gallery' in update) {
     hubConfig.currentExhibit = update.gallery.current_exhibit
-    updateAvailableExhibits(update.gallery.availableExhibits)
+    updateAvailableExhibits(update.gallery.available_exhibits)
     document.getElementById('exhibitNameField').innerHTML = exTools.getExhibit(update.gallery.current_exhibit).name
 
     if ('name' in update.gallery) {
@@ -666,8 +666,7 @@ function parseUpdate (update) {
     const updatedDate = new Date(update.issues.lastUpdateDate)
 
     if (updatedDate > currentLastDate) {
-      hubConfig.issueList = update.issues.issueList
-      // exIssues.rebuildIssueList()
+      hubConfig.issueList = update.issues.issue_list
       exIssues.upateIssueList()
       exIssues.rebuildIssueFilters()
     }

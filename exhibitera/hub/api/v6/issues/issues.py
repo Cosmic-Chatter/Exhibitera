@@ -125,15 +125,15 @@ async def get_issue_list(request: Request, match_uuid: str):
 
     if match_uuid != "__all":
         matched_issues = []
-        for issue in hub_config.issueList:
+        for issue in hub_config.issue_list:
             if match_uuid in issue.details["relatedComponentUUIDs"]:
                 matched_issues.append(issue.details)
     else:
-        matched_issues = [x.details for x in hub_config.issueList]
+        matched_issues = [x.details for x in hub_config.issue_list]
 
     response = {
         "success": True,
-        "issueList": matched_issues
+        "issue_list": matched_issues
     }
     return response
 

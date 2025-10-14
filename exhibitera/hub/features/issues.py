@@ -9,7 +9,7 @@ import uuid
 
 # Exhibitera imports
 import exhibitera.common.files as ex_files
-import exhibitera.hub.config as config
+import exhibitera.hub.config as hub_config
 import exhibitera.hub.tools as hub_tools
 
 
@@ -40,7 +40,7 @@ class Issue:
 
     def refresh_last_update_date(self):
         self.details["lastUpdateDate"] = datetime.datetime.now().isoformat()
-        config.issueList_last_update_date = self.details["lastUpdateDate"]
+        hub_config.issue_list_last_update_date = self.details["lastUpdateDate"]
 
 
 def delete_issue_media_file(files: list[str], owner: Union[str, None] = None) -> None:
@@ -49,34 +49,34 @@ def delete_issue_media_file(files: list[str], owner: Union[str, None] = None) ->
     for file in files:
         file_path = ex_files.get_path(["issues", "media", file], user_file=True)
         print("Deleting issue media file:", file)
-        with config.logLock:
+        with hub_config.logLock:
             logging.info("Deleting issue media file %s", file)
-        with config.issueMediaLock:
+        with hub_config.issueMediaLock:
             try:
                 os.remove(file_path)
             except FileNotFoundError:
-                with config.logLock:
+                with hub_config.logLock:
                     logging.error("Cannot delete requested issue media file %s: file not found", file)
                 print(f"Cannot delete requested issue media file {file}: file not found")
 
         if owner is not None:
-            with config.issueLock:
+            with hub_config.issueLock:
                 issue = get_issue(owner)
                 issue.details["media"] = [x for x in issue.details["media"] if x != file]
                 issue.refresh_last_update_date()
                 save_issue_list()
-            config.last_update_time = time.time()
+            hub_config.last_update_time = time.time()
 
 
 def create_issue(details: dict[str, Any], username: str = "") -> Issue:
-    """Create a new issue and add it to the issueList"""
+    """Create a new issue and add it to hub_config.issue_list"""
 
     if username != "":
         details["createdUsername"] = username
-    with config.issueLock:
+    with hub_config.issueLock:
         new_issue = Issue(details)
-        config.issueList.append(new_issue)
-    config.last_update_time = time.time()
+        hub_config.issue_list.append(new_issue)
+    hub_config.last_update_time = time.time()
     return new_issue
 
 
@@ -85,20 +85,20 @@ def edit_issue(details: dict, username: str) -> None:
 
     details["lastUpdateUsername"] = username
     issue = get_issue(details["id"])
-    with config.issueLock:
+    with hub_config.issueLock:
         issue.details = issue.details | details
         issue.refresh_last_update_date()
-    config.last_update_time = time.time()
+    hub_config.last_update_time = time.time()
 
 
 def get_issue(this_id: str) -> Issue:
     """Return an Issue with the given id, or None if no such Issue exists"""
 
-    return next((x for x in config.issueList if x.details["id"] == this_id), None)
+    return next((x for x in hub_config.issue_list if x.details["id"] == this_id), None)
 
 
 def remove_issue(this_id: str) -> None:
-    """Remove an Issue with the given id from the issueList"""
+    """Remove an Issue with the given id from hub_config.issue_list"""
 
     issue = get_issue(this_id)
     if issue is not None:
@@ -107,11 +107,11 @@ def remove_issue(this_id: str) -> None:
             if len(issue.details["media"]) > 0:
                 delete_issue_media_file(issue.details["media"])
 
-        with config.issueLock:
-            config.issueList = [x for x in config.issueList if x.details["id"] != this_id]
+        with hub_config.issueLock:
+            hub_config.issue_list = [x for x in hub_config.issue_list if x.details["id"] != this_id]
             issue.refresh_last_update_date()
             save_issue_list()
-    config.last_update_time = time.time()
+    hub_config.last_update_time = time.time()
 
 
 def archive_issue(this_id: str, username: str) -> None:
@@ -126,7 +126,7 @@ def archive_issue(this_id: str, username: str) -> None:
 
     # First, load the current archive
     archive_file = ex_files.get_path(["issues", "archived.json"], user_file=True)
-    with config.issueLock:
+    with hub_config.issueLock:
         try:
             with open(archive_file, 'r', encoding="UTF-8") as file_object:
                 try:
@@ -150,12 +150,12 @@ def archive_issue(this_id: str, username: str) -> None:
 
 
 def restore_issue(this_id: str) -> None:
-    """Move the given issue from the archive back to the issueList"""
+    """Move the given issue from the archive back to hub_config.issue_list"""
 
     archive_file = ex_files.get_path(["issues", "archived.json"], user_file=True)
 
     # First, create the new issue
-    with config.issueLock:
+    with hub_config.issueLock:
         try:
             with open(archive_file, 'r', encoding='UTF-8') as file_object:
                 archive_list = json.load(file_object)
@@ -166,7 +166,7 @@ def restore_issue(this_id: str) -> None:
     create_issue(issue)
     save_issue_list()
 
-    with config.issueLock:
+    with hub_config.issueLock:
         # Then, remove the issue from the archive
         new_archive = [x for x in archive_list if x["id"] != this_id]
 
@@ -176,7 +176,7 @@ def restore_issue(this_id: str) -> None:
 
 
 def read_issue_list() -> None:
-    """Read issues.json and set up the issueList"""
+    """Read issues.json and set up hub_config.issue_list"""
 
     latest_update = datetime.datetime(year=2000, day=1, month=1)
 
@@ -192,16 +192,16 @@ def read_issue_list() -> None:
             create_issue(issue)
     except FileNotFoundError:
         print("No stored issues to read")
-    config.issueList_last_update_date = latest_update
+    hub_config.issue_list_last_update_date = latest_update
 
 
 def save_issue_list() -> None:
-    """Write the current issueList to file"""
+    """Write the current issue list to file"""
 
     issue_file = ex_files.get_path(["issues", "issues.json"], user_file=True)
 
     with open(issue_file, "w", encoding="UTF-8") as file_object:
-        json.dump([x.details for x in config.issueList], file_object, indent=2, sort_keys=True)
+        json.dump([x.details for x in hub_config.issue_list], file_object, indent=2, sort_keys=True)
 
 
 # Set up log file

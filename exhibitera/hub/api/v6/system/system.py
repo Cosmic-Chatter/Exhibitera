@@ -91,14 +91,14 @@ def get_webpage_update():
     update_dict["components"] = component_dict_list
     update_dict["gallery"] = {"current_exhibit": hub_config.current_exhibit,
                               "exhibit_modified": len(hub_config.exhibit_modifications.get("components", [])) != 0,
-                              "availableExhibits": hub_config.exhibit_list,
+                              "available_exhibits": hub_config.exhibit_list,
                               "name": hub_config.gallery_name,
                               "outdated_os": hub_config.outdated_os,
                               "software_version": hub_config.software_version,
                               "software_update": ex_config.software_update}
 
-    update_dict["issues"] = {"issueList": [x.details for x in hub_config.issueList],
-                             "lastUpdateDate": hub_config.issueList_last_update_date}
+    update_dict["issues"] = {"issue_list": [x.details for x in hub_config.issue_list],
+                             "lastUpdateDate": hub_config.issue_list_last_update_date}
 
     update_dict["groups"] = {"group_list": hub_config.group_list,
                              "last_update_date": hub_config.group_list_last_update_date}

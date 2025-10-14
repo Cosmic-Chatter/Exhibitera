@@ -41,8 +41,8 @@ group_list_last_update_date: str = datetime.datetime.now().isoformat()
 serverWarningDict: dict = {}
 
 # Issue stuff
-issueList_last_update_date: str = datetime.datetime.now().isoformat()
-issueList: list = []
+issue_list_last_update_date: str = datetime.datetime.now().isoformat()
+issue_list: list = []
 
 # Schedule stuff
 schedule_timers: list[threading.Timer] = []
