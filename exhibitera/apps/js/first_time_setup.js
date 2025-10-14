@@ -11,10 +11,10 @@ function pageForward (current) {
     let moveOn = false
     const thisPage = document.getElementById('control-server')
     let nextPage
-    const warning = document.getElementById('controlServerDetailsWarning')
+    const warning = document.getElementById('hubDetailsWarning')
 
-    if (document.getElementById('useControlServerToggle').checked === true) {
-      if ((document.getElementById('controlServerIPInput').value.trim() === '') || (document.getElementById('controlServerPortInput').value.trim() === '')) {
+    if (document.getElementById('useHubToggle').checked === true) {
+      if ((document.getElementById('hubIPInput').value.trim() === '') || (document.getElementById('hubPortInput').value.trim() === '')) {
         warning.style.display = 'block'
       } else {
         moveOn = true
@@ -50,7 +50,7 @@ function pageForward (current) {
     }
   } else if (current === 'remote-display') {
     document.getElementById('remote-display').style.display = 'none'
-    if (document.getElementById('useControlServerToggle').checked === true) {
+    if (document.getElementById('useHubToggle').checked === true) {
       document.getElementById('basic-settings').style.display = 'block'
     } else {
       // Skip basic settings if we're not using Hub
@@ -81,15 +81,15 @@ function populateSummary () {
   // Use the settings on the various pages to populate a summary of selected settings.
 
   // Hub
-  if (document.getElementById('useControlServerToggle').checked === true) {
-    document.getElementById('summaryControlServerIP').innerHTML = document.getElementById('controlServerIPInput').value.trim()
-    document.getElementById('summaryControlServerPort').innerHTML = document.getElementById('controlServerPortInput').value.trim()
+  if (document.getElementById('useHubToggle').checked === true) {
+    document.getElementById('summaryHubIP').innerHTML = document.getElementById('hubIPInput').value.trim()
+    document.getElementById('summaryHubPort').innerHTML = document.getElementById('hubPortInput').value.trim()
 
     document.getElementById('summaryNoControlCenter').style.display = 'none'
-    document.getElementById('summaryControlServerDetails').style.display = 'block'
+    document.getElementById('summaryHubDetails').style.display = 'block'
   } else {
     document.getElementById('summaryNoControlCenter').style.display = 'block'
-    document.getElementById('summaryControlServerDetails').style.display = 'none'
+    document.getElementById('summaryHubDetails').style.display = 'none'
   }
   // Remote display
   if (document.getElementById('useRemoteDisplayToggle').checked === true) {
@@ -102,7 +102,7 @@ function populateSummary () {
   }
   // Basic settings
   document.getElementById('summaryID').innerHTML = document.getElementById('IDInput').value.trim()
-  if (document.getElementById('useControlServerToggle').checked === false) {
+  if (document.getElementById('useHubToggle').checked === false) {
     document.getElementById('summaryBasicSettings').style.display = 'none'
   } else {
     document.getElementById('summaryBasicSettings').style.display = 'block'
@@ -126,7 +126,7 @@ function pageBack (current) {
     document.getElementById('remote-display').style.display = 'block'
   } else if (current === 'summary') {
     document.getElementById('summary').style.display = 'none'
-    if (document.getElementById('useControlServerToggle').checked === true) {
+    if (document.getElementById('useHubToggle').checked === true) {
       // Goto basic settings
       document.getElementById('basic-settings').style.display = 'block'
     } else {
@@ -136,15 +136,15 @@ function pageBack (current) {
   }
 }
 
-function onUseControlServerToggle () {
+function onUseHubToggle () {
   // Called when the user toggles the switch to use Hub
 
-  if (document.getElementById('useControlServerToggle').checked === true) {
-    document.getElementById('controlServerIPInputGroup').style.display = 'block'
-    document.getElementById('controlServerPortInputGroup').style.display = 'block'
+  if (document.getElementById('useHubToggle').checked === true) {
+    document.getElementById('hubIPInputGroup').style.display = 'block'
+    document.getElementById('hubPortInputGroup').style.display = 'block'
   } else {
-    document.getElementById('controlServerIPInputGroup').style.display = 'none'
-    document.getElementById('controlServerPortInputGroup').style.display = 'none'
+    document.getElementById('hubIPInputGroup').style.display = 'none'
+    document.getElementById('hubPortInputGroup').style.display = 'none'
   }
 }
 
@@ -164,8 +164,8 @@ function authenticateUser () {
 
   const user = document.getElementById('loginUsername').value.trim()
   const password = document.getElementById('loginPassword').value
-  const hubIP = document.getElementById('controlServerIPInput').value
-  const hubPort = document.getElementById('controlServerPortInput').value
+  const hubIP = document.getElementById('hubIPInput').value
+  const hubPort = document.getElementById('hubPortInput').value
   const serverAddress = 'http://' + hubIP + ':' + hubPort
 
   const successMsg = document.getElementById('hub-auth-success')
@@ -213,11 +213,11 @@ function submitSettings () {
     permissions: {},
     system: {}
   }
-  if (document.getElementById('useControlServerToggle').checked === true) {
+  if (document.getElementById('useHubToggle').checked === true) {
     settings.system.standalone = false
     settings.app.id = document.getElementById('IDInput').value.trim()
-    settings.control_server.ip_address = document.getElementById('controlServerIPInput').value.trim()
-    settings.control_server.port = parseInt(document.getElementById('controlServerPortInput').value.trim()) || 8082
+    settings.control_server.ip_address = document.getElementById('hubIPInput').value.trim()
+    settings.control_server.port = parseInt(document.getElementById('hubPortInput').value.trim()) || 8082
   } else {
     settings.system.standalone = true
   }
@@ -255,7 +255,7 @@ Array.from(document.querySelectorAll('.back-button')).forEach((el) => {
     pageBack(event.target.getAttribute('data-page'))
   })
 })
-document.getElementById('useControlServerToggle').addEventListener('change', onUseControlServerToggle)
+document.getElementById('useHubToggle').addEventListener('change', onUseHubToggle)
 document.getElementById('useRemoteDisplayToggle').addEventListener('change', onUseRemoteDisplayToggle)
 document.getElementById('loginSubmitButton').addEventListener('click', authenticateUser)
 

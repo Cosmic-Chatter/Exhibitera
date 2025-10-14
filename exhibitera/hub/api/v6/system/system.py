@@ -9,6 +9,7 @@ from fastapi import APIRouter, Body, Request
 from sse_starlette.sse import EventSourceResponse
 
 # Exhibitera modules
+import exhibitera.common.config as ex_config
 import exhibitera.common.files as ex_files
 import exhibitera.hub.config as hub_config
 import exhibitera.hub.features.components as hub_components
@@ -21,6 +22,93 @@ logging.basicConfig(datefmt='%Y-%m-%d %H:%M:%S',
                     filename=log_path,
                     format='%(levelname)s, %(asctime)s, %(message)s',
                     level=logging.INFO)
+
+def get_webpage_update():
+    """Collect the current exhibit status and send it back to the web client to update the page."""
+
+    update_dict = {}
+
+    component_dict_list = []
+    for item in hub_config.componentList:
+        temp = {"class": "exhibitComponent",
+                "exhibiteraAppID": item.config["app_id"],
+                "helperAddress": item.helperAddress,
+                "id": item.id,
+                "ip_address": item.ip_address,
+                "groups": item.groups,
+                "lastContactDateTime": item.last_contact_datetime,
+                "latency": item.latency,
+                "platform_details": item.platform_details,
+                "maintenance_status": item.config.get("maintenance_status", "Off floor, not working"),
+                "status": item.current_status(),
+                "uuid": item.uuid}
+        if "content" in item.config:
+            temp["content"] = item.config["content"]
+        if "definition" in item.config:
+            temp["definition"] = item.config["definition"]
+        if "notifications" in item.config:
+            temp["notifications"] = item.config["notifications"]
+        if "permissions" in item.config:
+            temp["permissions"] = item.config["permissions"]
+        if "description" in item.config:
+            temp["description"] = item.config["description"]
+        component_dict_list.append(temp)
+
+    for item in hub_config.projectorList:
+        temp = {"class": "projector",
+                "groups": item.groups,
+                "id": item.id,
+                "ip_address": item.ip_address,
+                "latency": item.latency,
+                "maintenance_status": item.config.get("maintenance_status", "Off floor, not working"),
+                "password": item.password,
+                "protocol": item.connection_type,
+                "state": item.state,
+                "status": item.state["status"],
+                "uuid": item.uuid}
+        if "permissions" in item.config:
+            temp["permissions"] = item.config["permissions"]
+        if "description" in item.config:
+            temp["description"] = item.config["description"]
+        component_dict_list.append(temp)
+
+    for item in hub_config.wakeOnLANList:
+        temp = {"class": "wolComponent",
+                "id": item.id,
+                "groups": item.groups,
+                "ip_address": item.ip_address,
+                "latency": item.latency,
+                "mac_address": item.mac_address,
+                "maintenance_status": item.config.get("maintenance_status", "Off floor, not working"),
+                "status": item.state["status"],
+                "uuid": item.uuid}
+        if "permissions" in item.config:
+            temp["permissions"] = item.config["permissions"]
+        if "description" in item.config:
+            temp["description"] = item.config["description"]
+        component_dict_list.append(temp)
+
+    update_dict["components"] = component_dict_list
+    update_dict["gallery"] = {"current_exhibit": hub_config.current_exhibit,
+                              "exhibit_modified": len(hub_config.exhibit_modifications.get("components", [])) != 0,
+                              "availableExhibits": hub_config.exhibit_list,
+                              "name": hub_config.gallery_name,
+                              "outdated_os": hub_config.outdated_os,
+                              "software_version": hub_config.software_version,
+                              "software_update": ex_config.software_update}
+
+    update_dict["issues"] = {"issueList": [x.details for x in hub_config.issueList],
+                             "lastUpdateDate": hub_config.issueList_last_update_date}
+
+    update_dict["groups"] = {"group_list": hub_config.group_list,
+                             "last_update_date": hub_config.group_list_last_update_date}
+
+    with hub_config.scheduleLock:
+        update_dict["schedule"] = {"updateTime": hub_config.scheduleUpdateTime,
+                                   "schedule": hub_config.json_schedule_list,
+                                   "nextEvent": hub_config.json_next_event}
+
+    return update_dict
 
 router = APIRouter(prefix='/system')
 
@@ -127,7 +215,7 @@ async def send_update_stream(request: Request):
                     "event": "update",
                     "id": str(last_update_time),
                     "retry": 5000,  # milliseconds
-                    "data": json.dumps(hub_system.get_webpage_update(), default=str)
+                    "data": json.dumps(get_webpage_update(), default=str)
                 }
             await asyncio.sleep(0.5)  # seconds
 

@@ -580,9 +580,9 @@ function parseUpdate (update) {
     updateAvailableExhibits(update.gallery.availableExhibits)
     document.getElementById('exhibitNameField').innerHTML = exTools.getExhibit(update.gallery.current_exhibit).name
 
-    if ('galleryName' in update.gallery) {
-      document.getElementById('galleryNameField').innerHTML = update.gallery.galleryName
-      document.title = update.gallery.galleryName
+    if ('name' in update.gallery) {
+      document.getElementById('galleryNameField').innerHTML = update.gallery.name
+      document.title = update.gallery.name
     }
 
     if (update?.gallery?.software_update?.update_available) {
@@ -772,13 +772,13 @@ function deleteExhibitFromModal () {
   exUtilities.hideModal('#deleteExhibitModal')
 }
 
-function populateControlServerSettings () {
+function populateHubSettings () {
   // Get the latest system settings from Hub and build out the interface for changing them.
 
   // Hide warnings and buttons
-  document.getElementById('controlServerSettingsIPWarning').style.display = 'none'
-  document.getElementById('controlServerSettingsPortWarning').style.display = 'none'
-  document.getElementById('controlServerSettingsSaveButton').style.display = 'none'
+  document.getElementById('hubSettingsIPWarning').style.display = 'none'
+  document.getElementById('hubSettingsPortWarning').style.display = 'none'
+  document.getElementById('hubSettingsSaveButton').style.display = 'none'
 
   exTools.makeServerRequest({
     method: 'GET',
@@ -787,10 +787,10 @@ function populateControlServerSettings () {
     .then((result) => {
       const config = result.configuration
 
-      document.getElementById('controlServerSettingsIPAddress').value = config.ip_address
-      document.getElementById('controlServerSettingsPort').value = config.port
-      document.getElementById('controlServerSettingsGalleryName').value = config.gallery_name
-      document.getElementById('controlServerSettingsDebugMode').value = config.debug
+      document.getElementById('hubSettingsIPAddress').value = config.ip_address
+      document.getElementById('hubSettingsPort').value = config.port
+      document.getElementById('hubSettingsGalleryName').value = config.gallery_name
+      document.getElementById('hubSettingsDebugMode').value = config.debug
     })
 }
 
@@ -798,24 +798,24 @@ function updateSystemConfiguration () {
   // Update the system configuration
 
   const update = {
-    ip_address: document.getElementById('controlServerSettingsIPAddress').value.trim(),
-    port: parseInt(document.getElementById('controlServerSettingsPort').value),
-    gallery_name: document.getElementById('controlServerSettingsGalleryName').value.trim(),
-    debug: exUtilities.stringToBool(document.getElementById('controlServerSettingsDebugMode').value)
+    ip_address: document.getElementById('hubSettingsIPAddress').value.trim(),
+    port: parseInt(document.getElementById('hubSettingsPort').value),
+    gallery_name: document.getElementById('hubSettingsGalleryName').value.trim(),
+    debug: exUtilities.stringToBool(document.getElementById('hubSettingsDebugMode').value)
   }
 
   // Check that fields are properly filled out
   if (update.ip_address === '') {
-    document.getElementById('controlServerSettingsIPWarning').style.display = 'block'
+    document.getElementById('hubSettingsIPWarning').style.display = 'block'
     return
   } else {
-    document.getElementById('controlServerSettingsIPWarning').style.display = 'none'
+    document.getElementById('hubSettingsIPWarning').style.display = 'none'
   }
   if (isNaN(update.port)) {
-    document.getElementById('controlServerSettingsPortWarning').style.display = 'block'
+    document.getElementById('hubSettingsPortWarning').style.display = 'block'
     return
   } else {
-    document.getElementById('controlServerSettingsPortWarning').style.display = 'none'
+    document.getElementById('hubSettingsPortWarning').style.display = 'none'
   }
 
   exTools.makeServerRequest({
@@ -827,7 +827,7 @@ function updateSystemConfiguration () {
   })
     .then((result) => {
       if ('success' in result && result.success === true) {
-        document.getElementById('controlServerSettingsSaveButton').style.display = 'none'
+        document.getElementById('hubSettingsSaveButton').style.display = 'none'
       }
     })
 }
@@ -1184,12 +1184,12 @@ document.getElementById('editGroupModalSubmitButton').addEventListener('click', 
 document.getElementById('deleteGroupConfirmationButton').addEventListener('click', exGroup.deleteGroupFromModal)
 
 // Server settings
-for (const el of document.querySelectorAll('.controlServerSettingsInputField')) {
+for (const el of document.querySelectorAll('.hubSettingsInputField')) {
   el.addEventListener('change', () => {
-    document.getElementById('controlServerSettingsSaveButton').style.display = 'block'
+    document.getElementById('hubSettingsSaveButton').style.display = 'block'
   })
 }
-document.getElementById('controlServerSettingsSaveButton').addEventListener('click', updateSystemConfiguration)
+document.getElementById('hubSettingsSaveButton').addEventListener('click', updateSystemConfiguration)
 
 // Activate all popovers
 const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]')
@@ -1218,7 +1218,7 @@ document.addEventListener('hidden.bs.modal', function (event) {
 loadVersion()
 populateHelpTab()
 exUsers.populateUsers()
-populateControlServerSettings()
+populateHubSettings()
 const trackerTemplates = await exTracker.getAvailableTemplates()
 exTracker.populateTrackerTemplateSelect(trackerTemplates)
 

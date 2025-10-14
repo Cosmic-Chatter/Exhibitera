@@ -67,23 +67,23 @@
             <div class="row mt-4">
               <div class="col-5 d-flex align-items-center">
                 <div class="form-check form-switch">
-                  <input class="form-check-input" type="checkbox" role="switch" id="useControlServerToggle">
-                  <label class="form-check-label" for="useControlServerToggle">Use Hub</label>
+                  <input class="form-check-input" type="checkbox" role="switch" id="useHubToggle">
+                  <label class="form-check-label" for="useHubToggle">Use Hub</label>
                 </div>
               </div>
-              <div id="controlServerIPInputGroup" class="col-4"  style="display: none;">
+              <div id="hubIPInputGroup" class="col-4"  style="display: none;">
                 <div class="form-floating">
-                  <input type="text" class="form-control" id="controlServerIPInput" placeholder="IP address">
-                  <label for="controlServerIPInput">IP address</label>
+                  <input type="text" class="form-control" id="hubIPInput" placeholder="IP address">
+                  <label for="hubIPInput">IP address</label>
                 </div>
               </div>
-              <div id="controlServerPortInputGroup" class="col-3" style="display: none;">
+              <div id="hubPortInputGroup" class="col-3" style="display: none;">
                 <div class="form-floating">
-                  <input type="number" class="form-control" id="controlServerPortInput" placeholder="Port">
-                  <label for="controlServerPortInput">Port</label>
+                  <input type="number" class="form-control" id="hubPortInput" placeholder="Port">
+                  <label for="hubPortInput">Port</label>
                 </div>
               </div>
-              <div id="controlServerDetailsWarning" class="col-12 mt-3 text-warning" style="display: none;">
+              <div id="hubDetailsWarning" class="col-12 mt-3 text-warning" style="display: none;">
                 You must specifiy Hub's IP address and port. If you don't know these values, contact your system administrator.
               </div>
             </div>
@@ -209,10 +209,10 @@
             <div class="h6">Hub</div>
             <p>
               <em id="summaryNoControlCenter">This app will not connect to Hub.</em>
-              <div id="summaryControlServerDetails">
-                <b>IP address:</b> <span id="summaryControlServerIP"></span>
+              <div id="summaryHubDetails">
+                <b>IP address:</b> <span id="summaryHubIP"></span>
                 <br>
-                <b>Port:</b> <span id="summaryControlServerPort"></span>
+                <b>Port:</b> <span id="summaryHubPort"></span>
               </div>
             </p>
 

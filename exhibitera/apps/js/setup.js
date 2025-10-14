@@ -16,10 +16,10 @@ function updateParser (update) {
   }
   if ('control_server' in update) {
     if ('ip_address' in update.control_server) {
-      document.getElementById('controlServerIPInput').value = update.control_server.ip_address
+      document.getElementById('hubIPInput').value = update.control_server.ip_address
     }
     if ('port' in update.control_server) {
-      document.getElementById('controlServerPortInput').value = update.control_server.port
+      document.getElementById('hubPortInput').value = update.control_server.port
     }
   }
   if ('permissions' in update) {
@@ -69,7 +69,7 @@ function updateParser (update) {
       document.getElementById('useRemoteDisplayToggle').checked = update.system.remote_display
     }
     if ('standalone' in update.system) {
-      document.getElementById('useControlServerToggle').checked = !update.system.standalone
+      document.getElementById('useHubToggle').checked = !update.system.standalone
     }
   }
   configureInterface()
@@ -115,7 +115,7 @@ function saveConfiguration () {
     app: {},
     system: {
       remote_display: document.getElementById('useRemoteDisplayToggle').checked,
-      standalone: !document.getElementById('useControlServerToggle').checked
+      standalone: !document.getElementById('useHubToggle').checked
     }
   }
 
@@ -123,8 +123,8 @@ function saveConfiguration () {
     // We are using Hub, so update relevant defaults
     defaults.app.id = document.getElementById('IDInput').value.trim()
     defaults.control_server = {
-      ip_address: document.getElementById('controlServerIPInput').value.trim(),
-      port: parseInt(document.getElementById('controlServerPortInput').value)
+      ip_address: document.getElementById('hubIPInput').value.trim(),
+      port: parseInt(document.getElementById('hubPortInput').value)
     }
     defaults.permissions = {
       audio: exUtilities.stringToBool(document.getElementById('permissionsAudioInput').value),
@@ -219,11 +219,11 @@ function configureInterface () {
   // Check the state of various toggles and show/hide interface elements as appropriate.
 
   // Hub
-  if (document.getElementById('useControlServerToggle').checked === true) {
+  if (document.getElementById('useHubToggle').checked === true) {
     document.getElementById('IDInputGroup').style.display = 'block'
     document.getElementById('definitionSelectGroup').style.display = 'none'
-    document.getElementById('controlServerIPInputGroup').style.display = 'block'
-    document.getElementById('controlServerPortInputGroup').style.display = 'block'
+    document.getElementById('hubIPInputGroup').style.display = 'block'
+    document.getElementById('hubPortInputGroup').style.display = 'block'
     document.getElementById('smartRestartPane').style.display = 'block'
     document.getElementById('permissionsPane').style.display = 'block'
     document.getElementById('definitionGroup').style.display = 'none'
@@ -232,8 +232,8 @@ function configureInterface () {
   } else {
     document.getElementById('IDInputGroup').style.display = 'none'
     document.getElementById('definitionSelectGroup').style.display = 'block'
-    document.getElementById('controlServerIPInputGroup').style.display = 'none'
-    document.getElementById('controlServerPortInputGroup').style.display = 'none'
+    document.getElementById('hubIPInputGroup').style.display = 'none'
+    document.getElementById('hubPortInputGroup').style.display = 'none'
     document.getElementById('smartRestartPane').style.display = 'none'
     document.getElementById('permissionsPane').style.display = 'none'
     document.getElementById('definitionGroup').style.display = 'block'

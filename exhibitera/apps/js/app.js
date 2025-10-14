@@ -22,8 +22,8 @@ exCommon.askForDefaults()
     if (exCommon.config.standalone === false) {
       // Using Hub
       document.getElementById('standaloneWelcome').style.display = 'none'
-      document.getElementById('controlServerWelcome').style.display = 'block'
-      document.getElementById('controlServerAddress').innerHTML = exCommon.config.serverAddress
+      document.getElementById('hubWelcome').style.display = 'block'
+      document.getElementById('hubAddress').innerHTML = exCommon.config.serverAddress
 
       exCommon.sendPing()
       setInterval(exCommon.sendPing, 5000)
@@ -31,7 +31,7 @@ exCommon.askForDefaults()
     } else {
       // Not using Hub
       document.getElementById('standaloneWelcome').style.display = 'block'
-      document.getElementById('controlServerWelcome').style.display = 'none'
+      document.getElementById('hubWelcome').style.display = 'none'
       exCommon.loadDefinition(exCommon.config.currentDefinition)
     }
   })

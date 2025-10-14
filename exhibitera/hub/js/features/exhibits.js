@@ -401,7 +401,6 @@ class ExhibitComponent extends BaseComponent {
     super.updateFromServer(update)
 
     const fields = [
-      'autoplay_audio',
       'definition',
       'exhibiteraAppID',
       'helperAddress',
