@@ -16,6 +16,7 @@ const exhibiteraAppIdDisplayNames = {
   sos_kiosk: 'SOS Kiosk',
   sos_screen_player: 'SOS Screen Player',
   static_component: 'Static component',
+  survey_kiosk: 'Survey Kiosk',
   timelapse_viewer: 'Timelapse Viewer',
   timeline_explorer: 'Timeline Explorer',
   voting_kiosk: 'Voting Kiosk',

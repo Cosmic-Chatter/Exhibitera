@@ -37,6 +37,9 @@ tr, td, th {
     overflow-wrap: break-word;
     width: 75%;
 }
+.dropdown-toggle.no-caret::after {
+  display: none !important;
+}
 .exhibitera-dialog {
     max-width: min(95%, 750px); 
     width: min(95%, 750px);

@@ -37,7 +37,7 @@ export function setComponentInfoModalMaintenanceStatus (uuid, id) {
     endpoint: '/issue/list/' + uuid
   }).then((response) => {
     if (response.success === true) {
-      for (const issue of response.issueList) {
+      for (const issue of response.issue_list) {
         issueList.appendChild(exIssues.createIssueHTML(issue, false))
       }
     }

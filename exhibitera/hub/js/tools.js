@@ -278,6 +278,7 @@ export function rebuildNotificationList () {
   // Show/hide the dropdown
   if (notificationCount > 0) {
     notificationsCol.style.display = 'block'
+    document.getElementById('notificationsCount').innerText = notificationCount
   } else {
     notificationsCol.style.display = 'none'
   }
