@@ -15,7 +15,7 @@ export function guessMimetype (filename) {
     return 'audio'
   } else if (['otf', 'ttf', 'woff', 'woff2'].includes(ext)) {
     return 'font'
-  } else if (['jpeg', 'jpg', 'tiff', 'tif', 'png', 'bmp', 'gif', 'webp', 'eps', 'ps', 'svg'].includes(ext)) {
+  } else if (['bmp', 'eps', 'gif', 'heic', 'jpeg', 'jpg', 'png', 'ps', 'svg', 'tif', 'tiff', 'webp'].includes(ext)) {
     return 'image'
   } else if (['fbx', 'glb', 'obj', 'stl', 'usdz'].includes(ext)) {
     return 'model'

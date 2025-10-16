@@ -75,6 +75,9 @@ def delete_file(file: str, absolute: bool = False):
     else:
         file_path = ex_files.get_path(["content", file], user_file=True)
 
+    if not os.path.exists(file_path):
+        return
+
     print("Deleting file:", file_path)
     with ex_config.binary_file_lock:
         os.remove(file_path)
@@ -84,7 +87,8 @@ def delete_file(file: str, absolute: bool = False):
         for size_key in apps_config.thumbnail_archive[file]:
             for mimetype_key in apps_config.thumbnail_archive[file][size_key]:
                 thumb_path_v2 = ex_files.get_path(["thumbnails", "v2", apps_config.thumbnail_archive[file][size_key][mimetype_key]], user_file=True)
-                os.remove(thumb_path_v2)
+                if os.path.exists(thumb_path_v2):
+                    os.remove(thumb_path_v2)
         del apps_config.thumbnail_archive[file]
 
         # Write updated archive to disk
