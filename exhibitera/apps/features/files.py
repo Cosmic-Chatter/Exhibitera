@@ -385,7 +385,6 @@ def convert_video_to_frames(filename: str, file_type: str = 'jpg'):
             args = [ffmpeg_path, "-i", input_path, "-quality", "90", output_path]
 
         process = subprocess.Popen(args, stderr=subprocess.PIPE, encoding="UTF-8")
-        process.communicate(timeout=3600) # Make this blocking
 
     except OSError as e:
         print("convert_video_to_frame: error:", e)

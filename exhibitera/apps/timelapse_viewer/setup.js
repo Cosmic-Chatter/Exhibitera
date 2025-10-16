@@ -189,6 +189,8 @@ async function convertVideo () {
   })
   const numFilesCurrent = response.content.length
 
+  trackConversionProgress(numFilesToCreate, numFilesCurrent)
+
   exCommon.makeHelperRequest({
     method: 'POST',
     endpoint: '/files/' + filename + '/convertVideoToFrames',
@@ -197,32 +199,32 @@ async function convertVideo () {
     },
     timeout: 3.6e6 // 1 hr
   })
-  trackConversionProgress(numFilesToCreate, numFilesCurrent)
 }
 
-function trackConversionProgress (total, starting) {
+async function trackConversionProgress (total, starting) {
   // Track the progress of the video conversion.
   // total is the estimated number of frames to be converted
   // starting is the number of files when the conversion started
   // The number completed = current total - now
 
-  exCommon.makeHelperRequest({
+  const result = await exCommon.makeHelperRequest({
     method: 'GET',
     endpoint: '/files/availableContent'
-  }).then((result) => {
-    const numComplete = result.content.length - starting
-    const percent = Math.round(100 * (numComplete / total))
-    document.getElementById('conversionProgressBarDiv').setAttribute('aria-valuenow', percent)
-    document.getElementById('conversionProgressBar').style.width = String(percent) + '%'
-    if (numComplete < total - 5) {
-      // Add a little slop (5) in case the estimated number of files is wrong.
-      setTimeout(() => {
-        trackConversionProgress(total, starting)
-      }, 1000)
-    } else {
-      videoConversionModal.hide()
-    }
   })
+
+  const numComplete = result.content.length - starting
+  const percent = Math.round(100 * (numComplete / total))
+  document.getElementById('conversionProgressBarDiv').setAttribute('aria-valuenow', percent)
+  document.getElementById('conversionProgressBar').style.width = String(percent) + '%'
+  console.log(numComplete, total, starting, percent)
+  if (numComplete < total - 5) {
+    // Add a little slop (5) in case the estimated number of files is wrong.
+    setTimeout(() => {
+      trackConversionProgress(total, starting)
+    }, 1000)
+  } else {
+    videoConversionModal.hide()
+  }
 }
 
 // Set helperAddress for calls to exCommon.makeHelperRequest

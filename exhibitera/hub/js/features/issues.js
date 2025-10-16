@@ -420,7 +420,7 @@ function getIssueList (id = '__all') {
   return hubTools.makeServerRequest({
     method: 'GET',
     endpoint: '/issue/list/' + id
-  }).then((response) => response.issueList)
+  }).then((response) => response.issue_list)
 }
 
 function getIssue (id) {
