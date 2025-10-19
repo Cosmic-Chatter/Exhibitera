@@ -2,12 +2,18 @@
     /* Colors */
     --background-color: black;
     --subtitleColor: white;
+    --progressActiveColor: #008000;
+    --progressInactiveColor: #808080;
+    --progressBackgroundColor: #64646499;
 
     /* Font facts */
     --subtitle-font: "subtitles-default";
 
     /* Font modifiers */
     --subtitle-font-adjust: 0;
+
+    /* Misc modifiers */
+    --progress-indicator-size: 1;
   }
 
 /* Font definitions */
@@ -39,6 +45,29 @@ body,html {
     user-select: none;
     cursor: none;
 }
+.progress-dot {
+    width: calc(var(--progress-indicator-size) * 1vmax);
+    height: calc(var(--progress-indicator-size) * 1vmax);
+    border-radius: 50%;
+    background-color: var(--progressInactiveColor);
+    margin: calc(var(--progress-indicator-size) * 0.25vmax);
+    transition: all 0.3s ease;
+}
+
+.progress-dot.active {
+    width: calc(var(--progress-indicator-size) * 3vmax);
+    height: calc(var(--progress-indicator-size) * 1vmax);
+    border-radius: calc(var(--progress-indicator-size) * 0.6vmax);
+    overflow: hidden;
+    background-color: var(--progressInactiveColor);
+}
+
+.progress-dot.active .fill {
+    height: 100%;
+    width: 0%;
+    background-color: var(--progressActiveColor);
+    transition: width 0.1s linear;
+}
 
 #imageOverlay {
     width: 100vw;
@@ -51,6 +80,7 @@ body,html {
     margin: 0;
     padding: 0;
     cursor: none;
+    z-index: 1;
 }
 #fullscreenImage {
     max-width: 100vw;
@@ -93,6 +123,17 @@ body,html {
     font-size: calc(6vh + var(--subtitle-font-adjust) * 1vmax);
     font-family: var(--subtitle-font);
     color: var(--subtitleColor);
+}
+#progressContainer {
+    z-index: 999;
+    position: fixed;
+    width: 100%;
+    padding: 0.3vmax;
+}
+#progressIndicator {
+    height: calc(var(--progress-indicator-size) * 2vmax);
+    border-radius: calc(var(--progress-indicator-size) * 1vmax);
+    background-color: var(--progressBackgroundColor);
 }
 #watermark {
     position: absolute;

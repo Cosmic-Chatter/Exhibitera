@@ -28,6 +28,7 @@ _Exhibitera Hub and Apps must all be upgraded to version 6 at the same time._
 - Guided setup makes things easier than ever
 
 ### Media Player
+- Track progress through a playlist and the current item with a progress indicator
 - Adjust the opacity of watermarks
 - Annotate media with custom text
 

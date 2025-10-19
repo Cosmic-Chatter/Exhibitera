@@ -27,7 +27,13 @@ async function clearDefinitionInput (full = true) {
   document.getElementById('definitionNameInput').value = ''
 
   // Reset style options
-  const colorInputs = ['subtitleColor']
+  document.getElementById('showProgressCheckbox').checked = false
+  document.getElementById('progressIndicatorPosSelect').value = 'bottom_left'
+  document.getElementById('progressIndicatorSizeSelect').value = '1'
+  document.getElementById('progressIndicatorPosCol').style.display = 'none'
+  document.getElementById('progressIndicatorSizeCol').style.display = 'none'
+
+  const colorInputs = ['subtitleColor', 'progressBackgroundColor', 'progressInactiveColor', 'progressActiveColor']
   colorInputs.forEach((input) => {
     const el = document.getElementById('colorPicker_' + input)
     el.value = el.getAttribute('data-default')
@@ -68,6 +74,21 @@ function editDefinition (uuid = '') {
 
   document.getElementById('definitionNameInput').value = def.name
   rebuildItemList()
+
+  // Progress indicator
+  document.getElementById('showProgressCheckbox').checked = def?.behavior?.progress_indicator?.visible ?? false
+  const posCol = document.getElementById('progressIndicatorPosCol')
+  const sizeCol = document.getElementById('progressIndicatorSizeCol')
+  if (def?.behavior?.progress_indicator?.visible ?? false) {
+    posCol.style.display = 'block'
+    sizeCol.style.display = 'block'
+  } else {
+    posCol.style.display = 'none'
+    sizeCol.style.display = 'none'
+  }
+
+  document.getElementById('progressIndicatorPosSelect').value = def?.behavior?.progress_indicator?.position ?? 'bottom_left'
+  document.getElementById('progressIndicatorSizeSelect').value = def?.behavior?.progress_indicator?.size ?? '1'
 
   exSetup.updateAdvancedColorPicker('style>background', def?.style?.background)
   exSetup.updateColorPickers(def?.style?.color ?? {})
@@ -1316,6 +1337,28 @@ Array.from(document.querySelectorAll('.watermark-slider')).forEach((el) => {
 })
 
 // Style fields
+document.getElementById('showProgressCheckbox').addEventListener('change', (ev) => {
+  const posCol = document.getElementById('progressIndicatorPosCol')
+  const sizeCol = document.getElementById('progressIndicatorSizeCol')
+  exSetup.updateWorkingDefinition(['behavior', 'progress_indicator', 'visible'], ev.target.checked)
+  if (ev.target.checked) {
+    posCol.style.display = 'block'
+    sizeCol.style.display = 'block'
+  } else {
+    posCol.style.display = 'none'
+    sizeCol.style.display = 'none'
+  }
+  exSetup.previewDefinition(true)
+})
+document.getElementById('progressIndicatorPosSelect').addEventListener('change', (ev) => {
+  exSetup.updateWorkingDefinition(['behavior', 'progress_indicator', 'position'], ev.target.value)
+  exSetup.previewDefinition(true)
+})
+document.getElementById('progressIndicatorSizeSelect').addEventListener('change', (ev) => {
+  exSetup.updateWorkingDefinition(['behavior', 'progress_indicator', 'size'], ev.target.value)
+  exSetup.previewDefinition(true)
+})
+
 document.querySelectorAll('.coloris').forEach((element) => {
   element.addEventListener('change', function () {
     const value = this.value.trim()

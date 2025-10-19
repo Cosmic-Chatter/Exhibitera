@@ -108,7 +108,6 @@ body {
   width: 3vmin;
   height: 3vmin;
   margin: 0.2vmin;
-  /* border-radius: 10px; */
   background-color: var(--active-dot-color);
 }
 
