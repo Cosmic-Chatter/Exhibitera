@@ -57,7 +57,7 @@ function buildLayoutVote (index) {
   itemPane.appendChild(questionDiv)
 
   const question = document.createElement('div')
-  question.innerHTML = exMarkdown.formatText(currentDefinition.languages?.[currentLang]?.items?.[uuid]?.header?.text, { string: true, removeParagraph: true })
+  question.innerHTML = exMarkdown.formatText(currentDefinition.languages?.[currentLang]?.items?.[uuid]?.header?.text ?? '', { string: true, removeParagraph: true })
   questionDiv.appendChild(question)
 
   let nCols
@@ -517,6 +517,7 @@ function localize (lang) {
   // Update the GUi to reflect the given language
 
   currentLang = lang
+  exCommon.configureLanguage(lang)
   buildLayout(currentIndex)
 }
 
@@ -570,7 +571,8 @@ function restartSession () {
   response = {}
   exUtilities.hideModal('#inactivityModal')
   currentLang = currentDefinition.language_order[0]
-  buildLayout(0)
+  currentIndex = 0
+  localize(currentLang)
 }
 
 function showInactivityWarning () {
@@ -620,7 +622,6 @@ const restartTimeout = 5000 // ms
 
 let configurationName = 'default'
 let currentDefinition = {}
-const currentDefintionUUID = ''
 let currentLang = ''
 let currentIndex = 0
 let response = {}

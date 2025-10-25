@@ -160,7 +160,7 @@ body {
 
 #langSwitchDropdown {
     width: 6vmax;
-    margin-left: auto;
+    margin-inline-start: auto;
 }
 
 #restartButton {
