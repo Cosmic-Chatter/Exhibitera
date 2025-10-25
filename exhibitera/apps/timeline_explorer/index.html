@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" dir="ltr">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="description" content="">
     <meta name="author" content="Morgan Rehnberg">
     <meta name="msapplication-TileColor" content="#000000">
@@ -14,7 +14,8 @@
 
     <title>Exhibitera Timeline Explorer</title>
 
-    <link rel="stylesheet" href="../css/bootstrap_5_3/bootstrap.min.css">
+    <link id="bsStylesheetRTL" rel="stylesheet" href="../css/bootstrap_5_3/bootstrap.rtl.min.css" disabled>
+    <link id="bsStylesheetLTR" rel="stylesheet" href="../css/bootstrap_5_3/bootstrap.min.css">
     <link rel="stylesheet" href="timeline_explorer.css">
   </head>
 
@@ -40,34 +41,20 @@
         </div>
     </div>
       
-    <div id="tools-pane" class="container-fluid">
-        <div class='row h-100'>
-            <div class='col h-100 text-center'>
-              <button id="fontSizeDecreaseButton" type="button" class="btn btn-link h-100">
-                <img src="../_static/icons/font_size_decrease.svg" height="60%">
-            </button>
-            </div>
-            <div class='col h-100 text-center'>
-                <button id="fontSizeIncreaseButton" type="button" class="btn btn-link h-100">
-                    <img src="../_static/icons/font_size_increase.svg" height="60%">
-                </button>
-            </div>
-            <div class="col"></div>
-            <div class="col"></div>
-            <div class="col"></div>
-            <div class="col"></div>
-            <div class="col"></div>
-            <div class='col h-100'>
-                <div id="langSwitchDropdown" class="btn-group dropup w-100 h-100 text-center">
-                    <button type="button" class="btn btn-link" data-bs-toggle="dropdown" aria-expanded="false">
-                      <img src="../_static/icons/translation-icon_white.svg" height="80%">
-                    </button>
-                    <ul id="langSwitchOptions" class="dropdown-menu">
-                    </ul>
-                </div>
-            </div>
-            
+    <div id="tools-pane" class="d-flex">
+        <div id="langSwitchDropdown" class="btn-group dropup h-100 text-center">
+          <button type="button" class="btn btn-link" data-bs-toggle="dropdown" aria-expanded="false">
+            <img src="../_static/icons/translation-icon_white.svg" height="80%">
+          </button>
+          <ul id="langSwitchOptions" class="dropdown-menu">
+          </ul>
         </div>
+        <button id="fontSizeDecreaseButton" type="button" class="btn btn-link h-100 ms-auto">
+          <img src="../_static/icons/font_size_decrease.svg" height="60%">
+        </button>
+        <button id="fontSizeIncreaseButton" type="button" class="btn btn-link h-100">
+          <img src="../_static/icons/font_size_increase.svg" height="60%">
+        </button>
     </div>
 
     <script src="../js/bootstrap_5_3/bootstrap.bundle.min.js"></script>

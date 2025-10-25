@@ -443,8 +443,11 @@ function createLanguageTab (code) {
   })
 
   // If we have already loaded a spreadhseet, populate the key options
-  const keyList = document.getElementById('spreadsheetSelect').dataset.availableKeys
-  if (keyList != null) populateKeySelects(keyList)
+  const keyListStr = document.getElementById('spreadsheetSelect').dataset.availableKeys
+  let keyList = []
+  if (keyListStr != null) keyList = keyListStr.split(',')
+
+  populateKeySelects(keyList)
 
   // Activate tooltips
   const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
@@ -577,14 +580,14 @@ function populateKeySelects (keyList) {
   // Take a list of keys and use it to populate all the selects used to match keys to parameters.
 
   const workingDefinition = exSetup.config.workingDefinition
-  if (('languages' in workingDefinition) === false) return
 
-  for (const lang of Object.keys(workingDefinition.languages)) {
+  for (const lang of Object.keys(workingDefinition?.languages ?? {})) {
     const langDict = workingDefinition.languages[lang]
     for (const input of Object.keys(inputFields)) {
       const inputDict = inputFields[input]
       if (inputDict.kind === 'select') {
         const thisInput = document.getElementById(input + '_' + lang)
+        if (thisInput == null) continue
         thisInput.innerText = ''
 
         for (const key of keyList) {

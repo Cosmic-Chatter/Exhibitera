@@ -116,7 +116,6 @@ __________________________________________________*/
 .timeline ul li {
   list-style-type: none;
   position: relative;
-  /* width: 6px; */
   margin: 0 auto;
   padding-top: 50px;
   background: var(--lineColor);
@@ -133,7 +132,7 @@ __________________________________________________*/
   border-radius: 50%;
   background: inherit;
   z-index: 1;
-}
+} 
 
 .timeline ul li div.timeline-element {
   position: relative;
@@ -152,19 +151,34 @@ __________________________________________________*/
 }
 
 .timeline ul li:nth-child(odd) div.timeline-element::before {
-  left: -15px;
   border-width: 8px 16px 8px 0;
   border-color: transparent var(--itemColor) transparent transparent;
+}
+:dir(ltr) .timeline ul li:nth-child(odd) div.timeline-element::before {
+  left: -15px;
+}
+
+:dir(rtl) .timeline ul li:nth-child(odd) div.timeline-element::before {
+  right: -15px;
+  transform: rotate(180deg);
 }
 
 .timeline ul li:nth-child(even) div.timeline-element {
   left: -439px;
 }
-
+:dir(rtl) .timeline ul li:nth-child(even) div.timeline-element {
+  right: -439px;
+}
 .timeline ul li:nth-child(even) div.timeline-element::before {
-  right: -15px;
   border-width: 8px 0 8px 16px;
   border-color: transparent transparent transparent var(--itemColor);
+}
+:dir(ltr) .timeline ul li:nth-child(even) div.timeline-element::before {
+  right: -15px;
+}
+:dir(rtl) .timeline ul li:nth-child(even) div.timeline-element::before {
+  left: -15px;
+  transform: rotate(180deg);
 }
 
 .timeline-body {
@@ -259,15 +273,25 @@ time {
       flex-direction: row;
       left: 2.5vw;
     }
+    :dir(rtl) .timeline ul li:nth-child(odd) div.timeline-element {
+      flex-direction: row;
+      right: 2.5vw;
+    }
     .timeline ul li:nth-child(even) div.timeline-element {
       flex-direction: row-reverse;
-      /* left: -22vw; */
       left: max(calc(-1 * (20vw * var(--fontModifier) + 2.5vw - 0.5vw) ), -47vw);
       /* - (20 + 2.5 - 0.5) */
     }
+    :dir(rtl) .timeline ul li:nth-child(even) div.timeline-element {
+      right: max(calc(-1 * (20vw * var(--fontModifier) + 2.5vw - 0.5vw) ), -47vw);
+      /* - (20 + 2.5 - 0.5) */
+    }
     .timeline ul li:nth-child(even) div.timeline-element.with-image {
-      /* left: -32vw; */
       left: max(calc(-1 * (30vw * var(--fontModifier) + 2.5vw - 0.5vw) ), -47vw);
+      /* - (30 + 2.5 - 0.5) */
+    }
+    :dir(rtl) .timeline ul li:nth-child(even) div.timeline-element.with-image {
+      right: max(calc(-1 * (30vw * var(--fontModifier) + 2.5vw - 0.5vw) ), -47vw);
       /* - (30 + 2.5 - 0.5) */
     }
     .timeline ul li div.timeline-element {
@@ -304,9 +328,16 @@ time {
     }
     .timeline ul li:nth-child(odd) div.timeline-element {
       left: 4.5vw;
-    }    
+    }
+    :dir(rtl) .timeline ul li:nth-child(odd) div.timeline-element {
+      right: 4.5vw;
+    }  
     .timeline ul li:nth-child(even) div.timeline-element {
       left: -43.5vw;
+      /* - (40 + 4.5 - 1) */
+    }
+    :dir(rtl) .timeline ul li:nth-child(even) div.timeline-element {
+      right: -43.5vw;
       /* - (40 + 4.5 - 1) */
     }
     .timeline ul li div.timeline-element {

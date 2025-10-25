@@ -32,11 +32,11 @@ function loadDefinition (def) {
   root.style.setProperty('--toolbarButtonColor', '#393A5A')
 
   // Then, apply the definition settings
-  Object.keys(def.style.color).forEach((key) => {
+  for (let key of Object.keys(def?.style?.color ?? {})) {
     // Fix for change from backgroundColor to background-color in v4
     if (key === 'backgroundColor') key = 'background-color'
     document.documentElement.style.setProperty('--' + key, def.style.color[key])
-  })
+  }
 
   if ('headerColor' in def.style.color) {
     // Configure the status bar for PWAs
@@ -123,20 +123,21 @@ function adjustFontSize (increment) {
 
   const root = document.querySelector(':root')
   let fontModifierStr = root.style.getPropertyValue('--fontModifier')
-  if (fontModifierStr === '') {
-    fontModifierStr = '1'
-  }
+  if (fontModifierStr === '') fontModifierStr = '1'
   let fontModifier = parseFloat(fontModifierStr)
 
   fontModifier += increment
   if (fontModifier < 1) {
     fontModifier = 1
   }
+
   root.style.setProperty('--fontModifier', fontModifier)
 }
 
 function localize (lang) {
   // Use the spreadhseet and defintion to set the content to the given language
+
+  exCommon.configureLanguage(lang)
 
   let spreadsheet, definition
   try {
@@ -316,7 +317,7 @@ document.getElementById('fontSizeDecreaseButton').addEventListener('click', () =
   adjustFontSize(-0.1)
 })
 document.getElementById('fontSizeIncreaseButton').addEventListener('click', () => {
-  adjustFontSize(-0.1)
+  adjustFontSize(0.1)
 })
 
 document.getElementById('attractorOverlay').addEventListener('click', hideAttractor)
