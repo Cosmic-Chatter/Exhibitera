@@ -225,7 +225,6 @@ p, div {
   transition: font-size 0.1s;
 }
 #nav-tabContent {
-  width: 100vw;
   overflow-x: hidden;
   overflow-y: auto;
 }
@@ -268,6 +267,9 @@ p, div {
     top: 0vh;
     width: calc((100 - var(--sidebar-width))*1vw);
     height: 100vh;
+  }
+  :dir(rtl) #nav-tabContent {
+    left: 0;
   }
   #buttonRow {
     width: calc(var(--sidebar-width) * 1vw); 

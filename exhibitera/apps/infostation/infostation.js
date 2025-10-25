@@ -110,6 +110,8 @@ function loadDefinition (definition) {
 function localize (lang) {
   // Use the given language code to build the GUI
 
+  exCommon.configureLanguage(lang)
+
   const fullDefinition = exCommon.config.definition
   const definition = fullDefinition.languages[lang]
 

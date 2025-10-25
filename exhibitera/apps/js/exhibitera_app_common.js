@@ -116,6 +116,28 @@ export function configureApp (opt = {}) {
   }
 }
 
+export function configureLanguage (code) {
+  // Configure the app for the given language.
+
+  if (code == null) return
+
+  const bsStylesheetRTL = document.getElementById('bsStylesheetRTL')
+  const bsStylesheetLTR = document.getElementById('bsStylesheetLTR')
+
+  document.documentElement.lang = code
+  if (code.startsWith('ar') || code.startsWith('he')) {
+    // Enable RTL support
+    document.documentElement.dir = 'rtl'
+    bsStylesheetRTL.disabled = false
+    bsStylesheetLTR.disabled = true
+  } else {
+    // Enable LTR support
+    document.documentElement.dir = 'ltr'
+    bsStylesheetRTL.disabled = true
+    bsStylesheetLTR.disabled = false
+  }
+}
+
 export function makeServerRequest (opt) {
   // Shortcut for making a Hub request and returning a Promise
 
