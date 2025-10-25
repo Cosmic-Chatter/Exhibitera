@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" dir="ltr">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, maximum-scale=1.0, user-scalable=no">
@@ -13,7 +13,8 @@
     <link rel="icon" type="image/x-icon" href="../_static/favicon.ico">
     <link rel="manifest" href="../_static/manifest.json" />
 
-    <link rel="stylesheet" href="../css/bootstrap_5_3/bootstrap.min.css">
+   <link id="bsStylesheetRTL" rel="stylesheet" href="../css/bootstrap_5_3/bootstrap.rtl.min.css" disabled>
+    <link id="bsStylesheetLTR" rel="stylesheet" href="../css/bootstrap_5_3/bootstrap.min.css">
     <link rel="stylesheet" href="../css/simple-keyboard.css">
     <link rel="stylesheet" href="../css/exhibitera-common.css">
     <link rel="stylesheet" href="media_browser.css">
@@ -58,7 +59,7 @@
       <div id="displayPane" class="row w-100 px-0 mx-0 align-items-center justify-items-center">
 
         <div class="col-2 col-lg-1 text-center">
-          <button id="previousPageButton" class='pageButton btn btn-lg btn-secondary'>←</button>
+          <button id="previousPageButton" class='pageButton btn btn-lg btn-secondary'></button>
 
           <div id="filterDropdown" class="btn-group dropup text-center">
             <button type="button" class="btn btn-link w-100 h-100 px-0 py-0" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
@@ -73,7 +74,7 @@
           </div>
         </div>
         <div class="col-2 col-lg-1 text-center">
-          <button id="nextPageButton" class='pageButton btn btn-lg btn-secondary'>→</button>
+          <button id="nextPageButton" class='pageButton btn btn-lg btn-secondary'></button>
           
           <div id="langSwitchDropdown" class="btn-group dropup text-center">
             <button type="button" class="btn btn-link w-100 h-100 px-0 py-0" data-bs-toggle="dropdown" aria-expanded="false">

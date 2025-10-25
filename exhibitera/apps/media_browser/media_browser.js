@@ -6,34 +6,27 @@ import * as exUtilities from '../../common/utilities.js'
 import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exMarkdown from '../js/exhibitera_app_markdown.js'
 
-function changePage (val) {
-  switch (val) {
-    case 0:
-      currentPage = 0
-      break
-    case 1:
-      currentPage += 1
-      if (currentPage * cardsPerPage >= spreadsheet.length) {
-        if ((exCommon.config.definition?.behavior?.loop_results ?? true) === false) {
-          currentPage -= 1
-        } else {
-          // If there are not more cards to show, go page to the first page.
-          currentPage = 0
-        }
+function changePage (direction) {
+  if (direction === 'forward') {
+    currentPage += 1
+    if (currentPage * cardsPerPage >= spreadsheet.length) {
+      if ((exCommon.config.definition?.behavior?.loop_results ?? true) === false) {
+        currentPage -= 1
+      } else {
+        // If there are not more cards to show, go page to the first page.
+        currentPage = 0
       }
-      break
-    case -1:
-      currentPage -= 1
-      if (currentPage < 0) {
-        if ((exCommon.config.definition?.behavior?.loop_results ?? true) === false) {
-          currentPage = 0
-        } else {
-          // Loop back to last page
-          currentPage = Math.floor((spreadsheet.length - 1 / cardsPerPage))
-        }
+    }
+  } else {
+    currentPage -= 1
+    if (currentPage < 0) {
+      if ((exCommon.config.definition?.behavior?.loop_results ?? true) === false) {
+        currentPage = 0
+      } else {
+        // Loop back to last page
+        currentPage = Math.floor(((spreadsheet.length - 1) / cardsPerPage))
       }
-      break
-    default:
+    }
   }
   populateResultsRow()
 }
@@ -544,6 +537,8 @@ function loadDefinition (def) {
 function localize (lang) {
   // Use the spreadsheet and definition to set the content to the given language
 
+  exCommon.configureLanguage(lang)
+
   const definition = exCommon.config.definition
 
   mediaKey = definition?.languages?.[lang]?.media_key
@@ -552,7 +547,7 @@ function localize (lang) {
   captionKey = definition?.languages?.[lang]?.caption_key
   creditKey = definition?.languages?.[lang]?.credit_key
 
-  if ((definition?.languages?.[lang]?.filter_order.length ?? 0) > 0) {
+  if ((definition?.languages?.[lang]?.filter_order?.length ?? 0) > 0) {
     // Show the filter icon
     document.getElementById('filterDropdown').style.display = 'block'
     populateFilterOptions(definition.languages[lang].filter_order, definition.languages[lang].filters)
@@ -640,12 +635,7 @@ function showMediaInLightbox (media, title = '', caption = '', credit = '') {
   titleDiv.innerHTML = title
 
   captionDiv.innerHTML = caption
-
-  if (credit !== '' && credit != null) {
-    creditDiv.innerHTML = 'Credit: ' + credit
-  } else {
-    creditDiv.innerHTML = ''
-  }
+  creditDiv.innerHTML = credit
 
   // Load the media with a callback to fade it in when it is loaded
   const mimetype = exFiles.guessMimetype(media)
@@ -760,10 +750,10 @@ let videoPlaying = false
 
 // Attach event listeners
 document.getElementById('previousPageButton').addEventListener('click', () => {
-  changePage(-1)
+  changePage('backward')
 })
 document.getElementById('nextPageButton').addEventListener('click', () => {
-  changePage(1)
+  changePage('forward')
 })
 document.body.addEventListener('click', resetActivityTimer)
 document.getElementById('attractorOverlay').addEventListener('click', hideAttractor)

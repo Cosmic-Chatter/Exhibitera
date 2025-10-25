@@ -249,6 +249,18 @@ body {
 #logoRegion {
     height: 100%;
 }
+:dir(ltr) #nextPageButton::before {
+    content: '→';
+}
+:dir(rtl) #nextPageButton::before {
+    content: '←'; /* Flip the arrow when in right-to-left mode */
+}
+:dir(ltr) #previousPageButton::before {
+    content: '←';
+}
+:dir(rtl) #previousPageButton::before {
+    content: '→'; /* Flip the arrow when in right-to-left mode */
+}
 #resultsRow {
     padding-top: 2.5vh;
     transition: 300ms;

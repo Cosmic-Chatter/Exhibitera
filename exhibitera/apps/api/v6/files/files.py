@@ -73,7 +73,7 @@ def get_v2_thumbnail(filename: str, width: str = "400", force_image: bool = Fals
     """
 
     thumbnail_path, mimetype = apps_files.get_thumbnail(filename, width=width, force_image=force_image)
-    if not os.path.exists(thumbnail_path):
+    if thumbnail_path is None or not os.path.exists(thumbnail_path):
         return FileResponse(ex_files.get_path(["_static", "icons", "document_missing.svg"]))
     return FileResponse(thumbnail_path)
 
