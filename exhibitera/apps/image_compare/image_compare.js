@@ -421,7 +421,8 @@ function localize (lang) {
   // Use the localization to switch to the given language
 
   currentLang = lang
-  console.log(exCommon.config)
+  exCommon.configureLanguage(lang)
+
   if (homeScreenDisabled) {
     loadImages(exCommon.config.definition.content[exCommon.config.definition.content_order[0]])
     document.getElementById('mainMenu').style.display = 'none'

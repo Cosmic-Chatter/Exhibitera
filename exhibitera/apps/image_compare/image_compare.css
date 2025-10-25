@@ -345,7 +345,7 @@ html, body {
 @media (orientation: landscape) {
     #itemList {
         width: calc(var(--itemList-width-landscape)/12 * 100%);
-        margin-left: calc((12 - var(--itemList-width-landscape)) /24 * 100%);
+        margin-inline-start: calc((12 - var(--itemList-width-landscape)) /24 * 100%);
     }
     #itemList > * {
         flex: 0 0 auto;
@@ -365,7 +365,7 @@ html, body {
     }
     #itemList {
         width: calc(var(--itemList-width-portrait)/12 * 100%);
-        margin-left: calc((12 - var(--itemList-width-portrait)) /24 * 100%);
+        margin-inline-start: calc((12 - var(--itemList-width-portrait)) /24 * 100%);
     }
     #itemList > * {
         flex: 0 0 auto;
