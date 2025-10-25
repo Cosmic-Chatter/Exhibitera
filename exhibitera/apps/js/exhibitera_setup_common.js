@@ -149,28 +149,32 @@ export async function configure (options) {
     })
 
   // Set up the color pickers
-  function setUpColorPickers () {
-    try {
-      Coloris({
-        el: '.coloris',
-        theme: 'pill',
-        themeMode: 'dark',
-        formatToggle: false,
-        clearButton: false,
-        swatches: [
-          '#000',
-          '#22222E',
-          '#393A5A',
-          '#719abf',
-          '#fff'
-        ]
-      })
-    } catch {
-    // Will fail if we aren't using any color pickers
-    }
-  }
+
   // Call with a slight delay to make sure the elements are loaded
   setTimeout(setUpColorPickers, 100)
+}
+
+export function setUpColorPickers () {
+  // Find all the color picker divs and apply the Coloris style
+
+  try {
+    Coloris({
+      el: '.coloris',
+      theme: 'pill',
+      themeMode: 'dark',
+      formatToggle: false,
+      clearButton: false,
+      swatches: [
+        '#000',
+        '#22222E',
+        '#393A5A',
+        '#719abf',
+        '#fff'
+      ]
+    })
+  } catch {
+    // Will fail if we aren't using any color pickers
+  }
 }
 
 function configureGUIForUser (user) {

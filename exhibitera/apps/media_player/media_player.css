@@ -44,6 +44,7 @@ body,html {
 .annotation {
     user-select: none;
     cursor: none;
+    z-index: 9999;
 }
 .progress-dot {
     width: calc(var(--progress-indicator-size) * 1vmax);

@@ -64,7 +64,6 @@ function loadDefinition (def) {
   progressIndicator.style.width = String(2 * indicatorSize * (def.content_order.length - 1) + 2 * indicatorSize) + 'vw'
 
   // Indicator visibility
-  console.log(def?.behavior?.progress_indicator?.visible)
   if (def?.behavior?.progress_indicator?.visible ?? false) {
     progressContainer.style.display = 'flex'
   } else {
@@ -358,7 +357,7 @@ function createAnnotation (details) {
   // Render an annotation on the display.
 
   const annotation = document.createElement('div')
-  annotation.classList = 'annotation'
+  annotation.classList = 'annotation text-center'
   annotation.innerHTML = appsMarkdown.formatText(String(details.value), { removeParagraph: true, string: true })
   annotation.style.position = 'absolute'
 
@@ -378,16 +377,8 @@ function createAnnotation (details) {
   } else {
     annotation.style.fontFamily = 'annotation-default'
   }
-  if ('color' in details) {
-    annotation.style.color = details.color
-  } else {
-    annotation.style.color = 'black'
-  }
-  if ('font_size' in details) {
-    annotation.style.fontSize = details.font_size + 'px'
-  } else {
-    annotation.style.fontSize = '20px'
-  }
+  annotation.style.color = details?.color ?? 'black'
+  annotation.style.fontSize = (details?.font_size ?? '20') + 'px'
 
   document.body.appendChild(annotation)
 }
