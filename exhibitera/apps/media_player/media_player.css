@@ -138,4 +138,5 @@ body,html {
 #watermark {
     position: absolute;
     object-fit: contain;
+    z-index: 1;
 }
