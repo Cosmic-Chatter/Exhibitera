@@ -107,14 +107,13 @@ def load_json_schedule(schedule_name: str) -> tuple[bool, dict]:
     """Load and parse the appropriate schedule file and return it"""
 
     schedule_path = ex_files.get_path(["schedules", schedule_name], user_file=True)
+    if not os.path.exists(schedule_path):
+        return False, {}
+
     with hub_config.scheduleLock:
         events = ex_files.load_json(schedule_path)
         if events is None:
-            # Check if the file is empty, which is a success condition
-            with open(schedule_path, "r", encoding="UTF-8") as f:
-                if len(f.read().strip()) == 0:
-                    return True, {}
-            return False, {}
+            events = {}
 
     return True, events
 

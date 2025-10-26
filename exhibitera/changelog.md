@@ -2,6 +2,10 @@
 _Exhibitera Hub and Apps must all be upgraded to version 6 at the same time._
 
 ## Hub
+
+### Schedules
+- Download schedules for upcoming dates from the future dates manager
+
 ### Exhibitions
 - _Exhibits_ are now called _Exhibitions_
 - Changing a component's definition now creates an _exhibition modification_. Modifications are not permanently stored in the exhibition; instead, they will be cleared the next time the exhibition changes. This enables you to make a temporary change (such as with the schedule action) without it permanently affecting the exhibition. 

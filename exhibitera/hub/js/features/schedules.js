@@ -868,6 +868,7 @@ export function showManageFutureDateModal () {
   populateFutureDatesList()
   document.getElementById('manageFutureDateAddActionButton').style.display = 'none'
   document.getElementById('manageFutureDateDeleteScheduleButton').style.display = 'none'
+  document.getElementById('manageFutureDateDownloadAsJSONDropdown').style.display = 'none'
 
   if (allowEdit) {
     document.getElementById('manageFutureDateModal').querySelector('.modal-title').innerHTML = 'Manage a future date'
@@ -943,6 +944,7 @@ export function populateFutureDateCalendarInput () {
     document.getElementById('manageFutureDateCreateScheduleButtonContainer').style.display = 'block'
     document.getElementById('manageFutureDateAddActionButton').style.display = 'none'
     document.getElementById('manageFutureDateDeleteScheduleButton').style.display = 'none'
+    document.getElementById('manageFutureDateDownloadAsJSONDropdown').style.display = 'none'
     return
   }
 
@@ -955,12 +957,14 @@ export function populateFutureDateCalendarInput () {
         document.getElementById('manageFutureDateCreateScheduleButtonContainer').style.display = 'block'
         document.getElementById('manageFutureDateAddActionButton').style.display = 'none'
         document.getElementById('manageFutureDateDeleteScheduleButton').style.display = 'none'
+        document.getElementById('manageFutureDateDownloadAsJSONDropdown').style.display = 'none'
         return
       } else {
         document.getElementById('manageFutureDateCreateScheduleButtonContainer').style.display = 'none'
         if (allowEdit) {
           document.getElementById('manageFutureDateAddActionButton').style.display = 'block'
           document.getElementById('manageFutureDateDeleteScheduleButton').style.display = 'block'
+          document.getElementById('manageFutureDateDownloadAsJSONDropdown').style.display = 'block'
         }
 
         // Find the appropriate button and highlight it
@@ -1005,7 +1009,7 @@ export function convertFutureScheduleFromModal () {
     })
 }
 
-function downloadScheduleAsJSON (name) {
+export function downloadScheduleAsJSON (name) {
   // Get the given schedule as JSON from Hub and download for the user.
 
   exTools.makeServerRequest({

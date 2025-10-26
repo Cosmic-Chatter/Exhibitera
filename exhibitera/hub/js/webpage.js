@@ -997,6 +997,10 @@ document.getElementById('manageFutureDateCreateScheduleButton').addEventListener
 document.getElementById('manageFutureDateDeleteScheduleButton').addEventListener('click', (event) => {
   event.target.focus()
 })
+document.getElementById('manageFutureDateDownloadAsJSONButton').addEventListener('click', () => {
+  const date = document.getElementById('manageFutureDateCalendarInput').value
+  exSchedule.downloadScheduleAsJSON(date)
+})
 // Create schedule from file modal
 document.getElementById('showScheduleFromFileModalButton').addEventListener('click', exSchedule.showScheduleFromFileModal)
 document.getElementById('scheduleFromFileModalFileInput').addEventListener('change', exSchedule.onScheduleFromFileModalFileInputChange)
