@@ -218,6 +218,7 @@ async function changeMedia (index) {
       video.load()
     }
     video.play()
+    video.style.objectFit = source?.fill_mode ?? 'contain'
 
     // Subtitles
     if (subtitleEl != null) subtitleEl.remove()
@@ -246,6 +247,8 @@ async function changeMedia (index) {
     videoContainer.style.opacity = 0
     modelContainer.style.opacity = 0
     image.src = filename
+    console.log(source)
+    image.style.objectFit = source?.fill_mode ?? 'contain'
     imageContainer.style.opacity = 1
     clearTimeout(sourceAdvanceTimer)
     sourceAdvanceTimer = setTimeout(gotoNextSource, source.duration * 1000)

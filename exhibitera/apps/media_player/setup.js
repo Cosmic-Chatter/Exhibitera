@@ -153,6 +153,7 @@ function addItem () {
 
 function createItemHTML (item, num) {
   // Add a blank item to the itemList
+
   const itemCol = document.createElement('div')
   itemCol.classList = 'col-12 content-item'
   itemCol.setAttribute('id', 'Item_' + item.uuid)
@@ -275,7 +276,7 @@ function createItemHTML (item, num) {
   orderButtonRightCol.appendChild(orderButtonRight)
 
   const durationCol = document.createElement('div')
-  durationCol.classList = 'col-12 mt-2 duration-col'
+  durationCol.classList = 'col-12 col-lg-6 mt-2 duration-col'
   modifyRow.appendChild(durationCol)
 
   const durationLabel = document.createElement('label')
@@ -311,15 +312,35 @@ function createItemHTML (item, num) {
     durationCol.style.display = 'none'
   }
 
+  // Fill mode
+  const fillCol = document.createElement('div')
+  fillCol.classList = 'col-12 col-lg-6 mt-2 fill-col'
+  modifyRow.appendChild(fillCol)
+
+  const fillLabel = document.createElement('label')
+  fillLabel.classList = 'form-label'
+  fillLabel.innerText = 'Fill mode'
+  fillCol.appendChild(fillLabel)
+
+  const fillSelect = document.createElement('select')
+  fillSelect.classList = 'form-select'
+  fillSelect.appendChild(new Option('Show entire image', 'contain'))
+  fillSelect.appendChild(new Option('Fill entire screen', 'cover'))
+  fillSelect.addEventListener('change', (ev) => {
+    exSetup.updateWorkingDefinition(['content', item.uuid, 'fill_mode'], ev.target.value)
+    exSetup.previewDefinition(true)
+  })
+  fillCol.appendChild(fillSelect)
+
   // Rotation
   const rotationCol = document.createElement('div')
-  rotationCol.classList = 'col-12 mt-2 rotation-col'
+  rotationCol.classList = 'col-12 col-lg-6 mt-2 rotation-col'
   modifyRow.appendChild(rotationCol)
 
   const rotationLabel = document.createElement('label')
   rotationLabel.classList = 'form-label'
   rotationLabel.innerHTML = `
-  Rotation
+  Rotations
   <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="The number of rotations of the model to perform." style="font-size: 0.55em;">?</span>
   `
   rotationCol.appendChild(rotationLabel)
@@ -1109,6 +1130,8 @@ function setItemContent (uuid, itemEl, file, type = 'file') {
     video.style.display = 'none'
     // Hide the duration input
     itemEl.querySelector('.duration-col').style.display = 'none'
+    // Hide the fill mode input
+    itemEl.querySelector('.fill-col').style.display = 'none'
     // Hide the rotation input
     itemEl.querySelector('.rotation-col').style.display = 'none'
     // Hide the material input
@@ -1126,6 +1149,8 @@ function setItemContent (uuid, itemEl, file, type = 'file') {
     video.style.display = 'none'
     // Show the duration input
     itemEl.querySelector('.duration-col').style.display = 'block'
+    // Show the fill mode input
+    itemEl.querySelector('.fill-col').style.display = 'block'
     // Hide the rotation input
     itemEl.querySelector('.rotation-col').style.display = 'none'
     // Hide the material input
@@ -1142,6 +1167,8 @@ function setItemContent (uuid, itemEl, file, type = 'file') {
     exSetup.updateWorkingDefinition(['content', uuid, 'subtitles'], null)
     // Show the duration input
     itemEl.querySelector('.duration-col').style.display = 'block'
+    // Hide the fill mode input
+    itemEl.querySelector('.fill-col').style.display = 'none'
     // Show the rotation input
     itemEl.querySelector('.rotation-col').style.display = 'block'
     if (file.toLowerCase().endsWith('obj')) {
@@ -1157,6 +1184,8 @@ function setItemContent (uuid, itemEl, file, type = 'file') {
     image.style.display = 'none'
     // Hide the duration input
     itemEl.querySelector('.duration-col').style.display = 'none'
+    // Show the fill mode input
+    itemEl.querySelector('.fill-col').style.display = 'block'
     // Hide the rotation input
     itemEl.querySelector('.rotation-col').style.display = 'none'
     // Hide the material input

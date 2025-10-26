@@ -36,6 +36,7 @@ _Exhibitera Hub and Apps must all be upgraded to version 6 at the same time._
 - Track progress through a playlist and the current item with a progress indicator
 - Adjust the opacity of watermarks
 - Annotate media with custom text
+- Expand videos and images to fill the display
 
 ### Survey Kiosk
 _This brand-new app extends Voting Kiosk to multiple survey questions, with new features and customizations._
