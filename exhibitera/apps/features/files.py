@@ -299,6 +299,8 @@ def create_definition_thumbnail_video_from_frames(frames: list, filename: str, d
     for i, frame in enumerate(frames):
         if not ex_files.is_url(frame):
             thumb_path, _ = get_thumbnail(frame, force_image=True)
+            if thumb_path is None or not os.path.exists(thumb_path):
+                continue
             command = [ffmpeg_path, '-y', '-i', thumb_path, '-vf',
                        'scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2,setsar=1',
                        '-pix_fmt', 'yuv420p',
@@ -317,7 +319,9 @@ def create_definition_thumbnail_video_from_frames(frames: list, filename: str, d
 
         # Finally, delete the temp files
         for i in range(len(frames)):
-            os.remove(ex_files.get_path(["thumbnails", '__tempOutput_' + str(i).rjust(4, '0') + '.png'], user_file=True))
+            frame_path = ex_files.get_path(["thumbnails", '__tempOutput_' + str(i).rjust(4, '0') + '.png'], user_file=True)
+            if os.path.exists(frame_path):
+                os.remove(frame_path)
 
     return True
 

@@ -247,7 +247,7 @@ async function changeMedia (index) {
     videoContainer.style.opacity = 0
     modelContainer.style.opacity = 0
     image.src = filename
-    console.log(source)
+
     image.style.objectFit = source?.fill_mode ?? 'contain'
     imageContainer.style.opacity = 1
     clearTimeout(sourceAdvanceTimer)

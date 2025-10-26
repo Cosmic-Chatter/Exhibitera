@@ -176,25 +176,75 @@ function createItemHTML (item, num) {
   numberCol.appendChild(number)
 
   const nameCol = document.createElement('div')
-  nameCol.classList = 'col-11'
+  nameCol.classList = 'col-10 col-lg-9'
   cardBody.appendChild(nameCol)
 
   const name = document.createElement('div')
-  name.classList = 'w-100 mb-3 file-field'
+  name.classList = 'w-100 file-field'
   name.innerHTML = item.filename
   nameCol.appendChild(name)
 
-  const modifyPane = document.createElement('div')
-  modifyPane.classList = 'col-12 col-md-6'
-  cardBody.appendChild(modifyPane)
+  const orderButtonsCol = document.createElement('div')
+  orderButtonsCol.classList = 'col-12 col-lg-2 mb-2 mb-lg-0 d-flex align-items-start justify-content-end'
+  cardBody.appendChild(orderButtonsCol)
 
-  const modifyRow = document.createElement('div')
-  modifyRow.classList = 'row gy-2'
-  modifyPane.appendChild(modifyRow)
+  const orderButtonLeft = document.createElement('button')
+  orderButtonLeft.classList = 'btn btn-outline-info btn-sm'
+  orderButtonLeft.innerHTML = '▲'
+  orderButtonLeft.setAttribute('data-bs-toggle', 'tooltip')
+  orderButtonLeft.setAttribute('title', 'Move item up')
+  orderButtonLeft.addEventListener('click', (event) => {
+    changeItemOrder(item.uuid, -1)
+  })
+  orderButtonsCol.appendChild(orderButtonLeft)
+
+  const orderButtonRight = document.createElement('button')
+  orderButtonRight.classList = 'btn btn-outline-info btn-sm ms-1'
+  orderButtonRight.innerHTML = '▼'
+  orderButtonRight.setAttribute('data-bs-toggle', 'tooltip')
+  orderButtonRight.setAttribute('title', 'Move item down')
+  orderButtonRight.addEventListener('click', (event) => {
+    changeItemOrder(item.uuid, 1)
+  })
+  orderButtonsCol.appendChild(orderButtonRight)
+
+  const deleteButton = document.createElement('button')
+  deleteButton.classList = 'btn btn-outline-danger btn-sm ms-3'
+  deleteButton.innerHTML = 'Delete'
+  deleteButton.addEventListener('click', (event) => {
+    deleteitem(item.uuid)
+  })
+  orderButtonsCol.appendChild(deleteButton)
+
+  const previewCol = document.createElement('div')
+  previewCol.classList = 'col-12 col-md-6'
+  cardBody.appendChild(previewCol)
+
+  const image = document.createElement('img')
+  image.classList = 'image-preview'
+  image.style.maxHeight = '200px'
+  image.style.width = '100%'
+  image.style.objectFit = 'contain'
+  image.style.display = 'none'
+  previewCol.appendChild(image)
+
+  const video = document.createElement('video')
+  video.classList = 'video-preview'
+  video.style.maxHeight = '200px'
+  video.style.width = '100%'
+  video.style.display = 'none'
+  video.style.objectFit = 'contain'
+  video.setAttribute('autoplay', true)
+  video.muted = 'true'
+  video.setAttribute('loop', 'true')
+  video.setAttribute('playsinline', 'true')
+  video.setAttribute('webkit-playsinline', 'true')
+  video.setAttribute('disablePictureInPicture', 'true')
+  previewCol.appendChild(video)
 
   const selectButtonCol = document.createElement('div')
   selectButtonCol.classList = 'col-12 mt-2'
-  modifyRow.appendChild(selectButtonCol)
+  previewCol.appendChild(selectButtonCol)
 
   const selectDropdown = document.createElement('div')
   selectDropdown.classList = 'dropdown w-100'
@@ -243,38 +293,68 @@ function createItemHTML (item, num) {
   })
   li1.appendChild(selectURL)
 
-  const orderButtonsCol = document.createElement('div')
-  orderButtonsCol.classList = 'col-12 mt-2'
-  modifyRow.appendChild(orderButtonsCol)
+  // Cache
+  const cacheCol = document.createElement('div')
+  cacheCol.classList = 'col-12 mt-2 cache-col'
+  previewCol.appendChild(cacheCol)
 
-  const orderButtonsRow = document.createElement('div')
-  orderButtonsRow.classList = 'row'
-  orderButtonsCol.appendChild(orderButtonsRow)
+  const cacheGroup = document.createElement('div')
+  cacheGroup.classList = 'form-check'
+  cacheCol.appendChild(cacheGroup)
 
-  const orderButtonLeftCol = document.createElement('div')
-  orderButtonLeftCol.classList = 'col-6'
-  orderButtonsRow.appendChild(orderButtonLeftCol)
-
-  const orderButtonLeft = document.createElement('button')
-  orderButtonLeft.classList = 'btn btn-info btn-sm w-100'
-  orderButtonLeft.innerHTML = '▲'
-  orderButtonLeft.addEventListener('click', (event) => {
-    changeItemOrder(item.uuid, -1)
+  const cacheCheck = document.createElement('input')
+  cacheCheck.classList = 'form-check-input'
+  cacheCheck.setAttribute('type', 'checkbox')
+  if ('no_cache' in item && item.no_cache === true) cacheCheck.checked = true
+  cacheCheck.addEventListener('change', (event) => {
+    exSetup.updateWorkingDefinition(['content', item.uuid, 'no_cache'], cacheCheck.checked)
+    exSetup.previewDefinition(true)
   })
-  orderButtonLeftCol.appendChild(orderButtonLeft)
+  cacheGroup.appendChild(cacheCheck)
 
-  const orderButtonRightCol = document.createElement('div')
-  orderButtonRightCol.classList = 'col-6'
-  orderButtonsRow.appendChild(orderButtonRightCol)
+  const cacheLabel = document.createElement('label')
+  cacheLabel.classList = 'form-check-label'
+  cacheLabel.innerHTML = `
+  Disable cache
+  <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="Choose this option only if the media will change. Please respect usage limits for linked media." style="font-size: 0.55em;">?</span>
+  `
+  cacheGroup.appendChild(cacheLabel)
 
-  const orderButtonRight = document.createElement('button')
-  orderButtonRight.classList = 'btn btn-info btn-sm w-100'
-  orderButtonRight.innerHTML = '▼'
-  orderButtonRight.addEventListener('click', (event) => {
-    changeItemOrder(item.uuid, 1)
+  const modifyPane = document.createElement('div')
+  modifyPane.classList = 'col-12 col-md-6'
+  cardBody.appendChild(modifyPane)
+
+  const modifyRow = document.createElement('div')
+  modifyRow.classList = 'row gy-2'
+  modifyPane.appendChild(modifyRow)
+
+  // Fill mode
+  const fillCol = document.createElement('div')
+  fillCol.classList = 'col-12 mt-2 fill-col'
+  modifyRow.appendChild(fillCol)
+
+  const fillLabel = document.createElement('label')
+  fillLabel.classList = 'form-label'
+  fillLabel.innerText = 'Fill mode'
+  fillCol.appendChild(fillLabel)
+
+  const fillSelect = document.createElement('select')
+  fillSelect.classList = 'form-select'
+  fillSelect.appendChild(new Option('Show entire image', 'contain'))
+  fillSelect.appendChild(new Option('Fill entire screen', 'cover'))
+  fillSelect.addEventListener('change', (ev) => {
+    exSetup.updateWorkingDefinition(['content', item.uuid, 'fill_mode'], ev.target.value)
+    exSetup.previewDefinition(true)
   })
-  orderButtonRightCol.appendChild(orderButtonRight)
+  fillCol.appendChild(fillSelect)
 
+  if (['image', 'video'].includes(exFiles.guessMimetype(item.filename))) {
+    fillCol.style.display = 'block'
+  } else {
+    fillCol.style.display = 'none'
+  }
+
+  // Duration
   const durationCol = document.createElement('div')
   durationCol.classList = 'col-12 col-lg-6 mt-2 duration-col'
   modifyRow.appendChild(durationCol)
@@ -311,26 +391,6 @@ function createItemHTML (item, num) {
   } else {
     durationCol.style.display = 'none'
   }
-
-  // Fill mode
-  const fillCol = document.createElement('div')
-  fillCol.classList = 'col-12 col-lg-6 mt-2 fill-col'
-  modifyRow.appendChild(fillCol)
-
-  const fillLabel = document.createElement('label')
-  fillLabel.classList = 'form-label'
-  fillLabel.innerText = 'Fill mode'
-  fillCol.appendChild(fillLabel)
-
-  const fillSelect = document.createElement('select')
-  fillSelect.classList = 'form-select'
-  fillSelect.appendChild(new Option('Show entire image', 'contain'))
-  fillSelect.appendChild(new Option('Fill entire screen', 'cover'))
-  fillSelect.addEventListener('change', (ev) => {
-    exSetup.updateWorkingDefinition(['content', item.uuid, 'fill_mode'], ev.target.value)
-    exSetup.previewDefinition(true)
-  })
-  fillCol.appendChild(fillSelect)
 
   // Rotation
   const rotationCol = document.createElement('div')
@@ -431,33 +491,6 @@ function createItemHTML (item, num) {
     materialCol.style.display = 'none'
   }
 
-  // Cache
-  const cacheCol = document.createElement('div')
-  cacheCol.classList = 'col-12 mt-2 cache-col'
-  modifyRow.appendChild(cacheCol)
-
-  const cacheGroup = document.createElement('div')
-  cacheGroup.classList = 'form-check'
-  cacheCol.appendChild(cacheGroup)
-
-  const cacheCheck = document.createElement('input')
-  cacheCheck.classList = 'form-check-input'
-  cacheCheck.setAttribute('type', 'checkbox')
-  if ('no_cache' in item && item.no_cache === true) cacheCheck.checked = true
-  cacheCheck.addEventListener('change', (event) => {
-    exSetup.updateWorkingDefinition(['content', item.uuid, 'no_cache'], cacheCheck.checked)
-    exSetup.previewDefinition(true)
-  })
-  cacheGroup.appendChild(cacheCheck)
-
-  const cacheLabel = document.createElement('label')
-  cacheLabel.classList = 'form-check-label'
-  cacheLabel.innerHTML = `
-  Disable cache
-  <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="Choose this option only if the media will change. Please respect usage limits for linked media." style="font-size: 0.55em;">?</span>
-  `
-  cacheGroup.appendChild(cacheLabel)
-
   const subtitleCol = document.createElement('div')
   subtitleCol.classList = 'col-12 subtitle-col'
   modifyRow.appendChild(subtitleCol)
@@ -487,7 +520,7 @@ function createItemHTML (item, num) {
   annotateCol.appendChild(annotateDropdown)
 
   const annotatebutton = document.createElement('button')
-  annotatebutton.classList = 'btn btn-primary dropdown-toggle w-100'
+  annotatebutton.classList = 'btn btn-primary dropdown-toggle w-100 mt-2'
   annotatebutton.setAttribute('type', 'button')
   annotatebutton.setAttribute('data-bs-toggle', 'dropdown')
   annotatebutton.setAttribute('aria-expanded', false)
@@ -519,46 +552,8 @@ function createItemHTML (item, num) {
   })
   annotateLi2.appendChild(annotateJSONAction)
 
-  const previewCol = document.createElement('div')
-  previewCol.classList = 'col-12 col-md-6'
-  cardBody.appendChild(previewCol)
-
-  const image = document.createElement('img')
-  image.classList = 'image-preview'
-  image.style.maxHeight = '200px'
-  image.style.width = '100%'
-  image.style.objectFit = 'contain'
-  image.style.display = 'none'
-  previewCol.appendChild(image)
-
-  const video = document.createElement('video')
-  video.classList = 'video-preview'
-  video.style.maxHeight = '200px'
-  video.style.width = '100%'
-  video.style.display = 'none'
-  video.style.objectFit = 'contain'
-  video.setAttribute('autoplay', true)
-  video.muted = 'true'
-  video.setAttribute('loop', 'true')
-  video.setAttribute('playsinline', 'true')
-  video.setAttribute('webkit-playsinline', 'true')
-  video.setAttribute('disablePictureInPicture', 'true')
-  previewCol.appendChild(video)
-
-  const deleteCol = document.createElement('div')
-  deleteCol.classList = 'col-12'
-  modifyRow.appendChild(deleteCol)
-
-  const deleteButton = document.createElement('button')
-  deleteButton.classList = 'btn btn-danger btn-sm w-100 my-2'
-  deleteButton.innerHTML = 'Delete'
-  deleteButton.addEventListener('click', (event) => {
-    deleteitem(item.uuid)
-  })
-  previewCol.appendChild(deleteButton)
-
   const annotationsPane = document.createElement('div')
-  annotationsPane.classList = 'col-12'
+  annotationsPane.classList = 'col-12 mt-2'
   cardBody.appendChild(annotationsPane)
 
   const annotationsRow = document.createElement('div')
@@ -608,8 +603,9 @@ function selectSubtitlesFile () {
   exFileSelect.createFileSelectionModal({ multiple: false, filetypes: ['vtt'] })
     .then((files) => {
       if (files.length === 0) return
+
       document.getElementById('configureSubtitlesModalSelectButton').innerText = files[0]
-      modal.dataset.filehame = files[0]
+      modal.dataset.filename = files[0]
     })
 }
 
@@ -1203,6 +1199,7 @@ function deleteitem (uuid) {
   delete workingDefinition.content[uuid]
   workingDefinition.content_order = workingDefinition.content_order.filter(item => item !== uuid)
   rebuildItemList()
+  exSetup.previewDefinition(true)
 }
 
 function changeItemOrder (uuid, dir) {
