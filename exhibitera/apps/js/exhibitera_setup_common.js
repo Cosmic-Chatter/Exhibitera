@@ -149,9 +149,16 @@ export async function configure (options) {
     })
 
   // Set up the color pickers
-
   // Call with a slight delay to make sure the elements are loaded
   setTimeout(setUpColorPickers, 100)
+
+  // If we're using Hub, display the component ID
+  const idField = document.getElementById('setupComponentID')
+  if (idField) {
+    setTimeout(() => {
+      idField.innerText = exCommon.config?.id ?? ''
+    }, 10)
+  }
 }
 
 export function setUpColorPickers () {
