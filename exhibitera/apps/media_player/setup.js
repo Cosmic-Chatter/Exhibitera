@@ -316,7 +316,7 @@ function createItemHTML (item, num) {
   cacheLabel.classList = 'form-check-label'
   cacheLabel.innerHTML = `
   Disable cache
-  <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="Choose this option only if the media will change. Please respect usage limits for linked media." style="font-size: 0.55em;">?</span>
+  <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="Force the media to reload every time. Choose this option only if the media will change. Please respect usage limits for linked media." style="font-size: 0.55em;">?</span>
   `
   cacheGroup.appendChild(cacheLabel)
 
