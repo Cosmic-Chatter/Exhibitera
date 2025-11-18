@@ -192,10 +192,10 @@ export function createFileSelectionModal (userOptions) {
 
       let acceptStr = ''
       if (options.upload_any === false) {
-        options.filetypes.forEach((type) => {
+        for (const type of options.filetypes) {
           if (type === 'audio' || type === 'image' || type === 'video') acceptStr += type + '/*, '
           else acceptStr += '.' + type + ', '
-        })
+        }
       }
 
       document.getElementById('exFileSelectModalUpload').setAttribute('accept', acceptStr)

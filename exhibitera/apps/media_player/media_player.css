@@ -99,6 +99,7 @@ body,html {
     left: 0px;
     opacity: 0;
     cursor: none;
+    z-index: 2;
 }
 #modelViewer {
     width: 100%;
@@ -138,5 +139,5 @@ body,html {
 #watermark {
     position: absolute;
     object-fit: contain;
-    z-index: 1;
+    z-index: 3;
 }

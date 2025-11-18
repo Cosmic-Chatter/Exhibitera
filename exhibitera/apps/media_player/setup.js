@@ -18,6 +18,219 @@ async function initializeWizard () {
   document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'none'
 }
 
+function wizardPopulateContent (files, clear = false) {
+  // Take an array of files and build an HTML representation for the wizard.
+
+  document.getElementById('wizardMediaBlankWarning').style.display = 'none'
+
+  const wizardContentRow = document.getElementById('wizardContentRow')
+  let fileList = JSON.parse(wizardContentRow.dataset?.files ?? '[]')
+  if (clear) {
+    fileList = files
+  } else {
+    for (const filename of files) {
+      if (!fileList.includes(filename)) fileList.push(filename)
+    }
+  }
+  wizardContentRow.dataset.files = JSON.stringify(fileList)
+
+  wizardContentRow.innerText = ''
+
+  for (const filename of fileList) {
+    const col = document.createElement('div')
+    col.classList = 'col px-3'
+    wizardContentRow.appendChild(col)
+
+    const row = document.createElement('div')
+    row.classList = 'row border rounded py-2'
+    col.appendChild(row)
+
+    const thumbCol = document.createElement('div')
+    thumbCol.classList = 'col-12'
+    row.appendChild(thumbCol)
+
+    let thumb
+    if (exFiles.guessMimetype(filename) === 'video') {
+      thumb = document.createElement('video')
+      thumb.classList = 'w-100 rounded'
+      thumb.loop = true
+      thumb.muted = true
+      thumb.controls = false
+      thumb.autoplay = true
+      thumb.disablePictureInPicture = true
+      thumb.disableremoteplayback = true
+    } else {
+      thumb = document.createElement('img')
+      thumb.classList = 'w-100 rounded'
+    }
+    thumb.src = exConfig.api + '/files/' + filename + '/thumbnail'
+    thumbCol.appendChild(thumb)
+
+    const titleCol = document.createElement('div')
+    titleCol.classList = 'col-12 text-center my-2 text-break'
+    titleCol.innerText = filename
+    row.appendChild(titleCol)
+
+    const buttonCol = document.createElement('div')
+    buttonCol.classList = 'col-12 d-flex justify-content-between'
+    row.appendChild(buttonCol)
+
+    const leftButton = document.createElement('button')
+    leftButton.classList = 'btn btn-sm btn-outline-info'
+    leftButton.style.width = '30%'
+    leftButton.innerText = '◀'
+    leftButton.addEventListener('click', (ev) => {
+      wizardRearrageFiles(filename, 'left')
+    })
+    buttonCol.appendChild(leftButton)
+
+    const rightButton = document.createElement('button')
+    rightButton.classList = 'btn btn-sm btn-outline-info'
+    rightButton.style.width = '30%'
+    rightButton.innerText = '▶'
+    rightButton.addEventListener('click', (ev) => {
+      wizardRearrageFiles(filename, 'right')
+    })
+    buttonCol.appendChild(rightButton)
+
+    const deleteButton = document.createElement('button')
+    deleteButton.classList = 'btn btn-sm btn-outline-danger'
+    deleteButton.style.width = '30%'
+    deleteButton.innerText = '✕'
+    deleteButton.addEventListener('click', () => {
+      const wizardContentRow = document.getElementById('wizardContentRow')
+      const arr = JSON.parse(wizardContentRow.dataset?.files ?? '[]')
+      wizardPopulateContent(arr.filter(item => item !== filename), true)
+    })
+    buttonCol.appendChild(deleteButton)
+  }
+}
+
+function wizardRearrageFiles (value, direction) {
+  const wizardContentRow = document.getElementById('wizardContentRow')
+  const arr = JSON.parse(wizardContentRow.dataset?.files ?? '[]')
+
+  const index = arr.indexOf(value)
+  if (index === -1) return arr // not found
+
+  const isLeft = direction === 'left'
+  const isRight = direction === 'right'
+
+  if (!isLeft && !isRight) return arr // invalid direction
+
+  const newIndex = isLeft ? index - 1 : index + 1
+
+  // boundary check
+  if (newIndex < 0 || newIndex >= arr.length) return arr
+
+  // swap
+  const temp = arr[newIndex]
+  arr[newIndex] = arr[index]
+  arr[index] = temp
+
+  wizardPopulateContent(arr, true)
+}
+
+async function wizardForward (currentPage) {
+  // Check if the wizard is ready to advance and perform the move
+
+  if (currentPage === 'Welcome') {
+    const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
+    if (defName !== '') {
+      document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'none'
+      exSetup.wizardGoTo('Content')
+    } else {
+      document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'block'
+    }
+  } else if (currentPage === 'Content') {
+    const wizardContentRow = document.getElementById('wizardContentRow')
+    if (wizardContentRow.children.length === 0) {
+      document.getElementById('wizardMediaBlankWarning').style.display = 'block'
+      return
+    } else document.getElementById('wizardMediaBlankWarning').style.display = 'none'
+
+    // Check if there are images or 3D models which need a duration set.
+    const files = JSON.parse(wizardContentRow.dataset?.files ?? '[]')
+
+    if (files.length === 1) {
+      document.getElementById('wizardDurationSlider').value = 30
+      wizardCreateDefinition()
+    } else {
+      let timedFile = false
+      for (const file of files) {
+        if (['model', 'image'].includes(exFiles.guessMimetype(file))) timedFile = true
+      }
+      if (timedFile) {
+        exSetup.createAdvancedSlider(document.getElementById('wizardDurationSlider'))
+        exSetup.wizardGoTo('Duration')
+      } else {
+        document.getElementById('wizardDurationSlider').value = 30
+        wizardCreateDefinition()
+      }
+    }
+  } else if (currentPage === 'Duration') {
+    wizardCreateDefinition()
+  }
+}
+
+function wizardBack (currentPage) {
+  // Move the wizard back one page
+
+  if (currentPage === 'Content') {
+    exSetup.wizardGoTo('Welcome')
+  } else if (currentPage === 'Duration') {
+    exSetup.wizardGoTo('Content')
+  }
+}
+
+async function wizardCreateDefinition () {
+  // Use the provided details to build a definition file.
+
+  // Definition name
+  const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
+  exSetup.updateWorkingDefinition(['name'], defName)
+
+  // Cycle the list of files and build an entry for each
+  const wizardContentRow = document.getElementById('wizardContentRow')
+  const files = JSON.parse(wizardContentRow.dataset?.files ?? '[]')
+  const content = {}
+  const contentOrder = []
+  for (const file of files) {
+    const itemUUID = exUtilities.uuid()
+    const mimetype = exFiles.guessMimetype(file)
+
+    contentOrder.push(itemUUID)
+    content[itemUUID] = {
+      filename: file,
+      mimetype,
+      type: 'file',
+      uuid: itemUUID
+    }
+
+    // Handle mimetype-specific attributes
+    if (mimetype === 'image') {
+      content[itemUUID].duration = parseFloat(document.getElementById('wizardDurationSlider').value)
+      content[itemUUID].fill_mode = 'contain'
+    } else if (mimetype === 'video') {
+      content[itemUUID].fill_mode = 'contain'
+    } else if (mimetype === 'model') {
+      content[itemUUID].duration = parseFloat(document.getElementById('wizardDurationSlider').value)
+    }
+  }
+  exSetup.updateWorkingDefinition(['content'], content)
+  exSetup.updateWorkingDefinition(['content_order'], contentOrder)
+
+  const uuid = exSetup.config.workingDefinition.uuid
+
+  await exSetup.saveDefinition(defName)
+  const result = await exCommon.getAvailableDefinitions('media_player')
+  exSetup.populateAvailableDefinitions(result.definitions)
+  document.getElementById('availableDefinitionSelect').value = uuid
+
+  editDefinition(uuid)
+  exUtilities.hideModal('#setupWizardModal')
+}
+
 async function clearDefinitionInput (full = true) {
   // Clear all input related to a defnition
 
@@ -1254,6 +1467,28 @@ tooltipTriggerList.map(function (tooltipTriggerEl) {
 
 // Add event listeners
 // -------------------------------------------------------------
+
+// Wizard
+
+// Connect the forward and back buttons
+for (const el of document.querySelectorAll('.wizard-forward')) {
+  el.addEventListener('click', () => {
+    wizardForward(el.getAttribute('data-current-page'))
+  })
+}
+for (const el of document.querySelectorAll('.wizard-back')) {
+  el.addEventListener('click', () => {
+    wizardBack(el.getAttribute('data-current-page'))
+  })
+}
+document.getElementById('wizardAddContentBUtton').addEventListener('click', () => {
+  exFileSelect.createFileSelectionModal({
+    filetypes: ['audio', 'image', 'video', 'glb', 'mtl', 'obj']
+  })
+    .then((files) => {
+      if (files.length > 0) wizardPopulateContent(files)
+    })
+})
 
 // Main buttons
 

@@ -1165,13 +1165,19 @@ export function createAdvancedSlider (el, value = null) {
 
   // Add event listeners
   slider.addEventListener('input', (event) => {
-    updateWorkingDefinition([...path], event.target.value)
+    if (path[0] !== '') {
+      updateWorkingDefinition([...path], event.target.value)
+    }
     number.value = event.target.value
+    el.value = event.target.value
     previewDefinition(true)
   })
   number.addEventListener('input', (event) => {
-    updateWorkingDefinition([...path], event.target.value)
+    if (path[0] !== '') {
+      updateWorkingDefinition([...path], event.target.value)
+    }
     slider.value = event.target.value
+    el.value = event.target.value
     previewDefinition(true)
   })
 }

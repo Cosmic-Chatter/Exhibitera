@@ -1,5 +1,5 @@
 /* Remove default bullets */
-ul, #myUL {
+li>ul, #myUL {
   list-style-type: none;
 }
 
