@@ -15,7 +15,8 @@ _Exhibitera Hub and Apps must all be upgraded to version 6 at the same time._
 ### General
 - Apps that support language selection now properly display right-to-left text for Arabic and Hebrew
 - Creating, editing, and setting definitions is now much easier when not using Hub
-- Easily access DMX lighting scenes when not using Hub 
+- Easily access DMX lighting scenes when not using Hub
+- Use *Shift-click* to easily select multiple files in the file picker
 
 ### Custom Apps
 - New Basic App option turns a simple HTML file into an app without needing to implement the Exhibitera APIs

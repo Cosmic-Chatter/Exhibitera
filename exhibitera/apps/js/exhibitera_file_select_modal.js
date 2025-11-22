@@ -3,6 +3,8 @@ import exConfig from '../../common/config.js'
 import * as exFiles from '../../common/files.js'
 import * as exCommon from './exhibitera_app_common.js'
 
+let lastClickedSelectBox = null // For handling multiple selection on shift-click
+
 export function createFileSelectionModal (userOptions) {
   // Build a standard Exhibitera file selection modal
 
@@ -393,7 +395,7 @@ function _populateComponentContent (fileDict, options) {
     check.setAttribute('data-filename', file)
 
     entry.addEventListener('click', (event) => {
-      selectFile(check, options.multiple)
+      selectFile(check, options.multiple, event)
     })
 
     // Thumbnail
@@ -603,24 +605,50 @@ export function getDefaultModelIcon (png = false) {
   else return '/_static/icons/model_black.' + ext
 }
 
-function selectFile (target, allowMultiple) {
+function selectFile (target, allowMultiple, clickEvent) {
   // Called when the user clicks on a file. If allowMultiple=false,
   // selecting one file unselects the others.
+  // If shift is held and allowMultiple=true, select a range of files.
 
-  if (target.classList.contains('const-file-selected')) {
-    target.classList.remove('const-file-selected', 'bg-success')
-    target.innerHTML = ''
-  } else {
-    if (allowMultiple === false) {
-      document.querySelectorAll('.const-file-select-box').forEach((el) => {
-        el.classList.remove('const-file-selected', 'bg-success')
-        el.innerHTML = ''
-      })
+  document.getSelection().removeAllRanges() // Clear any text selection from a shift-click
+
+  const fileList = document.getElementById('exFileSelectModalFileList')
+  const allSelectBoxes = Array.from(fileList.querySelectorAll('.const-file-entry:not([data-filtered-out="true"]) .const-file-select-box'))
+
+  // Handle shift+click range selection
+  if (clickEvent.shiftKey && allowMultiple && lastClickedSelectBox !== null) {
+    const lastIndex = allSelectBoxes.indexOf(lastClickedSelectBox)
+    const currentIndex = allSelectBoxes.indexOf(target)
+
+    if (lastIndex !== -1 && currentIndex !== -1) {
+      const start = Math.min(lastIndex, currentIndex)
+      const end = Math.max(lastIndex, currentIndex)
+
+      // Select all items in the range
+      for (let i = start; i <= end; i++) {
+        allSelectBoxes[i].classList.add('const-file-selected', 'bg-success')
+        allSelectBoxes[i].innerHTML = '✓'
+      }
     }
-
-    target.classList.add('const-file-selected', 'bg-success')
-    target.innerHTML = '✓'
+  } else {
+    // Normal click behavior
+    if (target.classList.contains('const-file-selected')) {
+      target.classList.remove('const-file-selected', 'bg-success')
+      target.innerHTML = ''
+    } else {
+      if (allowMultiple === false) {
+        document.querySelectorAll('.const-file-select-box').forEach((el) => {
+          el.classList.remove('const-file-selected', 'bg-success')
+          el.innerHTML = ''
+        })
+      }
+      target.classList.add('const-file-selected', 'bg-success')
+      target.innerHTML = '✓'
+    }
   }
+
+  // Update last clicked reference
+  lastClickedSelectBox = target
 
   // Check if multiple files are selected and show/hide the delete multiple button
   if (allowMultiple === true) {
