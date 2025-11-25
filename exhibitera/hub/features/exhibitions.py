@@ -168,6 +168,12 @@ def remove_modifications(to_remove: list[str]):
     hub_config.exhibit_modifications["components"] = [x for x in hub_config.exhibit_modifications["components"] if x["uuid"] not in to_remove]
     update_components()
 
+def clear_modifications():
+    """Remove all definitions from the modifications list"""
+
+    hub_config.exhibit_modifications["components"] = []
+    update_components()
+
 
 def update_exhibition_from_modifications():
     """Update the current exhibition with the current modifications."""
@@ -202,10 +208,14 @@ def execute_action(action: str,
     if action == 'set_definition' and target is not None and value is not None:
         if isinstance(value, list):
             value = value[0]
+        if isinstance(target, list):
+            target = target[0]
         print(f"Changing definition for {target} to {value}")
 
         logging.info("Changing definition for %s to %s", target, value)
         add_exhibition_modification(target["uuid"], {"definition": value})
+    elif action == 'clear_exhibition_mods':
+        clear_modifications()
     elif action == 'set_dmx_scene' and target is not None and value is not None:
         if isinstance(value, list):
             value = value[0]

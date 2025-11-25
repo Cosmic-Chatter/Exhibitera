@@ -246,6 +246,8 @@ function createScheduleEntryHTML (item, scheduleID, scheduleName, scheduleType, 
     description = `Set exhibit: ${exTools.getExhibitName(target.value)}`
   } else if (action === 'note') {
     description = item.value
+  } else if (action === 'clear_exhibition_mods') {
+    description = 'Clear exhibition modifications'
   }
 
   const eventRow = document.createElement('div')
@@ -340,7 +342,7 @@ export function populateScheduleDescriptionHelper (eventList, includeTime) {
   } else if (eventList.length === 1) {
     const event = eventList[0]
     description += scheduleActionToDescription(event.action) + ' '
-    if (description.trim() !== 'No action') {
+    if ((description.trim() !== 'No action') && (event.action !== 'clear_exhibition_mods')) {
       description += scheduleTargetToDescription(event.target, event.action)
     }
   } else {
@@ -368,6 +370,8 @@ function scheduleActionToDescription (action) {
   // Convert actions such as "power_on" to English text like "Power on"
 
   switch (action) {
+    case 'clear_exhibition_mods':
+      return 'Clear exhibition modifications'
     case 'power_off':
       return 'Power off'
     case 'power_on':
@@ -434,8 +438,6 @@ function scheduleTargetToDescription (targetList, action = '') {
       const component = exTools.getExhibitComponent(target.uuid)
       if (component) return component.id
     }
-    // Deprecated in Ex5.2
-    if ('id' in target) return target.id
   } else if (target.type === 'value') {
     if (action === 'set_exhibit') return exTools.getExhibitName(target.value)
     return target.value
@@ -564,6 +566,13 @@ export function setScheduleActionTargetSelector (action = null, target = null) {
     valueSelector.style.display = 'none'
     valueSelectorLabel.style.display = 'none'
     noteInput.style.display = 'block'
+  } else if (action === 'clear_exhibition_mods') {
+    targetSelector.style.display = 'none'
+    targetSelectorLabel.style.display = 'none'
+    targetSelector.value = null
+    valueSelector.style.display = 'none'
+    valueSelectorLabel.style.display = 'none'
+    noteInput.style.display = 'none'
   } else {
     targetSelector.style.display = 'none'
     targetSelectorLabel.style.display = 'none'
@@ -728,6 +737,8 @@ export function scheduleConfigureEditModal (scheduleName,
     if (currentAction === 'note') {
       document.getElementById('scheduleNoteInput').value = currentValue
       noteInput.style.display = 'block'
+    } else if (currentAction === 'clear_exhibition_mods') {
+      // Do nothing because there are no targets or values to show
     } else {
       if (currentTarget != null) {
         setScheduleActionTargetSelector(currentAction, currentTarget)
@@ -777,6 +788,9 @@ export function sendScheduleUpdateFromModal () {
   if (action === 'note') {
     value = document.getElementById('scheduleNoteInput').value
     target = null
+  } else if (action === 'clear_exhibition_mods') {
+    target = null
+    value = null
   } else {
     value = document.getElementById('scheduleValueSelector').value
   }
