@@ -186,7 +186,7 @@ class BaseComponent {
         refreshAction.classList = 'dropdown-item handCursor'
         refreshAction.innerHTML = 'Refresh component'
         refreshAction.addEventListener('click', function () {
-          queueCommand(thisUUID, 'refresh')
+          queueCommand(thisUUID, 'refresh_page')
         }, false)
         dropdownMenu.appendChild(refreshAction)
       }
