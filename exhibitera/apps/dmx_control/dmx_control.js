@@ -1025,6 +1025,7 @@ function showUniverseEditModal (universeName, universeUUID) {
   // Prepare the editUniverseModal and then show it.
 
   const universe = getUniverseByUUID(universeUUID)
+  const editUniverseModal = document.getElementById('editUniverseModal')
   $('#editUniverseModal').data('uuid', universeUUID)
   $('#editUniverseModal').data('name', universe.name)
 
@@ -1731,6 +1732,10 @@ function getDMXConfiguration () {
         rebuildUniverseInterface()
         document.getElementById('noUniverseWarning').style.display = 'none'
         document.getElementById('createNewUniverseButton').style.display = 'block'
+      } else {
+        document.getElementById('universeRow').innerText = ''
+        document.getElementById('noUniverseWarning').style.display = 'block'
+        document.getElementById('createNewUniverseButton').style.display = 'none'
       }
     })
     .then(() => {
@@ -1932,7 +1937,7 @@ document.addEventListener('click', (event) => {
       deleteGroup(document.getElementById('editGroupModal').dataset.group)
       break
     case 'universeDeletePopover':
-      deleteUniverse(document.getElementById('editUniverseModal').dataset.uuid)
+      deleteUniverse($('#editUniverseModal').data('uuid'))
       break
   }
 })
