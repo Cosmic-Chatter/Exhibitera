@@ -1850,7 +1850,7 @@ function showAddUniverseMOdal () {
           } else if (controller.model === 'uDMX') {
             option.innerHTML = `uDMX (Bus: ${controller.bus}, address: ${controller.address})`
           }
-          option.setAttribute('data-value', controller)
+          option.setAttribute('data-value', JSON.stringify(controller))
 
           addUniverseController.appendChild(option)
         }
@@ -1864,7 +1864,7 @@ function addUniverseFromModal () {
   // Use the addUniverseModal to create a new universe.
 
   const name = document.getElementById('addUniverseName').value.trim()
-  const controller = document.getElementById('addUniverseController')?.selectedOptions[0]?.getAttribute('data-value')
+  const controller = JSON.parse(document.getElementById('addUniverseController')?.selectedOptions[0]?.dataset.value)
 
   if (name === '') {
     document.getElementById('addUniverseMissingNameWarning').style.display = 'block'
