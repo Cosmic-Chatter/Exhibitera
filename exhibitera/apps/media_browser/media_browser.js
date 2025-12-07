@@ -49,19 +49,21 @@ function createCard (obj) {
   // Take a JSON object and turn it into a card in the resultsRow
 
   const def = exCommon.config.definition
-  let thumb
 
+  // Get a thumbnail
+  let thumbName
   if (thumbnailKey != null && thumbnailKey !== '' && String(obj[thumbnailKey]).trim() !== '') {
     // Use a user-supplied thumbnail
-    thumb = exCommon.config.helperAddress + '/thumbnails/' + String(obj[thumbnailKey])
+    thumbName = String(obj[thumbnailKey])
   } else {
     // Pull the default thumbnail
-
-    const numCols = def?.layout?.num_columns ?? 3
-    const iconWidth = String(Math.round(window.innerWidth / numCols))
-    const thumbName = String(obj[mediaKey])
-    thumb = exCommon.config.helperAddress + exConfig.api + '/files/' + thumbName + '/thumbnail/' + iconWidth
+    thumbName = String(obj[mediaKey])
   }
+  console.log(thumbnailKey)
+  const numCols = def?.layout?.num_columns ?? 3
+  const iconWidth = String(Math.round(window.innerWidth / numCols))
+
+  const thumb = exCommon.config.helperAddress + exConfig.api + '/files/' + thumbName + '/thumbnail/' + iconWidth + '?force_image=true'
 
   let title = ''
   if (titleKey != null && titleKey !== '') {
