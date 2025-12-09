@@ -1059,7 +1059,7 @@ function updateUniverseFromModal () {
       promiseList.push(exCommon.makeHelperRequest({
         method: 'POST',
         endpoint: '/DMX/fixture/remove',
-        params: { fixtureUUID }
+        params: { fixture_uuid: fixtureUUID }
       }))
     }
   }
@@ -1903,7 +1903,8 @@ document.getElementById('addFixtureAddChannelButton')?.addEventListener('click',
 document.getElementById('addFixtureFromModalButton')?.addEventListener('click', addFixtureFromModal)
 document.getElementById('addFixtureStartingChannel').addEventListener('input', updateModalChannelCounts)
 document.getElementById('deleteFixtureFromModalButton').addEventListener('click', () => {
-  const fixtureUUID = document.getElementById('addFixtureModal').getAttribute('data-fixtureUUID')
+const fixtureUUID = $('#addFixtureModal').data('fixtureUUID')
+
   exCommon.makeHelperRequest({
     method: 'POST',
     endpoint: '/DMX/fixture/remove',
