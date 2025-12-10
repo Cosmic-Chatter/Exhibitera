@@ -198,7 +198,6 @@ def update_media_browser_definition_format():
             reader = csv.DictReader(csvfile)
             reader.fieldnames = [name.strip() for name in reader.fieldnames]  # Make sure there is no whitespace around the keys
             for row in reader:
-                print(row)
                 new_uuid = str(uuid.uuid4())
                 content[new_uuid] = {
                     "custom_thumbnail": row.get(thumb_key, ""),
@@ -212,7 +211,7 @@ def update_media_browser_definition_format():
                     title_key = languages[lang].get("title_key", "")
                     caption_key = languages[lang].get("caption_key", "")
                     credit_key = languages[lang].get("credit_key", "")
-                    print(title_key, caption_key, credit_key)
+
                     localization = {
                         "uuid": new_uuid,
                         "title": row.get(title_key, ""),
@@ -230,9 +229,11 @@ def update_media_browser_definition_format():
                                 "value": row.get(filter_dict.get("key", ""), "")
                             }
 
-                    for key in ["title_key", "caption_key", "credit_key", "media_key", "thumbnail_key", "default"]:
-                        if key in languages[lang]:
-                            del languages[lang][key]
+        # Clean up the dictionary
+        for lang in language_order:
+            for key in ["title_key", "caption_key", "credit_key", "media_key", "thumbnail_key", "default"]:
+                if key in languages[lang]:
+                    del languages[lang][key]
 
         definition["languages"] = languages
         definition["content"] = content

@@ -7,9 +7,13 @@ import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exMarkdown from '../js/exhibitera_app_markdown.js'
 
 function changePage (direction) {
+  // Display a new page of results
+
+  const numItems = exCommon.config.definition.content_order.length
+
   if (direction === 'forward') {
     currentPage += 1
-    if (currentPage * cardsPerPage >= spreadsheet.length) {
+    if (currentPage * cardsPerPage >= numItems) {
       if ((exCommon.config.definition?.behavior?.loop_results ?? true) === false) {
         currentPage -= 1
       } else {
@@ -24,7 +28,7 @@ function changePage (direction) {
         currentPage = 0
       } else {
         // Loop back to last page
-        currentPage = Math.floor(((spreadsheet.length - 1) / cardsPerPage))
+        currentPage = Math.floor(((numItems - 1) / cardsPerPage))
       }
     }
   }
@@ -52,27 +56,20 @@ function createCard (obj) {
 
   // Get a thumbnail
   let thumbName
-  if (thumbnailKey != null && thumbnailKey !== '' && String(obj[thumbnailKey]).trim() !== '') {
+  if (obj.custom_thumbnail !== '') {
     // Use a user-supplied thumbnail
-    thumbName = String(obj[thumbnailKey])
+    thumbName = obj.custom_thumbnail
   } else {
     // Pull the default thumbnail
-    thumbName = String(obj[mediaKey])
+    thumbName = obj.filename
   }
-  console.log(thumbnailKey)
+
   const numCols = def?.layout?.num_columns ?? 3
   const iconWidth = String(Math.round(window.innerWidth / numCols))
 
   const thumb = exCommon.config.helperAddress + exConfig.api + '/files/' + thumbName + '/thumbnail/' + iconWidth + '?force_image=true'
 
-  let title = ''
-  if (titleKey != null && titleKey !== '') {
-    title = exMarkdown.formatText(obj[titleKey] ?? '', { string: true, removeParagraph: true })
-  }
-
-  const id = String(Math.round(Date.now() * Math.random()))
-
-  obj.uniqueMediaBrowserID = id
+  const title = exMarkdown.formatText(def.languages[currentLang].content[obj.uuid]?.title ?? '', { string: true, removeParagraph: true })
 
   const col = document.createElement('div')
   col.classList = 'cardCol col align-items-center justify-content-center d-flex'
@@ -81,7 +78,7 @@ function createCard (obj) {
   const card = document.createElement('div')
   card.classList = 'resultCard row w-100 d-flex align-content-center'
   card.addEventListener('click', function () {
-    displayMedia(id)
+    displayMedia(obj.uuid)
   })
   col.appendChild(card)
 
@@ -93,7 +90,7 @@ function createCard (obj) {
   const img = document.createElement('img')
   img.classList = 'resultImg'
   img.src = thumb
-  img.setAttribute('id', 'Entry_' + id)
+  img.setAttribute('id', 'Entry_' + obj.uuid)
 
   img.style.borderRadius = String(def?.style?.layout?.corner_radius ?? 0) + '%'
 
@@ -190,12 +187,12 @@ function populateFilterOptions (order, filters) {
 
     const select = document.createElement('select')
     select.classList = 'form-select filter-entry'
-    select.setAttribute('id', 'filterSelect_' + uuid)
-    select.setAttribute('data-key', details.key)
+    select.dataset.uuid = details.uuid
+    select.id = 'filterSelect_' + uuid
     select.addEventListener('change', onFilterOptionChange)
     div.appendChild(select)
 
-    const options = _getFilterOptions(details.key)
+    const options = _getFilterOptions(details.uuid)
 
     const blank = new Option('-', '')
     select.append(blank)
@@ -221,15 +218,21 @@ function populateFilterOptions (order, filters) {
   div.appendChild(clearButton)
 }
 
-function _getFilterOptions (key) {
-  // For a given spreadsheet key, get a list of the unique options for the select.
+function _getFilterOptions (filterUUID) {
+  // For a given filter, get a list of the unique options for the select.
 
-  const resultDict = {} // Will hold unique entries without duplicates
+  const uniqueValues = new Set()
+  // Iterate through all content items
+  for (const itemUuid in exCommon.config.definition.content) {
+    const item = exCommon.config.definition.content[itemUuid]
 
-  for (const row of spreadsheet) {
-    if (key in row) resultDict[row[key]] = 1
+    // Check if this item has filter_data and the specific filter
+    if (item.filter_data && item.filter_data[filterUUID]) {
+      uniqueValues.add(item.filter_data[filterUUID].value)
+    }
   }
-  return exUtilities.sortAlphabetically(Object.keys(resultDict))
+
+  return exUtilities.sortAlphabetically(Array.from(uniqueValues))
 }
 
 function clearFilters () {
@@ -248,48 +251,28 @@ function _populateResultsRow (currentKey) {
 
   document.getElementById('resultsRow').innerHTML = ''
 
-  // const input = document.getElementById('searchInput').value
-  // // Filter on search terms
-  // const searchTerms = (input).split(' ')
-  // const searchedData = []
-  // spreadsheet.forEach((item, i) => {
-  //   let matchCount = 0
-  //   searchTerms.forEach((term, i) => {
-  //     if (term !== '' || (term === '' && searchTerms.length === 1)) {
-  //       // Strip out non-letters, since the keyboard doesn't allow them
-  //       if (item.searchData.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z\s]/ig, '').toLowerCase().includes(term.replace(/[^A-Za-z]/ig, '').toLowerCase())) {
-  //         matchCount += 1
-  //       }
-  //     }
-  //   })
-  //   if (matchCount > 0) {
-  //     item.matchCount = matchCount
-  //     searchedData.push(item)
-  //   }
-  // })
-
   // Filter on filter options
   const filters = Array.from(document.getElementsByClassName('filter-entry'))
   const filteredData = []
-  let thisKey, selectedValue, filterMathces
+  let selectedValue, filterMathces
 
-  // Iterate through the remaining data and make sure it matches at least
-  // one filtered value.
-  for (const item of spreadsheet) {
+  // Iterate through the data and make sure it matches at least one filtered value.
+  for (const itemUUID of exCommon.config.definition.content_order) {
+    const item = exCommon.config.definition.content[itemUUID]
+
     filterMathces = {}
     for (const filter of filters) {
-      thisKey = filter.dataset.key
-      filterMathces[thisKey] = 0
+      const filterUUID = filter.dataset.uuid
+      filterMathces[filterUUID] = 0 // This will be set to 1 if the filter matches
 
       selectedValue = filter.value // Can only select one for now
-
       if (selectedValue != null && selectedValue !== '') {
-        if (selectedValue.includes(item[thisKey])) {
-          filterMathces[thisKey] = 1
+        if (item?.filter_data?.[filterUUID].value === selectedValue) {
+          filterMathces[filterUUID] = 1
         }
       } else {
         // If no values are selected for this filter, pass all matches through
-        filterMathces[thisKey] = 1
+        filterMathces[filterUUID] = 1
       }
     }
 
@@ -349,18 +332,19 @@ function populateResultsRow (currentKey = '') {
   setTimeout(() => { _populateResultsRow(currentKey) }, 300)
 }
 
-function displayMedia (id) {
-  // Take the given id and display the media in the overlay.
+function displayMedia (uuid) {
+  // Take the given uuid and display the media in the overlay.
 
-  const obj = spreadsheet.filter(function (item) {
-    return item.uniqueMediaBrowserID === id
-  })[0]
+  const def = exCommon.config.definition
+  const obj = def.content[uuid]
+  console.log(obj)
 
-  const title = exMarkdown.formatText(obj[titleKey] ?? '', { string: true, removeParagraph: true })
-  const caption = exMarkdown.formatText(obj[captionKey] ?? '', { string: true, removeParagraph: true })
-  const credit = exMarkdown.formatText(obj[creditKey] ?? '', { string: true, removeParagraph: true })
+  const title = exMarkdown.formatText(def.languages[currentLang].content[uuid].title ?? '', { string: true, removeParagraph: true })
 
-  const media = String(obj[mediaKey])
+  const caption = exMarkdown.formatText(def.languages[currentLang].content[uuid].caption ?? '', { string: true, removeParagraph: true })
+  const credit = exMarkdown.formatText(def.languages[currentLang].content[uuid].credit ?? '', { string: true, removeParagraph: true })
+
+  const media = String(obj.filename)
   showMediaInLightbox(media, title, caption, credit)
 }
 
@@ -385,9 +369,8 @@ function loadDefinition (def) {
   exCommon.createLanguageSwitcher(def, localize)
 
   // Configure the attractor
-  if ('inactivity_timeout' in def) {
-    inactivityTimeout = def.inactivity_timeout * 1000
-  }
+  inactivityTimeout = (def?.inactivity_timeout ?? 30) * 1000
+
   if ('attractor' in def && def.attractor.trim() !== '') {
     if (exFiles.guessMimetype(def.attractor) === 'video') {
       attractorType = 'video'
@@ -509,45 +492,21 @@ function loadDefinition (def) {
   }
 
   // Find the default language
-  if (def.language_order) {
-    defaultLang = def.language_order[0]
-  } else {
-    // Deprecated in Ex5.3
-    for (const lang of Object.keys(def.languages)) {
-      if (def.languages[lang].default === true) defaultLang = lang
-    }
-  }
+  defaultLang = def.language_order[0]
 
-  // Load the CSV file containing the items ad build the results row
-  exCommon.makeHelperRequest({
-    api: '',
-    method: 'GET',
-    endpoint: '/content/' + def.spreadsheet,
-    rawResponse: true,
-    noCache: true
-  })
-    .then((response) => {
-      const csvAsJSON = exFiles.csvToJSON(response)
-      spreadsheet = csvAsJSON.json // Global property
-      localize(defaultLang)
+  localize(defaultLang)
 
-      // Send a thumbnail to the helper
-      setTimeout(() => exCommon.saveScreenshotAsThumbnail(def.uuid + '.png'), 500)
-    })
+  // Send a thumbnail to the helper
+  setTimeout(() => exCommon.saveScreenshotAsThumbnail(def.uuid + '.png'), 500)
 }
 
 function localize (lang) {
-  // Use the spreadsheet and definition to set the content to the given language
+  // Set the content to the given language
 
   exCommon.configureLanguage(lang)
+  currentLang = lang
 
   const definition = exCommon.config.definition
-
-  mediaKey = definition?.languages?.[lang]?.media_key
-  thumbnailKey = definition?.languages?.[lang]?.thumbnail_key
-  titleKey = definition?.languages?.[lang]?.title_key
-  captionKey = definition?.languages?.[lang]?.caption_key
-  creditKey = definition?.languages?.[lang]?.credit_key
 
   if ((definition?.languages?.[lang]?.filter_order?.length ?? 0) > 0) {
     // Show the filter icon
@@ -730,7 +689,6 @@ function fixLightboxTextSize (titleDiv, creditDiv) {
 //   }
 // })
 
-let spreadsheet, mediaKey, thumbnailKey, titleKey, captionKey, creditKey
 let currentPage = 0
 let cardsPerPage, numCols, numRows
 let defaultLang = ''
@@ -742,7 +700,7 @@ exCommon.configureApp({
   parseUpdate: updateParser
 })
 
-const currentDefinition = ''
+let currentLang = ''
 
 let inactivityTimer = null
 let inactivityTimeout = 30000
