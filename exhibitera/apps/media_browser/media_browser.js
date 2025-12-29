@@ -153,6 +153,10 @@ function hideMediaLightBox () {
   video.pause()
   videoPlaying = false
 
+  const audio = document.getElementById('mediaLightboxAudio')
+  audio.pause()
+  videoPlaying = false
+
   const mediaLightbox = document.getElementById('mediaLightbox')
   mediaLightbox.style.opacity = 0
   setTimeout(() => { mediaLightbox.style.display = 'none' }, 500)
@@ -353,6 +357,7 @@ function updateParser (update) {
 
   if (update?.permissions?.audio) {
     document.getElementById('mediaLightboxVideo').muted = !update.permissions.audio
+    document.getElementById('mediaLightboxAudio').muted = !update.permissions.audio
   }
 }
 
@@ -588,6 +593,7 @@ function showMediaInLightbox (media, title = '', caption = '', credit = '') {
   })
 
   const lightbox = document.getElementById('mediaLightbox')
+  const audioEl = document.getElementById('mediaLightboxAudio')
   const imageEl = document.getElementById('mediaLightboxImage')
   const videoEl = document.getElementById('mediaLightboxVideo')
   const titleDiv = document.getElementById('mediaLightboxTitle')
@@ -600,8 +606,20 @@ function showMediaInLightbox (media, title = '', caption = '', credit = '') {
 
   // Load the media with a callback to fade it in when it is loaded
   const mimetype = exFiles.guessMimetype(media)
-  if (mimetype === 'image') {
+  if (mimetype === 'audio') {
+    videoPlaying = true
+    audioEl.src = '/content/' + media
+    audioEl.load()
+    audioEl.play()
+    document.querySelectorAll('.lightbox-text').forEach((el) => {
+      el.style.opacity = 1
+    })
+    // Make the image element active but invisible to claim vertical space
+    imageEl.style.display = 'block'
+    imageEl.style.opacity = 0
+  } else if (mimetype === 'image') {
     imageEl.src = '/content/' + media
+    imageEl.style.opacity = 1
   } else if (mimetype === 'video') {
     videoPlaying = true
     videoEl.src = '/content/' + media
@@ -721,6 +739,10 @@ document.querySelectorAll('.hideLightboxTrigger').forEach((el) => {
   el.addEventListener('click', hideMediaLightBox)
 })
 document.getElementById('mediaLightboxVideo').addEventListener('ended', (event) => {
+  resetActivityTimer()
+  videoPlaying = false
+})
+document.getElementById('mediaLightboxAudio').addEventListener('ended', (event) => {
   resetActivityTimer()
   videoPlaying = false
 })

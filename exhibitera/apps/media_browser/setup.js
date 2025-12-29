@@ -1,11 +1,13 @@
 /* global Coloris, bootstrap */
 
+import exConfig from '../../common/config.js'
 import * as exFiles from '../../common/files.js'
 import * as exUtilities from '../../common/utilities.js'
 import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exFileSelect from '../js/exhibitera_file_select_modal.js'
 import * as exSetup from '../js/exhibitera_setup_common.js'
 import * as exLang from '../js/exhibitera_setup_languages.js'
+import * as exMarkdown from '../js/exhibitera_setup_markdown.js'
 
 async function initializeWizard () {
   // Setup the wizard
@@ -244,12 +246,6 @@ async function clearDefinitionInput (full = true) {
 
   if (full === true) exSetup.initializeDefinition()
 
-  // Spreadsheet
-  const spreadsheetSelect = document.getElementById('spreadsheetSelect')
-  spreadsheetSelect.innerHTML = 'Select file'
-  spreadsheetSelect.setAttribute('data-filename', '')
-  spreadsheetSelect.setAttribute('data-availableKeys', '[]')
-
   // Language
   exLang.clearLanguagePicker(document.getElementById('language-picker'))
   exLang.createLanguagePicker(document.getElementById('language-picker'), { onLanguageRebuild: rebuildLanguageElements })
@@ -316,11 +312,6 @@ function editDefinition (uuid = '') {
 
   document.getElementById('definitionNameInput').value = def.name
 
-  // Spreadsheet
-  const spreadsheetSelect = document.getElementById('spreadsheetSelect')
-  spreadsheetSelect.innerHTML = def.spreadsheet
-  spreadsheetSelect.setAttribute('data-filename', def.spreadsheet)
-
   // Attractor
   const attractorSelect = document.getElementById('attractorSelect')
   if ('attractor' in def && def.attractor.trim() !== '') {
@@ -372,11 +363,96 @@ function editDefinition (uuid = '') {
     }
   )
 
-  // Load the spreadsheet to populate the existing keys
-  onSpreadsheetFileChange()
+  rebuildItemList()
 
   // Configure the preview frame
   document.getElementById('previewFrame').src = 'index.html?standalone=true&definition=' + def.uuid
+}
+
+function rebuildItemList () {
+  // Rebuild the list of content items
+
+  const def = exSetup.config.workingDefinition
+  const itemsList = document.getElementById('itemsList')
+  const defaultLang = def.language_order[0]
+
+  itemsList.innerText = ''
+
+  for (const uuid of def.content_order) {
+    const itemDef = def.content[uuid]
+    const itemLangDef = def.languages[defaultLang].content[uuid]
+
+    let itemName
+    if ((itemLangDef?.title ?? '') !== '') {
+      itemName = exMarkdown.formatText(itemLangDef.title, { string: true, removeParagraph: true })
+    } else if ((itemDef?.filename ?? '') !== '') {
+      itemName = itemDef.filename
+    } else itemName = 'New Item'
+
+    const col = document.createElement('div')
+    col.classList = 'col'
+
+    const button = document.createElement('button')
+    button.classList = 'btn btn-info w-100'
+    button.addEventListener('click', () => {
+      editItem(uuid)
+    })
+    button.innerHTML = itemName
+
+    col.appendChild(button)
+    itemsList.appendChild(col)
+  }
+}
+
+function editItem (itemUUID) {
+  // Build the interface for editing the given item
+
+  const def = exSetup.config.workingDefinition
+  const itemDef = def.content[itemUUID]
+
+  document.getElementById('editPane').dataset.uuid = itemUUID // Tag for later use
+
+  const fileSelect = document.getElementById('editItemFileSelect')
+  const thumbSelect = document.getElementById('editItemThumbnailSelect')
+  const imagePreview = document.getElementById('editItemPreviewImage')
+  const videoPreview = document.getElementById('editItemPreviewVideo')
+  const thumbImageTPreview = document.getElementById('editItemThumbPreviewImage')
+
+  imagePreview.style.display = 'none'
+  videoPreview.style.display = 'none'
+  thumbImageTPreview.style.display = 'none'
+
+  fileSelect.innerText = itemDef?.filename || 'Select File' // Default for '' or null
+  thumbSelect.innerText = itemDef?.custom_thumbnail || 'Select File' // Default for '' or null
+
+  // Media file preview
+  if (itemDef.filename && itemDef.filename !== '') {
+    const mimetype = exFiles.guessMimetype(itemDef.filename)
+    let preview
+    if (mimetype === 'video') {
+      preview = videoPreview
+    } else {
+      preview = imagePreview
+    }
+    preview.style.display = 'block'
+    preview.src = exConfig.api + '/files/' + itemDef.filename + '/thumbnail'
+  }
+
+  // Optional thumbnail
+  if (itemDef.custom_thumbnail && itemDef.custom_thumbnail !== '') {
+    // Show preview
+    const mimetype = exFiles.guessMimetype(itemDef.custom_thumbnail)
+    let preview
+    if (mimetype === 'video') {
+      preview = thumbVideoPreview
+    } else {
+      preview = thumbImageTPreview
+    }
+    preview.style.display = 'block'
+    preview.src = exConfig.api + '/files/' + itemDef.custom_thumbnail + '/thumbnail'
+  }
+
+  console.log(itemDef)
 }
 
 function rebuildLanguageElements (langOrder) {
@@ -468,12 +544,6 @@ function createLanguageTab (code) {
     })
     col.appendChild(input)
   })
-
-  // If we have already loaded a spreadhseet, populate the key options
-  const keyList = document.getElementById('spreadsheetSelect').getAttribute('data-availableKeys')
-  if (keyList != null) {
-    populateKeySelects(JSON.parse(keyList), code)
-  }
 
   // Create the filter options
   const filterCol = document.createElement('div')
@@ -583,12 +653,6 @@ function addFilter (lang, details = {}, addition = true) {
   document.getElementById('filterDeleteButton_' + details.uuid).addEventListener('click', () => {
     deleteFilter(lang, details.uuid)
   })
-
-  // If we have already loaded a spreadhseet, populate the key options
-  const keyList = document.getElementById('spreadsheetSelect').getAttribute('data-availableKeys')
-  if (keyList != null) {
-    populateFilterSelects(JSON.parse(keyList))
-  }
 
   exSetup.previewDefinition(true)
 }
@@ -911,16 +975,6 @@ document.getElementById('checkContentButton').addEventListener('click', checkCon
 // document.getElementById('optimizeContentBeginButton').addEventListener('click', optimizeMediaFromModal)
 
 // Definition fields
-document.getElementById('spreadsheetSelect').addEventListener('click', (event) => {
-  exFileSelect.createFileSelectionModal({ filetypes: ['csv'], multiple: false })
-    .then((files) => {
-      if (files.length === 1) {
-        event.target.innerHTML = files[0]
-        event.target.setAttribute('data-filename', files[0])
-        onSpreadsheetFileChange()
-      }
-    })
-})
 
 document.getElementById('attractorSelect').addEventListener('click', (event) => {
   exFileSelect.createFileSelectionModal({ filetypes: ['image', 'video'], multiple: false })
@@ -946,6 +1000,68 @@ document.getElementById('inactivityTimeoutField').addEventListener('change', (ev
 
 document.getElementById('loopResultsCheckbox').addEventListener('change', (event) => {
   exSetup.updateWorkingDefinition(['behavior', 'loop_results'], event.target.checked)
+  exSetup.previewDefinition(true)
+})
+
+document.getElementById('editItemFileSelect').addEventListener('click', () => {
+  // Handle selecting the media file for the current item
+
+  const uuid = document.getElementById('editPane').dataset.uuid
+  if (!uuid || uuid === '') return
+
+  exFileSelect.createFileSelectionModal({ filetypes: ['audio', 'image', 'video'], multiple: false })
+    .then((files) => {
+      if (files.length !== 1) return
+      exSetup.updateWorkingDefinition(['content', uuid, 'filename'], files[0])
+      document.getElementById('editItemFileSelect').innerText = files[0]
+
+      const imagePreview = document.getElementById('editItemPreviewImage')
+      const videoPreview = document.getElementById('editItemPreviewVideo')
+      imagePreview.style.display = 'none'
+      videoPreview.style.display = 'none'
+
+      const mimetype = exFiles.guessMimetype(files[0])
+      let preview
+      if (mimetype === 'video') {
+        preview = videoPreview
+      } else {
+        preview = imagePreview
+      }
+      preview.style.display = 'block'
+      preview.src = exConfig.api + '/files/' + files[0] + '/thumbnail'
+
+      exSetup.previewDefinition(true)
+    })
+})
+
+document.getElementById('editItemThumbnailSelect').addEventListener('click', () => {
+  // Handle setting a custom thumbnail for hte current item
+
+  const uuid = document.getElementById('editPane').dataset.uuid
+  if (!uuid || uuid === '') return
+
+  exFileSelect.createFileSelectionModal({ filetypes: ['image'], multiple: false })
+    .then((files) => {
+      if (files.length !== 1) return
+      exSetup.updateWorkingDefinition(['content', uuid, 'custom_thumbnail'], files[0])
+      document.getElementById('editItemThumbnailSelect').innerText = files[0]
+
+      const thumbImageTPreview = document.getElementById('editItemThumbPreviewImage')
+      thumbImageTPreview.style.display = 'block'
+      thumbImageTPreview.src = exConfig.api + '/files/' + files[0] + '/thumbnail'
+      exSetup.previewDefinition(true)
+    })
+})
+
+document.getElementById('editItemThumbnailDelete').addEventListener('click', () => {
+  // Handle deleting a custom thumbnail from the current item.
+
+  const uuid = document.getElementById('editPane').dataset.uuid
+  if (!uuid || uuid === '') return
+
+  exSetup.updateWorkingDefinition(['content', uuid, 'custom_thumbnail'], '')
+  document.getElementById('editItemThumbnailSelect').innerText = 'Select File'
+  document.getElementById('editItemThumbPreviewImage').style.display = 'none'
   exSetup.previewDefinition(true)
 })
 

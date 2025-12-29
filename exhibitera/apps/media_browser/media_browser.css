@@ -102,13 +102,6 @@ body {
     font-size: 20px;
     outline: none;
 }
-
-.mediaLightboxImageShort {
-    max-height: 60%;
-}
-.mediaLightboxImageTall {
-    max-height: 85%;
-}
 .input {
     font-size: 30px;
     border: 0px;
