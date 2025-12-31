@@ -69,7 +69,7 @@ function createCard (obj) {
 
   const thumb = exCommon.config.helperAddress + exConfig.api + '/files/' + thumbName + '/thumbnail/' + iconWidth + '?force_image=true'
 
-  const title = exMarkdown.formatText(def.languages[currentLang].content[obj.uuid]?.title ?? '', { string: true, removeParagraph: true })
+  const title = exMarkdown.formatText(def.languages?.[currentLang]?.content?.[obj.uuid]?.title ?? '', { string: true, removeParagraph: true })
 
   const col = document.createElement('div')
   col.classList = 'cardCol col align-items-center justify-content-center d-flex'
@@ -343,10 +343,10 @@ function displayMedia (uuid) {
   const obj = def.content[uuid]
   console.log(obj)
 
-  const title = exMarkdown.formatText(def.languages[currentLang].content[uuid].title ?? '', { string: true, removeParagraph: true })
+  const title = exMarkdown.formatText(def.languages?.[currentLang].content?.[uuid]?.title ?? '', { string: true, removeParagraph: true })
 
-  const caption = exMarkdown.formatText(def.languages[currentLang].content[uuid].caption ?? '', { string: true, removeParagraph: true })
-  const credit = exMarkdown.formatText(def.languages[currentLang].content[uuid].credit ?? '', { string: true, removeParagraph: true })
+  const caption = exMarkdown.formatText(def.languages?.[currentLang].content?.[uuid]?.caption ?? '', { string: true, removeParagraph: true })
+  const credit = exMarkdown.formatText(def.languages?.[currentLang].content?.[uuid]?.credit ?? '', { string: true, removeParagraph: true })
 
   const media = String(obj.filename)
   showMediaInLightbox(media, title, caption, credit)

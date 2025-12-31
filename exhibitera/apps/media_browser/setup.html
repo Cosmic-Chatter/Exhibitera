@@ -12,6 +12,7 @@
 
     <link rel="stylesheet" href="/css/bootstrap_5_3/bootstrap.min.css">
     <link rel="stylesheet" href="/css/coloris.min.css">
+    <link rel="stylesheet" href="../css/tiny-mde-Exhiibtera.css">
     <link rel="stylesheet" href="/css/setup.css">  
     <link rel="stylesheet" href="setup.css">      
 
@@ -546,7 +547,7 @@
                         <div id="itemsList" class="row row-cols-1 gy-2"></div>
                       </div>
                       <div id="editPane" class="col-7">
-                        <div class="row row-cols-1 gy-2">
+                        <div id="editPaneRow" class="row row-cols-1 gy-2">
                           <div class="col">
                             <img class="media-preview" id="editItemPreviewImage">
                             <video class="media-preview" id="editItemPreviewVideo" autoplay loop muted disablePictureInPicture="true" webkit-playsinline="true" playsinline="true"></video>
@@ -574,16 +575,10 @@
                             </div>
                           </div>
                           <div class="col">
-                            <label class="form-label" for="itemTitleInput">Title</label>
-                            <input class="form-control" type="text" id="itemTitleInput">
-                          </div>
-                          <div class="col">
-                            <label class="form-label" for="itemCaptionInput">Caption</label>
-                            <input class="form-control" type="text" id="itemCaptionInput">
-                          </div>
-                          <div class="col">
-                            <label class="form-label" for="itemCreditInput">Credit</label>
-                            <input class="form-control" type="text" id="itemCreditInput">
+                            <nav  class="mt-3">
+                              <div id="editPaneNav" class="nav nav-tabs" role="tablist"></div>
+                            </nav>
+                            <div class="tab-content" id="editPaneContent"></div>
                           </div>
                         </div>
                       </div>
@@ -784,6 +779,7 @@
   <script type="text/javascript" src="/js/bootstrap_5_3/bootstrap.bundle.min.js"></script>
   <script type="text/javascript" src="/js/showdown.min.js"></script>
   <script type="text/javascript" src="/js/platform.js"></script>
+  <script type="text/javascript" src="../js/tiny-mde.min.js"></script>
   <script type="text/javascript" src="/js/coloris.min.js"></script>
   <script type="module" src="setup.js"></script>
 

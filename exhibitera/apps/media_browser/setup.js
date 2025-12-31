@@ -441,18 +441,77 @@ function editItem (itemUUID) {
   // Optional thumbnail
   if (itemDef.custom_thumbnail && itemDef.custom_thumbnail !== '') {
     // Show preview
-    const mimetype = exFiles.guessMimetype(itemDef.custom_thumbnail)
-    let preview
-    if (mimetype === 'video') {
-      preview = thumbVideoPreview
-    } else {
-      preview = thumbImageTPreview
+    thumbImageTPreview.style.display = 'block'
+    thumbImageTPreview.src = exConfig.api + '/files/' + itemDef.custom_thumbnail + '/thumbnail'
+  }
+
+  // Build nav for to edit title, caption, credit in each language
+  const nav = document.getElementById('editPaneNav')
+  const content = document.getElementById('editPaneContent')
+  nav.innerText = ''
+  content.innerText = ''
+
+  let first = true
+  for (const code of def.language_order) {
+    // Create the tab button
+    const tabButton = document.createElement('button')
+    tabButton.classList = 'nav-link header-tab'
+    tabButton.setAttribute('id', 'editItemTab_' + code)
+    tabButton.setAttribute('data-bs-toggle', 'tab')
+    tabButton.setAttribute('data-bs-target', '#editItemContent_' + code)
+    tabButton.setAttribute('type', 'button')
+    tabButton.setAttribute('role', 'tab')
+    tabButton.innerHTML = exLang.getLanguageDisplayName(code, true)
+    nav.appendChild(tabButton)
+
+    // Create corresponding pane
+    const tabPane = document.createElement('div')
+    tabPane.classList = 'tab-pane fade'
+    tabPane.setAttribute('id', 'editItemContent_' + code)
+    tabPane.setAttribute('role', 'tabpanel')
+    tabPane.setAttribute('aria-labelledby', '#editItemTab_' + code)
+    content.appendChild(tabPane)
+
+    const row = document.createElement('div')
+    row.classList = 'row row-cols-1 gy-2 mt-2 mb-3'
+    tabPane.appendChild(row)
+
+    for (const field of ['title', 'caption', 'credit']) {
+      const col = document.createElement('div')
+      col.classList = 'col'
+      row.appendChild(col)
+
+      const label = document.createElement('label')
+      label.classList = 'form-label'
+      label.innerHTML = field.charAt(0).toUpperCase() + field.slice(1)
+      col.appendChild(label)
+
+      const commandBar = document.createElement('div')
+      col.appendChild(commandBar)
+
+      const input = document.createElement('div')
+      col.appendChild(input)
+
+      const editor = new exMarkdown.ExhibiteraMarkdownEditor({
+        content: exSetup.config.workingDefinition.languages?.[code]?.content?.[itemUUID]?.[field] ?? '',
+        editorDiv: input,
+        commandDiv: commandBar,
+        commands: ['basic'],
+        callback: (content) => {
+          exSetup.updateWorkingDefinition(['languages', code, 'content', itemUUID, field], content)
+          exSetup.previewDefinition(true)
+        }
+      })
     }
-    preview.style.display = 'block'
-    preview.src = exConfig.api + '/files/' + itemDef.custom_thumbnail + '/thumbnail'
+
+    if (first) {
+      tabButton.click()
+      first = false
+    }
   }
 
   console.log(itemDef)
+  document.getElementById('editPaneRow').style.display = 'block'
 }
 
 function rebuildLanguageElements (langOrder) {
@@ -461,14 +520,8 @@ function rebuildLanguageElements (langOrder) {
   document.getElementById('languageNav').innerHTML = ''
   document.getElementById('languageNavContent').innerHTML = ''
 
-  let first = null
-  for (const lang of langOrder) {
-    const tabButton = createLanguageTab(lang)
-    if (first == null) {
-      first = tabButton
-    }
-  }
-  if (first) first.click()
+  const currentItemUUID = document.getElementById('editPane').dataset.uuid
+  if (currentItemUUID) editItem(currentItemUUID)
 }
 
 function createLanguageTab (code) {
@@ -1003,55 +1056,59 @@ document.getElementById('loopResultsCheckbox').addEventListener('change', (event
   exSetup.previewDefinition(true)
 })
 
-document.getElementById('editItemFileSelect').addEventListener('click', () => {
+for (const id of ['editItemFileSelect', 'editItemPreviewImage', 'editItemPreviewVideo']) {
+  document.getElementById(id).addEventListener('click', () => {
   // Handle selecting the media file for the current item
 
-  const uuid = document.getElementById('editPane').dataset.uuid
-  if (!uuid || uuid === '') return
+    const uuid = document.getElementById('editPane').dataset.uuid
+    if (!uuid || uuid === '') return
 
-  exFileSelect.createFileSelectionModal({ filetypes: ['audio', 'image', 'video'], multiple: false })
-    .then((files) => {
-      if (files.length !== 1) return
-      exSetup.updateWorkingDefinition(['content', uuid, 'filename'], files[0])
-      document.getElementById('editItemFileSelect').innerText = files[0]
+    exFileSelect.createFileSelectionModal({ filetypes: ['audio', 'image', 'video'], multiple: false })
+      .then((files) => {
+        if (files.length !== 1) return
+        exSetup.updateWorkingDefinition(['content', uuid, 'filename'], files[0])
+        document.getElementById('editItemFileSelect').innerText = files[0]
 
-      const imagePreview = document.getElementById('editItemPreviewImage')
-      const videoPreview = document.getElementById('editItemPreviewVideo')
-      imagePreview.style.display = 'none'
-      videoPreview.style.display = 'none'
+        const imagePreview = document.getElementById('editItemPreviewImage')
+        const videoPreview = document.getElementById('editItemPreviewVideo')
+        imagePreview.style.display = 'none'
+        videoPreview.style.display = 'none'
 
-      const mimetype = exFiles.guessMimetype(files[0])
-      let preview
-      if (mimetype === 'video') {
-        preview = videoPreview
-      } else {
-        preview = imagePreview
-      }
-      preview.style.display = 'block'
-      preview.src = exConfig.api + '/files/' + files[0] + '/thumbnail'
+        const mimetype = exFiles.guessMimetype(files[0])
+        let preview
+        if (mimetype === 'video') {
+          preview = videoPreview
+        } else {
+          preview = imagePreview
+        }
+        preview.style.display = 'block'
+        preview.src = exConfig.api + '/files/' + files[0] + '/thumbnail'
 
-      exSetup.previewDefinition(true)
-    })
-})
+        exSetup.previewDefinition(true)
+      })
+  })
+}
 
-document.getElementById('editItemThumbnailSelect').addEventListener('click', () => {
+for (const id of ['editItemThumbnailSelect', 'editItemThumbPreviewImage']) {
+  document.getElementById(id).addEventListener('click', () => {
   // Handle setting a custom thumbnail for hte current item
 
-  const uuid = document.getElementById('editPane').dataset.uuid
-  if (!uuid || uuid === '') return
+    const uuid = document.getElementById('editPane').dataset.uuid
+    if (!uuid || uuid === '') return
 
-  exFileSelect.createFileSelectionModal({ filetypes: ['image'], multiple: false })
-    .then((files) => {
-      if (files.length !== 1) return
-      exSetup.updateWorkingDefinition(['content', uuid, 'custom_thumbnail'], files[0])
-      document.getElementById('editItemThumbnailSelect').innerText = files[0]
+    exFileSelect.createFileSelectionModal({ filetypes: ['image'], multiple: false })
+      .then((files) => {
+        if (files.length !== 1) return
+        exSetup.updateWorkingDefinition(['content', uuid, 'custom_thumbnail'], files[0])
+        document.getElementById('editItemThumbnailSelect').innerText = files[0]
 
-      const thumbImageTPreview = document.getElementById('editItemThumbPreviewImage')
-      thumbImageTPreview.style.display = 'block'
-      thumbImageTPreview.src = exConfig.api + '/files/' + files[0] + '/thumbnail'
-      exSetup.previewDefinition(true)
-    })
-})
+        const thumbImageTPreview = document.getElementById('editItemThumbPreviewImage')
+        thumbImageTPreview.style.display = 'block'
+        thumbImageTPreview.src = exConfig.api + '/files/' + files[0] + '/thumbnail'
+        exSetup.previewDefinition(true)
+      })
+  })
+}
 
 document.getElementById('editItemThumbnailDelete').addEventListener('click', () => {
   // Handle deleting a custom thumbnail from the current item.
