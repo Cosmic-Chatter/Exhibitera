@@ -320,7 +320,7 @@
         <div class="modal-dialog modal-dialog-centered mw-100 w-75">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title">Check content</h5>
+              <h5 class="modal-title">Check for missing files</h5>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body"  style="max-height: 70vh; overflow-y: auto;">
@@ -487,7 +487,7 @@
                           <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="An attractor is a fullscreen image or video that takes over when the app is idle." style="font-size: 0.55em;">?</span>
                         </label>
                         <div class="col-8 col-sm-9 col-md-8 col-lg-9 col-xxl-10 pe-0">
-                          <button id="attractorSelect" class="btn btn-outline-primary w-100">Select file</button>
+                          <button id="attractorSelect" class="btn btn-outline-primary w-100 text-break">Select file</button>
                         </div>
                         <div class="col-4 col-sm-3 col-md-4 col-lg-3 col-xxl-2">
                           <button id="attractorSelectClear" class="btn btn-danger align-self-center w-100">✕</button>
@@ -530,65 +530,77 @@
               </h2>
               <div id="content" class="accordion-collapse collapse" data-bs-parent="#topLevelAccordion">
                 <div class="accordion-body">
-                  <div class="row gy-2">
-                    <div class="row gy-2 align-items-end">
-                      <div class="col-12 col-lg-6 col-xl-4">
-                        <button id="manageContentButton" class="btn btn-primary w-100">Manage content</button>
-                      </div>
-                      <div class="col-12 col-lg-6 col-xl-4">
-                        <button id="showCheckContentButton" class="btn btn-info w-100">Check content</button>
-                      </div>
-                      
+                  <div class="row gy-2 align-items-end">
+                    <div class="col-12 col-lg-4 col-xl-3">
+                      <div id="addItemButton" class="btn btn-primary w-100">Add item</div>
                     </div>
-                    <H5>Items</H5>
-
-                    <div class="row gy-2">
-                      <div class="col-5 border-end">
-                        <div id="itemsList" class="row row-cols-1 gy-2"></div>
+                    <div class="col-8 col-md-9 col-lg-4 col-xl-3">
+                      <div id="bulkImportButton" class="btn btn-secondary w-100">Bulk import</div>
+                    </div>
+                    <div class="col-4 col-md-3 col-lg-2 col-xx-1 offset-lg-2 offset-xl-4 offset-xxl-5 col d-flex justify-content-end">
+                      <div class="dropdown">
+                        <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">⚙</button>
+                        <ul class="dropdown-menu">
+                          <li><button id="manageContentButton" class="dropdown-item">Manage content</button></li>
+                          <li><button id="showCheckContentButton" class="dropdown-item">Check for missing files</button></li>
+                        </ul>
                       </div>
-                      <div id="editPane" class="col-7">
-                        <div id="editPaneRow" class="row row-cols-1 gy-2">
-                          <div class="col">
-                            <img class="media-preview" id="editItemPreviewImage">
-                            <video class="media-preview" id="editItemPreviewVideo" autoplay loop muted disablePictureInPicture="true" webkit-playsinline="true" playsinline="true"></video>
-                            <div class="row mt-2">
-                              <div class="col-9 pe-0">
-                                <button id="editItemFileSelect" class="w-100 btn btn-outline-primary text-break">Select file</button>
-                              </div>
-                              <div class="col-3 ps-1">
-                                <div class="dropdown">
-                                  <button class="btn btn-secondary dropdown-toggle" data-bs-auto-close="outside" type="button" data-bs-toggle="dropdown" aria-expanded="false">⚙</button>
-                                  <div class="dropdown-menu p-2 text-center" style="min-width: 250px;">
-                                      <b>Custom thumbnail</b>
-                                    <img class="media-preview mt-2" id="editItemThumbPreviewImage">
-                                    <div class="row mt-2">
-                                      <div class="col-9 pe-0">
-                                        <button id="editItemThumbnailSelect" class="w-100 btn btn-outline-primary text-break">Select file</button>
-                                      </div>
-                                      <div class="col-3 ps-1">
-                                        <button id="editItemThumbnailDelete" class="w-100 btn btn-danger px-0">✕</button>
-                                      </div>
-                                    </div>                                    
-                                  </div>
+                    </div>
+                  </div>
+                  <div class="h5 mt-3">Items</div>
+                  <div class="row gy-2">
+                    <div class="col-5 border-end">
+                      <div id="itemsList" class="row row-cols-1 gy-2"></div>
+                    </div>
+                    <div id="editPane" class="col-7">
+                      <div id="editPaneRow" class="row row-cols-1 gy-2">
+                        <div class="col mt-0">
+                          <div class="row gy-2 gx-1">
+                            <div class="col-3">
+                              <button id="editPaneUpButton" class="btn btn-info btn-sm w-100">▲</button>
+                            </div>
+                            <div class="col-3">
+                              <button id="editPaneDownButton" class="btn btn-info btn-sm w-100">▼</button>
+                            </div>
+                            <div class="col-3 offset-3">
+                              <button id="editPaneDeleteButton" class="btn btn-danger btn-sm w-100">Delete</button>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="col">
+                          <img class="media-preview" id="editItemPreviewImage">
+                          <video class="media-preview" id="editItemPreviewVideo" autoplay loop muted disablePictureInPicture="true" webkit-playsinline="true" playsinline="true"></video>
+                          <div class="row mt-2">
+                            <div class="col-9 pe-0">
+                              <button id="editItemFileSelect" class="w-100 btn btn-outline-primary text-break">Select file</button>
+                            </div>
+                            <div class="col-3 ps-1">
+                              <div class="dropdown">
+                                <button class="btn btn-secondary dropdown-toggle" data-bs-auto-close="outside" type="button" data-bs-toggle="dropdown" aria-expanded="false">⚙</button>
+                                <div class="dropdown-menu p-2 text-center" style="min-width: 250px;">
+                                    <b>Custom thumbnail</b>
+                                  <img class="media-preview mt-2" id="editItemThumbPreviewImage">
+                                  <div class="row mt-2">
+                                    <div class="col-9 pe-0">
+                                      <button id="editItemThumbnailSelect" class="w-100 btn btn-outline-primary text-break">Select file</button>
+                                    </div>
+                                    <div class="col-3 ps-1">
+                                      <button id="editItemThumbnailDelete" class="w-100 btn btn-danger px-0">✕</button>
+                                    </div>
+                                  </div>                                    
                                 </div>
                               </div>
                             </div>
                           </div>
-                          <div class="col">
-                            <nav  class="mt-3">
-                              <div id="editPaneNav" class="nav nav-tabs" role="tablist"></div>
-                            </nav>
-                            <div class="tab-content" id="editPaneContent"></div>
-                          </div>
+                        </div>
+                        <div class="col">
+                          <nav  class="mt-3">
+                            <div id="editPaneNav" class="nav nav-tabs" role="tablist"></div>
+                          </nav>
+                          <div class="tab-content" id="editPaneContent"></div>
                         </div>
                       </div>
-                    </div>
-
-                    <nav>
-                      <div id="languageNav" class="nav nav-tabs" role="tablist">
-                      </div>
-                    </nav>
-                    <div class="tab-content border-bottom" id="languageNavContent">
                     </div>
                   </div>
                 </div>

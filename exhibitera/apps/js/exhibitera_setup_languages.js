@@ -246,6 +246,10 @@ export function createLanguagePicker (parent, callbacks = {}) {
     languageEnglishNameInputCol.style.display = 'none'
     warningCol.style.display = 'none'
   })
+
+  // Activate tooltips
+  const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+  const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
 }
 
 export function clearLanguagePicker (el) {

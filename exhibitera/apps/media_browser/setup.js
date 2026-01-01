@@ -263,7 +263,6 @@ async function clearDefinitionInput (full = true) {
 
   // Definition details
   document.getElementById('definitionNameInput').value = ''
-  document.getElementById('languageNav').innerHTML = ''
   document.getElementById('missingContentWarningField').innerHTML = ''
 
   // Reset layout options
@@ -393,7 +392,7 @@ function rebuildItemList () {
     col.classList = 'col'
 
     const button = document.createElement('button')
-    button.classList = 'btn btn-info w-100'
+    button.classList = 'btn btn-info w-100 text-break'
     button.addEventListener('click', () => {
       editItem(uuid)
     })
@@ -504,141 +503,145 @@ function editItem (itemUUID) {
       })
     }
 
+    const filterHeader = document.createElement('div')
+    filterHeader.classList = 'col fs-4'
+    filterHeader.innerText = 'Filters'
+    row.appendChild(filterHeader)
+
+    // Add any filters
+    for (const filterUUID of def.languages[code].filter_order) {
+      const existing = itemDef?.filter_data?.[filterUUID]
+
+      // Ensure the filter entry exists
+      if (!existing) {
+        itemDef.filter_data[filterUUID] = {
+          uuid: filterUUID,
+          value: ''
+        }
+      }
+
+      const col = document.createElement('div')
+      col.classList = 'col'
+
+      const label = document.createElement('label')
+      label.className = 'form-label'
+      label.textContent = def.languages[code].filters[filterUUID]?.display_name ?? filterUUID
+      col.appendChild(label)
+
+      const input = document.createElement('input')
+      input.type = 'text'
+      input.className = 'form-control'
+      input.value = itemDef.filter_data[filterUUID].value
+      input.addEventListener('change', () => {
+        exSetup.updateWorkingDefinition(['content', itemDef.uuid, 'filter_data', filterUUID, 'value'], input.value)
+        exSetup.previewDefinition(true)
+      })
+      col.appendChild(input)
+      row.appendChild(col)
+    }
+
     if (first) {
       tabButton.click()
       first = false
     }
   }
 
-  console.log(itemDef)
-  document.getElementById('editPaneRow').style.display = 'block'
+  const editPaneRow = document.getElementById('editPaneRow')
+  editPaneRow.style.display = 'block'
+  editPaneRow.scrollTop = 0
+}
+
+function buildFilterEditorTabs (itemDef, lang) {
+  // Build GUI for editing any existing filters
+
+  const def = exSetup.config.workingDefinition
+
+  const col = document.createElement('div')
+  col.classList = 'col'
+
+  const nav = document.createElement('ul')
+  nav.className = 'nav nav-tabs'
+  nav.role = 'tablist'
+
+  const tabContent = document.createElement('div')
+  tabContent.className = 'tab-content border border-top-0 p-3'
+
+  def.language_order.forEach((lang, index) => {
+    const langDef = def.languages[lang]
+    if (!langDef || !Array.isArray(langDef.filter_order)) return
+
+    const tabId = `filters-${lang}`
+
+    /* ---------- TAB BUTTON ---------- */
+
+    const navItem = document.createElement('li')
+    navItem.className = 'nav-item'
+
+    const navBtn = document.createElement('button')
+    navBtn.className = `nav-link ${index === 0 ? 'active' : ''}`
+    navBtn.type = 'button'
+    navBtn.role = 'tab'
+    navBtn.dataset.bsToggle = 'tab'
+    navBtn.dataset.bsTarget = `#${tabId}`
+    navBtn.textContent = lang.toUpperCase()
+
+    navItem.appendChild(navBtn)
+    nav.appendChild(navItem)
+
+    /* ---------- TAB PANEL ---------- */
+
+    const pane = document.createElement('div')
+    pane.className = `tab-pane fade ${index === 0 ? 'show active' : ''}`
+    pane.id = tabId
+    pane.role = 'tabpanel'
+
+    langDef.filter_order.forEach(filterUUID => {
+      const existing = itemDef.filter_data[filterUUID]
+
+      // Ensure the filter entry exists
+      if (!existing) {
+        itemDef.filter_data[filterUUID] = {
+          uuid: filterUUID,
+          value: ''
+        }
+      }
+
+      const formGroup = document.createElement('div')
+      formGroup.className = 'mb-3'
+
+      const label = document.createElement('label')
+      label.className = 'form-label small text-muted'
+      console.log(def.languages[def.language_order[0]].filters[filterUUID])
+      label.textContent = def.languages[def.language_order[0]].filters[filterUUID]?.display_name ?? filterUUID
+
+      const input = document.createElement('input')
+      input.type = 'text'
+      input.className = 'form-control'
+      input.value = itemDef.filter_data[filterUUID].value
+
+      input.addEventListener('input', e => {
+        itemDef.filter_data[filterUUID].value = e.target.value
+      })
+
+      formGroup.appendChild(label)
+      formGroup.appendChild(input)
+      pane.appendChild(formGroup)
+    })
+
+    tabContent.appendChild(pane)
+  })
+
+  col.appendChild(nav)
+  col.appendChild(tabContent)
+
+  return col
 }
 
 function rebuildLanguageElements (langOrder) {
   // Clear and rebuild GUI elements when the languages have been modified
 
-  document.getElementById('languageNav').innerHTML = ''
-  document.getElementById('languageNavContent').innerHTML = ''
-
   const currentItemUUID = document.getElementById('editPane').dataset.uuid
   if (currentItemUUID) editItem(currentItemUUID)
-}
-
-function createLanguageTab (code) {
-  // Create a new language tab for the given details.
-  // first = true means this is the first tab to be built on this cycle, so show it.
-
-  const workingDefinition = exSetup.config.workingDefinition
-
-  // Create the tab button
-  const tabButton = document.createElement('button')
-  tabButton.classList = 'nav-link language-tab'
-  tabButton.setAttribute('id', 'languageTab_' + code)
-  tabButton.setAttribute('data-bs-toggle', 'tab')
-  tabButton.setAttribute('data-bs-target', '#languagePane_' + code)
-  tabButton.setAttribute('type', 'button')
-  tabButton.setAttribute('role', 'tab')
-  tabButton.innerHTML = exLang.getLanguageDisplayName(code, true)
-  document.getElementById('languageNav').appendChild(tabButton)
-
-  // Create corresponding pane
-  const tabPane = document.createElement('div')
-  tabPane.classList = 'tab-pane fade'
-  tabPane.setAttribute('id', 'languagePane_' + code)
-  tabPane.setAttribute('role', 'tabpanel')
-  tabPane.setAttribute('aria-labelledby', 'languageTab_' + code)
-  document.getElementById('languageNavContent').appendChild(tabPane)
-
-  const row = document.createElement('div')
-  row.classList = 'row gy-2 mt-2 mb-3'
-  tabPane.appendChild(row)
-
-  // Create the various inputs
-  Object.keys(inputFields).forEach((key) => {
-    const langKey = key + '_' + code
-    const col = document.createElement('div')
-    col.classList = 'col-12 col-md-6'
-    row.appendChild(col)
-
-    const label = document.createElement('label')
-    label.classList = 'form-label'
-    label.setAttribute('for', langKey)
-    label.innerHTML = inputFields[key].name
-
-    if ('hint' in inputFields[key]) {
-      label.innerHTML += ' ' + `<span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="${inputFields[key].hint}" style="font-size: 0.55em;">?</span>`
-    }
-
-    if ('tooltip' in inputFields[key]) {
-      const tooltip = '\n<span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="' + inputFields[key].tooltip + '" style="font-size: 0.55em;">?</span>'
-      label.innerHTML += tooltip
-    }
-    col.appendChild(label)
-
-    let input
-
-    if (inputFields[key].kind === 'select') {
-      input = document.createElement('select')
-      input.classList = 'form-select'
-      if ('multiple' in inputFields[key] && inputFields[key].multiple === true) {
-        input.setAttribute('multiple', true)
-      }
-    } else if (inputFields[key].kind === 'input') {
-      input = document.createElement('input')
-      input.setAttribute('type', inputFields[key].type)
-      input.classList = 'form-control'
-    }
-    input.setAttribute('id', langKey)
-    input.addEventListener('change', function () {
-      let value = this.value
-      if (typeof value === 'string') value = value.trim()
-      exSetup.updateWorkingDefinition(['languages', code, inputFields[key].property], value)
-      exSetup.previewDefinition(true)
-    })
-    col.appendChild(input)
-  })
-
-  // Create the filter options
-  const filterCol = document.createElement('div')
-  filterCol.classList = 'col-12 mt-2'
-  row.appendChild(filterCol)
-
-  const filterHeader = document.createElement('H5')
-  filterHeader.innerHTML = 'Filter options'
-  filterCol.appendChild(filterHeader)
-
-  const filterLabel = document.createElement('div')
-  filterLabel.classList = 'fst-italic'
-  filterLabel.innerHTML = 'Filters let the user sort the entries based on groupings such as decade, artist, etc.'
-  filterCol.appendChild(filterLabel)
-
-  const addFilterbutton = document.createElement('button')
-  addFilterbutton.classList = 'btn btn-primary mt-2'
-  addFilterbutton.innerHTML = 'Add filter column'
-  addFilterbutton.addEventListener('click', () => {
-    addFilter(code)
-  })
-  filterCol.appendChild(addFilterbutton)
-
-  const filterEntriesRow = document.createElement('div')
-  filterEntriesRow.classList = 'row mt-2 gy-2 row-cols-1 row-cols-md-2'
-  filterEntriesRow.setAttribute('id', 'filterEntriesRow_' + code)
-  filterCol.appendChild(filterEntriesRow)
-
-  // Create any existing filter entries
-  if ('filter_order' in workingDefinition.languages[code]) {
-    for (const uuid of workingDefinition.languages[code].filter_order) {
-      addFilter(code, workingDefinition.languages[code].filters[uuid], false)
-    }
-  }
-
-  // Activate tooltips
-  const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-  tooltipTriggerList.map(function (tooltipTriggerEl) {
-    return new bootstrap.Tooltip(tooltipTriggerEl)
-  })
-
-  return tabButton
 }
 
 function addFilter (lang, details = {}, addition = true) {

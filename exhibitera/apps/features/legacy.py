@@ -167,9 +167,6 @@ def update_media_browser_definition_format():
                 , "6.0.0"):
             continue
 
-        print(file)
-        print('---------')
-
         spread_name = definition.get("spreadsheet", "")
         if spread_name == "":
             _delete_definition(file)
@@ -184,8 +181,8 @@ def update_media_browser_definition_format():
 
         languages = definition["languages"]
         language_order = definition["language_order"]
-        media_key = definition["languages"][language_order[0]]["media_key"]
-        thumb_key = definition["languages"][language_order[0]]["thumbnail_key"]
+        media_key = definition["languages"][language_order[0]].get("media_key", "")
+        thumb_key = definition["languages"][language_order[0]].get("thumbnail_key", "")
 
         # Add a content dictionary to each language
         for lang in language_order:
