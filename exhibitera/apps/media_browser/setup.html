@@ -525,7 +525,7 @@
               <h2 class="accordion-header">
                 <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#content" aria-expanded="false" aria-controls="content">
                   Content
-                  <div class="accordion-detail">Utilize your spreadsheet and set up langauge options.</div>
+                  <div class="accordion-detail">Create, edit, and sort items.</div>
                 </button>
               </h2>
               <div id="content" class="accordion-collapse collapse" data-bs-parent="#topLevelAccordion">
@@ -537,7 +537,7 @@
                     <div class="col-8 col-md-9 col-lg-4 col-xl-3">
                       <div id="bulkImportButton" class="btn btn-secondary w-100">Bulk import</div>
                     </div>
-                    <div class="col-4 col-md-3 col-lg-2 col-xx-1 offset-lg-2 offset-xl-4 offset-xxl-5 col d-flex justify-content-end">
+                    <div class="col-4 col-md-3 col-lg-2 col-xxl-1 offset-lg-2 offset-xl-4 offset-xxl-5 col d-flex justify-content-end">
                       <div class="dropdown">
                         <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">⚙</button>
                         <ul class="dropdown-menu">
@@ -601,6 +601,31 @@
                           <div class="tab-content" id="editPaneContent"></div>
                         </div>
                       </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#filters" aria-expanded="false" aria-controls="appearance">
+                  Filters
+                  <div class="accordion-detail">Create and manage filters to aid in browsing.</div>
+                </button>
+              </h2>
+              <div id="filters" class="accordion-collapse collapse" data-bs-parent="#topLevelAccordion">
+                <div class="accordion-body">
+                  <div class="row gy-2">
+                    <div class="col-12 fst-italic">
+                      Filters help guests find related items, such as paintings by the same artist or photos from the same decade.
+                    </div>
+                    <div class="col-12">
+                      <nav  class="mt-3">
+                        <div id="defineFiltersNav" class="nav nav-tabs" role="tablist"></div>
+                      </nav>
+                      <div class="tab-content" id="defineFiltersContent"></div>
                     </div>
                   </div>
                 </div>

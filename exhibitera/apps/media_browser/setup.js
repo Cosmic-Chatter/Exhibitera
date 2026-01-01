@@ -503,12 +503,19 @@ function editItem (itemUUID) {
       })
     }
 
+    // Add any filters
     const filterHeader = document.createElement('div')
     filterHeader.classList = 'col fs-4'
-    filterHeader.innerText = 'Filters'
+    filterHeader.innerText = 'Filter data'
     row.appendChild(filterHeader)
 
-    // Add any filters
+    if (def.languages[code].filter_order.length > 0) {
+      const col = document.createElement('div')
+      col.classList = 'col fst-italic'
+      col.innerText = 'Use the Filters section to define filters for this language.'
+      row.appendChild(col)
+    }
+
     for (const filterUUID of def.languages[code].filter_order) {
       const existing = itemDef?.filter_data?.[filterUUID]
 
@@ -551,26 +558,21 @@ function editItem (itemUUID) {
   editPaneRow.scrollTop = 0
 }
 
-function buildFilterEditorTabs (itemDef, lang) {
-  // Build GUI for editing any existing filters
+function rebuildFilterInterface () {
+  // Build the accordion tab for managing filters
+
+  const nav = document.getElementById('defineFiltersNav')
+  const content = document.getElementById('defineFiltersContent')
+  nav.innerText = ''
+  content.innerText = ''
 
   const def = exSetup.config.workingDefinition
-
-  const col = document.createElement('div')
-  col.classList = 'col'
-
-  const nav = document.createElement('ul')
-  nav.className = 'nav nav-tabs'
-  nav.role = 'tablist'
-
-  const tabContent = document.createElement('div')
-  tabContent.className = 'tab-content border border-top-0 p-3'
 
   def.language_order.forEach((lang, index) => {
     const langDef = def.languages[lang]
     if (!langDef || !Array.isArray(langDef.filter_order)) return
 
-    const tabId = `filters-${lang}`
+    const tabId = `defineFilters-${lang}`
 
     /* ---------- TAB BUTTON ---------- */
 
@@ -583,7 +585,7 @@ function buildFilterEditorTabs (itemDef, lang) {
     navBtn.role = 'tab'
     navBtn.dataset.bsToggle = 'tab'
     navBtn.dataset.bsTarget = `#${tabId}`
-    navBtn.textContent = lang.toUpperCase()
+    navBtn.textContent = exLang.getLanguageDisplayName(lang, true)
 
     navItem.appendChild(navBtn)
     nav.appendChild(navItem)
@@ -595,46 +597,56 @@ function buildFilterEditorTabs (itemDef, lang) {
     pane.id = tabId
     pane.role = 'tabpanel'
 
-    langDef.filter_order.forEach(filterUUID => {
-      const existing = itemDef.filter_data[filterUUID]
+    const row = document.createElement('div')
+    row.classList = 'row gy-2 mt-2'
+    pane.appendChild(row)
 
-      // Ensure the filter entry exists
-      if (!existing) {
-        itemDef.filter_data[filterUUID] = {
-          uuid: filterUUID,
-          value: ''
-        }
-      }
+    const addCol = document.createElement('div')
+    addCol.classList = 'col-4'
+    row.appendChild(addCol)
 
-      const formGroup = document.createElement('div')
-      formGroup.className = 'mb-3'
+    const addButton = document.createElement('button')
+    addButton.classList = 'btn btn-primary w-100'
+    addButton.innerText = 'Add filter'
+    addCol.appendChild(addButton)
 
-      const label = document.createElement('label')
-      label.className = 'form-label small text-muted'
-      console.log(def.languages[def.language_order[0]].filters[filterUUID])
-      label.textContent = def.languages[def.language_order[0]].filters[filterUUID]?.display_name ?? filterUUID
+    for (const filterUUID of langDef.filter_order) {
+      const filter = langDef.filters?.[filterUUID] ?? { display_name: '', uuid: filterUUID }
+
+      const col = document.createElement('div')
+      col.classList = 'col-12'
+      row.appendChild(col)
+
+      const card = document.createElement('div')
+      card.classList = 'card'
+      col.appendChild(card)
+
+      const cardBody = document.createElement('div')
+      cardBody.classList = 'card-body'
+      card.appendChild(cardBody)
+
+      const cardRow = document.createElement('div')
+      cardRow.classList = 'row gy-2'
+      cardBody.appendChild(cardRow)
+
+      const inputCol = document.createElement('div')
+      inputCol.classList = 'col-6'
+      cardRow.appendChild(inputCol)
 
       const input = document.createElement('input')
       input.type = 'text'
       input.className = 'form-control'
-      input.value = itemDef.filter_data[filterUUID].value
+      input.value = filter.display_name
+      inputCol.appendChild(input)
 
       input.addEventListener('input', e => {
-        itemDef.filter_data[filterUUID].value = e.target.value
+        exSetup.updateWorkingDefinition(['languages', lang, 'filters', filterUUID, 'display_name'], input.value)
+        exSetup.previewDefinition(true)
       })
+    }
 
-      formGroup.appendChild(label)
-      formGroup.appendChild(input)
-      pane.appendChild(formGroup)
-    })
-
-    tabContent.appendChild(pane)
+    content.appendChild(pane)
   })
-
-  col.appendChild(nav)
-  col.appendChild(tabContent)
-
-  return col
 }
 
 function rebuildLanguageElements (langOrder) {
@@ -642,6 +654,8 @@ function rebuildLanguageElements (langOrder) {
 
   const currentItemUUID = document.getElementById('editPane').dataset.uuid
   if (currentItemUUID) editItem(currentItemUUID)
+
+  rebuildFilterInterface()
 }
 
 function addFilter (lang, details = {}, addition = true) {
