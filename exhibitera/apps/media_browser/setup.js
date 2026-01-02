@@ -250,6 +250,7 @@ async function clearDefinitionInput (full = true) {
   exLang.clearLanguagePicker(document.getElementById('language-picker'))
   exLang.createLanguagePicker(document.getElementById('language-picker'), {
     onLanguageAdd: addLanguage,
+    beforeLanguageDelete: deleteLanguage,
     onLanguageRebuild: rebuildLanguageElements
   })
 
@@ -362,6 +363,7 @@ function editDefinition (uuid = '') {
   exLang.createLanguagePicker(langSelect,
     {
       onLanguageAdd: addLanguage,
+      beforeLanguageDelete: deleteLanguage,
       onLanguageRebuild: rebuildLanguageElements
     }
   )
@@ -388,6 +390,18 @@ function addLanguage (code, displayName, englishName) {
     }
   }
   exSetup.updateWorkingDefinition(['languages', code, 'content'], content)
+}
+
+function deleteLanguage (code) {
+  // Clean up when a language is deleted
+
+  const def = exSetup.config.workingDefinition
+
+  for (const filterUUID of def.languages[code].filter_order) {
+    for (const contentUUID of def.content_order) {
+      delete def.content?.[contentUUID]?.filter_data?.[filterUUID]
+    }
+  }
 }
 
 function rebuildItemList () {
@@ -1242,6 +1256,7 @@ Array.from(document.querySelectorAll('.text-size-slider')).forEach((el) => {
 // Populate available languages
 exLang.createLanguagePicker(document.getElementById('language-picker'), {
   onLanguageAdd: addLanguage,
+  beforeLanguageDelete: deleteLanguage,
   onLanguageRebuild: rebuildLanguageElements
 })
 

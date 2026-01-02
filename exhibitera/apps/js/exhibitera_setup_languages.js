@@ -78,10 +78,11 @@ export function createLanguagePicker (parent, callbacks = {}) {
 
   // callbacks is an object with the following fields:
   // callbacks = {
-  //              onLanguageAdd:     function(code, displayName, englishName),
-  //              onLanguageDelete:  function(languageOrder),
-  //              onLanguageReorder: function(languageOrder),
-  //              onLanguageRebuild: function(languageOrder),
+  //              beforeLanguageDelete: function(code)
+  //              onLanguageAdd:        function(code, displayName, englishName),
+  //              onLanguageDelete:     function(languageOrder, deletedCode),
+  //              onLanguageReorder:    function(languageOrder),
+  //              onLanguageRebuild:    function(languageOrder),
   //             }
 
   const workingDefinition = exSetup.config.workingDefinition
@@ -404,6 +405,8 @@ function deleteLanguage (languageList, code, callbacks = {}) {
   // Callback should take one parameter, language_order
 
   const workingDefinition = exSetup.config.workingDefinition
+
+  if (callbacks.beforeLanguageDelete) callbacks.beforeLanguageDelete(code)
 
   delete workingDefinition.languages[code]
   workingDefinition.language_order = workingDefinition.language_order.filter(lang => lang !== code)
