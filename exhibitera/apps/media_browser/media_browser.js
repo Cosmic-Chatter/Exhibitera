@@ -271,7 +271,7 @@ function _populateResultsRow (currentKey) {
 
       selectedValue = filter.value // Can only select one for now
       if (selectedValue != null && selectedValue !== '') {
-        if (item?.filter_data?.[filterUUID].value === selectedValue) {
+        if (item?.filter_data?.[filterUUID]?.value === selectedValue) {
           filterMathces[filterUUID] = 1
         }
       } else {

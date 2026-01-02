@@ -233,9 +233,7 @@ export function createLanguagePicker (parent, callbacks = {}) {
     }
 
     addLanguage(languageList, code, displayName, displayNameEn, callbacks)
-    if (callbacks.onLanguageAdd) {
-      callbacks.onLanguageAdd(code, displayName, displayNameEn)
-    }
+
     // Reset fields
     languageSelect.value = 'en-gb'
     languageCodeInput.value = ''
@@ -396,8 +394,8 @@ function addLanguage (languageList, code, displayName, englishName, callbacks) {
   definition.language_order.push(code)
 
   createLanguageHTML(languageList, code, displayName, englishName, definition.language_order.length === 1, callbacks)
-  rebuildLanguageList(languageList, callbacks)
   if (callbacks.onLanguageAdd) callbacks.onLanguageAdd(code, displayName, englishName)
+  rebuildLanguageList(languageList, callbacks)
   exSetup.previewDefinition(true)
 }
 

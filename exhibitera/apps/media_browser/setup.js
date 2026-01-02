@@ -248,7 +248,10 @@ async function clearDefinitionInput (full = true) {
 
   // Language
   exLang.clearLanguagePicker(document.getElementById('language-picker'))
-  exLang.createLanguagePicker(document.getElementById('language-picker'), { onLanguageRebuild: rebuildLanguageElements })
+  exLang.createLanguagePicker(document.getElementById('language-picker'), {
+    onLanguageAdd: addLanguage,
+    onLanguageRebuild: rebuildLanguageElements
+  })
 
   rebuildLanguageElements([])
 
@@ -358,6 +361,7 @@ function editDefinition (uuid = '') {
   const langSelect = document.getElementById('language-picker')
   exLang.createLanguagePicker(langSelect,
     {
+      onLanguageAdd: addLanguage,
       onLanguageRebuild: rebuildLanguageElements
     }
   )
@@ -366,6 +370,24 @@ function editDefinition (uuid = '') {
 
   // Configure the preview frame
   document.getElementById('previewFrame').src = 'index.html?standalone=true&definition=' + def.uuid
+}
+
+function addLanguage (code, displayName, englishName) {
+  // Set up the definition for a new langauge
+
+  exSetup.updateWorkingDefinition(['languages', code, 'filter_order'], [])
+  exSetup.updateWorkingDefinition(['languages', code, 'filters'], {})
+
+  const content = {}
+  for (const uuid of exSetup.config.workingDefinition.content_order) {
+    content[uuid] = {
+      caption: '',
+      credit: '',
+      title: '',
+      uuid
+    }
+  }
+  exSetup.updateWorkingDefinition(['languages', code, 'content'], content)
 }
 
 function rebuildItemList () {
@@ -509,7 +531,7 @@ function editItem (itemUUID) {
     filterHeader.innerText = 'Filter data'
     row.appendChild(filterHeader)
 
-    if (def.languages[code].filter_order.length > 0) {
+    if (def.languages[code].filter_order.length === 0) {
       const col = document.createElement('div')
       col.classList = 'col fst-italic'
       col.innerText = 'Use the Filters section to define filters for this language.'
@@ -569,12 +591,7 @@ function rebuildFilterInterface () {
   const def = exSetup.config.workingDefinition
 
   def.language_order.forEach((lang, index) => {
-    const langDef = def.languages[lang]
-    if (!langDef || !Array.isArray(langDef.filter_order)) return
-
     const tabId = `defineFilters-${lang}`
-
-    /* ---------- TAB BUTTON ---------- */
 
     const navItem = document.createElement('li')
     navItem.className = 'nav-item'
@@ -590,63 +607,132 @@ function rebuildFilterInterface () {
     navItem.appendChild(navBtn)
     nav.appendChild(navItem)
 
-    /* ---------- TAB PANEL ---------- */
-
     const pane = document.createElement('div')
     pane.className = `tab-pane fade ${index === 0 ? 'show active' : ''}`
     pane.id = tabId
     pane.role = 'tabpanel'
-
-    const row = document.createElement('div')
-    row.classList = 'row gy-2 mt-2'
-    pane.appendChild(row)
-
-    const addCol = document.createElement('div')
-    addCol.classList = 'col-4'
-    row.appendChild(addCol)
-
-    const addButton = document.createElement('button')
-    addButton.classList = 'btn btn-primary w-100'
-    addButton.innerText = 'Add filter'
-    addCol.appendChild(addButton)
-
-    for (const filterUUID of langDef.filter_order) {
-      const filter = langDef.filters?.[filterUUID] ?? { display_name: '', uuid: filterUUID }
-
-      const col = document.createElement('div')
-      col.classList = 'col-12'
-      row.appendChild(col)
-
-      const card = document.createElement('div')
-      card.classList = 'card'
-      col.appendChild(card)
-
-      const cardBody = document.createElement('div')
-      cardBody.classList = 'card-body'
-      card.appendChild(cardBody)
-
-      const cardRow = document.createElement('div')
-      cardRow.classList = 'row gy-2'
-      cardBody.appendChild(cardRow)
-
-      const inputCol = document.createElement('div')
-      inputCol.classList = 'col-6'
-      cardRow.appendChild(inputCol)
-
-      const input = document.createElement('input')
-      input.type = 'text'
-      input.className = 'form-control'
-      input.value = filter.display_name
-      inputCol.appendChild(input)
-
-      input.addEventListener('input', e => {
-        exSetup.updateWorkingDefinition(['languages', lang, 'filters', filterUUID, 'display_name'], input.value)
-        exSetup.previewDefinition(true)
-      })
-    }
-
     content.appendChild(pane)
+
+    _rebuildFilterInterface(lang)
   })
+}
+
+function _rebuildFilterInterface (lang) {
+  // Build out the filter GUI for one language
+
+  const langDef = exSetup.config.workingDefinition.languages[lang]
+  const pane = document.getElementById(`defineFilters-${lang}`)
+  pane.innerText = ''
+
+  const row = document.createElement('div')
+  row.classList = 'row gy-2 mt-2'
+  pane.appendChild(row)
+
+  const addCol = document.createElement('div')
+  addCol.classList = 'col-6 col-lg-4 col-xl-3 col-xxl-2'
+  row.appendChild(addCol)
+
+  const addButton = document.createElement('button')
+  addButton.classList = 'btn btn-primary w-100'
+  addButton.innerText = 'Add filter'
+  addButton.addEventListener('click', () => {
+    addFilter(lang)
+    _rebuildFilterInterface(lang)
+  })
+  addCol.appendChild(addButton)
+
+  // Build a card for each filter
+  for (const filterUUID of langDef?.filter_order ?? []) {
+    const filter = langDef.filters?.[filterUUID] ?? { display_name: '', uuid: filterUUID }
+
+    const col = document.createElement('div')
+    col.classList = 'col-12'
+    row.appendChild(col)
+
+    const card = document.createElement('div')
+    card.classList = 'card'
+    col.appendChild(card)
+
+    const cardBody = document.createElement('div')
+    cardBody.classList = 'card-body'
+    card.appendChild(cardBody)
+
+    const cardRow = document.createElement('div')
+    cardRow.classList = 'row gy-2'
+    cardBody.appendChild(cardRow)
+
+    const inputCol = document.createElement('div')
+    inputCol.classList = 'col-12 col-md-6 col-xl-9 '
+    cardRow.appendChild(inputCol)
+
+    const input = document.createElement('input')
+    input.type = 'text'
+    input.className = 'form-control'
+    input.value = filter.display_name
+    inputCol.appendChild(input)
+
+    input.addEventListener('change', e => {
+      exSetup.updateWorkingDefinition(['languages', lang, 'filters', filterUUID, 'display_name'], input.value)
+      exSetup.previewDefinition(true)
+    })
+
+    const upCol = document.createElement('div')
+    upCol.classList = 'col-4 col-md-2 col-xl-1 pe-1 d-flex align-items-center'
+    cardRow.appendChild(upCol)
+
+    const upButton = document.createElement('button')
+    upButton.classList = 'btn btn-info w-100 btn-sm'
+    upButton.innerText = '▲'
+    upButton.addEventListener('click', () => {
+      moveFilterInLanguage(lang, filterUUID, -1)
+      _rebuildFilterInterface(lang)
+    })
+    upCol.appendChild(upButton)
+
+    const downCol = document.createElement('div')
+    downCol.classList = 'col-4 col-md-2 col-xl-1 ps-1 d-flex align-items-center'
+    cardRow.appendChild(downCol)
+
+    const downButton = document.createElement('button')
+    downButton.classList = 'btn btn-info w-100 btn-sm'
+    downButton.innerText = '▼'
+    downButton.addEventListener('click', () => {
+      moveFilterInLanguage(lang, filterUUID, 1)
+      _rebuildFilterInterface(lang)
+    })
+    downCol.appendChild(downButton)
+
+    const deleteCol = document.createElement('div')
+    deleteCol.classList = 'col-4 col-md-2 col-xl-1 ps-1 pe-md-1 ps-md-1 d-flex align-items-center'
+    cardRow.appendChild(deleteCol)
+
+    const deleteButton = document.createElement('button')
+    deleteButton.classList = 'btn btn-danger w-100 btn-sm'
+    deleteButton.innerText = '✕'
+    deleteButton.addEventListener('click', () => {
+      deleteFilter(lang, filterUUID)
+      _rebuildFilterInterface(lang)
+      console.log(exSetup.config.workingDefinition)
+    })
+    deleteCol.appendChild(deleteButton)
+  }
+}
+
+function moveFilterInLanguage (lang, filterUUID, direction) {
+  const order = exSetup.config.workingDefinition.languages?.[lang]?.filter_order
+
+  const index = order.indexOf(filterUUID)
+  if (index === -1) return false
+
+  const target = index + direction
+  if (target < 0 || target >= order.length) return false
+
+  order.splice(index, 1)
+  order.splice(target, 0, filterUUID)
+
+  console.log(order)
+  exSetup.previewDefinition(true)
+  return true
 }
 
 function rebuildLanguageElements (langOrder) {
@@ -658,89 +744,35 @@ function rebuildLanguageElements (langOrder) {
   rebuildFilterInterface()
 }
 
-function addFilter (lang, details = {}, addition = true) {
+function addFilter (lang) {
   // Add a new filter element to the current language
 
-  const workingDefinition = exSetup.config.workingDefinition
+  const def = exSetup.config.workingDefinition
 
-  if (('uuid' in details) === false) details.uuid = exUtilities.uuid()
-  if (('display_name' in details) === false) details.display_name = ''
-  if (('key' in details) === false) details.key = ''
-
-  if (addition === true) {
-    exSetup.updateWorkingDefinition(['languages', lang, 'filters', details.uuid], details)
-    let filterOrder = []
-    if ('filter_order' in workingDefinition.languages[lang]) filterOrder = workingDefinition.languages[lang].filter_order
-    filterOrder.push(details.uuid)
-    exSetup.updateWorkingDefinition(['languages', lang, 'filter_order'], filterOrder)
-  }
-
-  const col = document.createElement('div')
-  col.classList = 'col'
-  document.getElementById('filterEntriesRow_' + lang).appendChild(col)
-
-  const html = `
-  <div class='col'>
-    <div class='border rounded px-2 py-2'>
-      <label class='form-label'>
-        Display name
-      </label>
-      <input id='filterName_${details.uuid}' type='text' class='form-control' data-uuid='${details.uuid}' value='${details.display_name}'>
-      <label class='filter-name form-label mt-2'>
-        Column
-      </label>
-      <select id='filterSelect_${details.uuid}' class='filter-select form-select' data-uuid='${details.uuid}' value='${details.key}'></select>
-      <div class='row mt-2'>
-        <div class='col-12 col-lg-6'>
-          <button id='filterDeleteButton_${details.uuid}' class='btn btn-danger w-100'>Delete</button>
-        </div>
-        <div class='col-6 col-lg-3 pe-1 mt-2 mt-lg-0'>
-          <button id='filterLeftButton_${details.uuid}' class='btn btn-info w-100'><</button>
-        </div>
-        <div id='filterRightButton_${details.uuid}' class='col-6 col-lg-3 ps-1 mt-2 mt-lg-0'>
-          <button class='btn btn-info w-100'>></button>
-        </div>
-      </div>
-    </div>
-  </div>
-  `
-  col.innerHTML = html
-
-  document.getElementById('filterName_' + details.uuid).addEventListener('change', () => {
-    onFilterValueChange(lang, details.uuid)
-    exSetup.previewDefinition(true)
-  })
-  document.getElementById('filterSelect_' + details.uuid).addEventListener('change', () => {
-    onFilterValueChange(lang, details.uuid)
-    exSetup.previewDefinition(true)
-  })
-  document.getElementById('filterLeftButton_' + details.uuid).addEventListener('click', () => {
-    changeFilterOrder(lang, details.uuid, -1)
-  })
-  document.getElementById('filterRightButton_' + details.uuid).addEventListener('click', () => {
-    changeFilterOrder(lang, details.uuid, 1)
-  })
-  document.getElementById('filterDeleteButton_' + details.uuid).addEventListener('click', () => {
-    deleteFilter(lang, details.uuid)
-  })
-
+  const uuid = exUtilities.uuid()
+  def.languages[lang].filter_order.push(uuid)
+  def.languages[lang].filters[uuid] = { display_name: '', uuid }
   exSetup.previewDefinition(true)
 }
 
-function deleteFilter (lang, uuid) {
+function deleteFilter (lang, filterUUID) {
   // Remove the given filter and rebuild the GUI
 
-  const workingDefinition = exSetup.config.workingDefinition
-  const index = workingDefinition.languages[lang].filter_order.indexOf(uuid)
-  if (index > -1) { // only splice array when item is found
-    workingDefinition.languages[lang].filter_order.splice(index, 1)
-    delete workingDefinition.languages[lang].filters[uuid]
+  const def = exSetup.config.workingDefinition
+  const index = def.languages[lang].filter_order.indexOf(filterUUID)
+  if (index < 0) return // Nothing to delete
+
+  // Remove from the language object
+  def.languages[lang].filter_order.splice(index, 1)
+  delete def.languages[lang].filters[filterUUID]
+
+  // Search the content object and remove related filter data
+  for (const contentUUID of def.content_order) {
+    if (def.content[contentUUID]?.filter_data?.[filterUUID]) {
+      delete def.content[contentUUID].filter_data[filterUUID]
+    }
   }
 
-  document.getElementById('filterEntriesRow_' + lang).innerHTML = ''
-  for (const uuid of workingDefinition.languages[lang].filter_order) {
-    addFilter(lang, workingDefinition.languages[lang].filters[uuid], false)
-  }
   exSetup.previewDefinition(true)
 }
 
@@ -1208,7 +1240,10 @@ Array.from(document.querySelectorAll('.text-size-slider')).forEach((el) => {
 })
 
 // Populate available languages
-exLang.createLanguagePicker(document.getElementById('language-picker'), { onLanguageRebuild: rebuildLanguageElements })
+exLang.createLanguagePicker(document.getElementById('language-picker'), {
+  onLanguageAdd: addLanguage,
+  onLanguageRebuild: rebuildLanguageElements
+})
 
 // Set helper address for use with exCommon.makeHelperRequest
 exCommon.config.helperAddress = window.location.origin
