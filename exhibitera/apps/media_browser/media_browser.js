@@ -344,7 +344,6 @@ function displayMedia (uuid) {
 
   const def = exCommon.config.definition
   const obj = def.content[uuid]
-  console.log(obj)
 
   const title = exMarkdown.formatText(def.languages?.[currentLang].content?.[uuid]?.title ?? '', { string: true, removeParagraph: true })
 

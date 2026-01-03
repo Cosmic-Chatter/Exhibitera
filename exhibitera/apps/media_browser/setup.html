@@ -184,28 +184,24 @@
                       Media Browser can display the following information about each media file. Choose which you would like to include:
                     </p>
                   </i>
-                  <div class="row gy-2 row-cols-1 row-cols-md-3">
+                  <div class="row gy-2 row-cols-1">
                     <div class="col">
                       <div class="form-check">
                         <input class="form-check-input" type="checkbox" value="" id="wizardCheckboxTitle" checked>
                         <label class="form-check-label" for="wizardCheckboxTitle">
-                          Title
+                          <b>Title</b> <i><small>Labels the item in the browser and media views.</small></i>
                         </label>
                       </div>
-                    </div>
-                    <div class="col">
                       <div class="form-check">
                         <input class="form-check-input" type="checkbox" value="" id="wizardCheckboxCaption" checked>
                         <label class="form-check-label" for="wizardCheckboxCaption">
-                          Caption
+                          <b>Caption</b> <i><small>Up to a few sentances describing the item..</small></i>
                         </label>
                       </div>
-                    </div>
-                    <div class="col">
                       <div class="form-check">
                         <input class="form-check-input" type="checkbox" value="" id="wizardCheckboxCredit" checked>
                         <label class="form-check-label" for="wizardCheckboxCredit">
-                          Credit
+                          <b>Credit</b> <i><small>Who is responsible for the item.</small></i>
                         </label>
                       </div>
                     </div>
@@ -317,25 +313,69 @@
 
       <!-- Check content modal -->
       <div id="checkContentModal" class="modal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered mw-100 w-75">
+        <div class="modal-dialog modal-dialog-centered">
           <div class="modal-content">
             <div class="modal-header">
               <h5 class="modal-title">Check for missing files</h5>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body"  style="max-height: 70vh; overflow-y: auto;">
-              <div class="row align-items-center">
+            <div class="modal-body">
+              <div class="row gy-2 align-items-center">
                 <div class="col-12">
-                  This tool checks that every media file listed in the spreadsheet has a corresponding file in the content directory.
+                  This tool checks that every media file referenced in an item has a corresponding file in the content directory.
                 </div>
-                <div class="col-12 mt-3">
+                <div class="col-12">
                   <button id="checkContentButton" class="btn btn-primary">Check content</button>
                 </div>
-                <div id="missingContentWarningField" class="col-12 mt-3">
+                <div id="missingContentWarningField" class="col-12">
+                  <div class='alert alert-danger'>There is missing content!</div>
+                </div>
+                <div id="missingContentSuccessField" class="col-12">
+                  <div class='alert alert-success'>No missing content!</div>
+                </div>
+                <div id="missingContentListDiv" class="col-12">
+                  Missing content:
+                  <ul id="missingContentList" style="max-height: 30vh; overflow-y: auto;"></ul>
                 </div>
               </div>
             </div>
             <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bulk import modal -->
+      <div id="bulkImportModal" class="modal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Bulk import</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div class="row gy-2 align-items-center">
+                <div class="col-12">
+                  To import many items at once, click the button below to download a template spreadsheet. Use an app such as Microsoft Excel, Apple Numbers, or Google Sheets to edit the sheet, adding a row for each item you want to import.
+                </div>
+                <div class="col-12">
+                  <b>Step 1: </b><button id="bulkImportDownloadTemplate" class="btn btn-secondary ms-2 bulk-import-button" style="width: 230px;">Download blank template</button>
+                </div>
+                <div class="col-12">
+                  <b>Step 2: </b><button id="bulkImportUploadTemplate" class="btn btn-secondary ms-2 bulk-import-button" style="width: 230px;">Upload completed template</button>
+                </div>
+                <div class="col-12">
+                  <b>Step 3: </b><button id="bulkImportUploadMedia" class="btn btn-secondary ms-2 bulk-import-button" style="width: 230px;">Upload media files</button> 
+                </div>
+                <div id="bulkUploadMissingContentDiv" class="col-12">
+                  Missing content:
+                  <ul id="bulkUploadMissingContent" style="max-height: 20vh; overflow-y: auto;"></ul>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button id="bulkImportButton" type="button" class="btn btn-primary">Import </button>
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
           </div>
@@ -530,75 +570,78 @@
               </h2>
               <div id="content" class="accordion-collapse collapse" data-bs-parent="#topLevelAccordion">
                 <div class="accordion-body">
-                  <div class="row gy-2 align-items-end">
-                    <div class="col-12 col-lg-4 col-xl-3">
-                      <div id="addItemButton" class="btn btn-primary w-100">Add item</div>
-                    </div>
-                    <div class="col-8 col-md-9 col-lg-4 col-xl-3">
-                      <div id="bulkImportButton" class="btn btn-secondary w-100">Bulk import</div>
-                    </div>
-                    <div class="col-4 col-md-3 col-lg-2 col-xxl-1 offset-lg-2 offset-xl-4 offset-xxl-5 col d-flex justify-content-end">
-                      <div class="dropdown">
-                        <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">⚙</button>
-                        <ul class="dropdown-menu">
-                          <li><button id="manageContentButton" class="dropdown-item">Manage content</button></li>
-                          <li><button id="showCheckContentButton" class="dropdown-item">Check for missing files</button></li>
-                        </ul>
+                  <div id="contentNoLanguagesAlert" class="alert alert-warning"><b>You must add a language before adding items.</b> Go to the <i>Basic details</i> section to add a language.</div>
+                  <div id="contentInterface">
+                    <div class="row gy-2 align-items-end">
+                      <div class="col-12 col-lg-4 col-xl-3">
+                        <div id="addItemButton" class="btn btn-primary w-100">Add item</div>
+                      </div>
+                      <div class="col-8 col-md-9 col-lg-4 col-xl-3">
+                        <div id="showBulkImportButton" class="btn btn-secondary w-100">Bulk import</div>
+                      </div>
+                      <div class="col-4 col-md-3 col-lg-2 col-xxl-1 offset-lg-2 offset-xl-4 offset-xxl-5 col d-flex justify-content-end">
+                        <div class="dropdown">
+                          <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">⚙</button>
+                          <ul class="dropdown-menu">
+                            <li><button id="manageContentButton" class="dropdown-item">Manage content</button></li>
+                            <li><button id="showCheckContentButton" class="dropdown-item">Check for missing files</button></li>
+                          </ul>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div class="h5 mt-3">Items</div>
-                  <div class="row gy-2">
-                    <div class="col-5 border-end">
-                      <div id="itemsList" class="row row-cols-1 gy-2"></div>
-                    </div>
-                    <div id="editPane" class="col-7">
-                      <div id="editPaneRow" class="row row-cols-1 gy-2">
-                        <div class="col mt-0">
-                          <div class="row gy-2 gx-1">
-                            <div class="col-6 col-md-3 col-lg-2 col-xxl-1">
-                              <button id="editPaneUpButton" class="btn btn-info btn-sm w-100">▲</button>
-                            </div>
-                            <div class="col-6 col-md-3 col-lg-2 col-xxl-1">
-                              <button id="editPaneDownButton" class="btn btn-info btn-sm w-100">▼</button>
-                            </div>
-                            <div class="col-12 col-md-6 col-lg-3 col-xxl-2 offset-lg-3 offset-lg-5 offset-xxl-8">
-                              <button id="editPaneDeleteButton" class="btn btn-danger btn-sm w-100">Delete</button>
+                    <div class="h5 mt-3">Items</div>
+                    <div class="row gy-2">
+                      <div class="col-5 border-end">
+                        <div id="itemsList" class="row row-cols-1 gy-2"></div>
+                      </div>
+                      <div id="editPane" class="col-7">
+                        <div id="editPaneRow" class="row row-cols-1 gy-2">
+                          <div class="col mt-0">
+                            <div class="row gy-2 gx-1">
+                              <div class="col-6 col-md-3 col-lg-2 col-xxl-1">
+                                <button id="editPaneUpButton" class="btn btn-info btn-sm w-100">▲</button>
+                              </div>
+                              <div class="col-6 col-md-3 col-lg-2 col-xxl-1">
+                                <button id="editPaneDownButton" class="btn btn-info btn-sm w-100">▼</button>
+                              </div>
+                              <div class="col-12 col-md-6 col-lg-3 col-xxl-2 offset-lg-3 offset-lg-5 offset-xxl-8">
+                                <button id="editPaneDeleteButton" class="btn btn-danger btn-sm w-100">Delete</button>
+                              </div>
                             </div>
                           </div>
-                        </div>
 
-                        <div class="col">
-                          <img class="media-preview" id="editItemPreviewImage">
-                          <video class="media-preview" id="editItemPreviewVideo" autoplay loop muted disablePictureInPicture="true" webkit-playsinline="true" playsinline="true"></video>
-                          <div class="row mt-2">
-                            <div class="col-12 col-lg-9 col-xxl-10 pe-lg-0">
-                              <button id="editItemFileSelect" class="w-100 btn btn-outline-primary text-break">Select file</button>
-                            </div>
-                            <div class="col-6 col-lg-3 col-xxl-2 ps-lg-1 pt-2 pt-lg-0 offset-6 offset-lg-0">
-                              <div class="dropdown">
-                                <button class="btn btn-secondary dropdown-toggle w-100" data-bs-auto-close="outside" type="button" data-bs-toggle="dropdown" aria-expanded="false">⚙</button>
-                                <div class="dropdown-menu p-2 text-center" style="min-width: 250px;">
-                                    <b>Custom thumbnail</b>
-                                  <img class="media-preview mt-2" id="editItemThumbPreviewImage">
-                                  <div class="row mt-2">
-                                    <div class="col-9 pe-0">
-                                      <button id="editItemThumbnailSelect" class="w-100 btn btn-outline-primary text-break">Select file</button>
-                                    </div>
-                                    <div class="col-3 ps-1">
-                                      <button id="editItemThumbnailDelete" class="w-100 btn btn-danger px-0">✕</button>
-                                    </div>
-                                  </div>                                    
+                          <div class="col">
+                            <img class="media-preview" id="editItemPreviewImage">
+                            <video class="media-preview" id="editItemPreviewVideo" autoplay loop muted disablePictureInPicture="true" webkit-playsinline="true" playsinline="true"></video>
+                            <div class="row mt-2">
+                              <div class="col-12 col-lg-9 col-xxl-10 pe-lg-0">
+                                <button id="editItemFileSelect" class="w-100 btn btn-outline-primary text-break">Select file</button>
+                              </div>
+                              <div class="col-6 col-lg-3 col-xxl-2 ps-lg-1 pt-2 pt-lg-0 offset-6 offset-lg-0">
+                                <div class="dropdown">
+                                  <button class="btn btn-secondary dropdown-toggle w-100" data-bs-auto-close="outside" type="button" data-bs-toggle="dropdown" aria-expanded="false">⚙</button>
+                                  <div class="dropdown-menu p-2 text-center" style="min-width: 250px;">
+                                      <b>Custom thumbnail</b>
+                                    <img class="media-preview mt-2" id="editItemThumbPreviewImage">
+                                    <div class="row mt-2">
+                                      <div class="col-9 pe-0">
+                                        <button id="editItemThumbnailSelect" class="w-100 btn btn-outline-primary text-break">Select file</button>
+                                      </div>
+                                      <div class="col-3 ps-1">
+                                        <button id="editItemThumbnailDelete" class="w-100 btn btn-danger px-0">✕</button>
+                                      </div>
+                                    </div>                                    
+                                  </div>
                                 </div>
                               </div>
                             </div>
                           </div>
-                        </div>
-                        <div class="col">
-                          <nav  class="mt-3">
-                            <div id="editPaneNav" class="nav nav-tabs" role="tablist"></div>
-                          </nav>
-                          <div class="tab-content" id="editPaneContent"></div>
+                          <div class="col">
+                            <nav  class="mt-3">
+                              <div id="editPaneNav" class="nav nav-tabs" role="tablist"></div>
+                            </nav>
+                            <div class="tab-content" id="editPaneContent"></div>
+                          </div>
                         </div>
                       </div>
                     </div>
