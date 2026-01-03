@@ -264,6 +264,9 @@ function _populateResultsRow (currentKey) {
   for (const itemUUID of exCommon.config.definition.content_order) {
     const item = exCommon.config.definition.content[itemUUID]
 
+    // Discard any entries that don't have a filename set
+    if (!item.filename || item.filename === '') continue
+
     filterMathces = {}
     for (const filter of filters) {
       const filterUUID = filter.dataset.uuid
@@ -348,8 +351,7 @@ function displayMedia (uuid) {
   const caption = exMarkdown.formatText(def.languages?.[currentLang].content?.[uuid]?.caption ?? '', { string: true, removeParagraph: true })
   const credit = exMarkdown.formatText(def.languages?.[currentLang].content?.[uuid]?.credit ?? '', { string: true, removeParagraph: true })
 
-  const media = String(obj.filename)
-  showMediaInLightbox(media, title, caption, credit)
+  showMediaInLightbox(obj.filename, { title, caption, credit, thumbnail: obj?.custom_thumbnail })
 }
 
 function updateParser (update) {
@@ -580,7 +582,7 @@ function resetActivityTimer () {
   inactivityTimer = setTimeout(showAttractor, inactivityTimeout)
 }
 
-function showMediaInLightbox (media, title = '', caption = '', credit = '') {
+function showMediaInLightbox (media, details = {}) {
   // Set the img or video source to the provided media, set the caption, and reveal the light box.
 
   // Hide elements until image is loaded
@@ -599,10 +601,10 @@ function showMediaInLightbox (media, title = '', caption = '', credit = '') {
   const titleDiv = document.getElementById('mediaLightboxTitle')
   const captionDiv = document.getElementById('mediaLightboxCaption')
   const creditDiv = document.getElementById('mediaLightboxCredit')
-  titleDiv.innerHTML = title
+  titleDiv.innerHTML = details?.title ?? ''
 
-  captionDiv.innerHTML = caption
-  creditDiv.innerHTML = credit
+  captionDiv.innerHTML = details?.caption ?? ''
+  creditDiv.innerHTML = details?.credit ?? ''
 
   // Load the media with a callback to fade it in when it is loaded
   const mimetype = exFiles.guessMimetype(media)
@@ -614,9 +616,14 @@ function showMediaInLightbox (media, title = '', caption = '', credit = '') {
     document.querySelectorAll('.lightbox-text').forEach((el) => {
       el.style.opacity = 1
     })
-    // Make the image element active but invisible to claim vertical space
     imageEl.style.display = 'block'
-    imageEl.style.opacity = 0
+    if (details.thumbnail) {
+      imageEl.src = '/content/' + details.thumbnail
+      imageEl.style.opacity = 1
+    } else {
+    // No image to show, so make invisible (but still active to claim space)
+      imageEl.style.opacity = 0
+    }
   } else if (mimetype === 'image') {
     imageEl.src = '/content/' + media
     imageEl.style.opacity = 1
