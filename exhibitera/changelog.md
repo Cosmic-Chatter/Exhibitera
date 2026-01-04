@@ -35,6 +35,12 @@ _Exhibitera Hub and Apps must all be upgraded to version 6 at the same time._
 - Customize the look of captions
 - Guided setup makes things easier than ever
 
+### Media Browser
+- Support for audio files
+- Add a custom thumbnail separate from the main media
+- Add items individually or use a spreadsheet for bulk import
+- Reorder your items
+
 ### Media Player
 - Track progress through a playlist and the current item with a progress indicator
 - Adjust the opacity of watermarks
