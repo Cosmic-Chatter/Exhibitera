@@ -93,9 +93,10 @@ def load_default_configuration() -> None:
     # Check if there is a configuration file
     config_path = ex_files.get_path(["configuration", "system.json"], user_file=True)
     if not os.path.exists(config_path):
-        # We don't have a apps_config file, so let's get info from the user to create one
+        # We don't have a config file, so let's get info from the user to create one
         hub_system.command_line_setup()
     hub_users.check_for_root_admin()
+    hub_users.check_for_first_user()
     hub_tools.load_system_configuration()
 
     # Handle legacy conversions

@@ -14,7 +14,7 @@ def command_line_setup_print_gui() -> None:
     """Helper to print the header content for the setup tool"""
 
     ex_utilities.clear_terminal()
-    print("##########################################################")
+    print("############################################################")
     print("Welcome to Exhibitera Hub!")
     print("")
     print("This appears to be your first time running Hub.")

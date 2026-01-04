@@ -204,20 +204,79 @@ def create_root_admin(password: str):
             f.write(password_hash)
 
 
+def command_line_setup_print_gui():
+    ex_utilities.clear_terminal()
+    print("############################################################")
+    print("Welcome to Exhibitera Hub!")
+    print("")
+    print("Access to Exhibitera is controlled by a user account system.")
+
+
+def check_for_first_user():
+    """Check that at least one user has been created or prompt to create it."""
+
+    path = ex_files.get_path(["configuration", "users.json"], user_file=True)
+
+    users = ex_files.load_json(path)
+    if users is not None and isinstance(users, list) and len(users) > 0:
+        # We have at least one user
+        return
+
+    command_line_setup_print_gui()
+    print("You should generally not use the admin account for daily")
+    print("use. Let's create a regular user account. This account will")
+    print("have full permissions.")
+    display_name = input("Your name (e.g., John Smith): ")
+    username = ""
+    while username == "" or username == "admin":
+        username = input ("Your username (e.g., jsmith): ")
+        if username == "admin":
+            print("Username cannot be 'admin'!")
+    pass1 = ""
+    pass2 = ""
+    match = False
+    while match is False:
+        while pass1.strip() == "":
+            pass1 = getpass.getpass(prompt="Enter password: ").strip()
+            if pass1 == "":
+                print("Password cannot be blank!")
+        while pass2.strip() == "":
+            pass2 = getpass.getpass(prompt="Re-enter password to confirm: ").strip()
+        if pass1 == pass2:
+            match = True
+        else:
+            print("Passwords do not math. Please try again!")
+            pass1 = ""
+            pass2 = ""
+
+    hub_config.user_list = []
+    create_user(username, display_name, pass1, {
+        "analytics": "edit",
+        "components": {
+            "edit": ["__all"],
+            "edit_content": [],
+            "view": []
+        },
+        "exhibits": "edit",
+        "maintenance": "edit",
+        "schedule": "edit",
+        "settings": "edit",
+        "users": "edit"
+    })
+
+
 def check_for_root_admin():
     """Check that the file root_admin.txt exists or prompt to create it."""
 
     path = ex_files.get_path(["configuration", "root_admin.txt"], user_file=True)
     if not os.path.exists(path):
-        ex_utilities.clear_terminal()
-        print("##########################################################")
-        print("Welcome to Exhibitera Hub!")
-        print("")
-        print("Access to Exhibitera is controlled by a user account")
-        print("system. To begin, you must create a password for the root")
+        command_line_setup_print_gui()
+        print("To begin, you must create a password for the root")
         print("admin account. You will be able to use this password to")
-        print("manage other accounts.")
-        print("")
+        print("manage other accounts. The username for this account is")
+        print("'admin'.")
+        print("", flush=True)
+
         pass1 = ""
         pass2 = ""
         match = False
@@ -298,7 +357,7 @@ def create_user(username: str,
     """Create a new user."""
 
     if check_username_available(username) is False:
-        if ex_config.debug:
+        if hub_config.debug:
             print(f"create_user: error: username {username} exists")
         return False, {}
 
@@ -323,7 +382,7 @@ def delete_user(uuid_str: str) -> bool:
 
     user = get_user(uuid_str=uuid_str)
     if user is None:
-        if ex_config.debug is True:
+        if hub_config.debug is True:
             print("delete_user: error: user does not exist: ", uuid_str)
         return False
     user_dict = user.get_dict()
