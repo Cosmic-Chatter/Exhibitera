@@ -78,10 +78,11 @@ export function createLanguagePicker (parent, callbacks = {}) {
 
   // callbacks is an object with the following fields:
   // callbacks = {
-  //              onLanguageAdd:     function(code, displayName, englishName),
-  //              onLanguageDelete:  function(languageOrder),
-  //              onLanguageReorder: function(languageOrder),
-  //              onLanguageRebuild: function(languageOrder),
+  //              beforeLanguageDelete: function(code)
+  //              onLanguageAdd:        function(code, displayName, englishName),
+  //              onLanguageDelete:     function(languageOrder, deletedCode),
+  //              onLanguageReorder:    function(languageOrder),
+  //              onLanguageRebuild:    function(languageOrder),
   //             }
 
   const workingDefinition = exSetup.config.workingDefinition
@@ -233,9 +234,7 @@ export function createLanguagePicker (parent, callbacks = {}) {
     }
 
     addLanguage(languageList, code, displayName, displayNameEn, callbacks)
-    if (callbacks.onLanguageAdd) {
-      callbacks.onLanguageAdd(code, displayName, displayNameEn)
-    }
+
     // Reset fields
     languageSelect.value = 'en-gb'
     languageCodeInput.value = ''
@@ -246,6 +245,10 @@ export function createLanguagePicker (parent, callbacks = {}) {
     languageEnglishNameInputCol.style.display = 'none'
     warningCol.style.display = 'none'
   })
+
+  // Activate tooltips
+  const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+  const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
 }
 
 export function clearLanguagePicker (el) {
@@ -392,8 +395,8 @@ function addLanguage (languageList, code, displayName, englishName, callbacks) {
   definition.language_order.push(code)
 
   createLanguageHTML(languageList, code, displayName, englishName, definition.language_order.length === 1, callbacks)
-  rebuildLanguageList(languageList, callbacks)
   if (callbacks.onLanguageAdd) callbacks.onLanguageAdd(code, displayName, englishName)
+  rebuildLanguageList(languageList, callbacks)
   exSetup.previewDefinition(true)
 }
 
@@ -402,6 +405,8 @@ function deleteLanguage (languageList, code, callbacks = {}) {
   // Callback should take one parameter, language_order
 
   const workingDefinition = exSetup.config.workingDefinition
+
+  if (callbacks.beforeLanguageDelete) callbacks.beforeLanguageDelete(code)
 
   delete workingDefinition.languages[code]
   workingDefinition.language_order = workingDefinition.language_order.filter(lang => lang !== code)

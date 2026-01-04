@@ -95,57 +95,57 @@ async def get_definition_content_list(this_uuid: str):
     if app is None:
         return {"success": False, "reason": f"Missing required 'app' key."}
 
-    content = []
+    content = set()
 
     # First pull out any shared style elements
-    field = "style"
-    if app.startswith('word_cloud'):
-        field = "appearance"
+    if (definition.get("style", {}).get("background", {}).get("image", "") != ""
+            and definition.get("style", {}).get("background", {}).get("mode") == "image"):
+        content.add(definition["style"]["background"]["image"])
 
-    if (definition.get(field, {}).get("background", {}).get("image", "") != ""
-            and definition.get(field, {}).get("background", {}).get("mode") == "image"):
-        content.append(definition[field]["background"]["image"])
-
-    for item in definition.get(field, {}).get("font", {}):
-        file = definition[field]["font"][item]
+    for item in definition.get("style", {}).get("font", {}):
+        file = definition["style"]["font"][item]
         # Check if this file in the content directory vs an Exhibitera source directory like _fonts/
         if os.path.basename(os.path.dirname(file)) == 'content':
-            content.append(os.path.basename(file))
+            content.add(os.path.basename(file))
 
     # Then add app-specific content fields
     if app == "image_compare":
         for item_uuid in definition["content"]:
             item = definition["content"][item_uuid]
-            content.append(item["image1"])
-            content.append(item["image2"])
+            content.add(item["image1"])
+            content.add(item["image2"])
+    elif app == 'media_browser':
+        for item_uuid in definition.get('content_order', []):
+            item = definition["content"][item_uuid]
+            content.add(item.get("filename", ""))
+            content.add(item.get("custom_thumbnail", ""))
     elif app == 'media_player':
         if definition.get("watermark", {}).get('file', '') != '':
-            content.append(definition["watermark"]["file"])
+            content.add(definition["watermark"]["file"])
         for item_uuid in definition.get("content", {}):
             item = definition["content"][item_uuid]
-            if item["filename"] not in content and item["type"] == "file":
-                content.append(item["filename"])
+            if item["type"] == "file":
+                content.add(item["filename"])
             if item.get("subtitles", {}).get("filename", "") != '':
-                content.append(item["subtitles"]["filename"])
+                content.add(item["subtitles"]["filename"])
             if "annotations" in item and isinstance(item["annotations"], dict):
                 for anno_uuid in item["annotations"]:
                     # Iterate any annotations and copy any needed json files and font files
                     anno = item["annotations"][anno_uuid]
                     if anno.get('type', '') == "file":
-                        content.append(anno["file"])
+                        content.add(anno["file"])
                     if os.path.basename(os.path.dirname(anno["font"])) == 'content':
-                        content.append(os.path.basename(anno["font"]))
+                        content.add(os.path.basename(anno["font"]))
     elif app == "timelapse_viewer":
         if "font" in definition.get("attractor", {}):
             if os.path.basename(os.path.dirname(definition["attractor"]["font"])) == 'content':
-                content.append(os.path.basename(definition["attractor"]["font"]))
+                content.add(os.path.basename(definition["attractor"]["font"]))
         content += glob.glob(definition["files"], root_dir=ex_files.get_path(["content"], user_file=True))
     elif app == "voting_kiosk":
         for item_uuid in definition.get("options", {}):
             item = definition["options"][item_uuid]
             if item.get("icon_user_file", "") != "":
-                if item["icon_user_file"] not in content:
-                    content.append(item["icon_user_file"])
+                content.add(item["icon_user_file"])
     elif app == "word_cloud_input":
         pass
     elif app == "word_cloud_viewer":
@@ -156,6 +156,8 @@ async def get_definition_content_list(this_uuid: str):
     content_details = []
     total_size = 0
     for file in content:
+        if file == "":
+            continue
         path = ex_files.get_path(["content", file], user_file=True)
         size, size_text = ex_files.get_file_size(path)
 

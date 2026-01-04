@@ -317,7 +317,6 @@ function populateComponentContent (options) {
     endpoint: '/files/availableContent'
   })
     .then((result) => {
-      console.log(result)
       _populateComponentContent(result, options)
       previewFile({})
     })

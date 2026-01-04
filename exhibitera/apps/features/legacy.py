@@ -1,8 +1,10 @@
 # Handle migration from past versions of Exhibitera Apps
 
+import csv
 import os
 import re
 import shutil
+import uuid
 
 import exhibitera.common.files as ex_files
 import exhibitera.common.utilities as ex_utilities
@@ -146,3 +148,111 @@ def update_infostation_definition_format():
         shutil.copy(file_path, backup_path)
 
         ex_files.write_json(new_def, file_path)
+
+
+# Added in Ex6
+def update_media_browser_definition_format():
+    """Eliminate the use of spreadsheets for storing Media Browser data."""
+
+    current_version = ex_files.load_json(ex_files.get_path(["_static", "semantic_version.json"]))
+    def_path = ex_files.get_path(["definitions"], user_file=True)
+    for file in os.listdir(def_path):
+        if not file.lower().endswith("json"):
+            continue
+        file_path = ex_files.get_path(["definitions", file], user_file=True)
+        definition = ex_files.load_json(file_path)
+        if definition is None or definition.get("app", "") != "media_browser":
+            continue
+        if not ex_utilities.semantic_version_less_than(definition.get("exhibitera_version", "0.0.0")
+                , "6.0.0"):
+            continue
+
+        spread_name = definition.get("spreadsheet", "")
+        if spread_name == "":
+            _delete_definition(file)
+            continue
+        spread_path = ex_files.get_path(["content", spread_name], user_file=True)
+        if not os.path.exists(spread_path):
+            _delete_definition(file)
+            continue
+        if len(definition.get("language_order", [])) == 0:
+            _delete_definition(file)
+            continue
+
+        languages = definition["languages"]
+        language_order = definition["language_order"]
+        media_key = definition["languages"][language_order[0]].get("media_key", "")
+        thumb_key = definition["languages"][language_order[0]].get("thumbnail_key", "")
+
+        # Add a content dictionary to each language
+        for lang in language_order:
+            languages[lang]["content"] = {}
+
+        # Iterate the rows of the spreadsheet and make a content entry for each
+        content = {}
+        content_order = []
+        with open(spread_path, newline='', encoding='UTF-8-sig') as csvfile:
+            reader = csv.DictReader(csvfile)
+            reader.fieldnames = [name.strip() for name in reader.fieldnames]  # Make sure there is no whitespace around the keys
+            for row in reader:
+                new_uuid = str(uuid.uuid4())
+                content[new_uuid] = {
+                    "custom_thumbnail": row.get(thumb_key, ""),
+                    "filename": row.get(media_key, ""),
+                    "filter_data": {},
+                    "uuid": new_uuid
+                }
+                content_order.append(new_uuid)
+                # Now iterate the languages and fill in the localization for each from this row
+                for lang in language_order:
+                    title_key = languages[lang].get("title_key", "")
+                    caption_key = languages[lang].get("caption_key", "")
+                    credit_key = languages[lang].get("credit_key", "")
+
+                    localization = {
+                        "uuid": new_uuid,
+                        "title": row.get(title_key, ""),
+                        "caption": row.get(caption_key, ""),
+                        "credit": row.get(credit_key, "")
+                    }
+                    languages[lang]["content"][new_uuid] = localization
+
+                    # Now iterate through any filters
+                    if "filter_order" in languages[lang]:
+                        for filter_uuid in languages[lang]["filter_order"]:
+                            filter_dict = languages[lang]["filters"][filter_uuid]
+                            content[new_uuid]["filter_data"][filter_uuid] = {
+                                "uuid": filter_uuid,
+                                "value": row.get(filter_dict.get("key", ""), "")
+                            }
+
+        # Clean up the dictionary
+        for lang in language_order:
+            for key in ["title_key", "caption_key", "credit_key", "media_key", "thumbnail_key", "default"]:
+                if key in languages[lang]:
+                    del languages[lang][key]
+
+        definition["languages"] = languages
+        definition["content"] = content
+        definition["content_order"] = content_order
+        definition["exhibitera_version"] = current_version["version"]
+        del definition["spreadsheet"]
+
+        # Rename the old file
+        backup_path = ex_files.get_path(["definitions", file + '.backup'], user_file=True)
+        shutil.copy(file_path, backup_path)
+
+        ex_files.write_json(definition, file_path)
+
+
+def _delete_definition(filename):
+    """Delete the given definition, but make a backup first"""
+
+    file_path = ex_files.get_path(["definitions", filename], user_file=True)
+    if not os.path.exists(file_path):
+        print("Bad filepath:", file_path)
+        return
+    backup_path = ex_files.get_path(["definitions", filename + '.backup'], user_file=True)
+    shutil.copy(file_path, backup_path)
+    os.remove(file_path)
+

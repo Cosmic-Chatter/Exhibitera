@@ -12,7 +12,9 @@
 
     <link rel="stylesheet" href="/css/bootstrap_5_3/bootstrap.min.css">
     <link rel="stylesheet" href="/css/coloris.min.css">
-    <link rel="stylesheet" href="/css/setup.css">      
+    <link rel="stylesheet" href="../css/tiny-mde-Exhiibtera.css">
+    <link rel="stylesheet" href="/css/setup.css">  
+    <link rel="stylesheet" href="setup.css">      
 
     <title>Media Browser Setup</title>
 
@@ -127,12 +129,12 @@
                   <H4 class="text-center">Welcome to Media Browser!</H4>
                   <i>
                     <p>
-                      Media Browser displays collections of images and videos for users to explore. They can browse the collection, filter it based on attributes you choose, and view more information about a selected item.
+                      Media Browser displays collections of audio, images, and videos for users to explore. They can browse the collection, filter it based on attributes you choose, and view more information about a selected item.
                     </p>
                     <p>
                       To create a Media Browser, you will need:
                       <ul>
-                        <li>The image and video files you want to display;</li>
+                        <li>The media files you want to display;</li>
                         <li>The media titles, captions, and any credit information you want users to see.</li>
                       </ul>
                     </p>
@@ -173,6 +175,62 @@
                 </div>
               </div>
 
+              <!-- Import options -->
+              <div id="wizardPane_ImportOptions" class="row wizard-pane">
+                <div class="col-8 offset-2 mt-3">
+                  <H4 class="text-center">How do you want to add your media?</H4>
+                  <i>
+                    <p>
+                      Now, you'll add your media files. You can chooes your files now and add their details (title, caption, credit, etc.) after completing Guided Setup. Or, you can use a spreadsheet to bulk import everything right now.
+                    </p>
+                  </i>
+
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="wizardMediaImportOptions" id="wizardMediaImportOptionsSingle" checked>
+                    <label class="form-check-label" for="wizardMediaImportOptionsSingle">
+                      Choose files now, add details later
+                    </label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="wizardMediaImportOptions" id="wizardMediaImportOptionsBulk" >
+                    <label class="form-check-label" for="wizardMediaImportOptionsBulk">
+                      Bulk import files using a spreadsheet <span class="badge bg-secondary ms-2">Advanced</span>
+                    </label>
+                  </div>
+
+                  <div class="text-center mt-4">
+                    <button class="btn btn-secondary me-4 wizard-back" data-current-page="ImportOptions">Back</button>
+                    <button class="btn btn-primary ms-4 wizard-forward" data-current-page="ImportOptions">Next</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Basic file import -->
+              <div id="wizardPane_BasicImport" class="row wizard-pane">
+                <div class="col-8 offset-2 mt-3">
+                  <H4 class="text-center">Upload and select your files</H4>
+                  <i>
+                    <p>
+                      Use the button below to upload and select the files you want in your browser. Audio, image, and video files in most formats are supported. You can always add more files later.
+                    </p>
+                  </i>
+
+                  <div class="d-flex">
+                    <button id="wizardMediaImportButton" class="btn btn-primary">Select files</button>
+                    <button id="wizardMediaImportClearButton" class="btn btn-danger ms-auto">Clear files</button>
+                  </div>
+                  <div id="wizardMediaImportList" class="row gy-2 row-cols-2 row-cols-md-3 row-cols-lg-4 mt-2"></div>
+
+                  <div id="wizardMediaImportBlankWarning" class="text-warning mt-2" style="display: none;">
+                    You must add at least one file.
+                  </div>
+                  <div class="text-center mt-4">
+                    <button class="btn btn-secondary me-4 wizard-back" data-current-page="BasicImport">Back</button>
+                    <button class="btn btn-primary ms-4 wizard-forward" data-current-page="BasicImport">Next</button>
+                  </div>
+                </div>
+              </div>
+
               <!-- Media info -->
               <div id="wizardPane_MediaInfo" class="row wizard-pane">
                 <div class="col-8 offset-2 mt-3">
@@ -182,28 +240,30 @@
                       Media Browser can display the following information about each media file. Choose which you would like to include:
                     </p>
                   </i>
-                  <div class="row gy-2 row-cols-1 row-cols-md-3">
+                  <div class="row gy-2 row-cols-1">
                     <div class="col">
                       <div class="form-check">
                         <input class="form-check-input" type="checkbox" value="" id="wizardCheckboxTitle" checked>
                         <label class="form-check-label" for="wizardCheckboxTitle">
-                          Title
+                          <b>Title</b> <i><small>Labels the item in the browser and media views.</small></i>
                         </label>
                       </div>
-                    </div>
-                    <div class="col">
                       <div class="form-check">
                         <input class="form-check-input" type="checkbox" value="" id="wizardCheckboxCaption" checked>
                         <label class="form-check-label" for="wizardCheckboxCaption">
-                          Caption
+                          <b>Caption</b> <i><small>Up to a few sentances describing the item..</small></i>
                         </label>
                       </div>
-                    </div>
-                    <div class="col">
                       <div class="form-check">
                         <input class="form-check-input" type="checkbox" value="" id="wizardCheckboxCredit" checked>
                         <label class="form-check-label" for="wizardCheckboxCredit">
-                          Credit
+                          <b>Credit</b> <i><small>Who is responsible for the item.</small></i>
+                        </label>
+                      </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="" id="wizardCheckboxThumbnail">
+                        <label class="form-check-label" for="wizardCheckboxThumbnail">
+                          <b>Custom thumbnail</b> <i><small>A thumbnail different than the media itself.</small></i>
                         </label>
                       </div>
                     </div>
@@ -221,7 +281,7 @@
                   <H4 class="text-center">Organize your media and details</H4>
                   <i>
                     <p>
-                      Media Browser organizes your media and their details using a simple spreadsheet. Based on the languages and details you have selected, a template has been generated. Download the template and edit it using software such as Microsoft Excel, Google Sheets, Apple Numbers, or LibreOffice Calc.
+                      Based on the languages and details you have selected, a template has been generated. Download the template and edit it using software such as Microsoft Excel, Google Sheets, Apple Numbers, or LibreOffice Calc.
                     </p>
                     <p>
                       <b>Each row of the spreadsheet represents one file in your media browser.</b> <i class="text-warning">Make sure to save the file in the CSV (comma-separated values) format.</i>
@@ -315,21 +375,29 @@
 
       <!-- Check content modal -->
       <div id="checkContentModal" class="modal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered mw-100 w-75">
+        <div class="modal-dialog modal-dialog-centered">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title">Check content</h5>
+              <h5 class="modal-title">Check for missing files</h5>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body"  style="max-height: 70vh; overflow-y: auto;">
-              <div class="row align-items-center">
+            <div class="modal-body">
+              <div class="row gy-2 align-items-center">
                 <div class="col-12">
-                  This tool checks that every media file listed in the spreadsheet has a corresponding file in the content directory.
+                  This tool checks that every media file referenced in an item has a corresponding file in the content directory.
                 </div>
-                <div class="col-12 mt-3">
+                <div class="col-12">
                   <button id="checkContentButton" class="btn btn-primary">Check content</button>
                 </div>
-                <div id="missingContentWarningField" class="col-12 mt-3">
+                <div id="missingContentWarningField" class="col-12">
+                  <div class='alert alert-danger'>There is missing content!</div>
+                </div>
+                <div id="missingContentSuccessField" class="col-12">
+                  <div class='alert alert-success'>No missing content!</div>
+                </div>
+                <div id="missingContentListDiv" class="col-12">
+                  Missing content:
+                  <ul id="missingContentList" style="max-height: 30vh; overflow-y: auto;"></ul>
                 </div>
               </div>
             </div>
@@ -339,6 +407,62 @@
           </div>
         </div>
       </div>
+
+      <!-- Bulk import modal -->
+      <div id="bulkImportModal" class="modal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Bulk import</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div class="row gy-2 align-items-center">
+                <div class="col-12">
+                  To import many items at once, click the button below to download a template spreadsheet. Use an app such as Microsoft Excel, Apple Numbers, or Google Sheets to edit the sheet, adding a row for each item you want to import.
+                </div>
+                <div class="col-12">
+                  <b>Step 1: </b><button id="bulkImportDownloadTemplate" class="btn btn-secondary ms-2 bulk-import-button" style="width: 230px;">Download blank template</button>
+                </div>
+                <div class="col-12">
+                  <b>Step 2: </b><button id="bulkImportUploadTemplate" class="btn btn-secondary ms-2 bulk-import-button" style="width: 230px;">Upload completed template</button>
+                </div>
+                <div class="col-12">
+                  <b>Step 3: </b><button id="bulkImportUploadMedia" class="btn btn-secondary ms-2 bulk-import-button" style="width: 230px;">Upload media files</button> 
+                </div>
+                <div id="bulkUploadMissingContentDiv" class="col-12">
+                  Missing content:
+                  <ul id="bulkUploadMissingContent" style="max-height: 20vh; overflow-y: auto;"></ul>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button id="bulkImportButton" type="button" class="btn btn-primary">Import </button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Clear items modal -->
+      <div id="clearItemsModal" class="modal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Are you sure?</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              Clearing items will remove them from this definition, but not delete the media files from Exhibitera Apps.
+            </div>
+            <div class="modal-footer">
+              <button id="clearItemsConfirmButton" type="button" class="btn btn-danger">Confirm</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
 
       <div class="row">
         <div class="col-10" id="setupHeader">
@@ -468,7 +592,7 @@
               <h2 class="accordion-header">
                 <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#basicDetails" aria-expanded="true" aria-controls="basicDetails">
                   Basic details
-                  <div class="accordion-detail">Choose a spreadsheet, set up the attractor, and more.</div>
+                  <div class="accordion-detail">Set the definition name, set up the attractor, and configure your languages.</div>
                 </button>
               </h2>
               <div id="basicDetails" class="accordion-collapse collapse show" data-bs-parent="#topLevelAccordion">
@@ -479,21 +603,13 @@
                       <input type="text" class="form-control" id="definitionNameInput">
                     </div>
                     <div class="col-12 col-md-6">
-                      <label for="spreadsheetSelect" class="form-label">
-                        Spreadsheet
-                        <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="A CSV file in which each row represents one item in Media Browser." style="font-size: 0.55em;">?</span>
-                      </label>
-                      <div id="badSpreadsheetWarning" class="alert alert-danger" style="display: none;">Spreadsheet error detected in row <span id="badSpreadsheetWarningLineNumber"></span>. <span class="badge bg-warning ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="The most common error is a new line in the row. Use <br> to insert a new line instead." style="font-size: 0.55em;">?</span></div>
-                      <button id="spreadsheetSelect" class="btn btn-outline-primary w-100">Select file</button>
-                    </div>
-                    <div class="col-12 col-md-6">
                       <div class="row">
                         <label for="attractorSelect" class="form-label">
                           Attractor
                           <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="An attractor is a fullscreen image or video that takes over when the app is idle." style="font-size: 0.55em;">?</span>
                         </label>
                         <div class="col-8 col-sm-9 col-md-8 col-lg-9 col-xxl-10 pe-0">
-                          <button id="attractorSelect" class="btn btn-outline-primary w-100">Select file</button>
+                          <button id="attractorSelect" class="btn btn-outline-primary w-100 text-break">Select file</button>
                         </div>
                         <div class="col-4 col-sm-3 col-md-4 col-lg-3 col-xxl-2">
                           <button id="attractorSelectClear" class="btn btn-danger align-self-center w-100">✕</button>
@@ -510,52 +626,133 @@
                     <div class="col-12 col-md-6 col-lg-4 col-xxl-3 d-flex align-items-end">
                       <div class="form-check mt-1">
                         <input class="form-check-input" type="checkbox" value="" id="loopResultsCheckbox" checked>
-                        <label for="inactivityTimeoutField" class="form-label mb-0">
+                        <label for="loopResultsCheckbox" class="form-label mb-0">
                           Loop results
                           <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Reaching the final page of results will return to the first page." style="font-size: 0.55em;">?</span>
                         </label>
                       </div>
                     </div>
-                    <!-- <div class="col-12 col-md-6">
-                      <div class="form-check mb-0">
-                        <input class="form-check-input" type="checkbox" value="" id="showSearchPaneCheckbox">
-                        <label class="form-check-label small" for="showSearchPaneCheckbox">
-                          Enable search and filter
-                        </label>
-                      </div>
-                    </div> -->
+                    <div class="col-12">
+                      <H5 class="mt-2">Add a langauge</H5>
+                      <p><i>You must add at least one language.</i></p>
+                      <div id="language-picker"></div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
+
             <!-- Content -->
             <div class="accordion-item">
               <h2 class="accordion-header">
                 <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#content" aria-expanded="false" aria-controls="content">
                   Content
-                  <div class="accordion-detail">Utilize your spreadsheet and set up langauge options.</div>
+                  <div class="accordion-detail">Create, edit, and sort items.</div>
                 </button>
               </h2>
               <div id="content" class="accordion-collapse collapse" data-bs-parent="#topLevelAccordion">
                 <div class="accordion-body">
-                  <div class="row gy-2">
+                  <div id="contentNoLanguagesAlert" class="alert alert-warning"><b>You must add a language before adding items.</b> Go to the <i>Basic details</i> section to add a language.</div>
+                  <div id="contentInterface">
                     <div class="row gy-2 align-items-end">
-                      <div class="col-12 col-lg-6 col-xl-4">
-                        <button id="manageContentButton" class="btn btn-primary w-100">Manage content</button>
+                      <div class="col-12 col-lg-4 col-xl-3">
+                        <div id="addItemButton" class="btn btn-primary w-100">Add item</div>
                       </div>
-                      <div class="col-12 col-lg-6 col-xl-4">
-                        <button id="showCheckContentButton" class="btn btn-info w-100">Check content</button>
+                      <div class="col-8 col-md-9 col-lg-4 col-xl-3">
+                        <div id="showBulkImportButton" class="btn btn-secondary w-100">Bulk import</div>
                       </div>
-                      <H5 class="mt-2">Add a langauge</H5>
-                      <i>For each language you suppot, you need to match columns in your spreadsheet to properties of the browser.</i>
-                      <div id="language-picker"></div>
+                      <div class="col-4 col-md-3 col-lg-2 col-xxl-1 offset-lg-2 offset-xl-4 offset-xxl-5 col d-flex justify-content-end">
+                        <div class="dropdown">
+                          <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">⚙</button>
+                          <ul class="dropdown-menu">
+                            <li><button id="manageContentButton" class="dropdown-item">Manage content</button></li>
+                            <li><button id="showCheckContentButton" class="dropdown-item">Check for missing files</button></li>
+                            <li class="dropdown-divider"></li>
+                            <li><button id="clearItemsButton" class="dropdown-item text-danger">Clear all items</button></li>
+                          </ul>
+                        </div>
+                      </div>
                     </div>
-                    <H5>Current langauges</H5>
-                    <nav>
-                      <div id="languageNav" class="nav nav-tabs" role="tablist">
+                    <div class="h5 mt-3">Items</div>
+                    <div class="row gy-2">
+                      <div class="col-5 border-end">
+                        <div id="itemsList" class="row row-cols-1 gy-2"></div>
                       </div>
-                    </nav>
-                    <div class="tab-content border-bottom" id="languageNavContent">
+                      <div id="editPane" class="col-7">
+                        <div id="editPaneRow" class="row row-cols-1 gy-2">
+                          <div class="col mt-0">
+                            <div class="row gy-2 gx-1">
+                              <div class="col-6 col-md-3 col-lg-2 col-xxl-1">
+                                <button id="editPaneUpButton" class="btn btn-info btn-sm w-100">▲</button>
+                              </div>
+                              <div class="col-6 col-md-3 col-lg-2 col-xxl-1">
+                                <button id="editPaneDownButton" class="btn btn-info btn-sm w-100">▼</button>
+                              </div>
+                              <div class="col-12 col-md-6 col-lg-3 col-xxl-2 offset-lg-3 offset-lg-5 offset-xxl-8">
+                                <button id="editPaneDeleteButton" class="btn btn-danger btn-sm w-100">Delete</button>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div class="col">
+                            <img class="media-preview" id="editItemPreviewImage">
+                            <video class="media-preview" id="editItemPreviewVideo" autoplay loop muted disablePictureInPicture="true" webkit-playsinline="true" playsinline="true"></video>
+                            <div class="row mt-2">
+                              <div class="col-12 col-lg-9 col-xxl-10 pe-lg-0">
+                                <button id="editItemFileSelect" class="w-100 btn btn-outline-primary text-break">Select file</button>
+                              </div>
+                              <div class="col-6 col-lg-3 col-xxl-2 ps-lg-1 pt-2 pt-lg-0 offset-6 offset-lg-0">
+                                <div class="dropdown">
+                                  <button class="btn btn-secondary dropdown-toggle w-100" data-bs-auto-close="outside" type="button" data-bs-toggle="dropdown" aria-expanded="false">⚙</button>
+                                  <div class="dropdown-menu p-2 text-center" style="min-width: 250px;">
+                                      <b>Custom thumbnail</b>
+                                    <img class="media-preview mt-2" id="editItemThumbPreviewImage">
+                                    <div class="row mt-2">
+                                      <div class="col-9 pe-0">
+                                        <button id="editItemThumbnailSelect" class="w-100 btn btn-outline-primary text-break">Select file</button>
+                                      </div>
+                                      <div class="col-3 ps-1">
+                                        <button id="editItemThumbnailDelete" class="w-100 btn btn-danger px-0">✕</button>
+                                      </div>
+                                    </div>                                    
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="col">
+                            <nav  class="mt-3">
+                              <div id="editPaneNav" class="nav nav-tabs" role="tablist"></div>
+                            </nav>
+                            <div class="tab-content" id="editPaneContent"></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#filters" aria-expanded="false" aria-controls="appearance">
+                  Filters
+                  <div class="accordion-detail">Create and manage filters to aid in browsing.</div>
+                </button>
+              </h2>
+              <div id="filters" class="accordion-collapse collapse" data-bs-parent="#topLevelAccordion">
+                <div class="accordion-body">
+                  <div class="row gy-2">
+                    <div class="col-12 fst-italic">
+                      Filters help guests find related items, such as paintings by the same artist or photos from the same decade.
+                    </div>
+                    <div class="col-12">
+                      <nav  class="mt-3">
+                        <div id="defineFiltersNav" class="nav nav-tabs" role="tablist"></div>
+                      </nav>
+                      <div class="tab-content" id="defineFiltersContent"></div>
                     </div>
                   </div>
                 </div>
@@ -746,6 +943,7 @@
   <script type="text/javascript" src="/js/bootstrap_5_3/bootstrap.bundle.min.js"></script>
   <script type="text/javascript" src="/js/showdown.min.js"></script>
   <script type="text/javascript" src="/js/platform.js"></script>
+  <script type="text/javascript" src="../js/tiny-mde.min.js"></script>
   <script type="text/javascript" src="/js/coloris.min.js"></script>
   <script type="module" src="setup.js"></script>
 
