@@ -740,14 +740,14 @@ function editItem (itemUUID) {
     filterHeader.innerText = 'Filter data'
     row.appendChild(filterHeader)
 
-    if (def.languages[code].filter_order.length === 0) {
+    if ((def.languages[code]?.filter_order?.length ?? 0) === 0) {
       const col = document.createElement('div')
       col.classList = 'col fst-italic'
       col.innerText = 'Use the Filters section to define filters for this language.'
       row.appendChild(col)
     }
 
-    for (const filterUUID of def.languages[code].filter_order) {
+    for (const filterUUID of def.languages[code]?.filter_order ?? []) {
       const existing = itemDef?.filter_data?.[filterUUID]
 
       // Ensure the filter entry exists

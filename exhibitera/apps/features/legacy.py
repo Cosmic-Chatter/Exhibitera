@@ -191,7 +191,7 @@ def update_media_browser_definition_format():
         # Iterate the rows of the spreadsheet and make a content entry for each
         content = {}
         content_order = []
-        with open(spread_path, newline='') as csvfile:
+        with open(spread_path, newline='', encoding='UTF-8-sig') as csvfile:
             reader = csv.DictReader(csvfile)
             reader.fieldnames = [name.strip() for name in reader.fieldnames]  # Make sure there is no whitespace around the keys
             for row in reader:
