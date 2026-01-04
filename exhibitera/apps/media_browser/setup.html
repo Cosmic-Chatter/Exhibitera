@@ -129,12 +129,12 @@
                   <H4 class="text-center">Welcome to Media Browser!</H4>
                   <i>
                     <p>
-                      Media Browser displays collections of images and videos for users to explore. They can browse the collection, filter it based on attributes you choose, and view more information about a selected item.
+                      Media Browser displays collections of audio, images, and videos for users to explore. They can browse the collection, filter it based on attributes you choose, and view more information about a selected item.
                     </p>
                     <p>
                       To create a Media Browser, you will need:
                       <ul>
-                        <li>The image and video files you want to display;</li>
+                        <li>The media files you want to display;</li>
                         <li>The media titles, captions, and any credit information you want users to see.</li>
                       </ul>
                     </p>
@@ -175,6 +175,62 @@
                 </div>
               </div>
 
+              <!-- Import options -->
+              <div id="wizardPane_ImportOptions" class="row wizard-pane">
+                <div class="col-8 offset-2 mt-3">
+                  <H4 class="text-center">How do you want to add your media?</H4>
+                  <i>
+                    <p>
+                      Now, you'll add your media files. You can chooes your files now and add their details (title, caption, credit, etc.) after completing Guided Setup. Or, you can use a spreadsheet to bulk import everything right now.
+                    </p>
+                  </i>
+
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="wizardMediaImportOptions" id="wizardMediaImportOptionsSingle" checked>
+                    <label class="form-check-label" for="wizardMediaImportOptionsSingle">
+                      Choose files now, add details later
+                    </label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="wizardMediaImportOptions" id="wizardMediaImportOptionsBulk" >
+                    <label class="form-check-label" for="wizardMediaImportOptionsBulk">
+                      Bulk import files using a spreadsheet <span class="badge bg-secondary ms-2">Advanced</span>
+                    </label>
+                  </div>
+
+                  <div class="text-center mt-4">
+                    <button class="btn btn-secondary me-4 wizard-back" data-current-page="ImportOptions">Back</button>
+                    <button class="btn btn-primary ms-4 wizard-forward" data-current-page="ImportOptions">Next</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Basic file import -->
+              <div id="wizardPane_BasicImport" class="row wizard-pane">
+                <div class="col-8 offset-2 mt-3">
+                  <H4 class="text-center">Upload and select your files</H4>
+                  <i>
+                    <p>
+                      Use the button below to upload and select the files you want in your browser. Audio, image, and video files in most formats are supported. You can always add more files later.
+                    </p>
+                  </i>
+
+                  <div class="d-flex">
+                    <button id="wizardMediaImportButton" class="btn btn-primary">Select files</button>
+                    <button id="wizardMediaImportClearButton" class="btn btn-danger ms-auto">Clear files</button>
+                  </div>
+                  <div id="wizardMediaImportList" class="row gy-2 row-cols-2 row-cols-md-3 row-cols-lg-4 mt-2"></div>
+
+                  <div id="wizardMediaImportBlankWarning" class="text-warning mt-2" style="display: none;">
+                    You must add at least one file.
+                  </div>
+                  <div class="text-center mt-4">
+                    <button class="btn btn-secondary me-4 wizard-back" data-current-page="BasicImport">Back</button>
+                    <button class="btn btn-primary ms-4 wizard-forward" data-current-page="BasicImport">Next</button>
+                  </div>
+                </div>
+              </div>
+
               <!-- Media info -->
               <div id="wizardPane_MediaInfo" class="row wizard-pane">
                 <div class="col-8 offset-2 mt-3">
@@ -204,6 +260,12 @@
                           <b>Credit</b> <i><small>Who is responsible for the item.</small></i>
                         </label>
                       </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="" id="wizardCheckboxThumbnail">
+                        <label class="form-check-label" for="wizardCheckboxThumbnail">
+                          <b>Custom thumbnail</b> <i><small>A thumbnail different than the media itself.</small></i>
+                        </label>
+                      </div>
                     </div>
                   </div>
                   <div class="text-center mt-4">
@@ -219,7 +281,7 @@
                   <H4 class="text-center">Organize your media and details</H4>
                   <i>
                     <p>
-                      Media Browser organizes your media and their details using a simple spreadsheet. Based on the languages and details you have selected, a template has been generated. Download the template and edit it using software such as Microsoft Excel, Google Sheets, Apple Numbers, or LibreOffice Calc.
+                      Based on the languages and details you have selected, a template has been generated. Download the template and edit it using software such as Microsoft Excel, Google Sheets, Apple Numbers, or LibreOffice Calc.
                     </p>
                     <p>
                       <b>Each row of the spreadsheet represents one file in your media browser.</b> <i class="text-warning">Make sure to save the file in the CSV (comma-separated values) format.</i>
@@ -381,6 +443,26 @@
           </div>
         </div>
       </div>
+
+      <!-- Clear items modal -->
+      <div id="clearItemsModal" class="modal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Are you sure?</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              Clearing items will remove them from this definition, but not delete the media files from Exhibitera Apps.
+            </div>
+            <div class="modal-footer">
+              <button id="clearItemsConfirmButton" type="button" class="btn btn-danger">Confirm</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
 
       <div class="row">
         <div class="col-10" id="setupHeader">
@@ -585,6 +667,8 @@
                           <ul class="dropdown-menu">
                             <li><button id="manageContentButton" class="dropdown-item">Manage content</button></li>
                             <li><button id="showCheckContentButton" class="dropdown-item">Check for missing files</button></li>
+                            <li class="dropdown-divider"></li>
+                            <li><button id="clearItemsButton" class="dropdown-item text-danger">Clear all items</button></li>
                           </ul>
                         </div>
                       </div>

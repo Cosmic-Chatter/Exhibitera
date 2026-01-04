@@ -22,6 +22,7 @@ async function initializeWizard () {
   document.getElementById('wizardCheckboxTitle').checked = true
   document.getElementById('wizardCheckboxCaption').checked = true
   document.getElementById('wizardCheckboxCredit').checked = true
+  document.getElementById('wizardCheckboxThumbnail').checked = false
   document.getElementById('wizardUploadTemplateButton').setAttribute('data-spreadsheet', '')
   document.getElementById('wizardUploadTemplateBlankWarning').style.display = 'none'
   document.getElementById('wizardUploadMediaMissingWarning').style.display = 'none'
@@ -45,9 +46,23 @@ async function wizardForward (currentPage) {
   } else if (currentPage === 'Languages') {
     if (document.getElementById('wizardLanguages').children.length > 0) {
       document.getElementById('wizardLanguagesBlankWarning').style.display = 'none'
-      exSetup.wizardGoTo('MediaInfo')
+      exSetup.wizardGoTo('ImportOptions')
     } else {
       document.getElementById('wizardLanguagesBlankWarning').style.display = 'block'
+    }
+  } else if (currentPage === 'ImportOptions') {
+    if (document.getElementById('wizardMediaImportOptionsSingle').checked) {
+      exSetup.wizardGoTo('BasicImport')
+    } else {
+      exSetup.wizardGoTo('MediaInfo')
+    }
+  } else if (currentPage === 'BasicImport') {
+    const numFiles = document.getElementById('wizardMediaImportList').childElementCount
+    if (numFiles === 0) {
+      document.getElementById('wizardMediaImportBlankWarning').style.display = 'block'
+    } else {
+      document.getElementById('wizardMediaImportBlankWarning').style.display = 'none'
+      exSetup.wizardGoTo('Layout')
     }
   } else if (currentPage === 'MediaInfo') {
     exSetup.wizardGoTo('Spreadsheet')
@@ -61,19 +76,14 @@ async function wizardForward (currentPage) {
     }
   } else if (currentPage === 'MediaUpload') {
     // Check that each file listed in the spreadsheet has an uploaded copy.
-    const spreadsheet = document.getElementById('wizardUploadTemplateButton').getAttribute('data-spreadsheet')
-    let missing = []
-    try {
-      missing = await _checkContentExists(spreadsheet, ['Media filename'])
-      document.getElementById('wizardUploadMediaBadKeyWarning').style.display = 'none'
-    } catch (e) {
-      if (String(e).slice(0, 14) === 'Error: bad_key') {
-        document.getElementById('wizardUploadMediaBadKeyWarning').style.display = 'block'
-        return
-      }
-    }
+    const spreadsheet = document.getElementById('wizardUploadTemplateButton').dataset.spreadsheet
 
-    if (missing.length === 0) {
+    const keys = ['Media filename']
+    if (document.getElementById('wizardCheckboxThumbnail').checked) keys.push('Custom thumbnail')
+
+    const missingContent = await checkBulkImportContent(spreadsheet, keys)
+
+    if (missingContent.length === 0) {
       document.getElementById('wizardUploadMediaMissingWarning').style.display = 'none'
       document.getElementById('wizardUploadMediaMissingRow').style.display = 'none'
       exSetup.wizardGoTo('Layout')
@@ -83,7 +93,7 @@ async function wizardForward (currentPage) {
       missingRow.style.display = 'flex'
       document.getElementById('wizardUploadMediaMissingWarning').style.display = 'block'
 
-      for (const item of missing) {
+      for (const item of missingContent) {
         const col = document.createElement('div')
         col.classList = 'col-12 col-md-4'
         col.innerHTML = item
@@ -100,8 +110,10 @@ function wizardBack (currentPage) {
 
   if (currentPage === 'Languages') {
     exSetup.wizardGoTo('Welcome')
-  } else if (currentPage === 'MediaInfo') {
+  } else if (currentPage === 'ImportOptions') {
     exSetup.wizardGoTo('Languages')
+  } else if (currentPage === 'MediaInfo') {
+    exSetup.wizardGoTo('ImportOptions')
   } else if (currentPage === 'Spreadsheet') {
     exSetup.wizardGoTo('MediaInfo')
   } else if (currentPage === 'MediaUpload') {
@@ -123,32 +135,29 @@ async function wizardCreateDefinition () {
   for (const langEl of document.getElementById('wizardLanguages').children) {
     const lang = langEl.querySelector('select').value
     langOrder.push(lang)
-    const langDef = {
-      caption_key: null,
+    exSetup.updateWorkingDefinition(['languages', lang], {
       code: lang,
-      credit_key: null,
+      content: {},
       display_name: exLang.getLanguageDisplayName(lang),
       filter_order: [],
-      filters: {},
-      media_key: 'Media filename',
-      title_key: null
-    }
-    if (document.getElementById('wizardCheckboxTitle').checked === true) {
-      langDef.title_key = 'Title (' + lang + ')'
-    }
-    if (document.getElementById('wizardCheckboxCaption').checked === true) {
-      langDef.caption_key = 'Caption (' + lang + ')'
-    }
-    if (document.getElementById('wizardCheckboxCredit').checked === true) {
-      langDef.credit_key = 'Credit (' + lang + ')'
-    }
-    exSetup.updateWorkingDefinition(['languages', lang], langDef)
+      filters: {}
+    })
+    addLanguage(lang)
   }
   exSetup.updateWorkingDefinition(['language_order'], langOrder)
 
-  // Basics
-  exSetup.updateWorkingDefinition(['name'], document.getElementById('wizardDefinitionNameInput').value.trim())
-  exSetup.updateWorkingDefinition(['spreadsheet'], document.getElementById('wizardUploadTemplateButton').getAttribute('data-spreadsheet'))
+  // Media
+  if (document.getElementById('wizardMediaImportOptionsSingle').checked) {
+    const children = document.getElementById('wizardMediaImportList').children
+    for (const child of children) {
+      const filename = child.dataset.filename
+      addItem({ filename })
+    }
+  } else {
+    // Bulk import
+    const spreadsheet = document.getElementById('wizardUploadTemplateButton').dataset.spreadsheet
+    bulkImportFiles(spreadsheet)
+  }
 
   // Layout
   const orientation = document.getElementById('wizardOrientationSelect').value
@@ -203,6 +212,72 @@ async function wizardCreateDefinition () {
   exUtilities.hideModal('#setupWizardModal')
 }
 
+function onWizardMediaImport (files) {
+  // Take a list of filenames and create a preview for each
+
+  const wizardMediaImportList = document.getElementById('wizardMediaImportList')
+  const wizardMediaImportBlankWarning = document.getElementById('wizardMediaImportBlankWarning')
+  if (files.length === 0) {
+    wizardMediaImportBlankWarning.style.display = 'block'
+  } else {
+    wizardMediaImportBlankWarning.style.display = 'none'
+  }
+
+  for (const file of files) {
+    const mimetype = exFiles.guessMimetype(file)
+    const col = document.createElement('div')
+    col.dataset.filename = file
+    col.className = 'col'
+
+    const card = document.createElement('div')
+    card.className = 'card position-relative'
+
+    let preview = null
+
+    if (mimetype === 'image' || mimetype === 'audio') {
+      preview = document.createElement('img')
+      preview.src = exConfig.api + '/files/' + file + '/thumbnail'
+      preview.className = 'card-img-top'
+      preview.alt = file
+    } else if (mimetype === 'video') {
+      preview = document.createElement('video')
+      preview.src = exConfig.api + '/files/' + file + '/thumbnail'
+      preview.className = 'card-img-top'
+      preview.muted = true
+      preview.loop = true
+      preview.autoplay = true
+      preview.playsInline = true
+      preview.setAttribute('webkit-playsinline', true)
+      preview.setAttribute('disablePictureInPicture', true)
+    } else {
+      // Unsupported file type — skip
+      continue
+    }
+    card.appendChild(preview)
+
+    const removeBtn = document.createElement('button')
+    removeBtn.className =
+      'btn btn-sm btn-danger position-absolute top-0 end-0 m-1'
+    removeBtn.textContent = '✕'
+    removeBtn.addEventListener('click', () => col.remove())
+    card.appendChild(removeBtn)
+
+    const body = document.createElement('div')
+    body.className = 'card-body p-2'
+
+    const filenameEl = document.createElement('div')
+    filenameEl.className = 'small text-truncate'
+    filenameEl.textContent = file
+    filenameEl.title = file
+
+    body.appendChild(filenameEl)
+    card.appendChild(body)
+
+    col.appendChild(card)
+    wizardMediaImportList.appendChild(col)
+  }
+}
+
 function generateSpreadsheetTemplate (wizard = true) {
   // Generate a template spreadsheet and download it to the user's system.
 
@@ -229,7 +304,7 @@ function generateSpreadsheetTemplate (wizard = true) {
 
   // Loop through the various combinations to make the header line for the CSV file
   let csv = 'Media filename'
-  if (wizard === false) csv += ', Custom thumbnail'
+  if (wizard === false || document.getElementById('wizardCheckboxThumbnail').checked === true) csv += ', Custom thumbnail'
   for (const lang of languages) {
     for (const detail of details) {
       csv += ', ' + detail + ' (' + lang + ')'
@@ -480,12 +555,10 @@ function addItem (details = {}) {
   exSetup.previewDefinition(true)
 }
 
-function deleteItem () {
+function deleteItem (uuid, rebuildList = true) {
   // Remove the given item and clean up any references to it
 
   const def = exSetup.config.workingDefinition
-
-  const uuid = document.getElementById('editPane').dataset.uuid
 
   if (!def.content[uuid]) return
 
@@ -496,7 +569,6 @@ function deleteItem () {
   if (index !== -1) {
     def.content_order.splice(index, 1)
   }
-
   // Remove main content entry
   delete def.content[uuid]
 
@@ -507,20 +579,22 @@ function deleteItem () {
     }
   }
 
-  rebuildItemList()
+  if (rebuildList) {
+    rebuildItemList()
 
-  // Select a sane next item (or none)
-  const nextUUID = def.content_order[index] || def.content_order[index - 1]
-  if (nextUUID) {
-    editItem(nextUUID)
-  } else {
-    const nav = document.getElementById('editPaneNav')
-    const content = document.getElementById('editPaneContent')
-    nav.innerText = ''
-    content.innerText = ''
+    // Select a sane next item (or none)
+    const nextUUID = def.content_order[index] || def.content_order[index - 1]
+    if (nextUUID) {
+      editItem(nextUUID)
+    } else {
+      const nav = document.getElementById('editPaneNav')
+      const content = document.getElementById('editPaneContent')
+      nav.innerText = ''
+      content.innerText = ''
+    }
+
+    exSetup.previewDefinition(true)
   }
-
-  exSetup.previewDefinition(true)
 }
 
 function moveItem (direction) {
@@ -1037,10 +1111,8 @@ async function onBulkImportFileUpload (ev) {
   }
 }
 
-async function bulkImportFiles () {
+async function bulkImportFiles (spreadsheetFile) {
   // Use the selected spreadsheet to create new items
-
-  const spreadsheetFile = document.getElementById('bulkImportUploadTemplate').dataset.spreadsheet
 
   if (!spreadsheetFile || spreadsheetFile === '') return
 
@@ -1107,6 +1179,18 @@ Array.from(document.querySelectorAll('.wizard-back')).forEach((el) => {
   })
 })
 
+document.getElementById('wizardMediaImportButton').addEventListener('click', () => {
+  exFileSelect.createFileSelectionModal({
+    filetypes: ['audio', 'image', 'video'],
+    multiple: true
+  }).then((files) => {
+    onWizardMediaImport(files)
+  })
+})
+document.getElementById('wizardMediaImportClearButton').addEventListener('click', () => {
+  document.getElementById('wizardMediaImportList').innerText = ''
+})
+
 document.getElementById('wizardDownloadTemplateButton').addEventListener('click', () => {
   generateSpreadsheetTemplate()
 })
@@ -1122,7 +1206,7 @@ document.getElementById('wizardUploadTemplateButton').addEventListener('click', 
 
 document.getElementById('wizardUploadMediaButton').addEventListener('click', () => {
   exFileSelect.createFileSelectionModal({
-    filetypes: ['image', 'video'],
+    filetypes: ['audio', 'image', 'video'],
     manage: true,
     multiple: true
   })
@@ -1140,6 +1224,18 @@ document.getElementById('showCheckContentButton').addEventListener('click', () =
   exUtilities.showModal('#checkContentModal')
 })
 document.getElementById('checkContentButton').addEventListener('click', checkContentExists)
+document.getElementById('clearItemsButton').addEventListener('click', () => {
+  exUtilities.showModal('#clearItemsModal')
+})
+document.getElementById('clearItemsConfirmButton').addEventListener('click', () => {
+  const items = exSetup.config.workingDefinition.content_order.slice() // Clone
+  for (const item of items) {
+    deleteItem(item, false)
+  }
+  rebuildItemList()
+  exSetup.previewDefinition(true)
+  exUtilities.hideModal('#clearItemsModal')
+})
 
 // Bulk import
 document.getElementById('showBulkImportButton').addEventListener('click', () => {
@@ -1179,7 +1275,10 @@ document.getElementById('bulkImportUploadMedia').addEventListener('click', (ev) 
       onBulkImportFileUpload(ev)
     })
 })
-document.getElementById('bulkImportButton').addEventListener('click', bulkImportFiles)
+document.getElementById('bulkImportButton').addEventListener('click', () => {
+  const spreadsheetFile = document.getElementById('bulkImportUploadTemplate').dataset.spreadsheet
+  bulkImportFiles(spreadsheetFile)
+})
 
 // Definition fields
 
@@ -1211,7 +1310,10 @@ document.getElementById('loopResultsCheckbox').addEventListener('change', (event
 })
 
 document.getElementById('addItemButton').addEventListener('click', addItem)
-document.getElementById('editPaneDeleteButton').addEventListener('click', deleteItem)
+document.getElementById('editPaneDeleteButton').addEventListener('click', () => {
+  const uuid = document.getElementById('editPane').dataset.uuid
+  deleteItem(uuid)
+})
 document.getElementById('editPaneUpButton').addEventListener('click', () => {
   moveItem(-1)
 })
