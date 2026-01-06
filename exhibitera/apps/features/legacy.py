@@ -256,3 +256,87 @@ def _delete_definition(filename):
     shutil.copy(file_path, backup_path)
     os.remove(file_path)
 
+
+# Added in Ex6
+def update_timeline_definition_format():
+    """Eliminate the use of spreadsheets for storing Timeline Explorer data."""
+
+    current_version = ex_files.load_json(ex_files.get_path(["_static", "semantic_version.json"]))
+    def_path = ex_files.get_path(["definitions"], user_file=True)
+    for file in os.listdir(def_path):
+        if not file.lower().endswith("json"):
+            continue
+        file_path = ex_files.get_path(["definitions", file], user_file=True)
+        definition = ex_files.load_json(file_path)
+        if definition is None or definition.get("app", "") != "timeline_explorer":
+            continue
+        if not ex_utilities.semantic_version_less_than(definition.get("exhibitera_version", "0.0.0")
+                , "6.0.0"):
+            continue
+
+        spread_name = definition.get("spreadsheet", "")
+        if spread_name == "":
+            _delete_definition(file)
+            continue
+        spread_path = ex_files.get_path(["content", spread_name], user_file=True)
+        if not os.path.exists(spread_path):
+            _delete_definition(file)
+            continue
+        if len(definition.get("language_order", [])) == 0:
+            _delete_definition(file)
+            continue
+
+        languages = definition["languages"]
+        language_order = definition["language_order"]
+        media_key = definition["languages"][language_order[0]].get("image_key", "")
+        level_key = definition["languages"][language_order[0]].get("level_key", "")
+
+        # Add a content dictionary to each language
+        for lang in language_order:
+            languages[lang]["content"] = {}
+
+        # Iterate the rows of the spreadsheet and make a content entry for each
+        content = {}
+        content_order = []
+        with open(spread_path, newline='', encoding='UTF-8-sig') as csvfile:
+            reader = csv.DictReader(csvfile)
+            reader.fieldnames = [name.strip() for name in reader.fieldnames]  # Make sure there is no whitespace around the keys
+            for row in reader:
+                new_uuid = str(uuid.uuid4())
+                content[new_uuid] = {
+                    "filename": row.get(media_key, ""),
+                    "level": int(row.get(level_key, 4)),
+                    "uuid": new_uuid
+                }
+                content_order.append(new_uuid)
+                # Now iterate the languages and fill in the localization for each from this row
+                for lang in language_order:
+                    title_key = languages[lang].get("title_key", "")
+                    body_key = languages[lang].get("short_text_key", "")
+                    time_key = languages[lang].get("time_key", "")
+
+                    localization = {
+                        "uuid": new_uuid,
+                        "title": row.get(title_key, ""),
+                        "time": row.get(time_key, ""),
+                        "description": row.get(body_key, "")
+                    }
+                    languages[lang]["content"][new_uuid] = localization
+
+        # Clean up the dictionary
+        for lang in language_order:
+            for key in ["title_key", "image_key", "level_key", "short_text_key", "time_key", "default"]:
+                if key in languages[lang]:
+                    del languages[lang][key]
+
+        definition["languages"] = languages
+        definition["content"] = content
+        definition["content_order"] = content_order
+        definition["exhibitera_version"] = current_version["version"]
+        del definition["spreadsheet"]
+
+        # Rename the old file
+        backup_path = ex_files.get_path(["definitions", file + '.backup'], user_file=True)
+        shutil.copy(file_path, backup_path)
+
+        ex_files.write_json(definition, file_path)

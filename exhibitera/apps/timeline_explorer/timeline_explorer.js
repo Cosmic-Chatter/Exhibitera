@@ -13,9 +13,7 @@ function updateFunc (update) {
 function loadDefinition (def) {
   // Helper function to manage setting up the interface.
 
-  // Tag the document with the defintion for later reference
-  document.body.dataset.timelineDefinition = JSON.stringify(def)
-
+  exCommon.config.definition = def
   const root = document.querySelector(':root')
 
   // Modify the style
@@ -87,21 +85,6 @@ function loadDefinition (def) {
   // Find the default language
   defaultLang = def.language_order[0]
 
-  // Load the CSV file containing the timeline data and use it to build the timeline entries.
-  exCommon.makeHelperRequest({
-    api: '',
-    method: 'GET',
-    endpoint: '/content/' + def.spreadsheet,
-    rawResponse: true,
-    noCache: true
-  })
-    .then((response) => {
-      document.getElementById('timelineContainer').innerText = ''
-      const csvAsJSON = exFiles.csvToJSON(response).json
-      document.body.dataset.spreadsheet = JSON.stringify(csvAsJSON)
-      localize(defaultLang)
-    })
-
   // Set up the attractor
   inactivityTimeout = def.inactivity_timeout || 30
   if ('attractor' in def && def.attractor.trim() !== '') {
@@ -135,25 +118,20 @@ function adjustFontSize (increment) {
 }
 
 function localize (lang) {
-  // Use the spreadhseet and defintion to set the content to the given language
+  // Set the content to the given language
 
   exCommon.configureLanguage(lang)
 
-  let spreadsheet, definition
-  try {
-    spreadsheet = JSON.parse(document.body.dataset.spreadsheet)
-    definition = JSON.parse(document.body.dataset.timelineDefinition)
-  } catch {
-    // These might load undefined if we don't have a definition yet in the setup screen.
-    return
-  }
+  const definition = exCommon.config.definition
+
   const header = document.getElementById('headerText')
   const root = document.querySelector(':root')
 
   document.getElementById('timelineContainer').innerHTML = ''
-  spreadsheet.forEach((entry) => {
-    createTimelineEntry(entry, lang)
-  })
+
+  for (const itemUUID of definition.content_order) {
+    createTimelineEntry(itemUUID, lang)
+  }
 
   const headerText = exMarkdown.formatText(definition?.languages?.[lang]?.header_text ?? '', { string: true, removeParagraph: true })
 
@@ -166,10 +144,11 @@ function localize (lang) {
   }
 }
 
-function createTimelineEntry (entry, langCode) {
-  // Take the provided object and turn it into a set of HTML elements representing the entry.
+function createTimelineEntry (itemUUID, langCode) {
+  // Build an HTML element for the given timeline item
 
-  const langDef = JSON.parse(document.body.dataset.timelineDefinition).languages[langCode]
+  const item = exCommon.config.definition.content[itemUUID]
+  const localization = exCommon.config.definition.languages[langCode]?.content?.[itemUUID]
 
   const li = document.createElement('li')
 
@@ -184,28 +163,28 @@ function createTimelineEntry (entry, langCode) {
   container.appendChild(flex1)
 
   const timeEl = document.createElement('time')
-  timeEl.innerHTML = exMarkdown.formatText(entry[langDef.time_key], { string: true, removeParagraph: true })
+  timeEl.innerHTML = exMarkdown.formatText(localization.time, { string: true, removeParagraph: true })
   flex1.appendChild(timeEl)
 
   const title = document.createElement('div')
-  if (parseInt(entry.Level) < 1) {
+  if (parseInt(item.Level) < 1) {
     title.classList = 'size1'
-  } else if (parseInt(entry.Level) > 4) {
+  } else if (parseInt(item.Level) > 4) {
     title.classList = 'size4'
   } else {
-    title.classList = 'size' + parseInt(entry[langDef.level_key] ?? 4)
+    title.classList = 'size' + String(item?.level ?? 4)
   }
   title.classList.add('timeline-item-header')
-  title.innerHTML = exMarkdown.formatText(entry[langDef.title_key], { string: true, removeParagraph: true })
+  title.innerHTML = exMarkdown.formatText(localization.title, { string: true, removeParagraph: true })
   flex1.appendChild(title)
 
   const bodyEl = document.createElement('p')
   bodyEl.classList = 'timeline-body'
-  bodyEl.innerHTML = exMarkdown.formatText(entry[langDef.short_text_key], { string: true, removeParagraph: true })
+  bodyEl.innerHTML = exMarkdown.formatText(localization.description, { string: true, removeParagraph: true })
   flex1.appendChild(bodyEl)
 
   // Image
-  const imageName = entry[langDef.image_key]
+  const imageName = item.filename
   if (imageName != null && imageName.trim() !== '') {
     // Make the timeline element wider to accomdate the image
     container.classList.add('with-image')
