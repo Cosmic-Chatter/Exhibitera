@@ -394,7 +394,6 @@ function editDefinition (uuid = '') {
   clearDefinitionInput(false)
   const def = exSetup.getDefinitionByUUID(uuid)
 
-  exSetup.config.initialDefinition = structuredClone(def)
   exSetup.config.workingDefinition = structuredClone(def)
 
   // Configure preview behavior
@@ -531,7 +530,6 @@ function addItem (details = {}) {
   // Create a new item and add it to the definition
 
   const def = exSetup.config.workingDefinition
-  console.log(def)
   const uuid = exUtilities.uuid()
 
   def.content_order.push(uuid)
@@ -672,7 +670,7 @@ function editItem (itemUUID) {
     thumbImageTPreview.src = exConfig.api + '/files/' + itemDef.custom_thumbnail + '/thumbnail'
   }
 
-  // Build nav for to edit title, caption, credit in each language
+  // Build nav to edit title, caption, credit in each language
   const nav = document.getElementById('editPaneNav')
   const content = document.getElementById('editPaneContent')
   nav.innerText = ''
@@ -725,7 +723,7 @@ function editItem (itemUUID) {
         commandDiv: commandBar,
         commands: ['basic'],
         callback: (content) => {
-          if (field === 'title') {
+          if (field === 'title' && code === def.language_order[0]) {
             document.getElementById('itemButton_' + itemUUID).innerHTML = exMarkdown.formatText(content, { string: true, removeParagraph: true })
           }
           exSetup.updateWorkingDefinition(['languages', code, 'content', itemUUID, field], content)

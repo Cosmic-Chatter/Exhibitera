@@ -323,46 +323,60 @@
         </div>
       </div>
 
-      <!-- Optimize content modal -->
-      <!-- <div id="optimizeContentModal" class="modal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered mw-100 w-75">
+      <!-- Bulk import modal -->
+      <div id="bulkImportModal" class="modal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title">Optimize content</h5>
+              <h5 class="modal-title">Bulk import</h5>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body"  style="max-height: 70vh; overflow-y: auto;">
-              <div class="row align-items-center">
+            <div class="modal-body">
+              <div class="row gy-2 align-items-center">
                 <div class="col-12">
-                  This tool optimizes the resolution of your content to maximize performance. It accounts for the resolution of your screen, as well as the number of items per page. If you change these elements, you should re-optimize your content. The original files remain unaltered.
+                  To import many items at once, click the button below to download a template spreadsheet. Use an app such as Microsoft Excel, Apple Numbers, or Google Sheets to edit the sheet, adding a row for each item you want to import.
                 </div>
-                <div class="col-6 mt-2">
-                  <label for="resolutionSelect" class="form-label">Display resolution</label>
-                  <select id="resolutionSelect" class="form-select">
-                    <option value="3840_2160">4K landscape (3840x2160)</option>
-                    <option value="2160_3840">4K portrait (2160x3840)</option>
-                    <option value="1920_1080">2K landscape (1920x1080)</option>
-                    <option value="1080_1920">2K portrait (1080x1920)</option>
-                    <option value="2732_2048">iPad landscape (2732x2048)</option>
-                    <option value="2048_2732">iPad portrait (2048x2732)</option>
-                  </select>
+                <div class="col-12">
+                  <b>Step 1: </b><button id="bulkImportDownloadTemplate" class="btn btn-secondary ms-2 bulk-import-button" style="width: 230px;">Download blank template</button>
                 </div>
-                <div class="col-12 mt-3">
-                  <div id="optimizeContentProgressBarDiv" class="progress" role="progressbar" aria-label="Optimization progress" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
-                    <div id="optimizeContentProgressBar" class="progress-bar bg-primary" style="width: 0%"></div>
-                  </div>
+                <div class="col-12">
+                  <b>Step 2: </b><button id="bulkImportUploadTemplate" class="btn btn-secondary ms-2 bulk-import-button" style="width: 230px;">Upload completed template</button>
                 </div>
-                <div class="col-12 mt-3">
-                  <button id="optimizeContentBeginButton" class="btn btn-primary">Optimize</button>
+                <div class="col-12">
+                  <b>Step 3: </b><button id="bulkImportUploadMedia" class="btn btn-secondary ms-2 bulk-import-button" style="width: 230px;">Upload media files</button> 
+                </div>
+                <div id="bulkUploadMissingContentDiv" class="col-12">
+                  Missing content:
+                  <ul id="bulkUploadMissingContent" style="max-height: 20vh; overflow-y: auto;"></ul>
                 </div>
               </div>
             </div>
             <div class="modal-footer">
+              <button id="bulkImportButton" type="button" class="btn btn-primary">Import </button>
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
           </div>
         </div>
-      </div> -->
+      </div>
+
+      <!-- Clear items modal -->
+      <div id="clearItemsModal" class="modal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Are you sure?</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              Clearing items will remove them from this definition, but not delete the media files from Exhibitera Apps.
+            </div>
+            <div class="modal-footer">
+              <button id="clearItemsConfirmButton" type="button" class="btn btn-danger">Confirm</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div class="row">
         <div class="col-10" id="setupHeader">
@@ -492,7 +506,7 @@
               <h2 class="accordion-header">
                 <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#basicDetails" aria-expanded="true" aria-controls="basicDetails">
                   Basic details
-                  <div class="accordion-detail">Choose a spreadsheet, set up the attractor, and more.</div>
+                  <div class="accordion-detail">Set the definition name, set up the attractor, and configure your languages.</div>
                 </button>
               </h2>
               <div id="basicDetails" class="accordion-collapse collapse show" data-bs-parent="#topLevelAccordion">
@@ -501,11 +515,6 @@
                     <div class="col-12 col-md-6">
                       <label for="definitionNameInput" class="form-label">Definition name</label>
                       <input type="text" class="form-control" id="definitionNameInput">
-                    </div>
-                    <div class="col-12 col-md-6">
-                      <label for="spreadsheetSelect" class="form-label">Spreadsheet</label>
-                      <div id="badSpreadsheetWarning" class="alert alert-danger" style="display: none;">Spreadsheet error detected in row <span id="badSpreadsheetWarningLineNumber"></span>. <span class="badge bg-warning ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="The most common error is a new line in the row. Use <br> to insert a new line instead." style="font-size: 0.55em;">?</span></div>
-                      <button id="spreadsheetSelect" class="btn btn-outline-primary w-100">Select file</button>
                     </div>
                     <div class="col-12 col-md-6">
                       <div class="row">
@@ -528,6 +537,11 @@
                       </label>
                       <input type="number" class="form-control" min="10" value="30" id="inactivityTimeoutField"></select>
                     </div>
+                    <div class="col-12">
+                      <H5 class="mt-2">Add a langauge</H5>
+                      <i>You must add at least one language.</i>
+                      <div id="language-picker"></div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -543,30 +557,84 @@
               </h2>
               <div id="content" class="accordion-collapse collapse" data-bs-parent="#topLevelAccordion">
                 <div class="accordion-body">
-                  <div class="row gy-2">
-                    <div class="row gy-2 align-items-center">
-                      <div class="col-12 col-lg-6 col-xl-4">
-                        <button id="manageContentButton" class="btn btn-primary w-100">Manage content</button>
+                  <div id="contentNoLanguagesAlert" class="alert alert-warning"><b>You must add a language before adding items.</b> Go to the <i>Basic details</i> section to add a language.</div>
+                  <div id="contentInterface">
+                    <div class="row gy-2 align-items-end">
+                      <div class="col-12 col-lg-4 col-xl-3">
+                        <div id="addItemButton" class="btn btn-primary w-100">Add item</div>
                       </div>
-                      <div class="col-12 col-lg-6 col-xl-4">
-                        <button id="showCheckContentButton" class="btn btn-info w-100">Check content</button>
+                      <div class="col-8 col-md-9 col-lg-4 col-xl-3">
+                        <div id="showBulkImportButton" class="btn btn-secondary w-100">Bulk import</div>
                       </div>
-                      <!-- <div class="col-12 col-lg-6 col-xl-4">
-                        <button id="optimizeContentButton" class="btn btn-info w-100">Optimize content</button>
-                      </div> -->
-      
-                      <H5 class="mt-2">Add a langauge</H5>
-                      <i>For each language you suppot, you need to match columns in your spreadsheet to properties of the timeline.</i>
-                      <div id="language-picker"></div>
+                      <div class="col-4 col-md-3 col-lg-2 col-xxl-1 offset-lg-2 offset-xl-4 offset-xxl-5 col d-flex justify-content-end">
+                        <div class="dropdown">
+                          <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">⚙</button>
+                          <ul class="dropdown-menu">
+                            <li><button id="manageContentButton" class="dropdown-item">Manage content</button></li>
+                            <li><button id="showCheckContentButton" class="dropdown-item">Check for missing files</button></li>
+                            <li class="dropdown-divider"></li>
+                            <li><button id="clearItemsButton" class="dropdown-item text-danger">Clear all items</button></li>
+                          </ul>
+                        </div>
+                      </div>
                     </div>
-                    <H5>Current langauges</H5>
-                    <nav>
-                      <div id="languageNav" class="nav nav-tabs" role="tablist">
+                    <div class="h5 mt-3">Items</div>
+                    <div class="row gy-2">
+                      <div class="col-5 border-end">
+                        <div id="itemsList" class="row row-cols-1 gy-2"></div>
                       </div>
-                    </nav>
-                    <div class="tab-content border-bottom" id="languageNavContent">
+                      <div id="editPane" class="col-7">
+                        <div id="editPaneRow" class="row row-cols-1 gy-2">
+                          <div class="col mt-0">
+                            <div class="row gy-2 gx-1">
+                              <div class="col-6 col-md-3 col-lg-2 col-xxl-1">
+                                <button id="editPaneUpButton" class="btn btn-info btn-sm w-100">▲</button>
+                              </div>
+                              <div class="col-6 col-md-3 col-lg-2 col-xxl-1">
+                                <button id="editPaneDownButton" class="btn btn-info btn-sm w-100">▼</button>
+                              </div>
+                              <div class="col-12 col-md-6 col-lg-3 col-xxl-2 offset-lg-3 offset-lg-5 offset-xxl-8">
+                                <button id="editPaneDeleteButton" class="btn btn-danger btn-sm w-100">Delete</button>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div class="col">
+                            <img class="media-preview" id="editItemPreviewImage">
+                            <video class="media-preview" id="editItemPreviewVideo" autoplay loop muted disablePictureInPicture="true" webkit-playsinline="true" playsinline="true"></video>
+                            <div class="row mt-2">
+                              <div class="col-12 col-lg-9 col-xxl-10 pe-lg-0">
+                                <button id="editItemFileSelect" class="w-100 btn btn-outline-primary text-break">Select file</button>
+                              </div>
+                              <div class="col-6 col-lg-3 col-xxl-2 ps-lg-1 pt-2 pt-lg-0 offset-6 offset-lg-0">
+                                <div class="dropdown">
+                                  <button class="btn btn-secondary dropdown-toggle w-100" data-bs-auto-close="outside" type="button" data-bs-toggle="dropdown" aria-expanded="false">⚙</button>
+                                  <div class="dropdown-menu p-2 text-center" style="min-width: 250px;">
+                                      <b>Custom thumbnail</b>
+                                    <img class="media-preview mt-2" id="editItemThumbPreviewImage">
+                                    <div class="row mt-2">
+                                      <div class="col-9 pe-0">
+                                        <button id="editItemThumbnailSelect" class="w-100 btn btn-outline-primary text-break">Select file</button>
+                                      </div>
+                                      <div class="col-3 ps-1">
+                                        <button id="editItemThumbnailDelete" class="w-100 btn btn-danger px-0">✕</button>
+                                      </div>
+                                    </div>                                    
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="col">
+                            <nav  class="mt-3">
+                              <div id="editPaneNav" class="nav nav-tabs" role="tablist"></div>
+                            </nav>
+                            <div class="tab-content" id="editPaneContent"></div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  </div>                
                 </div>
               </div>
             </div>

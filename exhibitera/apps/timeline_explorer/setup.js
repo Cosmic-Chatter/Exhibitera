@@ -1,5 +1,6 @@
 /* global bootstrap, Coloris */
 
+import exConfig from '../../common/config.js'
 import * as exFiles from '../../common/files.js'
 import * as exUtilities from '../../common/utilities.js'
 import * as exCommon from '../js/exhibitera_app_common.js'
@@ -236,15 +237,13 @@ async function clearDefinitionInput (full = true) {
 
   if (full === true) exSetup.initializeDefinition()
 
-  // Spreadsheet
-  const spreadsheetSelect = document.getElementById('spreadsheetSelect')
-  spreadsheetSelect.innerText = 'Select file'
-  spreadsheetSelect.dataset.filename = ''
-  spreadsheetSelect.dataset.availableKeys = []
-
   // Language
   exLang.clearLanguagePicker(document.getElementById('language-picker'))
-  exLang.createLanguagePicker(document.getElementById('language-picker'), { onLanguageRebuild: rebuildLanguageElements })
+  exLang.createLanguagePicker(document.getElementById('language-picker'), {
+    onLanguageAdd: addLanguage,
+    beforeLanguageDelete: deleteLanguage,
+    onLanguageRebuild: rebuildLanguageElements
+  })
 
   rebuildLanguageElements([])
 
@@ -283,7 +282,6 @@ function editDefinition (uuid = '') {
 
   const def = exSetup.getDefinitionByUUID(uuid)
 
-  exSetup.config.initialDefinition = structuredClone(def)
   exSetup.config.workingDefinition = structuredClone(def)
 
   // Configure preview behavior
@@ -291,14 +289,9 @@ function editDefinition (uuid = '') {
 
   document.getElementById('definitionNameInput').value = def.name
 
-  // Spreadsheet
-  const spreadsheetSelect = document.getElementById('spreadsheetSelect')
-  spreadsheetSelect.innerText = def.spreadsheet
-  spreadsheetSelect.dataset.filename = def.spreadsheet
-
   // Attractor
   const attractorSelect = document.getElementById('attractorSelect')
-  attractorSelect.innerText = def.attractor
+  attractorSelect.innerText = def?.attractor ?? 'Select file'
   attractorSelect.dataset.filename = def.attractor
   document.getElementById('inactivityTimeoutField').value = def?.inactivity_timeout ?? 30
 
@@ -307,157 +300,328 @@ function editDefinition (uuid = '') {
   exSetup.updateAdvancedFontPickers(def?.style?.font ?? {})
   exSetup.updateTextSizeSliders(def?.style?.text_size ?? {})
 
-  // Set up any existing languages and tabs
-  // In Ex5.3, we added the language_order field. If it doesn't exist
-  // set it up now
-  if ((def?.language_order ?? []).length === 0) {
-    def.language_order = []
-    for (const code of Object.keys(def.languages ?? {})) {
-      const lang = def.languages[code]
-      if (lang.default === true) {
-        def.language_order.unshift(code)
-      } else def.language_order.push(code)
-    }
-    exSetup.updateWorkingDefinition(['language_order'], def.language_order)
-  }
-
   const langSelect = document.getElementById('language-picker')
-  exLang.createLanguagePicker(langSelect,
-    { onLanguageRebuild: rebuildLanguageElements }
+  exLang.createLanguagePicker(langSelect, {
+    onLanguageAdd: addLanguage,
+    beforeLanguageDelete: deleteLanguage,
+    onLanguageRebuild: rebuildLanguageElements
+  }
   )
 
-  // Load the spreadsheet to populate the existing keys
-  onSpreadsheetFileChange()
+  rebuildItemList()
 
   // Configure the preview frame
   document.getElementById('previewFrame').src = 'index.html?standalone=true&definition=' + def.uuid
 }
 
+function rebuildItemList () {
+  // Rebuild the list of content items
+
+  const def = exSetup.config.workingDefinition
+  const itemsList = document.getElementById('itemsList')
+  const defaultLang = def.language_order[0]
+
+  itemsList.innerText = ''
+
+  for (const uuid of def.content_order) {
+    const itemDef = def.content[uuid]
+    const itemLangDef = def.languages[defaultLang].content[uuid]
+
+    let itemName
+    if ((itemLangDef?.title ?? '') !== '' || (itemLangDef?.time ?? '') !== '') {
+      itemName = exMarkdown.formatText(itemLangDef.title, { string: true, removeParagraph: true })
+      let time = exMarkdown.formatText(itemLangDef.time ?? '', { string: true, removeParagraph: true })
+      if (time !== '') time += '<br>'
+      const title = exMarkdown.formatText(itemLangDef.title, { string: true, removeParagraph: true })
+      itemName = time + title
+    } else if ((itemDef?.filename ?? '') !== '') {
+      itemName = itemDef.filename
+    } else itemName = 'New Item'
+
+    const col = document.createElement('div')
+    col.classList = 'col'
+
+    const button = document.createElement('button')
+    button.classList = 'btn btn-info w-100 text-break item-button'
+    button.id = 'itemButton_' + uuid
+    button.addEventListener('click', () => {
+      editItem(uuid)
+    })
+    button.innerHTML = itemName
+    col.appendChild(button)
+    itemsList.appendChild(col)
+  }
+}
+
+function addItem (details = {}) {
+  // Create a new item and add it to the definition
+
+  const def = exSetup.config.workingDefinition
+  const uuid = exUtilities.uuid()
+
+  def.content_order.push(uuid)
+  def.content[uuid] = {
+    custom_thumbnail: details?.custom_thumbnail ?? '',
+    filename: details?.filename ?? '',
+    level: details?.level ?? 4,
+    uuid
+  }
+
+  for (const code of def.language_order) {
+    def.languages[code].content[uuid] = {
+      description: details?.languages?.[code]?.description ?? '',
+      time: details?.languages?.[code]?.time ?? '',
+      title: details?.languages?.[code]?.title ?? '',
+      uuid
+    }
+  }
+  rebuildItemList()
+  editItem(uuid)
+  exSetup.previewDefinition(true)
+}
+
+function deleteItem (uuid, rebuildList = true) {
+  // Remove the given item and clean up any references to it
+
+  const def = exSetup.config.workingDefinition
+
+  if (!def.content[uuid]) return
+
+  document.getElementById('editPane').dataset.uuid = ''
+
+  // Remove from content_order
+  const index = def.content_order.indexOf(uuid)
+  if (index !== -1) {
+    def.content_order.splice(index, 1)
+  }
+  // Remove main content entry
+  delete def.content[uuid]
+
+  // Remove per-language content entries
+  for (const code of def.language_order) {
+    if (def.languages[code]?.content) {
+      delete def.languages[code].content[uuid]
+    }
+  }
+
+  if (rebuildList) {
+    rebuildItemList()
+
+    // Select a sane next item (or none)
+    const nextUUID = def.content_order[index] || def.content_order[index - 1]
+    if (nextUUID) {
+      editItem(nextUUID)
+    } else {
+      const nav = document.getElementById('editPaneNav')
+      const content = document.getElementById('editPaneContent')
+      nav.innerText = ''
+      content.innerText = ''
+    }
+
+    exSetup.previewDefinition(true)
+  }
+}
+
+function moveItem (direction) {
+  const def = exSetup.config.workingDefinition
+  const order = def.content_order
+
+  const uuid = document.getElementById('editPane').dataset.uuid
+
+  const index = order.indexOf(uuid)
+  if (index === -1) return false
+
+  const target = index + direction
+  if (target < 0 || target >= order.length) return false
+
+  order.splice(index, 1)
+  order.splice(target, 0, uuid)
+
+  rebuildItemList()
+  editItem(uuid)
+  exSetup.previewDefinition(true)
+
+  return true
+}
+
+function editItem (itemUUID) {
+  // Build the interface for editing the given item
+
+  const def = exSetup.config.workingDefinition
+  const itemDef = def.content[itemUUID]
+
+  // Turn the button green and make sure it's visible
+  for (const el of document.querySelectorAll('.item-button')) {
+    el.classList.remove('btn-success')
+    el.classList.add('btn-info')
+  }
+  const button = document.getElementById('itemButton_' + itemUUID)
+  button.classList.remove('btn-info')
+  button.classList.add('btn-success')
+
+  button.parentElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+
+  // Set up the edit interface
+  document.getElementById('editPane').dataset.uuid = itemUUID // Tag for later use
+
+  const fileSelect = document.getElementById('editItemFileSelect')
+  const thumbSelect = document.getElementById('editItemThumbnailSelect')
+  const imagePreview = document.getElementById('editItemPreviewImage')
+  const videoPreview = document.getElementById('editItemPreviewVideo')
+  const thumbImageTPreview = document.getElementById('editItemThumbPreviewImage')
+
+  imagePreview.style.display = 'none'
+  videoPreview.style.display = 'none'
+  thumbImageTPreview.style.display = 'none'
+
+  fileSelect.innerText = itemDef?.filename || 'Select File' // Default for '' or null
+  thumbSelect.innerText = itemDef?.custom_thumbnail || 'Select File' // Default for '' or null
+
+  // Media file preview
+  if (itemDef.filename && itemDef.filename !== '') {
+    const mimetype = exFiles.guessMimetype(itemDef.filename)
+    let preview
+    if (mimetype === 'video') {
+      preview = videoPreview
+    } else {
+      preview = imagePreview
+    }
+    preview.style.display = 'block'
+    preview.src = exConfig.api + '/files/' + itemDef.filename + '/thumbnail'
+  }
+
+  // Optional thumbnail
+  if (itemDef.custom_thumbnail && itemDef.custom_thumbnail !== '') {
+    // Show preview
+    thumbImageTPreview.style.display = 'block'
+    thumbImageTPreview.src = exConfig.api + '/files/' + itemDef.custom_thumbnail + '/thumbnail'
+  }
+
+  // Build nav to edit title, time, description in each language
+  const nav = document.getElementById('editPaneNav')
+  const content = document.getElementById('editPaneContent')
+  nav.innerText = ''
+  content.innerText = ''
+
+  let first = true
+  for (const code of def.language_order) {
+    // Create the tab button
+    const tabButton = document.createElement('button')
+    tabButton.classList = 'nav-link header-tab'
+    tabButton.setAttribute('id', 'editItemTab_' + code)
+    tabButton.setAttribute('data-bs-toggle', 'tab')
+    tabButton.setAttribute('data-bs-target', '#editItemContent_' + code)
+    tabButton.setAttribute('type', 'button')
+    tabButton.setAttribute('role', 'tab')
+    tabButton.innerHTML = exLang.getLanguageDisplayName(code, true)
+    nav.appendChild(tabButton)
+
+    // Create corresponding pane
+    const tabPane = document.createElement('div')
+    tabPane.classList = 'tab-pane fade'
+    tabPane.setAttribute('id', 'editItemContent_' + code)
+    tabPane.setAttribute('role', 'tabpanel')
+    tabPane.setAttribute('aria-labelledby', '#editItemTab_' + code)
+    content.appendChild(tabPane)
+
+    const row = document.createElement('div')
+    row.classList = 'row row-cols-1 gy-2 mt-2 mb-3'
+    tabPane.appendChild(row)
+
+    for (const field of ['time', 'title', 'description']) {
+      const col = document.createElement('div')
+      col.classList = 'col'
+      row.appendChild(col)
+
+      const label = document.createElement('label')
+      label.classList = 'form-label'
+      label.innerHTML = field.charAt(0).toUpperCase() + field.slice(1)
+      col.appendChild(label)
+
+      const commandBar = document.createElement('div')
+      col.appendChild(commandBar)
+
+      const input = document.createElement('div')
+      col.appendChild(input)
+
+      const editor = new exMarkdown.ExhibiteraMarkdownEditor({
+        content: exSetup.config.workingDefinition.languages?.[code]?.content?.[itemUUID]?.[field] ?? '',
+        editorDiv: input,
+        commandDiv: commandBar,
+        commands: ['basic'],
+        callback: (content) => {
+          exSetup.updateWorkingDefinition(['languages', code, 'content', itemUUID, field], content)
+          if (code === def.language_order[0]) {
+            // Update the button when editing the default language
+            if (field === 'title' || field === 'time') {
+              let time = exMarkdown.formatText(exSetup.config.workingDefinition.languages[code].content[itemUUID].time ?? '', { string: true, removeParagraph: true })
+              if (time !== '') time += '<br>'
+              const title = exMarkdown.formatText(exSetup.config.workingDefinition.languages[code].content[itemUUID].title, { string: true, removeParagraph: true })
+              document.getElementById('itemButton_' + itemUUID).innerHTML = time + title
+            }
+          }
+          exSetup.previewDefinition(true)
+        }
+      })
+    }
+
+    if (first) {
+      tabButton.click()
+      first = false
+    }
+  }
+
+  const editPaneRow = document.getElementById('editPaneRow')
+  editPaneRow.style.display = 'block'
+  editPaneRow.scrollTop = 0
+}
+
+function addLanguage (code, displayName, englishName) {
+  // Set up the definition for a new langauge
+
+  exSetup.updateWorkingDefinition(['languages', code, 'filter_order'], [])
+  exSetup.updateWorkingDefinition(['languages', code, 'filters'], {})
+
+  const content = {}
+  for (const uuid of exSetup.config.workingDefinition.content_order) {
+    content[uuid] = {
+      caption: '',
+      credit: '',
+      title: '',
+      uuid
+    }
+  }
+  exSetup.updateWorkingDefinition(['languages', code, 'content'], content)
+}
+
+function deleteLanguage (code) {
+  // Clean up when a language is deleted
+
+  const def = exSetup.config.workingDefinition
+
+  for (const filterUUID of def.languages[code].filter_order) {
+    for (const contentUUID of def.content_order) {
+      delete def.content?.[contentUUID]?.filter_data?.[filterUUID]
+    }
+  }
+}
+
 function rebuildLanguageElements (langOrder) {
   // Clear and rebuild GUI elements when the languages have been modified
 
-  document.getElementById('languageNav').innerText = ''
-  document.getElementById('languageNavContent').innerText = ''
-
-  let first = null
-  for (const lang of langOrder) {
-    const tabButton = createLanguageTab(lang)
-    if (first == null) first = tabButton
+  const contentNoLanguagesAlert = document.getElementById('contentNoLanguagesAlert')
+  const contentInterface = document.getElementById('contentInterface')
+  // Show/hide the item interface
+  if (langOrder.length === 0) {
+    contentNoLanguagesAlert.style.display = 'block'
+    contentInterface.style.display = 'none'
+  } else {
+    contentNoLanguagesAlert.style.display = 'none'
+    contentInterface.style.display = 'block'
   }
-  if (first) first.click()
-}
 
-function createLanguageTab (code) {
-  // Create a new language tab for the given details.
-  // Set first=true when creating the first tab
-
-  const workingDefinition = exSetup.config.workingDefinition
-
-  // Create the tab button
-  const tabButton = document.createElement('button')
-  tabButton.classList = 'nav-link language-tab'
-  tabButton.setAttribute('id', 'languageTab_' + code)
-  tabButton.setAttribute('data-bs-toggle', 'tab')
-  tabButton.setAttribute('data-bs-target', '#languagePane_' + code)
-  tabButton.setAttribute('type', 'button')
-  tabButton.setAttribute('role', 'tab')
-  tabButton.innerHTML = exLang.getLanguageDisplayName(code, true)
-  document.getElementById('languageNav').appendChild(tabButton)
-
-  // Create corresponding pane
-  const tabPane = document.createElement('div')
-  tabPane.classList = 'tab-pane fade'
-  tabPane.setAttribute('id', 'languagePane_' + code)
-  tabPane.setAttribute('role', 'tabpanel')
-  tabPane.setAttribute('aria-labelledby', 'languageTab_' + code)
-  document.getElementById('languageNavContent').appendChild(tabPane)
-
-  const row = document.createElement('div')
-  row.classList = 'row gy-2 mt-2 mb-3'
-  tabPane.appendChild(row)
-
-  // Create the header input
-  const headerCol = document.createElement('div')
-  headerCol.classList = 'col-12 col-md-6'
-  row.appendChild(headerCol)
-
-  const label = document.createElement('label')
-  label.classList = 'form-label mt-2'
-  label.setAttribute('for', 'headerInput_' + code)
-  label.innerHTML = 'Header'
-  headerCol.appendChild(label)
-
-  const headerCommandBar = document.createElement('div')
-  headerCol.appendChild(headerCommandBar)
-
-  const headerInput = document.createElement('div')
-  headerInput.setAttribute('id', 'headerInput_' + code)
-  headerCol.appendChild(headerInput)
-
-  const headerEditor = new exMarkdown.ExhibiteraMarkdownEditor({
-    content: workingDefinition?.languages?.[code]?.header_text ?? '',
-    editorDiv: headerInput,
-    commandDiv: headerCommandBar,
-    commands: ['basic'],
-    callback: (content) => {
-      exSetup.updateWorkingDefinition(['languages', code, 'header_text'], content)
-      exSetup.previewDefinition(true)
-    }
-  })
-
-  // Create the key selectors
-  Object.keys(inputFields).forEach((key) => {
-    const langKey = key + '_' + code
-    const col = document.createElement('div')
-    col.classList = 'col-12 col-md-6'
-    row.appendChild(col)
-
-    const label = document.createElement('label')
-    label.classList = 'form-label'
-    label.setAttribute('for', langKey)
-    label.innerHTML = inputFields[key].name
-
-    if ('hint' in inputFields[key]) {
-      label.innerHTML += ' ' + `<span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="${inputFields[key].hint}" style="font-size: 0.55em;">?</span>`
-    }
-
-    col.appendChild(label)
-
-    let input
-
-    if (inputFields[key].kind === 'select') {
-      input = document.createElement('select')
-      input.classList = 'form-select'
-    } else if (inputFields[key].kind === 'input') {
-      input = document.createElement('input')
-      input.setAttribute('type', inputFields[key].type)
-      input.classList = 'form-control'
-    }
-    input.setAttribute('id', langKey)
-    input.addEventListener('change', function () {
-      const value = this.value.trim()
-      exSetup.updateWorkingDefinition(['languages', code, inputFields[key].property], value)
-      exSetup.previewDefinition(true)
-    })
-    col.appendChild(input)
-  })
-
-  // If we have already loaded a spreadhseet, populate the key options
-  const keyListStr = document.getElementById('spreadsheetSelect').dataset.availableKeys
-  let keyList = []
-  if (keyListStr != null) keyList = keyListStr.split(',')
-
-  populateKeySelects(keyList)
-
-  // Activate tooltips
-  const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-  tooltipTriggerList.map(function (tooltipTriggerEl) {
-    return new bootstrap.Tooltip(tooltipTriggerEl)
-  })
-
-  // Switch to this new tab
-  tabButton.click()
-  return tabButton
+  const currentItemUUID = document.getElementById('editPane').dataset.uuid
+  if (currentItemUUID) editItem(currentItemUUID)
 }
 
 function onAttractorFileChange () {
@@ -689,16 +853,6 @@ document.getElementById('showCheckContentButton').addEventListener('click', () =
 document.getElementById('checkContentButton').addEventListener('click', checkContentExists)
 
 // Definition fields
-document.getElementById('spreadsheetSelect').addEventListener('click', (event) => {
-  exFileSelect.createFileSelectionModal({ filetypes: ['csv'], multiple: false })
-    .then((files) => {
-      if (files.length === 1) {
-        event.target.innerHTML = files[0]
-        event.target.setAttribute('data-filename', files[0])
-        onSpreadsheetFileChange()
-      }
-    })
-})
 
 document.getElementById('attractorSelect').addEventListener('click', (event) => {
   exFileSelect.createFileSelectionModal({ filetypes: ['image', 'video'], multiple: false })
@@ -720,6 +874,108 @@ document.getElementById('attractorSelectClear').addEventListener('click', (event
 document.getElementById('inactivityTimeoutField').addEventListener('change', (event) => {
   exSetup.updateWorkingDefinition(['inactivity_timeout'], event.target.value)
   exSetup.previewDefinition(true)
+})
+
+// Content buttons
+
+document.getElementById('clearItemsButton').addEventListener('click', () => {
+  exUtilities.showModal('#clearItemsModal')
+})
+document.getElementById('clearItemsConfirmButton').addEventListener('click', () => {
+  const items = exSetup.config.workingDefinition.content_order.slice() // Clone
+  for (const item of items) {
+    deleteItem(item, false)
+  }
+  rebuildItemList()
+  exSetup.previewDefinition(true)
+  exUtilities.hideModal('#clearItemsModal')
+})
+document.getElementById('addItemButton').addEventListener('click', addItem)
+document.getElementById('editPaneDeleteButton').addEventListener('click', () => {
+  const uuid = document.getElementById('editPane').dataset.uuid
+  deleteItem(uuid)
+})
+document.getElementById('editPaneUpButton').addEventListener('click', () => {
+  moveItem(-1)
+})
+document.getElementById('editPaneDownButton').addEventListener('click', () => {
+  moveItem(1)
+})
+
+for (const id of ['editItemFileSelect', 'editItemPreviewImage', 'editItemPreviewVideo']) {
+  document.getElementById(id).addEventListener('click', () => {
+  // Handle selecting the media file for the current item
+
+    const uuid = document.getElementById('editPane').dataset.uuid
+    if (!uuid || uuid === '') return
+
+    exFileSelect.createFileSelectionModal({ filetypes: ['audio', 'image', 'video'], multiple: false })
+      .then((files) => {
+        if (files.length !== 1) return
+        exSetup.updateWorkingDefinition(['content', uuid, 'filename'], files[0])
+        document.getElementById('editItemFileSelect').innerText = files[0]
+
+        const imagePreview = document.getElementById('editItemPreviewImage')
+        const videoPreview = document.getElementById('editItemPreviewVideo')
+        imagePreview.style.display = 'none'
+        videoPreview.style.display = 'none'
+
+        const mimetype = exFiles.guessMimetype(files[0])
+        let preview
+        if (mimetype === 'video') {
+          preview = videoPreview
+        } else {
+          preview = imagePreview
+        }
+        preview.style.display = 'block'
+        preview.src = exConfig.api + '/files/' + files[0] + '/thumbnail'
+
+        exSetup.previewDefinition(true)
+      })
+  })
+}
+
+// Bulk import
+document.getElementById('showBulkImportButton').addEventListener('click', () => {
+  for (const el of document.querySelectorAll('.bulk-import-button')) {
+    el.classList.remove('btn-success')
+    el.classList.remove('btn-warning')
+    el.classList.add('btn-secondary')
+  }
+  document.getElementById('bulkImportUploadTemplate').dataset.spreadsheet = ''
+  document.getElementById('bulkUploadMissingContentDiv').style.display = 'none'
+  exUtilities.showModal('#bulkImportModal')
+})
+document.getElementById('bulkImportDownloadTemplate').addEventListener('click', (ev) => {
+  ev.target.classList.remove('btn-secondary')
+  ev.target.classList.add('btn-success')
+  generateSpreadsheetTemplate(false)
+})
+document.getElementById('bulkImportUploadTemplate').addEventListener('click', (ev) => {
+  exFileSelect.createFileSelectionModal({
+    filetypes: ['csv'],
+    multiple: false
+  })
+    .then((selectedFiles) => {
+      if (selectedFiles.length > 0) {
+        document.getElementById('bulkImportUploadTemplate').dataset.spreadsheet = selectedFiles[0]
+        ev.target.classList.remove('btn-secondary')
+        ev.target.classList.add('btn-success')
+      }
+    })
+})
+document.getElementById('bulkImportUploadMedia').addEventListener('click', (ev) => {
+  exFileSelect.createFileSelectionModal({
+    filetypes: ['audio', 'image', 'video'],
+    manage: true
+  })
+    .then(() => {
+      onBulkImportFileUpload(ev)
+    })
+})
+document.getElementById('bulkImportButton').addEventListener('click', () => {
+  const spreadsheetFile = document.getElementById('bulkImportUploadTemplate').dataset.spreadsheet
+  bulkImportFiles(spreadsheetFile)
 })
 
 // Style fields
@@ -752,7 +1008,11 @@ Array.from(document.querySelectorAll('.text-size-slider')).forEach((el) => {
 exCommon.config.helperAddress = window.location.origin
 
 // Populate available languages
-exLang.createLanguagePicker(document.getElementById('language-picker'), { onLanguageRebuild: rebuildLanguageElements })
+exLang.createLanguagePicker(document.getElementById('language-picker'), {
+  onLanguageAdd: addLanguage,
+  beforeLanguageDelete: deleteLanguage,
+  onLanguageRebuild: rebuildLanguageElements
+})
 
 exSetup.configure({
   app: 'timeline_explorer',

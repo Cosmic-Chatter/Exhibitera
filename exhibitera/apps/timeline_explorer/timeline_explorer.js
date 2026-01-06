@@ -163,7 +163,7 @@ function createTimelineEntry (itemUUID, langCode) {
   container.appendChild(flex1)
 
   const timeEl = document.createElement('time')
-  timeEl.innerHTML = exMarkdown.formatText(localization.time, { string: true, removeParagraph: true })
+  timeEl.innerHTML = exMarkdown.formatText(localization?.time ?? '', { string: true, removeParagraph: true })
   flex1.appendChild(timeEl)
 
   const title = document.createElement('div')
@@ -175,12 +175,12 @@ function createTimelineEntry (itemUUID, langCode) {
     title.classList = 'size' + String(item?.level ?? 4)
   }
   title.classList.add('timeline-item-header')
-  title.innerHTML = exMarkdown.formatText(localization.title, { string: true, removeParagraph: true })
+  title.innerHTML = exMarkdown.formatText(localization?.title ?? '', { string: true, removeParagraph: true })
   flex1.appendChild(title)
 
   const bodyEl = document.createElement('p')
   bodyEl.classList = 'timeline-body'
-  bodyEl.innerHTML = exMarkdown.formatText(localization.description, { string: true, removeParagraph: true })
+  bodyEl.innerHTML = exMarkdown.formatText(localization?.description ?? '', { string: true, removeParagraph: true })
   flex1.appendChild(bodyEl)
 
   // Image
