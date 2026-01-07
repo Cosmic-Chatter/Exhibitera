@@ -60,6 +60,11 @@ _This brand-new app extends Voting Kiosk to multiple survey questions, with new 
 ### Timelapse Viewer
 - Choose between filling the screen with the video or letterboxing it to show the whole video
 
+### Timeline Explorer
+- Timeline items can now include videos in addition to images
+- Add items individually or use a spreadsheet for bulk import 
+- Reorder your items
+
 ### Word Cloud
 - Switched profanity filtering library, so please check your word clouds
 

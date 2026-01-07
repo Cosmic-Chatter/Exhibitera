@@ -197,21 +197,34 @@ async function wizardCreateDefinition () {
   exUtilities.hideModal('#setupWizardModal')
 }
 
-function generateSpreadsheetTemplate () {
-  // Based on selections made in the wizard, generate a template spreadsheet and download it to the user's system.
+function generateSpreadsheetTemplate (wizard = true) {
+  // Generate a template spreadsheet and download it to the user's system.
 
-  const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
+  let defName = 'New Definition'
+  let languages = []
+  let details = []
 
-  const languages = []
-  for (const child of document.getElementById('wizardLanguages').children) {
-    const lang = child.querySelector('select').value
-    if (languages.includes(lang) === false) languages.push(lang)
+  if (wizard) {
+    defName = document.getElementById('wizardDefinitionNameInput').value.trim()
+    for (const child of document.getElementById('wizardLanguages').children) {
+      const lang = child.querySelector('select').value
+      if (languages.includes(lang) === false) languages.push(lang)
+    }
+
+    if (document.getElementById('wizardCheckboxTitle').checked === true) details.push('Title')
+    if (document.getElementById('wizardCheckboxCaption').checked === true) details.push('Caption')
+    if (document.getElementById('wizardCheckboxCredit').checked === true) details.push('Credit')
+  } else {
+    const def = exSetup.config.workingDefinition
+    if (def.name && def.name !== '') defName = def.name
+    languages = def.language_order
+    details = ['Time', 'Title', 'Description']
   }
 
-  const details = ['Time', 'Title', 'Description']
-
   // Loop through the various combinations to make the header line for the CSV file
-  let csv = 'Level, Image'
+  let csv = 'Media filename'
+  // if (wizard === false || document.getElementById('wizardCheckboxThumbnail').checked === true) csv += ', Custom thumbnail'
+  csv += ', Level'
   for (const lang of languages) {
     for (const detail of details) {
       csv += ', ' + detail + ' (' + lang + ')'
@@ -225,7 +238,7 @@ function generateSpreadsheetTemplate () {
   // Initiate file download
   const element = document.createElement('a')
   element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(csv))
-  element.setAttribute('download', defName + ' - event list.csv')
+  element.setAttribute('download', defName + ' - timeline items.csv')
   element.style.display = 'none'
   document.body.appendChild(element)
   element.click()
@@ -250,6 +263,8 @@ async function clearDefinitionInput (full = true) {
   // Definition details
   document.getElementById('definitionNameInput').value = ''
   document.getElementById('missingContentWarningField').innerHTML = ''
+  document.getElementById('itemsList').innerHTML = ''
+  document.getElementById('editPane').dataset.uuid = ''
 
   // Reset style options
   const colorInputs = ['textColor', 'headerColor', 'footerColor', 'itemColor', 'lineColor']
@@ -282,6 +297,7 @@ function editDefinition (uuid = '') {
 
   const def = exSetup.getDefinitionByUUID(uuid)
 
+  exSetup.config.initialDefinition = structuredClone(def)
   exSetup.config.workingDefinition = structuredClone(def)
 
   // Configure preview behavior
@@ -465,17 +481,17 @@ function editItem (itemUUID) {
   document.getElementById('editPane').dataset.uuid = itemUUID // Tag for later use
 
   const fileSelect = document.getElementById('editItemFileSelect')
-  const thumbSelect = document.getElementById('editItemThumbnailSelect')
+  // const thumbSelect = document.getElementById('editItemThumbnailSelect')
   const imagePreview = document.getElementById('editItemPreviewImage')
   const videoPreview = document.getElementById('editItemPreviewVideo')
-  const thumbImageTPreview = document.getElementById('editItemThumbPreviewImage')
+  // const thumbImageTPreview = document.getElementById('editItemThumbPreviewImage')
 
   imagePreview.style.display = 'none'
   videoPreview.style.display = 'none'
-  thumbImageTPreview.style.display = 'none'
+  // thumbImageTPreview.style.display = 'none'
 
   fileSelect.innerText = itemDef?.filename || 'Select File' // Default for '' or null
-  thumbSelect.innerText = itemDef?.custom_thumbnail || 'Select File' // Default for '' or null
+  // thumbSelect.innerText = itemDef?.custom_thumbnail || 'Select File' // Default for '' or null
 
   // Media file preview
   if (itemDef.filename && itemDef.filename !== '') {
@@ -491,13 +507,13 @@ function editItem (itemUUID) {
   }
 
   // Optional thumbnail
-  if (itemDef.custom_thumbnail && itemDef.custom_thumbnail !== '') {
-    // Show preview
-    thumbImageTPreview.style.display = 'block'
-    thumbImageTPreview.src = exConfig.api + '/files/' + itemDef.custom_thumbnail + '/thumbnail'
-  }
+  // if (itemDef.custom_thumbnail && itemDef.custom_thumbnail !== '') {
+  //   // Show preview
+  //   thumbImageTPreview.style.display = 'block'
+  //   thumbImageTPreview.src = exConfig.api + '/files/' + itemDef.custom_thumbnail + '/thumbnail'
+  // }
 
-  // Build nav to edit title, time, description in each language
+  // Build nav to edit title, time, level, description in each language
   const nav = document.getElementById('editPaneNav')
   const content = document.getElementById('editPaneContent')
   nav.innerText = ''
@@ -564,6 +580,35 @@ function editItem (itemUUID) {
         }
       })
     }
+
+    const col = document.createElement('div')
+    col.classList = 'col'
+    row.appendChild(col)
+
+    const label = document.createElement('label')
+    label.classList = 'form-label'
+    label.innerHTML = `
+    Importance
+    <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="More important items will be shown with larger text." style="font-size: 0.55em;">?</span>
+    `
+    col.appendChild(label)
+
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+    const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+
+    const importance = document.createElement('select')
+    importance.classList = 'form-select'
+    importance.appendChild(new Option('High', 1))
+    importance.appendChild(new Option('Medium-high', 2))
+    importance.appendChild(new Option('Medium-low', 3))
+    importance.appendChild(new Option('Low', 4))
+    importance.value = itemDef?.level ?? 4
+    importance.addEventListener('change', (ev) => {
+      exSetup.updateWorkingDefinition(['content', itemUUID, 'level'], parseInt(importance.value))
+      exSetup.previewDefinition(true)
+      console.log(exSetup.config.workingDefinition)
+    })
+    col.appendChild(importance)
 
     if (first) {
       tabButton.click()
@@ -633,178 +678,164 @@ function onAttractorFileChange () {
   exSetup.previewDefinition(true)
 }
 
-function onSpreadsheetFileChange () {
-  // Called when a new spreadsheet is selected. Get the csv file and populate the options.
+async function checkContentExists () {
+  // Cross-check content from the definition with files in the content directory.
 
-  const file = document.getElementById('spreadsheetSelect').dataset.filename
-  if (file == null) return
-  exSetup.config.workingDefinition.spreadsheet = file
+  const def = exSetup.config.workingDefinition
 
-  exCommon.makeHelperRequest({
-    api: '',
+  const missingContentWarning = document.getElementById('missingContentWarningField')
+  const missingContentSuccess = document.getElementById('missingContentSuccessField')
+  const missingContentList = document.getElementById('missingContentList')
+  const missingContentListDiv = document.getElementById('missingContentListDiv')
+
+  // Loop through the items and collect all media files listed
+  const media = new Set()
+
+  for (const uuid of def.content_order) {
+    const item = def.content[uuid]
+    if (item.filename && item.filename !== '') media.add(item.filename)
+    if (item.custom_thumbnail && item.custom_thumbnail !== '') media.add(item.custom_thumbnail)
+  }
+  const missingContent = await _checkContentExists(Array.from(media))
+
+  if (missingContent.length === 0) {
+    missingContentSuccess.style.display = 'block'
+    missingContentWarning.style.display = 'none'
+    missingContentListDiv.style.display = 'none'
+  } else {
+    missingContentSuccess.style.display = 'none'
+    missingContentWarning.style.display = 'block'
+    missingContentListDiv.style.display = 'block'
+
+    for (const file of missingContent) {
+      missingContentList.innerHTML += `<li>${file}</li>`
+    }
+  }
+}
+
+async function _checkContentExists (media) {
+  // Cross-reference the files in the items with a list of available content
+
+  const missingContent = new Set()
+
+  const availableContentReq = await exCommon.makeHelperRequest({
     method: 'GET',
-    endpoint: '/content/' + file,
+    endpoint: '/files/availableContent'
+  })
+  const availableContent = availableContentReq.content
+
+  // Loop through the definition and compare referenced content to what's available
+  for (const file of media) {
+    if (!availableContent.includes(file)) missingContent.add(file)
+  }
+  return Array.from(missingContent)
+}
+
+async function checkBulkImportContent (spreadsheetFile, keys) {
+  // Load the given spreadsheet and check that all the content listed exists
+  // Retrieve the spreadsheet and check the content for each image key against the available content
+
+  const rawText = await exCommon.makeHelperRequest({
+    method: 'GET',
+    endpoint: '/content/' + spreadsheetFile,
+    api: '',
     rawResponse: true,
     noCache: true
   })
-    .then((result) => {
-      const csvAsJSON = exFiles.csvToJSON(result)
-      if (csvAsJSON.error === true) {
-        document.getElementById('badSpreadsheetWarningLineNumber').innerHTML = csvAsJSON.error_index + 2
-        document.getElementById('badSpreadsheetWarning').style.display = 'block'
-      } else {
-        document.getElementById('badSpreadsheetWarning').style.display = 'none'
+  const spreadsheet = exFiles.csvToJSON(rawText).json
+
+  // Iterate the spreadsheet rows and collect all media files
+  const media = new Set()
+  for (const row of spreadsheet) {
+    for (const key of keys) {
+      if ((key in row) === false) {
+        continue
       }
-      const spreadsheet = csvAsJSON.json
-      const keys = Object.keys(spreadsheet[0])
-      document.getElementById('spreadsheetSelect').dataset.availableKeys = keys
-      populateKeySelects(keys)
-      exSetup.previewDefinition(true)
-    })
-}
+      if (row[key].trim() === '') continue
 
-async function checkContentExists () {
-  // Cross-check content from the spreadsheet with files in the content directory.
-
-  const workingDefinition = exSetup.config.workingDefinition
-  const imageKeys = []
-  const missingContentField = document.getElementById('missingContentWarningField')
-
-  missingContentField.innerHTML = ''
-
-  // Loop through the defintion and collect any unique media keys
-  for (const lang of Object.keys(workingDefinition.languages)) {
-    if (imageKeys.includes(workingDefinition.languages[lang].image_key) === false) {
-      imageKeys.push(workingDefinition.languages[lang].image_key)
+      media.add(row[key].trim())
     }
   }
+  const missingContent = await _checkContentExists(media)
+  return missingContent
+}
 
-  const missingContent = await _checkContentExists(workingDefinition.spreadsheet, imageKeys)
+async function onBulkImportFileUpload (ev) {
+  // Check if there are missing files when bulk importing
 
-  if (missingContent.length === 0) {
-    missingContentField.classList.add('text-success')
-    missingContentField.classList.remove('text-danger')
-    missingContentField.innerHTML = 'No missing content!'
+  const bulkUploadMissingContentDiv = document.getElementById('bulkUploadMissingContentDiv')
+  const bulkUploadMissingContent = document.getElementById('bulkUploadMissingContent')
+
+  const missingFiles = await checkBulkImportContent(document.getElementById('bulkImportUploadTemplate').dataset.spreadsheet, ['Media filename', 'Custom thumbnail'])
+  if (missingFiles.length === 0) {
+    ev.target.classList.remove('btn-secondary')
+    ev.target.classList.remove('btn-warning')
+    ev.target.classList.add('btn-success')
+    bulkUploadMissingContentDiv.style.display = 'none'
   } else {
-    missingContentField.classList.add('text-danger')
-    missingContentField.classList.remove('text-success')
-    let html = '<b>Missing content found:</b><ul>'
-    missingContent.forEach((file) => {
-      html += '<li>' + file + '</li>'
-    })
-    html += '</ul>'
-    missingContentField.innerHTML = html
-  }
-}
-
-function _checkContentExists (spreadsheet, keys) {
-  // Take the given spreadsheet filename and image keys and cross check with
-  // the files available in the content directory. Return the names of any
-  // files that do not exist.
-
-  return new Promise(function (resolve, reject) {
-    // Get a list of available content
-
-    let availableContent
-    const missingContent = []
-
-    exCommon.makeHelperRequest({
-      method: 'GET',
-      endpoint: '/files/availableContent'
-    })
-      .then((result) => {
-        availableContent = result.content
-        // Retrieve the spreadsheet and check the content for each image key against the available content
-        exCommon.makeHelperRequest({
-          api: '',
-          method: 'GET',
-          endpoint: '/content/' + spreadsheet,
-          rawResponse: true,
-          noCache: true
-        })
-          .then((raw) => {
-            const spreadsheet = exFiles.csvToJSON(raw).json
-            spreadsheet.forEach((row) => {
-              for (const key of keys) {
-                if ((key in row) === false) {
-                  reject(new Error('bad_key: ' + key))
-                  continue
-                }
-                if (row[key].trim() === '') continue
-                if (availableContent.includes(row[key]) === false) missingContent.push(row[key])
-              }
-            })
-            resolve(missingContent)
-          })
-      })
-  })
-}
-
-function populateKeySelects (keyList) {
-  // Take a list of keys and use it to populate all the selects used to match keys to parameters.
-
-  const workingDefinition = exSetup.config.workingDefinition
-
-  for (const lang of Object.keys(workingDefinition?.languages ?? {})) {
-    const langDict = workingDefinition.languages[lang]
-    for (const input of Object.keys(inputFields)) {
-      const inputDict = inputFields[input]
-      if (inputDict.kind === 'select') {
-        const thisInput = document.getElementById(input + '_' + lang)
-        if (thisInput == null) continue
-        thisInput.innerText = ''
-
-        for (const key of keyList) {
-          const option = document.createElement('option')
-          option.value = key
-          option.innerHTML = key
-          thisInput.appendChild(option)
-        }
-
-        // If we already have a value for this select, set it
-        thisInput.value = langDict?.[inputDict?.property]
-      }
+    ev.target.classList.remove('btn-secondary')
+    ev.target.classList.remove('btn-success')
+    ev.target.classList.add('btn-warning')
+    bulkUploadMissingContentDiv.style.display = 'block'
+    bulkUploadMissingContent.innerText = ''
+    for (const file of missingFiles) {
+      bulkUploadMissingContent.innerHTML += `<li>${file}</li>`
     }
   }
+}
+
+async function bulkImportFiles (spreadsheetFile) {
+  // Use the selected spreadsheet to create new items
+
+  if (!spreadsheetFile || spreadsheetFile === '') return
+
+  const rawText = await exCommon.makeHelperRequest({
+    method: 'GET',
+    endpoint: '/content/' + spreadsheetFile,
+    api: '',
+    rawResponse: true,
+    noCache: true
+  })
+  const spreadsheet = exFiles.csvToJSON(rawText).json
+
+  // Iterate the spreadsheet and create an item for each row
+  for (const row of spreadsheet) {
+    const details = parseBulkImportSpreadsheetRow(row)
+    console.log(details)
+    addItem(details)
+  }
+  exUtilities.hideModal('#bulkImportModal')
+}
+
+function parseBulkImportSpreadsheetRow (input) {
+  const result = {
+    filename: input['Media filename'] || '',
+    custom_thumbnail: input['Custom thumbnail'] || '',
+    level: parseInt(input.Level) || 4,
+    languages: {}
+  }
+
+  for (const [key, value] of Object.entries(input)) {
+    const open = key.lastIndexOf('(')
+    const close = key.lastIndexOf(')')
+
+    if (open === -1 || close === -1) continue
+
+    const field = key.slice(0, open).trim().toLowerCase()
+    const lang = key.slice(open + 1, close)
+
+    if (!result.languages[lang]) {
+      result.languages[lang] = {}
+    }
+
+    result.languages[lang][field] = value
+  }
+
+  return result
 }
 
 // Set helper address for use with exCommon.makeHelperRequest
 exCommon.config.helperAddress = window.location.origin
-
-// The input fields to specifiy content for each langauge
-const inputFields = {
-  keyTimeSelect: {
-    name: 'Time column',
-    kind: 'select',
-    property: 'time_key'
-  },
-  keyTitleSelect: {
-    name: 'Title column',
-    kind: 'select',
-    property: 'title_key'
-  },
-  keyLevelSelect: {
-    name: 'Level column',
-    kind: 'select',
-    property: 'level_key',
-    hint: 'A number from 1 - 4 giving the importance of the event.'
-  },
-  keyShortSelect: {
-    name: 'Short text column',
-    kind: 'select',
-    property: 'short_text_key'
-  },
-  keyImageSelect: {
-    name: 'Image column',
-    kind: 'select',
-    property: 'image_key'
-  }
-  // keyThumbnailSelect: {
-  //   name: 'Thumbnail key',
-  //   kind: 'select',
-  //   property: 'thumbnail_key'
-  // }
-}
 
 // Add event listeners
 // -------------------------------------------------------------
@@ -847,10 +878,16 @@ document.getElementById('manageContentButton').addEventListener('click', (event)
   exFileSelect.createFileSelectionModal({ manage: true })
 })
 document.getElementById('showCheckContentButton').addEventListener('click', () => {
-  document.getElementById('missingContentWarningField').innerText = ''
+  document.getElementById('missingContentWarningField').style.display = 'none'
+  document.getElementById('missingContentSuccessField').style.display = 'none'
+  document.getElementById('missingContentList').innerText = ''
+  document.getElementById('missingContentListDiv').style.display = 'none'
   exUtilities.showModal('#checkContentModal')
 })
 document.getElementById('checkContentButton').addEventListener('click', checkContentExists)
+document.getElementById('clearItemsButton').addEventListener('click', () => {
+  exUtilities.showModal('#clearItemsModal')
+})
 
 // Definition fields
 
@@ -909,12 +946,12 @@ for (const id of ['editItemFileSelect', 'editItemPreviewImage', 'editItemPreview
     const uuid = document.getElementById('editPane').dataset.uuid
     if (!uuid || uuid === '') return
 
-    exFileSelect.createFileSelectionModal({ filetypes: ['audio', 'image', 'video'], multiple: false })
+    exFileSelect.createFileSelectionModal({ filetypes: ['image', 'video'], multiple: false })
       .then((files) => {
         if (files.length !== 1) return
         exSetup.updateWorkingDefinition(['content', uuid, 'filename'], files[0])
         document.getElementById('editItemFileSelect').innerText = files[0]
-
+        console.log(exSetup.config.workingDefinition)
         const imagePreview = document.getElementById('editItemPreviewImage')
         const videoPreview = document.getElementById('editItemPreviewVideo')
         imagePreview.style.display = 'none'
@@ -1020,6 +1057,8 @@ exSetup.configure({
   initializeWizard,
   loadDefinition: editDefinition,
   blankDefinition: {
+    content: {},
+    content_order: [],
     languages: {},
     language_order: [],
     style: {

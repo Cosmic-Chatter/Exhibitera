@@ -183,11 +183,10 @@ function createTimelineEntry (itemUUID, langCode) {
   bodyEl.innerHTML = exMarkdown.formatText(localization?.description ?? '', { string: true, removeParagraph: true })
   flex1.appendChild(bodyEl)
 
-  // Image
-  const imageName = item.filename
-  if (imageName != null && imageName.trim() !== '') {
-    // Make the timeline element wider to accomdate the image
-    container.classList.add('with-image')
+  // Media
+  if (item.filename != null && item.filename.trim() !== '') {
+    // Make the timeline element wider to accomdate the media
+    container.classList.add('with-media')
 
     const flex2 = document.createElement('div')
     flex2.style.flexBasis = '0'
@@ -195,19 +194,35 @@ function createTimelineEntry (itemUUID, langCode) {
     flex2.style.alignSelf = 'center'
     container.appendChild(flex2)
 
-    const image = document.createElement('img')
-    image.style.width = '100%'
-    // Calculate size of image
-    const width = window.innerWidth
-    const height = window.innerHeight
-    let thumbRes
-    if (width > height) {
-      thumbRes = Math.round(width * 0.25)
-    } else {
-      thumbRes = Math.round(width * 0.5)
+    const mimetype = exFiles.guessMimetype(item.filename)
+    if (mimetype === 'image') {
+      const image = document.createElement('img')
+      image.style.width = '100%'
+      // Calculate size of image
+      const width = window.innerWidth
+      const height = window.innerHeight
+      let thumbRes
+      if (width > height) {
+        thumbRes = Math.round(width * 0.25)
+      } else {
+        thumbRes = Math.round(width * 0.5)
+      }
+      image.src = exCommon.config.helperAddress + exConfig.api + '/files/' + item.filename + '/thumbnail/' + String(thumbRes)
+      flex2.appendChild(image)
+    } else if (mimetype === 'video') {
+      const video = document.createElement('video')
+      video.style.width = '100%'
+      video.style.objectFit = 'contain'
+      video.src = '/content/' + item.filename
+      video.className = 'card-img-top'
+      video.muted = true
+      video.loop = true
+      video.autoplay = true
+      video.playsInline = true
+      video.setAttribute('webkit-playsinline', true)
+      video.setAttribute('disablePictureInPicture', true)
+      flex2.appendChild(video)
     }
-    image.src = exCommon.config.helperAddress + exConfig.api + '/files/' + imageName + '/thumbnail/' + String(thumbRes)
-    flex2.appendChild(image)
   }
 
   document.getElementById('timelineContainer').appendChild(li)
@@ -233,10 +248,13 @@ function configureVisibleElements () {
   const items = document.querySelectorAll('.timeline li')
 
   for (let i = 0; i < items.length; i++) {
+    const video = items[i].querySelector('video')
     if (isElementInViewport(items[i])) {
       items[i].classList.add('in-view')
+      if (video) video.play()
     } else {
       items[i].classList.remove('in-view')
+      if (video) video.pause()
     }
   }
 }
@@ -244,11 +262,11 @@ function configureVisibleElements () {
 function setAttractor (filename, fileType) {
   attractorAvailable = true
   if (fileType === 'video') {
-    document.getElementById('attractorVideo').src = 'content/' + filename
+    document.getElementById('attractorVideo').src = '/content/' + filename
     document.getElementById('attractorImage').style.display = 'none'
     document.getElementById('attractorVideo').style.display = 'block'
   } else if (fileType === 'image') {
-    document.getElementById('attractorImage').src = 'content/' + filename
+    document.getElementById('attractorImage').src = '/content/' + filename
     document.getElementById('attractorImage').style.display = 'block'
     document.getElementById('attractorVideo').style.display = 'none'
   } else {

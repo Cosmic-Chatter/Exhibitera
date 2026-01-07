@@ -394,6 +394,7 @@ function editDefinition (uuid = '') {
   clearDefinitionInput(false)
   const def = exSetup.getDefinitionByUUID(uuid)
 
+  exSetup.config.initialDefinition = structuredClone(def)
   exSetup.config.workingDefinition = structuredClone(def)
 
   // Configure preview behavior
@@ -1004,7 +1005,7 @@ function onAttractorFileChange () {
 }
 
 async function checkContentExists () {
-  // Cross-check content from the spreadsheet with files in the content directory.
+  // Cross-check content from the definition with files in the content directory.
 
   const def = exSetup.config.workingDefinition
 

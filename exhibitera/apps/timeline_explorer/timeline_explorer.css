@@ -286,18 +286,18 @@ time {
       right: max(calc(-1 * (20vw * var(--fontModifier) + 2.5vw - 0.5vw) ), -47vw);
       /* - (20 + 2.5 - 0.5) */
     }
-    .timeline ul li:nth-child(even) div.timeline-element.with-image {
+    .timeline ul li:nth-child(even) div.timeline-element.with-media {
       left: max(calc(-1 * (30vw * var(--fontModifier) + 2.5vw - 0.5vw) ), -47vw);
       /* - (30 + 2.5 - 0.5) */
     }
-    :dir(rtl) .timeline ul li:nth-child(even) div.timeline-element.with-image {
+    :dir(rtl) .timeline ul li:nth-child(even) div.timeline-element.with-media {
       right: max(calc(-1 * (30vw * var(--fontModifier) + 2.5vw - 0.5vw) ), -47vw);
       /* - (30 + 2.5 - 0.5) */
     }
     .timeline ul li div.timeline-element {
         width: min(calc(20vw * var(--fontModifier)), 45vw);
     }
-    .timeline ul li div.timeline-element.with-image {
+    .timeline ul li div.timeline-element.with-media {
         width: min(calc(30vw * var(--fontModifier)), 45vw);
     }
     .timeline-element {
