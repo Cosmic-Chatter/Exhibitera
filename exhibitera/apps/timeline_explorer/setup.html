@@ -194,6 +194,34 @@
                 </div>
               </div>
 
+              <!-- Header -->
+              <div id="wizardPane_Option" class="row wizard-pane">
+                <div class="col-8 offset-2 mt-3">
+                  <H4 class="text-center">How do you want to add your timeline items?</H4>
+                  <i>
+                    The easiest way to add your timeline items is one-by-one using the main interface. But if you have many items, you can also add them in bulk by uploading a spreadsheet.
+                  </i>
+
+                  <div class="form-check mt-2">
+                    <input class="form-check-input" type="radio" name="wizardImportOptions" id="wizardImportOptionsSingle" checked>
+                    <label class="form-check-label" for="wizardImportOptionsSingle">
+                      Add you items one-by-one
+                    </label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="wizardImportOptions" id="wizardImportOptionsBulk" >
+                    <label class="form-check-label" for="wizardImportOptionsBulk">
+                      Bulk import items using a spreadsheet <span class="badge bg-secondary ms-2">Advanced</span>
+                    </label>
+                  </div>
+
+                  <div class="text-center mt-4">
+                    <button class="btn btn-secondary me-4 wizard-back" data-current-page="Option">Back</button>
+                    <button class="btn btn-primary ms-4 wizard-forward" data-current-page="Option">Next</button>
+                  </div>
+                </div>
+              </div>
+
               <!-- Download spreadsheet -->
               <div id="wizardPane_Spreadsheet" class="row wizard-pane">
                 <div class="col-8 offset-2 mt-3">
@@ -570,7 +598,15 @@
                   <div id="contentInterface">
                     <div class="row gy-2 align-items-end">
                       <div class="col-12 col-lg-4 col-xl-3">
-                        <div id="addItemButton" class="btn btn-primary w-100">Add item</div>
+                        <div class="btn-group w-100">
+                          <div id="addItemButton" class="btn btn-primary w-100">Add item</div>
+                          <button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                            <span class="visually-hidden">Toggle Dropdown</span>
+                          </button>
+                          <ul class="dropdown-menu">
+                            <li><button id="addItemAfterCurrentButton" class="dropdown-item">Add item after current</button></li>
+                          </ul>
+                        </div>
                       </div>
                       <div class="col-8 col-md-9 col-lg-4 col-xl-3">
                         <div id="showBulkImportButton" class="btn btn-secondary w-100">Bulk import</div>

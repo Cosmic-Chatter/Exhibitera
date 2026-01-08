@@ -78,10 +78,17 @@ async function wizardForward (currentPage) {
       document.getElementById('wizardLanguagesBlankWarning').style.display = 'block'
     }
   } else if (currentPage === 'Header') {
-    exSetup.wizardGoTo('Spreadsheet')
+    exSetup.wizardGoTo('Option')
+  } else if (currentPage === 'Option') {
+    if (document.getElementById('wizardImportOptionsSingle').checked) {
+      exSetup.wizardGoTo('Layout')
+    } else {
+      exSetup.wizardGoTo('Spreadsheet')
+    }
   } else if (currentPage === 'Spreadsheet') {
-    const selectedFile = document.getElementById('wizardUploadTemplateButton').getAttribute('data-spreadsheet')
-    if (selectedFile !== '') {
+    const selectedFile = document.getElementById('wizardUploadTemplateButton').dataset.spreadsheet
+
+    if (selectedFile && selectedFile !== '') {
       document.getElementById('wizardUploadTemplateBlankWarning').style.display = 'none'
       document.getElementById('wizardUploadMediaMissingWarning').style.display = 'none'
       document.getElementById('wizardUploadMediaMissingRow').style.display = 'none'
@@ -92,18 +99,9 @@ async function wizardForward (currentPage) {
   } else if (currentPage === 'MediaUpload') {
     // Check that each file listed in the spreadsheet has an uploaded copy.
     const spreadsheet = document.getElementById('wizardUploadTemplateButton').dataset.spreadsheet
-    let missing = []
-    try {
-      missing = await _checkContentExists(spreadsheet, ['Image'])
-      document.getElementById('wizardUploadMediaBadKeyWarning').style.display = 'none'
-    } catch (e) {
-      if (String(e).slice(0, 14) === 'Error: bad_key') {
-        document.getElementById('wizardUploadMediaBadKeyWarning').style.display = 'block'
-        return
-      }
-    }
+    const missingContent = await checkBulkImportContent(spreadsheet, ['Media filename'])
 
-    if (missing.length === 0) {
+    if (missingContent.length === 0) {
       document.getElementById('wizardUploadMediaMissingWarning').style.display = 'none'
       document.getElementById('wizardUploadMediaMissingRow').style.display = 'none'
       exSetup.wizardGoTo('Layout')
@@ -113,7 +111,7 @@ async function wizardForward (currentPage) {
       missingRow.style.display = 'flex'
       document.getElementById('wizardUploadMediaMissingWarning').style.display = 'block'
 
-      for (const item of missing) {
+      for (const item of missingContent) {
         const col = document.createElement('div')
         col.classList = 'col-12 col-md-4'
         col.innerHTML = item
@@ -132,12 +130,14 @@ function wizardBack (currentPage) {
     exSetup.wizardGoTo('Welcome')
   } else if (currentPage === 'Header') {
     exSetup.wizardGoTo('Languages')
-  } else if (currentPage === 'Spreadsheet') {
+  } else if (currentPage === 'Option') {
     exSetup.wizardGoTo('Header')
+  } else if (currentPage === 'Spreadsheet') {
+    exSetup.wizardGoTo('Option')
   } else if (currentPage === 'MediaUpload') {
     exSetup.wizardGoTo('Spreadsheet')
   } else if (currentPage === 'Layout') {
-    exSetup.wizardGoTo('MediaUpload')
+    exSetup.wizardGoTo('Option')
   }
 }
 
@@ -155,12 +155,8 @@ async function wizardCreateDefinition () {
     langOrder.push(lang)
     const langDef = {
       code: lang,
+      content: {},
       display_name: exLang.getLanguageDisplayName(lang),
-      image_key: 'Image',
-      level_key: 'Level',
-      title_key: 'Title (' + lang + ')',
-      time_key: 'Time (' + lang + ')',
-      short_text_key: 'Description (' + lang + ')',
       header_text: wizardHeaders?.[lang] ?? ''
     }
     exSetup.updateWorkingDefinition(['languages', lang], langDef)
@@ -169,18 +165,34 @@ async function wizardCreateDefinition () {
 
   // Basics
   exSetup.updateWorkingDefinition(['name'], document.getElementById('wizardDefinitionNameInput').value.trim())
-  exSetup.updateWorkingDefinition(['spreadsheet'], document.getElementById('wizardUploadTemplateButton').getAttribute('data-spreadsheet'))
 
   // Layout
   const orientation = document.getElementById('wizardOrientationSelect').value
 
-  // if (orientation === 'horizontal') {
-  //   exSetup.updateWorkingDefinition(['setup'], { auto_refresh: true, preview_ratio: '16x9' })
-  // } else {
-  //   exSetup.updateWorkingDefinition(['setup'], { auto_refresh: true, preview_ratio: '9x16' })
-  // }
-
-  exUtilities.hideModal('#setupWizardModal')
+  if (document.getElementById('wizardImportOptionsSingle').checked) {
+    // Add a demo item so they have something to see
+    const tempUUID = exUtilities.uuid()
+    exSetup.updateWorkingDefinition(['content_order'], [tempUUID])
+    const tempContent = {}
+    tempContent[tempUUID] = {
+      filename: '',
+      level: 4,
+      uuid: tempUUID
+    }
+    exSetup.updateWorkingDefinition(['content'], tempContent)
+    const tempLangContent = {}
+    tempLangContent[tempUUID] = {
+      description: 'This is your first timeline item',
+      time: 'January 1, 1970',
+      title: 'Your First Item!',
+      uuid: tempUUID
+    }
+    exSetup.updateWorkingDefinition(['languages', exSetup.config.workingDefinition.language_order[0], 'content'], tempLangContent)
+  } else {
+    // Import from spreadsheet
+    const spreadsheet = document.getElementById('wizardUploadTemplateButton').dataset.spreadsheet
+    bulkImportFiles(spreadsheet)
+  }
 
   if (orientation === 'horizontal') {
     exSetup.configurePreview('16x9', true)
@@ -202,7 +214,7 @@ function generateSpreadsheetTemplate (wizard = true) {
 
   let defName = 'New Definition'
   let languages = []
-  let details = []
+  const details = ['Time', 'Title', 'Description']
 
   if (wizard) {
     defName = document.getElementById('wizardDefinitionNameInput').value.trim()
@@ -210,15 +222,10 @@ function generateSpreadsheetTemplate (wizard = true) {
       const lang = child.querySelector('select').value
       if (languages.includes(lang) === false) languages.push(lang)
     }
-
-    if (document.getElementById('wizardCheckboxTitle').checked === true) details.push('Title')
-    if (document.getElementById('wizardCheckboxCaption').checked === true) details.push('Caption')
-    if (document.getElementById('wizardCheckboxCredit').checked === true) details.push('Credit')
   } else {
     const def = exSetup.config.workingDefinition
     if (def.name && def.name !== '') defName = def.name
     languages = def.language_order
-    details = ['Time', 'Title', 'Description']
   }
 
   // Loop through the various combinations to make the header line for the CSV file
@@ -369,13 +376,25 @@ function rebuildItemList () {
   }
 }
 
-function addItem (details = {}) {
+function addItem (details = {}, after = '') {
   // Create a new item and add it to the definition
 
   const def = exSetup.config.workingDefinition
   const uuid = exUtilities.uuid()
 
-  def.content_order.push(uuid)
+  if (after === '') {
+    // Insert item at end
+    def.content_order.push(uuid)
+  } else {
+    // Insert item after the given one
+    const index = def.content_order.indexOf(after)
+
+    if (index === -1) {
+      def.content_order.push(uuid)
+    } else {
+      def.content_order.splice(index + 1, 0, uuid)
+    }
+  }
   def.content[uuid] = {
     custom_thumbnail: details?.custom_thumbnail ?? '',
     filename: details?.filename ?? '',
@@ -801,7 +820,6 @@ async function bulkImportFiles (spreadsheetFile) {
   // Iterate the spreadsheet and create an item for each row
   for (const row of spreadsheet) {
     const details = parseBulkImportSpreadsheetRow(row)
-    console.log(details)
     addItem(details)
   }
   exUtilities.hideModal('#bulkImportModal')
@@ -854,14 +872,17 @@ Array.from(document.querySelectorAll('.wizard-back')).forEach((el) => {
   })
 })
 
-document.getElementById('wizardDownloadTemplateButton').addEventListener('click', generateSpreadsheetTemplate)
+document.getElementById('wizardDownloadTemplateButton').addEventListener('click', () => {
+  generateSpreadsheetTemplate()
+})
 document.getElementById('wizardUploadTemplateButton').addEventListener('click', () => {
   exFileSelect.createFileSelectionModal({
     filetypes: ['csv'],
     multiple: false
   })
     .then((selectedFiles) => {
-      document.getElementById('wizardUploadTemplateButton').setAttribute('data-spreadsheet', selectedFiles[0])
+      if (selectedFiles.length === 0) return
+      document.getElementById('wizardUploadTemplateButton').dataset.spreadsheet = selectedFiles[0]
     })
 })
 
@@ -928,6 +949,10 @@ document.getElementById('clearItemsConfirmButton').addEventListener('click', () 
   exUtilities.hideModal('#clearItemsModal')
 })
 document.getElementById('addItemButton').addEventListener('click', addItem)
+document.getElementById('addItemAfterCurrentButton').addEventListener('click', () => {
+  const currentItem = document.getElementById('editPane').dataset.uuid
+  addItem({}, currentItem)
+})
 document.getElementById('editPaneDeleteButton').addEventListener('click', () => {
   const uuid = document.getElementById('editPane').dataset.uuid
   deleteItem(uuid)

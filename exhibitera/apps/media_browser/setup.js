@@ -527,13 +527,26 @@ function rebuildItemList () {
   }
 }
 
-function addItem (details = {}) {
+function addItem (details = {}, after = '') {
   // Create a new item and add it to the definition
 
   const def = exSetup.config.workingDefinition
   const uuid = exUtilities.uuid()
 
-  def.content_order.push(uuid)
+  if (after === '') {
+    // Insert item at end
+    def.content_order.push(uuid)
+  } else {
+    // Insert item after the given one
+    const index = def.content_order.indexOf(after)
+
+    if (index === -1) {
+      def.content_order.push(uuid)
+    } else {
+      def.content_order.splice(index + 1, 0, uuid)
+    }
+  }
+
   def.content[uuid] = {
     custom_thumbnail: details?.custom_thumbnail ?? '',
     filename: details?.filename ?? '',
@@ -1309,6 +1322,10 @@ document.getElementById('loopResultsCheckbox').addEventListener('change', (event
 })
 
 document.getElementById('addItemButton').addEventListener('click', addItem)
+document.getElementById('addItemAfterCurrentButton').addEventListener('click', () => {
+  const currentItem = document.getElementById('editPane').dataset.uuid
+  addItem({}, currentItem)
+})
 document.getElementById('editPaneDeleteButton').addEventListener('click', () => {
   const uuid = document.getElementById('editPane').dataset.uuid
   deleteItem(uuid)

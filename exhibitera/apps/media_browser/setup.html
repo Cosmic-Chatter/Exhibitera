@@ -655,7 +655,15 @@
                   <div id="contentInterface">
                     <div class="row gy-2 align-items-end">
                       <div class="col-12 col-lg-4 col-xl-3">
-                        <div id="addItemButton" class="btn btn-primary w-100">Add item</div>
+                        <div class="btn-group w-100">
+                          <div id="addItemButton" class="btn btn-primary w-100">Add item</div>
+                          <button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                            <span class="visually-hidden">Toggle Dropdown</span>
+                          </button>
+                          <ul class="dropdown-menu">
+                            <li><button id="addItemAfterCurrentButton" class="dropdown-item">Add item after current</button></li>
+                          </ul>
+                        </div>
                       </div>
                       <div class="col-8 col-md-9 col-lg-4 col-xl-3">
                         <div id="showBulkImportButton" class="btn btn-secondary w-100">Bulk import</div>
