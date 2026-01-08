@@ -27,6 +27,18 @@ export function createFileSelectionModal (userOptions) {
     modal.setAttribute('tabindex', '-1000') // Always on top
     modal.innerHTML = `
       <div class="modal-dialog modal-dialog-centered modal-lg modal-fullscreen-lg-down">
+        <div id="exFileSelectModalDropOverlay"
+            class="position-absolute top-0 start-0 w-100 h-100 align-items-center justify-content-center rounded"
+            style="
+              display:none!important;
+              z-index:1056;
+              background: rgba(0,0,0,0.6);
+              border: 3px dashed #0d6efd;
+              color: white;
+              font-size: 1.5rem;
+              pointer-events:none;">
+          Drop files to upload
+        </div>
         <div class="modal-content">
           <div class="modal-header">
             <h5 id="exFileSelectModalTitle" class="modal-title">Select Files</h5>
@@ -79,8 +91,10 @@ export function createFileSelectionModal (userOptions) {
                   </div>
                 </div>
                 <div class='col-6 col-md-12 mt-2 text-center h6' style="word-wrap: break-word">
-                  <div id="exFileSelectModalFilePreviewFilename" ></div>
-                  <div id="exFileSelectModalFilePreviewFilesize" class="text-secondary mt-1 small"></div>
+                  <div style="height: 60px; overflow-y: auto;">
+                    <div id="exFileSelectModalFilePreviewFilename" ></div>
+                    <div id="exFileSelectModalFilePreviewFilesize" class="text-secondary mt-1 small"></div>
+                  </div>
                   <div id="exFileSelectModalFilePreviewEditContainer" class='row align-items-center'>
                     <div class='col-12'>
                       <input id="exFileSelectModalFilePreviewEditField" type='text' class='form-control'>
@@ -202,6 +216,7 @@ export function createFileSelectionModal (userOptions) {
 
       document.getElementById('exFileSelectModalUpload').setAttribute('accept', acceptStr)
     }
+    setupDragAndDrop(modal, options)
 
     // File rename
     document.getElementById('exFileSelectModalFilePreviewEditContainer').style.display = 'none'
@@ -291,6 +306,119 @@ export function createFileSelectionModal (userOptions) {
     popoverTriggerList.map(function (popoverTriggerEl) {
       return new bootstrap.Popover(popoverTriggerEl)
     })
+  })
+}
+
+function setupDragAndDrop (modal, options) {
+  const overlay = modal.querySelector('#exFileSelectModalDropOverlay')
+  const fileInput = document.getElementById('exFileSelectModalUpload')
+
+  let dragCounter = 0
+  let rejectFlashTimeout = null
+
+  // Enable smooth visual transitions (inline, self-contained)
+  overlay.style.transition =
+  'background-color 180ms ease, border-color 180ms ease'
+
+  // Cache base styles so we can restore them reliably
+  const baseBackground = overlay.style.background || 'rgba(13,110,253,0.15)'
+  const baseBorder = overlay.style.border || '3px dashed #0d6efd'
+  const baseText = overlay.textContent
+
+  const showOverlay = () => {
+    overlay.style.display = 'flex'
+  }
+
+  const hideOverlay = () => {
+    overlay.style.display = 'none'
+  }
+
+  const flashReject = () => {
+    // Clear any in-flight flash
+    if (rejectFlashTimeout) {
+      clearTimeout(rejectFlashTimeout)
+      rejectFlashTimeout = null
+    }
+
+    // Apply error state
+    overlay.style.background = 'rgba(220,53,69,0.25)' // Bootstrap danger red
+    overlay.style.border = '3px dashed #dc3545'
+    overlay.textContent = 'Invalid file type dropped'
+
+    rejectFlashTimeout = setTimeout(() => {
+      overlay.style.background = baseBackground
+      overlay.style.border = baseBorder
+      overlay.textContent = baseText
+      rejectFlashTimeout = null
+    }, 950)
+  }
+
+  const matchesFiletypes = (file) => {
+    if (options.filetypes.length === 0 || options.upload_any === true) return true
+
+    const ext = file.name.split('.').pop().toLowerCase()
+    const mimetype = file.type.split('/')[0]
+
+    return options.filetypes.some(type => type === ext || type === mimetype)
+  }
+
+  modal.addEventListener('dragenter', (e) => {
+    if (!e.dataTransfer?.types?.includes('Files')) return
+    e.preventDefault()
+    dragCounter++
+    showOverlay()
+  })
+
+  modal.addEventListener('dragleave', (e) => {
+    e.preventDefault()
+    dragCounter--
+    if (dragCounter <= 0) {
+      dragCounter = 0
+      hideOverlay()
+    }
+  })
+
+  modal.addEventListener('dragover', (e) => {
+    if (!e.dataTransfer?.types?.includes('Files')) return
+    e.preventDefault()
+  })
+
+  modal.addEventListener('drop', (e) => {
+    if (!e.dataTransfer?.types?.includes('Files')) return
+    e.preventDefault()
+
+    dragCounter = 0
+    hideOverlay()
+
+    const droppedFiles = Array.from(e.dataTransfer.files)
+    if (droppedFiles.length === 0) return
+
+    const accepted = []
+    const rejected = []
+
+    for (const file of droppedFiles) {
+      if (matchesFiletypes(file)) accepted.push(file)
+      else rejected.push(file)
+    }
+
+    if (rejected.length > 0) {
+      // Briefly re-show overlay to display the rejection flash
+      showOverlay()
+      flashReject()
+
+      // Hide again after the flash completes
+      setTimeout(() => {
+        hideOverlay()
+      }, 950)
+    }
+
+    if (accepted.length === 0) return
+
+    const dataTransfer = new DataTransfer()
+    accepted.forEach(file => dataTransfer.items.add(file))
+    fileInput.files = dataTransfer.files
+
+    onUploadContentChange()
   })
 }
 
