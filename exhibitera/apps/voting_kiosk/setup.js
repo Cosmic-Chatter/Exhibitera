@@ -488,11 +488,7 @@ function createSurveyOption (userDetails, populateEditor = false) {
   deleteButton.setAttribute('data-bs-content', `<a id="DeleteOptionPopover_${details.uuid}" class="btn btn-danger w-100">Confirm</a>`)
   deleteButton.setAttribute('data-bs-trigger', 'focus')
   deleteButton.setAttribute('data-bs-html', 'true')
-  document.addEventListener('click', (event) => {
-    if (event?.target?.id === 'DeleteOptionPopover_' + details.uuid) {
-      deleteOption(details.uuid)
-    }
-  })
+
   deleteButton.addEventListener('click', function () { deleteButton.focus() })
   deleteCol.appendChild(deleteButton)
 
@@ -690,6 +686,7 @@ Array.from(document.querySelectorAll('.definition-text-input')).forEach((el) => 
 // Option fields
 document.getElementById('addOptionButton').addEventListener('click', () => {
   createSurveyOption(null, true)
+  exSetup.previewDefinition(true)
 })
 document.getElementById('optionInput_icon_user_file').addEventListener('click', (event) => {
   exFileSelect.createFileSelectionModal({ multiple: false, filetypes: ['image'] })
@@ -722,6 +719,13 @@ for (const el of document.getElementsByClassName('option-input')) {
     exSetup.previewDefinition(true)
   })
 }
+document.addEventListener('click', (event) => {
+  if (event?.target?.id.startsWith('DeleteOptionPopover_')) {
+    const split = event.target.id.split('_')
+    const uuid = split[1]
+    deleteOption(uuid)
+  }
+})
 
 // Style fields
 for (const el of document.querySelectorAll('.color-picker')) {

@@ -192,7 +192,7 @@ function loadDefinition (definition) {
 
   // If there are votes left for the old survey, make sure they are recorded
   sendData()
-  console.log(definition)
+
   configurationName = definition.name
 
   // Clear the vote categories

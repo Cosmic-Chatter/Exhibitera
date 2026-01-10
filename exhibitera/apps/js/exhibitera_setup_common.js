@@ -300,13 +300,13 @@ export function configureFromQueryString () {
 
   const queryString = decodeURIComponent(window.location.search)
   const searchParams = new URLSearchParams(queryString)
-
+  console.log(exCommon.config)
   if (searchParams.get('definition') != null) {
     config.loadDefinition(searchParams.get('definition'))
     document.getElementById('availableDefinitionSelect').value = searchParams.get('definition')
   } else {
     if (config.clearDefinition != null) config.clearDefinition()
-    if (config.loggedIn) {
+    if (exCommon.config.standalone === true || config.loggedIn) {
       const modal = document.getElementById('appWelcomeModal')
       if (modal) exUtilities.showModal(modal)
     }
