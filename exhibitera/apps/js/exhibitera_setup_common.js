@@ -153,11 +153,13 @@ export async function configure (options) {
   setTimeout(setUpColorPickers, 100)
 
   // If we're using Hub, display the component ID
-  const idField = document.getElementById('setupComponentID')
-  if (idField) {
-    setTimeout(() => {
-      idField.innerText = exCommon.config?.id ?? ''
-    }, 10)
+  if (exCommon.config.standalone === false) {
+    const idField = document.getElementById('setupComponentID')
+    if (idField) {
+      setTimeout(() => {
+        idField.innerText = exCommon.config?.id ?? ''
+      }, 10)
+    }
   }
 }
 
