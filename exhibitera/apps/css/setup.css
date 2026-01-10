@@ -33,6 +33,10 @@
   -webkit-appearance: none;
   margin: 0;
 }
+
+#helpNewAccountMessage {
+    display: none;
+}
 #previewContainer {
     width: 100%;
     height: 100%;
