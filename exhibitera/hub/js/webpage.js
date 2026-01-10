@@ -849,13 +849,13 @@ exTools.rebuildNotificationList()
 // Bind event listeners
 
 // Login
-document.getElementById('formTest').addEventListener('keydown', function (e) {
+document.getElementById('loginForm').addEventListener('keydown', function (e) {
   if (e.key === 'Enter') {
     e.preventDefault() // Prevents form from reloading the page
     document.getElementById('loginSubmitButton').click() // Trigger form submission programmatically
   }
 })
-document.getElementById('formTest').addEventListener('click', exUsers.loginFromDropdown)
+document.getElementById('loginSubmitButton').addEventListener('click', exUsers.loginFromDropdown)
 document.getElementById('logoutButton').addEventListener('click', exUsers.logoutUser)
 document.getElementById('viewUserPreferencesModalButton').addEventListener('click', exUsers.showUserPreferenceModal)
 document.getElementById('userPreferencesModalSaveButton').addEventListener('click', exUsers.submitUserPreferencesFromModal)

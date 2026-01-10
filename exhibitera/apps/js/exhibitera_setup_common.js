@@ -497,6 +497,12 @@ export function createLoginEventListeners () {
 
   // Login
   document.getElementById('loginSubmitButton').addEventListener('click', loginFromDropdown)
+  document.getElementById('loginForm').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+      e.preventDefault() // Prevents form from reloading the page
+      document.getElementById('loginSubmitButton').click() // Trigger form submission programmatically
+    }
+  })
   document.getElementById('logoutButton').addEventListener('click', logoutUser)
 
   document.getElementById('changePasswordButton').addEventListener('click', showPasswordChangeModal)
