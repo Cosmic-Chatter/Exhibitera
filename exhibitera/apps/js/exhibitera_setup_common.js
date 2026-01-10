@@ -163,6 +163,34 @@ export async function configure (options) {
   }
 }
 
+export function gotoAppLink (el) {
+  // Navigate to the link given by element el, either in the browser or in the webview
+
+  if (exCommon.config.remoteDisplay === true) {
+    // Switch webpages in the browser
+
+    const endpoint = el.getAttribute('data-web-link')
+    window.open(window.location.origin + endpoint, '_blank').focus()
+  } else {
+    // Launch the appropriate webview page in the app
+
+    const page = el.getAttribute('data-app-link')
+    let reload = false
+    if (page === 'app') {
+      reload = true
+    }
+    exCommon.makeHelperRequest({
+      method: 'POST',
+      api: '',
+      endpoint: '/app/showWindow/' + page,
+      params: {
+        parameters: {},
+        reload
+      }
+    })
+  }
+}
+
 export function setUpColorPickers () {
   // Find all the color picker divs and apply the Coloris style
 
@@ -595,6 +623,13 @@ function createEventListeners () {
   const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
   tooltipTriggerList.map(function (tooltipTriggerEl) {
     return new bootstrap.Tooltip(tooltipTriggerEl)
+  })
+
+  // Activate app links
+  Array.from(document.querySelectorAll('.app-link')).forEach((el) => {
+    el.addEventListener('click', (event) => {
+      gotoAppLink(event.target)
+    })
   })
 }
 
@@ -1364,5 +1399,9 @@ export function submitUserPasswordChange () {
     })
 }
 
-const markdownConverter = new showdown.Converter()
-markdownConverter.setFlavor('github')
+try {
+  const markdownConverter = new showdown.Converter()
+  markdownConverter.setFlavor('github')
+} catch {
+  console.log('showdown library not loaded')
+}

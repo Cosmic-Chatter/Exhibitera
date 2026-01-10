@@ -1,4 +1,5 @@
 import * as exCommon from '../js/exhibitera_app_common.js'
+import * as exSetup from '../js/exhibitera_setup_common.js'
 
 function updateParser (update) {
   // Read updates
@@ -18,7 +19,6 @@ exCommon.config.helperAddress = window.location.origin
 
 exCommon.askForDefaults()
   .then(() => {
-    console.log(exCommon.config)
     if (exCommon.config.standalone === false) {
       // Using Hub
       document.getElementById('standaloneWelcome').style.display = 'none'
@@ -36,19 +36,9 @@ exCommon.askForDefaults()
     }
   })
 
-document.getElementById('settingsButton').addEventListener('click', (event) => {
-  if (exCommon.config.remoteDisplay === true) {
-    // Switch webpages in the browser
-
-    window.open(window.location.origin + '/setup.html', '_blank').focus()
-  } else {
-    // Launch the appropriate webview page in the app
-
-    exCommon.makeHelperRequest({
-      method: 'POST',
-      api: '',
-      endpoint: '/app/showWindow/settings',
-      params: { reload: true }
-    })
-  }
+// Activate app links
+Array.from(document.querySelectorAll('.app-link')).forEach((el) => {
+  el.addEventListener('click', (event) => {
+    exSetup.gotoAppLink(event.target)
+  })
 })

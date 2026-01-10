@@ -484,34 +484,6 @@ async function editDefintion (uuid) {
   }
 }
 
-function gotoAppLink (el) {
-  // Navigate to the link given by element el, either in the browser or in the webview
-
-  if (exCommon.config.remoteDisplay === true) {
-    // Switch webpages in the browser
-
-    const endpoint = el.getAttribute('data-web-link')
-    window.open(window.location.origin + endpoint, '_blank').focus()
-  } else {
-    // Launch the appropriate webview page in the app
-
-    const page = el.getAttribute('data-app-link')
-    let reload = false
-    if (page === 'app') {
-      reload = true
-    }
-    exCommon.makeHelperRequest({
-      method: 'POST',
-      api: '',
-      endpoint: '/app/showWindow/' + page,
-      params: {
-        parameters: {},
-        reload
-      }
-    })
-  }
-}
-
 function configureUser (user) {
   // Configure the interface for the permissions of the given user
 
@@ -595,7 +567,8 @@ exSetup.createLoginEventListeners()
 // Activate app links
 Array.from(document.querySelectorAll('.app-link')).forEach((el) => {
   el.addEventListener('click', (event) => {
-    gotoAppLink(event.target)
+    console.log('here')
+    exSetup.gotoAppLink(event.target)
   })
 })
 

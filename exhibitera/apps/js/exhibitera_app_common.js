@@ -545,11 +545,13 @@ export async function writeDefinition (definition) {
 export function loadDefinition (defName) {
   // Ask the helper for the given definition and return a promise containing it.
 
-  config.currentDefinition = defName
-  return makeHelperRequest({
-    method: 'GET',
-    endpoint: '/definitions/' + defName + '/load'
-  })
+  if (defName && typeof defName === 'string' && defName !== '') {
+    config.currentDefinition = defName
+    return makeHelperRequest({
+      method: 'GET',
+      endpoint: '/definitions/' + defName + '/load'
+    })
+  }
 }
 
 export function saveScreenshotAsThumbnail (filename) {
