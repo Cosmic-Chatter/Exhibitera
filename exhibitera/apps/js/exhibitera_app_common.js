@@ -95,6 +95,15 @@ export function configureApp (opt = {}) {
   // We are displaying this for real
     askForDefaults()
       .then(() => {
+        // If we've already got a definition, load it
+        if (config.definitionUUID && config.definitionUUID !== '') {
+          loadDefinition(config.definitionUUID)
+            .then((result) => {
+              config.definition = result.definition
+              config.definitionLoader(result.definition)
+            })
+        }
+
         if (config.standalone === false) {
           // Using Hub
           sendPing()
@@ -102,12 +111,6 @@ export function configureApp (opt = {}) {
           if (config.connectionChecker != null) setInterval(config.connectionChecker, 500)
         } else {
           // Not using Hub
-          loadDefinition(config.currentDefinition)
-            .then((result) => {
-              config.definition = result.definition
-              config.definitionLoader(result.definition)
-            })
-
           setInterval(checkForHelperUpdates, 500)
         }
       })
@@ -212,12 +215,20 @@ export function sendPing () {
         params: requestDict
       })
       .then(readServerUpdate)
+      .catch(handlePingError)
   }
 
   // First, check the helper for updates, then send the ping
   checkForHelperUpdates()
     .then(pingRequest)
     .catch(pingRequest)
+}
+
+function handlePingError () {
+  // Called when a ping fails, usually because the conntection to Hub was lost.
+
+  // Load the saved definition
+  loadDefinition(config.definitionUUID)
 }
 
 export function wakeDisplay () {
@@ -315,20 +326,27 @@ function readServerUpdate (update) {
     config.helperAddress = update.helperAddress
   }
   if (update.current_exhibit) {
-    if (update.currentExhibit !== config.currentExhibit) {
+    if (update.current_exhibit !== config.currentExhibit) {
       sendUpdate = true
       config.currentExhibit = update.current_exhibit
     }
   }
 
+  if (update.definition) {
+    if (update.definition !== config.definitionUUID) {
+      sendUpdate = true
+    }
+  }
+
+  // Save any changes before we might reload the page to switch apps
   if (sendUpdate) {
     sendConfigUpdate(update)
   }
 
   // Check the definition file for a changed app.
   let definitionChanged = false
-  if (config.exhibiteraAppID !== 'dmx_control' && update.definition && update.definition !== config.currentDefinition) {
-    config.currentDefinition = update.definition
+  if (config.exhibiteraAppID !== 'dmx_control' && update.definition && update.definition !== config.definitionUUID) {
+    config.definitionUUID = update.definition
     definitionChanged = true
     makeHelperRequest({
       method: 'GET',
@@ -347,7 +365,7 @@ function readServerUpdate (update) {
   }
 
   if (definitionChanged) {
-    loadDefinition(config.currentDefinition)
+    loadDefinition(config.definitionUUID)
       .then((result) => {
         config.definitionLoader(result.definition)
       })
@@ -390,10 +408,10 @@ function readHelperUpdate (update, changeApp = true) {
     changeApp === true &&
     'app' in update &&
     'definition' in update.app &&
-    update.app.definition !== config.currentDefinition &&
+    update.app.definition !== config.definitionUUID &&
     config.standalone === true
   ) {
-    config.currentDefinition = update.app.definition
+    config.definitionUUID = update.app.definition
     definitionChanged = true
     makeHelperRequest({
       method: 'GET',
@@ -412,7 +430,7 @@ function readHelperUpdate (update, changeApp = true) {
   }
 
   if (definitionChanged) {
-    loadDefinition(config.currentDefinition)
+    loadDefinition(config.definitionUUID)
       .then((result) => {
         config.definitionLoader(result.definition)
       })
@@ -463,7 +481,12 @@ export function sendConfigUpdate (update) {
   // Send a message to the helper with the latest configuration to set as
   // the default
 
-  const defaults = { content: update.content, current_exhibit: update.current_exhibit }
+  const defaults = {
+    current_exhibit: update.current_exhibit,
+    app: {
+      definition: update.definition
+    }
+  }
 
   const requestDict = { defaults }
 
@@ -546,7 +569,7 @@ export function loadDefinition (defName) {
   // Ask the helper for the given definition and return a promise containing it.
 
   if (defName && typeof defName === 'string' && defName !== '') {
-    config.currentDefinition = defName
+    config.definitionUUID = defName
     return makeHelperRequest({
       method: 'GET',
       endpoint: '/definitions/' + defName + '/load'

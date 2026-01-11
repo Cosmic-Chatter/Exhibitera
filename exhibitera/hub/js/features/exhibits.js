@@ -2457,20 +2457,28 @@ async function createExhibitionModificationHTML (mod, exhib) {
   document.getElementById('exhibitModificationsModalSaveButton').style.display = 'none'
   document.getElementById('exhibitModificationsModalCloseButton').innerText = 'Close'
 
-  const modDefReq = await exUtilities.makeRequest({
-    method: 'GET',
-    url: hubTools.getExhibitComponent(mod.uuid).getHelperURL(),
-    endpoint: '/definitions/' + mod.definition + '/load'
-  })
-  const modDef = modDefReq.definition
+  let exhibDef = {} // The definition from the exhibition
+  let modDef = {} // The definition we've modified to
+  let badConnection = false
+  try {
+    const modDefReq = await exUtilities.makeRequest({
+      method: 'GET',
+      url: hubTools.getExhibitComponent(mod.uuid).getHelperURL(),
+      endpoint: '/definitions/' + mod.definition + '/load'
+    })
 
-  const exhibDefUUID = exhib.components.find(obj => obj.uuid === mod.uuid)?.definition ?? 'error'
-  const exhibDefReq = await exUtilities.makeRequest({
-    method: 'GET',
-    url: hubTools.getExhibitComponent(mod.uuid).getHelperURL(),
-    endpoint: '/definitions/' + exhibDefUUID + '/load'
-  })
-  const exhibDef = exhibDefReq.definition
+    modDef = modDefReq.definition
+
+    const exhibDefUUID = exhib.components.find(obj => obj.uuid === mod.uuid)?.definition ?? 'error'
+    const exhibDefReq = await exUtilities.makeRequest({
+      method: 'GET',
+      url: hubTools.getExhibitComponent(mod.uuid).getHelperURL(),
+      endpoint: '/definitions/' + exhibDefUUID + '/load'
+    })
+    exhibDef = exhibDefReq.definition
+  } catch {
+    badConnection = true
+  }
 
   const col = document.createElement('div')
   col.classList = 'col py-1'
@@ -2479,6 +2487,8 @@ async function createExhibitionModificationHTML (mod, exhib) {
     <div class="col-12 position-relative d-flex justify-content-center align-items-center">
       <span class="text-center fs-4 fw-bold pt-1">${component.id}</span>
       <button class="btn-close position-absolute end-0 me-2"></button>
+    </div>
+    <div class='col-12 bad-connection-warning'>
     </div>
     <div class='col-5 text-center'>
     <span class='fs-6'>Original</span>
@@ -2491,12 +2501,15 @@ async function createExhibitionModificationHTML (mod, exhib) {
     <div class='col-5 text-center'>
     <span class='fs-6'>Modified to</span>
     <div class='mod-div py-1'></div>
-    <div class="fs-5">${modDef.name}</div>
+    <div class="fs-5">${modDef?.name ?? '<i>No definition</i>'}</div>
     </div>
   </div>
   `
 
   compareRow.appendChild(col)
+  if (badConnection) {
+    col.querySelector('.bad-connection-warning').innerHTML = '<div class=\'text-center text-warning fst-italic\'>Cannot connect to component</div>'
+  }
   col.querySelector('.mod-div').appendChild(exUtilities.getDefinitionThumbnail(component.getHelperURL(), mod.definition))
   col.querySelector('.exhib-div').appendChild(exUtilities.getDefinitionThumbnail(component.getHelperURL(), exhibDef?.uuid ?? 'error'))
   col.querySelector('.btn-close').addEventListener('click', (ev) => {

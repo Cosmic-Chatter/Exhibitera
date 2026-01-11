@@ -32,7 +32,7 @@ exCommon.askForDefaults()
       // Not using Hub
       document.getElementById('standaloneWelcome').style.display = 'block'
       document.getElementById('hubWelcome').style.display = 'none'
-      exCommon.loadDefinition(exCommon.config.currentDefinition)
+      exCommon.loadDefinition(exCommon.config.definitionUUID)
     }
   })
 

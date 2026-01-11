@@ -262,33 +262,61 @@ export function getDefinitionThumbnail (helperAddress, uuid) {
 
   const div = document.createElement('div')
 
-  // First try to load the thumbnail as an image.
+  const thumbUrl =
+    helperAddress +
+    exConfig.api +
+    '/definitions/' +
+    uuid +
+    '/thumbnail?' +
+    Date.now()
+
+  // Final fallback: static missing document image
+  function loadMissingImage () {
+    const missing = new Image()
+    if (document.querySelector('html').getAttribute('data-bs-theme') === 'dark') {
+      missing.src = '/_static/icons/document_missing.svg'
+    } else {
+      missing.src = '/_static/icons/document_missing_black.svg'
+    }
+    missing.style.height = '100px'
+    missing.style.width = '100%'
+    missing.style.objectFit = 'contain'
+    div.innerHTML = ''
+    div.appendChild(missing)
+  }
+
+  // First attempt: image
   const img = new Image()
-  img.crossOrigin = 'anonymous' // Allow cross-origin requests
+  img.crossOrigin = 'anonymous'
   img.onload = () => {
-    // If the image loads successfully, append it to the container
     img.style.height = '100px'
     img.style.width = '100%'
     img.style.objectFit = 'contain'
     div.innerHTML = ''
     div.appendChild(img)
   }
+
   img.onerror = () => {
-    // If the image fails to load, try loading it as a video
-    const thumb = document.createElement('video')
-    thumb.style.height = '100px'
-    thumb.style.width = '100%'
-    thumb.style.objectFit = 'contain'
-    thumb.setAttribute('autoplay', true)
-    thumb.muted = 'true'
-    thumb.setAttribute('loop', 'true')
-    thumb.setAttribute('playsinline', 'true')
-    thumb.setAttribute('webkit-playsinline', 'true')
-    thumb.setAttribute('disablePictureInPicture', 'true')
-    thumb.src = helperAddress + exConfig.api + '/definitions/' + uuid + '/thumbnail?' + Date.now()
-    div.appendChild(thumb)
+    // Second attempt: video
+    const video = document.createElement('video')
+    video.style.height = '100px'
+    video.style.width = '100%'
+    video.style.objectFit = 'contain'
+    video.autoplay = true
+    video.muted = true
+    video.loop = true
+    video.playsInline = true
+    video.setAttribute('disablePictureInPicture', 'true')
+
+    video.onerror = () => {
+      loadMissingImage()
+    }
+
+    video.src = thumbUrl
+    div.innerHTML = ''
+    div.appendChild(video)
   }
 
-  img.src = helperAddress + exConfig.api + '/definitions/' + uuid + '/thumbnail?' + Date.now()
+  img.src = thumbUrl
   return div
 }
