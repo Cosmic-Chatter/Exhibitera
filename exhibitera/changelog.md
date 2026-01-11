@@ -42,6 +42,7 @@ _Exhibitera Hub and Apps must all be upgraded to version 6 at the same time._
 - Add a custom thumbnail separate from the main media
 - Add items individually or use a spreadsheet for bulk import
 - Reorder your items
+- Copy Media Browser definitions to other PCs
 
 ### Media Player
 - Track progress through a playlist and the current item with a progress indicator
@@ -66,6 +67,7 @@ _This brand-new app extends Voting Kiosk to multiple survey questions, with new 
 - Timeline items can now include videos in addition to images
 - Add items individually or use a spreadsheet for bulk import 
 - Reorder your items
+- Copy Timeline Explorer definitions to other PCs
 
 ### Word Cloud
 - Switched profanity filtering library, so please check your word clouds

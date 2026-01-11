@@ -141,6 +141,11 @@ async def get_definition_content_list(this_uuid: str):
             if os.path.basename(os.path.dirname(definition["attractor"]["font"])) == 'content':
                 content.add(os.path.basename(definition["attractor"]["font"]))
         content += glob.glob(definition["files"], root_dir=ex_files.get_path(["content"], user_file=True))
+    elif app == "timeline_explorer":
+        for item_uuid in definition.get('content_order', []):
+            item = definition["content"][item_uuid]
+            content.add(item.get("filename", ""))
+            content.add(item.get("custom_thumbnail", ""))
     elif app == "voting_kiosk":
         for item_uuid in definition.get("options", {}):
             item = definition["options"][item_uuid]
@@ -159,6 +164,8 @@ async def get_definition_content_list(this_uuid: str):
         if file == "":
             continue
         path = ex_files.get_path(["content", file], user_file=True)
+        if not os.path.exists(path):
+            continue
         size, size_text = ex_files.get_file_size(path)
 
         total_size += size
