@@ -163,12 +163,6 @@ __________________________________________________*/
   transform: rotate(180deg);
 }
 
-.timeline ul li:nth-child(even) div.timeline-element {
-  left: -439px;
-}
-:dir(rtl) .timeline ul li:nth-child(even) div.timeline-element {
-  right: -439px;
-}
 .timeline ul li:nth-child(even) div.timeline-element::before {
   border-width: 8px 0 8px 16px;
   border-color: transparent transparent transparent var(--itemColor);
@@ -263,59 +257,107 @@ time {
 –––––––––––––––––––––––––––––––––––––––––––––––––– */
 
 @media (orientation: landscape) {
-    time {
-      margin-bottom: 0.5vh;
+    /* 1. Center the entire timeline track vertically */
+    #timeline-pane {
+        height: calc(100vh - var(--header-height) - 8.9vh); /* Adjust based on your header/footer */
+        overflow-x: auto !important; /* Enable side-scrolling */
+        overflow-y: hidden !important; 
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
     }
+
+    /* 2. Ensure the list expands horizontally and stays centered */
+    .timeline ul {
+        display: flex;
+        flex-direction: row;
+        width: max-content; /* Critical for horizontal scroll */
+        padding: 0 20vw; 
+        margin: 0;
+        height: 100%; /* Take full height of pane to allow top/bottom positioning */
+        align-items: center; /* Center the 'li' line segments */
+    }
+
+    /* 3. The LI is now a horizontal segment of the line */
     .timeline ul li { 
-      width: 0.5vw;
+        flex: 0 0 450px; 
+        height: 5px; /* The thickness of the timeline line */
+        background: var(--lineColor); /* Show the line */
+        position: relative;
+        margin: 0;
+        padding: 0;
     }
-    .timeline ul li:nth-child(odd) div.timeline-element {
-      flex-direction: row;
-      left: 2.5vw;
+
+    /* 4. Center the dot on the line */
+    .timeline ul li::after {
+        top: 50%;
+        left: 50%;
+        bottom: auto;
+        transform: translate(-50%, -50%);
     }
-    :dir(rtl) .timeline ul li:nth-child(odd) div.timeline-element {
-      flex-direction: row;
-      right: 2.5vw;
-    }
-    .timeline ul li:nth-child(even) div.timeline-element {
-      flex-direction: row-reverse;
-      left: max(calc(-1 * (20vw * var(--fontModifier) + 2.5vw - 0.5vw) ), -47vw);
-      /* - (20 + 2.5 - 0.5) */
-    }
-    :dir(rtl) .timeline ul li:nth-child(even) div.timeline-element {
-      right: max(calc(-1 * (20vw * var(--fontModifier) + 2.5vw - 0.5vw) ), -47vw);
-      /* - (20 + 2.5 - 0.5) */
-    }
-    .timeline ul li:nth-child(even) div.timeline-element.with-media {
-      left: max(calc(-1 * (30vw * var(--fontModifier) + 2.5vw - 0.5vw) ), -47vw);
-      /* - (30 + 2.5 - 0.5) */
-    }
-    :dir(rtl) .timeline ul li:nth-child(even) div.timeline-element.with-media {
-      right: max(calc(-1 * (30vw * var(--fontModifier) + 2.5vw - 0.5vw) ), -47vw);
-      /* - (30 + 2.5 - 0.5) */
-    }
+
+    /* 5. General item box styling */
     .timeline ul li div.timeline-element {
-        width: min(calc(20vw * var(--fontModifier)), 45vw);
+        position: absolute;
+        left: 50%!important; /* Position relative to the center of the LI */
+        width: 420px;
+        max-height: 35vh;
+        display: flex;
+        flex-direction: row;
+        transform: translateX(-50%) translateY(20px); /* Initial animation state */
+        visibility: hidden;
+        opacity: 0;
+        transition: all 0.5s ease-in-out;
     }
     .timeline ul li div.timeline-element.with-media {
-        width: min(calc(30vw * var(--fontModifier)), 45vw);
+      width: 620px;
     }
-    .timeline-element {
-        display: flex;
-        gap: 1vh;
+
+    /* 6. Position ODD items ABOVE the line */
+    .timeline ul li:nth-child(odd) div.timeline-element {
+        bottom: 35px; /* Distance above the line */
+        top: auto;
+        transform: translate3d(-50%, -100px, 0) !important;
     }
-    #header-pane {
-        height: calc(1.78 * var(--header-height));
+
+    /* 7. Position EVEN items BELOW the line */
+    .timeline ul li:nth-child(even) div.timeline-element {
+        top: 35px; /* Distance below the line */
+        bottom: auto;
+        transform: translate3d(-50%, 100px, 0) !important;
     }
-    #timeline-pane {
-        height: calc(91.1vh - 1.78 * var(--header-height));
-        overflow-y: auto;
-        overflow-x: hidden;
+
+    /* 8. Slide-in animations for horizontal mode */
+    /* Animation: When in view, center horizontally */
+    .timeline ul li.in-view div.timeline-element {
+        transform: translate3d(-50%, 0, 0) !important;
+        visibility: visible;
+        opacity: 1;
     }
-    #tools-pane {
-        height: 8.9vh;
+
+    /* 9. Reset the triangle pointers to point Up or Down */
+    .timeline ul li div.timeline-element::before {
+        left: 50% !important;
+        right: auto !important;
+        transform: translateX(-50%);
+        border-style: solid;
+    }
+
+    /* Pointers for boxes ABOVE the line (pointing down) */
+    .timeline ul li:nth-child(odd) div.timeline-element::before {
+        bottom: -15px;
+        border-width: 15px 15px 0 15px;
+        border-color: var(--itemColor) transparent transparent transparent;
+    }
+
+    /* Pointers for boxes BELOW the line (pointing up) */
+    .timeline ul li:nth-child(even) div.timeline-element::before {
+        top: -15px;
+        border-width: 0 15px 15px 15px;
+        border-color: transparent transparent var(--itemColor) transparent;
     }
 }
+
   
 @media (orientation: portrait) {
 
