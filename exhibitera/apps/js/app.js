@@ -33,6 +33,14 @@ exCommon.askForDefaults()
       document.getElementById('standaloneWelcome').style.display = 'block'
       document.getElementById('hubWelcome').style.display = 'none'
       exCommon.loadDefinition(exCommon.config.definitionUUID)
+      .then((result) => {
+        if (result?.success !== true) return
+
+        const def = result.definition
+        if (def.app && def.app !== '') {
+          exCommon.gotoApp(def.app)
+        }
+      })
     }
   })
 
