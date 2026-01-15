@@ -86,7 +86,7 @@ function loadDefinition (def) {
   defaultLang = def.language_order[0]
 
   // Set up the attractor
-  inactivityTimeout = def.inactivity_timeout || 30
+  inactivityTimeout = parseInt(def?.inactivity_timeout ?? 30)
   if ('attractor' in def && def.attractor.trim() !== '') {
     const fileType = exFiles.guessMimetype(def.attractor)
     if (['image', 'video'].includes(fileType)) {
@@ -99,6 +99,7 @@ function loadDefinition (def) {
   localize(defaultLang)
   // Send a thumbnail to the helper
   setTimeout(() => exCommon.saveScreenshotAsThumbnail(def.uuid + '.png'), 100)
+  resetInactivityTimer()
 }
 
 function adjustFontSize (increment) {
@@ -137,10 +138,10 @@ function localize (lang) {
 
   header.innerHTML = headerText
   if (headerText !== '') {
-    root.style.setProperty('--header-height', '7.5vh')
+    root.style.setProperty('--header-height', '7.5vmax')
     textFit(header)
   } else {
-    root.style.setProperty('--header-height', '0vh')
+    root.style.setProperty('--header-height', '0vmax')
   }
 }
 
@@ -153,18 +154,18 @@ function createTimelineEntry (itemUUID, langCode) {
   const li = document.createElement('li')
 
   const container = document.createElement('div')
-  container.classList = 'timeline-element'
+  container.classList = 'timeline-element row m-0'
   li.appendChild(container)
 
   // Text
-  const flex1 = document.createElement('div')
-  flex1.style.flexBasis = '0'
-  flex1.style.flexGrow = '1'
-  container.appendChild(flex1)
+  const textCol = document.createElement('div')
+  textCol.classList = 'col'
+  textCol.style.padding = '1vmax'
+  container.appendChild(textCol)
 
   const timeEl = document.createElement('time')
   timeEl.innerHTML = exMarkdown.formatText(localization?.time ?? '', { string: true, removeParagraph: true })
-  flex1.appendChild(timeEl)
+  textCol.appendChild(timeEl)
 
   const title = document.createElement('div')
   if (parseInt(item.Level) < 1) {
@@ -176,28 +177,28 @@ function createTimelineEntry (itemUUID, langCode) {
   }
   title.classList.add('timeline-item-header')
   title.innerHTML = exMarkdown.formatText(localization?.title ?? '', { string: true, removeParagraph: true })
-  flex1.appendChild(title)
+  textCol.appendChild(title)
 
   const bodyEl = document.createElement('p')
   bodyEl.classList = 'timeline-body'
   bodyEl.innerHTML = exMarkdown.formatText(localization?.description ?? '', { string: true, removeParagraph: true })
-  flex1.appendChild(bodyEl)
+  textCol.appendChild(bodyEl)
 
   // Media
   if (item.filename != null && item.filename.trim() !== '') {
     // Make the timeline element wider to accomdate the media
     container.classList.add('with-media')
 
-    const flex2 = document.createElement('div')
-    flex2.style.flexBasis = '0'
-    flex2.style.flexGrow = '1'
-    flex2.style.alignSelf = 'center'
-    container.appendChild(flex2)
+    const mediaCol = document.createElement('div')
+    mediaCol.classList = 'col px-0 media-col'
+    container.appendChild(mediaCol)
 
     const mimetype = exFiles.guessMimetype(item.filename)
     if (mimetype === 'image') {
       const image = document.createElement('img')
       image.style.width = '100%'
+      image.style.height = '100%'
+      image.style.objectFit = 'cover'
       // Calculate size of image
       const width = window.innerWidth
       const height = window.innerHeight
@@ -208,11 +209,12 @@ function createTimelineEntry (itemUUID, langCode) {
         thumbRes = Math.round(width * 0.5)
       }
       image.src = exCommon.config.helperAddress + exConfig.api + '/files/' + item.filename + '/thumbnail/' + String(thumbRes)
-      flex2.appendChild(image)
+      mediaCol.appendChild(image)
     } else if (mimetype === 'video') {
       const video = document.createElement('video')
       video.style.width = '100%'
-      video.style.objectFit = 'contain'
+      video.style.height = '100%'
+      video.style.objectFit = 'cover'
       video.src = '/content/' + item.filename
       video.className = 'card-img-top'
       video.muted = true
@@ -221,7 +223,7 @@ function createTimelineEntry (itemUUID, langCode) {
       video.playsInline = true
       video.setAttribute('webkit-playsinline', true)
       video.setAttribute('disablePictureInPicture', true)
-      flex2.appendChild(video)
+      mediaCol.appendChild(video)
     }
   }
 

@@ -675,6 +675,9 @@ function rebuildLanguageElements (langOrder) {
 
   const contentNoLanguagesAlert = document.getElementById('contentNoLanguagesAlert')
   const contentInterface = document.getElementById('contentInterface')
+  const headerPaneNav = document.getElementById('headerPaneNav')
+  const headerPaneContent = document.getElementById('headerPaneContent')
+
   // Show/hide the item interface
   if (langOrder.length === 0) {
     contentNoLanguagesAlert.style.display = 'block'
@@ -682,6 +685,67 @@ function rebuildLanguageElements (langOrder) {
   } else {
     contentNoLanguagesAlert.style.display = 'none'
     contentInterface.style.display = 'block'
+  }
+
+  // Create header edit interface
+  headerPaneNav.innerText = ''
+  headerPaneContent.innerText = ''
+
+  let first = true
+  for (const code of exSetup.config.workingDefinition.language_order) {
+    // Create the tab button
+    const tabButton = document.createElement('button')
+    tabButton.classList = 'nav-link header-tab'
+    tabButton.setAttribute('id', 'headerTab_' + code)
+    tabButton.setAttribute('data-bs-toggle', 'tab')
+    tabButton.setAttribute('data-bs-target', '#headerContent_' + code)
+    tabButton.setAttribute('type', 'button')
+    tabButton.setAttribute('role', 'tab')
+    tabButton.innerHTML = exLang.getLanguageDisplayName(code, true)
+    headerPaneNav.appendChild(tabButton)
+
+    // Create corresponding pane
+    const tabPane = document.createElement('div')
+    tabPane.classList = 'tab-pane fade'
+    tabPane.setAttribute('id', 'headerContent_' + code)
+    tabPane.setAttribute('role', 'tabpanel')
+    tabPane.setAttribute('aria-labelledby', '#headerTab_' + code)
+    headerPaneContent.appendChild(tabPane)
+
+    const row = document.createElement('div')
+    row.classList = 'row gy-2 mt-2 mb-3'
+    tabPane.appendChild(row)
+
+    const headerCol = document.createElement('div')
+    headerCol.classList = 'col-6'
+    row.appendChild(headerCol)
+
+    const headerInputLabel = document.createElement('label')
+    headerInputLabel.classList = 'form-label'
+    headerInputLabel.innerHTML = 'Header'
+    headerCol.appendChild(headerInputLabel)
+
+    const headerCommandBar = document.createElement('div')
+    headerCol.appendChild(headerCommandBar)
+
+    const headerInput = document.createElement('div')
+    headerCol.appendChild(headerInput)
+
+    const titleEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+      content: exSetup.config.workingDefinition.languages?.[code]?.header_text ?? '',
+      editorDiv: headerInput,
+      commandDiv: headerCommandBar,
+      commands: ['basic'],
+      callback: (content) => {
+        exSetup.updateWorkingDefinition(['languages', code, 'header_text'], content)
+        exSetup.previewDefinition(true)
+      }
+    })
+
+    if (first) {
+      tabButton.click()
+      first = false
+    }
   }
 
   const currentItemUUID = document.getElementById('editPane').dataset.uuid
