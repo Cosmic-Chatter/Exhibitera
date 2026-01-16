@@ -187,7 +187,7 @@ function createTimelineEntry (itemUUID, langCode) {
   if (item.filename != null && item.filename.trim() !== '') {
     // Make the timeline element wider to accomdate the media
     container.classList.add('with-media')
-
+    console.log(item)
     const mediaCol = document.createElement('div')
     mediaCol.classList = 'col px-0 media-col'
     container.appendChild(mediaCol)
@@ -197,7 +197,7 @@ function createTimelineEntry (itemUUID, langCode) {
       const image = document.createElement('img')
       image.style.width = '100%'
       image.style.height = '100%'
-      image.style.objectFit = 'cover'
+      image.style.objectFit = item?.fill_mode ?? 'cover'
       // Calculate size of image
       const width = window.innerWidth
       const height = window.innerHeight
@@ -213,7 +213,7 @@ function createTimelineEntry (itemUUID, langCode) {
       const video = document.createElement('video')
       video.style.width = '100%'
       video.style.height = '100%'
-      video.style.objectFit = 'cover'
+      video.style.objectFit = item?.fill_mode ?? 'cover'
       video.src = '/content/' + item.filename
       video.className = 'card-img-top'
       video.muted = true

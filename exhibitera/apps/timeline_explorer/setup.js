@@ -504,6 +504,7 @@ function editItem (itemUUID) {
   const imagePreview = document.getElementById('editItemPreviewImage')
   const videoPreview = document.getElementById('editItemPreviewVideo')
   // const thumbImageTPreview = document.getElementById('editItemThumbPreviewImage')
+  document.getElementById('fillModeSelect').value = itemDef?.fill_mode ?? 'cover'
 
   imagePreview.style.display = 'none'
   videoPreview.style.display = 'none'
@@ -1060,6 +1061,29 @@ for (const id of ['editItemFileSelect', 'editItemPreviewImage', 'editItemPreview
       })
   })
 }
+
+document.getElementById('editItemFileDelete').addEventListener('click', () => {
+  // Handle deleting the media file from the current item.
+
+  const uuid = document.getElementById('editPane').dataset.uuid
+  if (!uuid || uuid === '') return
+
+  exSetup.updateWorkingDefinition(['content', uuid, 'filename'], '')
+  document.getElementById('editItemFileSelect').innerText = 'Select File'
+  document.getElementById('editItemPreviewImage').style.display = 'none'
+  document.getElementById('editItemPreviewVideo').style.display = 'none'
+  exSetup.previewDefinition(true)
+})
+
+document.getElementById('fillModeSelect').addEventListener('change', (ev) => {
+  // Handle deleting the media file from the current item.
+
+  const uuid = document.getElementById('editPane').dataset.uuid
+  if (!uuid || uuid === '') return
+
+  exSetup.updateWorkingDefinition(['content', uuid, 'fill_mode'], ev.target.value)
+  exSetup.previewDefinition(true)
+})
 
 // Bulk import
 document.getElementById('showBulkImportButton').addEventListener('click', () => {
