@@ -65,6 +65,7 @@ _This brand-new app extends Voting Kiosk to multiple survey questions, with new 
 
 ### Timeline Explorer
 - Timeline items can now include videos in addition to images
+- Show media edge-to-edge for a more polished look
 - Add items individually or use a spreadsheet for bulk import 
 - Reorder your items
 - Copy Timeline Explorer definitions to other PCs

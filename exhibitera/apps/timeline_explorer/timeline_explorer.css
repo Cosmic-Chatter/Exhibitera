@@ -30,6 +30,7 @@
 
   /* Misc */
   --header-height: 0vh; /* Set to 7.5vh in javascript when a header is given */
+  --item-border-radius: 1vh;
 }
 
 /* Font definitions */
@@ -61,7 +62,6 @@ body {
   color: var(--textColor);
   overflow-x: hidden;
   overflow-y: hidden;
-  /* padding-bottom: 50px; */
   font-family: var(--Body-font);
 }
 
@@ -108,81 +108,47 @@ __________________________________________________*/
 /* TIMELINE
 –––––––––––––––––––––––––––––––––––––––––––––––––– */
 
-.timeline ul {
-  background: transparent;
-  padding: 50px 0;
-}
-
 .timeline ul li {
   list-style-type: none;
   position: relative;
   margin: 0 auto;
-  padding-top: 50px;
   background: var(--lineColor);
 }
 
 .timeline ul li::after {
   content: "";
   position: absolute;
-  left: 50%;
-  bottom: 0;
-  transform: translateX(-50%);
-  width: 30px;
-  height: 30px;
+  width: 1.6vmax;
+  height: 1.6vmax;
   border-radius: 50%;
   background: inherit;
   z-index: 1;
-} 
+  transition: background 0.5s ease-in-out;
+}
+
+.timeline-element {
+  border-radius: var(--item-border-radius);
+}
 
 .timeline ul li div.timeline-element {
-  position: relative;
   bottom: 0;
-  padding: 15px;
+  visibility: hidden;
+  opacity: 0;
+  transition: all 0.5s ease-in-out;
   background: var(--itemColor);
 }
 
 .timeline ul li div.timeline-element::before {
   content: "";
   position: absolute;
-  bottom: 7px;
   width: 0;
   height: 0;
   border-style: solid;
 }
 
-.timeline ul li:nth-child(odd) div.timeline-element::before {
-  border-width: 8px 16px 8px 0;
-  border-color: transparent var(--itemColor) transparent transparent;
-}
-:dir(ltr) .timeline ul li:nth-child(odd) div.timeline-element::before {
-  left: -15px;
-}
-
-:dir(rtl) .timeline ul li:nth-child(odd) div.timeline-element::before {
-  right: -15px;
-  transform: rotate(180deg);
-}
-
-.timeline ul li:nth-child(even) div.timeline-element {
-  left: -439px;
-}
-:dir(rtl) .timeline ul li:nth-child(even) div.timeline-element {
-  right: -439px;
-}
-.timeline ul li:nth-child(even) div.timeline-element::before {
-  border-width: 8px 0 8px 16px;
-  border-color: transparent transparent transparent var(--itemColor);
-}
-:dir(ltr) .timeline ul li:nth-child(even) div.timeline-element::before {
-  right: -15px;
-}
-:dir(rtl) .timeline ul li:nth-child(even) div.timeline-element::before {
-  left: -15px;
-  transform: rotate(180deg);
-}
-
 .timeline-body {
   font-size: calc((calc(var(--body-font-adjust) + 1) * 0.85vmax) * var(--fontModifier));
+  margin-bottom: 0px;
 }
 
 time {
@@ -190,6 +156,10 @@ time {
   font-weight: bold;
   font-family: var(--Time-font);
   font-size: calc((1vmax + var(--time-font-adjust)*1vmax) * var(--fontModifier));
+}
+
+.text-col {
+  padding: 1vmax;
 }
 
 .timeline-item-header {
@@ -203,26 +173,8 @@ time {
 /* EFFECTS
 –––––––––––––––––––––––––––––––––––––––––––––––––– */
 
-.timeline ul li::after {
-  transition: background 0.5s ease-in-out;
-}
-
 .timeline ul li.in-view::after {
   background: var(--itemColor);
-}
-
-.timeline ul li div.timeline-element {
-  visibility: hidden;
-  opacity: 0;
-  transition: all 0.5s ease-in-out;
-}
-
-.timeline ul li:nth-child(odd) div.timeline-element {
-  transform: translate3d(200px, 0, 0);
-}
-
-.timeline ul li:nth-child(even) div.timeline-element {
-  transform: translate3d(-200px, 0, 0);
 }
 
 .timeline ul li.in-view div.timeline-element {
@@ -248,14 +200,22 @@ time {
   font-weight: bold;
 }
 .size3 {
-  font-size: calc((calc(var(--title-font-adjust) + 1) * 1.6vmax) * var(--fontModifier)); bold;
+  font-size: calc((calc(var(--title-font-adjust) + 1) * 1.6vmax) * var(--fontModifier)); font-weight: bold;
 }
 .size4 {
   font-size: calc((calc(var(--title-font-adjust) + 1) * 1.3vmax) * var(--fontModifier));
   font-weight: bold;
 }
+#header-pane {
+  height: var(--header-height);
+}
+#timeline-pane {
+  height: calc(100vh - var(--header-height) - 5vmax);
+
+}
 #tools-pane {
     background-color: var(--footerColor);
+    height: 5vmax;
 }
 
 
@@ -263,109 +223,294 @@ time {
 –––––––––––––––––––––––––––––––––––––––––––––––––– */
 
 @media (orientation: landscape) {
-    time {
-      margin-bottom: 0.5vh;
+    /* 1. Center the entire timeline track vertically */
+    #timeline-pane {
+        overflow-x: auto !important; /* Enable side-scrolling */
+        overflow-y: hidden !important; 
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
     }
+
+    /* 2. Ensure the list expands horizontally and stays centered */
+    .timeline ul {
+        display: flex;
+        flex-direction: row;
+        width: max-content;
+        padding: 0 20vw; 
+        margin: 0;
+        height: 100%;
+        align-items: center; /* Center the 'li' line segments */
+    }
+
+    /* 3. The LI is now a horizontal segment of the line */
     .timeline ul li { 
-      width: 0.5vw;
+        flex: 0 0 23.4375vmax; 
+        height: 1vh; /* The thickness of the timeline line */
+        padding: 0;
     }
-    .timeline ul li:nth-child(odd) div.timeline-element {
-      flex-direction: row;
-      left: 2.5vw;
+
+    /* 4. Center the dot on the line */
+    .timeline ul li::after {
+        top: 50%;
+        left: 50%;
+        bottom: auto;
+        transform: translate(-50%, -50%);
     }
-    :dir(rtl) .timeline ul li:nth-child(odd) div.timeline-element {
-      flex-direction: row;
-      right: 2.5vw;
-    }
-    .timeline ul li:nth-child(even) div.timeline-element {
-      flex-direction: row-reverse;
-      left: max(calc(-1 * (20vw * var(--fontModifier) + 2.5vw - 0.5vw) ), -47vw);
-      /* - (20 + 2.5 - 0.5) */
-    }
-    :dir(rtl) .timeline ul li:nth-child(even) div.timeline-element {
-      right: max(calc(-1 * (20vw * var(--fontModifier) + 2.5vw - 0.5vw) ), -47vw);
-      /* - (20 + 2.5 - 0.5) */
-    }
-    .timeline ul li:nth-child(even) div.timeline-element.with-media {
-      left: max(calc(-1 * (30vw * var(--fontModifier) + 2.5vw - 0.5vw) ), -47vw);
-      /* - (30 + 2.5 - 0.5) */
-    }
-    :dir(rtl) .timeline ul li:nth-child(even) div.timeline-element.with-media {
-      right: max(calc(-1 * (30vw * var(--fontModifier) + 2.5vw - 0.5vw) ), -47vw);
-      /* - (30 + 2.5 - 0.5) */
-    }
+
+    /* 5. General item box styling */
     .timeline ul li div.timeline-element {
-        width: min(calc(20vw * var(--fontModifier)), 45vw);
+        position: absolute;
+        left: 50%!important; /* Position relative to the center of the LI */
+        width: 26vmax;
+        max-height: 35vh;
+        display: flex;
+        flex-direction: row;
+        transform: translateX(-50%); /* Initial animation state */
     }
     .timeline ul li div.timeline-element.with-media {
-        width: min(calc(30vw * var(--fontModifier)), 45vw);
-    }
-    .timeline-element {
-        display: flex;
-        gap: 1vh;
-    }
-    #header-pane {
-        height: calc(1.78 * var(--header-height));
-    }
-    #timeline-pane {
-        height: calc(91.1vh - 1.78 * var(--header-height));
-        overflow-y: auto;
-        overflow-x: hidden;
-    }
-    #tools-pane {
-        height: 8.9vh;
-    }
-}
-  
-@media (orientation: portrait) {
-
-    time {
-      margin-bottom: 0.3vh;
+      width: 32.3vmax;
     }
     
-    .timeline ul li { 
-      width: 1vw;
-    }
+    /* 6. Position ODD items ABOVE the line */
     .timeline ul li:nth-child(odd) div.timeline-element {
-      left: 4.5vw;
+        bottom: 1.9vmax; /* Distance above the line */
+        top: auto;
+        transform: translate3d(-50%, -5.2vmax, 0) !important;
     }
-    :dir(rtl) .timeline ul li:nth-child(odd) div.timeline-element {
-      right: 4.5vw;
-    }  
+
+
+    /* 7. Position EVEN items BELOW the line */
     .timeline ul li:nth-child(even) div.timeline-element {
-      left: -43.5vw;
-      /* - (40 + 4.5 - 1) */
+        top: 1.9vmax; /* Distance below the line */
+        bottom: auto;
+        transform: translate3d(-50%, 5.2vmax, 0) !important;
     }
-    :dir(rtl) .timeline ul li:nth-child(even) div.timeline-element {
-      right: -43.5vw;
-      /* - (40 + 4.5 - 1) */
+
+    /* 8. Slide-in animations for horizontal mode */
+    /* Animation: When in view, center horizontally */
+    .timeline ul li.in-view div.timeline-element {
+        transform: translate3d(-50%, 0, 0) !important;
+        visibility: visible;
+        opacity: 1;
     }
-    .timeline ul li div.timeline-element {
-        width: 40vw;
+
+    /* 9. Reset the triangle pointers to point Up or Down */
+    .timeline ul li div.timeline-element::before {
+        left: 50% !important;
+        right: auto !important;
+        transform: translateX(-50%);
+        border-style: solid;
     }
-    .timeline-element {
-        display: flex;
-        flex-direction: column;
-        gap: 1vw;
+
+    /* Pointers for boxes ABOVE the line (pointing down) */
+    .timeline ul li:nth-child(odd) div.timeline-element::before {
+        bottom: -.78vmax;
+        border-width: .78vmax .78vmax 0 .78vmax;
+        border-color: var(--itemColor) transparent transparent transparent;
     }
+
+    /* Pointers for boxes BELOW the line (pointing up) */
+    .timeline ul li:nth-child(even) div.timeline-element::before {
+        top: -.78vmax;
+        border-width: 0 .78vmax .78vmax .78vmax;
+        border-color: transparent transparent var(--itemColor) transparent;
+    }
+
+    .timeline-element.with-media > * {
+      flex: 0 0 auto;
+      width: 50%;
+    }
+
+    .timeline-element > .text-col > .timeline-body {
+      max-height: 22vh;
+      overflow-y: auto;
+    }
+    
+    .media-col {
+      border-top-right-radius: var(--item-border-radius);
+      border-bottom-right-radius: var(--item-border-radius);
+      max-height: 18vmax;
+      overflow: hidden;
+    }
+    .media-contain { /* Added in JS when object-fit == contain */
+      padding-right: 1vmax;
+      padding-top: 1vmax;
+      padding-bottom: 1vmax;
+    }
+}
+
+  
+@media (orientation: portrait) {
+    /* 1. Standardize Pane Heights to fill exactly 100vh */
     #header-pane {
         height: var(--header-height);
     }
     #timeline-pane {
-        height: calc(95vh - var(--header-height));
+        /* Total height (100) - Header - Toolbar (6) */
+        height: calc(100vh - var(--header-height) - 6vh);
         overflow-y: auto;
         overflow-x: hidden;
     }
     #tools-pane {
-        height: 5vh;
+        height: 6vh;
+    }
+
+    /* 2. Timeline Track Logic */
+    .timeline ul {
+        position: relative; /* Needed for the absolute line positioning */
+        padding: 10vh 0 20vh 0; 
+    }
+
+    /* Create one continuous line that hangs past the bottom */
+    .timeline ul::before {
+        content: "";
+        position: absolute;
+        top: 10vh;    /* Starts at the center of the first dot (matches top padding) */
+        bottom: 5vh; /* END POINT: Decrease this value to make the line longer */
+        left: 50%;
+        width: 1vw;
+        background: var(--lineColor);
+        transform: translateX(-50%);
+        z-index: 1;
+    }
+
+    .timeline ul li {
+        position: relative;
+        list-style-type: none;
+        width: 1vw;
+        margin: 0 auto;
+        background: none; /* REMOVE individual backgrounds so the line is continuous */
+        height: 18vmax; 
+    }
+
+    /* 3. The Dot (Update background to fix the 'inherit' issue) */
+    .timeline ul li::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        bottom: 0;
+        transform: translate(-50%, 50%);
+        width: 2.1vmax;
+        height: 2.1vmax;
+        border-radius: 50%;
+        background: var(--lineColor); /* Changed from 'inherit' to use the variable directly */
+        z-index: 10;
+        transition: background 0.5s ease-in-out;
+    }
+
+    /* 4. Timeline Card Logic */
+    .timeline ul li div.timeline-element {
+        position: absolute;
+        bottom: 0; /* Anchored to the dot */
+        width: 40vw;
+        visibility: hidden;
+        opacity: 0;
+        transition: all 0.5s ease-in-out;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Entrance Animations and Horizontal Offsets */
+    :dir(ltr) .timeline ul li:nth-child(odd) div.timeline-element {
+        left: 2.09vmax;
+        transform: translate3d(10.4vmax, 50%, 0); 
+    }
+    :dir(ltr) .timeline ul li:nth-child(even) div.timeline-element {
+        left: calc(-40vw - 1.51vmax);
+        transform: translate3d(-10.4vmax, 50%, 0);
+    }
+
+    /* Final 'In-View' state: perfectly centered vertically on the dot */
+    .timeline ul li.in-view div.timeline-element {
+        visibility: visible;
+        opacity: 1;
+        transform: translate3d(0, 50%, 0) !important;
+    }
+
+    /* 5. Triangle (Matches Landscape Size) */
+    .timeline ul li div.timeline-element::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        margin-top: -.78vmax;
+        width: 0;
+        height: 0;
+        border-style: solid;
+        bottom: auto;
+    }
+
+    :dir(ltr) .timeline ul li:nth-child(odd) div.timeline-element::before {
+        left: -.78vmax;
+        border-width: .78vmax .78vmax .78vmax 0;
+        border-color: transparent var(--itemColor) transparent transparent;
+    }
+    :dir(ltr) .timeline ul li:nth-child(even) div.timeline-element::before {
+        right: -.78vmax;
+        border-width: .78vmax 0 .78vmax .78vmax;
+        border-color: transparent transparent transparent var(--itemColor);
+    }
+
+    /* 6. RTL Logic */
+    :dir(rtl) .timeline ul li:nth-child(odd) div.timeline-element {
+        right: 4.5vw;
+        left: auto;
+        transform: translate3d(-10.4vmax, 50%, 0);
+    }
+    :dir(rtl) .timeline ul li:nth-child(even) div.timeline-element {
+        right: -44.5vw;
+        left: auto;
+        transform: translate3d(10.4vmax, 50%, 0);
+    }
+    :dir(rtl) .timeline ul li:nth-child(odd) div.timeline-element::before {
+        right: -.78vmax;
+        left: auto;
+        border-width: .78vmax 0 .78vmax .78vmax;
+        border-color: transparent transparent transparent var(--itemColor);
+    }
+    :dir(rtl) .timeline ul li:nth-child(even) div.timeline-element::before {
+        left: -.78vmax;
+        right: auto;
+        border-width: .78vmax .78vmax .78vmax 0;
+        border-color: transparent var(--itemColor) transparent transparent;
+    }
+
+    .media-col {
+      border-bottom-left-radius: var(--item-border-radius);
+      border-bottom-right-radius: var(--item-border-radius);
+      overflow: hidden;
+      max-height: 18vmax;
+    }
+    .media-col img {
+      width: 100%;
+      height: auto;
+      max-height: 18vmax;
+    }
+    .media-col video {
+      width: 100%;
+      height: auto;
+      max-height: 18vmax;
+    }
+    .media-contain { /* Added in JS when object-fit == contain */
+      padding-bottom: 1vmax;
+      padding-left: 1vmax;
+      padding-right: 1vmax;
+    }
+    .timeline-element > .text-col > .timeline-body {
+      max-height: 23vmax;
+      overflow-y: auto;
+    }
+    .timeline-element.with-media > .text-col > .timeline-body {
+      max-height: 8vmax;
+      overflow-y: auto;
     }
 }
 
 /* EXTRA/CLIP PATH STYLES
 –––––––––––––––––––––––––––––––––––––––––––––––––– */
 .timeline-clippy ul li::after {
-  width: 40px;
-  height: 40px;
+  width: 2.1vmax;
+  height: 2.1vmax;
   border-radius: 0;
 }
 
@@ -374,8 +519,9 @@ time {
 }
 
 .timeline-rhombus ul li div.timeline-element::before {
-  bottom: 12px;
+  bottom: .625vmax;
 }
+
 
 .timeline-star ul li::after {
   clip-path: polygon(
