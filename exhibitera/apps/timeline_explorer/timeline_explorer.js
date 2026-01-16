@@ -159,8 +159,7 @@ function createTimelineEntry (itemUUID, langCode) {
 
   // Text
   const textCol = document.createElement('div')
-  textCol.classList = 'col'
-  textCol.style.padding = '1vmax'
+  textCol.classList = 'col text-col'
   container.appendChild(textCol)
 
   const timeEl = document.createElement('time')
