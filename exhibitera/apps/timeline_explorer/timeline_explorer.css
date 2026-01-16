@@ -330,7 +330,13 @@ time {
     .media-col {
       border-top-right-radius: var(--item-border-radius);
       border-bottom-right-radius: var(--item-border-radius);
+      max-height: 18vmax;
       overflow: hidden;
+    }
+    .media-contain { /* Added in JS when object-fit == contain */
+      padding-right: 1vmax;
+      padding-top: 1vmax;
+      padding-bottom: 1vmax;
     }
 }
 
@@ -474,6 +480,21 @@ time {
       border-bottom-right-radius: var(--item-border-radius);
       overflow: hidden;
       max-height: 18vmax;
+    }
+    .media-col img {
+      width: 100%;
+      height: auto;
+      max-height: 18vmax;
+    }
+    .media-col video {
+      width: 100%;
+      height: auto;
+      max-height: 18vmax;
+    }
+    .media-contain { /* Added in JS when object-fit == contain */
+      padding-bottom: 1vmax;
+      padding-left: 1vmax;
+      padding-right: 1vmax;
     }
     .timeline-element > .text-col > .timeline-body {
       max-height: 23vmax;
