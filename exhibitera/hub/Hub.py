@@ -41,6 +41,8 @@ import exhibitera.hub.tools as hub_tools
 import exhibitera.hub.features.users as hub_users
 
 # API modules
+from exhibitera.hub.api.core import core as core_api
+
 from exhibitera.hub.api.v6.analytics import analytics as analytics_v6
 from exhibitera.hub.api.v6.components import components as components_v6
 from exhibitera.hub.api.v6.data import data as data_v6
@@ -53,6 +55,7 @@ from exhibitera.hub.api.v6.schedule import schedule as schedule_v6
 from exhibitera.hub.api.v6.system import system as system_v6
 from exhibitera.hub.api.v6.tracker import tracker as tracker_v6
 from exhibitera.hub.api.v6.users import users as users_v6
+
 
 # Set up the automatic documentation
 def exhibitera_schema():
@@ -225,6 +228,8 @@ app.add_middleware(
 app.openapi = exhibitera_schema
 
 # Link API routers
+app.include_router(core_api.router, prefix='/core')
+
 app.include_router(analytics_v6.router, prefix='/v6')
 app.include_router(components_v6.router, prefix='/v6')
 app.include_router(data_v6.router, prefix='/v6')

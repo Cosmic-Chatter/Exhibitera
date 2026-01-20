@@ -1044,7 +1044,7 @@ function configureComponentInfoModalForExhibitComponent (obj, permission) {
     }
     groupSelect.appendChild(option)
   }
-
+  console.log(obj)
   document.getElementById('componentInfoModalFullSettingsButton').setAttribute('href', obj.helperAddress + '?showSettings=true')
   document.getElementById('componentInfoModalSettingsAutoplayAudio').value = String(obj.permissions.audio)
   document.getElementById('componentInfoModalSettingsAllowRefresh').value = String(obj.permissions.refresh)
@@ -2038,7 +2038,7 @@ async function updateComponentInfoModalFromHelper (uuid, permission) {
   const obj = hubTools.getExhibitComponent(uuid)
 
   const url = obj.getHelperURL()
-  if (url == null) {
+  if (!url) {
     // We don't have enough information to contact the helper
     componentCannotConnect()
 
@@ -2223,6 +2223,12 @@ export function submitComponentSettingsChange () {
   // Collect the current settings and send them to the component's helper for saving.
 
   const obj = hubTools.getExhibitComponent(document.getElementById('componentInfoModal').dataset.uuid)
+
+  // Check that we actually have something to update
+  if (!obj.getHelperURL()) {
+    console.log('submitComponentSettingsChange: error: no helperAddress to contact')
+    return
+  }
 
   // Update component settings, if allowed
   const settingsAvailable = document.getElementById('componentInfoModalSettingsPermissionsPane').style.display === 'flex'

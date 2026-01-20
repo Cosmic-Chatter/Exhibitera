@@ -688,23 +688,12 @@ def add_exhibit_component(this_id: str,
     Set from_disk=True when loading a previously-created component to skip some steps.
     """
 
-    # Check if component has a legacy maintenance status.
-    old_maintenance_log = ex_maintenance.convert_legacy_maintenance_log(this_id)
-    if old_maintenance_log is not None:
-        maintenance_log = old_maintenance_log
-        maintenance_path = ex_files.get_path(["maintenance-logs", this_id + '.txt'], user_file=True)
-        maintenance_path_new = ex_files.get_path(["maintenance-logs", this_id + '.txt.old'], user_file=True)
-        try:
-            os.rename(maintenance_path, maintenance_path_new)
-        except FileNotFoundError:
-            pass
-
     component = ExhibitComponent(this_id, groups, category,
                                  description=description,
                                  last_contact_datetime=last_contact_datetime,
                                  maintenance_log=maintenance_log,
                                  uuid_str=uuid_str)
-    if not from_disk or old_maintenance_log is not None:
+    if not from_disk:
         component.save()
 
     hub_config.componentList.append(component)
@@ -821,9 +810,12 @@ def update_exhibit_component_status(data: dict[str, Any], ip: str):
     if ip == "::1":
         ip = "localhost"
 
-    component = get_exhibit_component(data["uuid"])
+    component = get_exhibit_component(data.get("uuid", 'FAIL'))
     if component is None:  # This is a new uuid, so create the component
-        component = add_exhibit_component(data["id"], ["Default"], uuid_str=data.get("uuid", ""))
+        this_uuid = data.get("uuid", str(uuid.uuid4()))
+        this_id = data.get("id", "New Component " + this_uuid)
+
+        component = add_exhibit_component(this_id, ["Default"], uuid_str=this_uuid)
 
     component.ip_address = ip
     if "helperAddress" in data:

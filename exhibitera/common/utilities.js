@@ -12,6 +12,7 @@ const exhibiteraAppIdDisplayNames = {
   media_browser: 'Media Browser',
   media_player: 'Media Player',
   media_player_kiosk: 'Media Player Kiosk',
+  other: 'Custom App',
   projector: 'Projector',
   sos_kiosk: 'SOS Kiosk',
   sos_screen_player: 'SOS Screen Player',
