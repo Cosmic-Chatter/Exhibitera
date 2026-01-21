@@ -13,7 +13,7 @@ export const config = {
   },
   autoplayAudio: false,
   connectionChecker: null, // A function to check the connection with Hub and act on it
-  exhibiteraAppID: '',
+  exhibiteraAppID: 'none',
   currentDefinition: '',
   currentExhibit: 'Default',
   currentInteraction: false,

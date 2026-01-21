@@ -37,9 +37,13 @@ async def handle_ping(data: dict[str, Any], request: Request):
         return response
 
     # Translate API fields
+    data["exhibiteraAppID"] = "external"
     if data.get("helper_address", "") != "":
         data["helperAddress"] = data["helper_address"]
         del data["helper_address"]
+    if data.get("current_interaction", "") != "":
+        data["currentInteraction"] = data["current_interaction"]
+        del data["current_interaction"]
 
     hub_components.update_exhibit_component_status(data, request.client.host)
 
@@ -55,3 +59,4 @@ async def handle_ping(data: dict[str, Any], request: Request):
         component.config["commands"] = []
 
     return dict_to_send
+

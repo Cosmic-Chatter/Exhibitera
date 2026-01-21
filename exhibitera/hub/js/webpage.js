@@ -17,6 +17,7 @@ async function editExhibitCreateComponentHTML (component) {
   // Create the HTML representation of a component exhibit entry.
 
   const contentList = document.getElementById('editExhibitExhibitContentList')
+  const componentObj = exTools.getExhibitComponent(component.uuid)
 
   const col = document.createElement('div')
   col.classList = 'col manageExhibit-component-col'
@@ -33,7 +34,7 @@ async function editExhibitCreateComponentHTML (component) {
 
   const nameDiv = document.createElement('div')
   nameDiv.classList = 'fs-5'
-  nameDiv.innerHTML = component.id
+  nameDiv.innerHTML = componentObj.id
   header.appendChild(nameDiv)
 
   const deleteButton = document.createElement('button')
@@ -51,8 +52,6 @@ async function editExhibitCreateComponentHTML (component) {
   const bodyRow = document.createElement('div')
   bodyRow.classList = 'row gy-2'
   body.appendChild(bodyRow)
-
-  const componentObj = exTools.getExhibitComponent(component.uuid)
 
   const definitionPreviewCol = document.createElement('div')
   definitionPreviewCol.classList = 'col-12 exhibit-thumbnail'
@@ -116,9 +115,8 @@ async function editExhibitCreateComponentHTML (component) {
   }
 
   try {
-    await exUtilities.makeRequest({
+    await componentObj.makeRequest({
       method: 'GET',
-      url: componentObj.getHelperURL(),
       endpoint: '/system/checkConnection'
     })
   } catch {
@@ -126,9 +124,8 @@ async function editExhibitCreateComponentHTML (component) {
     return
   }
 
-  const response = await exUtilities.makeRequest({
+  const response = await componentObj.makeRequest({
     method: 'GET',
-    url: componentObj.getHelperURL(),
     endpoint: '/definitions'
   })
 
@@ -439,16 +436,17 @@ async function editExhibitActionConfigureValueSelector (action = null, target = 
       console.log('editExhibitActionConfigureValueSelector: component not available: ', target.uuid)
       return
     }
-    if (component.helperAddress == null || component.helperAddress === '') {
-      console.log('editExhibitActionConfigureValueSelector: invalid helper address')
-      return
-    }
 
-    const response = await exUtilities.makeRequest({
-      method: 'GET',
-      url: component.helperAddress,
-      endpoint: '/DMX/getScenes'
-    })
+    let response
+    try {
+      response = await component.makeRequest({
+        method: 'GET',
+        endpoint: '/DMX/getScenes'
+      })
+    } catch {
+      console.log('editExhibitActionConfigureValueSelector: invalid helper address')
+    //   return
+    }
 
     if (response?.success ?? false) {
       for (const group of response.groups) {
@@ -953,7 +951,8 @@ document.getElementById('componentInfoModalDefinitionSaveButton').addEventListen
 
 document.getElementById('componentInfoModalViewScreenshot').addEventListener('click', () => {
   const component = exTools.getExhibitComponent(document.getElementById('componentInfoModal').dataset.uuid)
-  exTools.openMediaInNewTab([component.getHelperURL() + '/system/getScreenshot'], ['image'])
+  console.log(component)
+  exTools.openMediaInNewTab([component.getHelperURL() + exConfig.api + '/system/screenshot'], ['image'])
 })
 document.getElementById('componentInfoModalEditDMXButton').addEventListener('click', (event) => {
   const component = exTools.getExhibitComponent(document.getElementById('componentInfoModal').dataset.uuid)

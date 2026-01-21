@@ -278,7 +278,7 @@ class ExhibitComponent(BaseComponent):
         self.platform_details: dict = {}
 
         self.config["definition"] = ""
-        self.config["app_id"] = ""
+        self.config["app_id"] = "none"
 
         self.status_manager = ComponentStatusManager(category)
 
@@ -286,6 +286,7 @@ class ExhibitComponent(BaseComponent):
             self.update_configuration()
             self.poll_latency()
         else:
+            self.config["app_id"] = 'static_component'
             self.last_contact_datetime = None
 
     def __repr__(self):

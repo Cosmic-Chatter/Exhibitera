@@ -620,9 +620,8 @@ export async function setScheduleActionValueSelector (action = null, target = nu
   }
 
   if (action === 'set_definition') {
-    const response = await exUtilities.makeRequest({
+    const response = await component.makeRequest({
       method: 'GET',
-      url: component.helperAddress,
       endpoint: '/definitions'
     })
     if (response.success && response.success === true) {
@@ -640,9 +639,8 @@ export async function setScheduleActionValueSelector (action = null, target = nu
       }
     }
   } else if (action === 'set_dmx_scene') {
-    const response = await exUtilities.makeRequest({
+    const response = await component.makeRequest({
       method: 'GET',
-      url: component.helperAddress,
       endpoint: '/DMX/getScenes'
     })
     if (response.success && response.success === true) {

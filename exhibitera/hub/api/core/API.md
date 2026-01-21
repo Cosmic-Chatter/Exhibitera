@@ -1,6 +1,9 @@
 # Exhibitera Core API
 This file describes the current Core API.
 
+## Sending API
+These endpoints are maintained by Hub and can be accessed by your application
+
 ### /core/ping [POST]
 #### Body
 
@@ -41,3 +44,8 @@ An array of strings (usually empty) indicating actions the component should take
 
 ##### definition
 You may choose to allow administrators to select from different app states using Hub. These app states are called `definitions`. If so, the currently selected definition (a UUID4 string) will be listed here.
+
+## Receiving API
+Your application should listen at your `helper_address` for the following endpoints
+
+### /core/screenshot 

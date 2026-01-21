@@ -52,7 +52,7 @@ async def get_platform_details():
     return apps_system.get_platform_details()
 
 
-@router.get('/getScreenshot', responses={200: {"content": {"image/png": {}}}}, response_class=Response)
+@router.get('/screenshot', responses={200: {"content": {"image/png": {}}}}, response_class=Response)
 async def get_screenshot():
     """Capture a screenshot and return it as a JPEG response."""
 

@@ -1347,7 +1347,7 @@ function setItemContent (uuid, itemEl, file, type = 'file') {
     itemEl.querySelector('.material-col').style.display = 'none'
     // Hide the subtitle input
     itemEl.querySelector('.subtitle-col').style.display = 'none'
-    exSetup.updateWorkingDefinition(['content', uuid, 'subtitles'], null)
+    exSetup.updateWorkingDefinition(['content', uuid, 'subtitles'], {})
   } else if (mimetype === 'image') {
     if (type === 'file') {
       image.src = exCommon.config.helperAddress + exConfig.api + '/files/' + file + '/thumbnail'
@@ -1366,14 +1366,14 @@ function setItemContent (uuid, itemEl, file, type = 'file') {
     itemEl.querySelector('.material-col').style.display = 'none'
     // Hide the subtitle input
     itemEl.querySelector('.subtitle-col').style.display = 'none'
-    exSetup.updateWorkingDefinition(['content', uuid, 'subtitles'], null)
+    exSetup.updateWorkingDefinition(['content', uuid, 'subtitles'], {})
   } else if (mimetype === 'model') {
     image.src = exFileSelect.getDefaultModelIcon()
     image.style.display = 'block'
     video.style.display = 'none'
     // Hide the subtitle input
     itemEl.querySelector('.subtitle-col').style.display = 'none'
-    exSetup.updateWorkingDefinition(['content', uuid, 'subtitles'], null)
+    exSetup.updateWorkingDefinition(['content', uuid, 'subtitles'], {})
     // Show the duration input
     itemEl.querySelector('.duration-col').style.display = 'block'
     // Hide the fill mode input
@@ -1512,7 +1512,7 @@ document.getElementById('configureSubtitlesModalDeleteButton').addEventListener(
   const modal = document.getElementById('configureSubtitlesModal')
   const itemUUID = modal.getAttribute('data-uuid')
   document.getElementById('subttileButton_' + itemUUID).innerHTML = 'Add subtitles'
-  exSetup.updateWorkingDefinition(['content', itemUUID, 'subtitles'], null)
+  exSetup.updateWorkingDefinition(['content', itemUUID, 'subtitles'], {})
   exUtilities.hideModal(modal)
   exSetup.previewDefinition(true)
 })

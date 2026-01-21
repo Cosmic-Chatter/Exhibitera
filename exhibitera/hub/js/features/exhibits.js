@@ -413,6 +413,23 @@ class ExhibitComponent extends BaseComponent {
       }
     }
   }
+
+  makeRequest (opt) {
+    // Make a request to the helper for this component
+
+    opt.url = this.getHelperURL()
+
+    if (opt.url == null) {
+      return Promise.reject(new Error('helperAddress not found'))
+    }
+
+    // Check if we're using the Core API, which doesn't have an API version
+    if (this.exhibiteraAppID === 'external') {
+      opt.api = ''
+    }
+
+    return exUtilities.makeRequest(opt)
+  }
 }
 
 export class WakeOnLANComponent extends BaseComponent {
@@ -1044,7 +1061,7 @@ function configureComponentInfoModalForExhibitComponent (obj, permission) {
     }
     groupSelect.appendChild(option)
   }
-  console.log(obj)
+
   document.getElementById('componentInfoModalFullSettingsButton').setAttribute('href', obj.helperAddress + '?showSettings=true')
   document.getElementById('componentInfoModalSettingsAutoplayAudio').value = String(obj.permissions.audio)
   document.getElementById('componentInfoModalSettingsAllowRefresh').value = String(obj.permissions.refresh)
@@ -1742,16 +1759,14 @@ function showCopyDefinitionModal (componentUUID, definitionUUID, definitionName)
   submitButton.classList.add('btn-primary')
   submitButton.style.display = 'none'
 
-  const url = component.getHelperURL()
-  if (url == null) {
+  if (component.getHelperURL() == null) {
     // We don't have enough information to contact the helper
     console.log('Error: No helper address')
   }
 
   let content = []
-  exUtilities.makeRequest({
+  component.makeRequest({
     method: 'GET',
-    url,
     endpoint: '/definitions/' + definitionUUID + '/getContentList'
   }).then((result) => {
     console.log(result)
@@ -1849,9 +1864,8 @@ async function copyDefinitionModalCreateDestinationHTML (component, group, def, 
   label.innerHTML += `<span data-uuid="${component.uuid}" class="ms-2 badge text-bg-danger copy-fail" style="display:none;">Error</span>`
 
   // Check if the given definition already exists on the destination
-  const defRequest = await exUtilities.makeRequest({
+  const defRequest = await component.makeRequest({
     method: 'GET',
-    url: component.getHelperURL(),
     endpoint: '/definitions'
   })
 
@@ -1860,9 +1874,8 @@ async function copyDefinitionModalCreateDestinationHTML (component, group, def, 
   }
 
   // Check if any of the content already exists on the destination
-  const contentResponse = await exUtilities.makeRequest({
+  const contentResponse = await component.makeRequest({
     method: 'GET',
-    url: component.getHelperURL(),
     endpoint: '/files/availableContent'
   })
 
@@ -2037,8 +2050,7 @@ async function updateComponentInfoModalFromHelper (uuid, permission) {
 
   const obj = hubTools.getExhibitComponent(uuid)
 
-  const url = obj.getHelperURL()
-  if (!url) {
+  if (!obj.getHelperURL()) {
     // We don't have enough information to contact the helper
     componentCannotConnect()
 
@@ -2051,9 +2063,8 @@ async function updateComponentInfoModalFromHelper (uuid, permission) {
 
   let defResponse
   try {
-    defResponse = await exUtilities.makeRequest({
+    defResponse = await obj.makeRequest({
       method: 'GET',
-      url,
       endpoint: '/definitions',
       timeout: 3000
     })
@@ -2068,9 +2079,8 @@ async function updateComponentInfoModalFromHelper (uuid, permission) {
 
   let statsResponse
   try {
-    statsResponse = await exUtilities.makeRequest({
+    statsResponse = await obj.makeRequest({
       method: 'GET',
-      url,
       endpoint: '/system/stats',
       timeout: 3000
     })
@@ -2242,9 +2252,8 @@ export function submitComponentSettingsChange () {
         sleep: exUtilities.stringToBool(document.getElementById('componentInfoModalSettingsAllowRestart').value)
       }
     }
-    exUtilities.makeRequest({
+    obj.makeRequest({
       method: 'POST',
-      url: obj.getHelperURL(),
       endpoint: '/system/configuration/update',
       params: { defaults: settings }
     })
@@ -2294,9 +2303,8 @@ export function queueCommand (uuid, cmd) {
   const obj = hubTools.getExhibitComponent(uuid)
   if (['shutdown', 'restart'].includes(cmd) && obj.type === 'exhibit_component') {
     // We send these commands directly to the helper
-    exUtilities.makeRequest({
+    obj.makeRequest({
       method: 'GET',
-      url: obj.getHelperURL(),
       endpoint: '/' + cmd
     })
   } else {
@@ -2467,9 +2475,8 @@ async function createExhibitionModificationHTML (mod, exhib) {
   let modDef = {} // The definition we've modified to
   let badConnection = false
   try {
-    const modDefReq = await exUtilities.makeRequest({
+    const modDefReq = await hubTools.getExhibitComponent(mod.uuid).makeRequest({
       method: 'GET',
-      url: hubTools.getExhibitComponent(mod.uuid).getHelperURL(),
       endpoint: '/definitions/' + mod.definition + '/load'
     })
 

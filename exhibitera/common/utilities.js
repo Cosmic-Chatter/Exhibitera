@@ -6,17 +6,15 @@ import exConfig from './config.js'
 
 const exhibiteraAppIdDisplayNames = {
   dmx_control: 'DMX Control',
-  heartbeat: 'Heartbeat',
+  external: '3rd Party App', // For apps using the Core API
   image_compare: 'Image Compare',
   infostation: 'InfoStation',
   media_browser: 'Media Browser',
   media_player: 'Media Player',
-  media_player_kiosk: 'Media Player Kiosk',
-  other: 'Custom App',
+  none: 'Exhibitera Component', // For Ex Apps before a definition is selected
+  other: 'Custom App', // For apps set up with Custom App
   projector: 'Projector',
-  sos_kiosk: 'SOS Kiosk',
-  sos_screen_player: 'SOS Screen Player',
-  static_component: 'Static component',
+  static_component: 'Static Component',
   survey_kiosk: 'Survey Kiosk',
   timelapse_viewer: 'Timelapse Viewer',
   timeline_explorer: 'Timeline Explorer',

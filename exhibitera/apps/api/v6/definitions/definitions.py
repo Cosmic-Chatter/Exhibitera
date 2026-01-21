@@ -126,7 +126,7 @@ async def get_definition_content_list(this_uuid: str):
             item = definition["content"][item_uuid]
             if item["type"] == "file":
                 content.add(item["filename"])
-            if item.get("subtitles", {}).get("filename", "") != '':
+            if (item.get("subtitles") or {}).get("filename", "") != '':
                 content.add(item["subtitles"]["filename"])
             if "annotations" in item and isinstance(item["annotations"], dict):
                 for anno_uuid in item["annotations"]:
