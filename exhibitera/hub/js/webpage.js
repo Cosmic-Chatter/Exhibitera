@@ -952,7 +952,7 @@ document.getElementById('componentInfoModalDefinitionSaveButton').addEventListen
 document.getElementById('componentInfoModalViewScreenshot').addEventListener('click', () => {
   const component = exTools.getExhibitComponent(document.getElementById('componentInfoModal').dataset.uuid)
   console.log(component)
-  exTools.openMediaInNewTab([component.getHelperURL() + exConfig.api + '/system/screenshot'], ['image'])
+  exTools.openMediaInNewTab([component.getScreenshot()], ['image'])
 })
 document.getElementById('componentInfoModalEditDMXButton').addEventListener('click', (event) => {
   const component = exTools.getExhibitComponent(document.getElementById('componentInfoModal').dataset.uuid)

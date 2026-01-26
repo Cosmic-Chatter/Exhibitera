@@ -197,7 +197,7 @@ class BaseComponent {
         sleepAction.classList = 'dropdown-item handCursor'
         sleepAction.innerHTML = 'Sleep display'
         sleepAction.addEventListener('click', function () {
-          queueCommand(thisUUID, 'sleepDisplay')
+          queueCommand(thisUUID, 'sleep_display')
         }, false)
         dropdownMenu.appendChild(sleepAction)
 
@@ -205,7 +205,7 @@ class BaseComponent {
         wakeAction.classList = 'dropdown-item handCursor'
         wakeAction.innerHTML = 'Wake display'
         wakeAction.addEventListener('click', function () {
-          queueCommand(thisUUID, 'wakeDisplay')
+          queueCommand(thisUUID, 'wake_display')
         }, false)
         dropdownMenu.appendChild(wakeAction)
       }
@@ -395,6 +395,16 @@ class ExhibitComponent extends BaseComponent {
     return this.helperAddress
   }
 
+  getScreenshot () {
+    // Return a url pointing to a screenshot of the current display
+
+    let url = this.getHelperURL() + exConfig.api + '/system/screenshot'
+    if (this.exhibiteraAppID === 'external') {
+      url = this.getHelperURL() + '/core/screenshot'
+    }
+    return url
+  }
+
   updateFromServer (update) {
     // Extend parent update to include exhibit component-specific items
 
@@ -421,6 +431,17 @@ class ExhibitComponent extends BaseComponent {
 
     if (opt.url == null) {
       return Promise.reject(new Error('helperAddress not found'))
+    }
+
+    // If this component is a 3rd-party component, translate endpoints to the Core API
+    if (this.exhibiteraAppID === 'external') {
+      const endpointPairs = {
+        '/restart': '/core/restart',
+        '/shutdown': '/core/shutdown'
+      }
+      for (const key of endpointPairs) {
+        opt.endpoint = opt.endpoint.replace(key, endpointPairs[key])
+      }
     }
 
     // Check if we're using the Core API, which doesn't have an API version
@@ -567,10 +588,10 @@ class ExhibitComponentGroup {
     const thisGroup = this.group
     if (this.group === 'projector') {
       onCmdName = 'power_on'
-      offCmdName = 'sleepDisplay'
+      offCmdName = 'sleep_display'
     } else {
-      onCmdName = 'wakeDisplay'
-      offCmdName = 'sleepDisplay'
+      onCmdName = 'wake_display'
+      offCmdName = 'sleep_display'
     }
     const displayRefresh = 'block'
 
@@ -2248,8 +2269,8 @@ export function submitComponentSettingsChange () {
         audio: exUtilities.stringToBool(document.getElementById('componentInfoModalSettingsAutoplayAudio').value),
         refresh: exUtilities.stringToBool(document.getElementById('componentInfoModalSettingsAllowRefresh').value),
         restart: exUtilities.stringToBool(document.getElementById('componentInfoModalSettingsAllowRestart').value),
-        shutdown: exUtilities.stringToBool(document.getElementById('componentInfoModalSettingsAllowRestart').value),
-        sleep: exUtilities.stringToBool(document.getElementById('componentInfoModalSettingsAllowRestart').value)
+        shutdown: exUtilities.stringToBool(document.getElementById('componentInfoModalSettingsAllowShutdown').value),
+        sleep: exUtilities.stringToBool(document.getElementById('componentInfoModalSettingsAllowSleep').value)
       }
     }
     obj.makeRequest({

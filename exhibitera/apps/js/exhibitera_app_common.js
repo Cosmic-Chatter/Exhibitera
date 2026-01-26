@@ -200,8 +200,9 @@ export function sendPing () {
     const requestDict = {
       id: config.id,
       uuid: config.uuid,
+      api_level: exConfig.api_level, // The level of the API Apps is using
       exhibiteraAppID: config.exhibiteraAppID,
-      helperAddress: config.helperAddress,
+      helper_address: config.helperAddress,
       notifications: config.notifications,
       permissions: config.permissions,
       platform_details: config.platformDetails,
@@ -276,9 +277,9 @@ function readUpdate (update) {
       askForRestart()
     } else if (cmd === 'shutdown' || cmd === 'power_off') {
       askForShutdown()
-    } else if (cmd === 'sleepDisplay') {
+    } else if (cmd === 'sleep_display') {
       sleepDisplay()
-    } else if (cmd === 'wakeDisplay' || cmd === 'power_on') {
+    } else if (cmd === 'wake_display' || cmd === 'power_on') {
       wakeDisplay()
     } else if (cmd === 'refresh_page') {
       if ('refresh' in config.permissions && config.permissions.refresh === true) {

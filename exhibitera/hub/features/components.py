@@ -274,11 +274,12 @@ class ExhibitComponent(BaseComponent):
                          uuid_str=uuid_str)
 
         self.category = category
-        self.helperAddress: str = ""  # full IP and port of helper
+        self.helper_address: str = ""  # full IP and port of helper
         self.platform_details: dict = {}
 
         self.config["definition"] = ""
         self.config["app_id"] = "none"
+        self.config["api_level"] = 0
 
         self.status_manager = ComponentStatusManager(category)
 
@@ -306,7 +307,10 @@ class ExhibitComponent(BaseComponent):
         address = address.replace('127.0.0.1', self.ip_address)
         address = address.replace('::1', self.ip_address)
 
-        self.helperAddress = address
+        if not address.startswith('http://'):
+            address = 'http://' + address
+
+        self.helper_address = address
 
     def current_status(self) -> str:
         """Return the current status of the component
@@ -354,24 +358,28 @@ class ExhibitComponent(BaseComponent):
         if self.category == "static":
             return
 
-        if (command in ["power_on", "wakeDisplay"]) and (self.mac_address is not None):
+        if (command in ["power_on", "wake_display"]) and (self.mac_address is not None):
             self.wake_with_lan()
         elif command in ['shutdown', 'restart']:
-            if self.helperAddress == '' or self.helperAddress is None:
+            # Send these commands directly to the helper
+
+            if self.helper_address == '' or self.helper_address is None:
                 logging.error(f"{self.id}: error: {command} requested but helper address is blank.")
                 if ex_config.debug:
                     print(f"{self.id}: error: {command} requested but helper address is blank.")
                 return
-            # Send these commands directly to the helper
             if ex_config.debug:
                 print(f"{self.id}: command sent to helper: {command}")
             logging.info(f"{self.id}: command sent to helper: {command}")
-            if not self.helperAddress.startswith('http://'):
-                address = 'http://' + self.helperAddress + '/' + command
-            else:
-                address = self.helperAddress + '/' + command
 
-            requests.get(address)
+            if self.config["app_id"] == 'external':
+                # Core API
+                endpoint = '/core/' + command
+            else:
+                # Exhibitera API
+                endpoint = '/v' + str(self.config["api_level"]) + '/system/' + command
+
+            requests.get(self.helper_address + endpoint)
         else:
             # Queue all other commands for the next ping
             if ex_config.debug:
@@ -446,7 +454,7 @@ class WakeOnLANDevice(BaseComponent):
 
         """Wrapper function to match other exhibit components"""
 
-        if cmd in ["power_on", "wakeDisplay"]:
+        if cmd in ["power_on", "wake_display"]:
             self.wake()
 
     def wake(self):
@@ -596,8 +604,8 @@ class Projector(BaseComponent):
         # Translate commands for projector_control
         cmd_dict = {
             "shutdown": "power_off",
-            "sleepDisplay": "power_off",
-            "wakeDisplay": "power_on"
+            "sleep_display": "power_off",
+            "wake_display": "power_on"
         }
 
         try:
@@ -819,8 +827,8 @@ def update_exhibit_component_status(data: dict[str, Any], ip: str):
         component = add_exhibit_component(this_id, ["Default"], uuid_str=this_uuid)
 
     component.ip_address = ip
-    if "helperAddress" in data:
-        component.set_helper_address(data["helperAddress"])
+    if "helper_address" in data:
+        component.set_helper_address(data["helper_address"])
 
     component.update_last_contact_datetime(interaction=data.get("currentInteraction", False))
 
@@ -839,6 +847,9 @@ def update_exhibit_component_status(data: dict[str, Any], ip: str):
             component.platform_details.update(data["platform_details"])
     if "exhibiteraAppID" in data:
         component.config["app_id"] = data["exhibiteraAppID"]
+
+    if "api_level" in data:
+        component.config["api_level"] = data["api_level"]
 
 # Set up log file
 log_path = ex_files.get_path(["hub.log"], user_file=True)

@@ -32,7 +32,7 @@ def get_webpage_update():
     for item in hub_config.componentList:
         temp = {"class": "exhibitComponent",
                 "exhibiteraAppID": item.config["app_id"],
-                "helperAddress": item.helperAddress,
+                "helperAddress": item.helper_address,
                 "id": item.id,
                 "ip_address": item.ip_address,
                 "groups": item.groups,

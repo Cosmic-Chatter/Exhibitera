@@ -3,6 +3,9 @@ _Exhibitera Hub and Apps must all be upgraded to version 6 at the same time._
 
 ## Hub
 
+### Core API
+The Core API provides a stable API that enables developers to provide basic integration with Exhibitera for their applications. Calls to this API are guaranteed to remain compatible with future versions of Hub.
+
 ### Exhibitions
 - _Exhibits_ are now called _Exhibitions_
 - Changing a component's definition now creates an _exhibition modification_. Modifications are not permanently stored in the exhibition; instead, they will be cleared the next time the exhibition changes. This enables you to make a temporary change (such as with the _Set definition_ schedule action) without it permanently affecting the exhibition. 

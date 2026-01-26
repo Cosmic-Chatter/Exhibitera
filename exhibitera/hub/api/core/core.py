@@ -38,9 +38,7 @@ async def handle_ping(data: dict[str, Any], request: Request):
 
     # Translate API fields
     data["exhibiteraAppID"] = "external"
-    if data.get("helper_address", "") != "":
-        data["helperAddress"] = data["helper_address"]
-        del data["helper_address"]
+    data["api_level"] = 0
     if data.get("current_interaction", "") != "":
         data["currentInteraction"] = data["current_interaction"]
         del data["current_interaction"]
@@ -60,3 +58,30 @@ async def handle_ping(data: dict[str, Any], request: Request):
 
     return dict_to_send
 
+
+@router.post("/data/{name}/rawText")
+async def submit_raw_text(name: str,
+                         text: str = Body(description='The data to write.'),
+                         mode: str = Body(description="Pass 'a' to append or 'w' or overwrite.", default='a')):
+    """Write the raw text to file."""
+
+    if not ex_files.filename_safe(name):
+        return {"success": False, "reason": "unsafe_filename"}
+
+    if mode != "a" and mode != "w":
+        response = {"success": False,
+                    "reason": "Invalid mode field: must be 'a' (append, [default]) or 'w' (overwrite)"}
+        return response
+
+    file_path = ex_files.get_path(["data", ex_files.with_extension(name, 'txt')], user_file=True)
+    success, reason = ex_files.write_text(text, file_path, mode=mode)
+    return {"success": success, "reason": reason}
+
+
+@router.get("/data/{name}/rawText")
+async def get_raw_text(name: str):
+    """Load the given file and return the raw text."""
+
+    file_path = ex_files.get_path(["data", ex_files.with_extension(name, 'txt')], user_file=True)
+    result, success, reason = ex_files.get_text(file_path)
+    return {"success": success, "reason": reason, "text": result}

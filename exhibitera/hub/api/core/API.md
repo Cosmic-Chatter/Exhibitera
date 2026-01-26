@@ -34,18 +34,48 @@ These endpoints are maintained by Hub and can be accessed by your application
 ```
 
 ##### commands
-An array of strings (usually empty) indicating actions the component should take. Each string will be one of the following:
+A (usually empty) array of strings indicating actions the component should take. Each string will be one of the following:
 
 - `refresh_page`: Reload the content to an initial state
 - `restart`: Restart the PC
 - `shutdown`: Shutdown the PC
-- `sleepDisplay`: Turn off the connected display
-- `wakeDisplay`: Turn on the connected display
+- `sleep_display`: Turn off the connected display
+- `wake_display`: Turn on the connected display
 
 ##### definition
 You may choose to allow administrators to select from different app states using Hub. These app states are called `definitions`. If so, the currently selected definition (a UUID4 string) will be listed here.
 
-## Receiving API
-Your application should listen at your `helper_address` for the following endpoints
+### /core/data/[name]/rawText [GET]
+Retrieve text saved to Hub under the given `[name]`.
 
-### /core/screenshot 
+#### Path parameters
+- `name`: The name of the record whose contents should be returned. `name` should have been previously saved by using the `POST` version of this endpoint.
+
+### /core/data/[name]/rawText [POST]
+Save text in a named record on Hub.
+
+#### Path parameters
+- `name`: Name of the record to save text to. The namespace is shared by all components connected to that Hub, so `name` should be unique to your app, such as `"MyAppName_recordName"`.
+
+#### Body
+```json
+{
+  mode: "a", // "a" (defualt) for append or "w" for overwrite. 
+  text: "Some\ntext\nto write"
+}
+```
+
+When using `mode="a"` to append text, it is appended to a new line in the file.
+
+## Receiving API
+Your application should listen at your `helper_address` for the following endpoints. No receiving endpoint is required, but they provide better integration with Exhibitera native apps.
+
+
+### /core/restart [GET]
+Restart the PC.
+
+### /core/screenshot [GET]
+Return a screenshot of the current display as a JPEG blob.
+
+### /core/shutdown [GET]
+Shutdown the PC.
