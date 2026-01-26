@@ -23,6 +23,7 @@ import exhibitera.apps.features.utilities as apps_utilities
 import exhibitera.apps.features.system as apps_system
 
 # API modules
+from exhibitera.apps.api.core import core as core_api
 from exhibitera.apps.api.v6.data import data as data_v6
 from exhibitera.apps.api.v6.definitions import definitions as definitions_v6
 from exhibitera.apps.api.v6.dmx import dmx as dmx_v6
@@ -135,6 +136,7 @@ app.mount("/thumbnails",
           name="thumbnails")
 
 # Link API routers
+app.include_router(core_api.router, prefix='/core')
 app.include_router(data_v6.router, prefix='/v6')
 app.include_router(definitions_v6.router, prefix='/v6')
 app.include_router(dmx_v6.router, prefix='/v6')

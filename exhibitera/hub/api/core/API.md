@@ -45,11 +45,32 @@ A (usually empty) array of strings indicating actions the component should take.
 ##### definition
 You may choose to allow administrators to select from different app states using Hub. These app states are called `definitions`. If so, the currently selected definition (a UUID4 string) will be listed here.
 
+
+### /core/checkConnection [GET]
+Check if Hub is accessible
+
+#### Return
+```json
+{
+  success: true // Always returns true
+}
+```
+
+
 ### /core/data/[name]/rawText [GET]
 Retrieve text saved to Hub under the given `[name]`.
 
 #### Path parameters
 - `name`: The name of the record whose contents should be returned. `name` should have been previously saved by using the `POST` version of this endpoint.
+
+#### Returns
+```json
+{
+  success: true,
+  reason: "" // Gives reason for failure if success == false,
+  text: "The saved text"
+}
+```
 
 ### /core/data/[name]/rawText [POST]
 Save text in a named record on Hub.
@@ -66,6 +87,14 @@ Save text in a named record on Hub.
 ```
 
 When using `mode="a"` to append text, it is appended to a new line in the file.
+
+#### Returns
+```json
+{
+  success: true,
+  reason: "" // Gives reason for failure if success == false
+}
+```
 
 ## Receiving API
 Your application should listen at your `helper_address` for the following endpoints. No receiving endpoint is required, but they provide better integration with Exhibitera native apps.
