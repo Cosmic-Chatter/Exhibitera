@@ -50,28 +50,8 @@ function pageForward (current) {
     }
   } else if (current === 'remote-display') {
     document.getElementById('remote-display').style.display = 'none'
-    if (document.getElementById('useHubToggle').checked === true) {
-      document.getElementById('basic-settings').style.display = 'block'
-    } else {
-      // Skip basic settings if we're not using Hub
-      populateSummary()
-      document.getElementById('summary').style.display = 'block'
-    }
-  } else if (current === 'basic-settings') {
-    let moveOn = false
-    const IDInput = document.getElementById('IDInput')
-    const warning = document.getElementById('basicSettingsWarning')
-    if (IDInput.value.trim() === '') {
-      warning.style.display = 'block'
-    } else {
-      moveOn = true
-      warning.style.display = 'none'
-    }
-    if (moveOn === true) {
-      populateSummary()
-      document.getElementById('basic-settings').style.display = 'none'
-      document.getElementById('summary').style.display = 'block'
-    }
+    populateSummary()
+    document.getElementById('summary').style.display = 'block'
   } else if (current === 'summary') {
     submitSettings()
   }
@@ -100,13 +80,6 @@ function populateSummary () {
     document.getElementById('summaryNoRemoteDisplay').style.display = 'block'
     document.getElementById('summaryRemoteDisplayDetails').style.display = 'none'
   }
-  // Basic settings
-  document.getElementById('summaryID').innerHTML = document.getElementById('IDInput').value.trim()
-  if (document.getElementById('useHubToggle').checked === false) {
-    document.getElementById('summaryBasicSettings').style.display = 'none'
-  } else {
-    document.getElementById('summaryBasicSettings').style.display = 'block'
-  }
 }
 
 function pageBack (current) {
@@ -121,18 +94,9 @@ function pageBack (current) {
   } else if (current === 'remote-display') {
     document.getElementById('remote-display').style.display = 'none'
     document.getElementById('control-server').style.display = 'block'
-  } else if (current === 'basic-settings') {
-    document.getElementById('basic-settings').style.display = 'none'
-    document.getElementById('remote-display').style.display = 'block'
   } else if (current === 'summary') {
+    document.getElementById('remote-display').style.display = 'block'
     document.getElementById('summary').style.display = 'none'
-    if (document.getElementById('useHubToggle').checked === true) {
-      // Goto basic settings
-      document.getElementById('basic-settings').style.display = 'block'
-    } else {
-      // Skip back to remote display
-      document.getElementById('remote-display').style.display = 'block'
-    }
   }
 }
 
@@ -215,7 +179,6 @@ function submitSettings () {
   }
   if (document.getElementById('useHubToggle').checked === true) {
     settings.system.standalone = false
-    settings.app.id = document.getElementById('IDInput').value.trim()
     settings.control_server.ip_address = document.getElementById('hubIPInput').value.trim()
     settings.control_server.port = parseInt(document.getElementById('hubPortInput').value.trim()) || 8082
   } else {

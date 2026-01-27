@@ -61,7 +61,7 @@
               </ul>
             </p>
             <div class="text-center">
-              <button class="btn btn-secondary btn-sm">Learn more</button>
+              <a class="btn btn-secondary btn-sm" href="https://exhibitera.org/#createPane" target="_blank">Learn more</a>
             </div>
             
             <div class="row mt-4">
@@ -174,31 +174,6 @@
             </div>
           </div>
         </div>
-        <!-- Basic settings -->
-        <div id="basic-settings" class="col-12 wizard-pane" style="display: none;">
-          <div class="alert alert-primary">
-            <div class="h5 text-center">What should we call this component?</div>
-            <p>
-              Since we're using Hub, we need to identify this component. Each app instance needs an <b>ID</b>, which uniquely identifies this component. A good ID might be something like <i>Sports Intro Video</i>.
-            </p>
-            <div class="row mt-4">
-              <div class="col-6">
-                <div class="form-floating">
-                  <input type="text" class="form-control" id="IDInput" placeholder="ID">
-                  <label for="IDInput">ID</label>
-                </div>
-              </div>
-              <div id="basicSettingsWarning" class="col-12 mt-3 text-warning" style="display: none;">
-                You must enter an ID for this component.
-              </div>
-            </div>
-            
-            <div class="text-center mt-3">
-              <button data-page="basic-settings" class="btn btn-secondary back-button me-3">Back</button>
-              <button data-page="basic-settings" class="btn btn-success next-button ms-3">Next</button>
-            </div>
-          </div>
-        </div>
         <!-- Summary -->
         <div id="summary" class="col-12 wizard-pane" style="display: none;">
           <div class="alert alert-primary">
@@ -223,12 +198,6 @@
                 <b>Port:</b> <span id="summaryPort"></span>
               </div>
             </p>
-            <div id="summaryBasicSettings">
-              <div class="h6">Identification</div>
-              <p>
-                <b>ID:</b> <span id="summaryID"></span>
-              </p>
-            </div>
             <div class="text-center mt-3">
               <button data-page="summary" class="btn btn-secondary back-button me-3">Back</button>
               <button data-page="summary" class="btn btn-success next-button ms-3">Finish</button>

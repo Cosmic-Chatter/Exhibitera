@@ -24,9 +24,17 @@ async def send_update(config: apps_config = Depends(get_config)):
     """Get some key info for updating the component and web console."""
 
     response_dict = {
-        "app": config.defaults["app"],
+        "app": config.defaults.get("app", "none"),
         "commands": config.commandList,
-        "permissions": config.defaults["permissions"]
+        "permissions": config.defaults.get("permissions",
+                                           {
+                                            "audio": False,
+                                            "refresh": False,
+                                            "restart": False,
+                                            "shutdown": False,
+                                            "sleep": False
+                                           }
+                                           )
     }
     return response_dict
 

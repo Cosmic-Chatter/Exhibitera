@@ -9,9 +9,6 @@ function updateParser (update) {
   // Take a list of defaults and build the interface for editing them.
 
   if ('app' in update) {
-    if ('id' in update.app) {
-      document.getElementById('IDInput').value = update.app.id
-    }
     if (update.app.definition) document.getElementById('definitionSelect').value = update.app.definition
   }
   if ('control_server' in update) {
@@ -121,7 +118,6 @@ function saveConfiguration () {
 
   if (defaults.system.standalone === false) {
     // We are using Hub, so update relevant defaults
-    defaults.app.id = document.getElementById('IDInput').value.trim()
     defaults.control_server = {
       ip_address: document.getElementById('hubIPInput').value.trim(),
       port: parseInt(document.getElementById('hubPortInput').value)
@@ -220,7 +216,6 @@ function configureInterface () {
 
   // Hub
   if (document.getElementById('useHubToggle').checked === true) {
-    document.getElementById('IDInputGroup').style.display = 'block'
     document.getElementById('definitionSelectGroup').style.display = 'none'
     document.getElementById('hubIPInputGroup').style.display = 'block'
     document.getElementById('hubPortInputGroup').style.display = 'block'
@@ -230,7 +225,6 @@ function configureInterface () {
     document.getElementById('dataGroup').style.display = 'none'
     document.getElementById('dataHubMessage').style.display = 'block'
   } else {
-    document.getElementById('IDInputGroup').style.display = 'none'
     document.getElementById('definitionSelectGroup').style.display = 'block'
     document.getElementById('hubIPInputGroup').style.display = 'none'
     document.getElementById('hubPortInputGroup').style.display = 'none'

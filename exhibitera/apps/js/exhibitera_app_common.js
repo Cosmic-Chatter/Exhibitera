@@ -17,6 +17,7 @@ export const config = {
   currentDefinition: '',
   currentExhibit: 'Default',
   currentInteraction: false,
+  definitionUUID: '',
   definition: {}, // Holds the current definition
   definitionLoader: null, // A function used by loadDefinition() to set up the specific app.
   fontCache: {},
@@ -198,7 +199,6 @@ export function sendPing () {
 
   const pingRequest = function () {
     const requestDict = {
-      id: config.id,
       uuid: config.uuid,
       api_level: exConfig.api_level, // The level of the API Apps is using
       exhibiteraAppID: config.exhibiteraAppID,
