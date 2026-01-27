@@ -25,6 +25,7 @@ ol, ul {
   display: block;
   width: 100%;
   height: auto;
+  min-height: 50px;
 }
 /* the overlay sits on top of the video */
 .markdown-video-play-button {
@@ -45,7 +46,7 @@ ol, ul {
   max-width: 9vmax;
   border-radius: 50%;
   background: rgba(0,0,0,.75);
-  box-shadow: 0 2px 12px rgba(0,0,0,.35);
+  box-shadow: 0 0.1vmax 0.625vmax rgba(0,0,0,.35);
   position: relative;
   display: flex;
   align-items: center;

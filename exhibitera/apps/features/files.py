@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import pathlib
+import re
 import subprocess
 from typing import Any
 
@@ -358,14 +359,17 @@ def get_video_file_details(filename: str) -> tuple[bool, dict[str, Any]]:
         fps_str = ffmpeg_text[search_index + 1: fps_index].strip()
         details['fps'] = float(fps_str)
 
-    except OSError as e:
-        print("get_video_file_details: error:", e)
-        success = False
-    except ImportError as e:
-        print("get_video_file_details: error loading FFmpeg: ", e)
-        success = False
-    except ValueError as e:
-        print("get_video_file_details: value error: ", e)
+        # Resolution
+        match = re.search(r'Video:.* (\d{2,})x(\d{2,})', ffmpeg_text)
+        if match:
+            details['width'] = int(match.group(1))
+            details['height'] = int(match.group(2))
+        else:
+            details['width'] = 0
+            details['height'] = 0
+
+    except (OSError, ImportError, ValueError) as e:
+        print(f"get_video_file_details error: {e}")
         success = False
 
     return success, details

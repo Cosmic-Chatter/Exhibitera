@@ -127,6 +127,7 @@ body {
     aspect-ratio: 1;
     padding: 0;
     line-height: 100%;
+    cursor: none!important;
 }
 .resultCard {
     height: 100%;
@@ -157,7 +158,6 @@ body {
     bottom: 0;
     background-color: rgba(0,0,0,0.9);
     z-index: 2;
-    cursor: pointer;
     justify-content: center;
     align-items: center;
     transition: opacity 400ms ease;

@@ -294,7 +294,7 @@ def run():
             print(
                 f"Starting Exhibitera Apps for ID {apps_config.defaults['app']['id']} on port {apps_config.defaults['system']['port']}.")
     else:
-        # We need to create an config.json file based on user input.
+        # We need to create a config.json file based on user input.
         create_config()
 
     if apps_config.defaults["system"].get("remote_display", True) is True:
@@ -304,7 +304,7 @@ def run():
         # Create a GUI window and then start the server
         option_fullscreen = "fullscreen" in sys.argv
 
-        if "port" not in apps_config.defaults['system']:
+        if "port" not in apps_config.defaults['system'] or apps_config.defaults['system']["port"] is None:
             apps_config.defaults["system"]["port"] = apps_utilities.find_available_port()
 
         app_window = webview.create_window('Exhibitera Apps',

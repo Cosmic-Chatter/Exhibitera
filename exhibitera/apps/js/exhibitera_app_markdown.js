@@ -2,6 +2,7 @@
 
 import * as exFiles from '../../common/files.js'
 import exCOnfig from '../../common/config.js'
+import * as appsCommon from './exhibitera_app_common.js'
 
 const markdownConverter = new showdown.Converter(
   {
@@ -106,7 +107,28 @@ function formatMarkdownVideo (el, format) {
   newTag.playsInline = true
   const pathParts = el.src.split('/')
   const filename = pathParts[pathParts.length - 1]
+
   if (looping === false) {
+    // Get the video size to hold space while the poster is rendered
+    appsCommon.makeHelperRequest({
+      method: 'GET',
+      endpoint: `/files/${encodeURIComponent(filename)}/videoDetails`
+    })
+      .then((data) => {
+        if (data.success && data.details.width && data.details.height) {
+        // Setting these attributes helps the browser reserve space
+          newTag.setAttribute('width', data.details.width)
+          newTag.setAttribute('height', data.details.height)
+
+          // Apply aspect-ratio to prevent 0px height collapse
+          newTag.style.aspectRatio = `${data.details.width} / ${data.details.height}`
+          newTag.style.width = '100%'
+          newTag.style.height = 'auto'
+        }
+      })
+      .catch(err => console.warn('Video metadata fetch failed:', err))
+
+    // Then load the poster, which may trigger a long process on the helper
     newTag.poster = exCOnfig.api + `/files/${encodeURIComponent(filename)}/thumbnail/${String(window.innerWidth)}?force_image=true`
   }
   newTag.setAttribute('webkit-playsinline', '')

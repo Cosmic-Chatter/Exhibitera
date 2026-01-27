@@ -76,7 +76,8 @@ body, html {
   background: var(--background-color);
   background-size: cover;
   background-position: center;
-  overscroll-behavior-x: none;
+  touch-action: none;
+  overscroll-behavior: none;
   user-select: none;
   overflow: hidden;
 }
