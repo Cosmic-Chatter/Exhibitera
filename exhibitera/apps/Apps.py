@@ -225,7 +225,10 @@ def start_app(port=None, with_webview: bool = True):
 
 def _start_server(port=None):
     if port is None:
-        port = int(apps_config.defaults["system"]["port"])
+        try:
+            port = int(apps_config.defaults["system"].get('port'))
+        except TypeError:
+            port = apps_utilities.find_available_port()
 
     # Must use only one worker, since we are relying on the apps_config module being in global
     uvicorn.run(app,
@@ -375,7 +378,7 @@ def run():
                 )
             ]
 
-        webview.start(func=start_app, menu=menu_items, private_mode=False, storage_path=ex_files.get_path(['webview_storage'], user_file=True))
+        webview.start(func=start_app, menu=menu_items, private_mode=False, debug=apps_config.defaults["system"].get("debug", False), storage_path=ex_files.get_path(['webview_storage'], user_file=True))
 
 
 if __name__ == "__main__":

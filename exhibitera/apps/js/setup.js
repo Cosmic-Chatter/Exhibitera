@@ -68,6 +68,9 @@ function updateParser (update) {
     if ('standalone' in update.system) {
       document.getElementById('useHubToggle').checked = !update.system.standalone
     }
+    if ('debug' in update.system) {
+      document.getElementById('debugModeToggle').checked = update.system.debug
+    }
   }
   configureInterface()
 }
@@ -111,6 +114,7 @@ function saveConfiguration () {
   const defaults = {
     app: {},
     system: {
+      debug: document.getElementById('debugModeToggle').checked,
       remote_display: document.getElementById('useRemoteDisplayToggle').checked,
       standalone: !document.getElementById('useHubToggle').checked
     }
@@ -158,7 +162,6 @@ function saveConfiguration () {
       el.classList.remove('btn-primary')
       el.innerHTML = 'Saved!'
       setTimeout(() => {
-        console.log('here')
         el.classList.remove('btn-success')
         el.classList.add('btn-primary')
         el.innerHTML = 'Save changes'
@@ -593,7 +596,10 @@ document.getElementById('smartRestartStateSelect').addEventListener('change', (e
   configureInterface()
 })
 document.getElementById('useRemoteDisplayToggle').addEventListener('change', (event) => {
-  document.getElementById('remoteDisplayRestartRequiredWarning').style.display = 'block'
+  document.getElementById('restartRequiredWarning').style.display = 'block'
+})
+document.getElementById('debugModeToggle').addEventListener('change', (event) => {
+  document.getElementById('restartRequiredWarning').style.display = 'block'
 })
 
 // Data page

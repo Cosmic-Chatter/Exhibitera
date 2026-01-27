@@ -260,6 +260,12 @@
               <button id='manageContentButton' type="button" class="btn btn-info ms-2">Manage content</button>
               <button id='launchAppButton' type="button" class="btn btn-success ms-2 app-link" data-app-link="app" data-web-link="/app.html">Launch app</button>
             </div>
+            <div class="col-12 mt-2">
+              <div id="restartRequiredWarning" class="alert alert-warning" style="display: none;">
+                Some changes will not take effect until you restart Exhibitera Apps.
+              </div>
+            </div>
+            
           </div>
 
           <!-- Definition -->
@@ -312,7 +318,18 @@
           
           
           <!-- Basic settings -->
-           <div class="h4 mt-4">Basic settings</div>
+          <!-- <div class="h4 mt-4">Basic settings</div>
+          <div class="row gy-2">
+          <div class="col-6">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="" id="startFullscreenToggle">
+              <label class="form-check-label" for="startFullscreenToggle">
+                Start in fullscreen
+                <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="To exit fullscreen, press the Esc key." style="font-size: 0.55em; color: black">?</span>
+              </label>
+            </div>
+          </div>
+          </div> -->
           
           <!-- Hub -->
           <div class="h4 mt-3">Hub</div>
@@ -466,27 +483,35 @@
             </div>
           </div>
           </div>
+          
           <!-- Remote display -->
           <div class="h4 mt-2">Remote display</div>
           <p>
             <span class="badge bg-secondary">Advanced</span> <i>For more complex setups, it's possible to run Exhibitera Apps on this PC, but use a different device as the display. The most common use case for this approach is <b>using an iPad or other tablet as the display.</b></i>
           </p>
-          <div id="remoteDisplayRestartRequiredWarning" class="alert alert-warning" style="display: none;">
-            This change will not take effect until you restart Exhibitera Apps.
-          </div>
           <div class="row mt-2">
-            <div class="col-7 col-sm-4 col-lg-3 d-flex align-items-center">
+            <div class="col-6 col-sm-5 col-lg-3 d-flex align-items-center">
               <div class="form-check form-switch">
                 <input class="form-check-input gui-toggle" type="checkbox" role="switch" id="useRemoteDisplayToggle">
                 <label class="form-check-label" for="useRemoteDisplayToggle">Use a remote display</label>
               </div>
             </div>
-            <div id="remoteDisplayPortInputGroup" class="col-5 col-sm-4 col-md-3 col-lg-2 col-xxl-1">
+            <div id="remoteDisplayPortInputGroup" class="col-5 col-sm-3 col-md-2 col-xxl-1">
               <div class="form-floating">
                 <input type="number" class="form-control" id="remoteDisplayPortInput" placeholder="Port">
                 <label for="remoteDisplayPortInput">Port</label>
               </div>
             </div>
+          </div>
+
+          <!-- Debug mode -->
+          <div class="h4 mt-2">Debug mode</div>
+          <p>
+            <span class="badge bg-secondary">Advanced</span> <i>Access additional app details to aid in debugging Exhibitera Apps.</i>
+          </p>
+          <div class="form-check form-switch">
+            <input class="form-check-input gui-toggle" type="checkbox" role="switch" id="debugModeToggle">
+            <label class="form-check-label" for="debugModeToggle">Debug mode</label>
           </div>
         </div>
   
