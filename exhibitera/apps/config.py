@@ -47,3 +47,6 @@ HELPING_REMOTE_CLIENT: bool = False
 server_process: threading.Thread
 defaults_file_lock: threading.Lock = threading.Lock()
 thumbnail_lock: threading.Lock = threading.Lock()
+
+# Fullscreen state of the webview app
+webview_fullscreen = False

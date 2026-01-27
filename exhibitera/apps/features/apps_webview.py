@@ -5,53 +5,21 @@ from functools import partial
 import webview
 
 # Exhibitera modules
-import exhibitera.apps.config as config
-
+import exhibitera.apps.config as apps_config
 
 class ExhibiteraWebviewAPI:
-    """Bindings to connect pywebview window to Python."""
+    """Bindings to connect the app.html pywebview window to Python."""
+
     def __init__(self):
-        self.window = None
+        pass
 
     def toggle_fullscreen(self):
-        self.window.toggle_fullscreen()
+        if apps_config.webview_fullscreen is True:
+            apps_config.webview_fullscreen = False
+        else:
+            apps_config.webview_fullscreen = True
 
-
-def on_closed():
-    pass
-
-
-def on_closing():
-    pass
-
-
-def on_shown():
-    pass
-
-
-def on_minimized():
-    pass
-
-
-def on_restored():
-    pass
-
-
-def on_maximized():
-    pass
-
-
-def on_loaded():
-    # unsubscribe event listener
-    webview.windows[0].events.loaded -= on_loaded
-
-
-def on_resized(width, height):
-    pass
-
-
-def on_moved(x, y):
-    pass
+        show_app_window()
 
 
 def show_webview_window(app: str,
@@ -62,8 +30,11 @@ def show_webview_window(app: str,
     Pass query string parameters as a dict of key/value pairs
     """
 
+    if app == 'app':
+        show_app_window()
+        return
+
     endpoints = {
-        "app": "/app.html",
         "dmx_control": "/dmx_control/index.html?standalone=true",
         "image_compare_setup": "/image_compare/setup.html",
         "infostation_setup": "/infostation/setup.html",
@@ -80,7 +51,6 @@ def show_webview_window(app: str,
     }
 
     names = {
-        "app": "",
         "dmx_control": "DMX Control",
         "image_compare_setup": "Image Compare",
         "infostation_setup": "InfoStation",
@@ -103,24 +73,41 @@ def show_webview_window(app: str,
     # If reload=True, destroy any existing copy of this window
     if reload:
         for window in webview.windows:
-            if window.title == 'Exhibitera Apps - ' + names[app] or \
-                    (app == 'app' and window.title == 'Exhibitera Apps'):
+            if window.title == 'Exhibitera Apps - ' + names[app]:
                 window.destroy()
 
     # If not, create one
-    if app == 'app':
-        name = "Exhibitera Apps"
-    else:
-        name = 'Exhibitera Apps - ' + names[app]
+    name = 'Exhibitera Apps - ' + names[app]
 
-    url = 'http://localhost:' + str(config.defaults["system"]["port"]) + endpoints[app]
+    url = 'http://localhost:' + str(apps_config.defaults["system"]["port"]) + endpoints[app]
     if parameters is not None:
         url += '?'
         for key in parameters:
             url += key + '=' + parameters[key] + '&'
 
+    webview.create_window(name, height=600,  width=800, menu=menu_items, url=url)
+
+
+def show_app_window():
+    """Show the main app window.
+
+    Includes logic for going back and forth from fullscreen.
+    """
+
+    # Destroy any existing version of this app
+    for window in webview.windows:
+        if window.title == 'Exhibitera Apps':
+            window.destroy()
+
+    url = 'http://localhost:' + str(apps_config.defaults["system"]["port"]) + "/app.html"
+
     api = ExhibiteraWebviewAPI()
-    api.window = webview.create_window(name, height=600,width=800, js_api=api, url=url)
+    return webview.create_window('Exhibitera Apps',
+                          height=600, width=800,
+                          fullscreen=apps_config.webview_fullscreen,
+                          menu=None if apps_config.webview_fullscreen else menu_items,
+                          js_api=api,
+                          url=url)
 
 
 def save_file(data, default_filename: str):

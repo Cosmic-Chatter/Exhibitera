@@ -305,34 +305,14 @@ def run():
             option_fullscreen = True
         else:
             option_fullscreen = apps_config.defaults["system"].get("start_fullscreen", False)
+        apps_config.webview_fullscreen = option_fullscreen
 
         if "port" not in apps_config.defaults['system'] or apps_config.defaults['system']["port"] is None:
             apps_config.defaults["system"]["port"] = apps_utilities.find_available_port()
 
-        api = apps_webview.ExhibiteraWebviewAPI()
-        app_window = webview.create_window('Exhibitera Apps',
-                                           confirm_close=False,
-                                           fullscreen=option_fullscreen,
-                                           height=720,
-                                           width=1280,
-                                           min_size=(1280, 720),
-                                           js_api=api,
-                                           url='http://localhost:' + str(
-                                               apps_config.defaults["system"]["port"]) + '/app.html')
-        api.window = app_window
+        apps_webview.show_app_window()
 
-        # Subscribe to event listeners
-        app_window.events.closed += apps_webview.on_closed
-        app_window.events.closing += apps_webview.on_closing
-        app_window.events.shown += apps_webview.on_shown
-        app_window.events.loaded += apps_webview.on_loaded
-        app_window.events.minimized += apps_webview.on_minimized
-        app_window.events.maximized += apps_webview.on_maximized
-        app_window.events.restored += apps_webview.on_restored
-        app_window.events.resized += apps_webview.on_resized
-        app_window.events.moved += apps_webview.on_moved
-
-        webview.start(func=start_app, menu=apps_webview.menu_items, private_mode=False, debug=apps_config.defaults["system"].get("debug", False), storage_path=ex_files.get_path(['webview_storage'], user_file=True))
+        webview.start(func=start_app, private_mode=False, debug=apps_config.defaults["system"].get("debug", False), storage_path=ex_files.get_path(['webview_storage'], user_file=True))
 
 
 if __name__ == "__main__":
