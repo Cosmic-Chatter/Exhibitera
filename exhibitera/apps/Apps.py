@@ -33,7 +33,6 @@ from exhibitera.apps.api.v6.system import system as system_v6
 # If we're not on Linux, prepare to use the webview
 if sys.platform != 'linux':
     import webview
-    import webview.menu as webview_menu
 
     import exhibitera.apps.features.apps_webview as apps_webview
 
@@ -302,19 +301,25 @@ def run():
         start_app(with_webview=False)
     else:
         # Create a GUI window and then start the server
-        option_fullscreen = "fullscreen" in sys.argv
+        if "fullscreen" in sys.argv:
+            option_fullscreen = True
+        else:
+            option_fullscreen = apps_config.defaults["system"].get("start_fullscreen", False)
 
         if "port" not in apps_config.defaults['system'] or apps_config.defaults['system']["port"] is None:
             apps_config.defaults["system"]["port"] = apps_utilities.find_available_port()
 
+        api = apps_webview.ExhibiteraWebviewAPI()
         app_window = webview.create_window('Exhibitera Apps',
                                            confirm_close=False,
                                            fullscreen=option_fullscreen,
                                            height=720,
                                            width=1280,
                                            min_size=(1280, 720),
+                                           js_api=api,
                                            url='http://localhost:' + str(
                                                apps_config.defaults["system"]["port"]) + '/app.html')
+        api.window = app_window
 
         # Subscribe to event listeners
         app_window.events.closed += apps_webview.on_closed
@@ -327,58 +332,7 @@ def run():
         app_window.events.resized += apps_webview.on_resized
         app_window.events.moved += apps_webview.on_moved
 
-        # Add menu bar if we are not going into fullscreen
-        menu_items = None
-        if not option_fullscreen:
-            menu_items = [
-                webview_menu.Menu(
-                    'Settings',
-                    [
-                        webview_menu.MenuAction('Show settings', partial(apps_webview.show_webview_window, 'settings', reload=True)),
-                        webview_menu.Menu('Configure',
-                      [
-                          webview_menu.MenuAction('DMX Control',
-                                                  partial(apps_webview.show_webview_window,
-                                                          'dmx_control')),
-                          webview_menu.MenuAction('Image Compare',
-                                                  partial(apps_webview.show_webview_window,
-                                                          'image_compare_setup')),
-                          webview_menu.MenuAction('InfoStation',
-                                                  partial(apps_webview.show_webview_window,
-                                                          'infostation_setup')),
-                          webview_menu.MenuAction('Media Browser',
-                                                  partial(apps_webview.show_webview_window,
-                                                          'media_browser_setup')),
-                          webview_menu.MenuAction('Media Player',
-                                                  partial(apps_webview.show_webview_window,
-                                                          'media_player_setup')),
-                          webview_menu.MenuAction('Custom App',
-                                                  partial(apps_webview.show_webview_window,
-                                                          'other_setup')),
-                          webview_menu.MenuAction('Survey Kiosk',
-                                                  partial(apps_webview.show_webview_window,
-                                                          'survey_kiosk_setup')),
-                          webview_menu.MenuAction('Timelapse Viewer',
-                                                  partial(apps_webview.show_webview_window,
-                                                          'timelapse_viewer_setup')),
-                          webview_menu.MenuAction('Timeline Explorer',
-                                                  partial(apps_webview.show_webview_window,
-                                                          'timeline_explorer_setup')),
-                          webview_menu.MenuAction('Voting Kiosk',
-                                                  partial(apps_webview.show_webview_window,
-                                                          'voting_kiosk_setup')),
-                          webview_menu.MenuAction('Word Cloud Input',
-                                                  partial(apps_webview.show_webview_window,
-                                                          'word_cloud_input_setup')),
-                          webview_menu.MenuAction('Word Cloud Viewer',
-                                                  partial(apps_webview.show_webview_window,
-                                                          'word_cloud_viewer_setup')),
-                      ])
-                    ]
-                )
-            ]
-
-        webview.start(func=start_app, menu=menu_items, private_mode=False, debug=apps_config.defaults["system"].get("debug", False), storage_path=ex_files.get_path(['webview_storage'], user_file=True))
+        webview.start(func=start_app, menu=apps_webview.menu_items, private_mode=False, debug=apps_config.defaults["system"].get("debug", False), storage_path=ex_files.get_path(['webview_storage'], user_file=True))
 
 
 if __name__ == "__main__":

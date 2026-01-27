@@ -248,19 +248,19 @@
             </div>
           </div>
   
-          <div class='row'>
-            <div id="showUpdateInfoButtonCol" class="col-6 col-sm-4 col-md-3 col-xl-2 mt-2">
+          <div class='row gy-2 mt-2'>
+            <div id="showUpdateInfoButtonCol" class="col-6 col-sm-4 col-md-3 col-xl-2">
               <button id="showUpdateInfoButton" class="btn btn-info w-100">Update available</button>
             </div>
-            <div id="outdatedOSCol" class="col mt-2" style="display: none;">
+            <div id="outdatedOSCol" class="col" style="display: none;">
               <button type="button" class="btn btn-warning" data-bs-toggle="popover" data-bs-trigger="hover" data-bs-title="Your OS is reaching end of life" data-bs-content="This OS version may be unsupported in the next version of Exhibitera.">Outdated OS</button>
             </div>
-            <div class="col-12 mt-3">
+            <div class="col-12">
               <button id="saveDefaultsButton" class='btn btn-primary' style="width: 150px;">Save changes</button>
               <button id='manageContentButton' type="button" class="btn btn-info ms-2">Manage content</button>
               <button id='launchAppButton' type="button" class="btn btn-success ms-2 app-link" data-app-link="app" data-web-link="/app.html">Launch app</button>
             </div>
-            <div class="col-12 mt-2">
+            <div class="col-12">
               <div id="restartRequiredWarning" class="alert alert-warning" style="display: none;">
                 Some changes will not take effect until you restart Exhibitera Apps.
               </div>
@@ -318,18 +318,20 @@
           
           
           <!-- Basic settings -->
-          <!-- <div class="h4 mt-4">Basic settings</div>
-          <div class="row gy-2">
-          <div class="col-6">
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" value="" id="startFullscreenToggle">
-              <label class="form-check-label" for="startFullscreenToggle">
-                Start in fullscreen
-                <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="To exit fullscreen, press the Esc key." style="font-size: 0.55em; color: black">?</span>
-              </label>
+          <div  id="startFullscreenToggleGroup">
+            <div class="h4 mt-4">Basic settings</div>
+            <div class="row gy-2">
+            <div class="col-6">
+              <div class="form-check form-switch">
+                <input class="form-check-input gui-toggle" type="checkbox" role="switch" value="" id="startFullscreenToggle">
+                <label class="form-check-label" for="startFullscreenToggle">
+                  Start in fullscreen
+                  <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="To toggle fullscreen, press the F11 key (Fn-Shift-F11 on macOS)." style="font-size: 0.55em; color: black">?</span>
+                </label>
+              </div>
             </div>
           </div>
-          </div> -->
+          </div>
           
           <!-- Hub -->
           <div class="h4 mt-3">Hub</div>

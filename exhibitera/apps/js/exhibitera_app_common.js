@@ -105,6 +105,16 @@ export function configureApp (opt = {}) {
             })
         }
 
+        // Listen for fullscreen key, if not using a remote display
+        if (config.remoteDisplay === false) {
+          window.addEventListener('keydown', function (e) {
+            if (e.key === 'F11') {
+              e.preventDefault()
+              window.pywebview.api.toggle_fullscreen()
+            }
+          })
+        }
+
         if (config.standalone === false) {
           // Using Hub
           sendPing()

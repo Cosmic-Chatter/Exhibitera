@@ -19,11 +19,15 @@ The Core API provides a stable API that enables developers to provide basic inte
 
 ### General
 - Apps that support language selection now properly display right-to-left text for Arabic and Hebrew
+- Easily launch Apps fullscreen on Windows
 - Creating, editing, and setting definitions is now much easier when not using Hub
 - Easily access DMX lighting scenes when not using Hub 
 - When using Hub, Apps now gracefully recovers to the last used definition if Hub is unavailable
 - Use *Shift-click* to easily select multiple files in the file picker
 - Drag and drop files on the file picker to start an upload
+
+### Core API
+The Core API provides a stable API that enables developers to provide basic integration with Exhibitera for their applications. Calls to this API are guaranteed to remain compatible with future versions of Hub.
 
 ### Custom Apps
 - New Basic App option turns a simple HTML file into an app without needing to implement the Exhibitera APIs

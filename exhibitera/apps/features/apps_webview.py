@@ -1,8 +1,20 @@
+# Standard modules
+from functools import partial
+
 # Third-party modules
 import webview
 
 # Exhibitera modules
 import exhibitera.apps.config as config
+
+
+class ExhibiteraWebviewAPI:
+    """Bindings to connect pywebview window to Python."""
+    def __init__(self):
+        self.window = None
+
+    def toggle_fullscreen(self):
+        self.window.toggle_fullscreen()
 
 
 def on_closed():
@@ -107,7 +119,8 @@ def show_webview_window(app: str,
         for key in parameters:
             url += key + '=' + parameters[key] + '&'
 
-    webview.create_window(name, height=600,width=800, url=url)
+    api = ExhibiteraWebviewAPI()
+    api.window = webview.create_window(name, height=600,width=800, js_api=api, url=url)
 
 
 def save_file(data, default_filename: str):
@@ -118,3 +131,40 @@ def save_file(data, default_filename: str):
 
     with open(result, 'w', encoding='UTF-8') as f:
         f.write(data)
+
+
+menu_items = [
+    webview.menu.Menu(
+        'Settings',
+        [
+            webview.menu.MenuAction('Show settings', partial(show_webview_window, 'settings', reload=True)),
+            webview.menu.Menu('Configure',
+          [
+              webview.menu.MenuAction('DMX Control',
+                                      partial(show_webview_window, 'dmx_control')),
+              webview.menu.MenuAction('Image Compare',
+                                      partial(show_webview_window, 'image_compare_setup')),
+              webview.menu.MenuAction('InfoStation',
+                                      partial(show_webview_window, 'infostation_setup')),
+              webview.menu.MenuAction('Media Browser',
+                                      partial(show_webview_window, 'media_browser_setup')),
+              webview.menu.MenuAction('Media Player',
+                                      partial(show_webview_window, 'media_player_setup')),
+              webview.menu.MenuAction('Custom App',
+                                      partial(show_webview_window, 'other_setup')),
+              webview.menu.MenuAction('Survey Kiosk',
+                                      partial(show_webview_window, 'survey_kiosk_setup')),
+              webview.menu.MenuAction('Timelapse Viewer',
+                                      partial(show_webview_window, 'timelapse_viewer_setup')),
+              webview.menu.MenuAction('Timeline Explorer',
+                                      partial(show_webview_window, 'timeline_explorer_setup')),
+              webview.menu.MenuAction('Voting Kiosk',
+                                      partial(show_webview_window, 'voting_kiosk_setup')),
+              webview.menu.MenuAction('Word Cloud Input',
+                                      partial(show_webview_window, 'word_cloud_input_setup')),
+              webview.menu.MenuAction('Word Cloud Viewer',
+                                      partial(show_webview_window, 'word_cloud_viewer_setup')),
+          ])
+        ]
+    )
+]

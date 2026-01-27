@@ -71,6 +71,9 @@ function updateParser (update) {
     if ('debug' in update.system) {
       document.getElementById('debugModeToggle').checked = update.system.debug
     }
+    if ('start_fullscreen' in update.system) {
+      document.getElementById('startFullscreenToggle').checked = update.system.start_fullscreen
+    }
   }
   configureInterface()
 }
@@ -116,7 +119,8 @@ function saveConfiguration () {
     system: {
       debug: document.getElementById('debugModeToggle').checked,
       remote_display: document.getElementById('useRemoteDisplayToggle').checked,
-      standalone: !document.getElementById('useHubToggle').checked
+      standalone: !document.getElementById('useHubToggle').checked,
+      start_fullscreen: document.getElementById('startFullscreenToggle').checked
     }
   }
 
@@ -238,10 +242,14 @@ function configureInterface () {
     document.getElementById('dataHubMessage').style.display = 'none'
   }
   // Remote display
+
+  const startFullscreenToggleGroup = document.getElementById('startFullscreenToggleGroup')
   if (document.getElementById('useRemoteDisplayToggle').checked === true) {
     document.getElementById('remoteDisplayPortInputGroup').style.display = 'block'
+    startFullscreenToggleGroup.style.display = 'none'
   } else {
     document.getElementById('remoteDisplayPortInputGroup').style.display = 'none'
+    startFullscreenToggleGroup.style.display = 'block'
   }
   exCommon.makeHelperRequest({
     method: 'GET',
@@ -595,10 +603,17 @@ Array.from(document.querySelectorAll('.gui-toggle')).forEach((el) => {
 document.getElementById('smartRestartStateSelect').addEventListener('change', (event) => {
   configureInterface()
 })
-document.getElementById('useRemoteDisplayToggle').addEventListener('change', (event) => {
+document.getElementById('useHubToggle').addEventListener('change', (event) => {
   document.getElementById('restartRequiredWarning').style.display = 'block'
 })
+document.getElementById('useRemoteDisplayToggle').addEventListener('change', (event) => {
+  document.getElementById('restartRequiredWarning').style.display = 'block'
+  configureInterface()
+})
 document.getElementById('debugModeToggle').addEventListener('change', (event) => {
+  document.getElementById('restartRequiredWarning').style.display = 'block'
+})
+document.getElementById('startFullscreenToggle').addEventListener('change', (event) => {
   document.getElementById('restartRequiredWarning').style.display = 'block'
 })
 
