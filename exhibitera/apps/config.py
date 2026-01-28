@@ -48,5 +48,7 @@ server_process: threading.Thread
 defaults_file_lock: threading.Lock = threading.Lock()
 thumbnail_lock: threading.Lock = threading.Lock()
 
-# Fullscreen state of the webview app
+# Pywebview resources
+block_closing = True
+root_window = None
 webview_fullscreen = False

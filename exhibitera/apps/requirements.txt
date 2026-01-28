@@ -13,7 +13,7 @@ pyserial
 python-dateutil
 python-multipart
 pyusb
-pywebview==5.4; sys_platform != 'linux'
+pywebview; sys_platform != 'linux'
 requests
 sockio
 uvicorn

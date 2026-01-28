@@ -310,6 +310,15 @@ def run():
         if "port" not in apps_config.defaults['system'] or apps_config.defaults['system']["port"] is None:
             apps_config.defaults["system"]["port"] = apps_utilities.find_available_port()
 
+        # Start a hidden window to ensure pywebview stays alive
+        apps_config.root_window = webview.create_window(
+            "root",
+            html="",
+            hidden=True,
+            width=1,
+            height=1
+        )
+
         apps_webview.show_app_window()
 
         webview.start(func=start_app, private_mode=False, debug=apps_config.defaults["system"].get("debug", False), storage_path=ex_files.get_path(['webview_storage'], user_file=True))

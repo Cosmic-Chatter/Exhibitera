@@ -175,7 +175,9 @@ function submitSettings () {
     app: {},
     control_server: {},
     permissions: {},
-    system: {}
+    system: {
+      start_fullscreen: false
+    }
   }
   if (document.getElementById('useHubToggle').checked === true) {
     settings.system.standalone = false

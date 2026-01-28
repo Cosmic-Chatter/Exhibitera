@@ -1,11 +1,13 @@
 # Standard modules
 from functools import partial
+import sys
 
 # Third-party modules
 import webview
 
 # Exhibitera modules
 import exhibitera.apps.config as apps_config
+
 
 class ExhibiteraWebviewAPI:
     """Bindings to connect the app.html pywebview window to Python."""
@@ -85,8 +87,12 @@ def show_webview_window(app: str,
         for key in parameters:
             url += key + '=' + parameters[key] + '&'
 
-    webview.create_window(name, height=600,  width=800, menu=menu_items, url=url)
+    new_window = webview.create_window(name, height=600,  width=800, menu=menu_items, url=url)
 
+    new_window.events.closing += on_window_closing
+    new_window.events.loaded += on_window_loaded
+
+    return new_window
 
 def show_app_window():
     """Show the main app window.
@@ -97,17 +103,38 @@ def show_app_window():
     # Destroy any existing version of this app
     for window in webview.windows:
         if window.title == 'Exhibitera Apps':
+            apps_config.block_closing = True
             window.destroy()
 
     url = 'http://localhost:' + str(apps_config.defaults["system"]["port"]) + "/app.html"
 
     api = ExhibiteraWebviewAPI()
-    return webview.create_window('Exhibitera Apps',
+    new_window = webview.create_window('Exhibitera Apps',
                           height=600, width=800,
                           fullscreen=apps_config.webview_fullscreen,
                           menu=None if apps_config.webview_fullscreen else menu_items,
                           js_api=api,
                           url=url)
+
+    new_window.events.closing += on_window_closing
+    new_window.events.loaded += on_window_loaded
+    return new_window
+
+
+def on_window_loaded():
+    apps_config.block_closing = False
+
+
+def on_window_closing():
+    """ Called when a window is closing, to handle shutdown. """
+
+    # Check if the root window is the only window left
+    if apps_config.block_closing is True:
+        return
+
+    if len(webview.windows) == 2:
+        print("Shutting down")
+        apps_config.root_window.destroy()
 
 
 def save_file(data, default_filename: str):
