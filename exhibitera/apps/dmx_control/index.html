@@ -130,7 +130,7 @@
 
       <ul class="nav nav-tabs" id="main-nav" role="tablist">
         <li class="nav-item" role="presentation">
-          <button class="nav-link active" id="universes-tab" data-bs-toggle="tab" data-bs-target="#universes-tab-pane" type="button" role="tab" aria-controls="universes-tab-pane" aria-selected="true">Universes</button>
+          <button class="nav-link active" id="universes-tab" data-bs-toggle="tab" data-bs-target="#universes-tab-pane" type="button" role="tab" aria-controls="universes-tab-pane" aria-selected="true">All fixtures</button>
         </li>
         <li class="nav-item" role="presentation">
           <button class="nav-link" id="groups-tab" data-bs-toggle="tab" data-bs-target="#groups-tab-pane" type="button" role="tab" aria-controls="groups-tab-pane" aria-selected="false">Groups</button>
@@ -164,7 +164,7 @@
                   <div class="alert alert-primary">
                     <H5 class="text-center">No universe found</H5>
                     <span class="fw-italic">
-                      <p>A DMX universe contains and controls up to 32 fixtures. You must have a USB-to-DMX controller for each unvierse.</p> 
+                      <p>A DMX universe contains and controls up to 32 fixtures. You must have a USB-to-DMX controller to set up your universe.</p> 
                     </span>
                     <center>
                       <button id="showAddUniverseModalButton" class="btn btn-primary">Create universe</button>
@@ -179,7 +179,7 @@
               <div class="modal-dialog modal-dialog-centered" role="document">
                 <div class="modal-content" style="border:black 1px solid;">
                   <div class="modal-header">
-                    <h4 class="modal-title">Create a universe</h4>
+                    <h4 class="modal-title">Create universe</h4>
                   </div>
                   <div class="modal-body">
                     <div class="row gy-2">
@@ -236,9 +236,6 @@
             </div>
 
             <!-- Universe row -->
-            <div class="col-12">
-              <button id="createNewUniverseButton" class="btn btn-primary" style="display: none;">Create universe</button>
-            </div>
             <div class="col-12 mt-2">
               <div id='universeRow' class="row"></div>
             </div>
@@ -256,7 +253,7 @@
                   <div class="alert alert-primary">
                     <H5 class="text-center">No groups found</H5>
                     <span class="fw-italic">
-                      <p>A <i>group</i> is a collection of DMX fixturess from one or more universes. Groups allow you to organize your fixtures in a way that is convenient for your needs.</p> 
+                      <p>A <i>group</i> is a collection of DMX fixturess. Groups allow you to organize your fixtures in a way that is convenient for your needs.</p> 
                       <p>Each fixture may be in multiple groups. Once you have a group, you can create a <i>scene</i>, which stores a set of values to be used at a later time.</p>
                   </span>
                     <center>

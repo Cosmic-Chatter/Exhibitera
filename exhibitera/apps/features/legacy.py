@@ -10,6 +10,7 @@ import exhibitera.common.files as ex_files
 import exhibitera.common.utilities as ex_utilities
 import exhibitera.apps.features.files as apps_files
 
+
 # Added in Ex6
 def migrate_definition_thumbnails():
     """Move definition thumbnails to their new directory"""
@@ -101,7 +102,6 @@ def update_infostation_definition_format():
             # Use the first language as the default
             default_lang = new_def["language_order"][0]
             new_def["tab_order"] = definition.get("languages", {}).get(default_lang, {}).get("tab_order", [])
-
 
             # Cycle through the languages, rebuilding the dicts for each.
             # We will use the default language uuids for each tab
@@ -340,3 +340,20 @@ def update_timeline_definition_format():
         shutil.copy(file_path, backup_path)
 
         ex_files.write_json(definition, file_path)
+
+
+# Added in Ex6
+def update_dmx_config():
+    """Update existing DMX configurations to reflect changes in Exhibitera 6."""
+
+    config_path = ex_files.get_path(["configuration", "dmx.json"], user_file=True)
+    config_dict = ex_files.load_json(config_path)
+
+    if len(config_dict.get("universes", [])) > 0:
+        config_dict["universe"] = config_dict["universes"][0]
+        del config_dict["universes"]
+
+    backup_path = ex_files.get_path(["configuration", "dmx.json.backup"], user_file=True)
+    shutil.copy(config_path, backup_path)
+    ex_files.write_json(config_dict, config_path)
+

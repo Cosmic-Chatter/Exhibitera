@@ -12,6 +12,7 @@ import exhibitera.apps.features.dmx as apps_dmx
 
 router = APIRouter(prefix='/DMX')
 
+
 @router.get("/getAvailableControllers")
 async def get_dmx_controllers():
     """Return a list of connected DMX controllers."""
@@ -21,12 +22,11 @@ async def get_dmx_controllers():
     return {"success": success, "reason": reason, "controllers": controllers}
 
 
-@router.get("/{universe_index}/debug")
+@router.get("/debug")
 async def debug_dmx_universe(universe_index: int):
     """Trigger the debug mode for the universe at the given index"""
 
-    print(apps_config.dmx_universes, universe_index, type(universe_index))
-    apps_config.dmx_universes[universe_index].controller.web_control()
+    apps_config.dmx_universe.controller.web_control()
 
 
 @router.get("/configuration")
@@ -35,7 +35,7 @@ async def get_dmx_configuration():
 
     success, reason = apps_dmx.activate_dmx()
     config_dict = {
-        "universes": [],
+        "universe": None,
         "groups": []
     }
     if success is True:
@@ -71,7 +71,7 @@ async def create_dmx_fixture(name: str = Body(description="The name of the fixtu
     if not success:
         return {"success": False, "reason": reason}
 
-    new_fixture = apps_dmx.get_universe(uuid_str=universe).create_fixture(name, start_channel, channels)
+    new_fixture = apps_config.dmx_universe.create_fixture(name, start_channel, channels)
     apps_dmx.write_dmx_configuration()
 
     return {"success": True, "fixture": new_fixture.get_dict()}
@@ -81,15 +81,14 @@ async def create_dmx_fixture(name: str = Body(description="The name of the fixtu
 async def edit_dmx_fixture(fixture_uuid: str = Body(description="The UUID of the fixture to edit."),
                            name: str = Body(description="The name of the fixture.", default=None),
                            channels: list[str] = Body(description="A list of channel names.", default=None),
-                           start_channel: int = Body(description="The first channel to allocate.", default=None),
-                           universe: str = Body(description='The UUID of the universe this fixture belongs to.')):
+                           start_channel: int = Body(description="The first channel to allocate.", default=None)):
     """Edit an existing DMX fixture"""
 
     success, reason = apps_dmx.activate_dmx()
     if not success:
         return {"success": False, "reason": reason}
 
-    fixture = apps_dmx.get_universe(uuid_str=universe).get_fixture(fixture_uuid)
+    fixture = apps_config.dmx_universe.get_fixture(fixture_uuid)
     fixture.update(name=name, start_channel=start_channel, channel_list=channels)
     apps_dmx.write_dmx_configuration()
 
@@ -446,27 +445,26 @@ async def create_dmx_universe(name: str = Body(description="The name of the univ
 
 
 @router.post("/universe/rename")
-async def create_dmx_universe(uuid: str = Body(description="The UUID of the universe."),
-                              new_name: str = Body(description="The new name to set.")):
+async def create_dmx_universe(new_name: str = Body(description="The new name to set.")):
     """Change the name for a universe."""
 
     success, reason = apps_dmx.activate_dmx()
     if not success:
         return {"success": False, "reason": reason}
 
-    apps_dmx.get_universe(uuid_str=uuid).name = new_name
+    apps_config.dmx_universe.name = new_name
     apps_dmx.write_dmx_configuration()
 
     return {"success": True}
 
 
-@router.delete("/universe/{universe_uuid}")
+@router.delete("/universe")
 async def delete_dmx_universe(universe_uuid: str):
     success, reason = apps_dmx.activate_dmx()
     if not success:
         return {"success": False, "reason": reason}
 
-    universe = apps_dmx.get_universe(uuid_str=universe_uuid)
+    universe = apps_config.dmx_universe
     if universe is None:
         return {"success": False, "reason": "Universe does not exist"}
     universe.delete()

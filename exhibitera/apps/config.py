@@ -18,7 +18,7 @@ software_version: dict[str, int] = {}
 debug: bool = True
 
 # DMX resources
-dmx_universes: list = []
+dmx_universe = None
 dmx_groups: list = []
 dmx_fixtures = []
 dmx_active: bool = False

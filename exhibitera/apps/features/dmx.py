@@ -1,4 +1,5 @@
 # Standard imports
+import logging
 import os.path
 from typing import Any, Union
 import uuid
@@ -57,14 +58,14 @@ class DMXUniverse:
     def delete(self):
         """Remove the universe."""
 
-        # Delete each fixture
-        for key in self.fixtures.copy():
-            self.fixtures[key].delete()
-
         # Remove from apps_config
-        apps_config.dmx_universes = [x for x in apps_config.dmx_universes if x.uuid != self.uuid]
+        apps_config.dmx_universe = None
+        apps_config.dmx_groups = []
+        apps_config.dmx_fixtures = []
+        apps_config.dmx_active = False
 
-        write_dmx_configuration()
+        config_path = ex_files.get_path(["configuration", "dmx.json"], user_file=True)
+        os.remove(config_path)
 
         # Stop the controller
         self.controller.close()
@@ -148,10 +149,10 @@ class DMXFixture(Fixture):
         self.groups: set[str] = set()
 
     def __repr__(self, *args, **kwargs):
-        return f"[DMXFixture: '{self.name}' in universe '{get_universe(self.universe).name}' with channels {self.channel_usage}]"
+        return f"[DMXFixture: '{self.name}' with channels {self.channel_usage}]"
 
     def __str__(self, *args, **kwargs):
-        return f"[DMXFixture: '{self.name}' in universe '{get_universe(self.universe).name}' with channels {self.channel_usage}]"
+        return f"[DMXFixture: '{self.name}' with channels {self.channel_usage}]"
 
     def update(self,
                name: str | None = None,
@@ -182,7 +183,7 @@ class DMXFixture(Fixture):
             group = get_group(group_name)
             group.remove_fixture(self.uuid)
 
-        get_universe(self.universe).remove_fixture(self.uuid)
+        apps_config.dmx_universe.remove_fixture(self.uuid)
 
     def get_all_channel_values(self) -> dict[str, int]:
         """Return a dict with the current value of every channel."""
@@ -389,7 +390,13 @@ def create_universe(name: str,
                     device_details: dict[str, Any] = {},
                     dynamic_frame: bool = True,
                     uuid_str: str = "") -> Union[DMXUniverse, None]:
-    """Create a new DMXUniverse and add it to apps_config.dmx_universes."""
+    """Create a new DMXUniverse."""
+
+    if apps_config.dmx_universe is not None:
+        print("create_universe: error: DMX universe already exits.")
+        if apps_config.debug:
+            logging.error("create_universe: error: DMX universe already exits.")
+        return None
 
     try:
         new_universe = DMXUniverse(name,
@@ -398,7 +405,7 @@ def create_universe(name: str,
                                    dynamic_frame=dynamic_frame,
                                    uuid_str=uuid_str)
 
-        apps_config.dmx_universes.append(new_universe)
+        apps_config.dmx_universe = new_universe
     except IOError as e:
         if e.args[0] == "No such device":
             return None
@@ -435,28 +442,16 @@ def get_scene(uuid_str: str) -> tuple[DMXScene | None, DMXFixtureGroup | None]:
     return None, None
 
 
-def get_universe(uuid_str: str) -> Union[DMXUniverse, None]:
-    """Return the matching DMXUniverse."""
-
-    for universe in apps_config.dmx_universes:
-        if universe.uuid == uuid_str:
-            return universe
-
-
 def write_dmx_configuration() -> None:
-    """Use apps_config.dmx_universes and apps_config.dmx_groups to write dmx.json."""
+    """Use apps_config.dmx_universe and apps_config.dmx_groups to write dmx.json."""
 
-    universe_list = []
     group_list = []
-
-    for universe in apps_config.dmx_universes:
-        universe_list.append(universe.get_dict())
 
     for group in apps_config.dmx_groups:
         group_list.append(group.get_dict())
 
     config_dict = {
-        "universes": universe_list,
+        "universe": apps_config.dmx_universe.get_dict(),
         "groups": group_list
     }
 
@@ -466,7 +461,7 @@ def write_dmx_configuration() -> None:
 
 
 def read_dmx_configuration() -> tuple[bool, str]:
-    """Read dmx.json and turn it into a set of universes, fixtures, and groups."""
+    """Read dmx.json and turn it into a set of fixtures, and groups."""
 
     config_path = ex_files.get_path(
         ["configuration", "dmx.json"], user_file=True)
@@ -475,26 +470,25 @@ def read_dmx_configuration() -> tuple[bool, str]:
 
     config_dict = ex_files.load_json(config_path)
 
-    # First, create any universes
-    apps_config.dmx_universes = []
-    universe_config = config_dict["universes"]
+    # First, create the universe
+    apps_config.dmx_universe = None
+    uni_dict = config_dict["universe"]
 
-    for entry in universe_config:
-        details = {
-            "address": entry["address"],
-            "bus": entry['bus'],
-            "serial_number": entry["serial_number"]
-        }
-        uni = create_universe(entry["name"],
-                              controller=entry["controller"],
-                              device_details=details,
-                              uuid_str=entry["uuid"])
-        if uni is None:
-            return False, "device_not_found"
+    details = {
+        "address": uni_dict["address"],
+        "bus": uni_dict['bus'],
+        "serial_number": uni_dict["serial_number"]
+    }
+    uni = create_universe(uni_dict["name"],
+                          controller=uni_dict["controller"],
+                          device_details=details,
+                          uuid_str=uni_dict["uuid"])
+    if uni is None:
+        return False, "device_not_found"
 
-        for fix in entry["fixtures"]:
-            uni.create_fixture(
-                fix["name"], fix["start_channel"], fix["channels"], uuid_str=fix["uuid"])
+    for fix in uni_dict["fixtures"]:
+        uni.create_fixture(
+            fix["name"], fix["start_channel"], fix["channels"], uuid_str=fix["uuid"])
 
     # Then, create any groups
     apps_config.dmx_groups = []

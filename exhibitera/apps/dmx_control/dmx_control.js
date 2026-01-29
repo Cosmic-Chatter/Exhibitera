@@ -168,7 +168,7 @@ class DMXFixture {
     }
 
     // Remove from universe
-    getUniverseByUUID(this.universe).removeFixture(this.uuid)
+    universe.removeFixture(this.uuid)
   }
 
   setChannelValues (valueDict) {
@@ -185,7 +185,6 @@ class DMXFixture {
     // Loop the channels and update their GUI representations
     for (const key of Object.keys(this.channelValues)) {
       // Update the universe representation
-      const universe = getUniverseByUUID(this.universe)
       $('#' + universe.safeName + '_fixture_' + this.uuid + '_' + 'channelValue_' + key).val(this.channelValues[key])
       $('#' + universe.safeName + '_fixture_' + this.uuid + '_' + 'channelSlider_' + key).val(this.channelValues[key])
       updatecolorPicker(universe.safeName, this.uuid)
@@ -357,7 +356,7 @@ class DMXFixture {
     const universeCol = document.createElement('div')
     universeCol.classList = 'col-6 fst-italic pt-1'
     universeCol.style.backgroundColor = '#28587B'
-    universeCol.innerHTML = getUniverseByUUID(this.universe).name
+    universeCol.innerHTML = universe.name
     row.appendChild(universeCol)
 
     const channelsCol = document.createElement('div')
@@ -1024,7 +1023,6 @@ function updatecolorPicker (collectionName, uuid) {
 function showUniverseEditModal (universeName, universeUUID) {
   // Prepare the editUniverseModal and then show it.
 
-  const universe = getUniverseByUUID(universeUUID)
   const editUniverseModal = document.getElementById('editUniverseModal')
   $('#editUniverseModal').data('uuid', universeUUID)
   $('#editUniverseModal').data('name', universe.name)
@@ -1076,7 +1074,7 @@ function updateUniverseFromModal () {
       }
     })
       .then(() => {
-        getUniverseByUUID(uuid).name = newName
+        universe.name = newName
       })
     )
   }
@@ -1096,7 +1094,6 @@ function showAddFixtureModal (universeUUID, fixture = null) {
   // If a fixture is passed to 'fixture', the modal will be
   // configuerd to edit the fixture rather than add a new one.
 
-  const universe = getUniverseByUUID(universeUUID)
   $('#addFixtureModal').data('universeUUID', universeUUID)
 
   // Reset common fields
@@ -1149,11 +1146,9 @@ function cloneFixture (fixtureToClone = null) {
   // Use an existing fixture to populate the addFixtureModal
   // Optionally pass a DMXFixture or the value of the select will be used.
 
-  const universe = getUniverseByUUID($('#addFixtureModal').data('universeUUID'))
   if (fixtureToClone == null) {
     fixtureToClone = universe.getFixtureByUUID(document.getElementById('cloneFixtureList').value)
   }
-  console.log(fixtureToClone)
   const addFixtureChannelList = document.getElementById('addFixtureChannelList')
 
   for (let channel of fixtureToClone.channelList) {
@@ -1192,16 +1187,14 @@ function showEditGroupModal (groupUUID) {
   // Populate the list of fixtures
   const fixtureRow = $('#editGroupFixtureRow')
   fixtureRow.empty()
-  for (const universe of universeList) {
-    const header = document.createElement('div')
-    header.classList = 'h5 col-12'
-    header.innerHTML = universe.name
-    fixtureRow.append(header)
-    for (const fixtureName of Object.keys(universe.fixtures)) {
-      const fixture = universe.fixtures[fixtureName]
+  const header = document.createElement('div')
+  header.classList = 'h5 col-12'
+  header.innerHTML = universe.name
+  fixtureRow.append(header)
+  for (const fixtureName of Object.keys(universe.fixtures)) {
+    const fixture = universe.fixtures[fixtureName]
 
-      fixtureRow.append(createFixtureCheckbox(fixture, group))
-    }
+    fixtureRow.append(createFixtureCheckbox(fixture, group))
   }
 
   exUtilities.showModal('#editGroupModal')
@@ -1543,7 +1536,7 @@ function addFixtureFromModal () {
     definition.fixture_uuid = fixtureUUID
   }
 
-  const channelsFree = getUniverseByUUID(universeUUID).checkIfChannelsFree(startChannel, channelList.length, fixtureUUID)
+  const channelsFree = universe.checkIfChannelsFree(startChannel, channelList.length, fixtureUUID)
   if (channelsFree === false) {
     document.getElementById('addFixtureChannelsOccupiedWarning').style.display = 'block'
     return
@@ -1575,9 +1568,7 @@ function addFixtureFromModal () {
 function createUniverse (name, uuid, controller) {
   // Create a new universe and add it to the global list.
 
-  const newUniverse = new DMXUniverse(name, uuid, controller)
-  universeList.push(newUniverse)
-  return newUniverse
+  universe = new DMXUniverse(name, uuid, controller)
 }
 
 function deleteUniverse (uuid) {
@@ -1618,11 +1609,9 @@ function deleteGroup (uuid) {
         })
 
         // Cycle the fixtures and remove any reference to this group
-        for (const universe of universeList) {
-          for (const key of Object.keys(universe.fixtures)) {
-            const fixture = universe.fixtures[key]
-            fixture.groups = fixture.groups.filter(e => e !== uuid)
-          }
+        for (const key of Object.keys(universe.fixtures)) {
+          const fixture = universe.fixtures[key]
+          fixture.groups = fixture.groups.filter(e => e !== uuid)
         }
         exUtilities.hideModal('#editGroupModal')
         rebuildGroupsInterface()
@@ -1658,14 +1647,6 @@ function updateFunc (update) {
   }
 }
 
-function getUniverseByUUID (uuid) {
-  let matchedUniverse = null
-  for (const universe of universeList) {
-    if (universe.uuid === uuid) matchedUniverse = universe
-  }
-  return matchedUniverse
-}
-
 function getGroupByUUID (uuid) {
   let matchedGroup = null
   for (const group of groupList) {
@@ -1675,12 +1656,7 @@ function getGroupByUUID (uuid) {
 }
 
 function getFixtureByUUID (uuid) {
-  let matchedFixture = null
-  for (const universe of universeList) {
-    const fixture = universe.getFixtureByUUID(uuid)
-    if (fixture != null) matchedFixture = fixture
-  }
-  return matchedFixture
+  return universe.getFixtureByUUID(uuid) 
 }
 
 function getDMXStatus () {
@@ -1710,7 +1686,6 @@ function getDMXConfiguration () {
     endpoint: '/DMX/configuration'
   })
     .then((response) => {
-      universeList.length = 0
       groupList.length = 0
       configuration = response.configuration
 
@@ -1720,22 +1695,19 @@ function getDMXConfiguration () {
         document.getElementById('missingDeviceWarning').style.display = 'none'
       }
 
-      if (configuration.universes.length > 0) {
-        for (const universeDef of configuration.universes) {
+      if (configuration.universe != null) {
           // First, create the universe
-          const universeObj = createUniverse(universeDef.name, universeDef.uuid, universeDef.controller)
+          const universeDef = configuration.universe
+          createUniverse(universeDef.name, universeDef.uuid, universeDef.controller)
           // Then, loop the fixtures and add each.
           for (const fixture of universeDef.fixtures) {
-            universeObj.addFixture(fixture)
+            universe.addFixture(fixture)
           }
-        }
         rebuildUniverseInterface()
         document.getElementById('noUniverseWarning').style.display = 'none'
-        document.getElementById('createNewUniverseButton').style.display = 'block'
       } else {
         document.getElementById('universeRow').innerText = ''
         document.getElementById('noUniverseWarning').style.display = 'block'
-        document.getElementById('createNewUniverseButton').style.display = 'none'
       }
     })
     .then(() => {
@@ -1763,26 +1735,24 @@ function getDMXConfiguration () {
 }
 
 function rebuildUniverseInterface () {
-  // Take the list of universes and add the HTML representation of each.
+  // Build an HTML representation of the universe
 
   const universeRow = document.getElementById('universeRow')
 
   document.getElementById('noUniverseWarning').style.display = 'none'
   universeRow.innerHTML = ''
-  for (const universe of universeList) {
-    universeRow.appendChild(universe.createHTML())
-    // Then, bind the color picker to each element.
-    for (const fixtureName of Object.keys(universe.fixtures)) {
-      const fixture = universe.fixtures[fixtureName]
-      Coloris({
-        alpha: false,
-        theme: 'pill',
-        themeMode: 'dark',
-        format: 'rgb',
-        el: '#' + universe.safeName + '_fixture_' + fixture.uuid + '_' + 'colorPicker',
-        wrap: true
-      })
-    }
+  universeRow.appendChild(universe.createHTML())
+  // Then, bind the color picker to each element.
+  for (const fixtureName of Object.keys(universe.fixtures)) {
+    const fixture = universe.fixtures[fixtureName]
+    Coloris({
+      alpha: false,
+      theme: 'pill',
+      themeMode: 'dark',
+      format: 'rgb',
+      el: '#' + universe.safeName + '_fixture_' + fixture.uuid + '_' + 'colorPicker',
+      wrap: true
+    })
   }
 }
 
@@ -1922,7 +1892,6 @@ document.getElementById('editUniverseModalSaveButton')?.addEventListener('click'
 document.getElementById('cloneFixtureButton').addEventListener('click', () => {
   cloneFixture()
 })
-document.getElementById('createNewUniverseButton').addEventListener('click', showAddUniverseMOdal)
 
 // Group tab
 document.getElementById('createNewGroupFromWarningButton')?.addEventListener('click', () => showEditGroupModal(''))
@@ -1952,7 +1921,7 @@ exCommon.config.updateParser = updateFunc // Function to read app-specific updat
 exCommon.config.exhibiteraAppID = 'dmx_control'
 exCommon.config.helperAddress = window.location.origin
 
-const universeList = []
+let universe = null
 let groupList = []
 
 exCommon.config.debug = true
