@@ -84,62 +84,12 @@ class DMXUniverse {
   createHTML () {
     // Create the HTML representation for this universe.
 
-    const col = document.createElement('div')
-    col.classList = 'col-12'
-
-    const row1 = document.createElement('div')
-    row1.classList = 'row bg-secondary mx-0 rounded-top'
-    col.appendChild(row1)
-
-    const nameCol = document.createElement('div')
-    nameCol.classList = 'col-6 col-md-6 col-lg-8 h4 px-2 py-2 mb-0'
-    nameCol.innerHTML = this.name
-    row1.appendChild(nameCol)
-
-    const editButtonCol = document.createElement('div')
-    editButtonCol.classList = 'col-3 col-md-3 col-lg-2 align-self-center pe-1'
-    row1.appendChild(editButtonCol)
-
-    const editButton = document.createElement('button')
-    editButton.classList = 'btn btn-primary w-100'
-    editButton.innerHTML = `
-      <span class='d-none d-md-inline'>Edit universe</span>
-      <span class='d-inline d-md-none'>Edit</span>
-    `
-    editButton.addEventListener('click', () => {
-      showUniverseEditModal(this.name, this.uuid)
-    })
-    editButtonCol.appendChild(editButton)
-
-    const addButtonCol = document.createElement('div')
-    addButtonCol.classList = 'col-3 col-md-3 col-lg-2 align-self-center pe-1'
-    row1.appendChild(addButtonCol)
-
-    const addButton = document.createElement('button')
-    addButton.classList = 'btn btn-primary w-100'
-    addButton.innerHTML = `
-    <span class='d-none d-md-inline'>Add fixture</span>
-    <span class='d-inline d-md-none'>Add</span>
-  `
-    addButton.addEventListener('click', () => {
-      showAddFixtureModal(this.uuid)
-    })
-    addButtonCol.appendChild(addButton)
-
-    const row2 = document.createElement('div')
-    row2.classList = 'row'
-    col.appendChild(row2)
-
-    $(nameCol).click(() => {
-      $(row2).slideToggle(300)
-    })
-
+    const universeRow = document.getElementById('universeRow')
+    universeRow.innerHTML = ''
     for (const key of Object.keys(this.fixtures)) {
       const fixture = this.fixtures[key]
-      row2.appendChild(fixture.createHTML(this.safeName))
+      universeRow.appendChild(fixture.createHTML(this.safeName))
     }
-
-    return col
   }
 }
 
@@ -307,7 +257,6 @@ class DMXFixture {
     colorPicker.classList = 'coloris w-100'
     colorPicker.setAttribute('id', collectionName + '_fixture_' + this.uuid + '_' + 'colorPicker')
     colorPicker.setAttribute('type', 'text')
-    // colorPicker.setAttribute('data-coloris', true)
     colorPicker.value = 'rgb(255,255,255)'
     colorPicker.addEventListener('input', () => {
       onColorChangeFromPicker(collectionName, thisUUID, false)
@@ -340,27 +289,41 @@ class DMXFixture {
     })
     locateCol.appendChild(locateBtn)
 
-    const editCol = document.createElement('div')
-    editCol.classList = 'col-6 col-md-4 offset-md-4'
-    optionsRow.appendChild(editCol)
+    const gearCol = document.createElement('div')
+    gearCol.classList = 'col-2 col-sm-4 col-md-3 offset-4 offset-sm-2 offset-md-5'
+    optionsRow.appendChild(gearCol)
+
+    const dropdown = document.createElement('div')
+    dropdown.classList = 'dropdown'
+    gearCol.appendChild(dropdown)
+
+    const gearButton = document.createElement('button')
+    gearButton.classList = 'btn btn-secondary btn-sm dropdown-toggle w-100'
+    gearButton.setAttribute('type', 'button')
+    gearButton.setAttribute('data-bs-toggle', 'dropdown')
+    gearButton.setAttribute('aria-expanded', false)
+    gearButton.innerText = '⚙'
+    dropdown.appendChild(gearButton)
+
+    const gearMenu = document.createElement('ul')
+    gearMenu.classList = 'dropdown-menu'
+    gearMenu.innerHTML = `
+    <span class="dropdown-item disabled fst-italic">Channels ${String(this.startChannel)} - ${String(this.startChannel + this.channelList.length - 1)}</span>
+    <hr class="dropdown-divider">
+    `
+    dropdown.appendChild(gearMenu)
 
     const editButton = document.createElement('button')
-    editButton.classList = 'btn btn-sm btn-info w-100'
-    editButton.innerHTML = 'Edit'
+    editButton.classList = 'dropdown-item'
+    editButton.innerHTML = 'Edit fixture'
     const thisFixture = this
     editButton.addEventListener('click', () => {
-      showAddFixtureModal(thisFixture.universe, thisFixture)
+      showAddFixtureModal(thisFixture)
     })
-    editCol.appendChild(editButton)
-
-    const universeCol = document.createElement('div')
-    universeCol.classList = 'col-6 fst-italic pt-1'
-    universeCol.style.backgroundColor = '#28587B'
-    universeCol.innerHTML = universe.name
-    row.appendChild(universeCol)
+    gearMenu.appendChild(editButton)
 
     const channelsCol = document.createElement('div')
-    channelsCol.classList = 'col-6 text-end pt-1'
+    channelsCol.classList = 'col pt-1'
     channelsCol.style.backgroundColor = '#28587B'
     channelsCol.innerHTML = `
       <span class='d-inline d-sm-none d-xl-inline'>Channels ${String(this.startChannel)} - ${String(this.startChannel + this.channelList.length - 1)} </span>
@@ -1089,12 +1052,10 @@ function updateUniverseFromModal () {
   exUtilities.hideModal('#editUniverseModal')
 }
 
-function showAddFixtureModal (universeUUID, fixture = null) {
+function showAddFixtureModal (fixture = null) {
   // Prepare the addFixtureModal and then show it.
   // If a fixture is passed to 'fixture', the modal will be
   // configuerd to edit the fixture rather than add a new one.
-
-  $('#addFixtureModal').data('universeUUID', universeUUID)
 
   // Reset common fields
   document.getElementById('addFixtureChannelList').innerHTML = ''
@@ -1509,7 +1470,7 @@ function addFixtureFromModal () {
   // Collect the necessary information from the addFixtureModal and ask the helper to add or edit the fixture.
 
   const mode = $('#addFixtureModal').data('mode')
-  const universeUUID = $('#addFixtureModal').data('universeUUID')
+  const universeUUID = universe.uuid
 
   const channelList = []
   for (const el of document.getElementById('addFixtureChannelList').childNodes) {
@@ -1737,11 +1698,9 @@ function getDMXConfiguration () {
 function rebuildUniverseInterface () {
   // Build an HTML representation of the universe
 
-  const universeRow = document.getElementById('universeRow')
-
   document.getElementById('noUniverseWarning').style.display = 'none'
-  universeRow.innerHTML = ''
-  universeRow.appendChild(universe.createHTML())
+ 
+  universe.createHTML()
   // Then, bind the color picker to each element.
   for (const fixtureName of Object.keys(universe.fixtures)) {
     const fixture = universe.fixtures[fixtureName]
@@ -1869,6 +1828,9 @@ function addUniverseFromModal () {
 // Add event listeners
 // Universe tab
 document.getElementById('showAddUniverseModalButton')?.addEventListener('click', showAddUniverseMOdal)
+document.getElementById('addFixtureButton').addEventListener('click', () => {
+  showAddFixtureModal()
+})
 document.getElementById('addFixtureAddChannelButton')?.addEventListener('click', addChannelToModal)
 document.getElementById('addFixtureFromModalButton')?.addEventListener('click', addFixtureFromModal)
 document.getElementById('addFixtureStartingChannel').addEventListener('input', updateModalChannelCounts)
