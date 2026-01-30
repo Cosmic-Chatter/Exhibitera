@@ -239,10 +239,14 @@ class DMXFixture {
     col.classList = 'col-12 col-sm-6 col-lg-4 mt-2'
     col.setAttribute('id', 'Fixture_' + this.uuid + '_for_' + collectionName)
 
+    const rounded = document.createElement('div')
+    rounded.classList = 'border rounded-3 overflow-hidden shadow-sm'
+    col.appendChild(rounded)
+
     const row = document.createElement('div')
     row.classList = 'row mx-0'
     row.style.backgroundColor = '#28587B'
-    col.appendChild(row)
+    rounded.appendChild(row)
 
     const headerText = document.createElement('div')
     headerText.classList = 'col-8 fixture-header'
@@ -322,15 +326,6 @@ class DMXFixture {
     })
     gearMenu.appendChild(editButton)
 
-    const channelsCol = document.createElement('div')
-    channelsCol.classList = 'col pt-1'
-    channelsCol.style.backgroundColor = '#28587B'
-    channelsCol.innerHTML = `
-      <span class='d-inline d-sm-none d-xl-inline'>Channels ${String(this.startChannel)} - ${String(this.startChannel + this.channelList.length - 1)} </span>
-      <span class='d-none d-sm-inline d-xl-none'>Ch. ${String(this.startChannel)} - ${String(this.startChannel + this.channelList.length - 1)} </span>
-    `
-    row.appendChild(channelsCol)
-
     const expandMessage = document.createElement('div')
     expandMessage.classList = 'col-12 text-center fst-italic small'
     expandMessage.style.backgroundColor = '#28587B'
@@ -340,7 +335,7 @@ class DMXFixture {
 
     const row2 = document.createElement('div')
     row2.classList = 'row mx-0'
-    col.appendChild(row2)
+    rounded.appendChild(row2)
 
     for (const channel of this.channelList) {
       const channelCol = document.createElement('div')
@@ -568,7 +563,7 @@ class DMXFixtureGroup {
       channelSlider.addEventListener('input', (e) => {
         const value = parseInt(e.target.value)
 
-        $('#' + 'meta_fixture_' + thisUUID + '_' + 'channelValue_' + channel).val(value)
+        document.getElementById('meta_fixture_' + thisUUID + '_' + 'channelValue_' + channel).value = value
         updatecolorPicker('meta', thisUUID)
 
         // Update the fixtures and send a change to the helper
@@ -600,7 +595,7 @@ class DMXFixtureGroup {
       channelValue.addEventListener('input', e => {
         const value = parseInt(e.target.value)
 
-        $('#' + 'meta_fixture_' + thisUUID + '_' + 'channelSlider_' + channel).val(value)
+        document.getElementById('meta_fixture_' + thisUUID + '_' + 'channelSlider_' + channel).value = value
         updatecolorPicker('meta', thisUUID)
 
         // Update the fixtures and send a change to th  e helper
@@ -911,7 +906,9 @@ class DMXScene {
 function onColorChangeFromPicker (collectionName, uuid, meta = true) {
   // When is a color is changed from the picker, update the interface to match.
 
-  const newColor = $('#' + collectionName + '_fixture_' + uuid + '_' + 'colorPicker').val()
+  const prefix = collectionName + '_fixture_' + uuid + '_'
+  const newColor = document.getElementById(prefix + 'colorPicker').value
+
   // newColor is a string of format 'rgb(123, 123, 132)'
   const colorSplit = newColor.slice(4, -1).split(',')
   const red = parseInt(colorSplit[0])
@@ -919,14 +916,14 @@ function onColorChangeFromPicker (collectionName, uuid, meta = true) {
   const blue = parseInt(colorSplit[2])
 
   // Set the sliders
-  $('#' + collectionName + '_fixture_' + uuid + '_' + 'channelValue_r').val(red)
-  $('#' + collectionName + '_fixture_' + uuid + '_' + 'channelValue_g').val(green)
-  $('#' + collectionName + '_fixture_' + uuid + '_' + 'channelValue_b').val(blue)
+  document.getElementById(prefix + 'channelValue_r').value = red
+  document.getElementById(prefix + 'channelValue_g').value = green
+  document.getElementById(prefix + 'channelValue_b').value = blue
 
   // Set the inputs
-  $('#' + collectionName + '_fixture_' + uuid + '_' + 'channelSlider_r').val(red)
-  $('#' + collectionName + '_fixture_' + uuid + '_' + 'channelSlider_g').val(green)
-  $('#' + collectionName + '_fixture_' + uuid + '_' + 'channelSlider_b').val(blue)
+  document.getElementById(prefix + 'channelSlider_r').value = red
+  document.getElementById(prefix + 'channelSlider_g').value = green
+  document.getElementById(prefix + 'channelSlider_b').value = blue
 
   if (meta === true) {
     // Send the update to the whole group
@@ -1617,7 +1614,7 @@ function getGroupByUUID (uuid) {
 }
 
 function getFixtureByUUID (uuid) {
-  return universe.getFixtureByUUID(uuid) 
+  return universe.getFixtureByUUID(uuid)
 }
 
 function getDMXStatus () {
@@ -1657,13 +1654,13 @@ function getDMXConfiguration () {
       }
 
       if (configuration.universe != null) {
-          // First, create the universe
-          const universeDef = configuration.universe
-          createUniverse(universeDef.name, universeDef.uuid, universeDef.controller)
-          // Then, loop the fixtures and add each.
-          for (const fixture of universeDef.fixtures) {
-            universe.addFixture(fixture)
-          }
+        // First, create the universe
+        const universeDef = configuration.universe
+        createUniverse(universeDef.name, universeDef.uuid, universeDef.controller)
+        // Then, loop the fixtures and add each.
+        for (const fixture of universeDef.fixtures) {
+          universe.addFixture(fixture)
+        }
         rebuildUniverseInterface()
         document.getElementById('noUniverseWarning').style.display = 'none'
       } else {
@@ -1699,7 +1696,7 @@ function rebuildUniverseInterface () {
   // Build an HTML representation of the universe
 
   document.getElementById('noUniverseWarning').style.display = 'none'
- 
+
   universe.createHTML()
   // Then, bind the color picker to each element.
   for (const fixtureName of Object.keys(universe.fixtures)) {
@@ -1835,7 +1832,7 @@ document.getElementById('addFixtureAddChannelButton')?.addEventListener('click',
 document.getElementById('addFixtureFromModalButton')?.addEventListener('click', addFixtureFromModal)
 document.getElementById('addFixtureStartingChannel').addEventListener('input', updateModalChannelCounts)
 document.getElementById('deleteFixtureFromModalButton').addEventListener('click', () => {
-const fixtureUUID = $('#addFixtureModal').data('fixtureUUID')
+  const fixtureUUID = $('#addFixtureModal').data('fixtureUUID')
 
   exCommon.makeHelperRequest({
     method: 'POST',
