@@ -63,8 +63,7 @@ async def get_dmx_status():
 @router.post("/fixture/create")
 async def create_dmx_fixture(name: str = Body(description="The name of the fixture."),
                              channels: list[str] = Body(description="A list of channel names."),
-                             start_channel: int = Body(description="The first channel to allocate."),
-                             universe: str = Body(description='The UUID of the universe this fixture belongs to.')):
+                             start_channel: int = Body(description="The first channel to allocate.")):
     """Create a new DMX fixture"""
 
     success, reason = apps_dmx.activate_dmx()
@@ -95,8 +94,8 @@ async def edit_dmx_fixture(fixture_uuid: str = Body(description="The UUID of the
     return {"success": True, "fixture": fixture.get_dict()}
 
 
-@router.post("/fixture/remove")
-async def remove_dmx_fixture(fixture_uuid: str = Body(description="The UUID of the fixture to remove.", embed=True)):
+@router.delete("/fixture/{fixture_uuid}")
+async def remove_dmx_fixture(fixture_uuid: str):
     """Remove the given DMX fixture from its universe and any groups"""
 
     success, reason = apps_dmx.activate_dmx()
@@ -105,7 +104,7 @@ async def remove_dmx_fixture(fixture_uuid: str = Body(description="The UUID of t
 
     fixture = apps_dmx.get_fixture(fixture_uuid)
     if fixture is None:
-        print(f"/DMX/fixture/remove: Cannot remove fixture {fixture_uuid}. It does not exist.")
+        print(f"Cannot remove fixture {fixture_uuid}. It does not exist.")
         return {"success": False, "reason": "Fixture does not exist."}
     fixture.delete()
     apps_dmx.write_dmx_configuration()
@@ -428,15 +427,13 @@ async def set_dmx_group_scene(group_uuid: str,
 
 
 @router.post("/universe/create")
-async def create_dmx_universe(name: str = Body(description="The name of the universe."),
-                              controller: str = Body(description="The type of this controller (OpenBMX or uDMX)."),
+async def create_dmx_universe(controller: str = Body(description="The type of this controller (OpenBMX or uDMX)."),
                               device_details: dict[str, Any] = Body(
                                   description="A dictionary of hardware details for the controller.")):
     """Create a new DMXUniverse."""
 
     apps_dmx.activate_dmx()
-    new_universe = apps_dmx.create_universe(name,
-                                            controller=controller,
+    new_universe = apps_dmx.create_universe(controller=controller,
                                             device_details=device_details)
     apps_dmx.write_dmx_configuration()
     apps_config.dmx_active = True
@@ -444,22 +441,8 @@ async def create_dmx_universe(name: str = Body(description="The name of the univ
     return {"success": True, "universe": new_universe.get_dict()}
 
 
-@router.post("/universe/rename")
-async def create_dmx_universe(new_name: str = Body(description="The new name to set.")):
-    """Change the name for a universe."""
-
-    success, reason = apps_dmx.activate_dmx()
-    if not success:
-        return {"success": False, "reason": reason}
-
-    apps_config.dmx_universe.name = new_name
-    apps_dmx.write_dmx_configuration()
-
-    return {"success": True}
-
-
 @router.delete("/universe")
-async def delete_dmx_universe(universe_uuid: str):
+async def delete_dmx_universe():
     success, reason = apps_dmx.activate_dmx()
     if not success:
         return {"success": False, "reason": reason}

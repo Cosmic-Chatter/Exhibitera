@@ -18,13 +18,11 @@ import exhibitera.apps.features.files as apps_files
 class DMXUniverse:
     """A DMX controller and up to 32 fixtures."""
 
-    def __init__(self, name: str,
-                 controller: str = "OpenDMX",
+    def __init__(self, controller: str = "OpenDMX",
                  device_details: dict[str, Any] = {},
                  dynamic_frame=True,
                  uuid_str: str = ""):
 
-        self.name: str = name
         self.fixtures: dict[str, DMXFixture] = {}
         self.controller: TransmittingController
         self.controller_type = controller
@@ -385,8 +383,7 @@ def create_group(name: str, uuid_str: str = '') -> DMXFixtureGroup:
     return new_group
 
 
-def create_universe(name: str,
-                    controller: str = "OpenDMX",
+def create_universe(controller: str = "OpenDMX",
                     device_details: dict[str, Any] = {},
                     dynamic_frame: bool = True,
                     uuid_str: str = "") -> Union[DMXUniverse, None]:
@@ -399,8 +396,7 @@ def create_universe(name: str,
         return None
 
     try:
-        new_universe = DMXUniverse(name,
-                                   controller=controller,
+        new_universe = DMXUniverse(controller=controller,
                                    device_details=device_details,
                                    dynamic_frame=dynamic_frame,
                                    uuid_str=uuid_str)
@@ -479,8 +475,7 @@ def read_dmx_configuration() -> tuple[bool, str]:
         "bus": uni_dict['bus'],
         "serial_number": uni_dict["serial_number"]
     }
-    uni = create_universe(uni_dict["name"],
-                          controller=uni_dict["controller"],
+    uni = create_universe(controller=uni_dict["controller"],
                           device_details=details,
                           uuid_str=uni_dict["uuid"])
     if uni is None:

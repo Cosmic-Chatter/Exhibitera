@@ -7,10 +7,8 @@ import * as exSetup from '../js/exhibitera_setup_common.js'
 class DMXUniverse {
   // A mirror for the DMXUniverse Python class
 
-  constructor (name, uuid, controller) {
-    this.name = name
+  constructor (uuid, controller) {
     this.uuid = uuid
-    this.safeName = name.replaceAll(' ', '_').replaceAll('.', '_').replaceAll('#', '_')
     this.controller = controller
     this.fixtures = {}
     this.channelMap = new Array(513).fill(false) // true means that channel is ocupied
@@ -88,7 +86,7 @@ class DMXUniverse {
     universeRow.innerHTML = ''
     for (const key of Object.keys(this.fixtures)) {
       const fixture = this.fixtures[key]
-      universeRow.appendChild(fixture.createHTML(this.safeName))
+      universeRow.appendChild(fixture.createHTML('universe'))
     }
   }
 }
@@ -135,15 +133,15 @@ class DMXFixture {
     // Loop the channels and update their GUI representations
     for (const key of Object.keys(this.channelValues)) {
       // Update the universe representation
-      $('#' + universe.safeName + '_fixture_' + this.uuid + '_' + 'channelValue_' + key).val(this.channelValues[key])
-      $('#' + universe.safeName + '_fixture_' + this.uuid + '_' + 'channelSlider_' + key).val(this.channelValues[key])
-      updatecolorPicker(universe.safeName, this.uuid)
+      document.getElementById('universe_fixture_' + this.uuid + '_' + 'channelValue_' + key).value = this.channelValues[key]
+      document.getElementById('universe_fixture_' + this.uuid + '_' + 'channelSlider_' + key).value = this.channelValues[key]
+      updatecolorPicker('universe', this.uuid)
 
       // Update the group(s) representation
       for (const groupUUID of this.groups) {
         const group = getGroupByUUID(groupUUID)
-        $('#' + group.safeName + '_fixture_' + this.uuid + '_' + 'channelValue_' + key).val(this.channelValues[key])
-        $('#' + group.safeName + '_fixture_' + this.uuid + '_' + 'channelSlider_' + key).val(this.channelValues[key])
+        document.getElementById(group.safeName + '_fixture_' + this.uuid + '_' + 'channelValue_' + key).value = this.channelValues[key]
+        document.getElementById(group.safeName + '_fixture_' + this.uuid + '_' + 'channelSlider_' + key).value = this.channelValues[key]
         updatecolorPicker(group.safeName, this.uuid)
       }
     }
@@ -334,7 +332,7 @@ class DMXFixture {
     row.appendChild(expandMessage)
 
     const row2 = document.createElement('div')
-    row2.classList = 'row mx-0'
+    row2.classList = 'row mx-0 is-expanded'
     rounded.appendChild(row2)
 
     for (const channel of this.channelList) {
@@ -385,16 +383,27 @@ class DMXFixture {
       channelValueCol.appendChild(channelValue)
     }
 
-    $([headerText, expandMessage]).click(() => {
-      $(row2).slideToggle({
-        duration: 300,
-        complete: () => {
-          if (expandMessage.innerHTML === 'Tap to collapse') {
-            expandMessage.innerHTML = 'Tap to expand'
-          } else {
-            expandMessage.innerHTML = 'Tap to collapse'
-          }
-        }
+    [headerText, expandMessage].forEach(el => {
+      el.addEventListener('click', () => {
+        const isExpanding = !row2.classList.contains('is-expanded')
+
+        // 1. Get the exact height of the content
+        const startHeight = row2.offsetHeight
+        const endHeight = isExpanding ? row2.scrollHeight : 0
+
+        // 2. Animate between the two values
+        row2.animate([
+          { height: `${startHeight}px`, opacity: isExpanding ? 0 : 1 },
+          { height: `${endHeight}px`, opacity: isExpanding ? 1 : 0 }
+        ], {
+          duration: 300,
+          easing: 'ease-out',
+          fill: 'forwards' // Keeps the element at the endHeight
+        })
+
+        // 3. Update State and Text
+        row2.classList.toggle('is-expanded')
+        expandMessage.innerHTML = isExpanding ? 'Tap to collapse' : 'Tap to expand'
       })
     })
 
@@ -942,6 +951,7 @@ function onColorChangeFromPicker (collectionName, uuid, meta = true) {
 
 function onChannelSliderChange (collectionName, uuid, channel, value) {
   // When the slider changes, update the number field.
+
   $('#' + collectionName + '_fixture_' + uuid + '_' + 'channelValue_' + channel).val(value)
   updatecolorPicker(collectionName, uuid)
 
@@ -980,75 +990,6 @@ function updatecolorPicker (collectionName, uuid) {
   }
 }
 
-function showUniverseEditModal (universeName, universeUUID) {
-  // Prepare the editUniverseModal and then show it.
-
-  const editUniverseModal = document.getElementById('editUniverseModal')
-  $('#editUniverseModal').data('uuid', universeUUID)
-  $('#editUniverseModal').data('name', universe.name)
-
-  document.getElementById('editUniverseModalName').innerHTML = universeName
-  document.getElementById('editUniverseModalNameInput').value = universeName
-
-  // Populate the list of fixtures
-  const fixtureRow = $('#editUniverseFixtureRow')
-  fixtureRow.empty()
-  for (const fixtureName of Object.keys(universe.fixtures)) {
-    const fixture = universe.fixtures[fixtureName]
-    fixtureRow.append(createFixtureCheckbox(fixture, universe))
-  }
-
-  exUtilities.showModal('#editUniverseModal')
-}
-
-function updateUniverseFromModal () {
-  // Gather information from the editUniverseModal and send it to Hub to make an update.
-
-  const uuid = $('#editUniverseModal').data('uuid')
-  const currentName = $('#editUniverseModal').data('name')
-
-  const promiseList = []
-
-  // Get all the checkboxes for the fixtures and iterate through them to find unchecked ones.
-  const fixtureChecks = document.querySelectorAll('#editUniverseFixtureRow > div > div > input')
-  for (const fixture of fixtureChecks) {
-    if (fixture.checked === false) {
-      const fixtureUUID = fixture.getAttribute('data-uuid')
-      promiseList.push(exCommon.makeHelperRequest({
-        method: 'POST',
-        endpoint: '/DMX/fixture/remove',
-        params: { fixture_uuid: fixtureUUID }
-      }))
-    }
-  }
-
-  // Change the name
-  const newName = document.getElementById('editUniverseModalNameInput').value
-  if (newName !== currentName) {
-    promiseList.push(exCommon.makeHelperRequest({
-      method: 'POST',
-      endpoint: '/DMX/universe/rename',
-      params: {
-        uuid,
-        new_name: newName
-      }
-    })
-      .then(() => {
-        universe.name = newName
-      })
-    )
-  }
-
-  // Once all the promises have resolved, rebuild the interface
-  if (promiseList.length > 0) {
-    Promise.all(promiseList)
-      .then(() => {
-        getDMXConfiguration()
-      })
-  }
-  exUtilities.hideModal('#editUniverseModal')
-}
-
 function showAddFixtureModal (fixture = null) {
   // Prepare the addFixtureModal and then show it.
   // If a fixture is passed to 'fixture', the modal will be
@@ -1059,10 +1000,11 @@ function showAddFixtureModal (fixture = null) {
   document.getElementById('addFixtureFromModalButton').style.display = 'none'
   document.getElementById('addFixtureChannelsOccupiedWarning').style.display = 'none'
 
+  const addFixtureModal = document.getElementById('addFixtureModal')
   // Set up fields by mode
   if (fixture == null) {
     // Add a new fixture
-    $('#addFixtureModal').data('mode', 'add')
+    addFixtureModal.dataset.mode = 'add'
     document.getElementById('addFixtureName').value = ''
     document.getElementById('addFixtureFromModalButton').innerHTML = 'Add'
     document.getElementById('deleteFixtureFromModalButton').style.display = 'none'
@@ -1085,8 +1027,8 @@ function showAddFixtureModal (fixture = null) {
     }
   } else {
     // Update an existing fixture
-    $('#addFixtureModal').data('mode', 'edit')
-    $('#addFixtureModal').data('fixtureUUID', fixture.uuid)
+    addFixtureModal.dataset.mode = 'edit'
+    addFixtureModal.dataset.fixtureUUID = fixture.uuid
     document.getElementById('addFixtureName').value = fixture.name
     document.getElementById('addFixtureFromModalButton').innerHTML = 'Save'
     document.getElementById('addFixtureStartingChannel').value = fixture.startChannel
@@ -1140,7 +1082,7 @@ function showEditGroupModal (groupUUID) {
     document.getElementById('editGroupModalDeleteButton').style.display = 'block'
   }
 
-  $('#editGroupModal').data('group', groupUUID)
+  document.getElementById('editGroupModal').dataset.groupUUID = groupUUID
 
   // Populate the list of fixtures
   const fixtureRow = $('#editGroupFixtureRow')
@@ -1161,15 +1103,15 @@ function showEditGroupModal (groupUUID) {
 function editGroupFromModal () {
   // Called when the Save button is pressed in the editGroupModal
 
-  const groupUUID = $('#editGroupModal').data('group')
+  const groupUUID = document.getElementById('editGroupModal').dataset.groupUUID
 
-  const fixturesElements = $('#editGroupFixtureRow').find('.form-check-input ').toArray()
+  const fixturesElements = document.getElementById('editGroupFixtureRow').querySelectorAll('.form-check-input')
 
   const fixturesToAdd = []
   const fixturesToAddUUID = []
   for (const element of fixturesElements) {
-    if ($(element).prop('checked') === true) {
-      const fixture = getFixtureByUUID($(element).data('uuid'))
+    if (element.checked === true) {
+      const fixture = getFixtureByUUID(element.dataset.uuid)
       fixturesToAdd.push(fixture)
       fixturesToAddUUID.push(fixture.uuid)
     }
@@ -1230,29 +1172,31 @@ function showEditSceneModal (sceneName, groupUUID, uuid = '') {
 
   const group = getGroupByUUID(groupUUID)
   const scene = group.getSceneByName(sceneName)
-  $('#editSceneModal').data('group', group)
-  $('#editSceneModal').data('uuid', uuid)
 
-  $('#editSceneFixtureList').empty()
+  const editSceneModal = document.getElementById('editSceneModal')
+  const editSceneFixtureList = document.getElementById('editSceneFixtureList')
+  editSceneModal.dataset.groupUUID = group.uuid
+  editSceneModal.dataset.uuid = uuid
+
+  editSceneFixtureList.innerText = ''
   for (const fixtureName of Object.keys(group.fixtures)) {
     const fixture = group.getFixtureByName(fixtureName)
-    $('#editSceneFixtureList').append(createFixtureCheckbox(fixture, scene))
+    editSceneFixtureList.appendChild(createFixtureCheckbox(fixture, scene))
   }
 
-  $('#editSceneModalSceneName').val(sceneName)
+  document.getElementById('editSceneModalSceneName').value = sceneName
 
   if (uuid !== '') {
     // We are editing an existing scene
-    $('#editSceneModalDurationInput').val(scene.duration)
-
-    $('#editSceneModalTitle').html('Edit scene: ' + sceneName)
-    $('#editSceneModalSaveButton').html('Save')
-    $('#editSceneModalDeleteButton').show()
+    document.getElementById('editSceneModalDurationInput').value = scene.duration
+    document.getElementById('editSceneModalTitle').innerText = 'Edit scene: ' + sceneName
+    document.getElementById('editSceneModalSaveButton').innerText = 'Save'
+    document.getElementById('editSceneModalDeleteButton').style.display = 'block'
   } else {
-    $('#editSceneModalDurationInput').val(0)
-    $('#editSceneModalTitle').html('Add scene')
-    $('#editSceneModalSaveButton').html('Create')
-    $('#editSceneModalDeleteButton').hide()
+    document.getElementById('editSceneModalDurationInput').value = 0
+    document.getElementById('editSceneModalTitle').innerText = 'Add scene'
+    document.getElementById('editSceneModalSaveButton').innerText = 'Create'
+    document.getElementById('editSceneModalDeleteButton').style.display = 'none'
   }
 
   exUtilities.showModal('#editSceneModal')
@@ -1261,16 +1205,18 @@ function showEditSceneModal (sceneName, groupUUID, uuid = '') {
 function editSceneFromModal () {
   // Save the scene changse from the modal.
 
-  const sceneName = $('#editSceneModalSceneName').val().trim()
-  const duration = parseInt($('#editSceneModalDurationInput').val())
-  const checkboxes = $('#editSceneFixtureList').find('.form-check-input').toArray()
-  const groupUUID = $('#editSceneModal').data('group').uuid
-  const uuid = $('#editSceneModal').data('uuid')
+  const editSceneModal = document.getElementById('editSceneModal')
+
+  const sceneName = document.getElementById('editSceneModalSceneName').value.trim()
+  const duration = parseInt(document.getElementById('editSceneModalDurationInput').value)
+  const checkboxes = document.getElementById('editSceneFixtureList').querySelectorAll('.form-check-input')
+  const groupUUID = editSceneModal.dataset.groupUUID
+  const uuid = editSceneModal.dataset.uuid
 
   const sceneDict = {}
   for (const box of checkboxes) {
-    if ($(box).prop('checked') === true) {
-      const fixture = getFixtureByUUID($(box).data('uuid'))
+    if (box.checked === true) {
+      const fixture = getFixtureByUUID(box.dataset.uuid)
       const values = fixture.channelValues
       values.duration = duration
       sceneDict[fixture.uuid] = values
@@ -1318,8 +1264,9 @@ function editSceneFromModal () {
 function deleteSceneFromModal () {
   // Delete the scene we are currently editing.
 
-  const groupUUID = $('#editSceneModal').data('group').uuid
-  const uuid = $('#editSceneModal').data('uuid')
+  const editSceneModal = document.getElementById('editSceneModal')
+  const groupUUID = editSceneModal.dataset.groupUUID
+  const uuid = editSceneModal.dataset.uuid
 
   exCommon.makeHelperRequest({
     method: 'POST',
@@ -1327,7 +1274,7 @@ function deleteSceneFromModal () {
     params: { uuid }
   })
     .then((result) => {
-      if ('success' in result && result.success === true) {
+      if (result?.success === true) {
         const group = getGroupByUUID(groupUUID)
         group.deleteScene(uuid)
         exUtilities.hideModal('#editSceneModal')
@@ -1352,14 +1299,13 @@ function createFixtureCheckbox (fixture, collection = null) {
   check.classList = 'form-check-input'
   check.setAttribute('type', 'checkbox')
   check.setAttribute('id', 'editGroupFixture_' + fixture.uuid)
-  check.setAttribute('data-uuid', fixture.uuid)
+  check.dataset.uuid = fixture.uuid
   check.value = ''
 
   if (collection != null && collection.getFixtureByUUID(fixture.uuid) != null) {
-    check.setAttribute('checked', true)
+    check.checked = true
   }
 
-  $(check).data('uuid', fixture.uuid)
   container.appendChild(check)
 
   const label = document.createElement('label')
@@ -1466,8 +1412,8 @@ function updateModalChannelCounts () {
 function addFixtureFromModal () {
   // Collect the necessary information from the addFixtureModal and ask the helper to add or edit the fixture.
 
-  const mode = $('#addFixtureModal').data('mode')
-  const universeUUID = universe.uuid
+  const addFixtureModal = document.getElementById('addFixtureModal')
+  const mode = addFixtureModal.dataset.mode
 
   const channelList = []
   for (const el of document.getElementById('addFixtureChannelList').childNodes) {
@@ -1484,13 +1430,12 @@ function addFixtureFromModal () {
   const definition = {
     name: $('#addFixtureName').val(),
     start_channel: startChannel,
-    channels: channelList,
-    universe: universeUUID
+    channels: channelList
   }
 
   let fixtureUUID = null
   if (mode === 'edit') {
-    fixtureUUID = $('#addFixtureModal').data('fixtureUUID')
+    fixtureUUID = addFixtureModal.dataset.fixtureUUID
     definition.fixture_uuid = fixtureUUID
   }
 
@@ -1523,22 +1468,21 @@ function addFixtureFromModal () {
   })
 }
 
-function createUniverse (name, uuid, controller) {
+function createUniverse (uuid, controller) {
   // Create a new universe and add it to the global list.
 
-  universe = new DMXUniverse(name, uuid, controller)
+  universe = new DMXUniverse(uuid, controller)
 }
 
-function deleteUniverse (uuid) {
-  // Ask the helper to delete the given universe and then remove it from the interface.
+function deleteUniverse (uid) {
+  // Ask the helper to delete the universe and then remove it from the interface.
 
   exCommon.makeHelperRequest({
     method: 'DELETE',
-    endpoint: '/DMX/universe/' + uuid
+    endpoint: '/DMX/universe/'
   })
     .then((result) => {
       if ('success' in result && result.success === true) {
-        exUtilities.hideModal('#editUniverseModal')
         getDMXConfiguration()
       }
     })
@@ -1598,11 +1542,6 @@ function channelNameToDisplayName (name) {
 function updateFunc (update) {
   // Read updates for media player-specific actions and act on them
 
-  if ('commands' in update) {
-    for (let i = 0; i < update.commands.length; i++) {
-      const cmd = (update.commands)[i]
-    }
-  }
 }
 
 function getGroupByUUID (uuid) {
@@ -1656,16 +1595,20 @@ function getDMXConfiguration () {
       if (configuration.universe != null) {
         // First, create the universe
         const universeDef = configuration.universe
-        createUniverse(universeDef.name, universeDef.uuid, universeDef.controller)
+        createUniverse(universeDef.uuid, universeDef.controller)
         // Then, loop the fixtures and add each.
         for (const fixture of universeDef.fixtures) {
           universe.addFixture(fixture)
         }
         rebuildUniverseInterface()
         document.getElementById('noUniverseWarning').style.display = 'none'
+        document.getElementById('addFixtureButton').style.display = 'block'
+        document.getElementById('fixturesPaneOptionsButton').style.display = 'block'
       } else {
         document.getElementById('universeRow').innerText = ''
         document.getElementById('noUniverseWarning').style.display = 'block'
+        document.getElementById('addFixtureButton').style.display = 'none'
+        document.getElementById('fixturesPaneOptionsButton').style.display = 'none'
       }
     })
     .then(() => {
@@ -1706,7 +1649,7 @@ function rebuildUniverseInterface () {
       theme: 'pill',
       themeMode: 'dark',
       format: 'rgb',
-      el: '#' + universe.safeName + '_fixture_' + fixture.uuid + '_' + 'colorPicker',
+      el: '#universe_fixture_' + fixture.uuid + '_' + 'colorPicker',
       wrap: true
     })
   }
@@ -1813,9 +1756,7 @@ function addUniverseFromModal () {
   })
     .then((response) => {
       if (response?.success === true) {
-        createUniverse(response.universe.name,
-          response.universe.uuid,
-          response.universe.controller)
+        createUniverse(response.universe.uuid, response.universe.controller)
         rebuildUniverseInterface()
         exUtilities.hideModal('#addUniverseModal')
       }
@@ -1832,12 +1773,11 @@ document.getElementById('addFixtureAddChannelButton')?.addEventListener('click',
 document.getElementById('addFixtureFromModalButton')?.addEventListener('click', addFixtureFromModal)
 document.getElementById('addFixtureStartingChannel').addEventListener('input', updateModalChannelCounts)
 document.getElementById('deleteFixtureFromModalButton').addEventListener('click', () => {
-  const fixtureUUID = $('#addFixtureModal').data('fixtureUUID')
+  const fixtureUUID = document.getElementById('addFixtureModal').dataset.fixtureUUID
 
   exCommon.makeHelperRequest({
-    method: 'POST',
-    endpoint: '/DMX/fixture/remove',
-    params: { fixture_uuid: fixtureUUID }
+    method: 'DELETE',
+    endpoint: '/DMX/fixture/' + fixtureUUID
   })
     .then((response) => {
       if (response?.success === true) {
@@ -1847,7 +1787,6 @@ document.getElementById('deleteFixtureFromModalButton').addEventListener('click'
     })
 })
 document.getElementById('addUniverseFromModalButton')?.addEventListener('click', addUniverseFromModal)
-document.getElementById('editUniverseModalSaveButton')?.addEventListener('click', updateUniverseFromModal)
 document.getElementById('cloneFixtureButton').addEventListener('click', () => {
   cloneFixture()
 })
@@ -1863,10 +1802,10 @@ document.getElementById('editSceneModalDeleteButton')?.addEventListener('click',
 document.addEventListener('click', (event) => {
   switch (event.target.getAttribute('id')) {
     case 'groupDeletePopover':
-      deleteGroup(document.getElementById('editGroupModal').dataset.group)
+      deleteGroup(document.getElementById('editGroupModal').dataset.groupUUID)
       break
     case 'universeDeletePopover':
-      deleteUniverse($('#editUniverseModal').data('uuid'))
+      deleteUniverse()
       break
   }
 })
@@ -1884,7 +1823,6 @@ let universe = null
 let groupList = []
 
 exCommon.config.debug = true
-const standalone = false
 
 const searchParams = exCommon.parseQueryString()
 if (searchParams.has('standalone')) {

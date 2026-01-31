@@ -1399,8 +1399,9 @@ export function submitUserPasswordChange () {
     })
 }
 
+let markdownConverter
 try {
-  const markdownConverter = new showdown.Converter()
+  markdownConverter = new showdown.Converter()
   markdownConverter.setFlavor('github')
 } catch {
   console.log('showdown library not loaded')
