@@ -957,7 +957,8 @@ function onColorChangeFromPicker (collectionName, uuid, meta = true) {
 function onChannelSliderChange (collectionName, uuid, channel, value) {
   // When the slider changes, update the number field.
 
-  $('#' + collectionName + '_fixture_' + uuid + '_' + 'channelValue_' + channel).val(value)
+  document.getElementById(collectionName + '_fixture_' + uuid + '_' + 'channelValue_' + channel).value = value
+
   updatecolorPicker(collectionName, uuid)
 
   // Update the fixture and send a color change to the helper
@@ -970,7 +971,8 @@ function onChannelSliderChange (collectionName, uuid, channel, value) {
 
 function onChannelValueChange (collectionName, uuid, channel, value) {
   // When the number box is changed, update the slider.
-  $('#' + collectionName + '_fixture_' + uuid + '_' + 'channelSlider_' + channel).val(value)
+
+  document.getElementById(collectionName + '_fixture_' + uuid + '_' + 'channelSlider_' + channel).value = value
 
   const fixture = getFixtureByUUID(uuid)
   const valueToUpdate = {}
@@ -982,16 +984,29 @@ function onChannelValueChange (collectionName, uuid, channel, value) {
 function updatecolorPicker (collectionName, uuid) {
   // Read the values from the number inputs and update the color picker
 
-  const red = $('#' + collectionName + '_fixture_' + uuid + '_' + 'channelSlider_r').val()
-  const blue = $('#' + collectionName + '_fixture_' + uuid + '_' + 'channelSlider_g').val()
-  const green = $('#' + collectionName + '_fixture_' + uuid + '_' + 'channelSlider_b').val()
-  const colorStr = 'rgb(' + red + ',' + blue + ',' + green + ')'
+  const prefix = collectionName + '_fixture_' + uuid + '_'
+
+  const red = document.getElementById(prefix + 'channelSlider_r').value
+  const green = document.getElementById(prefix + 'channelSlider_g').value
+  const blue = document.getElementById(prefix + 'channelSlider_b').value
+
+  const colorStr = 'rgb(' + red + ',' + green + ',' + blue + ')'
 
   // Update the input and the color of the parent div
   try {
-    $('#' + collectionName + '_fixture_' + uuid + '_' + 'colorPicker').val(colorStr).closest('.clr-field')[0].style.color = colorStr
-  } catch (TypeError) {
-    // This will fail is the value is changed before the Coloris color picker is activated.
+    const picker = document.getElementById(prefix + 'colorPicker')
+
+    // Set the input value
+    picker.value = colorStr
+
+    // Find the closest wrapper and set the text color
+    // Original: .closest('.clr-field')[0].style.color = colorStr
+    const clrField = picker.closest('.clr-field')
+    if (clrField) {
+      clrField.style.color = colorStr
+    }
+  } catch (error) {
+    // This will fail if the value is changed before the Coloris color picker is activated.
   }
 }
 
@@ -1383,9 +1398,13 @@ function addChannelToModal () {
   deleteButton.innerHTML = '✕'
   deleteButton.style.fontSize = '20px'
   deleteButton.addEventListener('click', () => {
-    $(col).remove()
-    if ($('#addFixtureChannelList').children().length === 0) {
-      $('#addFixtureFromModalButton').hide()
+    col.remove()
+
+    const channelList = document.getElementById('addFixtureChannelList')
+    const modalButton = document.getElementById('addFixtureFromModalButton')
+
+    if (channelList.children.length === 0) {
+      modalButton.style.display = 'none'
     }
   })
   deleteCol.appendChild(deleteButton)
@@ -1395,7 +1414,7 @@ function addChannelToModal () {
   channelList.scrollTop = channelList.scrollHeight
   updateModalChannelCounts()
 
-  $('#addFixtureFromModalButton').show()
+  document.getElementById('addFixtureFromModalButton').style.display = 'block'
   document.getElementById('cloneFixtureGroup').style.display = 'none'
 }
 
@@ -1428,10 +1447,10 @@ function addFixtureFromModal () {
       channelList.push(input.value.trim().replaceAll(' ', '_'))
     }
   }
-  const startChannel = parseInt($('#addFixtureStartingChannel').val())
+  const startChannel = parseInt(document.getElementById('addFixtureStartingChannel').value)
 
   const definition = {
-    name: $('#addFixtureName').val(),
+    name: document.getElementById('addFixtureName').value.trim(),
     start_channel: startChannel,
     channels: channelList
   }

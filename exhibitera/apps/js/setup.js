@@ -1,4 +1,4 @@
-/* global bootstrap, showdown, $ */
+/* global bootstrap, showdown */
 
 import * as exCommon from './exhibitera_app_common.js'
 import * as exUtilities from '../../common/utilities.js'
@@ -104,10 +104,10 @@ function showUpdateInfoModal (details) {
           markdownConverter.setFlavor('github')
 
           const formattedText = markdownConverter.makeHtml(response)
-          $('#updateInfoModalChangelogContainer').html(formattedText)
+          document.getElementById('updateInfoModalChangelogContainer').innerHTML = formattedText
         })
 
-      $('#updateInfoModal').modal('show')
+      exUtilities.showModal('#updateInfoModal')
     })
 }
 
@@ -391,7 +391,7 @@ function populateHelpTab () {
       const formattedText = markdownConverter.makeHtml(result)
 
       // Add the formatted text
-      $('#mainHelpTextDiv').html(formattedText)
+      document.getElementById('mainHelpTextDiv').innerHTML = formattedText
     })
 }
 
@@ -524,7 +524,10 @@ function configureUser (user) {
         document.getElementById('nav-settings-tab').style.setProperty('display', 'none', 'important')
         document.getElementById('nav-apps-tab').style.setProperty('display', 'none', 'important')
         setTimeout(() => {
-          $('#nav-help-tab').tab('show')
+          // She the help tab
+          const helpTab = document.getElementById('nav-help-tab')
+          const tabTrigger = bootstrap.Tab.getOrCreateInstance(helpTab)
+          tabTrigger.show()
         }, 20)
       }
     })
