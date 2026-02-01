@@ -483,10 +483,14 @@ class DMXFixtureGroup {
     const col = document.createElement('div')
     col.classList = 'col-12 col-sm-6 col-lg-4 mt-2'
 
+    const rounded = document.createElement('div')
+    rounded.classList = 'border rounded-3 overflow-hidden shadow-sm'
+    col.appendChild(rounded)
+
     const row = document.createElement('div')
     row.style.backgroundColor = '#142f43'
     row.classList = 'row mx-0'
-    col.appendChild(row)
+    rounded.appendChild(row)
 
     const headerText = document.createElement('div')
     headerText.classList = 'col-8 meta-header'
@@ -536,12 +540,13 @@ class DMXFixtureGroup {
     const expandMessage = document.createElement('div')
     expandMessage.classList = 'col-12 text-center fst-italic small'
     expandMessage.style.backgroundColor = '#142f43'
+    expandMessage.style.cursor = 'pointer'
     expandMessage.innerHTML = 'Tap to collapse'
     row.appendChild(expandMessage)
 
     const row2 = document.createElement('div')
-    row2.classList = 'row mx-0'
-    col.appendChild(row2)
+    row2.classList = 'row mx-0 is-expanded'
+    rounded.appendChild(row2)
 
     for (const channel of matchingChannels) {
       const channelCol = document.createElement('div')
@@ -623,16 +628,27 @@ class DMXFixtureGroup {
       channelValueCol.appendChild(channelValue)
     }
 
-    $([headerText, expandMessage]).click(() => {
-      $(row2).slideToggle({
-        duration: 300,
-        complete: () => {
-          if (expandMessage.innerHTML === 'Tap to collapse') {
-            expandMessage.innerHTML = 'Tap to expand'
-          } else {
-            expandMessage.innerHTML = 'Tap to collapse'
-          }
-        }
+    [headerText, expandMessage].forEach(el => {
+      el.addEventListener('click', () => {
+        const isExpanding = !row2.classList.contains('is-expanded')
+
+        // 1. Get the exact height of the content
+        const startHeight = row2.offsetHeight
+        const endHeight = isExpanding ? row2.scrollHeight : 0
+
+        // 2. Animate between the two values
+        row2.animate([
+          { height: `${startHeight}px`, opacity: isExpanding ? 0 : 1 },
+          { height: `${endHeight}px`, opacity: isExpanding ? 1 : 0 }
+        ], {
+          duration: 300,
+          easing: 'ease-out',
+          fill: 'forwards' // Keeps the element at the endHeight
+        })
+
+        // 3. Update State and Text
+        row2.classList.toggle('is-expanded')
+        expandMessage.innerHTML = isExpanding ? 'Tap to collapse' : 'Tap to expand'
       })
     })
 
@@ -656,20 +672,14 @@ class DMXFixtureGroup {
   createHTML () {
     // Create the HTML representation for this group.
 
-    const col = document.createElement('div')
-    col.classList = 'col-12 mt-2'
+    const div = document.createElement('div')
 
     const row1 = document.createElement('div')
-    row1.classList = 'row bg-secondary mx-0 rounded-top'
-    col.appendChild(row1)
-
-    const nameCol = document.createElement('div')
-    nameCol.classList = 'col-6 col-lg-8 h4 px-2 py-2 mb-0'
-    nameCol.innerHTML = this.name
-    row1.appendChild(nameCol)
+    row1.classList = 'row'
+    div.appendChild(row1)
 
     const editFixturesCol = document.createElement('div')
-    editFixturesCol.classList = 'col-3 col-lg-2 align-self-center pe-1'
+    editFixturesCol.classList = 'col-3 col-lg-2'
     row1.appendChild(editFixturesCol)
 
     const editFixturesButton = document.createElement('button')
@@ -699,13 +709,8 @@ class DMXFixtureGroup {
     addSceneCol.appendChild(addSceneButton)
 
     const contentDiv = document.createElement('div')
-    contentDiv.classList = 'px-1 pt-2 bg-secondary'
-    col.appendChild(contentDiv)
-
-    // Collapse the content div when the group's top bar is clicked.
-    $(nameCol).click(() => {
-      $(contentDiv).slideToggle(300)
-    })
+    contentDiv.classList = 'px-1 pt-2'
+    div.appendChild(contentDiv)
 
     const tabNav = document.createElement('nav')
     tabNav.classList = 'nav nav-tabs'
@@ -777,7 +782,7 @@ class DMXFixtureGroup {
       sceneRow.appendChild(scene.createHTML())
     }
 
-    return col
+    return div
   }
 
   getFixtureByName (name) {
@@ -1068,15 +1073,16 @@ function cloneFixture (fixtureToClone = null) {
 function showEditGroupModal (groupUUID) {
   // Configure the edit group modal and show it
 
+  const titleEl = document.getElementById('editGroupModalTitle')
   let group
   if ((groupUUID == null) || (groupUUID.trim() === '')) {
-    $('#editGroupModalTitle').html('Create new group')
+    titleEl.innerText = 'Create new group'
     groupUUID = ''
     document.getElementById('editGroupNameInput').value = ''
     document.getElementById('editGroupModalDeleteButton').style.display = 'none'
   } else {
     group = getGroupByUUID(groupUUID)
-    $('#editGroupModalTitle').html('Edit ' + group.name)
+    titleEl.innerText = 'Edit ' + group.name
     // Add the current name
     document.getElementById('editGroupNameInput').value = group.name
     document.getElementById('editGroupModalDeleteButton').style.display = 'block'
@@ -1085,12 +1091,9 @@ function showEditGroupModal (groupUUID) {
   document.getElementById('editGroupModal').dataset.groupUUID = groupUUID
 
   // Populate the list of fixtures
-  const fixtureRow = $('#editGroupFixtureRow')
-  fixtureRow.empty()
-  const header = document.createElement('div')
-  header.classList = 'h5 col-12'
-  header.innerHTML = universe.name
-  fixtureRow.append(header)
+  const fixtureRow = document.getElementById('editGroupFixtureRow')
+  fixtureRow.innerText = ''
+
   for (const fixtureName of Object.keys(universe.fixtures)) {
     const fixture = universe.fixtures[fixtureName]
 
@@ -1656,22 +1659,43 @@ function rebuildUniverseInterface () {
 }
 
 function rebuildGroupsInterface () {
-  // Take the list of group and add the HTML representation of each.
+  // Take the list of groups and create a tab for each of them
 
-  const groupsRow = document.getElementById('groupsRow')
+  const tabNav = document.getElementById('groupTabNav')
+  const tabContent = document.getElementById('groupTabContent')
+  tabNav.innerHTML = ''
+  tabContent.innerHTML = ''
 
-  if (groupList.length > 0) {
-    document.getElementById('noGroupsWarning').style.display = 'none'
-    document.getElementById('createNewGroupButton').style.display = 'block'
-  } else {
-    document.getElementById('noGroupsWarning').style.display = 'block'
-    document.getElementById('createNewGroupButton').style.display = 'none'
-  }
+  groupList.forEach((group, index) => {
+    const isFirst = index === 0
 
-  groupsRow.innerHTML = ''
+    // 1. Create the Tab Link
+    const navItem = document.createElement('li')
+    navItem.className = 'nav-item'
+    navItem.role = 'presentation'
 
-  for (const group of groupList) {
-    groupsRow.appendChild(group.createHTML())
+    const navButton = document.createElement('button')
+    navButton.className = `nav-link ${isFirst ? 'active' : ''}`
+    navButton.id = `tab-${group.safeName}`
+    navButton.setAttribute('data-bs-toggle', 'tab')
+    navButton.setAttribute('data-bs-target', `#pane-${group.safeName}`)
+    navButton.type = 'button'
+    navButton.role = 'tab'
+    navButton.innerText = group.name
+
+    navItem.appendChild(navButton)
+    tabNav.appendChild(navItem)
+
+    // 2. Create the Tab Pane
+    const tabPane = document.createElement('div')
+    tabPane.className = `tab-pane fade ${isFirst ? 'show active' : ''}`
+    tabPane.id = `pane-${group.safeName}`
+    tabPane.role = 'tabpanel'
+    tabPane.setAttribute('aria-labelledby', `tab-${group.safeName}`)
+
+    // 3. Append Group Content
+    tabPane.appendChild(group.createHTML())
+    tabContent.appendChild(tabPane)
 
     // Then, bind the color picker to each element.
     for (const fixtureName of Object.keys(group.fixtures)) {
@@ -1693,7 +1717,7 @@ function rebuildGroupsInterface () {
       el: '#' + 'meta_fixture_' + group.uuid + '_' + 'colorPicker',
       wrap: true
     })
-  }
+  })
 }
 
 function showAddUniverseMOdal () {

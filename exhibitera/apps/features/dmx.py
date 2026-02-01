@@ -108,7 +108,6 @@ class DMXUniverse:
             fixture_list.append(fixture.get_dict())
 
         the_dict = {
-            "name": self.name,
             "uuid": self.uuid,
             "address": self.address,
             "bus": self.bus,
