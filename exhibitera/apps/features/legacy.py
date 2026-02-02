@@ -349,9 +349,22 @@ def update_dmx_config():
     config_path = ex_files.get_path(["configuration", "dmx.json"], user_file=True)
     config_dict = ex_files.load_json(config_path)
 
+    # Restrict to one universe
     if len(config_dict.get("universes", [])) > 0:
         config_dict["universe"] = config_dict["universes"][0]
         del config_dict["universes"]
+
+    # Separate out scenes from groups
+    if "scenes" not in config_dict:
+        config_dict["scenes"] = []
+
+        for group in config_dict.get("groups", []):
+            for scene in group.get("scenes", []):
+                for fixture in scene.get('values', {}):
+                    if "duration" in scene["values"][fixture]:
+                        del scene["values"][fixture]["duration"]
+                config_dict["scenes"].append(scene)
+            del group["scenes"]
 
     backup_path = ex_files.get_path(["configuration", "dmx.json.backup"], user_file=True)
     shutil.copy(config_path, backup_path)

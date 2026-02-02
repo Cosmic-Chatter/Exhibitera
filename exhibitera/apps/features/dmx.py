@@ -220,7 +220,6 @@ class DMXFixtureGroup:
     def __init__(self, name, uuid_str: str = ""):
         self.name: str = name
         self.fixtures: dict[str, DMXFixture] = {}
-        self.scenes: list[DMXScene] = []
 
         if uuid_str == "":
             self.uuid = str(uuid.uuid4())  # A unique ID
@@ -278,52 +277,8 @@ class DMXFixtureGroup:
             fixture = self.fixtures[key]
             fixture.set_color(color, duration, *args, **kwargs)
 
-    def create_scene(self, name: str, values: dict[str, Any], duration: float = 0, uuid_str: str = ""):
-        """Create a new scene and add it to the list."""
-
-        self.scenes.append(DMXScene(name, values, duration=duration, uuid_str=uuid_str))
-
-        return self.scenes[-1].uuid
-
-    def delete_scene(self, uuid_str):
-        """Remove the given scene."""
-
-        self.scenes = [scene for scene in self.scenes if scene.uuid != uuid_str]
-
-    def get_scene(self, uuid_str: str) -> Union['DMXScene', None]:
-
-        for scene in self.scenes:
-            if scene.uuid == uuid_str:
-                return scene
-
-    def show_scene(self, uuid_str: str):
-        """Find the given scene and set it."""
-
-        scene = self.get_scene(uuid_str)
-        if scene is None:
-            raise ValueError("A scene with the given identifier does not exist.")
-
-        for key in scene.values:
-            # key is the name of a Fixture
-            if key in self.fixtures:
-                entry = scene.values[key]
-
-                if "duration" in entry:
-                    duration = entry["duration"]
-                else:
-                    duration = 0
-
-                for channel in entry:
-                    if channel == 'duration':
-                        continue
-                    self.fixtures[key].anim(duration, [channel, entry[channel]])
-
     def get_dict(self) -> dict[str, Any]:
         """Return a dictionary that can be used to rebuild this group."""
-
-        scene_list = []
-        for scene in self.scenes:
-            scene_list.append(scene.get_dict())
 
         fixture_list = []
         for fixture_uuid in self.fixtures:
@@ -333,7 +288,6 @@ class DMXFixtureGroup:
             "name": self.name,
             "uuid": self.uuid,
             "fixtures": fixture_list,
-            "scenes": scene_list
         }
         return the_dict
 
@@ -346,10 +300,10 @@ class DMXScene:
         Options: brightness, color
     """
 
-    def __init__(self, name: str, values: dict[str, dict[str, Any]], duration: float = 0, uuid_str: str = ""):
+    def __init__(self, name: str, values: dict[str, dict[str, Any]], duration: int = 0, uuid_str: str = ""):
         self.name: str = name
         self.values: dict[str, dict[str, Any]] = values
-        self.duration: float = duration
+        self.duration: int = int(duration)
 
         if uuid_str == "":
             self.uuid = str(uuid.uuid4())  # A unique ID
@@ -427,14 +381,43 @@ def get_group(uuid_str: str) -> Union[DMXFixtureGroup, None]:
             return group
 
 
-def get_scene(uuid_str: str) -> tuple[DMXScene | None, DMXFixtureGroup | None]:
-    """Return the matching DMXScene, searching across groups."""
+def create_scene(name: str, values: dict[str, Any], duration: int = 0, uuid_str: str = ""):
+    """Create a new scene and add it to the list."""
 
-    for group in apps_config.dmx_groups:
-        for scene in group.scenes:
-            if scene.uuid == uuid_str:
-                return scene, group
-    return None, None
+    apps_config.dmx_scenes.append(DMXScene(name, values, duration=duration, uuid_str=uuid_str))
+
+    return apps_config.dmx_scenes[-1].uuid
+
+
+def delete_scene(uuid_str):
+    """Remove the given scene."""
+
+    apps_config.dmx_scenes = [scene for scene in apps_config.dmx_scenes if scene.uuid != uuid_str]
+
+
+def show_scene(uuid_str: str):
+    """Find the given scene and set it."""
+
+    scene = get_scene(uuid_str)
+    if scene is None:
+        raise ValueError("A scene with the given identifier does not exist.")
+
+    for fixture_uuid in scene.values:
+        fixture = get_fixture(fixture_uuid)
+        if fixture is not None:
+            entry = scene.values[fixture_uuid]
+
+            for channel in entry:
+                fixture.anim(scene.duration, (channel, entry[channel]))
+
+
+def get_scene(uuid_str: str) -> DMXScene | None:
+    """Return the matching DMXScene."""
+
+    for scene in apps_config.dmx_scenes:
+        if scene.uuid == uuid_str:
+            return scene
+    return None
 
 
 def write_dmx_configuration() -> None:
@@ -456,10 +439,9 @@ def write_dmx_configuration() -> None:
 
 
 def read_dmx_configuration() -> tuple[bool, str]:
-    """Read dmx.json and turn it into a set of fixtures, and groups."""
+    """Read dmx.json and turn it into a set of fixtures, groups, and scenes."""
 
-    config_path = ex_files.get_path(
-        ["configuration", "dmx.json"], user_file=True)
+    config_path = ex_files.get_path(["configuration", "dmx.json"], user_file=True)
     if not os.path.exists(config_path):
         return False, "no_config_file"
 
@@ -492,8 +474,12 @@ def read_dmx_configuration() -> tuple[bool, str]:
         for fixture_uuid in entry["fixtures"]:
             fixture = get_fixture(fixture_uuid)
             group.add_fixtures([fixture])
-        for scene in entry["scenes"]:
-            group.create_scene(scene["name"], scene["values"], duration=scene["duration"], uuid_str=scene["uuid"])
+
+    # Then, create any scenes
+    apps_config.dmx_scenes = []
+    scene_config = config_dict["scenes"]
+    for scene in scene_config:
+        create_scene(scene["name"], scene["values"], duration=scene["duration"], uuid_str=scene["uuid"])
 
     return True, ""
 

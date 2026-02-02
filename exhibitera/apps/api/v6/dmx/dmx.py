@@ -13,7 +13,7 @@ import exhibitera.apps.features.dmx as apps_dmx
 router = APIRouter(prefix='/DMX')
 
 
-@router.get("/getAvailableControllers")
+@router.get("/availableControllers")
 async def get_dmx_controllers():
     """Return a list of connected DMX controllers."""
 
@@ -76,8 +76,8 @@ async def create_dmx_fixture(name: str = Body(description="The name of the fixtu
     return {"success": True, "fixture": new_fixture.get_dict()}
 
 
-@router.post("/fixture/edit")
-async def edit_dmx_fixture(fixture_uuid: str = Body(description="The UUID of the fixture to edit."),
+@router.post("/fixture/{uuid_str}/edit")
+async def edit_dmx_fixture(uuid_str: str,
                            name: str = Body(description="The name of the fixture.", default=None),
                            channels: list[str] = Body(description="A list of channel names.", default=None),
                            start_channel: int = Body(description="The first channel to allocate.", default=None)):
@@ -87,24 +87,24 @@ async def edit_dmx_fixture(fixture_uuid: str = Body(description="The UUID of the
     if not success:
         return {"success": False, "reason": reason}
 
-    fixture = apps_config.dmx_universe.get_fixture(fixture_uuid)
+    fixture = apps_config.dmx_universe.get_fixture(uuid_str)
     fixture.update(name=name, start_channel=start_channel, channel_list=channels)
     apps_dmx.write_dmx_configuration()
 
     return {"success": True, "fixture": fixture.get_dict()}
 
 
-@router.delete("/fixture/{fixture_uuid}")
-async def remove_dmx_fixture(fixture_uuid: str):
+@router.delete("/fixture/{uuid_str}")
+async def remove_dmx_fixture(uuid_str: str):
     """Remove the given DMX fixture from its universe and any groups"""
 
     success, reason = apps_dmx.activate_dmx()
     if not success:
         return {"success": False, "reason": reason}
 
-    fixture = apps_dmx.get_fixture(fixture_uuid)
+    fixture = apps_dmx.get_fixture(uuid_str)
     if fixture is None:
-        print(f"Cannot remove fixture {fixture_uuid}. It does not exist.")
+        print(f"Cannot remove fixture {uuid_str}. It does not exist.")
         return {"success": False, "reason": "Fixture does not exist."}
     fixture.delete()
     apps_dmx.write_dmx_configuration()
@@ -112,8 +112,8 @@ async def remove_dmx_fixture(fixture_uuid: str):
     return {"success": True}
 
 
-@router.post("/fixture/{fixture_uuid}/setBrightness")
-async def set_dmx_fixture_to_brightness(fixture_uuid: str,
+@router.post("/fixture/{uuid_str}/setBrightness")
+async def set_dmx_fixture_to_brightness(uuid_str: str,
                                         value: int = Body(
                                             description="The brightness to be set."),
                                         duration: float = Body(
@@ -125,13 +125,13 @@ async def set_dmx_fixture_to_brightness(fixture_uuid: str,
     if not success:
         return {"success": False, "reason": reason}
 
-    fixture = apps_dmx.get_fixture(fixture_uuid)
+    fixture = apps_dmx.get_fixture(uuid_str)
     fixture.set_brightness(value, duration)
     return {"success": True, "configuration": fixture.get_dict()}
 
 
-@router.post("/fixture/{fixture_uuid}/setChannel")
-async def set_dmx_fixture_channel(fixture_uuid: str,
+@router.post("/fixture/{uuid_str}/setChannel")
+async def set_dmx_fixture_channel(uuid_str: str,
                                   channel_name: str = Body(
                                       "The name of the chanel to set."),
                                   value: int = Body(
@@ -142,13 +142,13 @@ async def set_dmx_fixture_channel(fixture_uuid: str,
     if not success:
         return {"success": False, "reason": reason}
 
-    fixture = apps_dmx.get_fixture(fixture_uuid)
+    fixture = apps_dmx.get_fixture(uuid_str)
     fixture.set_channel(channel_name, value)
     return {"success": True, "configuration": fixture.get_dict()}
 
 
-@router.post("/fixture/{fixture_uuid}/setColor")
-async def set_dmx_fixture_to_color(fixture_uuid: str,
+@router.post("/fixture/{uuid_str}/setColor")
+async def set_dmx_fixture_to_color(uuid_str: str,
                                    color: list = Body(
                                        description="The color to be set."),
                                    duration: float = Body(description="How long the color transition should take.",
@@ -159,7 +159,7 @@ async def set_dmx_fixture_to_color(fixture_uuid: str,
     if not success:
         return {"success": False, "reason": reason}
 
-    fixture = apps_dmx.get_fixture(fixture_uuid)
+    fixture = apps_dmx.get_fixture(uuid_str)
     if fixture is None:
         return {"success": False, "reason": "Figure does not exist."}
     fixture.set_color(color, duration)
@@ -233,38 +233,33 @@ async def delete_dmx_group(group_uuid: str):
     return {"success": True}
 
 
-@router.post("/group/{group_uuid}/createScene")
-async def create_dmx_scene(group_uuid: str,
-                           name: str = Body(description="The name of the scene."),
+@router.post("/scene/create")
+async def create_dmx_scene(name: str = Body(description="The name of the scene."),
                            values: dict = Body(description="A dictionary of values for the scene."),
                            duration: float = Body(description="The transition length in milliseconds.", default=0)):
-    """Create the given scene for the specified group."""
+    """Create the given scene."""
 
     success, reason = apps_dmx.activate_dmx()
     if not success:
         return {"success": False, "reason": reason}
 
-    group = apps_dmx.get_group(group_uuid)
-    uuid_str = group.create_scene(name, values, duration=duration)
+    uuid_str = apps_dmx.create_scene(name, values, duration=duration)
     apps_dmx.write_dmx_configuration()
     return {"success": True, "uuid": uuid_str}
 
 
-@router.post("/group/{group_uuid}/editScene")
-async def create_dmx_scene(group_uuid: str,
-                           uuid: str = Body(description="The UUID of the scene to edit."),
-                           name: str = Body(description="The name of the scene."),
-                           values: dict = Body(description="A dictionary of values for the scene."),
-                           duration: float = Body(description="The transition length in milliseconds.", default=0)):
-    """Edit the given scene for the specified group."""
+@router.post("/scene/{uuid_str}/edit")
+async def edit_dmx_scene(uuid_str: str,
+                         name: str = Body(description="The name of the scene."),
+                         values: dict = Body(description="A dictionary of values for the scene."),
+                         duration: float = Body(description="The transition length in milliseconds.", default=0)):
+    """Edit the given scene"""
 
     success, reason = apps_dmx.activate_dmx()
     if not success:
         return {"success": False, "reason": reason}
 
-    group = apps_dmx.get_group(group_uuid)
-
-    scene = group.get_scene(uuid_str=uuid)
+    scene = apps_dmx.get_scene(uuid_str=uuid_str)
 
     scene.name = name
     scene.duration = duration
@@ -274,18 +269,15 @@ async def create_dmx_scene(group_uuid: str,
     return {"success": True}
 
 
-@router.post("/group/{group_uuid}/deleteScene")
-async def create_dmx_scene(group_uuid: str,
-                           uuid: str = Body(description="The UUID of the scene to edit.", embed=True)):
-    """Delete the given scene for the specified group."""
+@router.delete("/scene/{uuid_str}")
+async def create_dmx_scene(uuid_str: str):
+    """Delete the given scene."""
 
     success, reason = apps_dmx.activate_dmx()
     if not success:
         return {"success": False, "reason": reason}
 
-    group = apps_dmx.get_group(group_uuid)
-    group.delete_scene(uuid)
-
+    apps_dmx.delete_scene(uuid_str)
     apps_dmx.write_dmx_configuration()
     return {"success": True}
 
@@ -340,90 +332,35 @@ async def set_dmx_group_to_color(group_uuid: str,
     return {"success": True, "configuration": group.get_dict()}
 
 
-@router.get("/group/{group_uuid}/getScenes")
-async def get_dmx_group_scenes(group_uuid: str):
-    """Return a list of the available scenes for the given group."""
-
-    response = {"success": True, "scenes": []}
-
-    config_path = ex_files.get_path(
-        ["configuration", "dmx.json"], user_file=True)
-    if not os.path.exists(config_path):
-        response["success"] = False
-        response["reason"] = "no_config_file"
-        return response
-
-    config_dict = ex_files.load_json(config_path)
-    groups = config_dict["groups"]
-    matches = [group for group in groups if group.uuid == group_uuid]
-    if len(matches) == 0:
-        response["success"] = False
-        response["reason"] = "group_not_found"
-        return response
-    group = matches[0]
-    response["scenes"] = group["scenes"]
-    return response
-
-
-@router.get("/getScenes")
+@router.get("/scenes")
 async def get_dmx_scenes():
-    """Return a list of the available scenes across all groups."""
-
-    response = {"success": True, "groups": []}
-
-    config_path = ex_files.get_path(
-        ["configuration", "dmx.json"], user_file=True)
-    if not os.path.exists(config_path):
-        response["success"] = False
-        response["reason"] = "no_config_file"
-        return response
-
-    config_dict = ex_files.load_json(config_path)
-    groups = config_dict["groups"]
-
-    for group_def in groups:
-        group = {}
-        group["uuid"] = group_def["uuid"]
-        group["name"] = group_def["name"]
-        scenes = []
-        for scene_def in group_def["scenes"]:
-            scene = {"uuid": scene_def["uuid"], "name": scene_def["name"]}
-            scenes.append(scene)
-        group["scenes"] = scenes
-        response["groups"].append(group)
-
-    return response
-
-
-@router.get("/setScene/{scene_uuid}")
-async def set_dmx_scene(scene_uuid: str):
-    """Search for and run a DMX scene."""
+    """Return a list of the available scenes."""
 
     success, reason = apps_dmx.activate_dmx()
     if not success:
         return {"success": False, "reason": reason}
 
-    _, group = apps_dmx.get_scene(scene_uuid)
-    group.show_scene(scene_uuid)
+    scenes = []
+    for scene in apps_config.dmx_scenes:
+        scenes.append({"uuid": scene.uuid, "name": scene.name})
+
+    return {"success": True, "scenes": scenes}
 
 
-@router.post("/group/{group_uuid}/showScene")
-async def set_dmx_group_scene(group_uuid: str,
-                              uuid: str = Body(
-                                  description="The UUID of the scene to be run.",
-                                  default="",
-                                  embed=True)
-                              ):
-    """Run a scene for the given group."""
+@router.get("/scene/{uuid_str}/set")
+async def set_dmx_scene(uuid_str: str):
+    """Show a DMX scene."""
 
     success, reason = apps_dmx.activate_dmx()
     if not success:
         return {"success": False, "reason": reason}
 
-    group = apps_dmx.get_group(group_uuid)
-    group.show_scene(uuid)
+    try:
+        apps_dmx.show_scene(uuid_str)
+    except ValueError:
+        return {"success": False, reason: "scene_does_not_exist"}
 
-    return {"success": True, "configuration": group.get_dict()}
+    return {"success": True}
 
 
 @router.post("/universe/create")

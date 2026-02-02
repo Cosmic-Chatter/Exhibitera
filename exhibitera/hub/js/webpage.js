@@ -441,22 +441,16 @@ async function editExhibitActionConfigureValueSelector (action = null, target = 
     try {
       response = await component.makeRequest({
         method: 'GET',
-        endpoint: '/DMX/getScenes'
+        endpoint: '/DMX/scenes'
       })
     } catch {
       console.log('editExhibitActionConfigureValueSelector: invalid helper address')
     //   return
     }
 
-    if (response?.success ?? false) {
-      for (const group of response.groups) {
-        const groupName = new Option(group.name)
-        groupName.setAttribute('disabled', true)
-        valueSelector.appendChild(groupName)
-
-        for (const scene of group.scenes) {
-          valueSelector.appendChild(new Option(scene.name, scene.uuid))
-        }
+    if (response?.success === true) {
+      for (const scene of response.scenes) {
+        valueSelector.appendChild(new Option(scene.name, scene.uuid))
       }
     }
     valueSelector.style.display = 'block'

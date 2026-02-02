@@ -214,7 +214,7 @@ function setDMXScene (uuid = null) {
 
   exCommon.makeHelperRequest({
     method: 'GET',
-    endpoint: '/DMX/setScene/' + uuid
+    endpoint: '/DMX/scene/' + uuid + '/set'
   })
 }
 
@@ -441,18 +441,12 @@ async function populateAvailableDMXScenes () {
 
   const response = await exCommon.makeHelperRequest({
     method: 'GET',
-    endpoint: '/DMX/getScenes'
+    endpoint: '/DMX/scenes'
   })
 
-  if (response.success && response.success === true) {
-    for (const group of response.groups) {
-      const groupName = new Option(group.name, null)
-      groupName.disabled = true
-      select.appendChild(groupName)
-
-      for (const scene of group.scenes) {
-        select.appendChild(new Option(scene.name, scene.uuid))
-      }
+  if (response?.success === true) {
+    for (const scene of response.scenes) {
+      select.appendChild(new Option(scene.name, scene.uuid))
     }
   }
 }

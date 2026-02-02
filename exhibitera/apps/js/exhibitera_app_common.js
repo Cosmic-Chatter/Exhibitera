@@ -300,7 +300,7 @@ function readUpdate (update) {
     } else if (cmd.slice(0, 15) === 'set_dmx_scene__') {
       makeHelperRequest({
         method: 'GET',
-        endpoint: '/DMX/setScene/' + cmd.slice(15)
+        endpoint: '/DMX/scene/' + cmd.slice(15) + '/set'
       })
     } else {
       console.log(`Command not recognized: ${cmd}`)

@@ -21,6 +21,7 @@ debug: bool = True
 dmx_universe = None
 dmx_groups: list = []
 dmx_fixtures = []
+dmx_scenes = []
 dmx_active: bool = False
 
 smart_restart: dict[str: Any] = {

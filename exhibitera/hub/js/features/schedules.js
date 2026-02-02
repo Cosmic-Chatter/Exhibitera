@@ -641,17 +641,11 @@ export async function setScheduleActionValueSelector (action = null, target = nu
   } else if (action === 'set_dmx_scene') {
     const response = await component.makeRequest({
       method: 'GET',
-      endpoint: '/DMX/getScenes'
+      endpoint: '/DMX/scenes'
     })
-    if (response.success && response.success === true) {
-      for (const group of response.groups) {
-        const groupName = new Option(group.name, null)
-        groupName.disabled = true
-        valueSelector.appendChild(groupName)
-
-        for (const scene of group.scenes) {
-          valueSelector.appendChild(new Option(scene.name, scene.uuid))
-        }
+    if (response?.success === true) {
+      for (const scene of response.scenes) {
+        valueSelector.appendChild(new Option(scene.name, scene.uuid))
       }
     }
   }

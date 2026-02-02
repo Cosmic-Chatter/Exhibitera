@@ -108,6 +108,9 @@
         <li class="nav-item" role="presentation">
           <button class="nav-link" id="groups-tab" data-bs-toggle="tab" data-bs-target="#groups-tab-pane" type="button" role="tab" aria-controls="groups-tab-pane" aria-selected="false">Groups</button>
         </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="scenes-tab" data-bs-toggle="tab" data-bs-target="#scenes-tab-pane" type="button" role="tab" aria-controls="scenes-tab-pane" aria-selected="false">Scenes</button>
+        </li>
       </ul>
 
       <div class="tab-content" id="main-nav-content">
@@ -211,7 +214,7 @@
                     <H5 class="text-center">No groups found</H5>
                     <span class="fw-italic">
                       <p>A <i>group</i> is a collection of DMX fixturess. Groups allow you to organize your fixtures in a way that is convenient for your needs.</p> 
-                      <p>Each fixture may be in multiple groups. Once you have a group, you can a a <i>scene</i>, which stores a set of values to be used at a later time.</p>
+                      <p>Each fixture may be in multiple groups.</p>
                   </span>
                     <center>
                       <button id="createNewGroupFromWarningButton" class="btn btn-primary">Create group</button>
@@ -243,6 +246,42 @@
                   <button type="button" class="btn btn-danger me-auto" id="editGroupModalDeleteButton" data-bs-toggle="popover" title="Are you sure?" data-bs-content='<a id="groupDeletePopover" class="btn btn-danger w-100">Confirm</a>' data-bs-trigger="focus" data-bs-html="true">Delete</button>
                   <button type="button" class="btn btn-primary" id="editGroupModalSaveButton">Save</button>
                   <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Groups row -->
+          <div class="row gy-2">
+            <div class="col-12">
+              <button id="createNewGroupButton" class="btn btn-primary" style="display: none;">Create group</button>
+            </div>
+            <div class="col-12 mt-2">
+              <ul class="nav nav-tabs" id="groupTabNav" role="tablist"></ul>
+              
+              <div class="tab-content mt-2" id="groupTabContent"></div>
+            </div>
+          </div>
+          
+        </div>
+
+        <!-- Scenes tab -->
+        <div class="tab-pane fade" id="scenes-tab-pane" role="tabpanel" aria-labelledby="scenes-tab" tabindex="0">
+
+          <!-- No scenes warning -->
+          <div class="row mt-2">
+            <div id="noScenesWarning" class="col-12 mt-4">
+              <div class="row">
+                <div class="col-6 offset-3">
+                  <div class="alert alert-primary">
+                    <H5 class="text-center">No scenes found</H5>
+                    <span class="fw-italic">
+                      <p>A <i>scene</i> is a set of values for one or more fixtures. Scenes allow you to save and recall different lighting configurations, such as daytime and evening lightinglevels.</p> 
+                  </span>
+                    <center>
+                      <button id="createNewSceneFromWarningButton" class="btn btn-primary">Create scene</button>
+                    </center>
+                  </div>
                 </div>
               </div>
             </div>
@@ -281,16 +320,10 @@
               </div>
             </div>
           </div>
+          
+          <button id="createSceneButton" class="btn btn-primary mt-2" style="display: block;">Create scene</button>
 
-          <!-- Groups row -->
-          <div class="col-12">
-            <button id="createNewGroupButton" class="btn btn-primary" style="display: none;">Create group</button>
-          </div>
-          <div class="col-12 mt-2">
-            <ul class="nav nav-tabs" id="groupTabNav" role="tablist"></ul>
-            
-            <div class="tab-content mt-2" id="groupTabContent"></div>
-          </div>
+          <div id="scenesRow" class="row gy-2 mt-2"></div>
         </div>
       </div>
 

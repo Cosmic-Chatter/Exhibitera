@@ -1113,7 +1113,7 @@ function configureComponentInfoModalForExhibitComponent (obj, permission) {
   exUtilities.makeRequest({
     method: 'GET',
     url: obj.getHelperURL(),
-    endpoint: '/DMX/getScenes'
+    endpoint: '/DMX/scenes'
   })
     .then((result) => {
       document.getElementById('componentInfoModalDMXTabButton').style.display = 'block'
