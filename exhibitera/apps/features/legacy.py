@@ -364,7 +364,8 @@ def update_dmx_config():
                     if "duration" in scene["values"][fixture]:
                         del scene["values"][fixture]["duration"]
                 config_dict["scenes"].append(scene)
-            del group["scenes"]
+            if "scenes" in group:
+                del group["scenes"]
 
     backup_path = ex_files.get_path(["configuration", "dmx.json.backup"], user_file=True)
     shutil.copy(config_path, backup_path)

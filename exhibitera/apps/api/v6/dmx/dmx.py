@@ -222,7 +222,7 @@ async def edit_dmx_group(group_uuid: str,
     return {"success": True}
 
 
-@router.get("/group/{group_uuid}/delete")
+@router.delete("/group/{group_uuid}")
 async def delete_dmx_group(group_uuid: str):
     success, reason = apps_dmx.activate_dmx()
     if not success:

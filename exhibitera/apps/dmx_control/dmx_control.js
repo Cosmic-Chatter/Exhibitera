@@ -1059,7 +1059,7 @@ function showEditSceneModal (uuid = '') {
     editSceneFixtureList.appendChild(createFixtureCheckbox(fixture, scene))
   }
 
-  document.getElementById('editSceneModalSceneName').value = scene.name
+  document.getElementById('editSceneModalSceneName').value = scene?.name ?? ''
 
   if (uuid !== '') {
     // We are editing an existing scene
@@ -1108,7 +1108,7 @@ function editSceneFromModal () {
         if (result?.success === true) {
           createScene(sceneName, sceneDict, result.uuid, duration)
           exUtilities.hideModal('#editSceneModal')
-          rebuildGroupsInterface()
+          rebuildScenesInterface()
         }
       })
   } else {
@@ -1146,7 +1146,7 @@ function deleteSceneFromModal () {
       if (result?.success === true) {
         deleteScene(uuid)
         exUtilities.hideModal('#editSceneModal')
-        rebuildGroupsInterface()
+        rebuildScenesInterface()
       }
     })
 }
@@ -1372,8 +1372,8 @@ function deleteGroup (uuid) {
   // Ask the helper to delete the given group and then remove it from the interface.
 
   exCommon.makeHelperRequest({
-    method: 'GET',
-    endpoint: '/DMX/group/' + uuid + '/delete'
+    method: 'DELETE',
+    endpoint: '/DMX/group/' + uuid
   })
     .then((result) => {
       if ('success' in result && result.success === true) {
@@ -1538,7 +1538,10 @@ function getDMXConfiguration () {
       document.getElementById('createNewGroupButton').style.display = 'block'
     })
     .then(() => {
-      if (configuration.scenes.length === 0) return
+      if ((configuration?.scenes ?? []).length === 0) {
+        rebuildScenesInterface()
+        return
+      }
 
       for (const sceneDef of configuration.scenes) {
         createScene(sceneDef.name, sceneDef.values, sceneDef.uuid, sceneDef.duration)
@@ -1636,8 +1639,18 @@ function rebuildScenesInterface () {
   // Build an HTML representation of each scene
 
   const scenesRow = document.getElementById('scenesRow')
+  const noScenesWarning = document.getElementById('noScenesWarning')
+  const createSceneButton = document.getElementById('createSceneButton')
   scenesRow.innerText = ''
 
+  if (sceneList.length === 0) {
+    noScenesWarning.style.display = 'block'
+    createSceneButton.style.display = 'none'
+    return
+  }
+
+  noScenesWarning.style.display = 'none'
+  createSceneButton.style.display = 'block'
   for (const scene of sceneList) {
     scenesRow.appendChild(scene.createHTML())
   }
@@ -1744,6 +1757,13 @@ document.getElementById('createNewGroupButton')?.addEventListener('click', () =>
 document.getElementById('editGroupModalSaveButton')?.addEventListener('click', editGroupFromModal)
 document.getElementById('editSceneModalSaveButton')?.addEventListener('click', editSceneFromModal)
 document.getElementById('editSceneModalDeleteButton')?.addEventListener('click', deleteSceneFromModal)
+
+// Scenes tab
+for (const id of ['createSceneButton', 'createNewSceneFromWarningButton']) {
+  document.getElementById(id).addEventListener('click', () => {
+    showEditSceneModal('')
+  })
+}
 
 // Place the popover trigger after all the event listeners
 document.addEventListener('click', (event) => {

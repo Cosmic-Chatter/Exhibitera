@@ -424,13 +424,18 @@ def write_dmx_configuration() -> None:
     """Use apps_config.dmx_universe and apps_config.dmx_groups to write dmx.json."""
 
     group_list = []
+    scene_list = []
 
     for group in apps_config.dmx_groups:
         group_list.append(group.get_dict())
 
+    for scene in apps_config.dmx_scenes:
+        scene_list.append(scene.get_dict())
+
     config_dict = {
         "universe": apps_config.dmx_universe.get_dict(),
-        "groups": group_list
+        "groups": group_list,
+        "scenes": scene_list
     }
 
     config_path = ex_files.get_path(
