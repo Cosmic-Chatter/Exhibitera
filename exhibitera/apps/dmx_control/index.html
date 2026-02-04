@@ -233,14 +233,20 @@
                   <h4 id="editGroupModalTitle" class="modal-title">Edit Group</h4>
                 </div>
                 <div class="modal-body">
-                  <div class="row">
+                  <div class="row gy-2">
                     <div class="col-12 col-md-6">
                       <label class="form-label" for="editGroupNameInput">Group name</label>
                       <input type="text" id="editGroupNameInput" class="form-control">
                     </div>
+                    <div class="col-12">
+                      <label class="form-label mt-2">Fixtures to include</label>
+                      <div id="editGroupFixtureRow" class="row"></div>
+                    </div>
+                    <div class="col-12">
+                      <div id="editGroupErrorAlert" class="alert alert-warning"></div>
+                    </div>
                   </div>
-                  <label class="form-label mt-2">Fixtures to include</label>
-                  <div id="editGroupFixtureRow" class="row"></div>
+                  
                 </div>
                 <div class="modal-footer">
                   <button type="button" class="btn btn-danger me-auto" id="editGroupModalDeleteButton" data-bs-toggle="popover" title="Are you sure?" data-bs-content='<a id="groupDeletePopover" class="btn btn-danger w-100">Confirm</a>' data-bs-trigger="focus" data-bs-html="true">Delete</button>
@@ -307,7 +313,10 @@
                     <div class="col-12 mt-2">
                       <label for="editSceneFixtureList">Fixtures to include</label>
                       <div id='editSceneFixtureList' class="row"></div>
-                      <span class="text-warning">Saving this scene will set the current values for the selected fixtures.</span>
+                      <span class="text-warning">Saving this scene will save the current values for the selected fixtures.</span>
+                    </div>
+                    <div class="col-12 mt-2">
+                      <div id="editSceneErrorAlert" class="alert alert-warning"></div>
                     </div>
                   </div>
                   

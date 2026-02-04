@@ -34,6 +34,9 @@ The Core API provides a stable API that enables developers to provide basic inte
 - New URL option enables you to embed a webpage into your exhibition (limitations apply)
 - Guided setup makes things easier than ever
 
+### DMX Control
+- Scenes are now separated from groups
+
 ### InfoStation
 - Easily reorder your tabs
 - Embed videos in the same way as images

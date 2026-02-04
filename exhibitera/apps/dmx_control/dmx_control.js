@@ -948,6 +948,9 @@ function showEditGroupModal (groupUUID) {
   // Configure the edit group modal and show it
 
   const titleEl = document.getElementById('editGroupModalTitle')
+
+  document.getElementById('editGroupErrorAlert').style.display = 'none'
+
   let group
   if ((groupUUID == null) || (groupUUID.trim() === '')) {
     titleEl.innerText = 'Create new group'
@@ -984,6 +987,16 @@ function editGroupFromModal () {
 
   const fixturesElements = document.getElementById('editGroupFixtureRow').querySelectorAll('.form-check-input')
 
+  const editGroupErrorAlert = document.getElementById('editGroupErrorAlert')
+
+  const name = document.getElementById('editGroupNameInput').value.trim()
+
+  if (name === '') {
+    editGroupErrorAlert.innerText = 'Name field must not be blank.'
+    editGroupErrorAlert.style.display = 'block'
+    return
+  }
+
   const fixturesToAdd = []
   const fixturesToAddUUID = []
   for (const element of fixturesElements) {
@@ -994,12 +1007,18 @@ function editGroupFromModal () {
     }
   }
 
+  if (fixturesToAddUUID.length === 0) {
+    editGroupErrorAlert.innerText = 'Your group must include at least one fixture.'
+    editGroupErrorAlert.style.display = 'block'
+    return
+  }
+
   let group
   if (groupUUID !== '') {
     // We are editing a group
     group = getGroupByUUID(groupUUID)
     group.clearFixtures()
-    group.name = document.getElementById('editGroupNameInput').value
+    group.name = name
     group.addFixtures(fixturesToAdd)
 
     exCommon.makeHelperRequest({
@@ -1019,7 +1038,7 @@ function editGroupFromModal () {
       })
   } else {
     // We are creating a new group
-    createGroupFromModal(document.getElementById('editGroupNameInput').value, fixturesToAdd, fixturesToAddUUID)
+    createGroupFromModal(name, fixturesToAdd, fixturesToAddUUID)
   }
 }
 
@@ -1074,6 +1093,8 @@ function showEditSceneModal (uuid = '') {
     document.getElementById('editSceneModalDeleteButton').style.display = 'none'
   }
 
+  document.getElementById('editSceneErrorAlert').style.display = 'none'
+
   exUtilities.showModal('#editSceneModal')
 }
 
@@ -1081,8 +1102,14 @@ function editSceneFromModal () {
   // Save the scene changse from the modal.
 
   const editSceneModal = document.getElementById('editSceneModal')
+  const editSceneErrorAlert = document.getElementById('editSceneErrorAlert')
 
   const sceneName = document.getElementById('editSceneModalSceneName').value.trim()
+  if (sceneName === '') {
+    editSceneErrorAlert.innerText = 'Name field must not be blank.'
+    editSceneErrorAlert.style.display = 'block'
+    return
+  }
   const duration = parseInt(document.getElementById('editSceneModalDurationInput').value)
   const checkboxes = document.getElementById('editSceneFixtureList').querySelectorAll('.form-check-input')
   const uuid = editSceneModal.dataset.uuid
@@ -1094,6 +1121,12 @@ function editSceneFromModal () {
       const values = fixture.channelValues
       sceneDict[fixture.uuid] = values
     }
+  }
+
+  if (Object.keys(sceneDict).length === 0) {
+    editSceneErrorAlert.innerText = 'Your scene must include at least one fixture.'
+    editSceneErrorAlert.style.display = 'block'
+    return
   }
 
   if (uuid === '') {
