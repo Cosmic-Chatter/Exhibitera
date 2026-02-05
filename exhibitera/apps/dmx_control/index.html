@@ -50,7 +50,7 @@
               <h4 class="modal-title">Add new fixture</h4>
             </div>
             <div class="modal-body">
-              <div class="row">
+              <div class="row gy-2">
                 <div class="col-6 col-sm-8">
                   <label for="addFixtureName" class="form-label">Fixture name</label>
                   <input type="text" class="form-control" id="addFixtureName">
@@ -60,7 +60,7 @@
                   <input type="number" min="1" max="512" class="form-control" id="addFixtureStartingChannel">
                 </div>
 
-                <div id="cloneFixtureGroup" class="col-12 mt-2">
+                <div id="cloneFixtureGroup" class="col-12">
                   <label for="cloneFixtureList" class="form-label">Clone existing fixture</label>
                   <div class="row">
                     <div class="col-8">
@@ -73,14 +73,15 @@
 
                 </div>
 
-                <div class="col-12 mt-2">
+                <div class="col-12">
                   <label  class="form-label">Channels</label>
                   <div id="addFixtureChannelList" class="row" style="max-height: 25vh; overflow-y: auto;"></div>
                   <button id="addFixtureAddChannelButton" class="btn btn-primary btn-sm mt-2">Add channel</button>
                 </div>
-              </div>
-              <div id="addFixtureChannelsOccupiedWarning" class="col-12 text-danger mt-2">
-                A fixture with these channels already exists!
+
+                <div class="col-12">
+                  <div id="addFixtureErrorAlert" class="alert alert-warning"></div>
+                </div>
               </div>
             </div>
             <div class="modal-footer">

@@ -877,7 +877,7 @@ function showAddFixtureModal (fixture = null) {
   // Reset common fields
   document.getElementById('addFixtureChannelList').innerHTML = ''
   document.getElementById('addFixtureFromModalButton').style.display = 'none'
-  document.getElementById('addFixtureChannelsOccupiedWarning').style.display = 'none'
+  document.getElementById('addFixtureErrorAlert').style.display = 'none'
 
   const addFixtureModal = document.getElementById('addFixtureModal')
   // Set up fields by mode
@@ -1318,6 +1318,7 @@ function addFixtureFromModal () {
   // Collect the necessary information from the addFixtureModal and ask the helper to add or edit the fixture.
 
   const addFixtureModal = document.getElementById('addFixtureModal')
+  const addFixtureErrorAlert = document.getElementById('addFixtureErrorAlert')
   const mode = addFixtureModal.dataset.mode
 
   const channelList = []
@@ -1330,10 +1331,44 @@ function addFixtureFromModal () {
       channelList.push(input.value.trim().replaceAll(' ', '_'))
     }
   }
+
+  if (new Set(channelList).size !== channelList.length) {
+    addFixtureErrorAlert.innerText = 'Two channels cannot have the same name.'
+    addFixtureErrorAlert.style.display = 'block'
+    return
+  }
+
   const startChannel = parseInt(document.getElementById('addFixtureStartingChannel').value)
 
+  if (Number.isNaN(startChannel)) {
+    addFixtureErrorAlert.innerText = 'Starting channel field cannot be blank.'
+    addFixtureErrorAlert.style.display = 'block'
+    return
+  }
+
+  if ((startChannel < 1) || (startChannel + channelList.length > 512)) {
+    addFixtureErrorAlert.innerText = 'Channels must be between 1 and 512'
+    addFixtureErrorAlert.style.display = 'block'
+    return
+  }
+
+  const name = document.getElementById('addFixtureName').value.trim()
+
+  if (name === '') {
+    addFixtureErrorAlert.innerText = 'Name field cannot be blank.'
+    addFixtureErrorAlert.style.display = 'block'
+    return
+  }
+
+  const pattern = /^[a-zA-Z0-9 -]*$/
+  if (pattern.test(name) === false) {
+    addFixtureErrorAlert.innerText = 'Name may contain only letters, numbers, spaces, and dashes.'
+    addFixtureErrorAlert.style.display = 'block'
+    return
+  }
+
   const definition = {
-    name: document.getElementById('addFixtureName').value.trim(),
+    name,
     start_channel: startChannel,
     channels: channelList
   }
@@ -1345,7 +1380,8 @@ function addFixtureFromModal () {
 
   const channelsFree = universe.checkIfChannelsFree(startChannel, channelList.length, fixtureUUID)
   if (channelsFree === false) {
-    document.getElementById('addFixtureChannelsOccupiedWarning').style.display = 'block'
+    addFixtureErrorAlert.innerText = 'A fixture with these channels already exists.'
+    addFixtureErrorAlert.style.display = 'block'
     return
   }
 
