@@ -35,15 +35,22 @@
       <div id="mediaLightbox">
         <div style='width: 100vw; height: 100vh;'>
           <div class='row' style="height: 100%;">
-            <div class='col-12 py-4 hideLightboxTrigger' style="max-height: 100%;">
-              <audio id="mediaLightboxAudio" class="lightboxMedia"></audio>
-              <img id="mediaLightboxImage" class="lightboxMedia lightbox-element"></img>
-              <video id="mediaLightboxVideo" class="lightboxMedia lightbox-element" disablePictureInPicture="true" webkit-playsinline="true" playsinline="true"></video>
-              <div class="mx-5 lightbox-element lightbox-text" id='mediaLightboxTitle'>
+            <div class='col-12' style="max-height: 100%; padding-bottom: 1.5rem;">
+              <div id="zoomContainer">
+                <audio id="mediaLightboxAudio" class="lightboxMedia"></audio>
+                <img id="mediaLightboxImage" class="lightboxMedia lightbox-element"></img>
+                <video id="mediaLightboxVideo" class="lightboxMedia lightbox-element" disablePictureInPicture="true" webkit-playsinline="true" playsinline="true"></video>
+
+                <div id="zoomIndicator">
+                  <div id="zoomIndicatorBox"></div>
+                </div>
               </div>
-              <div class="mx-5 lightbox-element lightbox-text" id='mediaLightboxCaption'>
+              
+              <div class="mx-5 lightbox-element lightbox-text hideLightboxTrigger" id='mediaLightboxTitle'>
               </div>
-              <div class="mx-5 lightbox-element lightbox-text" id='mediaLightboxCredit'>
+              <div class="mx-5 lightbox-element lightbox-text hideLightboxTrigger" id='mediaLightboxCaption'>
+              </div>
+              <div class="mx-5 lightbox-element lightbox-text hideLightboxTrigger" id='mediaLightboxCredit'>
               </div>              
             </div>
             <!-- <div class='hideLightboxTrigger col-1 pt-4'>

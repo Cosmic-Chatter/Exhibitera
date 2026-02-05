@@ -349,6 +349,9 @@ def update_dmx_config():
     config_path = ex_files.get_path(["configuration", "dmx.json"], user_file=True)
     config_dict = ex_files.load_json(config_path)
 
+    if config_dict is None:
+        return
+
     # Restrict to one universe
     if len(config_dict.get("universes", [])) > 0:
         config_dict["universe"] = config_dict["universes"][0]

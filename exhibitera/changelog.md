@@ -49,6 +49,7 @@ The Core API provides a stable API that enables developers to provide basic inte
 
 ### Media Browser
 - Support for audio files
+- Use pinch-to-zoom to explore media in more detail
 - Add a custom thumbnail separate from the main media
 - Add items individually or use a spreadsheet for bulk import
 - Reorder your items

@@ -419,10 +419,9 @@ function loadDefinition (def) {
   document.getElementById('mediaLightboxCredit').style.height = String(def?.style?.layout?.lightbox_credit_height ?? 6) + '%'
 
   if (def.style.layout.lightbox_image_height) {
-    document.getElementById('mediaLightboxImage').style.height = String(def.style.layout.lightbox_image_height) + '%'
-    document.getElementById('mediaLightboxVideo').style.height = String(def.style.layout.lightbox_image_height) + '%'
+    document.getElementById('zoomContainer').style.height = String(def.style.layout.lightbox_image_height) + '%'
   } else {
-    document.getElementById('mediaLightboxVideo').style.height = '70%'
+    document.getElementById('zoomContainer').style.height = '70%'
   }
 
   // Modify the style
@@ -547,16 +546,19 @@ function showAttractor () {
           attractorOverlay.style.display = 'flex'
           setTimeout(() => { attractorOverlay.style.opacity = 1 }, 0)
           hideMediaLightBox()
+          resetZoom()
           clear()
         })
     } else {
       attractorOverlay.style.display = 'flex'
       setTimeout(() => { attractorOverlay.style.opacity = 1 }, 0)
       hideMediaLightBox()
+      resetZoom()
       clear()
     }
   } else {
     hideMediaLightBox()
+    resetZoom()
     clear()
   }
 }
@@ -713,9 +715,139 @@ function fixLightboxTextSize (titleDiv, creditDiv) {
 //   }
 // })
 
+function resetZoom () {
+  // Zoom back out in the media lightbox
+
+  const mediaEl = document.getElementById('mediaLightboxVideo').style.display === 'block'
+    ? document.getElementById('mediaLightboxVideo')
+    : document.getElementById('mediaLightboxImage')
+
+  // Add the animation class
+  mediaEl.classList.add('smooth-zoom')
+
+  // Reset state
+  zoomState = { scale: 1, x: 0, y: 0 }
+
+  // Apply the transform
+  updateZoomTransform()
+
+  // Remove the class after the transition (400ms) so manual zoom remains snappy
+  setTimeout(() => {
+    mediaEl.classList.remove('smooth-zoom')
+  }, 400)
+}
+
+function constrainBounds (mediaEl) {
+  // Make sure that, when zoomed in, the media can't be scrolled off the screen.
+
+  const container = document.getElementById('zoomContainer')
+  const cRect = container.getBoundingClientRect()
+  // We use clientWidth/Height * scale for the "virtual" size
+  const vWidth = mediaEl.clientWidth * zoomState.scale
+  const vHeight = mediaEl.clientHeight * zoomState.scale
+
+  if (vWidth > cRect.width) {
+    const maxX = (vWidth - cRect.width) / 2
+    zoomState.x = Math.min(Math.max(zoomState.x, -maxX), maxX)
+  } else {
+    zoomState.x = 0
+  }
+
+  if (vHeight > cRect.height) {
+    const maxY = (vHeight - cRect.height) / 2
+    zoomState.y = Math.min(Math.max(zoomState.y, -maxY), maxY)
+  } else {
+    zoomState.y = 0
+  }
+}
+
+function updateZoomTransform () {
+  // Convert the position of the zoomed image to the position of the zoomIndicator
+
+  const mediaEl = document.getElementById('mediaLightboxVideo').style.display === 'block'
+    ? document.getElementById('mediaLightboxVideo')
+    : document.getElementById('mediaLightboxImage')
+
+  const container = document.getElementById('zoomContainer')
+
+  if (zoomState.scale > 1) {
+    constrainBounds(mediaEl)
+  }
+
+  mediaEl.style.transform = `translate(${zoomState.x}px, ${zoomState.y}px) scale(${zoomState.scale})`
+
+  // Update Indicator
+  const indicator = document.getElementById('zoomIndicator')
+  const box = document.getElementById('zoomIndicatorBox')
+
+  if (zoomState.scale > 1) {
+    indicator.style.display = 'block'
+
+    // 1. Calculate the box size as a percentage (e.g., at 2x zoom, box is 50% of indicator)
+    const boxSize = 100 / zoomState.scale
+    box.style.width = `${boxSize}%`
+    box.style.height = `${boxSize}%`
+
+    // 2. Determine the current maximum possible pan distance (in pixels)
+    // We use getBoundingClientRect to get the actual scaled size on screen
+    const mediaRect = mediaEl.getBoundingClientRect()
+    const containerRect = container.getBoundingClientRect()
+
+    const maxDeltaX = (mediaRect.width - containerRect.width) / 2
+    const maxDeltaY = (mediaRect.height - containerRect.height) / 2
+
+    // 3. Map translation to the indicator position
+    // We want to map zoomState.x (which goes from +maxDeltaX to -maxDeltaX)
+    // to the CSS 'left' property (which should go from 0% to 100% - boxSize)
+
+    // Calculate the 'available track' for the indicator box to move in
+    const trackX = 100 - boxSize
+    const trackY = 100 - boxSize
+
+    // Map: x = maxDeltaX (left edge) -> left = 0
+    //      x = -maxDeltaX (right edge) -> left = trackX
+    const leftPercent = maxDeltaX !== 0
+      ? ((zoomState.x / maxDeltaX) * -0.5 + 0.5) * trackX
+      : trackX / 2
+
+    const topPercent = maxDeltaY !== 0
+      ? ((zoomState.y / maxDeltaY) * -0.5 + 0.5) * trackY
+      : trackY / 2
+
+    box.style.left = `${leftPercent}%`
+    box.style.top = `${topPercent}%`
+  } else {
+    indicator.style.display = 'none'
+  }
+}
+
+function updateIndicatorAspectRatio (mediaEl) {
+  // Adjust the shape of the zoomIndicator to match the shape of the loaded media file
+
+  const indicator = document.getElementById('zoomIndicator')
+  const maxSize = 5 // The maximum dimension in vmax
+
+  // Get natural dimensions (works for both <img> and <video>)
+  const naturalWidth = mediaEl.naturalWidth || mediaEl.videoWidth
+  const naturalHeight = mediaEl.naturalHeight || mediaEl.videoHeight
+
+  if (!naturalWidth || !naturalHeight) return
+
+  const aspectRatio = naturalWidth / naturalHeight
+
+  if (aspectRatio > 1) {
+    // Landscape
+    indicator.style.width = `${maxSize}vmax`
+    indicator.style.height = `${maxSize / aspectRatio}vmax`
+  } else {
+    // Portrait
+    indicator.style.width = `${maxSize * aspectRatio}vmax`
+    indicator.style.height = `${maxSize}vmax`
+  }
+}
+
 let currentPage = 0
 let cardsPerPage, numCols, numRows
-let defaultLang = ''
 
 exCommon.configureApp({
   name: 'media_browser',
@@ -724,6 +856,7 @@ exCommon.configureApp({
   parseUpdate: updateParser
 })
 
+let defaultLang = ''
 let currentLang = ''
 
 let inactivityTimer = null
@@ -731,6 +864,11 @@ let inactivityTimeout = 30000
 let attractorAvailable = false
 let attractorType = 'image'
 let videoPlaying = false
+
+let zoomState = { scale: 1, x: 0, y: 0 }
+const lastTouch = { distance: 0, x: 0, y: 0 }
+let tapCount = 0
+let tapTimeout
 
 // Attach event listeners
 document.getElementById('previousPageButton').addEventListener('click', () => {
@@ -741,6 +879,12 @@ document.getElementById('nextPageButton').addEventListener('click', () => {
 })
 document.body.addEventListener('click', resetActivityTimer)
 document.getElementById('attractorOverlay').addEventListener('click', hideAttractor)
+document.getElementById('mediaLightboxImage').addEventListener('load', (e) => {
+  updateIndicatorAspectRatio(e.target)
+})
+document.getElementById('mediaLightboxVideo').addEventListener('loadedmetadata', (e) => {
+  updateIndicatorAspectRatio(e.target)
+})
 document.querySelectorAll('.hideLightboxTrigger').forEach((el) => {
   el.addEventListener('click', hideMediaLightBox)
 })
@@ -762,4 +906,75 @@ document.getElementById('mediaLightboxImage').addEventListener('load', (ev) => {
     el.style.opacity = '1'
   })
   ev.target.style.display = 'block'
+})
+
+const zoomContainer = document.getElementById('zoomContainer')
+
+zoomContainer.addEventListener('click', (e) => {
+  resetActivityTimer()
+  e.stopPropagation()
+
+  tapCount++
+  if (tapCount === 1) {
+    tapTimeout = setTimeout(() => {
+      // Single tap: The user wants to close the lightbox
+      hideMediaLightBox()
+      resetZoom()
+      tapCount = 0
+    }, 300) // 300ms window to detect the second tap
+  } else {
+    // Double tap: The user wants to zoom out
+    clearTimeout(tapTimeout)
+    resetZoom()
+    tapCount = 0
+  }
+})
+
+zoomContainer.addEventListener('touchstart', (e) => {
+  resetActivityTimer()
+
+  // Always refresh the anchor point for the primary finger
+  // relative to the current zoomState
+  lastTouch.x = e.touches[0].pageX - zoomState.x
+  lastTouch.y = e.touches[0].pageY - zoomState.y
+
+  if (e.touches.length === 2) {
+    lastTouch.distance = Math.hypot(
+      e.touches[0].pageX - e.touches[1].pageX,
+      e.touches[0].pageY - e.touches[1].pageY
+    )
+  }
+})
+
+zoomContainer.addEventListener('touchend', (e) => {
+  resetActivityTimer()
+
+  // If one finger remains on the screen after the other is lifted
+  if (e.touches.length === 1) {
+    // Re-anchor the remaining finger to prevent the "snap" jump
+    lastTouch.x = e.touches[0].pageX - zoomState.x
+    lastTouch.y = e.touches[0].pageY - zoomState.y
+  }
+})
+
+zoomContainer.addEventListener('touchmove', (e) => {
+  resetActivityTimer()
+  e.preventDefault()
+
+  // Handle pinch-to-zoom
+  if (e.touches.length === 2) {
+    const dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY)
+    const delta = dist / lastTouch.distance
+    zoomState.scale = Math.min(Math.max(1, zoomState.scale * delta), 5)
+    lastTouch.distance = dist
+  } else if (e.touches.length === 1 && zoomState.scale > 1) {
+    zoomState.x = e.touches[0].pageX - lastTouch.x
+    zoomState.y = e.touches[0].pageY - lastTouch.y
+  }
+  updateZoomTransform()
+}, { passive: false })
+
+// Ensure zoom resets when closing lightbox
+document.querySelectorAll('.hideLightboxTrigger').forEach((el) => {
+  el.addEventListener('click', resetZoom)
 })

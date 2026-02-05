@@ -208,11 +208,17 @@ body {
     font-family: var(--Lightbox_credit-font);
 }
 .lightboxMedia {
-    width: 100%;
-    height: 70%;
+    width: auto;
+    height: 100%;
     object-fit: contain;
     display: block;
     margin: auto;
+    transform-origin: center center;
+    transition: none;
+    max-width: 100%;
+}
+.smooth-zoom {
+    transition: transform 0.4s ease-in-out !important;
 }
 #mediaLightboxTitle {
     text-align: center;
@@ -263,6 +269,33 @@ body {
 }
 #searchPane {
     background-color: gray;
+}
+#zoomContainer {
+    position: relative;
+    overflow: hidden;
+    height: 70%;
+    width: 100%;
+    cursor: grab;
+    touch-action: none; /* Prevents browser-level scrolling/zooming */
+}
+
+#zoomIndicator {
+    position: absolute;
+    bottom: 0.5vmax;
+    right: 0.5vmax;
+    width: 5vmax; 
+    height: 5vmax;
+    background: rgba(0, 0, 0, 0.5);
+    border: 0.05vmax solid rgba(255, 255, 255, 0.5);
+    pointer-events: none;
+    display: none;
+    z-index: 100;
+}
+
+#zoomIndicatorBox {
+    position: absolute;
+    border: 0.1vmax solid #007bff;
+    background: rgba(0, 123, 255, 0.2);
 }
 
 @media (orientation: landscape) {
