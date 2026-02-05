@@ -136,9 +136,12 @@ def update_infostation_definition_format():
                     old_uuid = str(old_tab_order[i])
                     tab = definition.get("languages", {}).get(lang, {}).get("tabs", {}).get(old_uuid, {})
                     new_def["tabs"][uuid] = {"type": tab.get("type", "text"), "uuid": uuid}
+
+                    tab_text = tab.get("text", "")
+                    tab_text = tab_text.replace('(content/', '(/content/') # Fix content path for Ex6
                     new_def["languages"][lang]["tabs"][uuid] = {
                         "button_text": tab.get("button_text", ""),
-                        "text": tab.get("text", ""),
+                        "text": tab_text,
                         "uuid": uuid
                     }
                     i += 1
