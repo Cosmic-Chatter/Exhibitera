@@ -322,10 +322,14 @@ function readServerUpdate (update) {
 
   readUpdate(update)
 
-  let sendUpdate = false
+  const sendUpdate = false
+  const updateDict = {}
 
   if (update.id) {
-    config.id = update.id
+    if (config.id !== update.id) {
+      config.id = update.id
+      updateDict.id = update.id
+    }
   }
   if (update.group) {
     config.group = update.group
@@ -338,20 +342,20 @@ function readServerUpdate (update) {
   }
   if (update.current_exhibit) {
     if (update.current_exhibit !== config.currentExhibit) {
-      sendUpdate = true
+      updateDict.current_exhibit = update.current_exhibit
       config.currentExhibit = update.current_exhibit
     }
   }
 
   if (update.definition) {
     if (update.definition !== config.definitionUUID) {
-      sendUpdate = true
+      updateDict.definition = update.definition
     }
   }
 
   // Save any changes before we might reload the page to switch apps
-  if (sendUpdate) {
-    sendConfigUpdate(update)
+  if (Object.keys(updateDict).length > 0) {
+    sendConfigUpdate(updateDict)
   }
 
   // Check the definition file for a changed app.
@@ -492,12 +496,10 @@ export function sendConfigUpdate (update) {
   // Send a message to the helper with the latest configuration to set as
   // the default
 
-  const defaults = {
-    current_exhibit: update.current_exhibit,
-    app: {
-      definition: update.definition
-    }
-  }
+  const defaults = { app: {} }
+  if (update?.id) defaults.app.id = update.id
+  if (update?.definition) defaults.app.definition = update.definition
+  if (update?.current_exhibit) defaults.current_exhibit = update.current_exhibit
 
   const requestDict = { defaults }
 

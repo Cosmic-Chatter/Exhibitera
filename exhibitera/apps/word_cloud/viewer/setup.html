@@ -423,131 +423,165 @@
       </div>
       <div class="row align-items-start">
         <div id='editPane' class="col-6 col-lg-7">
-          <div class="row gy-2">
-            <div class="col-12 mt-2">
 
-              <h3>Settings</h3>
-              <div class="row gy-2">
-                <div class="col-12 col-md-6 col-lg-4">
-                  <label for="definitionNameInput" class="form-label">Definition name</label>
-                  <input type="text" class="form-control" id="definitionNameInput">
-                </div>
-                <div class="col-12 col-md-6 col-lg-4">
-                  <label for="collectionNameInput" class="form-label">
-                    Collection name
-                    <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="The collection name connects the word cloud inputs and output. Multiple inputs can use the same collection name to aggregate responses." style="font-size: 0.55em;">?</span>
-                  </label>
-                  <input type="text" class="form-control" id="collectionNameInput">
-                </div>
-                <div class="col-12 col-md-6 col-lg-4">
-                  <label for="refreshRateInput" class="form-label">
-                    Refresh rate
-                    <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="Time in seconds to wait before refreshing the word cloud." style="font-size: 0.55em;">?</span>
-                  </label>
-                  <input type="number" value="15" min="1" class="form-control" id="refreshRateInput">
-                </div>
-              </div>
-
-              <h3 class="mt-2">Content</h3>
-              <div class="row gy-2 align-items-end">
-                <div class="col-12 col-lg-6">
-                  <label for="promptInput" class="form-label">Prompt</label>
-                  <div id="promptInputCommandBar"></div>
-                  <div id="promptInput"></div>
-                </div>
-                <div class="col-12 col-md-6 col-lg-4">
-                  <button id="showExcludedWordsModalButton" class="btn btn-primary w-100">Excluded words</button>
-                </div>
-              </div>
-
-              <h3 class="mt-2">Appearance</h3>
-              <h4 class="mt-2">Word cloud</h4>
-              <div class="row gy-2">
-                <div class="col-12 col-md-6 col-lg-4">
-                  <label for="wordRotationSelect" class="form-label">
-                    Word rotation
-                    <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="How should words in the cloud be shown?" style="font-size: 0.55em;">?</span>
-                  </label>
-                  <select id="wordRotationSelect" class="form-select">
-                    <option value="horizontal">Horizontal only</option>
-                    <option value="right_angles">Horizontal/vertical only</option>  
-                    <option value="full">Full rotation</option>
-                  </select>
-                </div>
-                <div class="col-12 col-md-6 col-lg-4">
-                  <label for="cloudShapeSelect" class="form-label">
-                    Cloud shape
-                    <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="The words will be roughly arranged in the selected shape." style="font-size: 0.55em;">?</span>
-                  </label>
-                  <select id="cloudShapeSelect" class="form-select">
-                    <option value="circle">Circle</option>
-                    <option value="square">Square</option>  
-                    <option value="diamond">Diamond</option>
-                    <option value="triangle">Triangle (pointing up)</option>
-                    <option value="triangle-forward">Triangle (pointing right)</option>
-                    <option value="pentagon">Pentagon</option>
-                    <option value="star">Star</option>
-                  </select>
-                </div>
-                <div class="col-12 col-md-6 col-lg-4">
-                  <label for="textCaseSelect" class="form-label">
-                    Capitalization
-                  </label>
-                  <select id="textCaseSelect" class="form-select">
-                    <option value="lowercase">Lowercase</option>  
-                    <option value="uppercase">Uppercase</option>
-                  </select>
-                </div>
-              </div>
-
-              <h4 class="mt-2">Text size</h4>
-              <div class="row gy-2">
-                <div class="col-12 col-md-6 col-lg-4">
-                  <label for="promptTextSizeSlider" class="form-label">Prompt</label>
-                  <input id="promptTextSizeSlider" type="range" class="form-range text-size-slider realtime-slider" data-property="prompt" min="-2", max="4" start="0" step="0.5">
-                </div>
-              </div>
-
-              <h4>Colors</h4>
-              <div class="row gy-2 mb-3">
-                <div class="col-12 col-lg-8 advanced-color-picker" data-constACP-name="Background" data-constACP-path="style>background"></div>
-                <div class="col-12 col-sm-6 col-lg-4">
-                  <label for="colorPicker_prompt" class="form-label">Prompt</label>
-                  <div>
-                    <input id="colorPicker_prompt" type="text" class="coloris form-control" value="#000" data-property="prompt" data-default="#000">
-                  </div>
-                </div>
-                <div class="col-12 col-sm-6 col-lg-4">
-                  <label for="wordColorMode" class="form-label">
-                    Word color mode
-                  </label>
-                  <select id="wordColorMode" class="form-select">
-                    <option value="random-dark">Random dark</option>
-                    <option value="random-light">Random light</option>
-                    <option value="specific">Single color</option>
-                  </select>
-                </div>
-                <div class="col-12 col-sm-6 col-lg-4">
-                  <label for="colorPicker_words" class="form-label">
-                    Words
-                    <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="If color mode is set to single color, select that color here." style="font-size: 0.55em;">?</span>
-                  </label>
-                  <div>
-                    <input id="colorPicker_words" type="text" class="coloris form-control" value="#000" data-property="words" data-default="#000">
+          <div class="accordion mt-3" id="topLevelAccordion">
+            <!-- Basic details -->
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#basicDetails" aria-expanded="true" aria-controls="basicDetails">
+                  Basic details
+                  <div class="accordion-detail">Set the definition and collection names and how often the word cloud refreshes.</div>
+                </button>
+              </h2>
+              <div id="basicDetails" class="accordion-collapse collapse show" data-bs-parent="#topLevelAccordion">
+                <div class="accordion-body">
+                  <div class="row gy-2">
+                    <div class="col-12 col-md-6 col-lg-4">
+                      <label for="definitionNameInput" class="form-label">Definition name</label>
+                      <input type="text" class="form-control" id="definitionNameInput">
+                    </div>
+                    <div class="col-12 col-md-6 col-lg-4">
+                      <label for="collectionNameInput" class="form-label">
+                        Collection name
+                        <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="The collection name connects the word cloud inputs and output. Multiple inputs can use the same collection name to aggregate responses." style="font-size: 0.55em;">?</span>
+                      </label>
+                      <input type="text" class="form-control" id="collectionNameInput">
+                    </div>
+                    <div class="col-12 col-md-6 col-lg-4">
+                      <label for="refreshRateInput" class="form-label">
+                        Refresh rate
+                        <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="Time in seconds to wait before refreshing the word cloud." style="font-size: 0.55em;">?</span>
+                      </label>
+                      <input type="number" value="15" min="1" class="form-control" id="refreshRateInput">
+                    </div>
                   </div>
                 </div>
               </div>
+            </div>
 
-              <h4>Fonts</h4>
-              <div class="row gy-2">
-                <div class="col-12 col-md-6 col-lg-4 col-xl-3">
-                  <button id="manageFontsButton" class="btn btn-info w-100">Manage fonts</button>
+            <!-- Content -->
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#content" aria-expanded="false" aria-controls="content">
+                  Content
+                  <div class="accordion-detail">Set the prompt you want and other text options.</div>
+                </button>
+              </h2>
+              <div id="content" class="accordion-collapse collapse" data-bs-parent="#topLevelAccordion">
+                <div class="accordion-body">
+                  <div class="row gy-2 align-items-end">
+                    <div class="col-12 col-lg-6">
+                      <label for="promptInput" class="form-label">Prompt</label>
+                      <div id="promptInputCommandBar"></div>
+                      <div id="promptInput"></div>
+                    </div>
+                    <div class="col-12 col-md-6 col-lg-4">
+                      <button id="showExcludedWordsModalButton" class="btn btn-primary w-100">Excluded words</button>
+                    </div>
+                  </div>
                 </div>
-                <div class="col-0 col-lg-9"></div>
+              </div>
+            </div>
 
-                <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Prompt" data-constAFP-path="style>font>prompt" data-default="OpenSans-Bold.ttf"></div>
+            <!-- Appearance -->
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#appearance" aria-expanded="false" aria-controls="appearance">
+                  Appearance
+                  <div class="accordion-detail">Adjust colors, fonts, text sizes, and other word cloud properties.</div>
+                </button>
+              </h2>
+              <div id="appearance" class="accordion-collapse collapse" data-bs-parent="#topLevelAccordion">
+                <div class="accordion-body">
+                  <h4 class="mt-2">Word cloud</h4>
+                    <div class="row gy-2">
+                      <div class="col-12 col-md-6 col-lg-4">
+                        <label for="wordRotationSelect" class="form-label">
+                          Word rotation
+                          <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="How should words in the cloud be shown?" style="font-size: 0.55em;">?</span>
+                        </label>
+                        <select id="wordRotationSelect" class="form-select">
+                          <option value="horizontal">Horizontal only</option>
+                          <option value="right_angles">Horizontal/vertical only</option>  
+                          <option value="full">Full rotation</option>
+                        </select>
+                      </div>
+                      <div class="col-12 col-md-6 col-lg-4">
+                        <label for="cloudShapeSelect" class="form-label">
+                          Cloud shape
+                          <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="The words will be roughly arranged in the selected shape." style="font-size: 0.55em;">?</span>
+                        </label>
+                        <select id="cloudShapeSelect" class="form-select">
+                          <option value="circle">Circle</option>
+                          <option value="square">Square</option>  
+                          <option value="diamond">Diamond</option>
+                          <option value="triangle">Triangle (pointing up)</option>
+                          <option value="triangle-forward">Triangle (pointing right)</option>
+                          <option value="pentagon">Pentagon</option>
+                          <option value="star">Star</option>
+                        </select>
+                      </div>
+                      <div class="col-12 col-md-6 col-lg-4">
+                        <label for="textCaseSelect" class="form-label">
+                          Capitalization
+                        </label>
+                        <select id="textCaseSelect" class="form-select">
+                          <option value="lowercase">Lowercase</option>  
+                          <option value="uppercase">Uppercase</option>
+                        </select>
+                      </div>
+                    </div>
 
-                <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Words" data-constAFP-path="style>font>words" data-default="OpenSans-Regular.ttf"></div>
+                    <h4 class="mt-2">Text size</h4>
+                    <div class="row gy-2">
+                      <div class="col-12 col-md-6 col-lg-4">
+                        <label for="promptTextSizeSlider" class="form-label">Prompt</label>
+                        <input id="promptTextSizeSlider" type="range" class="form-range text-size-slider realtime-slider" data-property="prompt" min="-2", max="4" start="0" step="0.5">
+                      </div>
+                    </div>
+
+                    <h4>Colors</h4>
+                    <div class="row gy-2 mb-3">
+                      <div class="col-12 col-lg-8 advanced-color-picker" data-constACP-name="Background" data-constACP-path="style>background"></div>
+                      <div class="col-12 col-sm-6 col-lg-4">
+                        <label for="colorPicker_prompt" class="form-label">Prompt</label>
+                        <div>
+                          <input id="colorPicker_prompt" type="text" class="coloris form-control" value="#000" data-property="prompt" data-default="#000">
+                        </div>
+                      </div>
+                      <div class="col-12 col-sm-6 col-lg-4">
+                        <label for="wordColorMode" class="form-label">
+                          Word color mode
+                        </label>
+                        <select id="wordColorMode" class="form-select">
+                          <option value="random-dark">Random dark</option>
+                          <option value="random-light">Random light</option>
+                          <option value="specific">Single color</option>
+                        </select>
+                      </div>
+                      <div class="col-12 col-sm-6 col-lg-4">
+                        <label for="colorPicker_words" class="form-label">
+                          Words
+                          <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="If color mode is set to single color, select that color here." style="font-size: 0.55em;">?</span>
+                        </label>
+                        <div>
+                          <input id="colorPicker_words" type="text" class="coloris form-control" value="#000" data-property="words" data-default="#000">
+                        </div>
+                      </div>
+                    </div>
+
+                    <h4>Fonts</h4>
+                    <div class="row gy-2">
+                      <div class="col-12 col-md-6 col-lg-4 col-xl-3">
+                        <button id="manageFontsButton" class="btn btn-info w-100">Manage fonts</button>
+                      </div>
+                      <div class="col-0 col-lg-9"></div>
+
+                      <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Prompt" data-constAFP-path="style>font>prompt" data-default="OpenSans-Bold.ttf"></div>
+
+                      <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Words" data-constAFP-path="style>font>words" data-default="OpenSans-Regular.ttf"></div>
+                    </div>
+                </div>
               </div>
             </div>
           </div>

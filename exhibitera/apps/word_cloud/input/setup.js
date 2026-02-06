@@ -109,8 +109,8 @@ async function clearDefinitionInput (full = true) {
   // Reset color options
   const colorInputs = ['input', 'input-background', 'submit', 'submit-background', 'clear', 'clear-background', 'prompt', 'keyboard-key', 'keyboard-key-background', 'keyboard-background']
   colorInputs.forEach((input) => {
-    const el = $('#colorPicker_' + input)
-    el.val(el.data('default'))
+    const el = document.getElementById('colorPicker_' + input)
+    el.value = el.dataset.default
     document.querySelector('#colorPicker_' + input).dispatchEvent(new Event('input', { bubbles: true }))
   })
   exSetup.updateAdvancedColorPicker('style>background', {
@@ -228,11 +228,14 @@ document.getElementById('manageFontsButton').addEventListener('click', (event) =
 })
 
 // Color
-$('.coloris').change(function () {
-  const value = $(this).val().trim()
-  exSetup.updateWorkingDefinition(['style', 'color', $(this).data('property')], value)
-  exSetup.previewDefinition(true)
-})
+for (const el of document.querySelectorAll('.coloris')) {
+  el.addEventListener('change', function () {
+    const value = this.value.trim()
+    const property = this.dataset.property
+    exSetup.updateWorkingDefinition(['style', 'color', property], value)
+    exSetup.previewDefinition(true)
+  })
+}
 
 // Realtime-sliders should adjust as we drag them
 Array.from(document.querySelectorAll('.realtime-slider')).forEach((el) => {

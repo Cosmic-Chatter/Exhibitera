@@ -173,6 +173,7 @@ async def handle_ping(data: dict[str, Any], request: Request):
 
     component = hub_components.get_exhibit_component(data['uuid'])
     dict_to_send = component.config.copy()
+    dict_to_send["id"] = component.id
 
     if len(dict_to_send["commands"]) > 0:
         # Clear the command list now that we are sending
