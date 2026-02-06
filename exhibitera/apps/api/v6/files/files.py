@@ -204,3 +204,4 @@ async def get_available_content(config: apps_config = Depends(get_config)):
                 "static_details": static_details}
 
     return response
+

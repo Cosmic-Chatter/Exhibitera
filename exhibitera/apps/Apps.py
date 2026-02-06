@@ -255,7 +255,9 @@ def create_config():
                               url='http://localhost:' + str(
                                   available_port) + '/first_time_setup.html')
 
+        apps_webview.clear_cache()
         webview.start(func=bootstrap_app, args=available_port, private_mode=False)
+
 
 def run():
     """Initialize the server"""
@@ -302,6 +304,8 @@ def run():
         start_app(with_webview=False)
     else:
         # Create a GUI window and then start the server
+        apps_webview.clear_cache()
+
         if "fullscreen" in sys.argv:
             option_fullscreen = True
         else:

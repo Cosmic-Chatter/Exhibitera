@@ -317,6 +317,7 @@ function downloadDataAsCSV () {
           exCommon.makeHelperRequest({
             method: 'POST',
             endpoint: '/app/saveFile',
+            api: '',
             params: {
               data: result.csv,
               filename: name + '.csv'

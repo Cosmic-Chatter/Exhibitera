@@ -1,5 +1,8 @@
 # Standard modules
+import logging
 from functools import partial
+import os
+import shutil
 import sys
 
 # Third-party modules
@@ -140,11 +143,35 @@ def on_window_closing():
 def save_file(data, default_filename: str):
     """Create a file save dialog to get a file path and then save the given file."""
 
-    result = webview.windows[0].create_file_dialog(dialog_type=webview.SAVE_DIALOG,
+    result = webview.windows[0].create_file_dialog(dialog_type=webview.FileDialog.OPEN.SAVE,
                                                    save_filename=default_filename)
+    if result is None:
+        return
 
-    with open(result, 'w', encoding='UTF-8') as f:
+    with open(result[0], 'w', encoding='UTF-8') as f:
         f.write(data)
+
+
+def clear_cache():
+    """Clear the pywebview cache."""
+
+    if sys.platform == "win32":
+        appdata = os.environ.get('APPDATA')
+        if not appdata:
+            logging.error("app_webview.clear_cache(): Could not find APPDATA environment variable.")
+            return
+
+        target_dir = os.path.join(appdata, 'pywebview', 'EBWebView', 'Default', 'Cache', 'Cache_Data')
+
+        if not os.path.exists(target_dir):
+            logging.error(f"app_webview.clear_cache(): Path does not exist: {target_dir}")
+            return
+
+        try:
+            shutil.rmtree(target_dir)  # Deletes subdirectories and their contents
+
+        except Exception as e:
+            print(f"Error occurred while clearing cache: {e}")
 
 
 menu_items = [
