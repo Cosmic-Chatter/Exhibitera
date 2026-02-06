@@ -155,19 +155,26 @@ def save_file(data, default_filename: str):
 def clear_cache():
     """Clear the pywebview cache."""
 
-    if sys.platform != "win32":
+    if sys.platform == "win32":
+
+        appdata = os.getenv('APPDATA')
+        # The 'Default' profile is standard for pywebview
+        base_path = os.path.join(appdata, 'pywebview', 'EBWebView', 'Default')
+
+        # Folders to wipe for a 'fresh' UI without losing login sessions
+        folders_to_clear = [
+            os.path.join(base_path, 'Cache', 'Cache_Data'),
+            os.path.join(base_path, 'Code Cache'),
+            os.path.join(base_path, 'GPUCache')
+        ]
+    elif sys.platform == 'darwin':
+        home = os.path.expanduser("~")
+        folders_to_clear = [
+            os.path.join(home, 'Library', 'Caches', 'Exhibitera_Apps', 'WebKit'),
+            os.path.join(home, 'Library', 'Caches', 'org.python.python', 'WebKit')
+        ]
+    else:
         return
-
-    appdata = os.getenv('APPDATA')
-    # The 'Default' profile is standard for pywebview
-    base_path = os.path.join(appdata, 'pywebview', 'EBWebView', 'Default')
-
-    # Folders to wipe for a 'fresh' UI without losing login sessions
-    folders_to_clear = [
-        os.path.join(base_path, 'Cache', 'Cache_Data'),
-        os.path.join(base_path, 'Code Cache'),
-        os.path.join(base_path, 'GPUCache')
-    ]
 
     for target in folders_to_clear:
         if os.path.exists(target):
