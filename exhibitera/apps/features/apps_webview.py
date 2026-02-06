@@ -155,23 +155,26 @@ def save_file(data, default_filename: str):
 def clear_cache():
     """Clear the pywebview cache."""
 
-    if sys.platform == "win32":
-        appdata = os.environ.get('APPDATA')
-        if not appdata:
-            logging.error("app_webview.clear_cache(): Could not find APPDATA environment variable.")
-            return
+    if sys.platform != "win32":
+        return
 
-        target_dir = os.path.join(appdata, 'pywebview', 'EBWebView', 'Default', 'Cache', 'Cache_Data')
+    appdata = os.getenv('APPDATA')
+    # The 'Default' profile is standard for pywebview
+    base_path = os.path.join(appdata, 'pywebview', 'EBWebView', 'Default')
 
-        if not os.path.exists(target_dir):
-            logging.error(f"app_webview.clear_cache(): Path does not exist: {target_dir}")
-            return
+    # Folders to wipe for a 'fresh' UI without losing login sessions
+    folders_to_clear = [
+        os.path.join(base_path, 'Cache', 'Cache_Data'),
+        os.path.join(base_path, 'Code Cache'),
+        os.path.join(base_path, 'GPUCache')
+    ]
 
-        try:
-            shutil.rmtree(target_dir)  # Deletes subdirectories and their contents
-
-        except Exception as e:
-            print(f"Error occurred while clearing cache: {e}")
+    for target in folders_to_clear:
+        if os.path.exists(target):
+            try:
+                shutil.rmtree(target)
+            except Exception as e:
+                logging.warning(f"clear_cache(): Could not clear {target}: {e}")
 
 
 menu_items = [
