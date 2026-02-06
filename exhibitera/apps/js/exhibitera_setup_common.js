@@ -103,6 +103,16 @@ export async function configure (options) {
     document.querySelector('html').setAttribute('data-bs-theme', 'light')
   }
 
+  await exCommon.askForDefaults(false)
+  if (exCommon.config.standalone === false) {
+    // We are using Hub, so attempt to log in
+    await authenticateUser()
+  } else {
+    // Hide the login details
+    document.getElementById('loginMenu').style.display = 'none'
+    document.getElementById('helpNewAccountMessage').style.display = 'none'
+  }
+
   const defaults = {
     app: null,
     blankDefinition: {},
@@ -140,7 +150,7 @@ export async function configure (options) {
 
   exCommon.getAvailableDefinitions(options.app)
     .then((response) => {
-      if ('success' in response && response.success === true) {
+      if (response?.success === true) {
         populateAvailableDefinitions(response.definitions)
       }
     })

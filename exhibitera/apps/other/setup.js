@@ -346,15 +346,3 @@ exSetup.configure({
     properties: {}
   }
 })
-
-exCommon.askForDefaults(false)
-  .then(() => {
-    if (exCommon.config.standalone === false) {
-      // We are using Hub, so attempt to log in
-      exSetup.authenticateUser()
-    } else {
-      // Hide the login details
-      document.getElementById('loginMenu').style.display = 'none'
-      document.getElementById('helpNewAccountMessage').style.display = 'none'
-    }
-  })

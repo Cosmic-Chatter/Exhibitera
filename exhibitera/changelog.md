@@ -73,6 +73,7 @@ _This brand-new app extends Voting Kiosk to multiple survey questions, with new 
 
 ### Timelapse Viewer
 - Choose between filling the screen with the video or letterboxing it to show the whole video
+- Guided setup makes things easier than ever
 
 ### Timeline Explorer
 - Timeline items can now include videos in addition to images

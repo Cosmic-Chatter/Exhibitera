@@ -1,18 +1,109 @@
 /* global bootstrap */
 
 import exConfig from '../../common/config.js'
+import * as exUtilities from '../../common/utilities.js'
 import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exFileSelect from '../js/exhibitera_file_select_modal.js'
 import * as exSetup from '../js/exhibitera_setup_common.js'
 
 async function initializeWizard () {
-  // Set up the wizard
+  // Setup the wizard
 
   exSetup.prepareWizard()
 
   // Reset fields
   document.getElementById('wizardDefinitionNameInput').value = ''
   document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'none'
+  const firstImage = document.getElementById('wizardSelectFirstImageButton')
+  firstImage.innerText = 'Select first image'
+  firstImage.dataset.filename = ''
+  const lastImage = document.getElementById('wizardSelectLastImageButton')
+  lastImage.innerText = 'Select last image'
+  lastImage.dataset.filename = ''
+  document.getElementById('wizardMediaFileBlankWarning').style.display = 'none'
+  document.getElementById('wizardMediaSameFileWarning').style.display = 'none'
+  document.getElementById('wizardHeader').value = ''
+  document.getElementById('wizardDuration').value = 15
+}
+
+async function wizardForward (currentPage) {
+  // Check if the wizard is ready to advance and perform the move
+
+  if (currentPage === 'Welcome') {
+    const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
+    if (defName !== '') {
+      document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'none'
+      exSetup.wizardGoTo('Media')
+    } else {
+      document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'block'
+    }
+  } else if (currentPage === 'Media') {
+    const firstName = document.getElementById('wizardSelectFirstImageButton').dataset.filename
+    const lastName = document.getElementById('wizardSelectLastImageButton').dataset.filename
+    if (firstName === '' || lastName === '') {
+      document.getElementById('wizardMediaFileBlankWarning').style.display = 'block'
+      return
+    }
+    if (firstName === lastName) {
+      document.getElementById('wizardMediaSameFileWarning').style.display = 'block'
+      return
+    }
+    document.getElementById('wizardMediaFileBlankWarning').style.display = 'none'
+    document.getElementById('wizardMediaSameFileWarning').style.display = 'none'
+
+    exSetup.wizardGoTo('Attractor')
+  } else if (currentPage === 'Attractor') {
+    wizardCreateDefinition()
+  }
+}
+
+function wizardBack (currentPage) {
+  // Move the wizard back one page
+
+  if (currentPage === 'Media') {
+    exSetup.wizardGoTo('Welcome')
+  } else if (currentPage === 'Attractor') {
+    exSetup.wizardGoTo('Media')
+  }
+}
+
+async function wizardCreateDefinition () {
+  // Use the provided details to build a definition file.
+
+  // Definition name
+  const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
+  exSetup.updateWorkingDefinition(['name'], defName)
+
+  // Generate filename pattern
+  const first = document.getElementById('wizardSelectFirstImageButton').dataset.filename
+  const last = document.getElementById('wizardSelectLastImageButton').dataset.filename
+  guessFilenamePattern(first, last)
+
+  // Attractor
+  const header = document.getElementById('wizardHeader').value.trim()
+  exSetup.updateWorkingDefinition(['attractor'], {
+    attractor_background: '#000000b5',
+    attractor_height: '45',
+    text: header
+  })
+
+  exSetup.updateWorkingDefinition(['attractor', 'use_attractor'], header !== '')
+
+  // Behavior
+  exSetup.updateWorkingDefinition(['behavior'], {
+    animation_duration: parseInt(document.getElementById('wizardDuration').value),
+    video_mode: 'cover'
+  })
+
+  const uuid = exSetup.config.workingDefinition.uuid
+
+  await exSetup.saveDefinition(defName)
+  const result = await exCommon.getAvailableDefinitions('timelapse_viewer')
+  exSetup.populateAvailableDefinitions(result.definitions)
+  document.getElementById('availableDefinitionSelect').value = uuid
+
+  editDefinition(uuid)
+  exUtilities.hideModal('#setupWizardModal')
 }
 
 async function clearDefinitionInput (full = true) {
@@ -122,11 +213,8 @@ function disableAttractorOptions (disable) {
   }
 }
 
-function guessFilenamePattern () {
+function guessFilenamePattern (first, last) {
   // Use two given filenames to guess a wildcard (*) pattern to select the range
-
-  const first = document.getElementById('selectFirstImageButton').getAttribute('data-filename')
-  const last = document.getElementById('selectLastImageButton').getAttribute('data-filename')
 
   if (first == null || last == null) return
 
@@ -167,6 +255,25 @@ function retrieveMatchingFilesCount () {
     })
     document.getElementById('filenamePatternMatches').value = matchedFiles.length
   })
+}
+
+function showConvertVideoModal () {
+  // Prepare and show the modal for converting videos
+
+  const convertButton = document.getElementById('videoConversionModalSubmitButton')
+  document.getElementById('selectConversionVideoButton').innerHTML = 'Select video'
+  document.getElementById('selectConversionVideoButton').setAttribute('data-filename', null)
+  document.getElementById('fileConversionVideoPreview').src = null
+  document.getElementById('outputFileCountField').value = null
+  document.getElementById('conversionProgressBarDiv').style.display = 'none'
+  document.getElementById('conversionProgressBarDiv').setAttribute('aria-valuenow', 0)
+  document.getElementById('conversionProgressBar').style.width = '0%'
+
+  convertButton.innerHTML = 'Convert'
+  convertButton.classList.remove('btn-info')
+  convertButton.classList.add('btn-primary')
+
+  exUtilities.showModal('#videoConversionModal')
 }
 
 async function convertVideo () {
@@ -216,14 +323,14 @@ async function trackConversionProgress (total, starting) {
   const percent = Math.round(100 * (numComplete / total))
   document.getElementById('conversionProgressBarDiv').setAttribute('aria-valuenow', percent)
   document.getElementById('conversionProgressBar').style.width = String(percent) + '%'
-  console.log(numComplete, total, starting, percent)
+
   if (numComplete < total - 5) {
     // Add a little slop (5) in case the estimated number of files is wrong.
     setTimeout(() => {
       trackConversionProgress(total, starting)
     }, 1000)
   } else {
-    videoConversionModal.hide()
+    exUtilities.hideModal('#videoConversionModal')
   }
 }
 
@@ -235,6 +342,38 @@ let matchedFiles = []
 // Add event listeners
 // -------------------------------------------------------------
 
+// Wizard
+
+// Connect the forward and back buttons
+Array.from(document.querySelectorAll('.wizard-forward')).forEach((el) => {
+  el.addEventListener('click', () => {
+    wizardForward(el.getAttribute('data-current-page'))
+  })
+})
+Array.from(document.querySelectorAll('.wizard-back')).forEach((el) => {
+  el.addEventListener('click', () => {
+    wizardBack(el.getAttribute('data-current-page'))
+  })
+})
+
+document.getElementById('wizardManageContentButton').addEventListener('click', () => {
+  exFileSelect.createFileSelectionModal({ manage: true, filetypes: ['image', 'video'] })
+})
+document.getElementById('wizardConvertVideoButton').addEventListener('click', () => {
+  showConvertVideoModal()
+})
+for (const id of ['wizardSelectFirstImageButton', 'wizardSelectLastImageButton']) {
+  document.getElementById(id).addEventListener('click', (event) => {
+    exFileSelect.createFileSelectionModal({ multiple: false, filetypes: ['image'] })
+      .then((result) => {
+        if (result != null && result.length > 0) {
+          event.target.setAttribute('data-filename', result[0])
+          event.target.innerHTML = result[0]
+        }
+      })
+  })
+}
+
 // Behavior fields
 Array.from(document.querySelectorAll('.behavior-input')).forEach((el) => {
   el.addEventListener('change', (event) => {
@@ -244,23 +383,14 @@ Array.from(document.querySelectorAll('.behavior-input')).forEach((el) => {
   })
 })
 
+// Manage content button
+document.getElementById('manageContentButton').addEventListener('click', () => {
+  exFileSelect.createFileSelectionModal({ manage: true, filetypes: ['image', 'video'] })
+})
+
 // Video conversion
-const videoConversionModal = new bootstrap.Modal('#videoConversionModal')
 document.getElementById('showConvertVideoModal').addEventListener('click', (event) => {
-  const convertButton = document.getElementById('videoConversionModalSubmitButton')
-  document.getElementById('selectConversionVideoButton').innerHTML = 'Select video'
-  document.getElementById('selectConversionVideoButton').setAttribute('data-filename', null)
-  document.getElementById('fileConversionVideoPreview').src = null
-  document.getElementById('outputFileCountField').value = null
-  document.getElementById('conversionProgressBarDiv').style.display = 'none'
-  document.getElementById('conversionProgressBarDiv').setAttribute('aria-valuenow', 0)
-  document.getElementById('conversionProgressBar').style.width = '0%'
-
-  convertButton.innerHTML = 'Convert'
-  convertButton.classList.remove('btn-info')
-  convertButton.classList.add('btn-primary')
-
-  videoConversionModal.show()
+  showConvertVideoModal()
 })
 document.getElementById('selectConversionVideoButton').addEventListener('click', (event) => {
   exFileSelect.createFileSelectionModal({ multiple: false, filetypes: ['video'] })
@@ -328,7 +458,10 @@ document.getElementById('patternGeneratorModalSubmitButton').addEventListener('c
   if (first == null || last == null) {
     document.getElementById('patternGeneratorModalMissingFilenameWarning').style.display = 'block'
   } else {
-    guessFilenamePattern()
+    const first = document.getElementById('selectFirstImageButton').getAttribute('data-filename')
+    const last = document.getElementById('selectLastImageButton').getAttribute('data-filename')
+
+    guessFilenamePattern(first, last)
     PatternGeneratorModal.hide()
     exSetup.previewDefinition(true)
   }
@@ -395,15 +528,3 @@ exSetup.configure({
     }
   }
 })
-
-exCommon.askForDefaults(false)
-  .then(() => {
-    if (exCommon.config.standalone === false) {
-      // We are using Hub, so attempt to log in
-      exSetup.authenticateUser()
-    } else {
-      // Hide the login details
-      document.getElementById('loginMenu').style.display = 'none'
-      document.getElementById('helpNewAccountMessage').style.display = 'none'
-    }
-  })
