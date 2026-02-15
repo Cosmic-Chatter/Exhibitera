@@ -14,7 +14,6 @@ last_update_time: float = 0  # Will hold time.time() of last change to the serve
 
 software_version: dict[str, int] = {}
 software_update_timer: threading.Timer | None = None  # Timer reference to check for an update once daily
-outdated_os: bool = False
 
 # Threading resources
 polling_thread_dict: dict[str, threading.Timer] = {}
@@ -37,8 +36,8 @@ componentDescriptions: dict = {}  # Holds optional short descriptions of each co
 group_list: list[dict[str, Any]] = []
 group_list_last_update_date: str = datetime.datetime.now().isoformat()
 
-# Dictionary to keep track of warnings we have already presented
-serverWarningDict: dict = {}
+# Dictionary to keep track of notifications we have already presented
+notifications: dict = {}
 
 # Issue stuff
 issue_list_last_update_date: str = datetime.datetime.now().isoformat()

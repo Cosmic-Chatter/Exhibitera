@@ -2,7 +2,7 @@ export default {
   availableExhibits: [], // An array of strings
   componentGroups: [],
   currentExhibit: '',
-  notifications: {},
+  notifications: { hub: {} },
   exhibitComponents: [],
   groups: [],
   groupLastUpdateDate: 0,

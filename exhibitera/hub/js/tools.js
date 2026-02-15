@@ -169,7 +169,7 @@ export function createNotification (componentUUID, message, type = 'info', notif
 export function clearNotifications () {
   // Clear all stored notifications
 
-  hubConfig.notifications = {}
+  hubConfig.notifications = { hub: {} }
   rebuildNotificationList()
 }
 
@@ -232,18 +232,19 @@ export function rebuildNotificationList () {
         }
       } else if (notificationUUID === 'outdated_os') {
         if (worstType === 'info') worstType = 'warning'
-        let labelName
 
-        if (componentUUID === 'hub') {
-          labelName = 'This OS may not be supported in the next version of Exhibitera.'
-        } else {
-          labelName = 'This OS may not be supported in the next version of Exhibitera.'
-        }
+        notificationEl = createNotificationHTML({
+          message: 'This OS may not be supported in the next version of Exhibitera.',
+          type: 'warning'
+        }, componentName)
+      } else if (notificationUUID === 'wake_on_lan_privilege') {
+        if (worstType === 'info') worstType = 'warning'
+        const labelName = 'Hub needs administrator priviliges for full functionality.'
 
         notificationEl = createNotificationHTML({
           message: labelName,
           type: 'warning'
-        }, componentName)
+        }, 'Hub')
       } else {
         // Create and add the button
 

@@ -207,6 +207,8 @@ export function sendPing () {
     return
   }
 
+  config.notifications.outdated_os = config?.platformDetails?.outdated ?? false
+
   const pingRequest = function () {
     const requestDict = {
       uuid: config.uuid,

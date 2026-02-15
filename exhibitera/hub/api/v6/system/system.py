@@ -23,6 +23,7 @@ logging.basicConfig(datefmt='%Y-%m-%d %H:%M:%S',
                     format='%(levelname)s, %(asctime)s, %(message)s',
                     level=logging.INFO)
 
+
 def get_webpage_update():
     """Collect the current exhibit status and send it back to the web client to update the page."""
 
@@ -89,11 +90,14 @@ def get_webpage_update():
         component_dict_list.append(temp)
 
     update_dict["components"] = component_dict_list
+
+    hub_config.notifications["outdated_os"] = ex_config.outdated_os
+
     update_dict["gallery"] = {"current_exhibit": hub_config.current_exhibit,
                               "exhibit_modified": len(hub_config.exhibit_modifications.get("components", [])) != 0,
                               "available_exhibits": hub_config.exhibit_list,
                               "name": hub_config.gallery_name,
-                              "outdated_os": hub_config.outdated_os,
+                              "notifications": hub_config.notifications,
                               "software_version": hub_config.software_version,
                               "software_update": ex_config.software_update}
 

@@ -152,39 +152,6 @@ def error_handler(*exc_info) -> None:
     print(f"Error: see hub.log for more details ({datetime.datetime.now()})")
 
 
-def check_for_outdated_os() -> tuple[bool, str]:
-    """Check if the OS release is out of date.
-
-    This is a very limited check based on Ubuntu and Windows
-    """
-
-    message = "This OS version may be unsupported in the next version of Exhibitera."
-
-    if sys.platform == 'linux':
-        # Check for outdated Ubuntu
-        if distro.id() != 'ubuntu':
-            # We are only checking for Ubuntu right now
-            return False, ""
-
-        # Ubuntu LTS versions are supported for 5 years
-        version_parts = distro.version_parts(best=True)
-        major = int(version_parts[0])
-        minor = int(version_parts[1])
-        if major % 2 != 0 or minor != 4:
-            # LTS releases are always even year + 04, such as 22.04
-            return True, message
-        now = datetime.datetime.now()
-        now_year = int(now.strftime("%y"))
-        if now_year - major >= 5:
-            # LTS releases are supported for 5 years
-            return True, message
-
-    if sys.platform == 'win32':
-        return False, ""
-
-    return False, ""
-
-
 # Check whether we have packaged with Pyinstaller and set the appropriate root path.
 ex_config.exec_path = os.path.dirname(os.path.abspath(__file__))
 if getattr(sys, 'frozen', False):

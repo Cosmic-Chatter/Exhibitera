@@ -199,21 +199,7 @@ class BaseComponent:
         if self.ip_address is None:
             return
 
-        try:
-            ping = icmplib.ping(self.ip_address, privileged=False, count=1, timeout=1)
-            if ping.is_alive:
-                self.latency = ping.avg_rtt
-            else:
-                self.latency = None
-        except icmplib.exceptions.SocketPermissionError:
-            if "wakeOnLANPrivilege" not in hub_config.serverWarningDict:
-                hub_config.serverWarningDict["wakeOnLANPrivilege"] = True
-            self.latency = None
-        except icmplib.exceptions.NameLookupError:
-            self.latency = None
-        except Exception as e:
-            print(f"poll_latency: {self.id}: an unknown exception occurred", e)
-            self.latency = None
+        _, self.latency = ip_address_alive(self.ip_address)
 
     def get_maintenance_report(self) -> dict[str, Any]:
         """Return a summary of this component's maintenance status."""
@@ -318,7 +304,14 @@ class ExhibitComponent(BaseComponent):
         Options: [OFFLINE, SYSTEM ON, ONLINE, ACTIVE, WAITING, STATIC]
         """
 
-        return self.status_manager.status
+        status = self.status_manager.status
+
+        if status == "OFFLINE" and self.category == "dynamic":
+            is_alive, _ = ip_address_alive(self.ip_address)
+            if is_alive:
+                return "SYSTEM ON"
+
+        return status
 
     def update_configuration(self):
         """Update the component's configuration based on current exhibit configuration."""
@@ -481,26 +474,22 @@ class WakeOnLANDevice(BaseComponent):
 
         """If we have an IP address, ping the host to see if it is awake"""
 
-        if self.ip_address is not None:
-            try:
-                ping = icmplib.ping(self.ip_address, privileged=False, count=1)
-                prior_status = self.state["status"]
-                if ping.is_alive:
-                    self.state["status"] = "SYSTEM ON"
-                    self.last_contact_datetime = datetime.datetime.now()
-                elif self.seconds_since_last_contact() > 60:
-                    self.state["status"] = "OFFLINE"
-                if prior_status != self.state["status"]:
-                    hub_config.last_update_time = time.time()
-            except icmplib.exceptions.SocketPermissionError:
-                if "wakeOnLANPrivilege" not in hub_config.serverWarningDict:
-                    print(
-                        "Warning: to check the status of Wake on LAN devices, you must run Hub with administrator privileges.")
-                    with hub_config.logLock:
-                        logging.info(f"Need administrator privilege to check Wake on LAN status")
-                    hub_config.serverWarningDict["wakeOnLANPrivilege"] = True
-        else:
+        if self.ip_address is None:
             self.state["status"] = "UNKNOWN"
+            return
+
+        is_alive, _ = ip_address_alive(self.ip_address)
+
+        prior_status = self.state["status"]
+        if is_alive:
+            self.state["status"] = "SYSTEM ON"
+            self.last_contact_datetime = datetime.datetime.now()
+        elif self.seconds_since_last_contact() > 60:
+            self.state["status"] = "OFFLINE"
+
+        if prior_status != self.state["status"]:
+            hub_config.last_update_time = time.time()
+
 
     def get_dict(self):
         """Return a dictionary representation of this component.
@@ -850,6 +839,27 @@ def update_exhibit_component_status(data: dict[str, Any], ip: str):
 
     if "api_level" in data:
         component.config["api_level"] = data["api_level"]
+
+
+def ip_address_alive(ip_address: str) -> tuple[bool, float | None]:
+    """Send a ping to the given IP address to see if it is alive"""
+
+    try:
+        ping = icmplib.ping(ip_address, privileged=False, count=1)
+        return ping.is_alive, ping.avg_rtt
+    except icmplib.exceptions.SocketPermissionError:
+        if "wake_on_lan_privilege" not in hub_config.notifications:
+            print(
+                "Warning: to check the status of Wake on LAN devices, you must run Hub with administrator privileges.")
+            with hub_config.logLock:
+                logging.info(f"Need administrator privilege to check Wake on LAN status")
+            hub_config.notifications["wake_on_lan_privilege"] = True
+    except icmplib.exceptions.NameLookupError:
+        pass
+    except Exception as e:
+        print(f"ip_address_alive: an unknown exception occurred when pinging {ip_address}", e)
+
+    return False, None
 
 # Set up log file
 log_path = ex_files.get_path(["hub.log"], user_file=True)

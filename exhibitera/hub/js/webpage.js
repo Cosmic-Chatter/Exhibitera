@@ -572,10 +572,18 @@ function parseUpdate (update) {
     updateAvailableExhibits(update.gallery.available_exhibits)
     document.getElementById('exhibitNameField').innerHTML = exTools.getExhibit(update.gallery.current_exhibit).name
 
-    if ('name' in update.gallery) {
+    if (update.gallery?.name) {
       document.getElementById('galleryNameField').innerHTML = update.gallery.name
       document.title = update.gallery.name
     }
+
+    for (const key of Object.keys(update.gallery?.notifications ?? {})) {
+      if (update.gallery.notifications?.[key] === true) {
+        hubConfig.notifications.hub[key] = {}
+        hubConfig.notifications.hub[key][key] = true
+      }
+    }
+    exTools.rebuildNotificationList()
 
     if (update?.gallery?.software_update?.update_available) {
       const notification = {
@@ -583,25 +591,13 @@ function parseUpdate (update) {
         current_version: update.gallery.software_version,
         available_version: update.gallery.software_version_available
       }
-      if (hubConfig.notifications.hub) {
-        hubConfig.notifications.hub.software_update = notification
-      } else {
-        hubConfig.notifications.hub = {
-          software_update: notification
-        }
-      }
+      hubConfig.notifications.hub.software_update = notification
 
       exTools.rebuildNotificationList()
     }
 
     if (update.gallery?.outdated_os) {
-      if (hubConfig.notifications.hub) {
-        hubConfig.notifications.hub.outdated_os = { outdated_os: true }
-      } else {
-        hubConfig.notifications.hub = {
-          outdated_os: { outdated_os: true }
-        }
-      }
+      hubConfig.notifications.hub.outdated_os = { outdated_os: true }
 
       exTools.rebuildNotificationList()
     }
