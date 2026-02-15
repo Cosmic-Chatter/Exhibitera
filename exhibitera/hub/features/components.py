@@ -811,7 +811,7 @@ def update_exhibit_component_status(data: dict[str, Any], ip: str):
     component = get_exhibit_component(data.get("uuid", 'FAIL'))
     if component is None:  # This is a new uuid, so create the component
         this_uuid = data.get("uuid", str(uuid.uuid4()))
-        this_id = data.get("id", "New Component " + this_uuid)
+        this_id = data.get("id", "New Component " + this_uuid[0:8])
 
         component = add_exhibit_component(this_id, ["Default"], uuid_str=this_uuid)
 

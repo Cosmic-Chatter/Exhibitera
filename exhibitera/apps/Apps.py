@@ -290,11 +290,7 @@ def run():
         if "port" not in apps_config.defaults['system']:
             apps_config.defaults["system"]["port"] = apps_utilities.find_available_port()
 
-        if apps_config.defaults['system']['standalone'] is True:
-            print(f"Starting Exhibitera Apps on port {apps_config.defaults['system']['port']}.")
-        else:
-            print(
-                f"Starting Exhibitera Apps for ID {apps_config.defaults['app']['id']} on port {apps_config.defaults['system']['port']}.")
+        print(f"Starting Exhibitera Apps on port {apps_config.defaults['system']['port']}.")
     else:
         # We need to create a config.json file based on user input.
         create_config()

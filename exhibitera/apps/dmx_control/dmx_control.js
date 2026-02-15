@@ -1730,9 +1730,7 @@ function showAddUniverseMOdal () {
 
   const addUniverseController = document.getElementById('addUniverseController')
   // Clear previous input
-  document.getElementById('addUniverseName').value = ''
   addUniverseController.innerHTML = ''
-  document.getElementById('addUniverseMissingNameWarning').style.display = 'none'
 
   // Get a list of available DMX controllers
   exCommon.makeHelperRequest({
@@ -1766,19 +1764,12 @@ function showAddUniverseMOdal () {
 function addUniverseFromModal () {
   // Use the addUniverseModal to create a new universe.
 
-  const name = document.getElementById('addUniverseName').value.trim()
   const controller = JSON.parse(document.getElementById('addUniverseController')?.selectedOptions[0]?.dataset.value)
-
-  if (name === '') {
-    document.getElementById('addUniverseMissingNameWarning').style.display = 'block'
-    return
-  }
 
   exCommon.makeHelperRequest({
     method: 'POST',
     endpoint: '/DMX/universe/create',
     params: {
-      name,
       controller: controller.model,
       device_details: controller
     }

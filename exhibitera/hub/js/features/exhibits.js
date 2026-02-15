@@ -1118,8 +1118,8 @@ function configureComponentInfoModalForExhibitComponent (obj, permission) {
     .then((result) => {
       document.getElementById('componentInfoModalDMXTabButton').style.display = 'block'
       if (result?.success === true) {
-        hubDMX.populateDMXScenesForInfoModal(result.groups, obj.getHelperURL())
-        document.getElementById('componentInfoModalDMXControls').style.display = 'block'
+        hubDMX.populateDMXScenesForInfoModal(result.scenes, obj.getHelperURL())
+        document.getElementById('componentInfoModalDMXControls').style.display = 'flex'
         document.getElementById('componentInfoModalDMXIntro').style.display = 'none'
       } else {
         document.getElementById('componentInfoModalDMXControls').style.display = 'none'
