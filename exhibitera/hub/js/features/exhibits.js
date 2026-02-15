@@ -1727,7 +1727,7 @@ async function populateComponentDefinitionList (definitions, permission) {
       editOption.innerHTML = 'Edit'
       dropdownMenu.appendChild(editOption)
 
-      if (['image_compare', 'infostation', 'media_browser', 'media_player', 'timelapse_viewer', 'timeline_explorer', 'voting_kiosk', 'word_cloud_input', 'word_cloud_viewer'].includes(definition.app)) {
+      if (['image_compare', 'infostation', 'media_browser', 'media_player', 'survey_kiosk', 'timelapse_viewer', 'timeline_explorer', 'voting_kiosk', 'word_cloud_input', 'word_cloud_viewer'].includes(definition.app)) {
         const copyOption = document.createElement('a')
         copyOption.classList = 'dropdown-item'
         copyOption.innerHTML = 'Copy to...'

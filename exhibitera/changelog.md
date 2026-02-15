@@ -46,6 +46,7 @@ The Core API provides a stable API that enables developers to provide basic inte
 - Adjust the corner radius of sections
 - Customize the look of captions
 - Guided setup makes things easier than ever
+- Copy InfoStation definitions to other PCs
 
 ### Media Browser
 - Support for audio files

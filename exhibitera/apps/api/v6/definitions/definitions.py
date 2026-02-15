@@ -155,6 +155,34 @@ async def get_definition_content_list(this_uuid: str):
                         content.add(anno["file"])
                     if os.path.basename(os.path.dirname(anno["font"])) == 'content':
                         content.add(os.path.basename(anno["font"]))
+    elif app == "survey_kiosk":
+        # Find media from option icons
+        items = definition.get('items', {})
+        for item_uuid, item_def in items.items():
+            options = item_def.get("options", {})
+            for option_uuid, option_def in options.items():
+                content.add(option_def.get('icon_user_file', ''))
+                content.add(option_def.get("background", {}).get("image", ""))
+
+        # Find media in Markdown text
+        pattern = r'!\[.*?\]\(/content/([^ \"\)]+).*?\)'
+
+        # Navigate the JSON structure
+        languages = definition.get("languages", {})
+
+        for code, lang_def in languages.items():
+            items = lang_def.get("items", {})
+
+            for item_uuid, item_content in items.items():
+                # Access the 'body' dict, then the 'text' field
+                body = item_content.get("body", {})
+                markdown_text = body.get("text", "")
+
+                # Extract filenames using the regex
+                matches = re.findall(pattern, markdown_text)
+
+                for filename in matches:
+                    content.add(filename)
     elif app == "timelapse_viewer":
         if "font" in definition.get("attractor", {}):
             if os.path.basename(os.path.dirname(definition["attractor"]["font"])) == 'content':
