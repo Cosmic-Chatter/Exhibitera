@@ -3,7 +3,7 @@
 cd %1
 CALL venv\Scripts\activate.bat
 
-pyinstaller --clean --add-data "*.html;." --add-data "*.js;." --add-data "css\;css\." --add-data "icon\;icon\." --add-data "*.txt;." --add-data "images\;images\." --add-data "js\;js\." --add-data "README.md;.\README.md"   --runtime-tmpdir .\AppData\ --onefile Exhibitera_Hub.py
+pyinstaller --clean --add-data "exhibitera\hub\_static\:exhibitera\hub\_static\." --add-data "exhibitera\hub\api\:exhibitera\hub\api\." --add-data "exhibitera\hub\css\:exhibitera\hub\css\." --add-data "exhibitera\hub\features\:exhibitera\hub\features\." --add-data "exhibitera\common\:exhibitera\common\." --add-data "exhibitera\hub\js\:exhibitera\hub\js\." --add-data "exhibitera\hub\*.py:exhibitera\hub\." --add-data "exhibitera\hub\*.js:exhibitera\hub\." --add-data "exhibitera\hub\*.html:exhibitera\hub\." --add-data "exhibitera\hub\*.json:exhibitera\hub\." --add-data "exhibitera\hub\*.txt:exhibitera\hub\." --add-data "exhibitera\hub\*.md:exhibitera\hub\." --runtime-tmpdir .\AppData\ --onefile Exhibitera_Hub.py
 
 @GOTO :END
 
