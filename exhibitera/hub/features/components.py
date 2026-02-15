@@ -844,6 +844,9 @@ def update_exhibit_component_status(data: dict[str, Any], ip: str):
 def ip_address_alive(ip_address: str) -> tuple[bool, float | None]:
     """Send a ping to the given IP address to see if it is alive"""
 
+    if ip_address is None or ip_address == "":
+        return False, None
+
     try:
         ping = icmplib.ping(ip_address, privileged=False, count=1)
         return ping.is_alive, ping.avg_rtt

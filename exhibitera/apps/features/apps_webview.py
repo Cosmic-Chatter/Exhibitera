@@ -10,7 +10,7 @@ import webview
 
 # Exhibitera modules
 import exhibitera.apps.config as apps_config
-
+import exhibitera.common.files as ex_files
 
 class ExhibiteraWebviewAPI:
     """Bindings to connect the app.html pywebview window to Python."""
@@ -156,16 +156,18 @@ def clear_cache():
     """Clear the pywebview cache."""
 
     if sys.platform == "win32":
-
         appdata = os.getenv('APPDATA')
         # The 'Default' profile is standard for pywebview
         base_path = os.path.join(appdata, 'pywebview', 'EBWebView', 'Default')
+        apps_path = ex_files.get_path(["webview_storage", 'EBWebView', 'Default'], user_file=True)
 
-        # Folders to wipe for a 'fresh' UI without losing login sessions
         folders_to_clear = [
             os.path.join(base_path, 'Cache', 'Cache_Data'),
             os.path.join(base_path, 'Code Cache'),
-            os.path.join(base_path, 'GPUCache')
+            os.path.join(base_path, 'GPUCache'),
+            os.path.join(apps_path, 'Cache', 'Cache_Data'),
+            os.path.join(apps_path, 'Code Cache'),
+            os.path.join(apps_path, 'GPUCache')
         ]
     elif sys.platform == 'darwin':
         home = os.path.expanduser("~")

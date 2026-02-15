@@ -1403,7 +1403,7 @@ export function submitUserPasswordChange () {
           document.getElementById('passwordChangeModalBadCurrentPassWarning').style.display = 'block'
         }
       } else {
-        exUtilities.hideModal('#changePasswordModal')
+        exUtilities.hideModal('#passwordChangeModal')
         logoutUser()
       }
     })
