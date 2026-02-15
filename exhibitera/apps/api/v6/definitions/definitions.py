@@ -1,6 +1,7 @@
 # Standard modules
 import glob
 import os.path
+import re
 from typing import Any
 import uuid
 
@@ -114,6 +115,24 @@ async def get_definition_content_list(this_uuid: str):
             item = definition["content"][item_uuid]
             content.add(item["image1"])
             content.add(item["image2"])
+    elif app== 'infostation':
+        pattern = r'!\[.*?\]\(/content/([^ \"\)]+).*?\)'
+
+        # Navigate the JSON structure: languages > [code] > tabs > [uuid] > text
+        languages = definition.get("languages", {})
+
+        for code, lang_def in languages.items():
+            tabs = lang_def.get("tabs", {})
+
+            for tab_uuid, tab_content in tabs.items():
+                markdown_text = tab_content.get("text", "")
+
+                # Find all matches in the current markdown string
+                matches = re.findall(pattern, markdown_text)
+
+                # Add found filenames to the existing 'content' set
+                for filename in matches:
+                    content.add(filename)
     elif app == 'media_browser':
         for item_uuid in definition.get('content_order', []):
             item = definition["content"][item_uuid]

@@ -101,15 +101,7 @@ Clicking on a component opens its status view. Here, you can see a snapshot of t
 The _Definitions_ pane allows you to select the app definition that you want to display. A given component can have only one active definition. If the definition you selected belongs to an app other than the one that is currently active, the app will be changed before the new definition is applied.
 
 ##### Copying definitions
-Definitions for some apps can be copied from one component to another. This can be helpful if you want ot deploy the same definition across many systems, such as when using Media Player for digital signage. Copying definitions is supported for these apps:
-- Image Compare
-- Media Browser
-- Media Player
-- Survey Kiosk
-- Timelapse Viewer
-- Timeline Explorer
-- Voting Kiosk
-- Word Cloud
+Definitions for some apps can be copied from one component to another. This can be helpful if you want ot deploy the same definition across many systems, such as when using Media Player for digital signage.
 
 #### Lighting pane
 The _Lighting_ pane displays any DMX lighting scenes configured for this component. Clicking a scene will immediately show it.
