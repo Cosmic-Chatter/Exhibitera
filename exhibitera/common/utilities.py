@@ -167,14 +167,13 @@ def check_for_outdated_os() -> tuple[bool, str]:
 
 
 def deep_merge(source: dict, destination: dict) -> dict:
-    """Merge  a series of nested dictionaries. Merge source INTO destination
-
-    From https://stackoverflow.com/questions/20656135/python-deep-merge-dictionary-data/20666342#20666342
-    """
+    """Merge  a series of nested dictionaries. Merge source INTO destination"""
 
     for key, value in source.items():
-        if isinstance(value, dict):
-            # get node or create one
+        if value is None:
+            destination.pop(key, None)
+        elif isinstance(value, dict):
+            # Get node or create one
             node = destination.setdefault(key, {})
             deep_merge(value, node)
         else:

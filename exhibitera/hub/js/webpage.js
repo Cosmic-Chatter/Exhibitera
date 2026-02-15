@@ -847,8 +847,21 @@ document.getElementById('loginSubmitButton').addEventListener('click', exUsers.l
 document.getElementById('logoutButton').addEventListener('click', exUsers.logoutUser)
 document.getElementById('viewUserPreferencesModalButton').addEventListener('click', exUsers.showUserPreferenceModal)
 document.getElementById('userPreferencesModalSaveButton').addEventListener('click', exUsers.submitUserPreferencesFromModal)
+document.getElementById('userPreferencesModalResetHintsButton').addEventListener('click', () => {
+  exUsers.updateUserPreferences({ onboarding: null })
+})
 document.getElementById('changePasswordButton').addEventListener('click', exUsers.showPasswordChangeModal)
 document.getElementById('passwordChangeModalSubmitButton').addEventListener('click', exUsers.submitUserPasswordChange)
+
+// Onboarding panes
+for (const el of document.querySelectorAll('.onboarding-close')) {
+  el.addEventListener('click', (ev) => {
+    const name = ev.target.dataset.name
+    const pref = { onboarding: {} }
+    pref.onboarding[name] = false
+    exUsers.updateUserPreferences(pref)
+  })
+}
 
 // Components tab
 // =========================

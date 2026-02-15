@@ -79,6 +79,9 @@
                     <option value="dark">Dark</option>
                   </select>
                 </div>
+                <div class="col-6 d-flex flex-column justify-content-end">
+                  <button id="userPreferencesModalResetHintsButton" class="btn btn-primary w-100">Reset hints</button>
+                </div>
               </div>
             </div>
             <div class="modal-footer">
@@ -1333,25 +1336,6 @@
             </div>
           </div>
 
-          <div class="modal" tabindex="-1" role="dialog" id="fileDeleteModal">
-            <div class="modal-dialog modal-dialog-centered" role="document">
-              <div class="modal-content" style="border:black 1px solid;">
-                <div class="modal-header">
-                  <h4 class="modal-title" id="fileDeleteModalTitle">Are you sure?</h4>
-                </div>
-                <div class="modal-body">
-                  <div class="row">
-                    <div class="col-auto" id="fileDeleteModalText"></div>
-                  </div>
-                </div>
-                <div class="modal-footer">
-                  <button type="button" class="btn btn-danger" id="fileDeleteConfirmationButton">Delete File</button>
-                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                </div>
-              </div>
-            </div>
-          </div>
-
           <div class="row mt-3" id="componentsTabSettingsRow">
             <!-- Add item -->
             <div class="col-3 col-md-2 col-xl-1">
@@ -1455,12 +1439,43 @@
               
             </div>
           </div>
-
-          <div class="row" id="componentGroupsRow">
+          
+          <!-- Onboarding pane -->
+          <div id="onboarding_components" class="row mt-3" style="display: none;">
+            <div class="col-12 col-sm-10 offset-sm-1 col-md-8 offset-md-2 col-lg-6 offset-lg-3">
+              <div class="alert alert-primary alert-dismissible fade show" role="alert" >
+                <H5 class="text-center">Components</H5>
+                <p>
+                  The components tab shows the current status of each Exhibitera Apps component that is connected to Hub. By clicking on a component, you can edit its properties, create and show definitions, and update its maintenance details.
+                </p>
+                <p>
+                  By clicking the <i>Add</i> button above, you can connect projectors to Hub and add non-Apps exhibits to Hub for maintenance tracking.
+                </p>
+                <button data-name="components" type="button" class="btn-close onboarding-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            </div>
           </div>
+          
+          <div class="row" id="componentGroupsRow"></div>
         </div>
 
         <div class="tab-pane fade" id="nav-schedule" role="tabpanel" aria-labelledby="nav-schedule-tab">
+
+          <!-- Onboarding pane -->
+          <div id="onboarding_schedule" class="row mt-3" style="display: none;">
+            <div class="col-12 col-sm-10 offset-sm-1 col-md-8 offset-md-2 col-lg-6 offset-lg-3">
+              <div class="alert alert-primary alert-dismissible fade show" role="alert" >
+                <H5 class="text-center">Schedules</H5>
+                <p>
+                  Hub can execute actions at specified dates and times to modify your gallery. These actions include turning projectors on and off, modifying the content of a component, or triggering gallery lighting.
+                </p>
+                <p>
+                  By default, schedules recur weekly. So if you schedule an action for 9 AM on Monday, it will run at the same time the following Monday. To modify a schedule for just a single day, click the <i>Convert to date-specific</i> button.
+                </p>
+                <button data-name="schedule" type="button" class="btn-close onboarding-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            </div>
+          </div>
           
           <!-- Manage future date modal -->
           <div class="modal" tabindex="-1" role="dialog" id="manageFutureDateModal">
@@ -1651,6 +1666,7 @@
         </div>
 
         <div class="tab-pane fade" id="nav-exhibits" role="tabpanel" aria-labelledby="nav-exhibits-tab">
+
           <!-- Change exhibits modal -->
           <div class="modal" tabindex="-1" role="dialog" id="changeExhibitModal">
             <div class="modal-dialog modal-dialog-centered" role="document">
@@ -1731,10 +1747,7 @@
           </div>
 
           <!-- Manage exhibit buttons -->
-          <div class="row mt-0 gy-2">
-            <div class="col-12 fst-italic">
-              Exhibitions match each component in your gallery with one of its definitions. Switching exhibitions makes it easy to switch the content on many components at once.
-            </div>
+          <div class="row mt-2 gy-2">
             <div class="col-6 col-sm-4 col-md-4 col-lg-3 col-xl-2">
               <select class="form-select" id="exhibitSelect"></select>
             </div>
@@ -1759,6 +1772,23 @@
               <button class='btn btn-danger w-100' id="exhibitDeleteSelectorButton">Delete</button>
             </div>
           </div>
+
+          <!-- Onboarding pane -->
+          <div id="onboarding_exhibitions" class="row mt-3" style="display: none;">
+            <div class="col-12 col-sm-10 offset-sm-1 col-md-8 offset-md-2 col-lg-6 offset-lg-3">
+              <div class="alert alert-primary alert-dismissible fade show" role="alert" >
+                <H5 class="text-center">Exhibitions</H5>
+                <p>
+                  Exhibitions enable you to set specific content for each of your components. Once you have created a definition for a component, you can add it to an exhibition. When you change exhibitions, Hub tells each component which definition to set. For example, you might create an exhibition that changes your Media Players to different signage for evening events.
+                </p>
+                <p>
+                  Exhibitions can also contain schedule actions, such as turning on projectors. 
+                </p>
+                <button data-name="exhibitions" type="button" class="btn-close onboarding-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            </div>
+          </div>
+
           <!-- Edit exhibit fields -->
            <div id="editExhibitPane" class="row gy-2 mt-2" style="display: none;">
 
@@ -1847,6 +1877,21 @@
               <select id="issueListFilterAssignedToSelect" class='form-select'>
               </select>
             </div>
+            <!-- Onboarding pane -->
+            <div id="onboarding_maintenance" class="row mt-3" style="display: none;">
+              <div class="col-12 col-sm-10 offset-sm-1 col-md-8 offset-md-2 col-lg-6 offset-lg-3">
+                <div class="alert alert-primary alert-dismissible fade show" role="alert" >
+                  <H5 class="text-center">Maintenance</H5>
+                  <p>
+                    Track the maintenance status of your gallery in this tab. Users can create issues, tag staff and components, and upload images/video to help exhibit techs diagnose the problem.
+                  </p>
+                  <p>
+                    Related issues will also show up in the components tab when clicking on a component.
+                  </p>
+                  <button data-name="maintenance" type="button" class="btn-close onboarding-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+              </div>
+            </div>
             <div class='col-12'>
               <div id='issuesRow' class='row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 mt-3'></div>
             </div>
@@ -1854,6 +1899,22 @@
         </div>
 
         <div class="tab-pane fade" id="nav-analytics" role="tabpanel" aria-labelledby="nav-analytics-tab">
+
+          <!-- Onboarding pane -->
+          <div id="onboarding_analytics" class="row mt-3" style="display: none;">
+            <div class="col-12 col-sm-10 offset-sm-1 col-md-8 offset-md-2 col-lg-6 offset-lg-3">
+              <div class="alert alert-primary alert-dismissible fade show" role="alert" >
+                <H5 class="text-center">Analytics</H5>
+                <p>
+                  The analytics tab helps you collect and manage data. Flexible Tracker enables evaluators to create custom interfaces to structure their data collection.
+                </p>
+                <p>
+                  Data collected by Flexible Tracker, as well as Exhibitera Apps such as Survey Kiosk and Voting Kiosk, can be downloaded from the <i>Data</i> section.
+                </p>
+                <button data-name="analytics" type="button" class="btn-close onboarding-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            </div>
+          </div>
 
           <!-- Edit tracker template modal -->
           <div class="modal" tabindex="-1" role="dialog" id="editTrackerTemplateModal" >
@@ -2014,10 +2075,16 @@
           </div>
 
           <H3 class='mt-4'>Groups</H3>
-          <div class="row mt-0 gy-2">
-            <div class="col-12 fst-italic">
-              Groups help you organize your components. You may choose to arrange them by location, type, content, or whatever supports your needs.
+          <!-- Onboarding pane -->
+          <div id="onboarding_groups" class="row mt-3" style="display: none;">
+            <div class="col-12">
+              <div class="alert alert-primary alert-dismissible fade show" role="alert" >
+                Groups enable you to organize your components. You might choose to create groups based on location, component type, or something else. Add components to one or more groups on the component tab.
+                <button data-name="groups" type="button" class="btn-close onboarding-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
             </div>
+          </div>
+          <div class="row mt-0 gy-2">
             <div class="col-4 col-sm-3 col-md-2 border-end">
               <button id="settingsAddGroupButton" class="btn btn-primary w-100">Add group</button>
             </div>
@@ -2073,6 +2140,23 @@
         </div>
 
         <div class="tab-pane fade" id="nav-users" role="tabpanel" aria-labelledby="nav-users-tab">
+
+          <!-- Onboarding pane -->
+          <div id="onboarding_users" class="row mt-3" style="display: none;">
+            <div class="col-12 col-sm-10 offset-sm-1 col-md-8 offset-md-2 col-lg-6 offset-lg-3">
+              <div class="alert alert-primary alert-dismissible fade show" role="alert" >
+                <H5 class="text-center">User Accounts</H5>
+                <p>
+                  Exhibitera's user account system enables administrators to assign individuals the level of control over Hub and Apps needed to do their jobs. Through granular permissions, you can enable, for example, the marketing team to change the digital signage while allowing exhibit techs to change system settings.
+                </p>
+                <p>
+                  While care has been taken to make user accounts secure, the users system is not intended as a defense against a malicious actor.
+                </p>
+                <button data-name="users" type="button" class="btn-close onboarding-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            </div>
+          </div>
+
           <div class="row mt-3">
             <div class="col-12 col-md-4 col-lg-3">
               <button id="showEditUserModalButton" class="btn btn-primary">Create user</button>

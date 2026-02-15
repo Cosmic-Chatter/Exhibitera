@@ -469,13 +469,8 @@ function configureUser (userDict, login = true) {
   }
   exConfig.user = userDict
 
-  if (login === true) {
-    document.getElementById('helpNewAccountMessage').style.display = 'none'
-  } else {
-    document.getElementById('helpNewAccountMessage').style.display = 'block'
-  }
-
   if (login) {
+    document.getElementById('helpNewAccountMessage').style.display = 'none'
     document.getElementById('loginMenu').style.display = 'none'
     document.getElementById('userMenu').style.display = 'block'
 
@@ -489,6 +484,7 @@ function configureUser (userDict, login = true) {
 
     configureUserPreferences()
   } else {
+    document.getElementById('helpNewAccountMessage').style.display = 'block'
     document.getElementById('loginMenu').style.display = 'block'
     document.getElementById('userMenu').style.display = 'none'
   }
@@ -615,6 +611,15 @@ function configureUserPreferences () {
 
   // components_size
   document.getElementById('componentsTabSettingsSizeSelect').value = checkUserPreference('components_size')
+
+  // onboarding
+  for (const key of ['analytics', 'components', 'exhibitions', 'groups', 'maintenance', 'schedule', 'users']) {
+    const dismissed = Object.keys(exConfig.user.preferences?.onboarding ?? {})// Items in this dict have already been dismissed by the user
+
+    if (!dismissed.includes(key)) {
+      document.getElementById('onboarding_' + key).style.display = 'block'
+    }
+  }
 }
 
 export function logoutUser () {
