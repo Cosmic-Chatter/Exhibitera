@@ -231,6 +231,11 @@ export function rebuildNotificationList () {
           notificationEl.addEventListener('click', () => { showUpdateInfoModal(componentName, 'apps', hubConfig.notifications[componentUUID].software_update) })
         }
       } else if (notificationUUID === 'outdated_os') {
+        if (hubConfig.notifications[componentUUID].outdated_os === false) {
+          notificationCount -= 1
+          continue
+        }
+
         if (worstType === 'info') worstType = 'warning'
 
         notificationEl = createNotificationHTML({

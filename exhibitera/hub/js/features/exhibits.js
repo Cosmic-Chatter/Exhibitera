@@ -1029,7 +1029,7 @@ function showExhibitComponentInfo (uuid, groupUUID) {
   document.getElementById('componentInfoModalDefinitionsTabButton').style.display = 'none'
 
   document.getElementById('componentInfoModalDMXTabButton').style.display = 'none'
-  document.getElementById('contentUploadSystemStatsView').style.display = 'none'
+  document.getElementById('componentInfoModalMaintenanceSystemStatsView').style.display = 'none'
 
   // Based on the component type, configure the various tabs and panes
   if (obj.type === 'exhibit_component') {
@@ -2106,19 +2106,19 @@ async function updateComponentInfoModalFromHelper (uuid, permission) {
       timeout: 3000
     })
   } catch {
-    document.getElementById('contentUploadSystemStatsView').style.display = 'none'
+    document.getElementById('componentInfoModalMaintenanceSystemStatsView').style.display = 'none'
     return
   }
 
   const stats = statsResponse.system_stats
   // Disk
-  const spaceUsedBar = document.getElementById('contentUploadDiskSpaceUsedBar')
-  const spaceFreeBar = document.getElementById('contentUploadDiskSpaceFreeBar')
+  const spaceUsedBar = document.getElementById('componentInfoModalMaintenanceDiskSpaceUsedBar')
+  const spaceFreeBar = document.getElementById('componentInfoModalMaintenanceDiskSpaceFreeBar')
   spaceUsedBar.setAttribute('ariaValueNow', 100 - stats.disk_pct_free)
   spaceUsedBar.style.width = String(100 - stats.disk_pct_free) + '%'
   spaceFreeBar.setAttribute('ariaValueNow', stats.disk_pct_free)
   spaceFreeBar.style.width = String(stats.disk_pct_free) + '%'
-  document.getElementById('contentUploadDiskSpaceFree').innerHTML = `Disk: ${String(Math.round(stats.disK_free_GB))} GB`
+  document.getElementById('componentInfoModalMaintenanceDiskSpaceFree').innerHTML = `Disk: ${String(Math.round(stats.disK_free_GB))} GB`
 
   if (stats.disk_pct_free > 20) {
     spaceUsedBar.classList.remove('bg-warning', 'bg-danger')
@@ -2132,11 +2132,16 @@ async function updateComponentInfoModalFromHelper (uuid, permission) {
   }
 
   // CPU
-  const CPUUsedBar = document.getElementById('contentUploadCPUUsedBar')
-  const CPUFreeBar = document.getElementById('contentUploadCPUFreeBar')
+  if (obj?.platform_details?.operating_system.toLowerCase().includes('windows')) {
+    document.getElementById('componentInfoModalMaintenanceCPUBar').style.display = 'none'
+  } else {
+    document.getElementById('componentInfoModalMaintenanceCPUBar').style.display = 'block'
+  }
+  const CPUUsedBar = document.getElementById('componentInfoModalMaintenanceCPUUsedBar')
+  const CPUFreeBar = document.getElementById('componentInfoModalMaintenanceCPUFreeBar')
   CPUUsedBar.setAttribute('ariaValueNow', stats.cpu_load_pct)
   CPUUsedBar.style.width = String(stats.cpu_load_pct) + '%'
-  document.getElementById('contentUploadCPUUsed').innerHTML = `CPU: ${String(Math.round(stats.cpu_load_pct))}%`
+  document.getElementById('componentInfoModalMaintenanceCPUUsed').innerHTML = `CPU: ${String(Math.round(stats.cpu_load_pct))}%`
   CPUFreeBar.setAttribute('ariaValueNow', 100 - stats.cpu_load_pct)
   CPUFreeBar.style.width = String(100 - stats.cpu_load_pct) + '%'
 
@@ -2152,11 +2157,11 @@ async function updateComponentInfoModalFromHelper (uuid, permission) {
   }
 
   // RAM
-  const RAMUsedBar = document.getElementById('contentUploadRAMUsedBar')
-  const RAMFreeBar = document.getElementById('contentUploadRAMFreeBar')
+  const RAMUsedBar = document.getElementById('componentInfoModalMaintenanceRAMUsedBar')
+  const RAMFreeBar = document.getElementById('componentInfoModalMaintenanceRAMFreeBar')
   RAMUsedBar.setAttribute('ariaValueNow', stats.ram_used_pct)
   RAMUsedBar.style.width = String(stats.ram_used_pct) + '%'
-  document.getElementById('contentUploadRAMUsed').innerHTML = `RAM: ${String(Math.round(stats.ram_used_pct))}%`
+  document.getElementById('componentInfoModalMaintenanceRAMUsed').innerHTML = `RAM: ${String(Math.round(stats.ram_used_pct))}%`
   RAMFreeBar.setAttribute('ariaValueNow', 100 - stats.ram_used_pct)
   RAMFreeBar.style.width = String(100 - stats.ram_used_pct) + '%'
 
@@ -2171,7 +2176,7 @@ async function updateComponentInfoModalFromHelper (uuid, permission) {
     RAMUsedBar.classList.add('bg-danger')
   }
 
-  document.getElementById('contentUploadSystemStatsView').style.display = 'flex'
+  document.getElementById('componentInfoModalMaintenanceSystemStatsView').style.display = 'flex'
 }
 
 export function onDefinitionTabThumbnailsCheckboxChange () {
