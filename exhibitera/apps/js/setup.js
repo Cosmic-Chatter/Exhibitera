@@ -494,7 +494,7 @@ function configureUser (user) {
   })
     .then((response) => {
       let groups = []
-      if ('success' in response) {
+      if (response.success) {
         groups = response.groups
       }
 
@@ -517,7 +517,8 @@ function configureUser (user) {
           document.getElementById('helpInsufficientPermissionstMessage').style.display = 'block'
         }
         document.getElementById('nav-settings-tab').style.setProperty('display', 'none', 'important')
-        document.getElementById('nav-apps-tab').style.setProperty('display', 'none', 'important')
+        document.getElementById('nav-data-tab').style.setProperty('display', 'none', 'important')
+        document.getElementById('nav-lighting-tab').style.setProperty('display', 'none', 'important')
         setTimeout(() => {
           // She the help tab
           const helpTab = document.getElementById('nav-help-tab')

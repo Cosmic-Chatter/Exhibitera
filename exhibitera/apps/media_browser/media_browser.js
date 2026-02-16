@@ -64,8 +64,8 @@ function createCard (obj) {
     thumbName = obj.filename
   }
 
-  const numCols = def?.layout?.num_columns ?? 3
-  const iconWidth = String(Math.round(window.innerWidth / numCols))
+  const numCols = def?.style?.layout?.num_columns ?? 3
+  const iconWidth = String(Math.round(window.innerWidth * window.devicePixelRatio / numCols))
 
   const thumb = exCommon.config.helperAddress + exConfig.api + '/files/' + thumbName + '/thumbnail/' + iconWidth + '?force_image=true'
 

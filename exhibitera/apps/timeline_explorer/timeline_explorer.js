@@ -202,8 +202,8 @@ function createTimelineEntry (itemUUID, langCode) {
         image.classList.add('media-contain')
       }
       // Calculate size of image
-      const width = window.innerWidth
-      const height = window.innerHeight
+      const width = window.innerWidth * window.devicePixelRatio
+      const height = window.innerHeight * window.devicePixelRatio
       let thumbRes
       if (width > height) {
         thumbRes = Math.round(width * 0.25)

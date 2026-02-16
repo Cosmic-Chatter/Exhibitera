@@ -838,10 +838,10 @@ export function sendGroupCommand (group, cmd) {
   }
 }
 
-function setComponentInfoStatusMessage (msg) {
+function setComponentInfoStatusMessage (msg, delay = false) {
   // Set the given string as the status message and show it.
 
-  if (msg.trim() === '') {
+  if (msg == null || msg.trim() === '') {
     clearComponentInfoStatusMessage()
     return
   }
@@ -849,12 +849,18 @@ function setComponentInfoStatusMessage (msg) {
   const el = document.getElementById('componentInfoStatusMessage')
 
   el.innerHTML = msg
-  el.style.display = 'block'
+  if (delay) {
+    clearTimeout(exConfig.componentInfoModalStatusMessageTimer)
+    exConfig.componentInfoModalStatusMessageTimer = setTimeout(() => {
+      el.style.display = 'block'
+    }, 500)
+  } else el.style.display = 'block'
 }
 
 function clearComponentInfoStatusMessage () {
   // Hide the status message
 
+  clearTimeout(exConfig.componentInfoModalStatusMessageTimer)
   const el = document.getElementById('componentInfoStatusMessage')
 
   el.style.display = 'none'
@@ -2080,7 +2086,7 @@ async function updateComponentInfoModalFromHelper (uuid, permission) {
     return
   }
 
-  setComponentInfoStatusMessage('Connecting to component...')
+  setComponentInfoStatusMessage('Connecting to component...', true)
 
   let defResponse
   try {
@@ -2091,6 +2097,7 @@ async function updateComponentInfoModalFromHelper (uuid, permission) {
     })
   } catch {
     componentCannotConnect()
+    return
   }
 
   // Good connection, so show the interface elements

@@ -129,7 +129,7 @@ function formatMarkdownVideo (el, format) {
       .catch(err => console.warn('Video metadata fetch failed:', err))
 
     // Then load the poster, which may trigger a long process on the helper
-    newTag.poster = exCOnfig.api + `/files/${encodeURIComponent(filename)}/thumbnail/${String(window.innerWidth)}?force_image=true`
+    newTag.poster = exCOnfig.api + `/files/${encodeURIComponent(filename)}/thumbnail/${String(window.innerWidth * window.devicePixelRatio)}?force_image=true`
   }
   newTag.setAttribute('webkit-playsinline', '')
   newTag.classList.add('markdown-video')

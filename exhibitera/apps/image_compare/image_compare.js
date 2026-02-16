@@ -359,9 +359,9 @@ function populateItemList (def) {
     // We're in portrait
 
     if (numFiles < 5) {
-      thumbWidth = window.innerWidth
+      thumbWidth = window.innerWidth * window.devicePixelRatio
     } else {
-      thumbWidth = window.innerWidth / 2
+      thumbWidth = window.innerWidth * window.devicePixelRatio / 2
     }
   }
   thumbWidth = String(Math.round(thumbWidth))

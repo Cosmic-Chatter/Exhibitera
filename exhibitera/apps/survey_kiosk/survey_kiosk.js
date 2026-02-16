@@ -255,7 +255,7 @@ function getIcon (name) {
   } else {
     // Get a thumbnail for performance reasons. Assume the icon will never be
     // more than half the width of the display.
-    const width = Math.round(window.innerWidth / 2)
+    const width = Math.round(window.innerWidth * window.devicePixelRatio / 2)
     return exConfig.api + '/files/' + name + '/thumbnail/' + String(width)
   }
 }
