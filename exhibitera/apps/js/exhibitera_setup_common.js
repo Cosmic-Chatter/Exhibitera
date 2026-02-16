@@ -340,7 +340,7 @@ export function configureFromQueryString () {
 
   const queryString = decodeURIComponent(window.location.search)
   const searchParams = new URLSearchParams(queryString)
-  console.log(exCommon.config)
+
   if (searchParams.get('definition') != null) {
     config.loadDefinition(searchParams.get('definition'))
     document.getElementById('availableDefinitionSelect').value = searchParams.get('definition')
@@ -894,7 +894,7 @@ function _onAdvancedColorPickerModeChange (id, path, value) {
 
 export function updateAdvancedColorPicker (path,
   details,
-  defaults = { mode: 'color', color: '#fff' }) {
+  defaults = { mode: 'color', color: '#fff', image: 'Select file' }) {
   // Update the color picker defined by path using the values in details.
 
   // We may have multiple ACPs that coorespond to the same path

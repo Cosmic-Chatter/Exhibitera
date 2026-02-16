@@ -110,6 +110,9 @@ body {
     font-family: var(--filter_text-font);
     font-size: calc(3vmin + var(--filter_text-font-adjust)*1vmin);
     color: var(--filterTextColor);
+    /* Prevent font scaling in mobile/small viewports */
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
   }
 .filter-label {
     font-family: var(--filter_label-font);

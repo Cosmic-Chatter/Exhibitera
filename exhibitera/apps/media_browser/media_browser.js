@@ -64,7 +64,6 @@ function createCard (obj) {
     thumbName = obj.filename
   }
 
-  const numCols = def?.style?.layout?.num_columns ?? 3
   const iconWidth = String(Math.round(window.innerWidth * window.devicePixelRatio / numCols))
 
   const thumb = exCommon.config.helperAddress + exConfig.api + '/files/' + thumbName + '/thumbnail/' + iconWidth + '?force_image=true'
@@ -404,13 +403,9 @@ function loadDefinition (def) {
     attractorAvailable = false
   }
 
-  if (def.style.layout.num_columns) {
-    document.getElementById('resultsRow').classList = 'h-100 row row-cols-' + String(def.style.layout.num_columns)
-    numCols = def.style.layout.num_columns
-  } else {
-    document.getElementById('resultsRow').classList = 'h-100 row row-cols-3'
-    numCols = 3
-  }
+  numCols = def?.style?.layout?.num_columns ?? 3
+  document.getElementById('resultsRow').classList = 'h-100 row row-cols-' + String(numCols)
+
   cardsPerPage = parseInt(def?.style?.layout?.items_per_page ?? 6)
   numRows = Math.ceil(cardsPerPage / numCols)
 
