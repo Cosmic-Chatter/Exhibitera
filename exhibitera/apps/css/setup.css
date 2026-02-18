@@ -16,6 +16,7 @@
     border: var(--bs-border-color);
     border-width: 1px;
     border-style: solid;
+    cursor: default;
 }
 .exAS_number {
     font-size: 0.75rem;
@@ -27,6 +28,7 @@
 .exAS_label {
     font-size: 0.75rem;
     padding: .25rem;
+    cursor: default;
 }
 .exAS_number::-webkit-inner-spin-button,
 .exAS_number::-webkit-outer-spin-button {
