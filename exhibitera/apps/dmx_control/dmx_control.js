@@ -100,6 +100,7 @@ class DMXFixture {
 
     this.channelValues = {}
     this.valueMemory = {} // A place to store values temporarily when making changes.
+    this.isLocating = false // Is the locate button actively being pressed?
     this.universe = null
     this.groups = [] // Hold the name of every group this fixture is in
   }
@@ -200,6 +201,8 @@ class DMXFixture {
   locateStart () {
     // Send max brightness values to aid in finding the fixture.
 
+    this.isLocating = true
+
     // Cycle the possible color channels + dimmer
     for (const channel of ['a', 'b', 'dimmer', 'g', 'r', 'uv', 'w']) {
       if (channel in this.channelValues) {
@@ -215,6 +218,8 @@ class DMXFixture {
   locateEnd () {
     // Reset the brightness values to their pre-locate values.
 
+    if (this.isLocating === false) return
+
     // Cycle the possible color channels + dimmer
     for (const channel of ['a', 'b', 'dimmer', 'g', 'r', 'uv', 'w']) {
       if (channel in this.channelValues) {
@@ -222,6 +227,7 @@ class DMXFixture {
         this.sendChannelUpdate(channel)
       }
     }
+    this.isLocating = false
   }
 
   createHTML (collectionName) {
@@ -845,9 +851,9 @@ function updatecolorPicker (collectionName, uuid) {
 
   const prefix = collectionName + '_fixture_' + uuid + '_'
 
-  const red = document.getElementById(prefix + 'channelSlider_r').value
-  const green = document.getElementById(prefix + 'channelSlider_g').value
-  const blue = document.getElementById(prefix + 'channelSlider_b').value
+  const red = document.getElementById(prefix + 'channelSlider_r')?.value ?? 0
+  const green = document.getElementById(prefix + 'channelSlider_g')?.value ?? 0
+  const blue = document.getElementById(prefix + 'channelSlider_b')?.value ?? 0
 
   const colorStr = 'rgb(' + red + ',' + green + ',' + blue + ')'
 
@@ -974,7 +980,7 @@ function showEditGroupModal (groupUUID) {
   for (const fixtureName of Object.keys(universe.fixtures)) {
     const fixture = universe.fixtures[fixtureName]
 
-    fixtureRow.append(createFixtureCheckbox(fixture, group))
+    fixtureRow.append(createFixtureCheckbox(fixture, 'group', group))
   }
 
   exUtilities.showModal('#editGroupModal')
@@ -1054,7 +1060,7 @@ function createGroupFromModal (name, fixturesToAdd, fixturesToAddUUID) {
     }
   })
     .then((result) => {
-      if ('success' in result && result.success === true) {
+      if (result?.success) {
         const group = createGroup(name, result.uuid)
         group.addFixtures(fixturesToAdd)
       }
@@ -1075,7 +1081,7 @@ function showEditSceneModal (uuid = '') {
   editSceneFixtureList.innerText = ''
   for (const key of Object.keys(universe.fixtures)) {
     const fixture = universe.fixtures[key]
-    editSceneFixtureList.appendChild(createFixtureCheckbox(fixture, scene))
+    editSceneFixtureList.appendChild(createFixtureCheckbox(fixture, 'scene', scene))
   }
 
   document.getElementById('editSceneModalSceneName').value = scene?.name ?? ''
@@ -1184,7 +1190,7 @@ function deleteSceneFromModal () {
     })
 }
 
-function createFixtureCheckbox (fixture, collection = null) {
+function createFixtureCheckbox (fixture, type, collection = null) {
   // Return a column that holds a checkbox representing the fixture.
   // If 'collecion' is specified, the box will be checked if the fixture
   // is in 'collecion'
@@ -1199,7 +1205,7 @@ function createFixtureCheckbox (fixture, collection = null) {
   const check = document.createElement('input')
   check.classList = 'form-check-input'
   check.setAttribute('type', 'checkbox')
-  check.setAttribute('id', 'editGroupFixture_' + fixture.uuid)
+  check.setAttribute('id', type + 'fixtureCheckbox_' + fixture.uuid)
   check.dataset.uuid = fixture.uuid
   check.value = ''
 
@@ -1211,7 +1217,7 @@ function createFixtureCheckbox (fixture, collection = null) {
 
   const label = document.createElement('label')
   label.class = 'form-check-label'
-  label.setAttribute('for', 'editGroupFixture_' + fixture.uuid)
+  label.setAttribute('for', type + 'fixtureCheckbox_' + fixture.uuid)
   label.innerHTML = fixture.name
   container.appendChild(label)
 
@@ -1360,6 +1366,21 @@ function addFixtureFromModal () {
     return
   }
 
+  if (name in universe.fixtures) {
+    // Check if this fixture already had this name
+    let bad = false
+    if (mode === 'edit') {
+      const fixture = getFixture(addFixtureModal.dataset.fixtureUUID)
+      if (fixture.name !== name) bad = true
+    } else bad = true
+
+    if (bad) {
+      addFixtureErrorAlert.innerText = 'A fixture with this name already exists.'
+      addFixtureErrorAlert.style.display = 'block'
+      return
+    }
+  }
+
   const pattern = /^[a-zA-Z0-9 -]*$/
   if (pattern.test(name) === false) {
     addFixtureErrorAlert.innerText = 'Name may contain only letters, numbers, spaces, and dashes.'
@@ -1422,7 +1443,7 @@ function deleteUniverse (uid) {
     endpoint: '/DMX/universe/'
   })
     .then((result) => {
-      if ('success' in result && result.success === true) {
+      if (result?.success) {
         getDMXConfiguration()
       }
     })
@@ -1445,7 +1466,7 @@ function deleteGroup (uuid) {
     endpoint: '/DMX/group/' + uuid
   })
     .then((result) => {
-      if ('success' in result && result.success === true) {
+      if (result?.success) {
         groupList = groupList.filter((obj) => {
           return obj.uuid !== uuid
         })
@@ -1563,6 +1584,8 @@ function getDMXConfiguration () {
   })
     .then((response) => {
       groupList.length = 0
+      sceneList.length = 0
+      universe = null
       configuration = response.configuration
 
       if (response.success === false && response.reason === 'device_not_found') {
@@ -1579,42 +1602,31 @@ function getDMXConfiguration () {
         for (const fixture of universeDef.fixtures) {
           universe.addFixture(fixture)
         }
-        rebuildUniverseInterface()
-        document.getElementById('noUniverseWarning').style.display = 'none'
-        document.getElementById('addFixtureButton').style.display = 'block'
-        document.getElementById('fixturesPaneOptionsButton').style.display = 'block'
-      } else {
-        document.getElementById('universeRow').innerText = ''
-        document.getElementById('noUniverseWarning').style.display = 'block'
-        document.getElementById('addFixtureButton').style.display = 'none'
-        document.getElementById('fixturesPaneOptionsButton').style.display = 'none'
       }
+      rebuildUniverseInterface()
     })
     .then(() => {
-      if (configuration.groups.length === 0) return
-
-      for (const groupDef of configuration.groups) {
+      if (configuration.groups.length > 0) {
+        for (const groupDef of configuration.groups) {
         // First, create the group
-        const groupObj = createGroup(groupDef.name, groupDef.uuid)
-        // Then, add fixtures
-        for (const fixtureDef of groupDef.fixtures) {
-          const fixture = getFixture(fixtureDef)
-          groupObj.addFixtures([fixture])
+          const groupObj = createGroup(groupDef.name, groupDef.uuid)
+          // Then, add fixtures
+          for (const fixtureDef of groupDef.fixtures) {
+            const fixture = getFixture(fixtureDef)
+            groupObj.addFixtures([fixture])
+          }
         }
       }
+
       rebuildGroupsInterface()
-      document.getElementById('noGroupsWarning').style.display = 'none'
-      document.getElementById('createNewGroupButton').style.display = 'block'
     })
     .then(() => {
-      if ((configuration?.scenes ?? []).length === 0) {
-        rebuildScenesInterface()
-        return
+      if ((configuration?.scenes ?? []).length > 0) {
+        for (const sceneDef of configuration.scenes) {
+          createScene(sceneDef.name, sceneDef.values, sceneDef.uuid, sceneDef.duration)
+        }
       }
 
-      for (const sceneDef of configuration.scenes) {
-        createScene(sceneDef.name, sceneDef.values, sceneDef.uuid, sceneDef.duration)
-      }
       rebuildScenesInterface()
     })
     .then(() => {
@@ -1625,7 +1637,18 @@ function getDMXConfiguration () {
 function rebuildUniverseInterface () {
   // Build an HTML representation of the universe
 
+  if (universe == null) {
+    document.getElementById('universeRow').innerText = ''
+    document.getElementById('noUniverseWarning').style.display = 'block'
+    document.getElementById('addFixtureButton').style.display = 'none'
+    document.getElementById('fixturesPaneOptionsButton').style.display = 'none'
+
+    return
+  }
+
   document.getElementById('noUniverseWarning').style.display = 'none'
+  document.getElementById('addFixtureButton').style.display = 'block'
+  document.getElementById('fixturesPaneOptionsButton').style.display = 'block'
 
   universe.createHTML()
   // Then, bind the color picker to each element.
@@ -1649,6 +1672,15 @@ function rebuildGroupsInterface () {
   const tabContent = document.getElementById('groupTabContent')
   tabNav.innerHTML = ''
   tabContent.innerHTML = ''
+
+  if (groupList.length === 0) {
+    document.getElementById('noGroupsWarning').style.display = 'block'
+    document.getElementById('createNewGroupButton').style.display = 'none'
+    return
+  }
+
+  document.getElementById('noGroupsWarning').style.display = 'none'
+  document.getElementById('createNewGroupButton').style.display = 'block'
 
   groupList.forEach((group, index) => {
     const isFirst = index === 0
@@ -1879,4 +1911,4 @@ document.getElementById('helpButton').addEventListener('click', (event) => {
 setInterval(exCommon.checkForHelperUpdates, 5000)
 
 getDMXConfiguration()
-setInterval(getDMXStatus, 5000)
+setInterval(getDMXStatus, 1000)

@@ -60,6 +60,7 @@ class DMXUniverse:
         apps_config.dmx_universe = None
         apps_config.dmx_groups = []
         apps_config.dmx_fixtures = []
+        apps_config.dmx_scenes = []
         apps_config.dmx_active = False
 
         config_path = ex_files.get_path(["configuration", "dmx.json"], user_file=True)
