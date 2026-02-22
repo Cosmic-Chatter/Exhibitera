@@ -54,6 +54,7 @@ function clear () {
     keyboard.input.default = ''
     keyboard.input.inputField = ''
   }
+  setLengthHint(0)
 }
 
 function getCleanText () {
