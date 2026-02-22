@@ -201,6 +201,9 @@ async function clearDefinitionInput (full = true) {
     gradient_color_2: '#fff'
   })
 
+  document.getElementById('wordColorMode').value = 'random-dark'
+  document.getElementById('colorPicker_wordsGroup').style.display = 'none'
+
   // Reset font face options
   exSetup.resetAdvancedFontPickers()
 
@@ -248,6 +251,14 @@ function editDefinition (uuid = '') {
   exSetup.updateColorPickers(def?.style?.color ?? {})
   exSetup.updateAdvancedFontPickers(def?.style?.font ?? {})
   exSetup.updateTextSizeSliders(def?.style?.text_size ?? {})
+
+  if (['random-light', 'random-dark'].includes(def?.style?.color?.words ?? 'random_dark')) {
+    document.getElementById('colorPicker_wordsGroup').style.display = 'none'
+    document.getElementById('wordColorMode').value = def.style.color.words
+  } else {
+    document.getElementById('colorPicker_wordsGroup').style.display = 'block'
+    document.getElementById('wordColorMode').value = 'specific'
+  }
 
   // Configure the preview frame
   document.getElementById('previewFrame').src = 'index.html?standalone=true&definition=' + def.uuid
@@ -368,11 +379,14 @@ Array.from(document.querySelectorAll('.realtime-slider')).forEach((el) => {
 })
 
 document.getElementById('wordColorMode').addEventListener('change', (event) => {
+  const colorPickerWordsGroup = document.getElementById('colorPicker_wordsGroup')
   if (event.target.value === 'specific') {
     const value = document.getElementById('colorPicker_words').value
     exSetup.updateWorkingDefinition(['style', 'color', 'words'], value)
+    colorPickerWordsGroup.style.display = 'block'
   } else {
     exSetup.updateWorkingDefinition(['style', 'color', 'words'], event.target.value)
+    colorPickerWordsGroup.style.display = 'none'
   }
   exSetup.previewDefinition(true)
 })
@@ -381,6 +395,7 @@ document.getElementById('colorPicker_words').addEventListener('change', (event) 
   // We only need to save this change to the definition is the word color mode is set to specific.
 
   const mode = document.getElementById('wordColorMode').value
+  console.log(mode)
   if (mode !== 'specific') return
 
   exSetup.updateWorkingDefinition(['style', 'color', 'words'], event.target.value)
