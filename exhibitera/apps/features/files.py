@@ -468,12 +468,18 @@ def get_definition_thumbnail(uuid_str: str) -> tuple[str, str]:
     def_path = ex_files.get_path(["definitions", ex_files.with_extension(uuid_str, 'json')], user_file=True)
     definition = ex_files.load_json(def_path)
     if definition is None:
-        app = "document_missing"
+        app = "document_missing_black"
     else:
         app = definition.get("app", "document_missing_black")
     if app == 'other':
         app = 'document_missing_black'
-    return ex_files.get_path(["_static", "icons", ex_files.with_extension(app, "svg")]), 'image'
+    if app == 'word_cloud_input' or app == 'word_cloud_viewer':
+        app = 'word_cloud'
+
+    path = ex_files.get_path(["_static", "icons", ex_files.with_extension(app, "svg")])
+    if not os.path.exists(path):
+        path = ex_files.get_path(["_static", "icons", 'document_missing_black.svg'])
+    return path, 'image'
 
 
 def create_missing_thumbnails() -> None:
