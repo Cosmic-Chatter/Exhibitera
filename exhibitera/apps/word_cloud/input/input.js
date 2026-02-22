@@ -102,6 +102,10 @@ function updateFunc (update) {
 function loadDefinition (definition) {
   // Set up a new interface to collect input
 
+  // Reset fields
+  document.getElementById('inputField').value = ''
+  setLengthHint(0)
+
   // Parse the settings and make the appropriate changes
   document.getElementById('promptText').innerHTML = exMarkdown.formatText(definition?.content?.prompt ?? '', { removeParagraph: true, string: true })
   collectionName = definition?.behavior?.collection_name ?? 'default'
@@ -114,6 +118,7 @@ function loadDefinition (definition) {
   }
   if (showKeyboard || exCommon.config.hideKeyboard) {
     // Enable keyboard
+    document.querySelector('.simple-keyboard').innerText = ''
     keyboard = new Keyboard({
       onChange: input => onChange(input),
       onKeyPress: button => onKeyPress(button),
