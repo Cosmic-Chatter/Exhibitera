@@ -980,6 +980,10 @@ function addFilter (lang) {
   // Add a new filter element to the current language
 
   const def = exSetup.config.workingDefinition
+  if (!def.languages[lang].filter_order) {
+    def.languages[lang].filter_order = []
+    def.languages[lang].filters = {}
+  }
 
   const uuid = exUtilities.uuid()
   def.languages[lang].filter_order.push(uuid)
