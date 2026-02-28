@@ -1,14 +1,14 @@
 :root {
     /* Colors */
-    --background-color: white;
-    --titleColor: black;
-    --filterBackgroundColor: white;
-    --filterLabelColor: black;
-    --filterTextColor: black;
-    --lightboxBackgroundColor: #000000ef;
-    --lightboxTitleColor: white;
-    --lightboxCaptionColor: white;
-    --lightboxCreditColor: white;
+    --background-color: #0f1419;
+    --titleColor: #f5f5f0;
+    --filterBackgroundColor: #e6e6e2;
+    --filterLabelColor: #0f1419;
+    --filterTextColor: #0f1419;
+    --lightboxBackgroundColor: #0f1419f9;
+    --lightboxTitleColor: #f5f5f0;
+    --lightboxCaptionColor: #e6e6e2;
+    --lightboxCreditColor: #6b7280;
 
     /* Font faces */
     --Header-font: 'Header-default';

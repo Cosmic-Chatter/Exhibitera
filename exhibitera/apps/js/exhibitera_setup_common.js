@@ -212,11 +212,18 @@ export function setUpColorPickers () {
       formatToggle: false,
       clearButton: false,
       swatches: [
-        '#000',
-        '#22222E',
-        '#393A5A',
-        '#719abf',
-        '#fff'
+        '#0F1419',
+        '#1A2B3C',
+        '#243447',
+        '#2F3E4F',
+        '#E6E6E2',
+        '#F5F5F0',
+        '#4B5563',
+        '#6B7280',
+        '#C3512F',
+        '#E06A47',
+        '#3B5C8A',
+        '#5A7BA8'
       ]
     })
   } catch {
@@ -316,8 +323,8 @@ export function showAppHelpModal (app) {
 export function populateAvailableDefinitions (definitions) {
   // Take a list of definitions and add them to the select.
 
-  const availableDefinitionSelect = document.getElementById('availableDefinitionSelect')
-  availableDefinitionSelect.innerHTML = ''
+  const select = document.getElementById('availableDefinitionSelect')
+  select.innerText = ''
   config.availableDefinitions = definitions
   const keys = Object.keys(definitions).sort((a, b) => {
     const aName = definitions[a].name.toLowerCase()
@@ -331,7 +338,7 @@ export function populateAvailableDefinitions (definitions) {
     if (uuid.startsWith('__preview') || uuid.trim() === '') continue
 
     const option = new Option(definitions[uuid].name, uuid)
-    availableDefinitionSelect.appendChild(option)
+    select.appendChild(option)
   }
 }
 
@@ -460,7 +467,7 @@ function deleteDefinition () {
     .then(() => {
       exCommon.getAvailableDefinitions(config.app)
         .then((response) => {
-          if ('success' in response && response.success === true) {
+          if (response?.success) {
             populateAvailableDefinitions(response.definitions)
           }
         })
@@ -483,7 +490,7 @@ function cloneDefinition () {
       if ('success' in result && result.success === true) {
         exCommon.getAvailableDefinitions(config.app)
           .then((response) => {
-            if ('success' in response && response.success === true) {
+            if (response?.success) {
               populateAvailableDefinitions(response.definitions)
               document.getElementById('availableDefinitionSelect').value = result.uuid
               config.loadDefinition(result.uuid)
@@ -516,7 +523,7 @@ export async function saveDefinition (name = '') {
 
   return exCommon.writeDefinition(definition)
     .then((result) => {
-      if (result?.success === true) {
+      if (result?.success) {
         // Update the UUID in case we have created a new definition
         config.initialDefinition = structuredClone(definition)
 
@@ -524,8 +531,9 @@ export async function saveDefinition (name = '') {
         if (config.onDefinitionSave != null) config.onDefinitionSave(config.workingDefinition)
         exCommon.getAvailableDefinitions(config.app)
           .then((response) => {
-            if ('success' in response && response.success === true) {
+            if (response?.success) {
               populateAvailableDefinitions(response.definitions)
+              document.getElementById('availableDefinitionSelect').value = definition.uuid
             }
           })
       }

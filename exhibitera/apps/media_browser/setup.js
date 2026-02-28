@@ -373,9 +373,9 @@ async function clearDefinitionInput (full = true) {
 
   exSetup.updateAdvancedColorPicker('style>background', {
     mode: 'color',
-    color: '#fff',
-    gradient_color_1: '#fff',
-    gradient_color_2: '#fff'
+    color: '#0f1419',
+    gradient_color_1: '#1a2b3c',
+    gradient_color_2: '#0f1419'
   })
 
   // Reset font face options
@@ -1497,11 +1497,27 @@ exSetup.configure({
     language_order: [],
     style: {
       background: {
-        color: '#719abf',
+        color: '#0f1419',
         mode: 'color'
       },
-      color: {},
-      font: {},
+      color: {
+        filterBackgroundColor: '#e6e6e2',
+        filterLabelColor: '#0f1419',
+        filterTextColor: '#0f1419',
+        lightboxBackgroundColor: '#0f1419f9',
+        lightboxCaptionColor: '#e6e6e2',
+        lightboxCreditColor: '#6b7280',
+        lightboxTitleColor: '#f5f5f0',
+        titleColor: '#f5f5f0'
+      },
+      font: {
+        Lightbox_caption: '/_fonts/OpenSans-Regular.ttf',
+        Lightbox_credit: '/_fonts/OpenSans-LightItalic.ttf',
+        Lightbox_title: '/_fonts/OpenSans-Bold.ttf',
+        Title: '/_fonts/OpenSans-Bold.ttf',
+        filter_label: '/_fonts/OpenSans-Bold.ttf',
+        filter_text: '/_fonts/OpenSans-Regular.ttf'
+      },
       layout: {},
       text_size: {}
     }

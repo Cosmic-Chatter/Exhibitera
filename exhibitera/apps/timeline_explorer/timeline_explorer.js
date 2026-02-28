@@ -21,18 +21,15 @@ function loadDefinition (def) {
   // Color
 
   // First, reset to defaults (in case a style option doesn't exist in the definition)
-  root.style.setProperty('--backgroundColor', '#719abf')
-  root.style.setProperty('--headerColor', '#22222E')
-  root.style.setProperty('--footerColor', '#22222E')
-  root.style.setProperty('--itemColor', '#393A5A')
-  root.style.setProperty('--lineColor', 'white')
-  root.style.setProperty('--textColor', 'white')
-  root.style.setProperty('--toolbarButtonColor', '#393A5A')
+  root.style.setProperty('--backgroundColor', '#1a2b3c')
+  root.style.setProperty('--headerColor', '#0f1419')
+  root.style.setProperty('--footerColor', '#0f1419')
+  root.style.setProperty('--itemColor', '#2f3e4f')
+  root.style.setProperty('--lineColor', '#6b7280')
+  root.style.setProperty('--textColor', '#e6e6e2')
 
   // Then, apply the definition settings
-  for (let key of Object.keys(def?.style?.color ?? {})) {
-    // Fix for change from backgroundColor to background-color in v4
-    if (key === 'backgroundColor') key = 'background-color'
+  for (const key of Object.keys(def?.style?.color ?? {})) {
     document.documentElement.style.setProperty('--' + key, def.style.color[key])
   }
 
@@ -41,13 +38,13 @@ function loadDefinition (def) {
     document.querySelector('meta[name="theme-color"]').setAttribute('content', def.style.color.headerColor)
     document.querySelector('meta[name="msapplication-TileColor"]').setAttribute('content', def.style.color.headerColor)
   } else {
-    document.querySelector('meta[name="theme-color"]').setAttribute('content', '#000')
-    document.querySelector('meta[name="msapplication-TileColor"]').setAttribute('content', '#000')
+    document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0f1419')
+    document.querySelector('meta[name="msapplication-TileColor"]').setAttribute('content', '#0f1419')
   }
 
   // Backgorund settings
   if ('background' in def.style) {
-    exCommon.setBackground(def.style.background, root, '#719abf')
+    exCommon.setBackground(def.style.background, root, '#1a2b3c')
   }
 
   // Font

@@ -196,12 +196,12 @@ async function clearDefinitionInput (full = true) {
 
   exSetup.updateAdvancedColorPicker('style>background', {
     mode: 'color',
-    color: '#fff',
-    gradient_color_1: '#fff',
-    gradient_color_2: '#fff'
+    color: '#1a2b3c',
+    gradient_color_1: '#243447',
+    gradient_color_2: '#1a2b3c'
   })
 
-  document.getElementById('wordColorMode').value = 'random-dark'
+  document.getElementById('wordColorMode').value = 'random-light'
   document.getElementById('colorPicker_wordsGroup').style.display = 'none'
 
   // Reset font face options
@@ -409,9 +409,17 @@ exSetup.configure({
   blankDefinition: {
     style: {
       background: {
-        mode: 'color',
-        color: '#fff'
+        color: '#1a2b3c',
+        gradient_color_1: '#243447',
+        gradient_color_2: '#1a2b3c',
+        mode: 'color'
       },
+      cloud_shape: 'circle',
+      color: {
+        prompt: '#f5f5f0',
+        words: 'random-light'
+      },
+      rotation: 'horizontal',
       text_case: 'lowercase',
       text_size: {}
     },

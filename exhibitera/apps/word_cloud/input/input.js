@@ -163,17 +163,18 @@ function loadDefinition (definition) {
 
   // Color settings
   // First, reset to defaults (in case a style option doesn't exist in the definition)
-  root.style.setProperty('--background-color', '#ffffff')
-  root.style.setProperty('--prompt-color', '#000')
-  root.style.setProperty('--input-color', '#000')
-  root.style.setProperty('--input-background-color', '#e9ecef')
-  root.style.setProperty('--submit-background-color', '#6c757d')
-  root.style.setProperty('--submit-color', '#ffffff')
-  root.style.setProperty('--clear-background-color', '#6c757d')
-  root.style.setProperty('--clear-color', '#ffffff')
-  root.style.setProperty('--keyboard-key-color', '#000')
-  root.style.setProperty('--keyboard-key-background-color', '#fff')
-  root.style.setProperty('--keyboard-background-color', '#ececec')
+  root.style.setProperty('--background-color', '#1a2b3c')
+  root.style.setProperty('--prompt-color', '#f5f5f0')
+  root.style.setProperty('--input-color', '#0f1419')
+  root.style.setProperty('--input-font-hint-color', '#1a2b3c')
+  root.style.setProperty('--input-background-color', '#f5f5f0')
+  root.style.setProperty('--submit-background-color', '#6b7280')
+  root.style.setProperty('--submit-color', '#f5f5f0')
+  root.style.setProperty('--clear-background-color', '#6b7280')
+  root.style.setProperty('--clear-color', '#f5f5f0')
+  root.style.setProperty('--keyboard-key-color', '#0f1419')
+  root.style.setProperty('--keyboard-key-background-color', '#f5f5f0')
+  root.style.setProperty('--keyboard-background-color', '#6b7280')
 
   // Then, apply the definition settings
   for (const key of Object.keys(definition?.style?.color ?? {})) {
@@ -183,7 +184,7 @@ function loadDefinition (definition) {
 
   // Background settings
   if (definition?.style?.background) {
-    exCommon.setBackground(definition.style.background, root, '#fff', true)
+    exCommon.setBackground(definition.style.background, root, '#1a2b3c', true)
   }
 
   // Font settings

@@ -1600,11 +1600,35 @@ exSetup.configure({
     language_order: [],
     style: {
       background: {
-        mode: 'color',
-        color: '#22222E'
+        color: '#0f1419',
+        mode: 'color'
       },
-      color: {},
-      font: {},
+      color: {
+        'active-dot-color': '#e06a47',
+        'body-text-color': '#e6e6e2',
+        'button-color': '#1a2b3c',
+        'button-selected-color': '#e06a47',
+        'button-text-color': '#e6e6e2',
+        'header-color': '#e6e6e2',
+        'inactive-dot-color': '#4b5563',
+        'next-button-color': '#e06a47',
+        'next-button-text-color': '#f5f5f0',
+        'restart-button-color': '#4b5563',
+        'restart-button-text-color': '#f5f5f0'
+      },
+      font: {
+        body: '/_fonts/OpenSans-Regular.ttf',
+        button: '/_fonts/OpenSans-Regular.ttf',
+        header: '/_fonts/OpenSans-Bold.ttf',
+        next: '/_fonts/OpenSans-Regular.ttf',
+        restart: '/_fonts/OpenSans-Regular.ttf'
+      },
+      item_background: {
+        color: '#2f3e4f',
+        gradient_color_1: '#2f3e4f',
+        gradient_color_2: '#243447',
+        mode: 'color'
+      },
       layout: {},
       text_size: {}
     },

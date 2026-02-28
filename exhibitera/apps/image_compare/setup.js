@@ -256,9 +256,9 @@ async function clearDefinitionInput (full = true) {
 
   exSetup.updateAdvancedColorPicker('style>background', {
     mode: 'color',
-    color: '#000',
-    gradient_color_1: '#000',
-    gradient_color_2: '#000'
+    color: '#0f1419',
+    gradient_color_1: '#1a2b3c',
+    gradient_color_2: '#0f1419'
   })
 
   // Reset font face options
@@ -1081,11 +1081,31 @@ exSetup.configure({
     language_order: [],
     style: {
       background: {
-        color: '#000',
+        color: '#0f1419',
         mode: 'color'
       },
-      color: {},
-      font: {},
+      color: {
+        buttonBackgroundColor: '#2f3e4fd8',
+        buttonOutlineColor: '#e6e6e2',
+        buttonTextColor: '#f5f5f0',
+        infoBodyColor: '#e6e6e2',
+        infoTitleColor: '#f5f5f0',
+        itemNameColor: '#e6e6e2',
+        labelBackgroundColor: '#0f141991',
+        labelTextColor: '#e6e6e2',
+        sliderBackgroundColor: '#5a7ba8cc',
+        sliderIconColor: '#0f1419',
+        subtitleColor: '#e6e6e2',
+        titleColor: '#f5f5f0'
+      },
+      font: {
+        info_pane_body: '/_fonts/OpenSans-Regular.ttf',
+        info_pane_title: '/_fonts/OpenSans-Bold.ttf',
+        item_name: '/_fonts/OpenSans-Regular.ttf',
+        label: '/_fonts/OpenSans-Regular.ttf',
+        subtitle: '/_fonts/OpenSans-Regular.ttf',
+        title: '/_fonts/OpenSans-Bold.ttf'
+      },
       text_size: {}
     }
   }

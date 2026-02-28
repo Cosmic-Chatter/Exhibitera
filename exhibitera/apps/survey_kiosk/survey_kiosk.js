@@ -424,14 +424,19 @@ function loadDefinition (definition) {
   const root = document.querySelector(':root')
 
   // First, reset to defaults (in case a style option doesn't exist in the definition)
-  root.style.setProperty('--background-color', '#22222E')
-  root.style.setProperty('--item_background', '#6c757d')
-  root.style.setProperty('--button-color', '#393A5A')
-  root.style.setProperty('--button-touched-color', '#706F8E')
-  root.style.setProperty('--success-message-color', '#393A5A')
-  root.style.setProperty('--header-color', 'white')
-  root.style.setProperty('--footer-color', 'white')
-  root.style.setProperty('--button-text-color', 'white')
+  root.style.setProperty('--background-color', '#0f1419')
+  root.style.setProperty('--item_background', '#2f3e4f')
+  root.style.setProperty('--button-color', '#1a2b3c')
+  root.style.setProperty('--next-button-color', '#e06a47')
+  root.style.setProperty('--restart-button-color', '#4b5563')
+  root.style.setProperty('--body-text-color', '#e6e6e2')
+  root.style.setProperty('--button-selected-color', '#e06a47')
+  root.style.setProperty('--header-color', '#e6e6e2')
+  root.style.setProperty('--button-text-color', '#e6e6e2')
+  root.style.setProperty('--next-button-text-color', '#f5f5f0')
+  root.style.setProperty('--restart-button-text-color', '#f5f5f0')
+  root.style.setProperty('--active-dot-color', '#e06a47')
+  root.style.setProperty('--inactive-dot-color', '#4b5563')
 
   // Then, apply the definition settings
 
@@ -443,10 +448,10 @@ function loadDefinition (definition) {
 
   // Backgorund settings
   if ('background' in definition.style) {
-    exCommon.setBackground(definition.style.background, root, '#22222E', true)
+    exCommon.setBackground(definition.style.background, root, '#0f1419', true)
   }
   if ('item_background' in definition.style) {
-    exCommon.setELementBackground(definition.style.item_background, document.getElementById('itemPane'), '#6c757d')
+    exCommon.setELementBackground(definition.style.item_background, document.getElementById('itemPane'), '#2f3e4f')
   }
 
   // Font settings

@@ -1,10 +1,10 @@
 :root {
     /* Colors */
-    --background-color: black;
-    --subtitleColor: white;
-    --progressActiveColor: #008000;
-    --progressInactiveColor: #808080;
-    --progressBackgroundColor: #64646499;
+    --background-color: #0f1419;
+    --subtitleColor: #f5f5f0;
+    --progressActiveColor: #c3512f;
+    --progressInactiveColor: #6b7280;
+    --progressBackgroundColor: #1a2b3cc4;
 
     /* Font facts */
     --subtitle-font: "subtitles-default";

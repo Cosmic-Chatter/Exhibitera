@@ -8,13 +8,12 @@
 
 :root {
   /* Colors */
-  --background-color: #719abf;
-  --headerColor: #22222E;
-  --footerColor: #22222E;
-  --itemColor: #393A5A;
-  --lineColor: white;
-  --textColor: white;
-  --toolbarButtonColor: #393A5A;
+  --background-color: #1a2b3c;
+  --headerColor: #0f1419;
+  --footerColor: #0f1419;
+  --itemColor: #2f3e4f;
+  --lineColor: #6b7280;
+  --textColor: #e6e6e2;
 
   /* Font faces */
   --Header-font: 'Header-default';

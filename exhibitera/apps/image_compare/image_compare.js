@@ -256,19 +256,19 @@ function loadDefinition (definition) {
 
   // Color
   // First, reset to defaults (in case a style option doesn't exist in the definition)
-  root.style.setProperty('--background-color', 'black')
-  root.style.setProperty('--titleColor', 'white')
-  root.style.setProperty('--subtitleColor', 'white')
-  root.style.setProperty('--itemNameColor', 'white')
-  root.style.setProperty('--buttonBackgroundColor', '#393a5acc')
-  root.style.setProperty('--buttonTextColor', 'white')
-  root.style.setProperty('--buttonOutlineColor', 'white')
-  root.style.setProperty('--sliderBackgroundColor', '#719bbfb3')
-  root.style.setProperty('--sliderIconColor', 'black')
-  root.style.setProperty('--labelBackgroundColor', '#00000080')
-  root.style.setProperty('--labelTextColor', 'white')
-  root.style.setProperty('--infoTitleColor', 'white')
-  root.style.setProperty('--infoBodyColor', 'white')
+  root.style.setProperty('--background-color', '#0f1419')
+  root.style.setProperty('--titleColor', '#f5f5f0')
+  root.style.setProperty('--subtitleColor', '#e6e6e2')
+  root.style.setProperty('--itemNameColor', '#e6e6e2')
+  root.style.setProperty('--buttonBackgroundColor', '#2f3e4fd8')
+  root.style.setProperty('--buttonTextColor', '#f5f5f0')
+  root.style.setProperty('--buttonOutlineColor', '#e6e6e2')
+  root.style.setProperty('--sliderBackgroundColor', '#5a7ba8cc')
+  root.style.setProperty('--sliderIconColor', '#0f1419')
+  root.style.setProperty('--labelBackgroundColor', '#0f141991')
+  root.style.setProperty('--labelTextColor', '#e6e6e2')
+  root.style.setProperty('--infoTitleColor', '#f5f5f0')
+  root.style.setProperty('--infoBodyColor', '#e6e6e2')
 
   // Then, apply the definition settings
   for (const key of Object.keys(definition?.style?.color ?? {})) {

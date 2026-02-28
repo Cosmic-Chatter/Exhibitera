@@ -128,9 +128,9 @@ async function clearDefinitionInput (full = true) {
 
   document.getElementById('attractorInput_text').value = ''
   document.getElementById('attractorInput_font_adjust').value = 0
-  document.getElementById('attractorInput_attractor_background').value = 'rgba(0, 0, 0, 0.2)'
+  document.getElementById('attractorInput_attractor_background').value = '#000000b7'
   document.querySelector('#attractorInput_attractor_background').dispatchEvent(new Event('input', { bubbles: true }))
-  document.getElementById('attractorInput_text_color').value = '#fff'
+  document.getElementById('attractorInput_text_color').value = '#f5f5f0'
   document.querySelector('#attractorInput_text_color').dispatchEvent(new Event('input', { bubbles: true }))
   exSetup.resetAdvancedFontPickers()
   exSetup.createAdvancedSliders()
@@ -138,9 +138,9 @@ async function clearDefinitionInput (full = true) {
   // Appearance details
   exSetup.updateAdvancedColorPicker('style>background', {
     mode: 'color',
-    color: '#22222E',
-    gradient_color_1: '#22222E',
-    gradient_color_2: '#22222E'
+    color: '#0f1419',
+    gradient_color_1: '#1a2b3c',
+    gradient_color_2: '#0f1419'
   })
 }
 
@@ -518,12 +518,18 @@ exSetup.configure({
   initializeWizard,
   loadDefinition: editDefinition,
   blankDefinition: {
-    attractor: {},
+    attractor: {
+      attractor_background: '#000000b7',
+      font: '/_fonts/OpenSans-Bold.ttf',
+      text_color: '#f5f5f0'
+    },
     behavior: {},
     style: {
       background: {
-        mode: 'color',
-        color: '#22222E'
+        color: '#0f1419',
+        gradient_color_1: '#1a2b3c',
+        gradient_color_2: '#0f1419',
+        mode: 'color'
       }
     }
   }

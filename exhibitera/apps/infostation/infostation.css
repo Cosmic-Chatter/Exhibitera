@@ -1,17 +1,17 @@
 :root {
   /* Colors */
-  --header-color: #706F8E;
-  --footer-color: #706F8E;
-  --background-color: #719abf;
-  --tab-button-color: #6c757d;
-  --tab-button-active-color: #22222E;
-  --text-color: white;
-  --caption-color: #c7c7c7;
-  --quote-color: white;
-  --section-header-color: white;
-  --section-background-color: #393A5A;
-  --section-border-color: #E9E9E9;
-  --section-shadow-color: RGBA(34,34,46, .5);
+  --header-color: #243447;
+  --footer-color: #243447;
+  --background-color: #0f1419;
+  --tab-button-color: #4b5563;
+  --tab-button-active-color: #e06a47;
+  --text-color: #e6e6e2;
+  --caption-color: #e6e6e2;
+  --quote-color: #f5f5f0;
+  --section-header-color: #f5f5f0;
+  --section-background-color: #2f3e4f;
+  --section-border-color: #e6e6e2;
+  --section-shadow-color: #0f141900;
 
   /* Font faces */
   --header-font: 'header-default';

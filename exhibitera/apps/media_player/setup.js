@@ -255,9 +255,9 @@ async function clearDefinitionInput (full = true) {
 
   exSetup.updateAdvancedColorPicker('style>background', {
     mode: 'color',
-    color: '#000',
-    gradient_color_1: '#000',
-    gradient_color_2: '#000'
+    color: '#0f1419',
+    gradient_color_1: '#1a2b3c',
+    gradient_color_2: '#0f1419'
   })
 
   // Reset font face options
@@ -1631,8 +1631,17 @@ exSetup.configure({
     content_order: [],
     style: {
       background: {
-        mode: 'color',
-        color: '#000'
+        color: '#0f1419',
+        mode: 'color'
+      },
+      color: {
+        progressActiveColor: '#c3512f',
+        progressBackgroundColor: '#1a2b3cc4',
+        progressInactiveColor: '#6b7280',
+        subtitleColor: '#f5f5f0'
+      },
+      font: {
+        subtitle: '/_fonts/OpenSans-Regular.ttf'
       }
     },
     watermark: {}

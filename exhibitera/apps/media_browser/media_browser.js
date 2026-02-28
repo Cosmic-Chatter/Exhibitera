@@ -376,7 +376,7 @@ function loadDefinition (def) {
   // Configure the attractor
   inactivityTimeout = (def?.inactivity_timeout ?? 30) * 1000
 
-  if ('attractor' in def && def.attractor.trim() !== '') {
+  if ((def?.attractor ?? '').trim() !== '') {
     if (exFiles.guessMimetype(def.attractor) === 'video') {
       attractorType = 'video'
 
@@ -423,11 +423,15 @@ function loadDefinition (def) {
 
   // Color
   // First, reset to defaults (in case a style option doesn't exist in the definition)
-  root.style.setProperty('--background-color', 'white')
-  root.style.setProperty('--titleColor', 'black')
-  root.style.setProperty('--filterBackgroundColor', 'white')
-  root.style.setProperty('--filterLabelColor', 'black')
-  root.style.setProperty('--filterTextColor', 'black')
+  root.style.setProperty('--background-color', '#0f1419')
+  root.style.setProperty('--titleColor', '#f5f5f0')
+  root.style.setProperty('--filterBackgroundColor', '#e6e6e2')
+  root.style.setProperty('--filterLabelColor', '#0f1419')
+  root.style.setProperty('--filterTextColor', '#0f1419')
+  root.style.setProperty('--lightboxBackgroundColor', '#0f1419f9')
+  root.style.setProperty('--lightboxTitleColor', '#f5f5f0')
+  root.style.setProperty('--lightboxCaptionColor', '#e6e6e2')
+  root.style.setProperty('--lightboxCreditColor', '#6b7280')
 
   // Then, apply the definition settings
   for (let key of Object.keys(def.style.color)) {
@@ -437,7 +441,7 @@ function loadDefinition (def) {
   }
 
   // Backgorund settings
-  exCommon.setBackground(def?.style?.background, root, '#fff', true)
+  exCommon.setBackground(def?.style?.background, root, '#0f1419', true)
 
   // Set icon colors based on the background color.
   let backgroundClassification = 'dark'

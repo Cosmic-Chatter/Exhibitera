@@ -215,9 +215,9 @@ async function clearDefinitionInput (full = true) {
 
   exSetup.updateAdvancedColorPicker('style>background', {
     mode: 'color',
-    color: '#719abf',
-    gradient_color_1: '#719abf',
-    gradient_color_2: '#719abf'
+    color: '#0f1419',
+    gradient_color_1: '#5a7ba8',
+    gradient_color_2: '#1a2b3c'
   })
 
   exSetup.createAdvancedSliders()
@@ -762,11 +762,30 @@ exSetup.configure({
     language_order: [],
     style: {
       background: {
-        color: '#719abf',
+        color: '#0f1419',
         mode: 'color'
       },
-      color: {},
-      font: {},
+      color: {
+        caption: '#e6e6e2',
+        footer: '#243447',
+        header: '#243447',
+        quote: '#f5f5f0',
+        'section-background': '#2f3e4f',
+        'section-border': '#e6e6e2',
+        'section-header': '#f5f5f0',
+        'section-shadow': '#0f141900',
+        'tab-button': '#4b5563',
+        'tab-button-active': '#e06a47',
+        text: '#e6e6e2'
+      },
+      font: {
+        body: '/_fonts/OpenSans-Regular.ttf',
+        button: '/_fonts/OpenSans-Regular.ttf',
+        caption: '/_fonts/OpenSans-LightItalic.ttf',
+        header: '/_fonts/OpenSans-Bold.ttf',
+        quote: '/_fonts/OpenSans-SemiboldItalic.ttf',
+        'section-header': '/_fonts/OpenSans-Bold.ttf'
+      },
       text_size: {}
     },
     tabs: {},

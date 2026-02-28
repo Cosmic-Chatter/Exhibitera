@@ -88,17 +88,17 @@ function loadDefinition (def) {
 
   // Color
   // First, reset to defaults (in case a style option doesn't exist in the definition)
-  root.style.setProperty('--subtitleColor', 'white')
-  root.style.setProperty('--progressBackgroundColor', '#64646499')
-  root.style.setProperty('--progressActiveColor', '#008000')
-  root.style.setProperty('--progressInactiveColor', '#808080')
+  root.style.setProperty('--subtitleColor', '#f5f5f0')
+  root.style.setProperty('--progressBackgroundColor', '#1a2b3cc4')
+  root.style.setProperty('--progressActiveColor', '#c3512f')
+  root.style.setProperty('--progressInactiveColor', '#6b7280')
 
   // Then, apply the definition settings
   Object.keys(def?.style?.color ?? []).forEach((key) => {
     console.log(def.style.color[key])
     document.documentElement.style.setProperty('--' + key, def.style.color[key])
   })
-  appsCommon.setBackground(def?.style?.background ?? {}, root, '#000', true)
+  appsCommon.setBackground(def?.style?.background ?? {}, root, '#0f1419', true)
 
   // Font
 

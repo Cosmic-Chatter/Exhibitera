@@ -223,15 +223,15 @@ function loadDefinition (definition) {
   const root = document.querySelector(':root')
 
   // First, reset to defaults (in case a style option doesn't exist in the definition)
-  root.style.setProperty('--background-color', '#22222E')
-  root.style.setProperty('--button-color', '#393A5A')
-  root.style.setProperty('--button-touched-color', '#706F8E')
-  root.style.setProperty('--success-message-color', '#528e54')
-  root.style.setProperty('--header-color', 'white')
-  root.style.setProperty('--subheader-color', 'white')
-  root.style.setProperty('--footer-color', 'white')
-  root.style.setProperty('--subfooter-color', 'white')
-  root.style.setProperty('--button-text-color', 'white')
+  root.style.setProperty('--background-color', '#2f3e4f')
+  root.style.setProperty('--button-color', '#1a2b3c')
+  root.style.setProperty('--button-touched-color', '#3b5c8a')
+  root.style.setProperty('--success-message-color', '#e06a47')
+  root.style.setProperty('--header-color', '#f5f5f0')
+  root.style.setProperty('--subheader-color', '#e6e6e2')
+  root.style.setProperty('--footer-color', '#f5f5f0')
+  root.style.setProperty('--subfooter-color', '#e6e6e2')
+  root.style.setProperty('--button-text-color', '#f5f5f0')
 
   // Then, apply the definition settings
 
@@ -243,7 +243,7 @@ function loadDefinition (definition) {
 
   // Backgorund settings
   if ('background' in definition.style) {
-    exCommon.setBackground(definition.style.background, root, '#22222E', true)
+    exCommon.setBackground(definition.style.background, root, '#2f3e4f', true)
   }
 
   // Font settings

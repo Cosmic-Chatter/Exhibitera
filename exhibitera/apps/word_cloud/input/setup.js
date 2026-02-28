@@ -115,9 +115,9 @@ async function clearDefinitionInput (full = true) {
   })
   exSetup.updateAdvancedColorPicker('style>background', {
     mode: 'color',
-    color: '#fff',
-    gradient_color_1: '#fff',
-    gradient_color_2: '#fff'
+    color: '#1a2b3c',
+    gradient_color_1: '#1a2b3c',
+    gradient_color_2: '#1a2b3c'
   })
 
   // Reset font face options
@@ -254,8 +254,29 @@ exSetup.configure({
   blankDefinition: {
     style: {
       background: {
-        mode: 'color',
-        color: '#fff'
+        color: '#1a2b3c',
+        gradient_color_1: '#1a2b3c',
+        gradient_color_2: '#1a2b3c',
+        mode: 'color'
+      },
+      color: {
+        clear: '#f5f5f0',
+        'clear-background': '#6b7280',
+        input: '#0f1419',
+        'input-background': '#f5f5f0',
+        'input-font-hint': '#1a2b3c',
+        'keyboard-background': '#6b7280',
+        'keyboard-key': '#0f1419',
+        'keyboard-key-background': '#f5f5f0',
+        prompt: '#f5f5f0',
+        submit: '#f5f5f0',
+        'submit-background': '#6b7280'
+      },
+      font: {
+        clear: '/_fonts/OpenSans-Regular.ttf',
+        input: '/_fonts/OpenSans-Regular.ttf',
+        prompt: '/_fonts/OpenSans-Bold.ttf',
+        submit: '/_fonts/OpenSans-Regular.ttf'
       }
     },
     attractor: {},

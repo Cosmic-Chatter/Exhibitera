@@ -192,16 +192,16 @@ function loadDefinition (definition) {
 
   // Color settings
   // First, reset to defaults (in case a style option doesn't exist in the definition)
-  root.style.setProperty('--background-color', '#ffffff')
-  WordCloudOptions.backgroundColor = '#ffffff'
+  root.style.setProperty('--background-color', '#1a2b3c')
+  WordCloudOptions.backgroundColor = '#1a2b3c'
 
   // Then, apply the definition settings
-  root.style.setProperty('--prompt-color', definition?.style?.color?.prompt ?? '#000')
-  WordCloudOptions.color = definition?.style?.color?.words ?? 'random-dark'
+  root.style.setProperty('--prompt-color', definition?.style?.color?.prompt ?? '#f5f5f0')
+  WordCloudOptions.color = definition?.style?.color?.words ?? 'random-light'
 
   // Backgorund settings
   if ('background' in definition.style) {
-    exCommon.setBackground(definition.style.background, root, '#fff', true)
+    exCommon.setBackground(definition.style.background, root, '#1a2b3c', true)
     WordCloudOptions.backgroundColor = 'transparent'
   }
 

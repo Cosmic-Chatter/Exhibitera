@@ -21,36 +21,17 @@ function loadDefinition (definition) {
   root.style.setProperty('--video-fit-mode', definition?.behavior?.video_mode ?? 'contain'
 
   )
-  if ('attractor_timeout' in definition.attractor) {
-    attractorTimeout = parseFloat(definition.attractor.attractor_timeout * 1000)
-  } else {
-    attractorTimeout = 30000
-  }
-  if ('use_attractor' in definition.attractor) {
-    attractorAvailable = definition.attractor.use_attractor
-  } else {
-    attractorAvailable = false
-  }
-  if ('use_finger_animation' in definition.attractor) {
-    showFingerAnimation = definition.attractor.use_finger_animation
-  } else {
-    showFingerAnimation = true
-  }
-  if ('attractor_background' in definition.attractor) {
-    root.style.setProperty('--attractor-background', definition.attractor.attractor_background)
-  } else {
-    root.style.setProperty('--attractor-background', 'rgba(0, 0, 0, 0.2)')
-  }
-  if ('attractor_height' in definition.attractor) {
-    root.style.setProperty('--attractor-height', parseFloat(definition.attractor.attractor_height))
-  } else {
-    root.style.setProperty('--attractor-height', 70)
-  }
-  if ('font_adjust' in definition.attractor) {
-    root.style.setProperty('--attractor-font-adjust', parseFloat(definition.attractor.font_adjust))
-  } else {
-    root.style.setProperty('--attractor-font-adjust', 0)
-  }
+
+  attractorTimeout = parseFloat(definition?.attractor?.attractor_timeout ?? 30) * 1000
+  attractorAvailable = definition?.attractor?.use_attractor ?? false
+  showFingerAnimation = definition?.attractor?.use_finger_animation ?? true
+
+  root.style.setProperty('--attractor-background', definition?.attractor?.attractor_background ?? '#000000b7')
+  root.style.setProperty('--attractor-height', parseFloat(definition?.attractor?.attractor_height ?? 70))
+  root.style.setProperty('--attractor-font-adjust', parseFloat(definition?.attractor?.font_adjust ?? 0))
+  document.getElementById('attractor').innerHTML = definition?.attractor?.text ?? ''
+  root.style.setProperty('--attractor-text-color', definition?.attractor?.text_color ?? '#f5f5f0')
+
   if ('font' in definition.attractor) {
     const font = new FontFace('attractor-font', 'url(' + encodeURI(definition.attractor.font) + ')')
     document.fonts.add(font)
@@ -58,20 +39,10 @@ function loadDefinition (definition) {
   } else {
     root.style.setProperty('--attractor-font', 'attractor-default')
   }
-  if ('text' in definition.attractor) {
-    document.getElementById('attractor').innerHTML = definition.attractor.text
-  } else {
-    document.getElementById('attractor').innerHTML = ''
-  }
-  if ('text_color' in definition.attractor) {
-    root.style.setProperty('--attractor-text-color', definition.attractor.text_color)
-  } else {
-    root.style.setProperty('--attractor-text-color', 'white')
-  }
 
   // Backgorund settings
   if ('background' in definition.style) {
-    exCommon.setBackground(definition.style.background, root, '#22222E', true)
+    exCommon.setBackground(definition.style.background, root, '#0f1419', true)
   }
 
   showAttractor()

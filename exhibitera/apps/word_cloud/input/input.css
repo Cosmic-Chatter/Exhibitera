@@ -1,21 +1,21 @@
 :root {
-    --background-color: #ffffff;
-    --prompt-color: #000;
-    --input-color: #000;
-    --input-background-color: #e9ecef;
-    --submit-background-color: #6c757d;
-    --submit-color: #ffffff;
-    --clear-background-color: #6c757d;
-    --clear-color: #ffffff;
-    --keyboard-key-color: #000;
-    --keyboard-key-background-color: #fff;
-    --keyboard-background-color: #ececec;
+    --background-color: #1a2b3c;
+    --prompt-color: #f5f5f0;
+    --input-color: #0f1419;
+    --input-font-hint-color:#1a2b3c;
+    --input-background-color: #f5f5f0;
+    --submit-background-color: #6b7280;
+    --submit-color: #f5f5f0;
+    --clear-background-color: #6b7280;
+    --clear-color: #f5f5f0;
+    --keyboard-key-color: #0f1419;
+    --keyboard-key-background-color: #f5f5f0;
+    --keyboard-background-color: #6b7280;
     --prompt-font: 'prompt-default';
     --submit-font: "submit-default";
     --clear-font: 'clear-default';
     --input-font: "input-default";
     --prompt-font-adjust: 0;
-    --input-font-hint-color:#776767;
 }
 
 html {

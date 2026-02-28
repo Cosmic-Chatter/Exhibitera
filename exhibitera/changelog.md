@@ -19,6 +19,7 @@ The Core API provides a stable API that enables developers to provide basic inte
 
 ### General
 - Apps that support language selection now properly display right-to-left text for Arabic and Hebrew
+- Spiffy new default color scheme
 - Easily launch Apps fullscreen on Windows
 - Creating, editing, and setting definitions is now much easier when not using Hub
 - Easily access DMX lighting scenes when not using Hub 
