@@ -154,7 +154,7 @@ async function wizardForward (currentPage) {
 
     if (files.length === 1) {
       document.getElementById('wizardDurationSlider').value = 30
-      wizardCreateDefinition()
+      exSetup.wizardGoTo('ColorMode')
     } else {
       let timedFile = false
       for (const file of files) {
@@ -165,10 +165,12 @@ async function wizardForward (currentPage) {
         exSetup.wizardGoTo('Duration')
       } else {
         document.getElementById('wizardDurationSlider').value = 30
-        wizardCreateDefinition()
+        exSetup.wizardGoTo('ColorMode')
       }
     }
   } else if (currentPage === 'Duration') {
+    exSetup.wizardGoTo('ColorMode')
+  } else if (currentPage === 'ColorMode') {
     wizardCreateDefinition()
   }
 }
@@ -179,6 +181,8 @@ function wizardBack (currentPage) {
   if (currentPage === 'Content') {
     exSetup.wizardGoTo('Welcome')
   } else if (currentPage === 'Duration') {
+    exSetup.wizardGoTo('Content')
+  } else if (currentPage === 'ColorMode') {
     exSetup.wizardGoTo('Content')
   }
 }
@@ -219,6 +223,22 @@ async function wizardCreateDefinition () {
   }
   exSetup.updateWorkingDefinition(['content'], content)
   exSetup.updateWorkingDefinition(['content_order'], contentOrder)
+
+  // Switch to light color scheme if needed
+  if (document.getElementById('wizardColorModeLight').checked) {
+    exSetup.updateWorkingDefinition(['style', 'color'], {
+      progressActiveColor: '#c3512f',
+      progressBackgroundColor: '#f5f5f0e5',
+      progressInactiveColor: '#6b7280',
+      subtitleColor: '#0f1419'
+    })
+    exSetup.updateWorkingDefinition(['style', 'background'], {
+      color: '#e6e6e2',
+      gradient_color_1: '#f5f5f0',
+      gradient_color_2: '#e6e6e2',
+      mode: 'color'
+    })
+  }
 
   const uuid = exSetup.config.workingDefinition.uuid
 

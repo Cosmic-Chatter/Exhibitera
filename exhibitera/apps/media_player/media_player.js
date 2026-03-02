@@ -61,7 +61,7 @@ function loadDefinition (def) {
   // Indicator size
   const indicatorSize = parseFloat(def?.behavior?.progress_indicator?.size ?? 1)
   root.style.setProperty('--progress-indicator-size', indicatorSize)
-  progressIndicator.style.width = String(2 * indicatorSize * (def.content_order.length - 1) + 2 * indicatorSize) + 'vw'
+  progressIndicator.style.width = 'max-content'
 
   // Indicator visibility
   if (def?.behavior?.progress_indicator?.visible ?? false) {
@@ -95,7 +95,6 @@ function loadDefinition (def) {
 
   // Then, apply the definition settings
   Object.keys(def?.style?.color ?? []).forEach((key) => {
-    console.log(def.style.color[key])
     document.documentElement.style.setProperty('--' + key, def.style.color[key])
   })
   appsCommon.setBackground(def?.style?.background ?? {}, root, '#0f1419', true)

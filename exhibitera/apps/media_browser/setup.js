@@ -19,6 +19,7 @@ async function initializeWizard () {
   document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'none'
   document.getElementById('wizardLanguages').innerHTML = ''
   document.getElementById('wizardLanguagesBlankWarning').style.display = 'none'
+  document.getElementById('wizardMediaImportList').innerText = ''
   document.getElementById('wizardCheckboxTitle').checked = true
   document.getElementById('wizardCheckboxCaption').checked = true
   document.getElementById('wizardCheckboxCredit').checked = true
@@ -101,6 +102,8 @@ async function wizardForward (currentPage) {
       }
     }
   } else if (currentPage === 'Layout') {
+    exSetup.wizardGoTo('ColorMode')
+  } else if (currentPage === 'ColorMode') {
     wizardCreateDefinition()
   }
 }
@@ -120,6 +123,8 @@ function wizardBack (currentPage) {
     exSetup.wizardGoTo('Spreadsheet')
   } else if (currentPage === 'Layout') {
     exSetup.wizardGoTo('MediaUpload')
+  } else if (currentPage === 'ColorMode') {
+    exSetup.wizardGoTo('Layout')
   }
 }
 
@@ -200,6 +205,26 @@ async function wizardCreateDefinition () {
   if (orientation === 'horizontal') {
     exSetup.configurePreview('16x9', true)
   } else exSetup.configurePreview('9x16', true)
+
+  // Switch to light color scheme if needed
+  if (document.getElementById('wizardColorModeLight').checked) {
+    exSetup.updateWorkingDefinition(['style', 'color'], {
+      filterBackgroundColor: '#5a7ba8',
+      filterLabelColor: '#f5f5f0',
+      filterTextColor: '#0f1419',
+      lightboxBackgroundColor: '#e6e6e2ef',
+      lightboxCaptionColor: '#1a2b3c',
+      lightboxCreditColor: '#c3512f',
+      lightboxTitleColor: '#0f1419',
+      titleColor: '#0f1419'
+    })
+    exSetup.updateWorkingDefinition(['style', 'background'], {
+      color: '#e6e6e2',
+      gradient_color_1: '#f5f5f0',
+      gradient_color_2: '#e6e6e2',
+      mode: 'color'
+    })
+  }
 
   const uuid = exSetup.config.workingDefinition.uuid
 

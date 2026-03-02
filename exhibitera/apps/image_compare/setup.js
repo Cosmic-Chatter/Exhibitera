@@ -100,6 +100,8 @@ async function wizardForward (currentPage) {
     createHomeTextLocalizationHTML(nav, content)
     exSetup.wizardGoTo('HomeDetails')
   } else if (currentPage === 'HomeDetails') {
+    exSetup.wizardGoTo('ColorMode')
+  } else if (currentPage === 'ColorMode') {
     wizardCreateDefinition()
   }
 }
@@ -115,6 +117,8 @@ function wizardBack (currentPage) {
     exSetup.wizardGoTo('SelectImages')
   } else if (currentPage === 'HomeDetails') {
     exSetup.wizardGoTo('PairDetails')
+  } else if (currentPage === 'ColorMode') {
+    exSetup.wizardGoTo('HomeDetails')
   }
 }
 
@@ -126,6 +130,30 @@ async function wizardCreateDefinition () {
   // Definition name
   const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
   exSetup.updateWorkingDefinition(['name'], defName)
+
+  // Switch to light color scheme if needed
+  if (document.getElementById('wizardColorModeLight').checked) {
+    exSetup.updateWorkingDefinition(['style', 'color'], {
+      buttonBackgroundColor: '#2f3e4fd8',
+      buttonOutlineColor: '#e6e6e2',
+      buttonTextColor: '#f5f5f0',
+      infoBodyColor: '#e6e6e2',
+      infoTitleColor: '#f5f5f0',
+      itemNameColor: '#0f1419',
+      labelBackgroundColor: '#0f141991',
+      labelTextColor: '#e6e6e2',
+      sliderBackgroundColor: '#5a7ba8cc',
+      sliderIconColor: '#0f1419',
+      subtitleColor: '#1a2b3c',
+      titleColor: '#0f1419'
+    })
+    exSetup.updateWorkingDefinition(['style', 'background'], {
+      color: '#e6e6e2',
+      gradient_color_1: '#f5f5f0',
+      gradient_color_2: '#e6e6e2',
+      mode: 'color'
+    })
+  }
 
   exUtilities.hideModal('#setupWizardModal')
   resetWizardFields() // Must clear navs before building new ones for the main editor
@@ -831,7 +859,7 @@ function createHomeTextLocalizationHTML (tabList = null, navContent = null) {
   navContent.innerHTML = ''
 
   let i = 0
-  for (const code of def.language_order) {
+  for (const code of (def?.language_order ?? [])) {
     const lang = def.languages[code]
 
     // Create the tab button
@@ -955,7 +983,7 @@ function rebuildItemList () {
   document.getElementById('contentNavContent').innerHTML = ''
 
   let num = 1
-  for (const uuid of workingDefinition.content_order) {
+  for (const uuid of (workingDefinition?.content_order ?? [])) {
     const item = workingDefinition.content[uuid]
     createItemHTML(item, num, num === 1)
     num += 1

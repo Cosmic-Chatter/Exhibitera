@@ -214,7 +214,7 @@
                 </div>
               </div>
 
-              <!-- Question -->
+              <!-- Attractor -->
               <div id="wizardPane_Attractor" class="row wizard-pane">
                 <div class="col-8 offset-2 mt-3">
                   <H4 class="text-center">Configure the attractor</H4>
@@ -236,58 +236,6 @@
                   <div class="text-center mt-4">
                     <button class="btn btn-secondary me-4 wizard-back" data-current-page="Attractor">Back</button>
                     <button class="btn btn-primary ms-4 wizard-forward" data-current-page="Attractor">Finish</button>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Style -->
-              <div id="wizardPane_Style" class="row wizard-pane">
-                <div class="col-8 offset-2 mt-3">
-                  <H4 class="text-center">How should the word cloud look?</H4>
-                  <i>
-                    <p>
-                      You will be able to adjust colors and fonts after completing Guided Setup.
-                    </p>
-                  </i>
-                  <div class="row gy-2">
-                    <div class="col-6">
-                      <label for="wizard_wordRotationSelect" class="form-label mt-2">
-                        Word rotation
-                        <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="How should words in the cloud be shown?" style="font-size: 0.55em;">?</span>
-                      </label>
-                      <select id="wizard_wordRotationSelect" class="form-select wizard-style-option">
-                        <option value="horizontal">Horizontal only</option>
-                        <option value="right_angles">Horizontal/vertical only</option>  
-                        <option value="full">Full rotation</option>
-                      </select>
-                      <label for="wizard_cloudShapeSelect" class="form-label mt-2">
-                        Cloud shape
-                        <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="The words will be roughly arranged in the selected shape." style="font-size: 0.55em;">?</span>
-                      </label>
-                      <select id="wizard_cloudShapeSelect" class="form-select wizard-style-option">
-                        <option value="circle">Circle</option>
-                        <option value="square">Square</option>  
-                        <option value="diamond">Diamond</option>
-                        <option value="triangle">Triangle (pointing up)</option>
-                        <option value="triangle-forward">Triangle (pointing right)</option>
-                        <option value="pentagon">Pentagon</option>
-                        <option value="star">Star</option>
-                      </select>
-                      <label for="wizard_textCaseSelect" class="form-label mt-2">
-                        Capitalization
-                      </label>
-                      <select id="wizard_textCaseSelect" class="form-select wizard-style-option">
-                        <option value="lowercase">Lowercase</option>  
-                        <option value="uppercase">Uppercase</option>
-                      </select>                      
-                    </div>
-                    <div class="col-6">
-                      <div id="wordCloudContainer"></div>
-                    </div>
-                  </div>
-                  <div class="text-center mt-4">
-                    <button class="btn btn-secondary me-4 wizard-back" data-current-page="Style">Back</button>
-                    <button class="btn btn-primary ms-4 wizard-forward" data-current-page="Style">Finish</button>
                   </div>
                 </div>
               </div>

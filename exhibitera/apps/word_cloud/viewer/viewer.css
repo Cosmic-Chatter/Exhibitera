@@ -34,6 +34,7 @@ body {
   background: var(--background-color);
   background-size: cover;
   background-position: center;
+  background-repeat: no-repeat;
 }
 #promptText {
   font-size: calc(10vmin + var(--prompt-font-adjust)*1vmin);

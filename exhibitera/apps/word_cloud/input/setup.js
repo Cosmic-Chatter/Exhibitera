@@ -30,16 +30,18 @@ async function wizardForward (currentPage) {
     } else {
       document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'block'
     }
-  } if (currentPage === 'Question') {
+  } else if (currentPage === 'Question') {
     exSetup.wizardGoTo('Collection')
-  } if (currentPage === 'Collection') {
+  } else if (currentPage === 'Collection') {
     const collection = document.getElementById('wizardCollection').value.trim()
     if (collection !== '') {
       document.getElementById('wizardCollectionBlankWarning').style.display = 'none'
-      wizardCreateDefinition()
+      exSetup.wizardGoTo('ColorMode')
     } else {
       document.getElementById('wizardCollectionBlankWarning').style.display = 'block'
     }
+  } else if (currentPage === 'ColorMode') {
+    wizardCreateDefinition()
   }
 }
 
@@ -50,6 +52,8 @@ function wizardBack (currentPage) {
     exSetup.wizardGoTo('Welcome')
   } else if (currentPage === 'Collection') {
     exSetup.wizardGoTo('Question')
+  } else if (currentPage === 'ColorMode') {
+    exSetup.wizardGoTo('Collection')
   }
 }
 
@@ -67,6 +71,29 @@ async function wizardCreateDefinition () {
   // Collection
   const collection = document.getElementById('wizardCollection').value.trim()
   exSetup.updateWorkingDefinition(['behavior', 'collection_name'], collection)
+
+  // Switch to light color scheme if needed
+  if (document.getElementById('wizardColorModeLight').checked) {
+    exSetup.updateWorkingDefinition(['style', 'color'], {
+      clear: '#f5f5f0',
+      'clear-background': '#6b7280',
+      input: '#0f1419',
+      'input-background': '#f5f5f0',
+      'input-font-hint': '#1a2b3c',
+      'keyboard-background': '#6b7280',
+      'keyboard-key': '#0f1419',
+      'keyboard-key-background': '#f5f5f0',
+      prompt: '#0f1419',
+      submit: '#f5f5f0',
+      'submit-background': '#6b7280'
+    })
+    exSetup.updateWorkingDefinition(['style', 'background'], {
+      color: '#e6e6e2',
+      gradient_color_1: '#f5f5f0',
+      gradient_color_2: '#e6e6e2',
+      mode: 'color'
+    })
+  }
 
   const uuid = exSetup.config.workingDefinition.uuid
 

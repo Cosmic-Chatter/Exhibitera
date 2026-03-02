@@ -45,6 +45,8 @@ async function wizardForward (currentPage) {
     exSetup.wizardGoTo('Style')
     createWordCloud()
   } else if (currentPage === 'Style') {
+    exSetup.wizardGoTo('ColorMode')
+  } else if (currentPage === 'ColorMode') {
     wizardCreateDefinition()
   }
 }
@@ -58,6 +60,8 @@ function wizardBack (currentPage) {
     exSetup.wizardGoTo('Collection')
   } else if (currentPage === 'Style') {
     exSetup.wizardGoTo('Question')
+  } else if (currentPage === 'ColorMode') {
+    exSetup.wizardGoTo('Style')
   }
 }
 
@@ -80,6 +84,20 @@ async function wizardCreateDefinition () {
   exSetup.updateWorkingDefinition(['style', 'text_case'], document.getElementById('wizard_textCaseSelect').value)
   exSetup.updateWorkingDefinition(['style', 'rotation'], document.getElementById('wizard_wordRotationSelect').value)
   exSetup.updateWorkingDefinition(['style', 'cloud_shape'], document.getElementById('wizard_cloudShapeSelect').value)
+
+  // Switch to light color scheme if needed
+  if (document.getElementById('wizardColorModeLight').checked) {
+    exSetup.updateWorkingDefinition(['style', 'color'], {
+      prompt: '#0f1419',
+      words: 'random-dark'
+    })
+    exSetup.updateWorkingDefinition(['style', 'background'], {
+      color: '#e6e6e2',
+      gradient_color_1: '#f5f5f0',
+      gradient_color_2: '#e6e6e2',
+      mode: 'color'
+    })
+  }
 
   const uuid = exSetup.config.workingDefinition.uuid
 

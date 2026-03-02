@@ -902,8 +902,21 @@ function _onAdvancedColorPickerModeChange (id, path, value) {
 
 export function updateAdvancedColorPicker (path,
   details,
-  defaults = { mode: 'color', color: '#fff', image: 'Select file' }) {
+  userDefaults) {
   // Update the color picker defined by path using the values in details.
+
+  const baseDefaults = {
+    mode: 'color',
+    color: '#e6e6e2',
+    gradient_color_1: '#f5f5f0',
+    gradient_color_2: '#e6e6e2',
+    image: 'Select file'
+  }
+
+  let defaults
+  if (typeof userDefaults === 'object') {
+    defaults = { ...baseDefaults, ...userDefaults }
+  } else defaults = baseDefaults
 
   // We may have multiple ACPs that coorespond to the same path
   const els = getAdvancedColorPickersByPath(path)

@@ -218,7 +218,51 @@
                   
                   <div class="text-center mt-4">
                     <button class="btn btn-secondary me-4 wizard-back" data-current-page="Answers">Back</button>
-                    <button class="btn btn-primary ms-4 wizard-forward" data-current-page="Answers">Finish</button>
+                    <button class="btn btn-primary ms-4 wizard-forward" data-current-page="Answers">Next</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Color Mode -->
+              <div id="wizardPane_ColorMode" class="row wizard-pane">
+                <div class="col-8 offset-2 mt-3">
+                  <H4 class="text-center">Choose a color scheme</H4>
+
+                  <i>
+                    <p>
+                      You will be able to fine-tune colors later.
+                    </p>
+                  </i>
+                  <div class="exRadioButton form-check py-3 px-3 mt-2" style="background-color: #e6e6e2; color: #0f1419;">
+                    <input class="form-check-input d-none" type="radio" name="wizardColorMode" id="wizardColorModeLight" checked value="light">
+                    <label class="form-check-label w-100" for="wizardColorModeLight">
+                      <div class="row">
+                        <div class="col-12 col-md-3 col-lg-2 d-flex justify-content-center align-items-center" style="color: #c3512f;">
+                          <b>Light</b>
+                        </div>
+                        <div class="col-12 col-md-9 col-lg-10">
+                          Great for brighter galleries or making darker media stand out.
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+                  <div class="exRadioButton form-check py-3 px-3 mt-2" style="background-color: #1a2b3c; color: #e6e6e2;">
+                    <input class="form-check-input d-none" type="radio" name="wizardColorMode" id="wizardColorModeDark" value="dark">
+                    <label class="form-check-label w-100" for="wizardColorModeDark">
+                      <div class="row">
+                        <div class="col-12 col-md-3 col-lg-2 d-flex justify-content-center align-items-center" style="color: #f5f5f0">
+                          <b>Dark</b>
+                        </div>
+                        <div class="col-12 col-md-9 col-lg-10">
+                          Great for darker galleries or making bright media stand out.
+                        </div>
+                      </div>
+                    </label>
+                  </div>                  
+                  
+                  <div class="text-center mt-4">
+                    <button class="btn btn-secondary me-4 wizard-back" data-current-page="ColorMode">Back</button>
+                    <button class="btn btn-primary ms-4 wizard-forward" data-current-page="ColorMode">Finish</button>
                   </div>
                 </div>
               </div>

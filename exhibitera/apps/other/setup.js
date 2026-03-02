@@ -17,6 +17,11 @@ async function initializeWizard () {
   document.getElementById('wizardSourceAppFileSelect').innerText = 'Upload and select'
   document.getElementById('wizardAppURLInput').value = ''
   document.getElementById('wizardAppModeBasic').checked = true
+
+  if (exCommon.config.standalone) {
+    // We are not using Hub
+    document.getElementById('noHubWarning').style.display = 'block'
+  } else document.getElementById('noHubWarning').style.display = 'none'
 }
 
 async function wizardForward (currentPage) {

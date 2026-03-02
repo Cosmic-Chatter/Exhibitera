@@ -88,6 +88,8 @@ async function wizardForward (currentPage) {
     exSetup.previewDefinition(true)
     exSetup.wizardGoTo('Layout')
   } else if (currentPage === 'Layout') {
+    exSetup.wizardGoTo('ColorMode')
+  } else if (currentPage === 'ColorMode') {
     wizardCreateDefinition()
   }
 }
@@ -101,6 +103,10 @@ function wizardBack (currentPage) {
     exSetup.wizardGoTo('Languages')
   } else if (currentPage === 'Answers') {
     exSetup.wizardGoTo('Questions')
+  } else if (currentPage === 'Layout') {
+    exSetup.wizardGoTo('Answers')
+  } else if (currentPage === 'ColorMode') {
+    exSetup.wizardGoTo('Layout')
   }
 }
 
@@ -177,6 +183,29 @@ async function wizardCreateDefinition () {
     exSetup.configurePreview('16x9', true)
   } else exSetup.configurePreview('9x16', true)
 
+  // Switch to light color scheme if needed
+  if (document.getElementById('wizardColorModeLight').checked) {
+    exSetup.updateWorkingDefinition(['style', 'color'], {
+      caption: '#e6e6e2',
+      footer: '#3b5c8a',
+      header: '#2f3e4f',
+      quote: '#f5f5f0',
+      'section-background': '#5a7ba8',
+      'section-border': '#4b5563',
+      'section-header': '#f5f5f0',
+      'section-shadow': '#0f141900',
+      'tab-button': '#6b7280',
+      'tab-button-active': '#c3512f',
+      text: '#f5f5f0'
+    })
+    exSetup.updateWorkingDefinition(['style', 'background'], {
+      color: '#2f3e4f',
+      gradient_color_1: '#2f3e4f',
+      gradient_color_2: '#243447',
+      mode: 'color'
+    })
+  }
+
   const uuid = exSetup.config.workingDefinition.uuid
 
   await exSetup.saveDefinition(defName)
@@ -250,7 +279,7 @@ function editDefinition (uuid = '') {
   } else {
     attractorSelect.innerText = 'Select file'
   }
-  attractorSelect.dataset.filename = def.behavior.attractor
+  attractorSelect.dataset.filename = def?.behavior?.attractor ?? ''
   document.getElementById('inactivityTimeoutField').value = def?.behavior?.inactivity_timeout ?? 30
 
   // Layout fields

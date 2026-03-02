@@ -58,6 +58,8 @@ async function wizardForward (currentPage) {
         return
       }
     }
+    exSetup.wizardGoTo('ColorMode')
+  } else if (currentPage === 'ColorMode') {
     wizardCreateDefinition()
   }
 }
@@ -69,6 +71,8 @@ function wizardBack (currentPage) {
     exSetup.wizardGoTo('Welcome')
   } else if (currentPage === 'Answers') {
     exSetup.wizardGoTo('Question')
+  } else if (currentPage === 'ColorMode') {
+    exSetup.wizardGoTo('Answers')
   }
 }
 
@@ -172,6 +176,27 @@ async function wizardCreateDefinition () {
       value: '5_star'
     })
   }
+
+  // Switch to light color scheme if needed
+  if (document.getElementById('wizardColorModeLight').checked) {
+    exSetup.updateWorkingDefinition(['style', 'color'], {
+      'button-color': '#3b5c8a',
+      'button-text-color': '#f5f5f0',
+      'button-touched-color': '#2f3e4f',
+      'footer-color': '#0f1419',
+      'header-color': '#0f1419',
+      'subfooter-color': '#1a2b3c',
+      'subheader-color': '#1a2b3c',
+      'success-message-color': '#e06a47'
+    })
+    exSetup.updateWorkingDefinition(['style', 'background'], {
+      color: '#e6e6e2',
+      gradient_color_1: '#f5f5f0',
+      gradient_color_2: '#e6e6e2',
+      mode: 'color'
+    })
+  }
+
   const uuid = exSetup.config.workingDefinition.uuid
 
   await exSetup.saveDefinition(defName)

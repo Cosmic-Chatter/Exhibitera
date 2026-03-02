@@ -9,7 +9,7 @@ import * as exSetup from '../js/exhibitera_setup_common.js'
 import * as exLang from '../js/exhibitera_setup_languages.js'
 import * as exMarkdown from '../js/exhibitera_setup_markdown.js'
 
-const wizardHeaders = {} // Holds the markdown-formatted header text in each language
+let wizardHeaders = {} // Holds the markdown-formatted header text in each language
 
 async function initializeWizard () {
   // Setup the wizard
@@ -27,6 +27,7 @@ async function initializeWizard () {
   document.getElementById('wizardUploadMediaMissingRow').innerHTML = ''
   document.getElementById('wizardUploadMediaBadKeyWarning').style.display = 'none'
   document.getElementById('wizardOrientationSelect').value = 'vertical'
+  wizardHeaders = {}
 }
 
 async function wizardForward (currentPage) {
@@ -119,6 +120,8 @@ async function wizardForward (currentPage) {
       }
     }
   } else if (currentPage === 'Layout') {
+    exSetup.wizardGoTo('ColorMode')
+  } else if (currentPage === 'ColorMode') {
     wizardCreateDefinition()
   }
 }
@@ -138,6 +141,8 @@ function wizardBack (currentPage) {
     exSetup.wizardGoTo('Spreadsheet')
   } else if (currentPage === 'Layout') {
     exSetup.wizardGoTo('Option')
+  } else if (currentPage === 'ColorMode') {
+    exSetup.wizardGoTo('Layout')
   }
 }
 
@@ -197,6 +202,23 @@ async function wizardCreateDefinition () {
   if (orientation === 'horizontal') {
     exSetup.configurePreview('16x9', true)
   } else exSetup.configurePreview('9x16', true)
+
+  // Switch to light color scheme if needed
+  if (document.getElementById('wizardColorModeLight').checked) {
+    exSetup.updateWorkingDefinition(['style', 'color'], {
+      footerColor: '#2f3e4f',
+      headerColor: '#2f3e4f',
+      itemColor: '#3b5c8a',
+      lineColor: '#6b7280',
+      textColor: '#f5f5f0'
+    })
+    exSetup.updateWorkingDefinition(['style', 'background'], {
+      color: '#e6e6e2',
+      gradient_color_1: '#f5f5f0',
+      gradient_color_2: '#e6e6e2',
+      mode: 'color'
+    })
+  }
 
   const uuid = exSetup.config.workingDefinition.uuid
 

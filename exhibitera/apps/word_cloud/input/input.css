@@ -37,7 +37,8 @@ html {
     height: 100%;
     background: var(--background-color);
     background-size: cover;
-    background-position: center
+    background-position: center;
+    background-repeat: no-repeat;
   }
   .annotatedInput{
     position:relative;

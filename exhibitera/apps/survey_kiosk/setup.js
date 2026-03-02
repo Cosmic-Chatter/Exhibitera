@@ -79,6 +79,8 @@ async function wizardForward (currentPage) {
     }
     exSetup.wizardGoTo('Answers')
   } else if (currentPage === 'Answers') {
+    exSetup.wizardGoTo('ColorMode')
+  } else if (currentPage = 'ColorMode') {
     wizardCreateDefinition()
   }
 }
@@ -92,6 +94,8 @@ function wizardBack (currentPage) {
     exSetup.wizardGoTo('Languages')
   } else if (currentPage === 'Answers') {
     exSetup.wizardGoTo('Questions')
+  } else if (currentPage === 'ColorMode') {
+    exSetup.wizardGoTo('Answers')
   }
 }
 
@@ -176,6 +180,35 @@ async function wizardCreateDefinition () {
         value: '5_star'
       })
     }
+  }
+
+  // Switch to light color scheme if needed
+  if (document.getElementById('wizardColorModeLight').checked) {
+    exSetup.updateWorkingDefinition(['style', 'color'], {
+      'active-dot-color': '#e06a47',
+      'body-text-color': '#0f1419',
+      'button-color': '#5a7ba8',
+      'button-selected-color': '#c3512f',
+      'button-text-color': '#0f1419',
+      'header-color': '#0f1419',
+      'inactive-dot-color': '#5a7ba8',
+      'next-button-color': '#e06a47',
+      'next-button-text-color': '#f5f5f0',
+      'restart-button-color': '#c3512f',
+      'restart-button-text-color': '#f5f5f0'
+    })
+    exSetup.updateWorkingDefinition(['style', 'background'], {
+      color: '#3b5c8a',
+      gradient_color_1: '#5a7ba8',
+      gradient_color_2: '#3b5c8a',
+      mode: 'color'
+    })
+    exSetup.updateWorkingDefinition(['style', 'item_background'], {
+      color: '#e6e6e2',
+      gradient_color_1: '#f5f5f0',
+      gradient_color_2: '#e6e6e2',
+      mode: 'color'
+    })
   }
 
   const uuid = exSetup.config.workingDefinition.uuid
