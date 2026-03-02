@@ -1,4 +1,4 @@
-# Exhibitera Hub
+<img src="_static/Hub_logo.svg" alt="Exhibitera Hub" style="width: 400px; max-width:95%">
 
 ## Introduction
 

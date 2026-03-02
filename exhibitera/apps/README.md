@@ -1,4 +1,5 @@
-# Exhibitera Apps
+<img src="_static/Apps_logo.svg" alt="Exhibitera Hub" style="width: 400px; max-width:95%">
+
 A collection of visitor-facing apps to help you create rich digital experiences.
 
 ## First-time setup

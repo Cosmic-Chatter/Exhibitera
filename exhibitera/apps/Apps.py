@@ -256,7 +256,7 @@ def create_config():
                                   available_port) + '/first_time_setup.html')
 
         apps_webview.clear_cache()
-        webview.start(func=bootstrap_app, args=available_port, private_mode=False)
+        webview.start(func=bootstrap_app, args=available_port, private_mode=False, icon=ex_files.get_path(["_static", "favicon.svg"]))
 
 
 def run():
