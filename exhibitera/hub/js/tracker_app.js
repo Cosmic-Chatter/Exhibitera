@@ -180,7 +180,7 @@ function buildLayout (definition) {
     title.innerHTML = item.name
     body.appendChild(title)
 
-    if ('label' in item) {
+    if (item?.label) {
       const label = document.createElement('label')
       label.classList = 'form-label'
       label.setAttribute('for', item.uuid + '_input')

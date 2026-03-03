@@ -24,7 +24,7 @@ export function getAvailableTrackerData (complete) {
     endpoint: '/data/list'
   })
     .then((response) => {
-      if ('success' in response && response.success === false) {
+      if (!response?.success) {
         console.log('Error retrieving tracker data list:', response.reason)
         return
       }
@@ -53,7 +53,7 @@ export function downloadTrackerData (name) {
     endpoint: '/data/' + name + '/csv'
   })
     .then((result) => {
-      if ('success' in result && result.success === true) {
+      if (result?.success) {
         // Convert the text to a file and initiate download
         const fileBlob = new Blob([result.csv], {
           type: 'text/plain'
@@ -679,7 +679,7 @@ export function deleteTrackerData () {
     endpoint: '/data/' + name
   })
     .then((result) => {
-      if ('success' in result && result.success === true) {
+      if (result?.success) {
         exUtilities.hideModal('#deleteTrackerDataModal')
         getAvailableTrackerData(populateTrackerDataSelect)
       }

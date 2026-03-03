@@ -8,18 +8,18 @@ import * as exFileSelectModal from './exhibitera_file_select_modal.js'
 function updateParser (update) {
   // Take a list of defaults and build the interface for editing them.
 
-  if ('app' in update) {
+  if (update?.app) {
     if (update.app.definition) document.getElementById('definitionSelect').value = update.app.definition
   }
-  if ('control_server' in update) {
+  if (update?.control_server) {
     if ('ip_address' in update.control_server) {
       document.getElementById('hubIPInput').value = update.control_server.ip_address
     }
-    if ('port' in update.control_server) {
+    if (update.control_server?.port) {
       document.getElementById('hubPortInput').value = update.control_server.port
     }
   }
-  if ('permissions' in update) {
+  if (update?.permissions) {
     if ('audio' in update.permissions) {
       document.getElementById('permissionsAudioInput').value = String(update.permissions.audio)
     }
@@ -38,7 +38,7 @@ function updateParser (update) {
       document.getElementById('permissionsSleepInput').value = String(update.permissions.sleep)
     }
   }
-  if ('smart_restart' in update) {
+  if (update?.smart_restart) {
     if ('state' in update.smart_restart) {
       document.getElementById('smartRestartStateSelect').value = update.smart_restart.state
     }
@@ -49,12 +49,12 @@ function updateParser (update) {
       document.getElementById('smartRestartThresholdInput').value = update.smart_restart.threshold
     }
   }
-  if ('software_update' in update && update.software_update.update_available === true) {
+  if (update && update?.software_update?.update_available === true) {
     document.getElementById('showUpdateInfoButtonCol').style.display = 'block'
   } else {
     document.getElementById('showUpdateInfoButtonCol').style.display = 'none'
   }
-  if ('system' in update) {
+  if (update?.system) {
     if ('active hours' in update.system) {
       document.getElementById('activeHoursStartInput').value = update.system.active_hours.start
       document.getElementById('activeHoursEndInput').value = update.system.active_hours.end

@@ -1017,28 +1017,31 @@ function renameFile () {
     }
   })
     .then((result) => {
-      if ('success' in result) {
-        if (result.success === false && result.error === 'file_exists') {
-          document.getElementById('exFileSelectModalFilePreviewEditFileExistsWarning').style.display = 'block'
-        } else if (result.success === true) {
-          // Update the preview pane
-          document.getElementById('exFileSelectModalFilePreview').setAttribute('data-filename', newName)
-
-          // Update the entry
-          const entry = document.getElementById('exFileSelectModal').querySelector(`.const-file-entry[data-filename="${originalName}"]`)
-          const fileDetails = JSON.parse(entry.getAttribute('data-details'))
-          fileDetails.name = newName
-          entry.setAttribute('data-details', JSON.stringify(fileDetails))
-          entry.setAttribute('data-filename', newName)
-          entry.querySelector('.const-file-name').title = newName
-          entry.querySelector('.const-file-name').innerHTML = shortenFilename(newName)
-          entry.querySelector('.const-file-select-box').setAttribute('data-filename', newName)
-
-          // Update the preview filename
-          document.getElementById('exFileSelectModalFilePreviewFilename').innerHTML = newName
-          document.getElementById('exFileSelectModalFilePreviewEditContainer').style.display = 'none'
-          document.getElementById('exFileSelectModalFilePreviewFilename').style.display = 'block'
+      if (!result?.success) {
+        if (result?.error === 'file_exists') {
+          document.getElementById(
+            'exFileSelectModalFilePreviewEditFileExistsWarning'
+          ).style.display = 'block'
         }
+        return
       }
+
+      // Update the preview pane
+      document.getElementById('exFileSelectModalFilePreview').setAttribute('data-filename', newName)
+
+      // Update the entry
+      const entry = document.getElementById('exFileSelectModal').querySelector(`.const-file-entry[data-filename="${originalName}"]`)
+      const fileDetails = JSON.parse(entry.getAttribute('data-details'))
+      fileDetails.name = newName
+      entry.setAttribute('data-details', JSON.stringify(fileDetails))
+      entry.setAttribute('data-filename', newName)
+      entry.querySelector('.const-file-name').title = newName
+      entry.querySelector('.const-file-name').innerHTML = shortenFilename(newName)
+      entry.querySelector('.const-file-select-box').setAttribute('data-filename', newName)
+
+      // Update the preview filename
+      document.getElementById('exFileSelectModalFilePreviewFilename').innerHTML = newName
+      document.getElementById('exFileSelectModalFilePreviewEditContainer').style.display = 'none'
+      document.getElementById('exFileSelectModalFilePreviewFilename').style.display = 'block'
     })
 }

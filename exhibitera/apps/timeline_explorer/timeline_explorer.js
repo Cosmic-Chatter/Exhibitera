@@ -33,7 +33,7 @@ function loadDefinition (def) {
     document.documentElement.style.setProperty('--' + key, def.style.color[key])
   }
 
-  if ('headerColor' in def.style.color) {
+  if (def.style.color?.headerColor) {
     // Configure the status bar for PWAs
     document.querySelector('meta[name="theme-color"]').setAttribute('content', def.style.color.headerColor)
     document.querySelector('meta[name="msapplication-TileColor"]').setAttribute('content', def.style.color.headerColor)
@@ -84,7 +84,7 @@ function loadDefinition (def) {
 
   // Set up the attractor
   inactivityTimeout = parseInt(def?.inactivity_timeout ?? 30)
-  if ('attractor' in def && def.attractor.trim() !== '') {
+  if ((def?.attractor ?? '').trim() !== '') {
     const fileType = exFiles.guessMimetype(def.attractor)
     if (['image', 'video'].includes(fileType)) {
       setAttractor(def.attractor, fileType)

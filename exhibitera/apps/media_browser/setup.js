@@ -429,7 +429,7 @@ function editDefinition (uuid = '') {
 
   // Attractor
   const attractorSelect = document.getElementById('attractorSelect')
-  if ('attractor' in def && def.attractor.trim() !== '') {
+  if ((def?.attractor ?? '').trim() !== '') {
     attractorSelect.innerHTML = def.attractor
   } else {
     attractorSelect.innerHTML = 'Select file'

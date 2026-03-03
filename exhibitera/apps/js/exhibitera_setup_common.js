@@ -241,7 +241,7 @@ function configureGUIForUser (user) {
   })
     .then((response) => {
       let groups = []
-      if ('success' in response) {
+      if (response?.success) {
         groups = response.groups
       }
 
@@ -487,7 +487,7 @@ function cloneDefinition () {
 
   exCommon.writeDefinition(defToClone)
     .then((result) => {
-      if ('success' in result && result.success === true) {
+      if (result?.success) {
         exCommon.getAvailableDefinitions(config.app)
           .then((response) => {
             if (response?.success) {

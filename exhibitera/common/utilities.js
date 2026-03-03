@@ -31,7 +31,7 @@ export function makeRequest (opt) {
   return new Promise(function (resolve, reject) {
     const xhr = new XMLHttpRequest()
     xhr.timeout = opt.timeout ?? 2000 // ms
-    if ('withCredentials' in opt && opt.withCredentials === true) xhr.withCredentials = true
+    if (opt?.withCredentials === true) xhr.withCredentials = true
 
     let apiVersion = opt?.api ?? exConfig.api
     if ((apiVersion !== '') && (apiVersion[0] !== '/')) apiVersion = '/' + apiVersion

@@ -14,7 +14,7 @@ export function deleteSchedule (name) {
     endpoint: '/schedule/' + name
   })
     .then((response) => {
-      if ('success' in response && response.success === true) {
+      if (response?.success) {
         populateSchedule(response)
         if (document.getElementById('manageFutureDateModal').classList.contains('show')) {
           populateFutureDatesList()
@@ -40,7 +40,7 @@ export function scheduleConvertToDateSpecific (date, dayName) {
     params: requestDict
   })
     .then((response) => {
-      if ('success' in response && response.success === true) {
+      if (response?.success) {
         populateSchedule(response)
       }
     })
@@ -434,7 +434,7 @@ function scheduleTargetToDescription (targetList, action = '') {
   } else if (target.type === 'group') {
     return 'all ' + exTools.getGroupName(target.uuid)
   } else if (target.type === 'component') {
-    if ('uuid' in target) {
+    if (target?.uuid) {
       const component = exTools.getExhibitComponent(target.uuid)
       if (component) return component.id
     }
@@ -824,18 +824,16 @@ export function sendScheduleUpdateFromModal () {
     params: requestDict
   })
     .then((update) => {
-      if ('success' in update) {
-        if (update.success === true) {
-          exUtilities.hideModal('#scheduleEditModal')
-          populateSchedule(update)
-          if (document.getElementById('manageFutureDateModal').classList.contains('show')) {
-            populateFutureDateCalendarInput()
-          }
-        } else {
-          const alertEl = document.getElementById('scheduleEditErrorAlert')
-          alertEl.innerText = update.reason
-          alertEl.style.display = 'block'
+      if (update?.success) {
+        exUtilities.hideModal('#scheduleEditModal')
+        populateSchedule(update)
+        if (document.getElementById('manageFutureDateModal').classList.contains('show')) {
+          populateFutureDateCalendarInput()
         }
+      } else {
+        const alertEl = document.getElementById('scheduleEditErrorAlert')
+        alertEl.innerText = update.reason
+        alertEl.style.display = 'block'
       }
     })
 }
@@ -853,7 +851,7 @@ export function scheduleDeleteActionFromModal () {
     endpoint: '/schedule/' + scheduleName + '/action/' + scheduleID
   })
     .then((update) => {
-      if ('success' in update && update.success === true) {
+      if (update?.success) {
         exUtilities.hideModal('#scheduleEditModal')
         populateSchedule(update)
         if (document.getElementById('manageFutureDateModal').classList.contains('show')) {
@@ -1023,7 +1021,7 @@ export function downloadScheduleAsJSON (name) {
     endpoint: '/schedule/' + name + '/JSONString'
   })
     .then((result) => {
-      if ('success' in result && result.success === true) {
+      if (result?.success) {
         // Convert the text to a file and initiate download
         const fileBlob = new Blob([result.json], {
           type: 'text/plain'

@@ -144,7 +144,7 @@ function authenticateUser () {
     params: { credentials: [user, password] }
   })
     .then((response) => {
-      if ('success' in response && response.success === true) {
+      if (response?.success) {
         failureMsg.style.display = 'none'
         badConnectionMsg.style.display = 'none'
         if (response.user.permissions.settings === 'edit') {

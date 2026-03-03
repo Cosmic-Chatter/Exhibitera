@@ -134,7 +134,7 @@ function loadImages (item) {
   baseImg.src = exCommon.config.helperAddress + '/content/' + item.image1
 
   // Configure whether the images should be shown fullscreen
-  if ('show_fullscreen' in item && item.show_fullscreen === false) {
+  if (item?.show_fullscreen === false) {
     overlayImg.classList.add('comp-image-contain')
     baseImg.classList.add('comp-image-contain')
   } else {

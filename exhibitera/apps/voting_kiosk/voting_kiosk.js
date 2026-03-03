@@ -11,7 +11,7 @@ function buildLayout (definition) {
   cardRow.innerHTML = ''
 
   let nCols
-  if ('num_columns' in definition.style.layout) {
+  if (definition.style.layout?.num_columns) {
     if (definition.style.layout.num_columns !== 'auto') {
       nCols = parseInt(definition.style.layout.num_columns)
     } else {

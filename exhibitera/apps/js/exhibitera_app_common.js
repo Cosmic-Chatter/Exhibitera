@@ -294,7 +294,7 @@ function readUpdate (update) {
     } else if (cmd === 'wake_display' || cmd === 'power_on') {
       wakeDisplay()
     } else if (cmd === 'refresh_page') {
-      if ('refresh' in config.permissions && config.permissions.refresh === true) {
+      if (config?.permissions?.refresh === true) {
         location.reload()
       }
     } else if (cmd === 'reloadDefaults') {
@@ -423,10 +423,9 @@ function readHelperUpdate (update, changeApp = true) {
   let definitionChanged = false
   if (
     changeApp === true &&
-    'app' in update &&
-    'definition' in update.app &&
-    update.app.definition !== config.definitionUUID &&
-    config.standalone === true
+    config.standalone === true &&
+    update?.app?.definition &&
+    update.app.definition !== config.definitionUUID
   ) {
     config.definitionUUID = update.app.definition
     definitionChanged = true

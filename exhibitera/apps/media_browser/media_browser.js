@@ -226,7 +226,7 @@ function _getFilterOptions (filterUUID) {
 
   const uniqueValues = new Set()
   // Iterate through all content items
-  for (const itemUuid in exCommon.config.definition.content) {
+  for (const itemUuid of exCommon.config.definition.content) {
     const item = exCommon.config.definition.content[itemUuid]
 
     // Check if this item has filter_data and the specific filter

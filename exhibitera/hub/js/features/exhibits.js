@@ -162,7 +162,7 @@ class BaseComponent {
   getStatus () {
     // Return the current status, based on the selected status mode
 
-    if (('preferences' in hubConfig.user) && ('status_mode' in hubConfig.user.preferences)) {
+    if (hubConfig?.user?.preferences?.status_mode) {
       if (hubConfig.user.preferences.status_mode === 'realtime' && (this.status != null)) {
         return this.status
       } else if (hubConfig.user.preferences.status_mode === 'maintenance' && (this.maintenanceStatus != null)) {
@@ -364,12 +364,12 @@ class BaseComponent {
     if ('groups' in update && exUtilities.arraysEqual(this.groups, update.groups) === false) {
       this.setGroups(update.groups)
     }
-    if ('permissions' in update) {
+    if (update?.permissions) {
       if (JSON.stringify(this.permissions) !== JSON.stringify(update.permissions)) {
         this.setPermissions(update.permissions)
       }
     }
-    if ('notifications' in update) {
+    if (update?.notifications) {
       hubConfig.notifications[this.uuid] = update.notifications
       hubTools.rebuildNotificationList()
     }
@@ -483,17 +483,17 @@ class Projector extends BaseComponent {
 
     super.updateFromServer(update)
 
-    if ('state' in update) {
+    if (update.state) {
       const state = update.state
       const stateFields = ['model', 'power_state', 'lamp_status', 'error_status']
 
       for (const key of stateFields) {
-        if (key in state) {
+        if (state?.[key]) {
           this.state[key] = state[key]
         }
       }
 
-      if ('error_status' in state) {
+      if (state.error_status) {
         const errors = {}
         for (const item of Object.keys(state.error_status)) {
           if ((state.error_status)[item] !== 'ok') {
@@ -508,8 +508,8 @@ class Projector extends BaseComponent {
         hubTools.rebuildNotificationList()
       }
     }
-    if ('password' in update) this.password = update.password
-    if ('protocol' in update) this.protocol = update.protocol
+    if (update?.password) this.password = update.password
+    if (update?.protocol) this.protocol = update.protocol
   }
 }
 
@@ -1172,7 +1172,7 @@ function configureComponentInfoModalForProjector (obj) {
       createProjectorWarningEntry('Other', obj.state.error_status.other, "An unspecified error. Consult the projector's menu for more information")
     }
   }
-  if ('model' in obj.state) {
+  if (obj.state?.model) {
     document.getElementById('componentInfoModalModel').innerHTML = obj.state.model
     document.getElementById('componentInfoModalModelGroup').style.display = 'block'
   } else {
@@ -1409,7 +1409,7 @@ export function updateStaticComponentFromInfoModal () {
     params: update
   })
     .then((response) => {
-      if ('success' in response && response.success === true) {
+      if (response?.success) {
         document.getElementById('componentInfoModalStaticSettingsSaveButton').style.display = 'none'
         document.getElementById('componentInfoModalTitle').innerHTML = document.getElementById('componentInfoModalStaticSettingsID').value.trim()
         updateComponentInfoDescription(update.description)
@@ -2291,10 +2291,8 @@ export function submitComponentSettingsChange () {
       params: { defaults: settings }
     })
       .then((response) => {
-        if ('success' in response) {
-          if (response.success === true) {
-            document.getElementById('componentInfoModalSettingsSaveButton').style.display = 'none'
-          }
+        if (response?.success) {
+          document.getElementById('componentInfoModalSettingsSaveButton').style.display = 'none'
         }
       })
   }

@@ -47,7 +47,7 @@ export function upateIssueList () {
   }
 
   for (const issue of hubConfig.issueList) {
-    if (issue.id in issueColMap) {
+    if (issueColMap?.[issue.id]) {
       const details = issueColMap[issue.id]
       if (issue.lastUpdateDate > details.lastUpdateDate) {
         // Create an updated element and replace the old one
@@ -404,7 +404,7 @@ export function modifyIssue (id, mode) {
     endpoint: '/issue/' + id + '/' + mode
   })
     .then((result) => {
-      if ('success' in result && result.success === true) {
+      if (result?.success) {
         getIssueList()
           .then((issueList) => {
             hubConfig.issueList = issueList
@@ -570,15 +570,14 @@ export function uploadIssueMediaFile () {
       if (this.status === 200) {
         const response = JSON.parse(this.responseText)
 
-        if ('success' in response) {
-          if (response.success === true) {
-            _rebuildIssueMediaUploadedList(response.filenames, true)
-            // If we cancel without saving, need to delete this file.
-            document.getElementById('issueEditCancelButton').addEventListener('click', function () {
-              issueMediaDelete(response.filenames)
-            })
-          }
+        if (response?.success) {
+          _rebuildIssueMediaUploadedList(response.filenames, true)
+          // If we cancel without saving, need to delete this file.
+          document.getElementById('issueEditCancelButton').addEventListener('click', function () {
+            issueMediaDelete(response.filenames)
+          })
         }
+
         const progressBarContainer = document.getElementById('issueMediaUploadProgressBarContainer')
         const filenameDisplay = document.getElementById('issueMediaUploadFilename')
 
@@ -712,12 +711,10 @@ export function issueMediaDelete (filenames) {
     params: requestDict
   })
     .then((response) => {
-      if ('success' in response) {
-        if (response.success === true) {
-          let current = JSON.parse(document.getElementById('issueMediaViewFromModal').dataset.filenames)
-          current = current.filter(e => !filenames.includes(e))
-          _rebuildIssueMediaUploadedList(current)
-        }
+      if (response?.success) {
+        let current = JSON.parse(document.getElementById('issueMediaViewFromModal').dataset.filenames)
+        current = current.filter(e => !filenames.includes(e))
+        _rebuildIssueMediaUploadedList(current)
       }
     })
 }
@@ -764,7 +761,7 @@ export function submitIssueFromModal () {
       params: { details: issueDict }
     })
       .then((result) => {
-        if ('success' in result && result.success === true) {
+        if (result?.success) {
           getIssueList()
         }
       })

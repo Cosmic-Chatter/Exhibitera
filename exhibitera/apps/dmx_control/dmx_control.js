@@ -1036,7 +1036,7 @@ function editGroupFromModal () {
       }
     })
       .then((result) => {
-        if ('uuid' in result) {
+        if (result?.uuid) {
           group.uuid = result.uuid
         }
         rebuildGroupsInterface()
@@ -1366,7 +1366,7 @@ function addFixtureFromModal () {
     return
   }
 
-  if (name in universe.fixtures) {
+  if (universe?.fixtures?.[name]) {
     // Check if this fixture already had this name
     let bad = false
     if (mode === 'edit') {
@@ -1522,7 +1522,7 @@ function channelNameToDisplayName (name) {
     w: 'White',
     dimmer: 'Dimmer'
   }
-  if (name in nameDict) {
+  if (nameDict?.[name]) {
     return nameDict[name]
   }
   return (name[0].toUpperCase() + name.slice(1)).replaceAll('_', ' ')

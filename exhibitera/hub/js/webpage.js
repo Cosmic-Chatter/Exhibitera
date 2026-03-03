@@ -567,7 +567,7 @@ async function changeExhibit (warningShown) {
 function parseUpdate (update) {
   // Take a dictionary of updates from Hub and act on them.
 
-  if ('gallery' in update) {
+  if (update?.gallery) {
     hubConfig.currentExhibit = update.gallery.current_exhibit
     updateAvailableExhibits(update.gallery.available_exhibits)
     document.getElementById('exhibitNameField').innerHTML = exTools.getExhibit(update.gallery.current_exhibit).name
@@ -608,7 +608,7 @@ function parseUpdate (update) {
     }
   }
 
-  if ('groups' in update) {
+  if (update?.groups) {
     // Check if the list of groups has changed.
 
     const updateDate = new Date(update.groups.last_update_date)
@@ -621,7 +621,7 @@ function parseUpdate (update) {
     }
   }
 
-  if ('components' in update) {
+  if (update?.components) {
     let numComps = 0
     let numOnline = 0
 
@@ -646,7 +646,7 @@ function parseUpdate (update) {
     }
   }
 
-  if ('issues' in update) {
+  if (update?.issues) {
     // Check for the time of the most recent update. If it is more
     // recent than our existing date, rebuild the issue list
 
@@ -661,7 +661,7 @@ function parseUpdate (update) {
   }
 
   // Schedule should be after components
-  if ('schedule' in update) {
+  if (update?.schedule) {
     if (hubConfig.scheduleUpdateTime !== update.schedule.updateTime) {
       exSchedule.populateSchedule(update.schedule)
     }
@@ -708,7 +708,7 @@ function createExhibit (name, cloneFrom) {
     params: requestDict
   })
     .then((result) => {
-      if ('success' in result && result.success === true) {
+      if (result?.success) {
         editExhibitPopulateExhibitContent(result.uuid)
       }
     })
@@ -813,7 +813,7 @@ function updateSystemConfiguration () {
     }
   })
     .then((result) => {
-      if ('success' in result && result.success === true) {
+      if (result?.success) {
         document.getElementById('hubSettingsSaveButton').style.display = 'none'
       }
     })

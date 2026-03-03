@@ -72,7 +72,7 @@ function loadDefinition (definition) {
     document.documentElement.style.setProperty('--' + key + '-color', definition.style.color[key])
   })
 
-  if ('header' in definition.style.color) {
+  if (definition.style.color?.header) {
     // Configure the status bar for PWAs
     document.querySelector('meta[name="theme-color"]').setAttribute('content', definition.style.color.header)
     document.querySelector('meta[name="msapplication-TileColor"]').setAttribute('content', definition.style.color.header)
@@ -82,7 +82,7 @@ function loadDefinition (definition) {
   }
 
   // Backgorund settings
-  if ('background' in definition.style) {
+  if (definition?.style?.background) {
     exCommon.setBackground(definition.style.background, root, '#719abf')
   }
 

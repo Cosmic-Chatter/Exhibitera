@@ -6,7 +6,7 @@ import * as appsMarkdown from '../js/exhibitera_app_markdown.js'
 function updateParser (update) {
   // Read updates specific to the media player
 
-  if ('permissions' in update && 'audio' in update.permissions) {
+  if ('audio' in update?.permissions) {
     document.getElementById('fullscreenVideo').muted = !update.permissions.audio
     document.getElementById('audioPlayer').muted = !update.permissions.audio
   }
@@ -191,7 +191,7 @@ async function changeMedia (index) {
     filename = source.filename
   }
 
-  if ('no_cache' in source && source.no_cache === true) {
+  if (source?.no_cache === true) {
     filename += (/\?/.test(filename) ? '&' : '?') + new Date().getTime()
   }
 
@@ -369,12 +369,13 @@ function createAnnotation (details) {
   const ypos = details?.y_position ?? 50
   annotation.style.top = ypos + 'vh'
 
-  if ('align' in details) {
-    if (details.align === 'center') annotation.classList.add('align-center')
-    if (details.align === 'right') annotation.classList.add('align-right')
+  if (details.align === 'center') {
+    annotation.classList.add('align-center')
+  } else if (details.align === 'right') {
+    annotation.classList.add('align-right')
   }
 
-  if ('font' in details) {
+  if (details?.font) {
     annotation.style.fontFamily = appsCommon.createFont(details.font, details.font)
   } else {
     annotation.style.fontFamily = 'annotation-default'

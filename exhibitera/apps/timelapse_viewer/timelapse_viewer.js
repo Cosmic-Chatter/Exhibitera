@@ -10,7 +10,7 @@ function loadDefinition (definition) {
 
   const root = document.querySelector(':root')
 
-  if ('files' in definition) {
+  if (definition?.files) {
     updateSourceList(definition.files)
   }
   if ('animation_duration' in definition.behavior) {

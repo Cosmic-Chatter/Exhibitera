@@ -637,7 +637,7 @@ export function deleteUser (uuid) {
     endpoint: '/user/' + uuid
   })
     .then((response) => {
-      if ('success' in response && response.success === true) {
+      if (response?.success) {
         populateUsers()
         exUtilities.hideModal('#editUserModal')
       }

@@ -405,7 +405,7 @@ document.getElementById('selectConversionVideoButton').addEventListener('click',
           endpoint: '/files/' + result[0] + '/videoDetails'
         })
           .then((response) => {
-            if ('success' in response && response.success === true) {
+            if (response?.success) {
               const frames = Math.round(response.details.duration * response.details.fps)
               document.getElementById('outputFileCountField').value = frames
             }
