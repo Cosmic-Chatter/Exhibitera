@@ -256,7 +256,7 @@ def create_config():
                                   available_port) + '/first_time_setup.html')
 
         apps_webview.clear_cache()
-        webview.start(func=bootstrap_app, args=available_port, private_mode=False, icon=ex_files.get_path(["_static", "favicon.svg"]))
+        webview.start(func=bootstrap_app, args=available_port, private_mode=False, icon=apps_system.get_icon())
 
 
 def run():
@@ -264,9 +264,9 @@ def run():
 
     defaults_path = ex_files.get_path(['configuration', 'config.json'], user_file=True)
     if os.path.exists(defaults_path):
-        if apps_utilities.read_defaults() is False:
+        if apps_utilities.load_configuration() is False:
             create_config()
-            apps_utilities.read_defaults()
+            apps_utilities.load_configuration()
 
         # Handle legacy operations
         apps_legacy.migrate_definition_thumbnails()

@@ -11,6 +11,8 @@ import webview
 # Exhibitera modules
 import exhibitera.apps.config as apps_config
 import exhibitera.common.files as ex_files
+import exhibitera.apps.features.system as apps_system
+
 
 class ExhibiteraWebviewAPI:
     """Bindings to connect the app.html pywebview window to Python."""
@@ -28,7 +30,7 @@ class ExhibiteraWebviewAPI:
 
 
 def show_webview_window(app: str,
-                        parameters: dict[str, str] = None ,
+                        parameters: dict[str, str] = None,
                         reload: bool = False):
     """Create a window for the given app, or bring it to the front if it already exists.
     If reload=True, reload the window if it already exists.
@@ -90,12 +92,13 @@ def show_webview_window(app: str,
         for key in parameters:
             url += key + '=' + parameters[key] + '&'
 
-    new_window = webview.create_window(name, height=600,  width=800, menu=menu_items, url=url)
+    new_window = webview.create_window(name, height=600, width=800, menu=menu_items, url=url)
 
     new_window.events.closing += on_window_closing
     new_window.events.loaded += on_window_loaded
 
     return new_window
+
 
 def show_app_window():
     """Show the main app window.
@@ -113,11 +116,11 @@ def show_app_window():
 
     api = ExhibiteraWebviewAPI()
     new_window = webview.create_window('Exhibitera Apps',
-                          height=600, width=800,
-                          fullscreen=apps_config.webview_fullscreen,
-                          menu=None if apps_config.webview_fullscreen else menu_items,
-                          js_api=api,
-                          url=url)
+                                       height=600, width=800,
+                                       fullscreen=apps_config.webview_fullscreen,
+                                       menu=None if apps_config.webview_fullscreen else menu_items,
+                                       js_api=api,
+                                       url=url)
 
     new_window.events.closing += on_window_closing
     new_window.events.loaded += on_window_loaded
@@ -192,32 +195,32 @@ menu_items = [
         [
             webview.menu.MenuAction('Show settings', partial(show_webview_window, 'settings', reload=True)),
             webview.menu.Menu('Configure',
-          [
-              webview.menu.MenuAction('DMX Control',
-                                      partial(show_webview_window, 'dmx_control')),
-              webview.menu.MenuAction('Image Compare',
-                                      partial(show_webview_window, 'image_compare_setup')),
-              webview.menu.MenuAction('InfoStation',
-                                      partial(show_webview_window, 'infostation_setup')),
-              webview.menu.MenuAction('Media Browser',
-                                      partial(show_webview_window, 'media_browser_setup')),
-              webview.menu.MenuAction('Media Player',
-                                      partial(show_webview_window, 'media_player_setup')),
-              webview.menu.MenuAction('Custom App',
-                                      partial(show_webview_window, 'other_setup')),
-              webview.menu.MenuAction('Survey Kiosk',
-                                      partial(show_webview_window, 'survey_kiosk_setup')),
-              webview.menu.MenuAction('Timelapse Viewer',
-                                      partial(show_webview_window, 'timelapse_viewer_setup')),
-              webview.menu.MenuAction('Timeline Explorer',
-                                      partial(show_webview_window, 'timeline_explorer_setup')),
-              webview.menu.MenuAction('Voting Kiosk',
-                                      partial(show_webview_window, 'voting_kiosk_setup')),
-              webview.menu.MenuAction('Word Cloud Input',
-                                      partial(show_webview_window, 'word_cloud_input_setup')),
-              webview.menu.MenuAction('Word Cloud Viewer',
-                                      partial(show_webview_window, 'word_cloud_viewer_setup')),
-          ])
+                              [
+                                  webview.menu.MenuAction('DMX Control',
+                                                          partial(show_webview_window, 'dmx_control')),
+                                  webview.menu.MenuAction('Image Compare',
+                                                          partial(show_webview_window, 'image_compare_setup')),
+                                  webview.menu.MenuAction('InfoStation',
+                                                          partial(show_webview_window, 'infostation_setup')),
+                                  webview.menu.MenuAction('Media Browser',
+                                                          partial(show_webview_window, 'media_browser_setup')),
+                                  webview.menu.MenuAction('Media Player',
+                                                          partial(show_webview_window, 'media_player_setup')),
+                                  webview.menu.MenuAction('Custom App',
+                                                          partial(show_webview_window, 'other_setup')),
+                                  webview.menu.MenuAction('Survey Kiosk',
+                                                          partial(show_webview_window, 'survey_kiosk_setup')),
+                                  webview.menu.MenuAction('Timelapse Viewer',
+                                                          partial(show_webview_window, 'timelapse_viewer_setup')),
+                                  webview.menu.MenuAction('Timeline Explorer',
+                                                          partial(show_webview_window, 'timeline_explorer_setup')),
+                                  webview.menu.MenuAction('Voting Kiosk',
+                                                          partial(show_webview_window, 'voting_kiosk_setup')),
+                                  webview.menu.MenuAction('Word Cloud Input',
+                                                          partial(show_webview_window, 'word_cloud_input_setup')),
+                                  webview.menu.MenuAction('Word Cloud Viewer',
+                                                          partial(show_webview_window, 'word_cloud_viewer_setup')),
+                              ])
         ]
     )
 ]

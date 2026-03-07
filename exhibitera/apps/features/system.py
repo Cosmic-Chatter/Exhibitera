@@ -173,3 +173,12 @@ def get_platform_details() -> dict[str, Any]:
         details["outdated_message"] = message
 
     return details
+
+
+def get_icon() -> str:
+    """Return the appropriate icon path for this platform"""
+
+    if sys.platform == "darwin":  # MacOS
+        return ex_files.get_path(["_static", 'icon.icns'])
+    else:
+        return ex_files.get_path(["_static", 'icon.ico'])

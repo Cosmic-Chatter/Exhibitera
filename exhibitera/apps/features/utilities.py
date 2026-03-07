@@ -1,5 +1,6 @@
 # Standard modules
 import copy
+import ctypes
 import errno
 import getpass
 import psutil
@@ -46,11 +47,23 @@ def get_system_stats() -> dict[str, Union[int, float]]:
     return result
 
 
-def read_defaults() -> bool:
+def load_configuration() -> bool:
     """Load config.json and set up Exhibitera Apps based on its contents."""
 
     defaults_path = ex_files.get_path(["configuration", "config.json"], user_file=True)
     apps_config.defaults = ex_files.load_json(defaults_path)
+
+    if apps_config.defaults["system"].get("debug", False) is True and sys.platform == "win32":
+        # If we're in debug mode on Windows, attach a command prompt
+
+        # Check if we already have a console; if not, create one
+        kernel32 = ctypes.WinDLL('kernel32')
+        if kernel32.GetConsoleWindow() == 0:
+            kernel32.AllocConsole()
+            # Redirect standard streams to the new console
+            sys.stdout = open("CONOUT$", "w")
+            sys.stderr = open("CONOUT$", "w")
+
     if apps_config.defaults is None:
         return False
 
