@@ -23,5 +23,6 @@ pyinstaller --clean --onefile \
 			--add-data "exhibitera/hub/tools.py:exhibitera/hub/."\
 			--add-data "exhibitera/hub/tracker.html:exhibitera/hub/."\
 			--add-data "exhibitera/common/:exhibitera/common/." \
+			--icon "exhibitera/hub/_static/icon.icns" \
 			--runtime-tmpdir ./AppData/ \
 		Exhibitera_Hub.py
