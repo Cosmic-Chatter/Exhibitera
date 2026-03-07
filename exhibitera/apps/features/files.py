@@ -8,6 +8,7 @@ import os
 import pathlib
 import re
 import subprocess
+import sys
 from typing import Any
 
 # Non-standard modules
@@ -17,6 +18,7 @@ import requests
 import exhibitera.common.config as ex_config
 import exhibitera.common.files as ex_files
 import exhibitera.apps.config as apps_config
+import exhibitera.apps.features.utilities as apps_utilities
 
 ffmpeg_path: str
 try:
@@ -205,7 +207,8 @@ def create_definition_thumbnail(filename: str, width: int = 600) -> tuple[bool, 
         thumb_filename = ex_files.with_extension(filename, 'png')
         thumb_path = ex_files.get_path(['thumbnails', 'definitions', thumb_filename], user_file=True)
 
-        proc = subprocess.Popen([ffmpeg_path, "-y", "-i", file_path, "-vf", f"scale={width}:-1", thumb_path])
+        proc = subprocess.Popen([ffmpeg_path, "-y", "-i", file_path, "-vf", f"scale={width}:-1", thumb_path],
+                                creationflags=apps_utilities.get_subprocess_flags())
         try:
             proc.communicate(timeout=3600)  # 1 hour
         except subprocess.TimeoutExpired:
@@ -218,6 +221,7 @@ def create_definition_thumbnail(filename: str, width: int = 600) -> tuple[bool, 
         return False, 'ImportError'
 
     return True, ""
+
 
 def create_thumbnail(filename: str,
                      mimetype: str,
@@ -240,7 +244,8 @@ def create_thumbnail(filename: str,
             thumb_filename = get_thumbnail_name(filename, width=width)
             thumb_path = ex_files.get_path(['thumbnails', 'v2', thumb_filename], user_file=True)
 
-            proc = subprocess.Popen([ffmpeg_path, "-y", "-i", file_path, "-vf", f"scale={width}:-1", thumb_path])
+            proc = subprocess.Popen([ffmpeg_path, "-y", "-i", file_path, "-vf", f"scale={width}:-1", thumb_path],
+                                    creationflags=apps_utilities.get_subprocess_flags())
             if block:
                 try:
                     proc.communicate(timeout=3600)  # 1 hour
@@ -263,7 +268,8 @@ def create_thumbnail(filename: str,
             proc = subprocess.Popen([ffmpeg_path, "-y", "-i", file_path,
                                      "-filter:v",
                                      f'fps=1,setpts=({min(duration_sec, 10)}/{duration_sec})*PTS,scale={width}:-2',
-                                     "-an", thumb_path_video])
+                                     "-an", thumb_path_video],
+                                    creationflags=apps_utilities.get_subprocess_flags())
             if block:
                 try:
                     proc.communicate(timeout=3600)  # 1 hour
@@ -271,7 +277,8 @@ def create_thumbnail(filename: str,
                     proc.kill()
             # Finally, create the image thumbnail from the halfway point
             proc = subprocess.Popen([ffmpeg_path, "-y", '-ss', str(round(duration_sec / 2)), '-i', file_path,
-                                     '-vframes', '1', "-vf", f"scale={width}:-1", thumb_path_image])
+                                     '-vframes', '1', "-vf", f"scale={width}:-1", thumb_path_image],
+                                    creationflags=apps_utilities.get_subprocess_flags())
             if block:
                 try:
                     proc.communicate(timeout=3600)  # 1 hour
@@ -306,7 +313,7 @@ def create_definition_thumbnail_video_from_frames(frames: list, filename: str, d
                        'scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2,setsar=1',
                        '-pix_fmt', 'yuv420p',
                        ex_files.get_path(["thumbnails", '__tempOutput_' + str(i).rjust(4, '0') + '.png'], user_file=True)]
-            process = subprocess.Popen(command)
+            process = subprocess.Popen(command, creationflags=apps_utilities.get_subprocess_flags())
             process.communicate()
             count += 1
 
@@ -315,7 +322,7 @@ def create_definition_thumbnail_video_from_frames(frames: list, filename: str, d
         command = [ffmpeg_path, '-y', '-r', str(fps),
                    '-i', ex_files.get_path(["thumbnails", '__tempOutput_%04d.png'], user_file=True),
                    '-c:v', 'libx264', '-pix_fmt', 'yuv420p', "-vf", "scale=400:-2", output_path]
-        process = subprocess.Popen(command)
+        process = subprocess.Popen(command, creationflags=apps_utilities.get_subprocess_flags())
         process.communicate()
 
         # Finally, delete the temp files
@@ -335,7 +342,9 @@ def get_video_file_details(filename: str) -> tuple[bool, dict[str, Any]]:
 
     try:
         file_path = ex_files.get_path(['content', filename], user_file=True)
-        pipe = subprocess.Popen([ffmpeg_path, "-i", file_path], stderr=subprocess.PIPE, encoding="UTF-8")
+        pipe = subprocess.Popen([ffmpeg_path, "-i", file_path],
+                                creationflags=apps_utilities.get_subprocess_flags(),
+                                stderr=subprocess.PIPE, encoding="UTF-8")
         ffmpeg_text = pipe.stderr.read()
 
         # Duration
@@ -392,7 +401,10 @@ def convert_video_to_frames(filename: str, file_type: str = 'jpg'):
         else:
             args = [ffmpeg_path, "-i", input_path, "-quality", "90", output_path]
 
-        process = subprocess.Popen(args, stderr=subprocess.PIPE, encoding="UTF-8")
+        process = subprocess.Popen(args,
+                                   stderr=subprocess.PIPE,
+                                   encoding="UTF-8",
+                                   creationflags=apps_utilities.get_subprocess_flags())
 
     except OSError as e:
         print("convert_video_to_frame: error:", e)

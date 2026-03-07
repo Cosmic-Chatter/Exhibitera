@@ -3,13 +3,14 @@ import copy
 import ctypes
 import errno
 import getpass
-import psutil
 import os
-import socket
-import uuid
+import psutil
 import shutil
+import socket
+import subprocess
 import sys
 from typing import Any, Union
+import uuid
 
 # Non-standard modules
 from PIL import ImageGrab
@@ -285,3 +286,12 @@ def find_available_port(start: int = 8000) -> int:
 
         s.close()
     return this_port
+
+
+def get_subprocess_flags():
+    # If we are NOT debugging, we MUST use CREATE_NO_WINDOW
+    # to prevent the "ghost" popups in the packaged app.
+    if sys.platform == "win32" and apps_config.defaults["system"].get("debug", False) is False:
+        return subprocess.CREATE_NO_WINDOW
+
+    return 0
