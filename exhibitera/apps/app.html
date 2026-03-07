@@ -14,10 +14,23 @@
     <link rel="stylesheet" href="css/bootstrap_5_3/bootstrap.min.css">
 
     <style>
+      body {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0;
+      }
+
       #welcomeDiv {
-        width: 50%;
-        margin-left: 25%;
-        margin-top: 25%;
+        width: 80%;
+        max-width: 600px; 
+      }
+
+      @media (min-width: 768px) {
+        #welcomeDiv {
+          width: 50%;
+        }
       }
     </style>
   </head>
@@ -31,19 +44,17 @@
     </div>
   </div>
 
-<main class="container">
-  <div id="welcomeDiv" class="alert alert-primary">
-    <div class="h3 text-center">Welcome to Exhibitera Apps</div>
-    <p id="standaloneWelcome">
-      This window will display your app's content, but first you need to create a definition. To do that, visit settings.
-    </p>
-    <p id="hubWelcome">
-      This window will display your app's content. To create or select a definition, visit the Hub web console at <code id="hubAddress"></code>. To stop using Hub for this component, visit settings.
-    </p>
-    <div class="text-center">
-      <button id="settingsButton" type="button" class="btn btn-success app-link" data-app-link="settings" data-web-link="/">Go to settings</button>
-    </div>  
-  </div>
+<main class="w-100"> <div id="welcomeDiv" class="alert alert-primary mx-auto">    
+  <div class="h3 text-center">Welcome to Exhibitera Apps</div>
+  <p id="standaloneWelcome">
+    This window will display your app's content, but first you need to create a definition. To do that, visit settings.
+  </p>
+  <p id="hubWelcome">
+    This window will display your app's content. To create or select a definition, visit the Hub web console at <code id="hubAddress"></code>. To stop using Hub for this component, visit settings.
+  </p>
+  <div class="text-center">
+    <button id="settingsButton" type="button" class="btn btn-success app-link" data-app-link="settings" data-web-link="/">Go to settings</button>
+  </div>  
 </main>
 
 
