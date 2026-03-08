@@ -24,9 +24,17 @@ def get_path(path_list: list[str], user_file: bool = False) -> str:
     """Return a path that takes into account whether the app has been packaged by Pyinstaller"""
 
     _path = os.path.join(config.application_path, *path_list)
-    if getattr(sys, 'frozen', False) and not user_file:
+    if getattr(sys, 'frozen', False):
         # Handle the case of a Pyinstaller --onefile binary
-        _path = os.path.join(config.exec_path, *path_list)
+
+        if user_file:
+            if sys.platform == 'darwin':
+                # macOS-specific Application Support path
+                base_dir = os.path.join(os.path.expanduser("~"), "Library", "Application Support", "Exhibitera Apps")
+                os.makedirs(base_dir, exist_ok=True)
+                _path = os.path.join(base_dir, *path_list)
+        else:
+            _path = os.path.join(config.exec_path, *path_list)
     return _path
 
 

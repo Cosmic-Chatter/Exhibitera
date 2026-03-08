@@ -29,6 +29,6 @@ pyinstaller --clean --onefile \
             --add-data "exhibitera/apps/*.md:exhibitera/apps/." \
             --add-data "exhibitera/apps/*.py:exhibitera/apps/." \
             --add-data "exhibitera/common/:exhibitera/common/." \
-            --icon "exhibits/apps/_static/icon.icns" \
-            --runtime-tmpdir ./AppData/ \
+            --icon "exhibitera/apps/_static/icon.icns" \
+            --windowed \
             Exhibitera_Apps.py
