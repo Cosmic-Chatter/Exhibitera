@@ -267,24 +267,18 @@ def handle_missing_defaults_file():
     update_configuration(defaults, cull=True)
 
 
+def is_port_in_use(port):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        # returns 0 if the connection was successful (port is occupied)
+        return s.connect_ex(('127.0.0.1', port)) == 0
+
+
 def find_available_port(start: int = 8000) -> int:
     """Find the next available port and return it."""
 
     this_port = start
-    port_available = False
-    while port_available is False:
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        try:
-            s.bind(("127.0.0.1", this_port))
-            port_available = True
-        except socket.error as e:
-            if e.errno == errno.EADDRINUSE:
-                this_port += 1
-            else:
-                # Something else raised the socket.error exception
-                print(e)
-
-        s.close()
+    while is_port_in_use(this_port):
+        this_port += 1
     return this_port
 
 
