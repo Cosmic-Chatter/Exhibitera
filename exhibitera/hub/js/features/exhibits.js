@@ -978,6 +978,7 @@ function showExhibitComponentInfo (uuid, groupUUID) {
   } else {
     document.getElementById('componentInfoModalOperatingSystemGroup').style.display = 'none'
     document.getElementById('componentInfoModalBrowserGroup').style.display = 'none'
+    document.getElementById('componentInfoModalExhibteraGroup').style.display = 'none'
   }
   if (obj.protocol) {
     const protocolNames = {
