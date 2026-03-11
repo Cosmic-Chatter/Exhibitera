@@ -433,21 +433,16 @@ class ExhibitComponent extends BaseComponent {
       return Promise.reject(new Error('helperAddress not found'))
     }
 
-    // If this component is a 3rd-party component, translate endpoints to the Core API
-    if (this.exhibiteraAppID === 'external') {
-      const endpointPairs = {
-        '/restart': '/core/restart',
-        '/shutdown': '/core/shutdown'
+    // If this is a request that can be fulfilled by the Core API, do it.
+    const coreEndpoints = {
+        '/restart': '/core/system/restart',
+        '/shutdown': '/core/system/shutdown'
       }
-      for (const key of endpointPairs) {
-        opt.endpoint = opt.endpoint.replace(key, endpointPairs[key])
-      }
-    }
 
-    // Check if we're using the Core API, which doesn't have an API version
-    if (this.exhibiteraAppID === 'external') {
+    if (opt.endpoint in coreEndpoints) {
+      opt.endpoint = opt.endpoint.replace(opt.endpoint, coreEndpoints[opt.endpoint])
       opt.api = ''
-    }
+    } 
 
     return exUtilities.makeRequest(opt)
   }
