@@ -1,4 +1,5 @@
 import * as exUtilities from '../../../common/utilities.js'
+
 import exConfig from '../../config.js'
 import * as exTools from '../tools.js'
 
@@ -58,7 +59,7 @@ export function submitChangeFromGroupEditModal () {
       }
     })
       .then(() => {
-        exTools.hideModal('#editGroupModal')
+        exUtilities.hideModal('#editGroupModal')
       })
   } else {
     // Edit group
@@ -165,7 +166,7 @@ export function deleteGroupFromModal () {
     endpoint: '/group/' + uuid
   })
     .then(() => {
-      exTools.hideModal('#deleteGroupModal')
+      exUtilities.hideModal('#deleteGroupModal')
     })
 }
 

@@ -323,7 +323,7 @@ export function sortComponentsByGroup () {
 
   for (const component of hubConfig.exhibitComponents) {
     for (const group of component.groups) {
-      if (result?.group) {
+      if (result?.[group]) {
         result[group].push(component)
       } else {
         result[group] = [component]

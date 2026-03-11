@@ -1773,7 +1773,7 @@ async function populateComponentDefinitionList (definitions, permission) {
   }
 }
 
-function showCopyDefinitionModal (componentUUID, definitionUUID, definitionName) {
+async function showCopyDefinitionModal (componentUUID, definitionUUID, definitionName) {
   // Set up and show the model for copying a definition from one component to another
 
   const component = hubTools.getExhibitComponent(componentUUID)
@@ -1793,64 +1793,65 @@ function showCopyDefinitionModal (componentUUID, definitionUUID, definitionName)
   }
 
   let content = []
-  component.makeRequest({
+  const contentList = await component.makeRequest({
     method: 'GET',
     endpoint: '/definitions/' + definitionUUID + '/getContentList'
-  }).then((result) => {
-    console.log(result)
-
-    // Populate source files
-    const sourceDiv = document.getElementById('copyDefinitionModalSourceFiles')
-    sourceDiv.innerHTML = ''
-
-    sourceDiv.appendChild(copyDefinitionModalCreateSourceHTML(definitionName, '', true))
-    if (result.content && result.content.length > 0) {
-      content = result.content
-      modal.setAttribute('data-sourceFiles', JSON.stringify(result.content))
-
-      let supportingText = ' supporting file'
-      if (result.content.length > 1) supportingText = ' supporting files'
-      sourceDiv.appendChild(copyDefinitionModalCreateSourceHTML(String(result.content.length) + supportingText, result?.total_size ?? ''))
-    } else {
-      modal.setAttribute('data-sourceFiles', JSON.stringify([]))
-    }
-
-    // Populate destination options
-    const destDiv = document.getElementById('copyDefinitionModalDestinations')
-    destDiv.innerHTML = ''
-
-    const compsByGroup = hubTools.sortComponentsByGroup()
-    const groups = Object.keys(compsByGroup)
-    let totalComps = 0
-
-    for (const group of groups) {
-      const comps = compsByGroup[group]
-
-      const compsToShow = []
-      for (const comp of comps) {
-        if (comp.type !== 'exhibit_component') continue
-        if (comp.status !== hubConfig.STATUS.ONLINE && comp.status !== hubConfig.STATUS.ACTIVE) continue
-        if (comp.uuid === componentUUID) continue
-        totalComps += 1
-        compsToShow.push(comp)
-      }
-      if (compsToShow.length === 0) continue
-
-      const label = document.createElement('label')
-      label.innerHTML = hubTools.getGroup(group)?.name ?? group
-      label.classList = 'text-secondary'
-      destDiv.appendChild(label)
-
-      for (const comp of compsToShow) {
-        destDiv.appendChild(copyDefinitionModalCreateDestinationHTML(comp, group, definitionUUID, content))
-      }
-    }
-
-    if (totalComps === 0) destDiv.innerHTML = '<i>No available components</i>'
-
-    exUtilities.hideModal('#componentInfoModal')
-    exUtilities.showModal('#copyDefinitionModal')
   })
+
+  console.log(contentList)
+
+  // Populate source files
+  const sourceDiv = document.getElementById('copyDefinitionModalSourceFiles')
+  sourceDiv.innerHTML = ''
+
+  sourceDiv.appendChild(copyDefinitionModalCreateSourceHTML(definitionName, '', true))
+  if (contentList.content && contentList.content.length > 0) {
+    content = contentList.content
+    modal.setAttribute('data-sourceFiles', JSON.stringify(contentList.content))
+
+    let supportingText = ' supporting file'
+    if (contentList.content.length > 1) supportingText = ' supporting files'
+    sourceDiv.appendChild(copyDefinitionModalCreateSourceHTML(String(contentList.content.length) + supportingText, contentList?.total_size ?? ''))
+  } else {
+    modal.setAttribute('data-sourceFiles', JSON.stringify([]))
+  }
+
+  // Populate destination options
+  const destDiv = document.getElementById('copyDefinitionModalDestinations')
+  destDiv.innerHTML = ''
+
+  const compsByGroup = hubTools.sortComponentsByGroup()
+  const groups = Object.keys(compsByGroup)
+  let totalComps = 0
+
+  for (const group of groups) {
+    const comps = compsByGroup[group]
+
+    const compsToShow = []
+    for (const comp of comps) {
+      if (comp.type !== 'exhibit_component') continue
+      if (comp.status !== hubConfig.STATUS.ONLINE && comp.status !== hubConfig.STATUS.ACTIVE) continue
+      if (comp.uuid === componentUUID) continue
+      totalComps += 1
+      compsToShow.push(comp)
+    }
+    if (compsToShow.length === 0) continue
+
+    const label = document.createElement('label')
+    label.innerHTML = hubTools.getGroup(group)?.name ?? group
+    label.classList = 'text-secondary'
+    destDiv.appendChild(label)
+
+    for (const comp of compsToShow) {
+      const col = await copyDefinitionModalCreateDestinationHTML(comp, group, definitionUUID, content)
+      destDiv.appendChild(col)
+    }
+  }
+
+  if (totalComps === 0) destDiv.innerHTML = '<i>No available components</i>'
+
+  exUtilities.hideModal('#componentInfoModal')
+  exUtilities.showModal('#copyDefinitionModal')
 }
 
 async function copyDefinitionModalCreateDestinationHTML (component, group, def, content) {
@@ -2011,7 +2012,7 @@ export async function copyDefinitionModalPerformCopy () {
     }
   }
   if (error === false) {
-    hubTools.hideModal(modal)
+    exUtilities.hideModal(modal)
   } else {
     const button = document.getElementById('copyDefinitionModalSubmitButton')
     button.style.display = 'none'
