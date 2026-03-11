@@ -341,13 +341,7 @@ function generateSpreadsheetTemplate (wizard = true) {
   for (let i = 0; i < languages.length * details.length; i++) csv += ', '
 
   // Initiate file download
-  const element = document.createElement('a')
-  element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(csv))
-  element.setAttribute('download', defName + ' - media list.csv')
-  element.style.display = 'none'
-  document.body.appendChild(element)
-  element.click()
-  document.body.removeChild(element)
+  exSetup.downloadPlaintextFile(csv, defName + ' - media list.csv')
 }
 
 async function clearDefinitionInput (full = true) {

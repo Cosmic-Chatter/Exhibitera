@@ -162,7 +162,10 @@ def save_file(data, default_filename: str):
     if result is None:
         return
 
-    with open(result[0], 'w', encoding='UTF-8') as f:
+    if isinstance(result, tuple):
+        result = result[0]
+
+    with open(result, 'w', encoding='UTF-8') as f:
         f.write(data)
 
 

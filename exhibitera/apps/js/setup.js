@@ -311,28 +311,8 @@ function downloadDataAsCSV () {
     endpoint: '/data/' + name + '/csv'
   })
     .then((result) => {
-      if (result?.success === true) {
-        if (exCommon.config.remoteDisplay === false) {
-          // Ask the app to create a save dialog
-          exCommon.makeHelperRequest({
-            method: 'POST',
-            endpoint: '/app/saveFile',
-            api: '',
-            params: {
-              data: result.csv,
-              filename: name + '.csv'
-            }
-          })
-        } else {
-          // Ask the browser to initiate a download
-          const fileBlob = new Blob([result.csv], {
-            type: 'text/plain'
-          })
-          const a = document.createElement('a')
-          a.href = window.URL.createObjectURL(fileBlob)
-          a.download = name + '.csv'
-          a.click()
-        }
+      if (result?.success) {
+        exSetup.downloadPlaintextFile(result.csv, name + '.csv')
       }
     })
 }
