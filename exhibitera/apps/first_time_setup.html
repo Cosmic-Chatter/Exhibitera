@@ -13,7 +13,19 @@
     <link rel="stylesheet" href="css/bootstrap_5_3/bootstrap.min.css">
 
     <style>
-
+      body {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin: 0;
+      }
+      .container {
+        flex-grow: 1;
+        display: flex;
+        align-items: center;
+        width: 100%;
+      }
     </style>
 
     <title>Exhibitera Apps Setup Wizard</title>
@@ -21,19 +33,13 @@
   </head>
 
   <body>
+    <div class="text-center mt-3"><img src="/_static/Apps_logo.svg" style="width: 80%;"></div>
     <div class="container">
       <div class="row mt-3">
-        <div class="col-12">
-          <div class="h3 text-center">
-            Exhibitera Apps
-          </div>
-        </div>
-        <div class="col-12 mt-2 mb-4">
-        </div>
         <!-- Welcome -->
         <div id="welcome" class="col-12 wizard-pane">
           <div class="alert alert-primary">
-            <div class="h5 text-center">Welcome to Exhibitera Apps!</div>
+              <div class="h5 text-center">Welcome!</div>
               <p>
                 Exhibitera Apps is a collection of software that helps you put your digital content front-and-center. It's a powerful yet intuitive way to build guest-facing digital interactives for use on the museum floor.
               </p>

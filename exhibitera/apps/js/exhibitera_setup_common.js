@@ -1430,6 +1430,34 @@ export function submitUserPasswordChange () {
     })
 }
 
+export function downloadPlaintextFile (plaintext, filename) {
+  // Download the given string as a plaintext file.
+  // Choose download method depending on whetehr we're using a remote display.
+  // `filename` is the name the file should have when downloaded.
+
+  if (exCommon.config.remoteDisplay === false) {
+    // Ask the app to create a save dialog
+    exCommon.makeHelperRequest({
+      method: 'POST',
+      endpoint: '/app/saveFile',
+      api: '',
+      params: {
+        data: plaintext,
+        filename
+      }
+    })
+  } else {
+    // Ask the browser to initiate a download
+    const fileBlob = new Blob([plaintext], {
+      type: 'text/plain'
+    })
+    const a = document.createElement('a')
+    a.href = window.URL.createObjectURL(fileBlob)
+    a.download = filename
+    a.click()
+  }
+}
+
 let markdownConverter
 try {
   markdownConverter = new showdown.Converter()

@@ -46,21 +46,29 @@
 
 <main class="w-100"> <div id="welcomeDiv" class="alert alert-primary mx-auto">    
   <div class="h3 text-center"><img src='/_static/Apps_logo.svg' style="width: 80%;"></div>
-  <p id="standaloneWelcome">
-    This window will display your app's content, but first you need to create a definition. To do that, visit settings.
-  </p>
-  <p id="hubWelcome">
-    This window will display your app's content. To create or select a definition, visit the Hub web console at <code id="hubAddress"></code>. To stop using Hub for this component, visit settings.
+  <p>
+    Exhibitera Apps is configured to use a remote display. Click the button below or access <span id="url"></span> in a web browser to get started.
   </p>
   <div class="text-center">
-    <button id="settingsButton" type="button" class="btn btn-success app-link" data-app-link="settings" data-web-link="/">Go to settings</button>
+    <a id="settingsButton" target="_blank" class="btn btn-success">Get started</a>
   </div>  
 </main>
 
 
   <script src="js/bootstrap_5_3/bootstrap.bundle.min.js"></script>
   <script src="js/platform.js"></script>
-  <script type="module" src="js/app.js"></script>
+  <script>
+
+    // Set color mode
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      document.querySelector('html').setAttribute('data-bs-theme', 'dark')
+    } else {
+      document.querySelector('html').setAttribute('data-bs-theme', 'light')
+    }
+
+    document.getElementById('url').innerHTML = `<a href="${window.location.origin}" target="_blank">${window.location.origin}</a>`
+    document.getElementById('settingsButton').href = window.location.origin
+  </script>
   </body>
 
 </html>

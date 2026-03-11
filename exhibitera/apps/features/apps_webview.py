@@ -127,6 +127,17 @@ def show_app_window():
     return new_window
 
 
+def show_remote_display_window():
+    """Show a minimal app window directing the user to the browser."""
+
+    url = 'http://localhost:' + str(apps_config.defaults["system"]["port"]) + "/remote_display.html"
+
+    api = ExhibiteraWebviewAPI()
+    new_window = webview.create_window('Exhibitera Apps',
+                                       height=480, width=640,
+                                       url=url)
+
+
 def on_window_loaded():
     apps_config.block_closing = False
 
@@ -151,7 +162,10 @@ def save_file(data, default_filename: str):
     if result is None:
         return
 
-    with open(result[0], 'w', encoding='UTF-8') as f:
+    if isinstance(result, tuple):
+        result = result[0]
+
+    with open(result, 'w', encoding='UTF-8') as f:
         f.write(data)
 
 

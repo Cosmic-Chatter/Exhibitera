@@ -295,9 +295,21 @@ def run():
         # We need to create a config.json file based on user input.
         create_config()
 
-    if apps_config.defaults["system"].get("remote_display", True) is True:
+    if sys.platform == 'linux':
         # Start the server but don't create a GUI window
         start_app(with_webview=False)
+    elif apps_config.defaults["system"].get("remote_display", True) is True:
+        # Launch a minimal webview directing users to the browser on Windows and macOS
+        # when using a remote display
+
+        apps_webview.clear_cache()
+
+        if "port" not in apps_config.defaults['system'] or apps_config.defaults['system']["port"] is None:
+            apps_config.defaults["system"]["port"] = apps_utilities.find_available_port()
+
+        apps_webview.show_remote_display_window()
+        webview.start(func=start_app, private_mode=False, debug=apps_config.defaults["system"].get("debug", False),
+                      storage_path=ex_files.get_path(['webview_storage'], user_file=True))
     else:
         # Create a GUI window and then start the server
         apps_webview.clear_cache()
