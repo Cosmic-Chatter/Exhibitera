@@ -261,20 +261,40 @@ def create_thumbnail(filename: str,
             # First, find the length of the video
             _, video_details = get_video_file_details(filename)
             duration_sec = round(video_details.get('duration', 0))
-            if duration_sec == 0:
+            if duration_sec <= 0:
                 return False, "video has no duration"
 
             # Then, create the video thumbnail
-            proc = subprocess.Popen([ffmpeg_path, "-y", "-i", file_path,
-                                     "-filter:v",
-                                     f'fps=1,setpts=({min(duration_sec, 10)}/{duration_sec})*PTS,scale={width}:-2',
-                                     "-an", thumb_path_video],
-                                    creationflags=apps_utilities.get_subprocess_flags())
+            # proc = subprocess.Popen([ffmpeg_path, "-y", "-i", file_path,
+            #                          "-filter:v",
+            #                          f'fps=1,setpts=({min(duration_sec, 10)}/{duration_sec})*PTS,scale={width}:-2',
+            #                          "-an", thumb_path_video],
+            #                         creationflags=apps_utilities.get_subprocess_flags())
+
+            # This selects one frame every (duration / 10) seconds
+            select_rate = max(1, duration_sec // 10)
+            filter_str = f"select='gt(t,2)*not(mod(n,{select_rate}))',scale={width}:-2,setpts=N/1/TB"
+
+            cmd = [
+                ffmpeg_path, "-y",
+                "-skip_frame", "nokey",  # High-speed keyframe skipping
+                "-i", file_path,
+                "-vf", filter_str,  # Combined filter
+                "-r", "1",  # Output 1 frame per second
+                "-vframes", "10",  # Force exactly 10 frames
+                "-an",  # No audio
+                thumb_path_video
+            ]
+
+            # Execute Video Preview Generation
+            proc_vid = subprocess.Popen(cmd, creationflags=apps_utilities.get_subprocess_flags())
+
             if block:
                 try:
-                    proc.communicate(timeout=3600)  # 1 hour
+                    proc_vid.communicate(timeout=3600)  # 1 hour
                 except subprocess.TimeoutExpired:
-                    proc.kill()
+                    proc_vid.kill()
+
             # Finally, create the image thumbnail from the halfway point
             proc = subprocess.Popen([ffmpeg_path, "-y", '-ss', str(round(duration_sec / 2)), '-i', file_path,
                                      '-vframes', '1', "-vf", f"scale={width}:-1", thumb_path_image],
