@@ -220,8 +220,6 @@ menu_items = [
                                                           partial(show_webview_window, 'media_browser_setup')),
                                   webview.menu.MenuAction('Media Player',
                                                           partial(show_webview_window, 'media_player_setup')),
-                                  webview.menu.MenuAction('Custom App',
-                                                          partial(show_webview_window, 'other_setup')),
                                   webview.menu.MenuAction('Survey Kiosk',
                                                           partial(show_webview_window, 'survey_kiosk_setup')),
                                   webview.menu.MenuAction('Timelapse Viewer',
@@ -234,6 +232,8 @@ menu_items = [
                                                           partial(show_webview_window, 'word_cloud_input_setup')),
                                   webview.menu.MenuAction('Word Cloud Viewer',
                                                           partial(show_webview_window, 'word_cloud_viewer_setup')),
+                                  webview.menu.MenuAction('Custom App',
+                                                          partial(show_webview_window, 'other_setup')),
                               ])
         ]
     )
