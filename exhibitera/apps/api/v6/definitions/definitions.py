@@ -37,8 +37,8 @@ async def load_definition_as_binary(this_uuid: str):
 @router.post("/definitions/write")
 async def write_definition(definition: dict[str, Any] = Body(description="The JSON dictionary to write.", embed=True)):
     """Save the given JSON data to a definition file in the content directory."""
-    print(definition)
-    if "uuid" not in definition or definition["uuid"] == "":
+
+    if "uuid" not in definition or definition["uuid"] == "" or definition["uuid"] is None:
         # Add a unique identifier
         definition["uuid"] = str(uuid.uuid4())
     path = ex_files.get_path(["definitions",

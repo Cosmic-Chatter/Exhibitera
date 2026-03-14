@@ -353,21 +353,20 @@ def get_directory_contents(directory: list[str]) -> list:
 def download_file(url: str, path_to_save: str) -> bool:
     """Download the file at the given url and save it to disk."""
 
-    with config.binary_file_lock:
-        try:
-            with requests.get(url, stream=True, timeout=2) as r:
-                try:
-                    # Check that we received a good response
-                    r.raise_for_status()
-                except requests.HTTPError:
-                    return False
+    try:
+        with requests.get(url, stream=True, timeout=10) as r:
+            try:
+                # Check that we received a good response
+                r.raise_for_status()
+            except requests.HTTPError:
+                return False
 
-                with open(path_to_save, 'wb') as f:
-                    for chunk in r.iter_content(chunk_size=8192):
-                        f.write(chunk)
-        except requests.exceptions.ReadTimeout:
-            print("download_file: timeout retrieving ", url)
-            return False
+            with open(path_to_save, 'wb') as f:
+                for chunk in r.iter_content(chunk_size=8192):
+                    f.write(chunk)
+    except requests.exceptions.ReadTimeout:
+        print("download_file: timeout retrieving ", url)
+        return False
 
     return True
 

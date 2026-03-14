@@ -25,9 +25,9 @@ router = APIRouter()
 
 @router.get("/checkConnection")
 async def check_connection():
-    """Respond to request to confirm that the connection is active."""
+    """Confirm that the connection is active and provide the supported API level"""
 
-    return {"success": True}
+    return {"success": True, "api": ex_config.api, "api_level": ex_config.api_level}
 
 
 @router.post("/data/{name}/rawText")

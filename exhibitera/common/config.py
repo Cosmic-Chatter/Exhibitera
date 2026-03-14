@@ -9,6 +9,8 @@ exec_path: str = ""
 
 debug: bool = False
 
+api: str = '/v6'
+api_level: float = 6
 software_version: dict[str, int] = {}
 software_update: dict[str, bool | dict[str, int]] = {
     "update_available": False,
