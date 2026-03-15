@@ -159,27 +159,14 @@
                   <H4 class="text-center">Select Custom App mode</H4>
 
                   <div class="exRadioButton form-check py-3 px-3 mt-2">
-                    <input class="form-check-input d-none" type="radio" name="wizardAppMode" id="wizardAppModeBasic" checked value="basic">
-                    <label class="form-check-label" for="wizardAppModeBasic">
+                    <input class="form-check-input d-none" type="radio" name="wizardAppMode" id="wizardAppModeFiles" checked value="files">
+                    <label class="form-check-label" for="wizardAppModeFiles">
                       <div class="row">
                         <div class="col-12 col-md-3 col-lg-2 d-flex justify-content-center align-items-center">
-                          <b>Basic</b>
+                          <b>Files</b>
                         </div>
                         <div class="col-12 col-md-9 col-lg-10">
-                          Your web app doesn't need to know anything about Exhibitera. As long as it is a collection of <code>HTML</code>, <code>JavaScript</code>, <code>CSS</code>, and media files, Exhibitera Apps can load it and connect to Hub.
-                        </div>
-                      </div>
-                    </label>
-                  </div>
-                  <div class="exRadioButton form-check py-3 px-3 mt-2">
-                    <input class="form-check-input d-none" type="radio" name="wizardAppMode" id="wizardAppModeAdvanced" value="advanced">
-                    <label class="form-check-label" for="wizardAppModeAdvanced">
-                      <div class="row">
-                        <div class="col-12 col-md-3 col-lg-2 d-flex justify-content-center align-items-center">
-                          <b>Advanced</b>
-                        </div>
-                        <div class="col-12 col-md-9 col-lg-10">
-                          Your web app implements the Exhibitera Core API so that it can utilize Exhibitera features like writing data or configuring with definitions.
+                          Your web app doesn't need to know anything about Exhibitera. As long as it is a collection of <code>HTML</code>, <code>JavaScript</code>, <code>CSS</code>, and media files, Exhibitera Apps can load it and connect to Hub. You can optionally use the Exhibitera Core API to add additional functionality.
                         </div>
                       </div>
                     </label>
@@ -192,7 +179,7 @@
                           <b>URL</b>
                         </div>
                         <div class="col-12 col-md-9 col-lg-10">
-                          Exhibitera Apps will load your URL as a basic app. <b>Note that many public websites block being embedded for security reasons.</b>
+                          Exhibitera Apps will load your URL. <b>Note that many public websites block being embedded for security reasons.</b> The Exhibitera Core API is unavailable, even if you create the website at the URL you provide.
                         </div>
                       </div>
                     </label>
@@ -385,9 +372,8 @@
                     <div class="col-12 col-md-6 col-lg-4">
                       <label for="definitionModeInput" class="form-label">Mode</label>
                       <select class="form-select" id="definitionModeInput">
-                        <option value="basic">Basic</option>
-                        <option value="advanced">Advanced</opttion>
-                          <option value="url">URL</opttion>
+                        <option value="files">Files</option>
+                        <option value="url">URL</opttion>
                       </select>
                     </div>
                   </div>
@@ -414,9 +400,6 @@
                       <input id="appURLInput" class="form-control w-100"></input>
                       <div id="CORSErrorAlert" class="alert alert-danger mt-2">This URL blocks embedding and cannot be loaded.</div>
                       <div class="alert alert-info mt-2">Most websites block embedding as a security measure, so don't be surprised if your URL doesn't load. If you control the website you're linking to, ensure cross-origin requests (CORS) are allowed.</div>
-                    </div>
-                    <div id="appAPIHint" class="col-12">
-                      <div class="alert alert-info"><b>Advanced apps must implement the Exhibitera Core API.</b> If you don't implement the Core API, you will not be able to control the app from Hub once it is loaded or switch to another app.</div>
                     </div>
                     <div id="appFileSelectGroup" class="col-12 col-lg-6">
                       <label for="appFileSelect" class="form-label">

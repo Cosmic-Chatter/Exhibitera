@@ -33,7 +33,7 @@ async def check_connection():
 @router.post("/data/{name}/rawText")
 async def submit_raw_text(name: str,
                          text: str = Body(description='The data to write.'),
-                         mode: str = Body(description="Pass 'a' to append or 'w' or overwrite.", default='a')):
+                         mode: str = Body(description=" Pass 'a' to append or 'w' or overwrite.", default='a')):
     """Write the raw text to file."""
 
     if not ex_files.filename_safe(name):

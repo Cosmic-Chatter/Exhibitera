@@ -16,7 +16,7 @@ async function initializeWizard () {
   document.getElementById('wizardPathBlankErrorAlert').style.display = 'none'
   document.getElementById('wizardSourceAppFileSelect').innerText = 'Upload and select'
   document.getElementById('wizardAppURLInput').value = ''
-  document.getElementById('wizardAppModeBasic').checked = true
+  document.getElementById('wizardAppModeFiles').checked = true
 
   if (exCommon.config.standalone) {
     // We are not using Hub
@@ -112,7 +112,7 @@ async function clearDefinitionInput (full = true) {
 
   // Definition details
   document.getElementById('definitionNameInput').value = ''
-  document.getElementById('definitionModeInput').value = 'basic'
+  document.getElementById('definitionModeInput').value = 'files'
   document.getElementById('appFileSelect').innerText = 'Select file'
   document.getElementById('keyList').innerText = ''
   document.getElementById('appURLInput').value = ''
@@ -134,7 +134,7 @@ function editDefinition (uuid = '') {
   exSetup.configurePreviewFromDefinition(def)
 
   document.getElementById('definitionNameInput').value = def.name
-  document.getElementById('definitionModeInput').value = def?.mode ?? 'basic'
+  document.getElementById('definitionModeInput').value = def?.mode ?? 'files'
   document.getElementById('appURLInput').value = def?.url ?? ''
   checkCORS(def?.url ?? '')
 
@@ -161,7 +161,7 @@ function createKeyValueHTML (key = '', value = '') {
 
   const keyList = document.getElementById('keyList')
 
-  const uuid = String(new Date().getTime() * Math.random() * 1e6)
+  const uuid = exUtilities.uuid()
 
   const html = `
   <div id="keyValue_${uuid}" data-uuid="${uuid}" class="keyValuePair col-12">
@@ -184,9 +184,7 @@ function createKeyValueHTML (key = '', value = '') {
     </div>
   </div>
   `
-  keyList.innerHTML += html
-  document.getElementById('key_' + uuid).addEventListener('change', rebuildPropertyDict)
-  document.getElementById('value_' + uuid).addEventListener('change', rebuildPropertyDict)
+  keyList.insertAdjacentHTML('beforebegin', html)
 }
 
 function rebuildPropertyDict () {
@@ -199,7 +197,8 @@ function rebuildPropertyDict () {
     if (key.trim() === '') return
     dict[key] = document.getElementById('value_' + uuid).value
   })
-  exSetup.updateWorkingDefinition(['properties'], dict)
+  exSetup.updateWorkingDefinition(['properties'], structuredClone(dict))
+  exSetup.previewDefinition(true)
 }
 
 function configureOptions () {
@@ -213,18 +212,11 @@ function configureOptions () {
   const appFileSelectHint = document.getElementById('appFileSelectHint')
   const appAPIHint = document.getElementById('appAPIHint')
 
-  if (mode === 'basic') {
-    appFileSelectGroup.style.display = 'block'
-    appFileSelectHint.style.display = 'block'
-    appURLGroup.style.display = 'none'
-    keyListGroup.style.display = 'none'
-    appAPIHint.style.display = 'none'
-  } else if (mode === 'advanced') {
+  if (mode === 'files') {
     appFileSelectGroup.style.display = 'block'
     appFileSelectHint.style.display = 'block'
     appURLGroup.style.display = 'none'
     keyListGroup.style.display = 'block'
-    appAPIHint.style.display = 'block'
   } else if (mode === 'url') {
     appFileSelectGroup.style.display = 'none'
     appFileSelectHint.style.display = 'none'
@@ -269,6 +261,11 @@ async function checkCORS (url, wizard = false) {
   }
 
   return success
+}
+
+function updateProperties () {
+  // When a change happens, rebuild the definition's properties dictionary
+
 }
 
 // Set helperAddress for calls to exCommon.makeHelperRequest
@@ -338,6 +335,12 @@ document.addEventListener('click', (event) => {
   rebuildPropertyDict()
 })
 
+document.addEventListener('change', (ev) => {
+  if (ev.target.classList.contains('keyValueInput') === false) return
+
+  rebuildPropertyDict()
+})
+
 clearDefinitionInput()
 
 exSetup.configure({
@@ -346,7 +349,7 @@ exSetup.configure({
   initializeWizard,
   loadDefinition: editDefinition,
   blankDefinition: {
-    mode: 'basic',
+    mode: 'files',
     path: '',
     properties: {}
   }
