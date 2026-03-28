@@ -249,7 +249,7 @@ export class ExhibiteraMarkdownEditor {
 
     document.getElementById('exMarkdownInsertMediaFromModalButton').addEventListener('click', () => {
       // Collect the details and format the Markdown image string
-      const filename = document.getElementById('insertMediaModal').dataset.filename
+      const filename = document.getElementById('insertMediaModal').dataset.filename.replaceAll(' ', '%20')
 
       if ((filename == null) || filename === '') {
         document.getElementById('exMarkdownSelectImageNoImageWarning').style.display = 'block'
