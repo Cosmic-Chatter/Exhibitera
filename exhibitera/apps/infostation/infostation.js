@@ -57,6 +57,7 @@ function loadDefinition (definition) {
   root.style.setProperty('--section-border-color', '#e6e6e2')
   root.style.setProperty('--section-shadow-color', '#0f141900')
   root.style.setProperty('--text-color', '#e6e6e2')
+  root.style.setProperty('--tab-button-text-color', '#f5f5f0')
   root.style.setProperty('--quote-color', '#f5f5f0')
   root.style.setProperty('--caption-color', '#e6e6e2')
   root.style.setProperty('--header-font', 'header-default')
@@ -69,6 +70,7 @@ function loadDefinition (definition) {
 
   // Then, apply the definition settings
   Object.keys(definition.style.color).forEach((key) => {
+    console.log(key)
     document.documentElement.style.setProperty('--' + key + '-color', definition.style.color[key])
   })
 

@@ -196,6 +196,7 @@ async function wizardCreateDefinition () {
       'section-shadow': '#0f141900',
       'tab-button': '#6b7280',
       'tab-button-active': '#c3512f',
+      'tab-button-text': '#f5f5f0',
       text: '#f5f5f0'
     })
     exSetup.updateWorkingDefinition(['style', 'background'], {
@@ -805,7 +806,9 @@ exSetup.configure({
         'section-shadow': '#0f141900',
         'tab-button': '#4b5563',
         'tab-button-active': '#e06a47',
+        'tab-button-text': '#f5f5f0',
         text: '#e6e6e2'
+
       },
       font: {
         body: '/_fonts/OpenSans-Regular.ttf',

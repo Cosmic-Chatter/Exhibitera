@@ -6,6 +6,7 @@
   --tab-button-color: #4b5563;
   --tab-button-active-color: #e06a47;
   --text-color: #e6e6e2;
+  --tab-button-text-color: #f5f5f0;
   --caption-color: #e6e6e2;
   --quote-color: #f5f5f0;
   --section-header-color: #f5f5f0;
@@ -183,6 +184,8 @@ p, div {
 .tabButton {
   font-size: calc(2.5vmax + var(--tab-button-font-size-adjust) * 1vmax);
   font-family: var(--button-font);
+  color: var(--tab-button-text-color)!important;
+
 }
 #attractorImage {
   width: 100%;
