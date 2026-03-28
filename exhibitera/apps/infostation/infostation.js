@@ -70,7 +70,6 @@ function loadDefinition (definition) {
 
   // Then, apply the definition settings
   Object.keys(definition.style.color).forEach((key) => {
-    console.log(key)
     document.documentElement.style.setProperty('--' + key + '-color', definition.style.color[key])
   })
 
