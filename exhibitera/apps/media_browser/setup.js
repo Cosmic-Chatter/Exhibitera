@@ -359,8 +359,6 @@ async function clearDefinitionInput (full = true) {
     onLanguageRebuild: rebuildLanguageElements
   })
 
-  rebuildLanguageElements([])
-
   // Attractor
   document.getElementById('inactivityTimeoutField').value = 30
   const attractorSelect = document.getElementById('attractorSelect')
@@ -405,6 +403,8 @@ async function clearDefinitionInput (full = true) {
   document.getElementById('Lightbox_titleTextSizeSlider').value = 0
   document.getElementById('Lightbox_captionTextSizeSlider').value = 0
   document.getElementById('Lightbox_creditTextSizeSlider').value = 0
+
+  rebuildLanguageElements([]) // Must be at end
 }
 
 function editDefinition (uuid = '') {
