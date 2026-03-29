@@ -110,6 +110,7 @@ function buildLayoutVote (index) {
     } else card.classList.add('justify-content-center')
     card.dataset.value = value
     if (buttonDef.background) {
+      if (buttonDef.background.image) buttonDef.background.image = buttonDef.background.image.replaceAll(' ', '%20')
       exCommon.setELementBackground(buttonDef.background, card)
     }
     div.appendChild(card)
