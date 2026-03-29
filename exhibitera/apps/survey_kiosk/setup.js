@@ -819,7 +819,7 @@ function rebuildOptions (itemUUID, lang) {
     row.appendChild(backgroundCol)
     exSetup.createAdvancedColorPicker(backgroundCol, 'Background', ['items', item.uuid, 'options', optionUUID, 'background'])
 
-    exSetup.updateAdvancedColorPicker(`items>${item.uuid}>options>${optionUUID}>background`, item?.options?.[optionUUID]?.background)
+    exSetup.updateAdvancedColorPicker(`items>${item.uuid}>options>${optionUUID}>background`, item?.options?.[optionUUID]?.background ?? { mode: 'color', color: exSetup.config.workingDefinition.style.color['button-color'] })
 
     const iconCol = document.createElement('div')
     iconCol.classList = 'col-12'
@@ -888,6 +888,8 @@ function rebuildOptions (itemUUID, lang) {
       icon: item?.options?.[optionUUID]?.icon ?? '',
       icon_user_file: item?.options?.[optionUUID]?.icon_user_file
     })
+
+    exSetup.setUpColorPickers()
   }
 
   // Activate tooltips
@@ -1121,7 +1123,6 @@ function createSurveyItemGUIText (item) {
       callback: (content) => {
         exSetup.updateWorkingDefinition(['languages', code, 'items', item.uuid, 'header', 'text'], content)
         if (code === exSetup.config.workingDefinition.language_order[0]) {
-          console.log(document.getElementById(item.uuid + '_accordionName'))
           document.getElementById(item.uuid + '_accordionName').innerHTML = exMarkdown.formatText(content, { string: true, removeParagraph: true })
         }
         exSetup.previewDefinition(true)
@@ -1591,6 +1592,7 @@ for (const el of document.querySelectorAll('.color-picker')) {
     const value = this.value.trim()
     const property = this.dataset.property
     exSetup.updateWorkingDefinition(['style', 'color', property], value)
+    if (property === 'button-color') rebuildItems()
     exSetup.previewDefinition(true)
   })
 }
