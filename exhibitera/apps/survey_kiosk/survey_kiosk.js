@@ -516,7 +516,7 @@ function loadDefinition (definition) {
   localize(definition.language_order[0])
 
   // Send a thumbnail to the helper
-  setTimeout(() => exCommon.saveScreenshotAsThumbnail(definition.uuid + '.png'), 100)
+  setTimeout(() => exCommon.saveScreenshotAsThumbnail(definition.uuid + '.png'), 1000)
 }
 
 function localize (lang) {
