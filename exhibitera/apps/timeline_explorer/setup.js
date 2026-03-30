@@ -281,8 +281,6 @@ async function clearDefinitionInput (full = true) {
     onLanguageRebuild: rebuildLanguageElements
   })
 
-  rebuildLanguageElements([])
-
   // Definition details
   document.getElementById('definitionNameInput').value = ''
   document.getElementById('missingContentWarningField').innerHTML = ''
@@ -311,6 +309,8 @@ async function clearDefinitionInput (full = true) {
   document.getElementById('timeTextSizeSlider').value = 0
   document.getElementById('titleTextSizeSlider').value = 0
   document.getElementById('bodyTextSizeSlider').value = 0
+
+  rebuildLanguageElements([]) // Must be at end
 }
 
 function editDefinition (uuid = '') {
