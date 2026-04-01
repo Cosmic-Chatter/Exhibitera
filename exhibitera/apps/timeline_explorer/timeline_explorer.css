@@ -130,10 +130,17 @@ __________________________________________________*/
   border-radius: var(--item-border-radius);
 }
 
+.timeline-element > .text-col {
+    display: flex;
+    flex-direction: column;
+    max-height: 100%; 
+}
+
 .timeline ul li div.timeline-element {
   bottom: 0;
   visibility: hidden;
   opacity: 0;
+  overflow: hidden;
   transition: all 0.5s ease-in-out;
   background: var(--itemColor);
 }
@@ -223,7 +230,6 @@ time {
 –––––––––––––––––––––––––––––––––––––––––––––––––– */
 
 @media (orientation: landscape) {
-    /* 1. Center the entire timeline track vertically */
     #timeline-pane {
         overflow-x: auto !important; /* Enable side-scrolling */
         overflow-y: hidden !important; 
@@ -232,7 +238,6 @@ time {
         justify-content: flex-start;
     }
 
-    /* 2. Ensure the list expands horizontally and stays centered */
     .timeline ul {
         display: flex;
         flex-direction: row;
@@ -243,7 +248,6 @@ time {
         align-items: center; /* Center the 'li' line segments */
     }
 
-    /* 3. The LI is now a horizontal segment of the line */
     .timeline ul li { 
         flex: 0 0 23.4375vmax; 
         height: 1vh; /* The thickness of the timeline line */
@@ -258,7 +262,6 @@ time {
         transform: translate(-50%, -50%);
     }
 
-    /* 5. General item box styling */
     .timeline ul li div.timeline-element {
         position: absolute;
         left: 50%!important; /* Position relative to the center of the LI */
@@ -272,7 +275,7 @@ time {
       width: 32.3vmax;
     }
     
-    /* 6. Position ODD items ABOVE the line */
+    /* Position ODD items ABOVE the line */
     .timeline ul li:nth-child(odd) div.timeline-element {
         bottom: 1.9vmax; /* Distance above the line */
         top: auto;
@@ -280,22 +283,19 @@ time {
     }
 
 
-    /* 7. Position EVEN items BELOW the line */
+    /* Position EVEN items BELOW the line */
     .timeline ul li:nth-child(even) div.timeline-element {
         top: 1.9vmax; /* Distance below the line */
         bottom: auto;
         transform: translate3d(-50%, 5.2vmax, 0) !important;
     }
 
-    /* 8. Slide-in animations for horizontal mode */
-    /* Animation: When in view, center horizontally */
     .timeline ul li.in-view div.timeline-element {
         transform: translate3d(-50%, 0, 0) !important;
         visibility: visible;
         opacity: 1;
     }
 
-    /* 9. Reset the triangle pointers to point Up or Down */
     .timeline ul li div.timeline-element::before {
         left: 50% !important;
         right: auto !important;
@@ -322,18 +322,31 @@ time {
       width: 50%;
     }
 
+    .timeline-element > .text-col {
+        display: flex;
+        flex-direction: column;
+        max-height: 35vh;
+        overflow: hidden;
+
+    .timeline-element > .text-col > time,
+    .timeline-element > .text-col > .timeline-item-header {
+        flex-shrink: 0; 
+    }
+
     .timeline-element > .text-col > .timeline-body {
-      max-height: 22vh;
-      overflow-y: auto;
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+        max-height: none;
+        padding-bottom: 1vmax;
     }
     
     .media-col {
-      border-top-right-radius: var(--item-border-radius);
-      border-bottom-right-radius: var(--item-border-radius);
-      max-height: 18vmax;
+      border-start-end-radius: var(--item-border-radius);
+      border-end-end-radius: var(--item-border-radius);
       overflow: hidden;
     }
-    .media-contain { /* Added in JS when object-fit == contain */
+    .media-contain {
       padding-right: 1vmax;
       padding-top: 1vmax;
       padding-bottom: 1vmax;
@@ -342,7 +355,6 @@ time {
 
   
 @media (orientation: portrait) {
-    /* 1. Standardize Pane Heights to fill exactly 100vh */
     #header-pane {
         height: var(--header-height);
     }
@@ -356,18 +368,16 @@ time {
         height: 6vh;
     }
 
-    /* 2. Timeline Track Logic */
     .timeline ul {
-        position: relative; /* Needed for the absolute line positioning */
+        position: relative;
         padding: 10vh 0 20vh 0; 
     }
 
-    /* Create one continuous line that hangs past the bottom */
     .timeline ul::before {
         content: "";
         position: absolute;
-        top: 10vh;    /* Starts at the center of the first dot (matches top padding) */
-        bottom: 5vh; /* END POINT: Decrease this value to make the line longer */
+        top: 10vh;
+        bottom: 5vh;
         left: 50%;
         width: 1vw;
         background: var(--lineColor);
@@ -380,11 +390,11 @@ time {
         list-style-type: none;
         width: 1vw;
         margin: 0 auto;
-        background: none; /* REMOVE individual backgrounds so the line is continuous */
+        background: none;
         height: 18vmax; 
     }
 
-    /* 3. The Dot (Update background to fix the 'inherit' issue) */
+    /* The Dot */
     .timeline ul li::after {
         content: "";
         position: absolute;
@@ -394,15 +404,14 @@ time {
         width: 2.1vmax;
         height: 2.1vmax;
         border-radius: 50%;
-        background: var(--lineColor); /* Changed from 'inherit' to use the variable directly */
+        background: var(--lineColor);
         z-index: 10;
         transition: background 0.5s ease-in-out;
     }
 
-    /* 4. Timeline Card Logic */
     .timeline ul li div.timeline-element {
         position: absolute;
-        bottom: 0; /* Anchored to the dot */
+        bottom: 0;
         width: 40vw;
         visibility: hidden;
         opacity: 0;
@@ -421,14 +430,13 @@ time {
         transform: translate3d(-10.4vmax, 50%, 0);
     }
 
-    /* Final 'In-View' state: perfectly centered vertically on the dot */
     .timeline ul li.in-view div.timeline-element {
         visibility: visible;
         opacity: 1;
         transform: translate3d(0, 50%, 0) !important;
     }
 
-    /* 5. Triangle (Matches Landscape Size) */
+    /* Triangle */
     .timeline ul li div.timeline-element::before {
         content: "";
         position: absolute;
@@ -451,7 +459,7 @@ time {
         border-color: transparent transparent transparent var(--itemColor);
     }
 
-    /* 6. RTL Logic */
+    /* RTL Logic */
     :dir(rtl) .timeline ul li:nth-child(odd) div.timeline-element {
         right: 4.5vw;
         left: auto;
@@ -491,7 +499,7 @@ time {
       height: auto;
       max-height: 18vmax;
     }
-    .media-contain { /* Added in JS when object-fit == contain */
+    .media-contain {
       padding-bottom: 1vmax;
       padding-left: 1vmax;
       padding-right: 1vmax;
