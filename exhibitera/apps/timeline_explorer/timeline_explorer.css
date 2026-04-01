@@ -328,7 +328,7 @@ time {
         max-height: 35vh;
         overflow: hidden;
     }
-
+    
     .timeline-element > .text-col > time,
     .timeline-element > .text-col > .timeline-item-header {
         flex-shrink: 0; 
