@@ -1221,7 +1221,7 @@ document.addEventListener('hidden.bs.modal', function (event) {
 })
 
 loadVersion()
-populateHelpTab()
+// populateHelpTab()
 exUsers.populateUsers()
 populateHubSettings()
 const trackerTemplates = await exTracker.getAvailableTemplates()

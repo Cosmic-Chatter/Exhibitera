@@ -31,7 +31,7 @@ The Core API provides a stable API that enables developers to provide basic inte
 The Core API provides a stable API that enables developers to provide basic integration with Exhibitera for their applications. Calls to this API are guaranteed to remain compatible with future versions of Hub.
 
 ### Custom Apps
-- New Basic App option turns a simple HTML file into an app without needing to implement the Exhibitera APIs
+- Turn simple HTML files into an app without needing to implement the Exhibitera APIs
 - New URL option enables you to embed a webpage into your exhibition (limitations apply)
 - Guided setup makes things easier than ever
 

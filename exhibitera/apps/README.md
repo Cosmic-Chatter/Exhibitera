@@ -1,15 +1,3 @@
-<img src="_static/Apps_logo.svg" alt="Exhibitera Hub" style="width: 400px; max-width:95%">
-
-A collection of visitor-facing apps to help you create rich digital experiences.
-
-## First-time setup
-Exhibitera Apps must be hosted by a PC running Windows, macOS, or Linux, even if the user-facing interface is a mobile device such as an iPad.
-
-### Installation
-Download the version appropriate for your operating system [here](https://exhibitera.org/download/) and place the file in the location you would like to run Apps from. Then, launch the file.
-
-On Windows, a wizard will launch to begin setup. On Linux, a command-line setup window will launch, asking you a few basic questions. Once you use the keyboard to answer, Apps will launch and open a graphical interface.
-
 ## Configuration
 
 ### Using a remote display
