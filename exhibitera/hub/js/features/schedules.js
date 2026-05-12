@@ -590,13 +590,14 @@ export async function setScheduleActionValueSelector (action = null, target = nu
   // Helper function to show/hide the select element for picking the value
   // of an action when appropriate
 
-  if (['set_definition', 'set_dmx_scene'].includes(action) === false) {
-    console.log('setScheduleActionValueSelector: invalid action type!')
-  }
-
   if (action == null) action = document.getElementById('scheduleActionSelector').value
   if (target == null) target = JSON.parse(document.getElementById('scheduleTargetSelector').value)
   if (Array.isArray(target)) target = target[0]
+
+  if (['set_definition', 'set_dmx_scene'].includes(action) === false) {
+    console.log('setScheduleActionValueSelector: invalid action type!')
+    return
+  }
 
   const valueSelector = document.getElementById('scheduleValueSelector')
   const valueSelectorLabel = document.getElementById('scheduleValueSelector')
