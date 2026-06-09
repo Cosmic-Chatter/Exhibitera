@@ -583,4 +583,4 @@ log_path: str = ex_files.get_path(["apps.log"], user_file=True)
 logging.basicConfig(datefmt='%Y-%m-%d %H:%M:%S',
                     filename=log_path,
                     format='%(levelname)s, %(asctime)s, %(message)s',
-                    level=logging.DEBUG)
+                    level=logging.ERROR)
