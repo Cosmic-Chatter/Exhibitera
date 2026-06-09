@@ -511,7 +511,8 @@ export function getExhibit (uuid) {
 
 export function getExhibitName (uuid) {
   // Return the name of the specified exhibit, if it exists.
+  
   const exhibit = getExhibit(uuid)
-  if (exhibit == null) return 'Invalid exhibit'
+  if (exhibit == null) return 'Unknown exhibition'
   return exhibit.name
 }

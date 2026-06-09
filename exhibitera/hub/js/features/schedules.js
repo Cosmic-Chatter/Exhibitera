@@ -236,14 +236,17 @@ function createScheduleEntryHTML (item, scheduleID, scheduleName, scheduleType, 
 
   let description = null
   const action = item.action
-  const target = item.target
+  let target = item.target
   const value = item.value
 
   // Create the plain-language description of the action
   if (['power_off', 'power_on', 'refresh_page', 'restart', 'set_definition', 'set_dmx_scene'].includes(action)) {
     description = populateScheduleDescriptionHelper([item], false)
   } else if (action === 'set_exhibit') {
-    description = `Set exhibit: ${exTools.getExhibitName(target.value)}`
+    if (Array.isArray(target) && target.length > 0) {
+      target = target[0]
+    }
+    description = `Set exhibition: ${exTools.getExhibitName(target.value)}`
   } else if (action === 'note') {
     description = item.value
   } else if (action === 'clear_exhibition_mods') {
@@ -587,13 +590,14 @@ export async function setScheduleActionValueSelector (action = null, target = nu
   // Helper function to show/hide the select element for picking the value
   // of an action when appropriate
 
-  if (['set_definition', 'set_dmx_scene'].includes(action) === false) {
-    console.log('setScheduleActionValueSelector: invalid action type!')
-  }
-
   if (action == null) action = document.getElementById('scheduleActionSelector').value
   if (target == null) target = JSON.parse(document.getElementById('scheduleTargetSelector').value)
   if (Array.isArray(target)) target = target[0]
+
+  if (['set_definition', 'set_dmx_scene'].includes(action) === false) {
+    console.log('setScheduleActionValueSelector: invalid action type!')
+    return
+  }
 
   const valueSelector = document.getElementById('scheduleValueSelector')
   const valueSelectorLabel = document.getElementById('scheduleValueSelector')
