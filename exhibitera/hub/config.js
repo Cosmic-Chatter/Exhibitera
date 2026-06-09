@@ -1,8 +1,9 @@
 export default {
   availableExhibits: [], // An array of strings
   componentGroups: [],
+  componentInfoModalStatusMessageTimer: 0, // Holds setTimeout() reference
   currentExhibit: '',
-  errorDict: {},
+  notifications: { hub: {} },
   exhibitComponents: [],
   groups: [],
   groupLastUpdateDate: 0,

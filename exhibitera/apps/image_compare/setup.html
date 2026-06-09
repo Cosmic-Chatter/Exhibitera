@@ -8,7 +8,7 @@
 
     <meta name="description" content="">
     <meta name="author" content="Morgan Rehnberg">
-    <link rel="icon" type="image/x-icon" href="../_static/favicon.ico">
+    <link rel=icon href="/_static/favicon.svg" type="image/svg+xml">
 
     <link rel="stylesheet" href="../css/bootstrap_5_3/bootstrap.min.css">
     <link rel="stylesheet" href="../css/coloris.min.css">
@@ -249,7 +249,51 @@
 
                   <div class="text-center mt-4">
                     <button class="btn btn-secondary me-4 wizard-back" data-current-page="HomeDetails">Back</button>
-                    <button class="btn btn-primary ms-4 wizard-forward" data-current-page="HomeDetails">Finish</button>
+                    <button class="btn btn-primary ms-4 wizard-forward" data-current-page="HomeDetails">Next</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Color Mode -->
+              <div id="wizardPane_ColorMode" class="row wizard-pane">
+                <div class="col-8 offset-2 mt-3">
+                  <H4 class="text-center">Choose a color scheme</H4>
+
+                  <i>
+                    <p>
+                      You will be able to fine-tune colors later.
+                    </p>
+                  </i>
+                  <div class="exRadioButton form-check py-3 px-3 mt-2" style="background-color: #e6e6e2; color: #0f1419;">
+                    <input class="form-check-input d-none" type="radio" name="wizardColorMode" id="wizardColorModeLight" checked value="light">
+                    <label class="form-check-label w-100" for="wizardColorModeLight">
+                      <div class="row">
+                        <div class="col-12 col-md-3 col-lg-2 d-flex justify-content-center align-items-center" style="color: #c3512f;">
+                          <b>Light</b>
+                        </div>
+                        <div class="col-12 col-md-9 col-lg-10">
+                          Great for brighter galleries or making darker media stand out.
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+                  <div class="exRadioButton form-check py-3 px-3 mt-2" style="background-color: #1a2b3c; color: #e6e6e2;">
+                    <input class="form-check-input d-none" type="radio" name="wizardColorMode" id="wizardColorModeDark" value="dark">
+                    <label class="form-check-label w-100" for="wizardColorModeDark">
+                      <div class="row">
+                        <div class="col-12 col-md-3 col-lg-2 d-flex justify-content-center align-items-center" style="color: #f5f5f0">
+                          <b>Dark</b>
+                        </div>
+                        <div class="col-12 col-md-9 col-lg-10">
+                          Great for darker galleries or making bright media stand out.
+                        </div>
+                      </div>
+                    </label>
+                  </div>                  
+                  
+                  <div class="text-center mt-4">
+                    <button class="btn btn-secondary me-4 wizard-back" data-current-page="ColorMode">Back</button>
+                    <button class="btn btn-primary ms-4 wizard-forward" data-current-page="ColorMode">Finish</button>
                   </div>
                 </div>
               </div>
@@ -263,24 +307,27 @@
 
       <div class="row">
         <div class="col-10" id="setupHeader">
+          <div id="setupComponentID" class="fs-5"></div>          
           <H2>Image Compare  Setup</H2>
-          Use this utility to create and edit Image Compare configurations.
           </div>
 
         <div class="col-2">
           <div id="loginMenu">
-            <button class="btn btn-outline-primary btn-sm dropdown-toggle float-end" type="button" data-bs-toggle="dropdown" aria-expanded="false">Log in</button>
+            <button class="btn btn-outline-primary btn-sm dropdown-toggle float-end" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">Log in</button>
             <div class="dropdown-menu">
               <div class="px-4 py-3">
-                <div class="mb-3">
-                  <label for="loginDropdownUsername" class="form-label">Username</label>
-                  <input type="text" class="form-control" id="loginDropdownUsername">
-                </div>
-                <div class="mb-3">
-                  <label for="loginDropdownPassword" class="form-label">Password</label>
-                  <input type="password" class="form-control" id="loginDropdownPassword">
-                </div>
-                <button id="loginSubmitButton" class="btn btn-primary">Log in</button>
+                <form id="loginForm">
+                  <div class="mb-3">
+                    <label for="loginDropdownUsername" class="form-label">Username</label>
+                    <input type="text" class="form-control" id="loginDropdownUsername">
+                  </div>
+                  <div class="mb-3">
+                    <label for="loginDropdownPassword" class="form-label">Password</label>
+                    <input type="password" class="form-control" id="loginDropdownPassword">
+                  </div>
+                  <button type="button" id="loginSubmitButton" class="btn btn-primary">Log in</button>
+                </form>
+                
               </div>
               <div class="dropdown-divider"></div>
               <div class="dropdown-item text-center" data-bs-toggle="tooltip" data-bs-placement="top" title="To create an account or reset your password, contact your system administrator. To log in as the administrator, use the username 'admin'.">
@@ -488,73 +535,73 @@
                       <div class="col-12 col-sm-6 col-lg-4">
                         <label for="colorPicker_titleColor" class="form-label">Title</label>
                         <div>
-                          <input id="colorPicker_titleColor" type="text" class="coloris form-control" value="#fff" data-property="titleColor" data-default="#fff">
+                          <input id="colorPicker_titleColor" type="text" class="coloris form-control" value="#f5f5f0" data-property="titleColor" data-default="#f5f5f0">
                         </div>
                       </div>
                       <div class="col-12 col-sm-6 col-lg-4">
                         <label for="colorPicker_subtitleColor" class="form-label">Subtitle</label>
                         <div>
-                          <input id="colorPicker_subtitleColor" type="text" class="coloris form-control" value="#fff" data-property="subtitleColor" data-default="#fff">
+                          <input id="colorPicker_subtitleColor" type="text" class="coloris form-control" value="#e6e6e2" data-property="subtitleColor" data-default="#e6e6e2">
                         </div>
                       </div>
                       <div class="col-12 col-sm-6 col-lg-4">
                         <label for="colorPicker_itemNameColor" class="form-label">Item name</label>
                         <div>
-                          <input id="colorPicker_itemNameColor" type="text" class="coloris form-control" value="#fff" data-property="itemNameColor" data-default="#fff">
+                          <input id="colorPicker_itemNameColor" type="text" class="coloris form-control" value="#e6e6e2" data-property="itemNameColor" data-default="#e6e6e2">
                         </div>
                       </div>
                       <div class="col-12 col-sm-6 col-lg-4">
                         <label for="colorPicker_buttonBackgroundColor" class="form-label">Button background</label>
                         <div>
-                          <input id="colorPicker_buttonBackgroundColor" type="text" class="coloris form-control" value="#393a5acc" data-property="buttonBackgroundColor" data-default="#393a5acc">
+                          <input id="colorPicker_buttonBackgroundColor" type="text" class="coloris form-control" value="#2f3e4fd8" data-property="buttonBackgroundColor" data-default="#2f3e4fd8">
                         </div>
                       </div>
                       <div class="col-12 col-sm-6 col-lg-4">
                         <label for="colorPicker_buttonTextColor" class="form-label">Button text</label>
                         <div>
-                          <input id="colorPicker_buttonTextColor" type="text" class="coloris form-control" value="#fff" data-property="buttonTextColor" data-default="#fff">
+                          <input id="colorPicker_buttonTextColor" type="text" class="coloris form-control" value="#f5f5f0" data-property="buttonTextColor" data-default="#f5f5f0">
                         </div>
                       </div>
                       <div class="col-12 col-sm-6 col-lg-4">
                         <label for="colorPicker_buttonOutlineColor" class="form-label">Button outline</label>
                         <div>
-                          <input id="colorPicker_buttonOutlineColor" type="text" class="coloris form-control" value="#fff" data-property="buttonOutlineColor" data-default="#fff">
+                          <input id="colorPicker_buttonOutlineColor" type="text" class="coloris form-control" value="#e6e6e2" data-property="buttonOutlineColor" data-default="#e6e6e2">
                         </div>
                       </div>
                       <div class="col-12 col-sm-6 col-lg-4">
                         <label for="colorPicker_sliderBackgroundColor" class="form-label">Slider background</label>
                         <div>
-                          <input id="colorPicker_sliderBackgroundColor" type="text" class="coloris form-control" value="#719bbfb3" data-property="sliderBackgroundColor" data-default="#719bbfb3">
+                          <input id="colorPicker_sliderBackgroundColor" type="text" class="coloris form-control" value="#5a7ba8cc" data-property="sliderBackgroundColor" data-default="#5a7ba8cc">
                         </div>
                       </div>
                       <div class="col-12 col-sm-6 col-lg-4">
                         <label for="colorPicker_sliderIconColor" class="form-label">Slider icon</label>
                         <div>
-                          <input id="colorPicker_sliderIconColor" type="text" class="coloris form-control" value="#000" data-property="sliderIconColor" data-default="#000">
+                          <input id="colorPicker_sliderIconColor" type="text" class="coloris form-control" value="#0f1419" data-property="sliderIconColor" data-default="#0f1419">
                         </div>
                       </div>
                       <div class="col-12 col-sm-6 col-lg-4">
                         <label for="colorPicker_labelBackgroundColor" class="form-label">Label background</label>
                         <div>
-                          <input id="colorPicker_labelBackgroundColor" type="text" class="coloris form-control" value="#00000080" data-property="labelBackgroundColor" data-default="#00000080">
+                          <input id="colorPicker_labelBackgroundColor" type="text" class="coloris form-control" value="#0f141991" data-property="labelBackgroundColor" data-default="#0f141991">
                         </div>
                       </div>
                       <div class="col-12 col-sm-6 col-lg-4">
                         <label for="colorPicker_labelTextColor" class="form-label">Label text</label>
                         <div>
-                          <input id="colorPicker_labelTextColor" type="text" class="coloris form-control" value="#fff" data-property="labelTextColor" data-default="#fff">
+                          <input id="colorPicker_labelTextColor" type="text" class="coloris form-control" value="#e6e6e2" data-property="labelTextColor" data-default="#e6e6e2">
                         </div>
                       </div>
                       <div class="col-12 col-sm-6 col-lg-4">
                         <label for="colorPicker_infoTitleColor" class="form-label">Info pane title</label>
                         <div>
-                          <input id="colorPicker_infoTitleColor" type="text" class="coloris form-control" value="#fff" data-property="infoTitleColor" data-default="#fff">
+                          <input id="colorPicker_infoTitleColor" type="text" class="coloris form-control" value="#f5f5f0" data-property="infoTitleColor" data-default="#f5f5f0">
                         </div>
                       </div>
                       <div class="col-12 col-sm-6 col-lg-4">
                         <label for="colorPicker_infoBodyColor" class="form-label">Info pane text</label>
                         <div>
-                          <input id="colorPicker_infoBodyColor" type="text" class="coloris form-control" value="#fff" data-property="infoBodyColor" data-default="#fff">
+                          <input id="colorPicker_infoBodyColor" type="text" class="coloris form-control" value="#e6e6e2" data-property="infoBodyColor" data-default="#e6e6e2">
                         </div>
                       </div>
                     </div>
@@ -614,13 +661,12 @@
         </div>
         <div id='previewPane' class="col-6 col-lg-5 sticky-top" style="z-index: 1;">
           <div id="previewContainer">
-            <iframe id="previewFrame" class="mt-3 preview-16x9" src="../image_compare.html?standalone=true"></iframe>
+            <iframe id="previewFrame" class="mt-3 preview-16x9" src="index.html?standalone=true"></iframe>
           </div>
         </div>
       </div>
     </div>
 
-  <script type="text/javascript" src="../js/jquery-3.7.1.min.js"></script>
   <script type="text/javascript" src="../js/bootstrap_5_3/bootstrap.bundle.min.js"></script>
   <script type="text/javascript" src="../js/showdown.min.js"></script>
   <script type="text/javascript" src="../js/tiny-mde.min.js"></script>

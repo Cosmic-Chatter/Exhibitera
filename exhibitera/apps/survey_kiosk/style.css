@@ -1,0 +1,46 @@
+:root {
+    --background-color: #0f1419;
+    --item_background: #2f3e4f;
+    --button-color: #1a2b3c;
+    --next-button-color: #e06a47;
+    --restart-button-color: #4b5563;
+    --body-text-color: #e6e6e2;
+    --button-selected-color: #e06a47;
+    --header-color: #e6e6e2;
+    --button-text-color: #e6e6e2;
+    --next-button-text-color: #f5f5f0;
+    --restart-button-text-color: #f5f5f0;
+    --active-dot-color: #e06a47;
+    --inactive-dot-color: #4b5563;
+    --header-font: 'header-default';
+    --body-font: 'body-default';
+    --button-font: "button-default";
+    --next-font: "next-default";
+    --restart-font: "restart-default";
+    --header-font-adjust: 0;
+    --button-font-adjust: 0;
+    --next-font-adjust: 0;
+    --restart-font-adjust: 0;
+    --text-margin: 10;
+}
+
+@font-face {
+    font-family: "header-default";
+    src: url("../_fonts/OpenSans-Bold.ttf");
+}
+@font-face {
+    font-family: "button-default";
+    src: url("../_fonts/OpenSans-Bold.ttf");
+}
+@font-face {
+    font-family: "body-default";
+    src: url("../_fonts/OpenSans-Regular.ttf");
+}
+@font-face {
+    font-family: "next-default";
+    src: url("../_fonts/OpenSans-Regular.ttf");
+}
+@font-face {
+    font-family: "restart-default";
+    src: url("../_fonts/OpenSans-Regular.ttf");
+}

@@ -5,10 +5,6 @@ import datetime
 import threading
 from typing import Any
 
-# Path to the directory where the server is being launched from
-APP_PATH: str = ""
-# Path to the directory the code is actually running from (different from APP_PATH when using Pyinstaller)
-EXEC_PATH: str = ""
 
 debug: bool = False  # True means print various debug info
 gallery_name: str = "Exhibitera"
@@ -16,21 +12,17 @@ port: int = 8000
 ip_address: str = "localhost"
 last_update_time: float = 0  # Will hold time.time() of last change to the server
 
-software_version: float = 5.2
-software_update_available: bool = False
-software_update_available_version: str = ""
+software_version: dict[str, int] = {}
 software_update_timer: threading.Timer | None = None  # Timer reference to check for an update once daily
-outdated_os: bool = False
 
 # Threading resources
 polling_thread_dict: dict[str, threading.Timer] = {}
 logLock: threading.Lock = threading.Lock()
 galleryConfigurationLock: threading.Lock = threading.Lock()
-trackingDataWriteLock: threading.Lock = threading.Lock()
 trackerTemplateWriteLock: threading.Lock = threading.Lock()
 scheduleLock: threading.Lock = threading.Lock()
 issueLock: threading.Lock = threading.Lock()
-exhibitsLock: threading.Lock = threading.Lock()
+exhibitionsLock: threading.Lock = threading.Lock()
 maintenanceLock: threading.Lock = threading.Lock()
 issueMediaLock: threading.Lock = threading.Lock()
 
@@ -44,12 +36,12 @@ componentDescriptions: dict = {}  # Holds optional short descriptions of each co
 group_list: list[dict[str, Any]] = []
 group_list_last_update_date: str = datetime.datetime.now().isoformat()
 
-# Dictionary to keep track of warnings we have already presented
-serverWarningDict: dict = {}
+# Dictionary to keep track of notifications we have already presented
+notifications: dict = {}
 
 # Issue stuff
-issueList_last_update_date: str = datetime.datetime.now().isoformat()
-issueList: list = []
+issue_list_last_update_date: str = datetime.datetime.now().isoformat()
+issue_list: list = []
 
 # Schedule stuff
 schedule_timers: list[threading.Timer] = []
@@ -57,9 +49,10 @@ json_schedule_list: list[dict] = []
 json_next_event: list[dict] = []
 scheduleUpdateTime: float = 0
 
-# Exhibit stuff
-current_exhibit: str | None = "Default"  # The JSON file defining the current exhibit without the json extension
+# Exhibitions stuff
+current_exhibit: str | None = "Default"  # The UUID of the current exhibition
 exhibit_configuration: dict[str, Any] | None = None
+exhibit_modifications: dict[str, Any] = {"components": []} # Changes to the current configuration that aren't saved
 exhibit_list: list[str] = []
 
 # User stuff

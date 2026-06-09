@@ -1,26 +1,19 @@
 /* global showdown textFit */
 
+import exConfig from '../../common/config.js'
+import * as exFiles from '../../common/files.js'
 import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exMarkdown from '../js/exhibitera_app_markdown.js'
 
 function updateFunc (update) {
-  // Read updates for media player-specific actions and act on them
+  // Read updates for timeline explorer-specific actions and act on them
 
-  if ('definition' in update && update.definition !== currentDefintion) {
-    currentDefintion = update.definition
-    exCommon.loadDefinition(currentDefintion)
-      .then((result) => {
-        loadDefinition(result.definition)
-      })
-  }
 }
 
 function loadDefinition (def) {
   // Helper function to manage setting up the interface.
 
-  // Tag the document with the defintion for later reference
-  $(document).data('timelineDefinition', def)
-
+  exCommon.config.definition = def
   const root = document.querySelector(':root')
 
   // Modify the style
@@ -28,33 +21,30 @@ function loadDefinition (def) {
   // Color
 
   // First, reset to defaults (in case a style option doesn't exist in the definition)
-  root.style.setProperty('--backgroundColor', '#719abf')
-  root.style.setProperty('--headerColor', '#22222E')
-  root.style.setProperty('--footerColor', '#22222E')
-  root.style.setProperty('--itemColor', '#393A5A')
-  root.style.setProperty('--lineColor', 'white')
-  root.style.setProperty('--textColor', 'white')
-  root.style.setProperty('--toolbarButtonColor', '#393A5A')
+  root.style.setProperty('--backgroundColor', '#1a2b3c')
+  root.style.setProperty('--headerColor', '#0f1419')
+  root.style.setProperty('--footerColor', '#0f1419')
+  root.style.setProperty('--itemColor', '#2f3e4f')
+  root.style.setProperty('--lineColor', '#6b7280')
+  root.style.setProperty('--textColor', '#e6e6e2')
 
   // Then, apply the definition settings
-  Object.keys(def.style.color).forEach((key) => {
-    // Fix for change from backgroundColor to background-color in v4
-    if (key === 'backgroundColor') key = 'background-color'
+  for (const key of Object.keys(def?.style?.color ?? {})) {
     document.documentElement.style.setProperty('--' + key, def.style.color[key])
-  })
+  }
 
-  if ('headerColor' in def.style.color) {
+  if (def.style.color?.headerColor) {
     // Configure the status bar for PWAs
     document.querySelector('meta[name="theme-color"]').setAttribute('content', def.style.color.headerColor)
     document.querySelector('meta[name="msapplication-TileColor"]').setAttribute('content', def.style.color.headerColor)
   } else {
-    document.querySelector('meta[name="theme-color"]').setAttribute('content', '#000')
-    document.querySelector('meta[name="msapplication-TileColor"]').setAttribute('content', '#000')
+    document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0f1419')
+    document.querySelector('meta[name="msapplication-TileColor"]').setAttribute('content', '#0f1419')
   }
 
   // Backgorund settings
   if ('background' in def.style) {
-    exCommon.setBackground(def.style.background, root, '#719abf')
+    exCommon.setBackground(def.style.background, root, '#1a2b3c')
   }
 
   // Font
@@ -92,24 +82,10 @@ function loadDefinition (def) {
   // Find the default language
   defaultLang = def.language_order[0]
 
-  // Load the CSV file containing the timeline data and use it to build the timeline entries.
-  exCommon.makeHelperRequest({
-    method: 'GET',
-    endpoint: '/content/' + def.spreadsheet,
-    rawResponse: true,
-    noCache: true
-  })
-    .then((response) => {
-      $('#timelineContainer').empty()
-      const csvAsJSON = exCommon.csvToJSON(response).json
-      $(document).data('spreadsheet', csvAsJSON)
-      localize(defaultLang)
-    })
-
   // Set up the attractor
-  inactivityTimeout = def.inactivity_timeout || 30
-  if ('attractor' in def && def.attractor.trim() !== '') {
-    const fileType = exCommon.guessMimetype(def.attractor)
+  inactivityTimeout = parseInt(def?.inactivity_timeout ?? 30)
+  if ((def?.attractor ?? '').trim() !== '') {
+    const fileType = exFiles.guessMimetype(def.attractor)
     if (['image', 'video'].includes(fileType)) {
       setAttractor(def.attractor, fileType)
     }
@@ -120,6 +96,7 @@ function loadDefinition (def) {
   localize(defaultLang)
   // Send a thumbnail to the helper
   setTimeout(() => exCommon.saveScreenshotAsThumbnail(def.uuid + '.png'), 100)
+  resetInactivityTimer()
 }
 
 function adjustFontSize (increment) {
@@ -127,108 +104,130 @@ function adjustFontSize (increment) {
 
   const root = document.querySelector(':root')
   let fontModifierStr = root.style.getPropertyValue('--fontModifier')
-  if (fontModifierStr === '') {
-    fontModifierStr = '1'
-  }
+  if (fontModifierStr === '') fontModifierStr = '1'
   let fontModifier = parseFloat(fontModifierStr)
 
   fontModifier += increment
   if (fontModifier < 1) {
     fontModifier = 1
   }
+
   root.style.setProperty('--fontModifier', fontModifier)
 }
 
 function localize (lang) {
-  // Use the spreadhseet and defintion to set the content to the given language
+  // Set the content to the given language
 
-  const spreadsheet = $(document).data('spreadsheet')
-  const definition = $(document).data('timelineDefinition')
+  exCommon.configureLanguage(lang)
+
+  const definition = exCommon.config.definition
+
   const header = document.getElementById('headerText')
   const root = document.querySelector(':root')
 
   document.getElementById('timelineContainer').innerHTML = ''
-  if (spreadsheet != null) {
-    spreadsheet.forEach((entry) => {
-      createTimelineEntry(entry, lang)
-    })
+
+  for (const itemUUID of definition.content_order) {
+    createTimelineEntry(itemUUID, lang)
   }
 
   const headerText = exMarkdown.formatText(definition?.languages?.[lang]?.header_text ?? '', { string: true, removeParagraph: true })
 
   header.innerHTML = headerText
   if (headerText !== '') {
-    root.style.setProperty('--header-height', '7.5vh')
+    root.style.setProperty('--header-height', '7.5vmax')
     textFit(header)
   } else {
-    root.style.setProperty('--header-height', '0vh')
+    root.style.setProperty('--header-height', '0vmax')
   }
 }
 
-function createTimelineEntry (entry, langCode) {
-  // Take the provided object and turn it into a set of HTML elements representing the entry.
+function createTimelineEntry (itemUUID, langCode) {
+  // Build an HTML element for the given timeline item
 
-  const langDef = $(document).data('timelineDefinition').languages[langCode]
+  const item = exCommon.config.definition.content[itemUUID]
+  const localization = exCommon.config.definition.languages[langCode]?.content?.[itemUUID]
 
   const li = document.createElement('li')
 
   const container = document.createElement('div')
-  container.classList = 'timeline-element'
+  container.classList = 'timeline-element row m-0'
   li.appendChild(container)
 
   // Text
-  const flex1 = document.createElement('div')
-  flex1.style.flexBasis = '0'
-  flex1.style.flexGrow = '1'
-  container.appendChild(flex1)
+  const textCol = document.createElement('div')
+  textCol.classList = 'col text-col'
+  container.appendChild(textCol)
 
   const timeEl = document.createElement('time')
-  timeEl.innerHTML = exMarkdown.formatText(entry[langDef.time_key], { string: true, removeParagraph: true })
-  flex1.appendChild(timeEl)
+  timeEl.innerHTML = exMarkdown.formatText(localization?.time ?? '', { string: true, removeParagraph: true })
+  textCol.appendChild(timeEl)
 
   const title = document.createElement('div')
-  if (parseInt(entry.Level) < 1) {
+  if (parseInt(item.Level) < 1) {
     title.classList = 'size1'
-  } else if (parseInt(entry.Level) > 4) {
+  } else if (parseInt(item.Level) > 4) {
     title.classList = 'size4'
   } else {
-    title.classList = 'size' + parseInt(entry[langDef.level_key] ?? 4)
+    title.classList = 'size' + String(item?.level ?? 4)
   }
   title.classList.add('timeline-item-header')
-  title.innerHTML = exMarkdown.formatText(entry[langDef.title_key], { string: true, removeParagraph: true })
-  flex1.appendChild(title)
+  title.innerHTML = exMarkdown.formatText(localization?.title ?? '', { string: true, removeParagraph: true })
+  textCol.appendChild(title)
 
   const bodyEl = document.createElement('p')
   bodyEl.classList = 'timeline-body'
-  bodyEl.innerHTML = exMarkdown.formatText(entry[langDef.short_text_key], { string: true, removeParagraph: true })
-  flex1.appendChild(bodyEl)
+  bodyEl.innerHTML = exMarkdown.formatText(localization?.description ?? '', { string: true, removeParagraph: true })
+  textCol.appendChild(bodyEl)
 
-  // Image
-  const imageName = entry[langDef.image_key]
-  if (imageName != null && imageName.trim() !== '') {
-    // Make the timeline element wider to accomdate the image
-    container.classList.add('with-image')
+  // Media
+  if (item.filename != null && item.filename.trim() !== '') {
+    // Make the timeline element wider to accomdate the media
+    container.classList.add('with-media')
 
-    const flex2 = document.createElement('div')
-    flex2.style.flexBasis = '0'
-    flex2.style.flexGrow = '1'
-    flex2.style.alignSelf = 'center'
-    container.appendChild(flex2)
+    const mediaCol = document.createElement('div')
+    mediaCol.classList = 'col px-0 media-col'
+    container.appendChild(mediaCol)
 
-    const image = document.createElement('img')
-    image.style.width = '100%'
-    // image.src = 'thumbnails/' + imageName
-    // Calculate size of image
-    const width = window.innerWidth
-    const height = window.innerHeight
-    let thumbRes
-    if (width > height) {
-      thumbRes = Math.round(width * 0.25)
-    } else {
-      thumbRes = Math.round(width * 0.5)
+    const mimetype = exFiles.guessMimetype(item.filename)
+    if (mimetype === 'image') {
+      const image = document.createElement('img')
+      image.style.width = '100%'
+      image.style.height = '100%'
+      image.style.objectFit = item?.fill_mode ?? 'cover'
+      if ((item?.fill_mode ?? 'cover') === 'contain') {
+        image.classList.add('media-contain')
+      }
+      // Calculate size of image
+      const width = window.innerWidth * window.devicePixelRatio
+      const height = window.innerHeight * window.devicePixelRatio
+      let thumbRes
+      if (width > height) {
+        thumbRes = Math.round(width * 0.25)
+      } else {
+        thumbRes = Math.round(width * 0.5)
+      }
+      image.src = exCommon.config.helperAddress + exConfig.api + '/files/' + item.filename + '/thumbnail/' + String(thumbRes)
+      mediaCol.appendChild(image)
+    } else if (mimetype === 'video') {
+      const video = document.createElement('video')
+      video.style.width = '100%'
+      video.style.height = '100%'
+      video.className = 'card-img-top'
+      video.style.objectFit = item?.fill_mode ?? 'cover'
+      if ((item?.fill_mode ?? 'cover') === 'contain') {
+        video.classList.add('media-contain')
+      }
+      video.src = '/content/' + item.filename
+
+      video.muted = true
+      video.loop = true
+      video.autoplay = true
+      video.playsInline = true
+      video.setAttribute('webkit-playsinline', true)
+      video.setAttribute('disablePictureInPicture', true)
+      mediaCol.appendChild(video)
     }
-    image.src = exCommon.config.helperAddress + '/files/' + imageName + '/thumbnail/' + String(thumbRes)
-    flex2.appendChild(image)
   }
 
   document.getElementById('timelineContainer').appendChild(li)
@@ -236,15 +235,15 @@ function createTimelineEntry (entry, langCode) {
 }
 
 // check if an element is in viewport
-// http://stackoverflow.com/questions/123999/how-to-tell-if-a-dom-element-is-visible-in-the-current-viewport
 function isElementInViewport (el) {
   const rect = el.getBoundingClientRect()
   return (
-    rect.top >= 0 &&
-      rect.left >= 0 &&
-      rect.bottom <=
-        (window.innerHeight || document.documentElement.clientHeight) &&
-      rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+    // Horizontal Check
+    rect.right >= 0 &&
+    rect.left <= (window.innerWidth || document.documentElement.clientWidth) &&
+    // Vertical Check
+    rect.bottom >= 0 &&
+    rect.top <= (window.innerHeight || document.documentElement.clientHeight)
   )
 }
 
@@ -254,10 +253,13 @@ function configureVisibleElements () {
   const items = document.querySelectorAll('.timeline li')
 
   for (let i = 0; i < items.length; i++) {
+    const video = items[i].querySelector('video')
     if (isElementInViewport(items[i])) {
       items[i].classList.add('in-view')
+      if (video) video.play()
     } else {
       items[i].classList.remove('in-view')
+      if (video) video.pause()
     }
   }
 }
@@ -265,11 +267,11 @@ function configureVisibleElements () {
 function setAttractor (filename, fileType) {
   attractorAvailable = true
   if (fileType === 'video') {
-    document.getElementById('attractorVideo').src = 'content/' + filename
+    document.getElementById('attractorVideo').src = '/content/' + filename
     document.getElementById('attractorImage').style.display = 'none'
     document.getElementById('attractorVideo').style.display = 'block'
   } else if (fileType === 'image') {
-    document.getElementById('attractorImage').src = 'content/' + filename
+    document.getElementById('attractorImage').src = '/content/' + filename
     document.getElementById('attractorImage').style.display = 'block'
     document.getElementById('attractorVideo').style.display = 'none'
   } else {
@@ -313,12 +315,13 @@ function showAttractor () {
 window.addEventListener('load', configureVisibleElements)
 window.addEventListener('resize', configureVisibleElements)
 document.getElementById('timeline-pane').addEventListener('scroll', configureVisibleElements)
-$('#fontSizeDecreaseButton').click(function () {
+document.getElementById('fontSizeDecreaseButton').addEventListener('click', () => {
   adjustFontSize(-0.1)
 })
-$('#fontSizeIncreaseButton').click(function () {
+document.getElementById('fontSizeIncreaseButton').addEventListener('click', () => {
   adjustFontSize(0.1)
 })
+
 document.getElementById('attractorOverlay').addEventListener('click', hideAttractor)
 document.addEventListener('touchstart', resetInactivityTimer)
 document.addEventListener('click', resetInactivityTimer)
@@ -339,7 +342,7 @@ exCommon.configureApp({
   parseUpdate: updateFunc
 })
 
-let currentDefintion = ''
+const currentDefintion = ''
 
 adjustFontSize(-100) // Make sure the font modifier is at 1 to start
 hideAttractor()

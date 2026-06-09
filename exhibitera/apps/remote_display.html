@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="description" content="">
+    <meta name="author" content="Morgan Rehnberg">
+    <link rel=icon href="/_static/favicon.svg" type="image/svg+xml">
+    <link rel="manifest" href="_static/manifest.json" />
+
+    <title>Exhibitera Apps</title>
+
+    <link rel="stylesheet" href="css/bootstrap_5_3/bootstrap.min.css">
+
+    <style>
+      body {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0;
+      }
+
+      #welcomeDiv {
+        width: 80%;
+        max-width: 600px; 
+      }
+
+      @media (min-width: 768px) {
+        #welcomeDiv {
+          width: 50%;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+
+  <div id="helperConnectionWarning" class="position-fixed row w-100" style="display: none; z-index:999;">
+    <div class="alert alert-danger col-auto mx-auto text-center" role="alert">
+      <H4>Error: Cannot connect to Exhibitera Apps!</H4>
+      Make sure the app is running at <span id='helperConnectionWarningAddress'></span> and then refresh the page.
+    </div>
+  </div>
+
+<main class="w-100"> <div id="welcomeDiv" class="alert alert-primary mx-auto">    
+  <div class="h3 text-center"><img src='/_static/Apps_logo.svg' style="width: 80%;"></div>
+  <p>
+    Exhibitera Apps is configured to use a remote display. Click the button below or access <span id="url"></span> in a web browser to get started.
+  </p>
+  <div class="text-center">
+    <a id="settingsButton" target="_blank" class="btn btn-success">Get started</a>
+  </div>  
+</main>
+
+
+  <script src="js/bootstrap_5_3/bootstrap.bundle.min.js"></script>
+  <script src="js/platform.js"></script>
+  <script>
+
+    // Set color mode
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      document.querySelector('html').setAttribute('data-bs-theme', 'dark')
+    } else {
+      document.querySelector('html').setAttribute('data-bs-theme', 'light')
+    }
+
+    document.getElementById('url').innerHTML = `<a href="${window.location.origin}" target="_blank">${window.location.origin}</a>`
+    document.getElementById('settingsButton').href = window.location.origin
+  </script>
+  </body>
+
+</html>

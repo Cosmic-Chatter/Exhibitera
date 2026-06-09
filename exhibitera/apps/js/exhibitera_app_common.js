@@ -1,5 +1,8 @@
 /* global platform, html2canvas */
 
+import exConfig from '../../common/config.js'
+import * as exUtilities from '../../common/utilities.js'
+
 export const config = {
   permissions: {
     audio: true,
@@ -10,24 +13,34 @@ export const config = {
   },
   autoplayAudio: false,
   connectionChecker: null, // A function to check the connection with Hub and act on it
-  exhibiteraAppID: '',
+  exhibiteraAppID: 'none',
   currentDefinition: '',
   currentExhibit: 'Default',
   currentInteraction: false,
+  definitionUUID: '',
   definition: {}, // Holds the current definition
   definitionLoader: null, // A function used by loadDefinition() to set up the specific app.
-  errorDict: {},
   fontCache: {},
   group: 'Default',
   helperAddress: 'http://localhost:8000',
   id: 'TEMP ' + String(new Date().getTime()),
+  notifications: {},
   remoteDisplay: false, // false == we are using the webview app, true == browser
   serverAddress: '',
-  softwareVersion: 5.3,
+  software_version: {}, // format of {major: 6, minor: 0, patch: 0}
   standalone: false, // false == we are using Hub
   updateParser: null, // Function used by readUpdate() to parse app-specific updates
   uuid: ''
 }
+
+// Load the current software version
+const versionResponse = await exUtilities.makeRequest({
+  api: '',
+  method: 'GET',
+  url: window.location.origin,
+  endpoint: '/_static/semantic_version.json'
+})
+config.software_version = versionResponse.version
 
 // platform.js might not be included in 3rd-party apps
 try {
@@ -36,15 +49,17 @@ try {
     browser: platform.name + ' ' + platform.version
   }
 } catch {
-  console.log('script platform.js not found. Include this script to send additional details to Hub.')
+  console.log('Script platform.js not found. Include this script to send additional details to Hub.')
+  config.platformDetails = {}
 }
 
 makeHelperRequest({
   method: 'GET',
-  endpoint: '/system/getPlatformDetails'
+  endpoint: '/system/platformDetails'
 })
   .then((result) => {
     config.platformDetails.outdated = result?.outdated ?? false
+    config.platformDetails.exhibitera_version = result?.exhibitera_version ?? {}
   })
 
 // Fix bootstrap modal accessibility issue
@@ -64,8 +79,8 @@ export function configureApp (opt = {}) {
   } else {
     console.log('exhibitera_app_common: configureApp: you must specify the option loadDefinition')
   }
-  if ('name' in opt) config.exhibiteraAppID = opt.name
-  if ('parseUpdate' in opt) config.updateParser = opt.parseUpdate
+  if (opt.name) config.exhibiteraAppID = opt.name
+  if (opt.parseUpdate) config.updateParser = opt.parseUpdate
 
   const searchParams = parseQueryString()
   if (searchParams.has('standalone')) {
@@ -81,6 +96,25 @@ export function configureApp (opt = {}) {
   // We are displaying this for real
     askForDefaults()
       .then(() => {
+        // If we've already got a definition, load it
+        if (config.definitionUUID && config.definitionUUID !== '') {
+          loadDefinition(config.definitionUUID)
+            .then((result) => {
+              config.definition = result.definition
+              config.definitionLoader(result.definition)
+            })
+        }
+
+        // Listen for fullscreen key, if not using a remote display
+        if (config.remoteDisplay === false) {
+          window.addEventListener('keydown', function (e) {
+            if (e.key === 'F11') {
+              e.preventDefault()
+              window.pywebview.api.toggle_fullscreen()
+            }
+          })
+        }
+
         if (config.standalone === false) {
           // Using Hub
           sendPing()
@@ -88,11 +122,7 @@ export function configureApp (opt = {}) {
           if (config.connectionChecker != null) setInterval(config.connectionChecker, 500)
         } else {
           // Not using Hub
-          loadDefinition(config.currentDefinition)
-            .then((result) => {
-              config.definition = result.definition
-              config.definitionLoader(result.definition)
-            })
+          setInterval(checkForHelperUpdates, 500)
         }
       })
     // Hide the cursor
@@ -100,57 +130,40 @@ export function configureApp (opt = {}) {
   }
 }
 
-export function makeRequest (opt) {
-  // Function to make a request to a server and return a Promise with the result
-  // 'opt' should be an object with all the necessry options
+export function configureLanguage (code) {
+  // Configure the app for the given language.
 
-  return new Promise(function (resolve, reject) {
-    const xhr = new XMLHttpRequest()
-    if ('withCredentials' in opt && opt.withCredentials === true) xhr.withCredentials = true
-    const path = opt.url + opt.endpoint
-    if ('noCache' in opt && opt.noCache === true) {
-      xhr.open(opt.method, path + (/\?/.test(path) ? '&' : '?') + new Date().getTime(), true)
-    } else {
-      xhr.open(opt.method, path, true)
-    }
-    xhr.timeout = opt.timeout ?? 2000 // ms
-    xhr.onload = function () {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        if ('rawResponse' in opt && opt.rawResponse === true) {
-          resolve(xhr.responseText)
-        } else {
-          resolve(JSON.parse(xhr.responseText))
-        }
-      } else {
-        console.log(xhr)
-        reject(new Error(`Unable to complete ${opt.method} to ${opt.url + opt.endpoint} with data`, opt.params))
-      }
-    }
-    xhr.onerror = function () {
-      console.log(xhr)
-      reject(new Error(`Unable to complete $opt.{method} to ${opt.url + opt.endpoint} with data`, opt.params))
-    }
-    let paramText = null
-    if (opt.params != null) {
-      xhr.setRequestHeader('Content-Type', 'application/json')
-      paramText = JSON.stringify(opt.params)
-    }
-    xhr.send(paramText)
-  })
+  if (code == null) return
+
+  const bsStylesheetRTL = document.getElementById('bsStylesheetRTL')
+  const bsStylesheetLTR = document.getElementById('bsStylesheetLTR')
+
+  document.documentElement.lang = code
+  if (code.startsWith('ar') || code.startsWith('he')) {
+    // Enable RTL support
+    document.documentElement.dir = 'rtl'
+    bsStylesheetRTL.disabled = false
+    bsStylesheetLTR.disabled = true
+  } else {
+    // Enable LTR support
+    document.documentElement.dir = 'ltr'
+    bsStylesheetRTL.disabled = true
+    bsStylesheetLTR.disabled = false
+  }
 }
 
 export function makeServerRequest (opt) {
-  // Shortcut for making a server request and returning a Promise
+  // Shortcut for making a Hub request and returning a Promise
 
   opt.url = config.serverAddress
-  return makeRequest(opt)
+  return exUtilities.makeRequest(opt)
 }
 
 export function makeHelperRequest (opt) {
-  // Shortcut for making a server request and returning a Promise
+  // Shortcut for making an Apps request and returning a Promise
 
   opt.url = config.helperAddress
-  return makeRequest(opt)
+  return exUtilities.makeRequest(opt)
 }
 
 export function parseQueryString () {
@@ -160,27 +173,52 @@ export function parseQueryString () {
   return new URLSearchParams(queryString)
 }
 
+export function createNotification (message, type = 'info', notificaitonUUID = null) {
+  // Create a notificaiton and add it to config.notifications
+  // `type` should be one of ['error', 'warning', 'info']
+
+  if (!notificaitonUUID) notificaitonUUID = exUtilities.uuid()
+
+  const notificaiton = {
+    message,
+    type,
+    uuid: notificaitonUUID
+  }
+  config.notifications[notificaitonUUID] = notificaiton
+}
+
+export function clearNotifications () {
+  // Clear all stored notifications
+
+  config.notifications = {}
+}
+
+export function clearNotification (notificaitonUUID) {
+  // Clear the given notification
+
+  delete config.notifications[notificaitonUUID]
+}
+
 export function sendPing () {
   // Contact Hub and ask for any updates
+
   if (config.serverAddress === '') {
     console.log('Aborting ping... no config.serverAddress')
     return
   }
 
+  config.notifications.outdated_os = config?.platformDetails?.outdated ?? false
+
   const pingRequest = function () {
     const requestDict = {
-      id: config.id,
       uuid: config.uuid,
+      api_level: exConfig.api_level, // The level of the API Apps is using
       exhibiteraAppID: config.exhibiteraAppID,
-      helperAddress: config.helperAddress,
+      helper_address: config.helperAddress,
+      notifications: config.notifications,
       permissions: config.permissions,
       platform_details: config.platformDetails,
       currentInteraction: config.currentInteraction
-    }
-    // See if there is an error to report
-    const errorString = JSON.stringify(config.errorDict)
-    if (errorString !== '') {
-      requestDict.error = errorString
     }
 
     makeServerRequest(
@@ -190,6 +228,7 @@ export function sendPing () {
         params: requestDict
       })
       .then(readServerUpdate)
+      .catch(handlePingError)
   }
 
   // First, check the helper for updates, then send the ping
@@ -198,23 +237,29 @@ export function sendPing () {
     .catch(pingRequest)
 }
 
+function handlePingError () {
+  // Called when a ping fails, usually because the conntection to Hub was lost.
+
+  // Load the saved definition
+  loadDefinition(config.definitionUUID)
+}
+
 export function wakeDisplay () {
   // Send a message to the local helper process and ask it to sleep the
   // displays
 
   makeHelperRequest({
     method: 'GET',
-    endpoint: '/wakeDisplay'
+    endpoint: '/system/wakeDisplay'
   })
 }
 
 function sleepDisplay () {
-  // Send a message to the local helper process and ask it to sleep the
-  // displays
+  // Send a message to the local helper process and ask it to sleep the displays
 
   makeHelperRequest({
     method: 'GET',
-    endpoint: '/sleepDisplay'
+    endpoint: '/system/sleepDisplay'
   })
 }
 
@@ -223,7 +268,7 @@ export function askForRestart () {
 
   makeHelperRequest({
     method: 'GET',
-    endpoint: '/restart'
+    endpoint: '/system/restart'
   })
 }
 
@@ -232,27 +277,24 @@ export function askForShutdown () {
 
   makeHelperRequest({
     method: 'GET',
-    endpoint: '/shutdown'
+    endpoint: '/system/shutdown'
   })
 }
 
-function readServerUpdate (update) {
-  // Function to read a message from Hub and take action based on the contents
-  // 'update' should be an object
-
-  let sendUpdate = false
+function readUpdate (update) {
+  // Read an dictionary containing updates and act on them
 
   for (const cmd of update?.commands ?? []) {
     if (cmd === 'restart') {
       askForRestart()
     } else if (cmd === 'shutdown' || cmd === 'power_off') {
       askForShutdown()
-    } else if (cmd === 'sleepDisplay') {
+    } else if (cmd === 'sleep_display') {
       sleepDisplay()
-    } else if (cmd === 'wakeDisplay' || cmd === 'power_on') {
+    } else if (cmd === 'wake_display' || cmd === 'power_on') {
       wakeDisplay()
     } else if (cmd === 'refresh_page') {
-      if ('refresh' in config.permissions && config.permissions.refresh === true) {
+      if (config?.permissions?.refresh === true) {
         location.reload()
       }
     } else if (cmd === 'reloadDefaults') {
@@ -260,66 +302,89 @@ function readServerUpdate (update) {
     } else if (cmd.slice(0, 15) === 'set_dmx_scene__') {
       makeHelperRequest({
         method: 'GET',
-        endpoint: '/DMX/setScene/' + cmd.slice(15)
+        endpoint: '/DMX/scene/' + cmd.slice(15) + '/set'
       })
     } else {
       console.log(`Command not recognized: ${cmd}`)
     }
   }
 
-  if ('id' in update) {
-    config.id = update.id
+  if (update.permissions) {
+    config.permissions = update.permissions
   }
-  if ('group' in update) {
+
+  if (update?.software_update?.update_available) {
+    config.notifications.software_update = update.software_update
+  }
+}
+
+function readServerUpdate (update) {
+  // Function to read a message from Hub and take action based on the contents
+  // 'update' should be an object
+
+  readUpdate(update)
+
+  const sendUpdate = false
+  const updateDict = {}
+
+  if (update.id) {
+    if (config.id !== update.id) {
+      config.id = update.id
+      updateDict.id = update.id
+    }
+  }
+  if (update.group) {
     config.group = update.group
   }
-  if (('server_ip_address' in update) && ('server_port' in update)) {
+  if ((update.server_ip_address) && (update.server_port)) {
     config.serverAddress = 'http://' + update.server_ip_address + ':' + update.server_port
   }
-  if ('helperAddress' in update) {
+  if (update.helperAddress) {
     config.helperAddress = update.helperAddress
   }
-  if ('current_exhibit' in update) {
-    if (update.currentExhibit !== config.currentExhibit) {
-      sendUpdate = true
+  if (update.current_exhibit) {
+    if (update.current_exhibit !== config.currentExhibit) {
+      updateDict.current_exhibit = update.current_exhibit
       config.currentExhibit = update.current_exhibit
     }
   }
-  if ('missingContentWarnings' in update) {
-    config.errorDict.missingContentWarnings = update.missingContentWarnings
+
+  if (update.definition) {
+    if (update.definition !== config.definitionUUID) {
+      updateDict.definition = update.definition
+    }
   }
 
-  if ('permissions' in update) {
-    config.permissions = update.permissions
-  }
-  if (update?.software_update?.update_available) {
-    config.errorDict.software_update = update.software_update
-  }
-  if (sendUpdate) {
-    sendConfigUpdate(update)
+  // Save any changes before we might reload the page to switch apps
+  if (Object.keys(updateDict).length > 0) {
+    sendConfigUpdate(updateDict)
   }
 
   // Check the definition file for a changed app.
-  if (config.exhibiteraAppID !== 'dmx_control' && 'definition' in update && update.definition !== config.currentDefinition) {
-    config.currentDefinition = update.definition
+  let definitionChanged = false
+  if (config.exhibiteraAppID !== 'dmx_control' && update.definition && update.definition !== config.definitionUUID) {
+    config.definitionUUID = update.definition
+    definitionChanged = true
     makeHelperRequest({
       method: 'GET',
       endpoint: '/definitions/' + update.definition + '/load'
     })
       .then((result) => {
-        if ('success' in result && result.success === false) return
+        if (result?.success !== true) return
 
         const def = result.definition
-        if ('app' in def && def.app !== '') {
-          if (
-            (def.app !== config.exhibiteraAppID) ||
-          (config.exhibiteraAppID === 'other' && def.path !== location.pathname.slice(1))
-          ) {
-            let otherPath = ''
-            if (def.app === 'other') otherPath = def.path
-            gotoApp(def.app, otherPath)
+        if (def.app && def.app !== '') {
+          if (def.app !== config.exhibiteraAppID) {
+            gotoApp(def.app)
           }
         }
+      })
+  }
+
+  if (definitionChanged) {
+    loadDefinition(config.definitionUUID)
+      .then((result) => {
+        config.definitionLoader(result.definition)
       })
   }
 
@@ -334,47 +399,18 @@ function readHelperUpdate (update, changeApp = true) {
   // 'update' should be an object
   // Set changeApp === false to suppress changing the app if the definition has changed
 
-  const sendUpdate = false
-
-  for (const cmd of update?.commands ?? []) {
-    if (cmd === 'restart') {
-      askForRestart()
-    } else if (cmd === 'shutdown' || cmd === 'power_off') {
-      askForShutdown()
-    } else if (cmd === 'sleepDisplay') {
-      sleepDisplay()
-    } else if (cmd === 'wakeDisplay' || cmd === 'power_on') {
-      wakeDisplay()
-    } else if (cmd === 'refresh_page') {
-      if ('refresh' in config.permissions && config.permissions.refresh === true) {
-        location.reload()
-      }
-    } else if (cmd === 'reloadDefaults') {
-      askForDefaults()
-    } else if (cmd.slice(0, 15) === 'set_dmx_scene__') {
-      makeHelperRequest({
-        method: 'GET',
-        endpoint: '/DMX/setScene/' + cmd.slice(15)
-      })
-    } else {
-      console.log(`Command not recognized: ${cmd}`)
-    }
-  }
+  readUpdate(update)
 
   // App settings
   if (update?.app?.id) config.id = update.app.id
-  if (update?.app?.definition) config.definition = update.app.definition
+  if (update?.app?.definition) config.definitionUUID = update.app.definition
+
   if (update?.app?.uuid) config.uuid = update.app.uuid
 
   if ((update?.control_server?.ip_address) && (update?.control_server?.port)) {
     config.serverAddress = 'http://' + update.control_server.ip_address + ':' + update.control_server.port
   }
-  if ('permissions' in update) {
-    config.permissions = update.permissions
-  }
-  if ('software_update' in update) {
-    if (update.software_update.update_available === true) { config.errorDict.software_update = update.software_update }
-  }
+
   if (update?.system?.remote_display) {
     config.remoteDisplay = update.system.remote_display
   }
@@ -382,37 +418,37 @@ function readHelperUpdate (update, changeApp = true) {
     config.standalone = update.system.standalone
   }
 
-  if (sendUpdate) {
-    sendConfigUpdate(update)
-  }
-
   // After we have saved any updates, see if we should change the app based on the current definition
+
+  let definitionChanged = false
   if (
     changeApp === true &&
-    'app' in update &&
-    'definition' in update.app &&
-    update.app.definition !== config.currentDefinition &&
-    config.standalone === true
+    config.standalone === true &&
+    update?.app?.definition &&
+    update.app.definition !== config.definitionUUID
   ) {
-    config.currentDefinition = update.app.definition
+    config.definitionUUID = update.app.definition
+    definitionChanged = true
     makeHelperRequest({
       method: 'GET',
       endpoint: '/definitions/' + update.app.definition + '/load'
     })
       .then((result) => {
-        if ('success' in result && result.success === false) return
+        if (result?.success !== true) return
 
         const def = result.definition
-        if ('app' in def && def.app !== '') {
-          if (
-            (def.app !== config.exhibiteraAppID) ||
-          (config.exhibiteraAppID === 'other' && def.path !== location.pathname.slice(1))
-          ) {
-            let otherPath = ''
-            if (def.app === 'other') otherPath = def.path
-            gotoApp(def.app, otherPath)
+        if (def.app && def.app !== '') {
+          if (def.app !== config.exhibiteraAppID) {
+            gotoApp(def.app)
           }
         }
+      })
+  }
+
+  if (definitionChanged) {
+    loadDefinition(config.definitionUUID)
+      .then((result) => {
+        config.definitionLoader(result.definition)
       })
   }
 
@@ -434,13 +470,12 @@ function checkAgain () {
 }
 
 export function askForDefaults (changeApp = true) {
-  // Send a message to the local helper and ask for the latest configuration
-  // defaults, then use them.
+  // Send a message to the local helper and ask for the latest configuration, then use it.
   // Set changeApp === false to supress changing the app based on the current definition
 
   return makeHelperRequest({
     method: 'GET',
-    endpoint: '/getDefaults'
+    endpoint: '/system/configuration'
   })
     .then((update) => {
       readHelperUpdate(update, changeApp)
@@ -452,7 +487,7 @@ export function checkForHelperUpdates () {
 
   return makeHelperRequest({
     method: 'GET',
-    endpoint: '/getUpdate',
+    endpoint: '/system/update',
     timeout: 500
   })
     .then(readHelperUpdate)
@@ -462,45 +497,25 @@ export function sendConfigUpdate (update) {
   // Send a message to the helper with the latest configuration to set as
   // the default
 
-  const defaults = { content: update.content, current_exhibit: update.current_exhibit }
+  const defaults = { app: {} }
+  if (update?.id) defaults.app.id = update.id
+  if (update?.definition) defaults.app.definition = update.definition
+  if (update?.current_exhibit) defaults.current_exhibit = update.current_exhibit
 
   const requestDict = { defaults }
 
   makeHelperRequest(
     {
       method: 'POST',
-      endpoint: '/setDefaults',
+      endpoint: '/system/configuration/update',
       params: requestDict
     })
 }
 
-export function arraysEqual (arr1, arr2) {
-  // Function to check if two arrays have the same elements in the same order
-
-  if (arr1.length !== arr2.length) {
-    return false
-  } else {
-    for (let i = 0; i < arr1.length; i++) {
-      if (arr1[i] !== arr2[i]) {
-        return false
-      }
-    }
-    return true
-  }
-}
-
-export function stringToBool (str) {
-  // Parse a given string and return an appropriate bool
-
-  if (typeof str === 'boolean') {
-    return str
-  }
-
-  return ['True', 'true', 'TRUE', '1', 'yes', 'Yes', 'YES'].includes(str)
-}
-
 export function sendAnalytics (data) {
   // Take the provided dictionary of data and send it to Hub
+
+  if (config.uuid === '') return
 
   // Append the date and time of this recording
   const tzoffset = (new Date()).getTimezoneOffset() * 60000 // Time zone offset in milliseconds
@@ -510,166 +525,52 @@ export function sendAnalytics (data) {
   data.exhibit = config.current_exhibit
 
   const requestDict = {
-    data,
-    name: config.id
+    data
   }
 
   makeServerRequest(
     {
       method: 'POST',
-      endpoint: '/tracker/submitAnalytics',
+      endpoint: '/analytics/' + config.uuid + '/append',
       params: requestDict,
       timeout: 5000
     })
 }
 
-export function csvToJSON (csv) {
-  // From https://stackoverflow.com/questions/59016562/parse-csv-records-in-to-an-array-of-objects-in-javascript
-
-  const lines = csv.split('\n')
-  const result = []
-  const headers = lines[0].split(',')
-
-  for (let i = 1; i < lines.length; i++) {
-    const obj = {}
-
-    if (lines[i] === undefined || lines[i].trim() === '') {
-      continue
-    }
-
-    // regex to split on comma, but ignore inside of ""
-    const words = splitCsv(lines[i])
-    for (let j = 0; j < words.length; j++) {
-      // Clean up "" used to escape commas in the CSV
-      let word = words[j].trim()
-      if (word.slice(0, 1) === '"' && word.slice(-1) === '"') {
-        word = word.slice(1, -1)
-      }
-
-      word = word.replaceAll('""', '"')
-      obj[headers[j].trim()] = word.trim()
-    }
-
-    result.push(obj)
-  }
-  const detectBad = detectBadCSV(result)
-
-  if (detectBad.error === true) {
-    return {
-      json: result,
-      error: true,
-      error_index: detectBad.error_index
-    }
-  }
-
-  return { json: result, error: false }
-}
-
-function detectBadCSV (jsonArray) {
-  // Take the JSON array from csvToJSON and check if it seems properly formed.
-
-  const lengthCounts = {}
-  const lengthList = []
-  jsonArray.forEach((el) => {
-    // Count the number of fields (which should be the same for each row)
-    const length = Object.keys(el).length
-    if (length in lengthCounts) {
-      lengthCounts[length] += 1
-    } else {
-      lengthCounts[length] = 1
-    }
-    lengthList.push(length)
-  })
-
-  // Assume that the length that occurs most often is the correct one
-  const mostCommon = parseInt(Object.keys(lengthCounts).reduce((a, b) => lengthCounts[a] > lengthCounts[b] ? a : b))
-  const badIndices = []
-  lengthList.forEach((el, i) => {
-    if (el !== mostCommon) badIndices.push(i)
-  })
-  if (badIndices.length > 0) {
-    return { error: true, error_index: badIndices[0] }
-  }
-  return { error: false }
-}
-
-function splitCsv (str) {
-  // From https://stackoverflow.com/a/31955570
-
-  return str.split(',').reduce((accum, curr) => {
-    if (accum.isConcatting) {
-      accum.soFar[accum.soFar.length - 1] += ',' + curr
-    } else {
-      accum.soFar.push(curr)
-    }
-    if (curr.split('"').length % 2 === 0) {
-      accum.isConcatting = !accum.isConcatting
-    }
-    return accum
-  }, { soFar: [], isConcatting: false }).soFar
-}
-
-export function gotoApp (app, other = '') {
+export function gotoApp (app) {
   // Change the browser location to point to the given app.
-  console.log(app)
+
   const appLocations = {
-    dmx_control: '/dmx_control.html',
-    image_compare: '/image_compare.html',
-    infostation: '/infostation.html',
-    media_browser: '/media_browser.html',
-    media_player: '/media_player.html',
-    // media_player_kiosk: 'Media Player Kiosk',
-    // sos_kiosk: 'SOS Kiosk',
-    // sos_screen_player: 'SOS Screen Player',
-    timelapse_viewer: '/timelapse_viewer.html',
-    timeline_explorer: '/timeline_explorer.html',
-    voting_kiosk: '/voting_kiosk.html',
-    word_cloud_input: '/word_cloud_input.html',
-    word_cloud_viewer: '/word_cloud_viewer.html'
+    dmx_control: '/dmx_control',
+    image_compare: '/image_compare',
+    infostation: '/infostation',
+    media_browser: '/media_browser',
+    media_player: '/media_player',
+    other: '/other',
+    survey_kiosk: '/survey_kiosk',
+    timelapse_viewer: '/timelapse_viewer',
+    timeline_explorer: '/timeline_explorer',
+    voting_kiosk: '/voting_kiosk',
+    word_cloud_input: '/word_cloud/input',
+    word_cloud_viewer: '/word_cloud/viewer'
   }
-  console.log(config, app, other)
-  if (other !== '') {
-    window.location = config.helperAddress + '/' + other
-  } else {
-    window.location = config.helperAddress + appLocations[app]
-  }
+  window.location = config.helperAddress + appLocations[app]
 }
 
-export function appNameToDisplayName (appName) {
-  const displayNames = {
-    dmx_control: 'DMX Control',
-    image_compare: 'Image Compare',
-    infostation: 'InfoStation',
-    media_browser: 'Media Browser',
-    media_player: 'Media Player',
-    other: 'Other app',
-    settings: 'Settings',
-    timelapse_viewer: 'Timelapse Viewer',
-    timeline_explorer: 'Timeline Explorer',
-    voting_kiosk: 'Voting Kiosk',
-    web_viewer: 'Web Viewer',
-    word_cloud_input: 'Word Cloud Input',
-    word_cloud_viewer: 'word Cloud Viewer'
-  }
-  if (appName in displayNames) {
-    return displayNames[appName]
-  } else return appName
-}
-
-export async function getAvailableDefinitions (appID) {
+export async function getAvailableDefinitions (appID = '') {
   // Ask the helper for all the definition files for the given app and return a Promise with the result.
 
-  return makeHelperRequest({
-    method: 'GET',
-    endpoint: '/definitions/' + appID + '/getAvailable'
-  })
+  let endpoint = '/definitions/app/' + appID
+  if (appID === '') endpoint = '/definitions'
+
+  return makeHelperRequest({ method: 'GET', endpoint })
 }
 
 export async function writeDefinition (definition) {
   // Send the given JSON definition to the helper to write to the content directory.
 
   // Tag the definition with some useful properties
-  definition.exhibitera_version = config.softwareVersion
+  definition.exhibitera_version = config.software_version
   definition.lastEditedDate = new Date().toISOString()
   return makeHelperRequest({
     method: 'POST',
@@ -678,48 +579,16 @@ export async function writeDefinition (definition) {
   })
 }
 
-export function setObjectProperty (obj, keys, val) {
-  // Set the location given by the keys to val, creating the path if necessary.
-  // E.g., keys = ['prop1', 'prop2', 'prop3'] sets obj.prop1.prop2.prop3 to val
-  // From https://stackoverflow.com/questions/5484673/javascript-how-to-dynamically-create-nested-objects-using-object-names-given-by
-
-  const lastKey = keys.pop()
-  const lastObj = keys.reduce((obj, key) =>
-    (obj[key] = obj[key] || {}),
-  obj)
-  lastObj[lastKey] = val
-}
-
-export function guessMimetype (filename) {
-  // Use filename extension to guess the mimetype
-
-  const ext = filename.split('.').slice(-1)[0].toLowerCase()
-
-  if (['mp4', 'mpeg', 'mpg', 'webm', 'mov', 'm4v', 'avi', 'flv'].includes(ext)) {
-    return 'video'
-  } else if (['jpeg', 'jpg', 'tiff', 'tif', 'png', 'bmp', 'gif', 'webp', 'eps', 'ps', 'svg'].includes(ext)) {
-    return 'image'
-  } else if (['aac', 'm4a', 'mp3', 'oga', 'ogg', 'wav'].includes(ext)) {
-    return 'audio'
-  } else if (['otf', 'ttf', 'woff', 'woff2'].includes(ext)) {
-    return 'font'
-  } else if (['fbx', 'glb', 'obj', 'stl', 'usdz'].includes(ext)) {
-    return 'model'
-  } else if (['csv'].includes(ext)) {
-    return 'spreadsheet'
-  }
-  return ''
-}
-
 export function loadDefinition (defName) {
   // Ask the helper for the given definition and return a promise containing it.
 
-  config.currentDefinition = defName
-
-  return makeHelperRequest({
-    method: 'GET',
-    endpoint: '/definitions/' + defName + '/load'
-  })
+  if (defName && typeof defName === 'string' && defName !== '') {
+    config.definitionUUID = defName
+    return makeHelperRequest({
+      method: 'GET',
+      endpoint: '/definitions/' + defName + '/load'
+    })
+  }
 }
 
 export function saveScreenshotAsThumbnail (filename) {
@@ -732,7 +601,7 @@ export function saveScreenshotAsThumbnail (filename) {
       const formData = new FormData()
       if (img != null) {
         formData.append('files', img, filename)
-        fetch('/files/uploadThumbnail', {
+        fetch(exConfig.api + '/files/uploadThumbnail', {
           method: 'POST',
           body: formData
         })
@@ -749,6 +618,8 @@ export function createLanguageSwitcher (def, localize) {
   // localize is the name of a function that handles implementing the change in language
   // based on the provided language code.
 
+  if (!def.languages) return
+
   const langs = Object.keys(def.languages)
 
   const langSwitchDropdown = document.getElementById('langSwitchDropdown')
@@ -763,10 +634,10 @@ export function createLanguageSwitcher (def, localize) {
   langSwitchDropdown.style.display = 'flex'
 
   // Cycle the languages and build an entry for each
-  const langOrder = def?.language_order || langs
+  const langOrder = def?.language_order ?? langs
   langSwitchOptions.innerHTML = ''
 
-  langOrder.forEach((code) => {
+  for (const code of langOrder) {
     const name = def.languages[code].display_name
 
     const li = document.createElement('li')
@@ -798,7 +669,7 @@ export function createLanguageSwitcher (def, localize) {
     button.appendChild(span)
 
     langSwitchOptions.appendChild(li)
-  })
+  }
 }
 
 export function getColorAsRGBA (el, prop) {
@@ -840,27 +711,18 @@ export function classifyColor (color) {
   return 'dark'
 }
 
-export function withExtension (path, ext) {
-  // Return the given path with its extension replaced by ext
-
-  return path.split('.').slice(0, -1).join('.') + '.' + ext
-}
-
 export function setBackground (details, root, defaultColor = '#22222E', setStatusBar = false) {
   // Take the 'background' section of a definition and use it to configure the background
 
+  // Configure the status bar for PWAs to black by default
   if (setStatusBar === true) {
-    // Configure the status bar for PWAs to black by default
-    if (setStatusBar === true) {
-      document.querySelector('meta[name="theme-color"]').setAttribute('content', '#000')
-      document.querySelector('meta[name="msapplication-TileColor"]').setAttribute('content', '#000')
-    }
+    document.querySelector('meta[name="theme-color"]').setAttribute('content', '#000')
+    document.querySelector('meta[name="msapplication-TileColor"]').setAttribute('content', '#000')
   }
 
-  if (details.mode === 'color') {
+  if ((details?.mode ?? 'color') === 'color') {
     // Solid colors
-    let color = defaultColor
-    if ('color' in details) color = details.color
+    const color = details?.color ?? defaultColor
     root.style.setProperty('--background-color', color)
 
     // Configure the status bar for PWAs to match the background
@@ -870,12 +732,9 @@ export function setBackground (details, root, defaultColor = '#22222E', setStatu
     }
   } else if (details.mode === 'gradient') {
     // Gradient
-    let angle = 0
-    if ('gradient_angle' in details) angle = details.gradient_angle
-    let color1 = defaultColor
-    if ('gradient_color_1' in details) color1 = details.gradient_color_1
-    let color2 = defaultColor
-    if ('gradient_color_2' in details) color2 = details.gradient_color_2
+    const angle = details?.gradient_angle ?? 0
+    const color1 = details?.gradient_color_1 ?? defaultColor
+    const color2 = details?.gradient_color_2 ?? defaultColor
 
     const grad = `linear-gradient(${angle}deg, ${color2}, ${color1})`
     root.style.setProperty('--background-color', grad)
@@ -885,48 +744,31 @@ export function setBackground (details, root, defaultColor = '#22222E', setStatu
   }
 }
 
-export function uuid () {
-  // Generate a new UUID v4 without using the crypto library (we may not be in HTTPS).
-  // Format: 8-4-4-4-12
+export function setELementBackground (details, el, defaultColor = '#22222E') {
+  // Set the background of the given element based on an Advanced Color Picker definition.
 
-  const chars = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
-  let result = ''
-  for (let i = 0; i < 8; i++) {
-    result += chars[Math.floor(Math.random() * 36)]
-  }
-  result += '-'
-  for (let i = 0; i < 4; i++) {
-    result += chars[Math.floor(Math.random() * 36)]
-  }
-  result += '-'
-  for (let i = 0; i < 4; i++) {
-    result += chars[Math.floor(Math.random() * 36)]
-  }
-  result += '-'
-  for (let i = 0; i < 4; i++) {
-    result += chars[Math.floor(Math.random() * 36)]
-  }
-  result += '-'
-  for (let i = 0; i < 12; i++) {
-    result += chars[Math.floor(Math.random() * 36)]
-  }
-  return result
-}
+  if (typeof el === 'string') el = document.getElementById(el)
+  if (el == null) return
 
-export function sortAlphabetically (array) {
-  // Sort the given array alphabetically
+  if ((details?.mode ?? 'color') === 'color') {
+    // Solid colors
+    const color = details?.color ?? defaultColor
+    el.style.background = color
+  } else if (details.mode === 'gradient') {
+    // Gradient
+    const angle = details?.gradient_angle ?? 0
+    const color1 = details?.gradient_color_1 ?? defaultColor
+    const color2 = details?.gradient_color_2 ?? defaultColor
 
-  return array.sort((a, b) => {
-    try {
-      const aName = a.toLowerCase()
-      const bName = b.toLowerCase()
-      if (aName > bName) return 1
-      if (aName < bName) return -1
-    } catch {
-
-    }
-    return 0
-  })
+    const grad = `linear-gradient(${angle}deg, ${color2}, ${color1})`
+    el.style.background = grad
+  } else if (details.mode === 'image') {
+    // Image
+    el.style.background = `url(../content/${details.image})`
+    el.style.backgroundPosition = 'center center'
+    el.style.backgroundRepeat = 'no-repeat'
+    el.style.backgroundSize = 'cover'
+  }
 }
 
 export function createFont (name, font) {

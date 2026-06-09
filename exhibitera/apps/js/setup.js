@@ -1,26 +1,25 @@
-/* global bootstrap, showdown, $ */
+/* global bootstrap, showdown */
 
 import * as exCommon from './exhibitera_app_common.js'
+import * as exUtilities from '../../common/utilities.js'
 import * as exSetup from './exhibitera_setup_common.js'
 import * as exFileSelectModal from './exhibitera_file_select_modal.js'
 
 function updateParser (update) {
   // Take a list of defaults and build the interface for editing them.
 
-  if ('app' in update) {
-    if ('id' in update.app) {
-      document.getElementById('IDInput').value = update.app.id
-    }
+  if (update?.app) {
+    if (update.app.definition) document.getElementById('definitionSelect').value = update.app.definition
   }
-  if ('control_server' in update) {
+  if (update?.control_server) {
     if ('ip_address' in update.control_server) {
-      document.getElementById('controlServerIPInput').value = update.control_server.ip_address
+      document.getElementById('hubIPInput').value = update.control_server.ip_address
     }
-    if ('port' in update.control_server) {
-      document.getElementById('controlServerPortInput').value = update.control_server.port
+    if (update.control_server?.port) {
+      document.getElementById('hubPortInput').value = update.control_server.port
     }
   }
-  if ('permissions' in update) {
+  if (update?.permissions) {
     if ('audio' in update.permissions) {
       document.getElementById('permissionsAudioInput').value = String(update.permissions.audio)
     }
@@ -39,7 +38,7 @@ function updateParser (update) {
       document.getElementById('permissionsSleepInput').value = String(update.permissions.sleep)
     }
   }
-  if ('smart_restart' in update) {
+  if (update?.smart_restart) {
     if ('state' in update.smart_restart) {
       document.getElementById('smartRestartStateSelect').value = update.smart_restart.state
     }
@@ -50,12 +49,12 @@ function updateParser (update) {
       document.getElementById('smartRestartThresholdInput').value = update.smart_restart.threshold
     }
   }
-  if ('software_update' in update && update.software_update.update_available === true) {
+  if (update && update?.software_update?.update_available === true) {
     document.getElementById('showUpdateInfoButtonCol').style.display = 'block'
   } else {
     document.getElementById('showUpdateInfoButtonCol').style.display = 'none'
   }
-  if ('system' in update) {
+  if (update?.system) {
     if ('active hours' in update.system) {
       document.getElementById('activeHoursStartInput').value = update.system.active_hours.start
       document.getElementById('activeHoursEndInput').value = update.system.active_hours.end
@@ -67,7 +66,13 @@ function updateParser (update) {
       document.getElementById('useRemoteDisplayToggle').checked = update.system.remote_display
     }
     if ('standalone' in update.system) {
-      document.getElementById('useControlServerToggle').checked = !update.system.standalone
+      document.getElementById('useHubToggle').checked = !update.system.standalone
+    }
+    if ('debug' in update.system) {
+      document.getElementById('debugModeToggle').checked = update.system.debug
+    }
+    if ('start_fullscreen' in update.system) {
+      document.getElementById('startFullscreenToggle').checked = update.system.start_fullscreen
     }
   }
   configureInterface()
@@ -78,17 +83,17 @@ function showUpdateInfoModal (details) {
 
   return exCommon.makeHelperRequest({
     method: 'GET',
-    endpoint: '/getDefaults'
+    endpoint: '/system/configuration'
   })
     .then((result) => {
       const details = result.software_update
 
-      $('#updateInfoModalCurrentVersion').html(details.current_version)
-      $('#updateInfoModalLatestVersion').html(details.available_version)
-      $('#updateInfoModalDownloadButton').attr('href', 'https://exhibitera.org/download/')
+      document.getElementById('updateInfoModalCurrentVersion').textContent = exUtilities.formatSemanticVersion(details.current_version)
+      document.getElementById('updateInfoModalLatestVersion').textContent = exUtilities.formatSemanticVersion(details.available_version)
+      document.getElementById('updateInfoModalDownloadButton').href = 'https://exhibitera.org/download/'
 
       // Get the changelog
-      exCommon.makeRequest({
+      exUtilities.makeRequest({
         method: 'GET',
         url: 'https://raw.githubusercontent.com/Cosmic-Chatter/Exhibitera/main/exhibitera/changelog.md',
         endpoint: '',
@@ -99,10 +104,10 @@ function showUpdateInfoModal (details) {
           markdownConverter.setFlavor('github')
 
           const formattedText = markdownConverter.makeHtml(response)
-          $('#updateInfoModalChangelogContainer').html(formattedText)
+          document.getElementById('updateInfoModalChangelogContainer').innerHTML = formattedText
         })
 
-      $('#updateInfoModal').modal('show')
+      exUtilities.showModal('#updateInfoModal')
     })
 }
 
@@ -112,24 +117,25 @@ function saveConfiguration () {
   const defaults = {
     app: {},
     system: {
+      debug: document.getElementById('debugModeToggle').checked,
       remote_display: document.getElementById('useRemoteDisplayToggle').checked,
-      standalone: !document.getElementById('useControlServerToggle').checked
+      standalone: !document.getElementById('useHubToggle').checked,
+      start_fullscreen: document.getElementById('startFullscreenToggle').checked
     }
   }
 
   if (defaults.system.standalone === false) {
     // We are using Hub, so update relevant defaults
-    defaults.app.id = document.getElementById('IDInput').value.trim()
     defaults.control_server = {
-      ip_address: document.getElementById('controlServerIPInput').value.trim(),
-      port: parseInt(document.getElementById('controlServerPortInput').value)
+      ip_address: document.getElementById('hubIPInput').value.trim(),
+      port: parseInt(document.getElementById('hubPortInput').value)
     }
     defaults.permissions = {
-      audio: exCommon.stringToBool(document.getElementById('permissionsAudioInput').value),
-      refresh: exCommon.stringToBool(document.getElementById('permissionsRefreshInput').value),
-      restart: exCommon.stringToBool(document.getElementById('permissionsRestartInput').value),
-      shutdown: exCommon.stringToBool(document.getElementById('permissionsShutdownInput').value),
-      sleep: exCommon.stringToBool(document.getElementById('permissionsSleepInput').value)
+      audio: exUtilities.stringToBool(document.getElementById('permissionsAudioInput').value),
+      refresh: exUtilities.stringToBool(document.getElementById('permissionsRefreshInput').value),
+      restart: exUtilities.stringToBool(document.getElementById('permissionsRestartInput').value),
+      shutdown: exUtilities.stringToBool(document.getElementById('permissionsShutdownInput').value),
+      sleep: exUtilities.stringToBool(document.getElementById('permissionsSleepInput').value)
     }
     defaults.smart_restart = {
       state: document.getElementById('smartRestartStateSelect').value,
@@ -151,7 +157,7 @@ function saveConfiguration () {
 
   exCommon.makeHelperRequest({
     method: 'POST',
-    endpoint: '/setDefaults',
+    endpoint: '/system/configuration/update',
     params: { defaults }
   })
     .then((result) => {
@@ -160,7 +166,6 @@ function saveConfiguration () {
       el.classList.remove('btn-primary')
       el.innerHTML = 'Saved!'
       setTimeout(() => {
-        console.log('here')
         el.classList.remove('btn-success')
         el.classList.add('btn-primary')
         el.innerHTML = 'Save changes'
@@ -172,7 +177,6 @@ function saveConfiguration () {
       el.classList.remove('btn-primary')
       el.innerHTML = 'Error'
       setTimeout(() => {
-        console.log('here')
         el.classList.remove('btn-danger')
         el.classList.add('btn-primary')
         el.innerHTML = 'Save changes'
@@ -181,36 +185,75 @@ function saveConfiguration () {
   console.log(defaults)
 }
 
+function setDefinition (uuid = null) {
+  // Set the given definition as the current one. For use when not using Hub
+
+  if (uuid == null) uuid = document.getElementById('definitionSelect').value
+  exCommon.config.definitionUUID = uuid
+
+  exCommon.makeHelperRequest({
+    method: 'POST',
+    endpoint: '/system/configuration/update',
+    params: {
+      defaults: {
+        app: {
+          definition: uuid
+        }
+      }
+
+    }
+  })
+}
+
+function setDMXScene (uuid = null) {
+  // Run the given DMX scene
+
+  if (uuid == null) uuid = document.getElementById('dmxSceneSelect').value
+
+  if (uuid === '') return
+
+  exCommon.makeHelperRequest({
+    method: 'GET',
+    endpoint: '/DMX/scene/' + uuid + '/set'
+  })
+}
+
 function configureInterface () {
   // Check the state of various toggles and show/hide interface elements as appropriate.
 
   // Hub
-  if (document.getElementById('useControlServerToggle').checked === true) {
-    document.getElementById('IDInputGroup').style.display = 'block'
+  if (document.getElementById('useHubToggle').checked === true) {
     document.getElementById('definitionSelectGroup').style.display = 'none'
-    document.getElementById('controlServerIPInputGroup').style.display = 'block'
-    document.getElementById('controlServerPortInputGroup').style.display = 'block'
+    document.getElementById('hubIPInputGroup').style.display = 'block'
+    document.getElementById('hubPortInputGroup').style.display = 'block'
     document.getElementById('smartRestartPane').style.display = 'block'
     document.getElementById('permissionsPane').style.display = 'block'
-    document.getElementById('votingKioskCSVDownloadDiv').style.display = 'none'
+    document.getElementById('definitionGroup').style.display = 'none'
+    document.getElementById('dataGroup').style.display = 'none'
+    document.getElementById('dataHubMessage').style.display = 'block'
   } else {
-    document.getElementById('IDInputGroup').style.display = 'none'
     document.getElementById('definitionSelectGroup').style.display = 'block'
-    document.getElementById('controlServerIPInputGroup').style.display = 'none'
-    document.getElementById('controlServerPortInputGroup').style.display = 'none'
+    document.getElementById('hubIPInputGroup').style.display = 'none'
+    document.getElementById('hubPortInputGroup').style.display = 'none'
     document.getElementById('smartRestartPane').style.display = 'none'
     document.getElementById('permissionsPane').style.display = 'none'
-    document.getElementById('votingKioskCSVDownloadDiv').style.display = 'block'
+    document.getElementById('definitionGroup').style.display = 'block'
+    document.getElementById('dataGroup').style.display = 'block'
+    document.getElementById('dataHubMessage').style.display = 'none'
   }
   // Remote display
+
+  const startFullscreenToggleGroup = document.getElementById('startFullscreenToggleGroup')
   if (document.getElementById('useRemoteDisplayToggle').checked === true) {
     document.getElementById('remoteDisplayPortInputGroup').style.display = 'block'
+    startFullscreenToggleGroup.style.display = 'none'
   } else {
     document.getElementById('remoteDisplayPortInputGroup').style.display = 'none'
+    startFullscreenToggleGroup.style.display = 'block'
   }
   exCommon.makeHelperRequest({
     method: 'GET',
-    endpoint: '/system/getPlatformDetails'
+    endpoint: '/system/platformDetails'
   })
     .then((result) => {
       if (result.os === 'linux') {
@@ -234,16 +277,9 @@ function configureInterface () {
 }
 
 function loadVersion () {
-  // Load version.txt and update the GUI with the current version
+  // Load version and update the GUI with the current version
 
-  exCommon.makeHelperRequest({
-    method: 'GET',
-    endpoint: '/_static/version.txt',
-    rawResponse: true
-  })
-    .then((response) => {
-      $('#versionSpan').html(response)
-    })
+  document.getElementById('versionSpan').textContent = exUtilities.formatSemanticVersion(exCommon.config.software_version)
 }
 
 function populateAvailableData () {
@@ -251,10 +287,10 @@ function populateAvailableData () {
 
   exCommon.makeHelperRequest({
     method: 'GET',
-    endpoint: '/data/getAvailable'
+    endpoint: '/data/'
   })
     .then((result) => {
-      const select = document.getElementById('votingKioskCSVDownloadSelect')
+      const select = document.getElementById('dataSelect')
       select.innerHTML = ''
 
       result.files.forEach((file) => {
@@ -269,34 +305,56 @@ function populateAvailableData () {
 function downloadDataAsCSV () {
   // Download the currently selected data file as a CSV file.
 
-  const name = document.getElementById('votingKioskCSVDownloadSelect').value
+  const name = document.getElementById('dataSelect').value
   exCommon.makeHelperRequest({
-    method: 'POST',
-    endpoint: '/data/getCSV',
-    params: { name }
+    method: 'GET',
+    endpoint: '/data/' + name + '/csv'
   })
     .then((result) => {
-      if ('success' in result && result.success === true) {
-        if (exCommon.config.remoteDisplay === false) {
-          // Ask the app to create a save dialog
-          exCommon.makeHelperRequest({
-            method: 'POST',
-            endpoint: '/app/saveFile',
-            params: {
-              data: result.csv,
-              filename: name + '.csv'
-            }
-          })
-        } else {
-          // Ask the browser to initiate a download
-          const fileBlob = new Blob([result.csv], {
-            type: 'text/plain'
-          })
-          const a = document.createElement('a')
-          a.href = window.URL.createObjectURL(fileBlob)
-          a.download = name + '.csv'
-          a.click()
-        }
+      if (result?.success) {
+        exSetup.downloadPlaintextFile(result.csv, name + '.csv')
+      }
+    })
+}
+
+function showDeleteDataModal () {
+  // Show a modal confirming the request to delete a specific dataset. To be sure
+  // populate the modal with data for a test.
+
+  const name = document.getElementById('dataSelect').value
+  document.getElementById('deleteDataModalDeletedName').innerText = name
+  document.getElementById('deleteDataModalDeletedInput').value = ''
+  document.getElementById('deleteDataModalSpellingError').style.display = 'none'
+  exUtilities.showModal('#deleteDataModal')
+}
+
+function deleteDataFromModal () {
+  // Check inputed answer and confirm it is correct. If so, ask for the data to
+  // be deleted.
+
+  const name = document.getElementById('deleteDataModalDeletedName').innerText
+  const input = document.getElementById('deleteDataModalDeletedInput').value
+
+  if (name === input) {
+    deleteData()
+  } else {
+    document.getElementById('deleteDataModalSpellingError').style.display = 'block'
+  }
+}
+
+function deleteData () {
+  // Send a message to the helper asking it to delete the currently selected dataset
+
+  const name = document.getElementById('dataSelect').value
+
+  exCommon.makeHelperRequest({
+    method: 'DELETE',
+    endpoint: '/data/' + name
+  })
+    .then((result) => {
+      if (result.success && result.success === true) {
+        exUtilities.hideModal('#deleteDataModal')
+        populateAvailableData()
       }
     })
 }
@@ -306,6 +364,7 @@ function populateHelpTab () {
 
   exCommon.makeHelperRequest({
     method: 'GET',
+    api: '',
     endpoint: '/README.md',
     rawResponse: true
   })
@@ -313,7 +372,7 @@ function populateHelpTab () {
       const formattedText = markdownConverter.makeHtml(result)
 
       // Add the formatted text
-      $('#mainHelpTextDiv').html(formattedText)
+      document.getElementById('mainHelpTextDiv').innerHTML = formattedText
     })
 }
 
@@ -327,7 +386,7 @@ function populateAvailableDefinitions () {
 
   exCommon.makeHelperRequest({
     method: 'GET',
-    endpoint: '/getAvailableContent'
+    endpoint: '/definitions'
   })
     .then((result) => {
       // First, create option elements and sort them into catefories by app
@@ -344,35 +403,63 @@ function populateAvailableDefinitions () {
       })
       // Then, sort the categories and add them with header entries
       Object.keys(optionsByApp).sort().forEach((app) => {
-        const header = new Option(exCommon.appNameToDisplayName(app))
+        const header = new Option(exUtilities.appNameToDisplayName(app))
         header.setAttribute('disabled', true)
         definitionSelect.appendChild(header)
 
         optionsByApp[app].sort().forEach((option) => definitionSelect.appendChild(option))
       })
+
+      console.log(exCommon.config.definition)
+      definitionSelect.value = exCommon.config.definitionUUID
     })
 }
 
-function gotoAppLink (el) {
-  // Navigate to the link given by element el, either in the browser or in the webview
+async function populateAvailableDMXScenes () {
+  // Get a list of DMX scenes and populate the select
+
+  const select = document.getElementById('dmxSceneSelect')
+
+  const response = await exCommon.makeHelperRequest({
+    method: 'GET',
+    endpoint: '/DMX/scenes'
+  })
+
+  if (response?.success === true) {
+    for (const scene of response.scenes) {
+      select.appendChild(new Option(scene.name, scene.uuid))
+    }
+  }
+}
+
+async function editDefintion (uuid) {
+  // Load the given app setup view, either in the browser or the app
+
+  // First, figure out what app we need
+  const result = await exCommon.makeHelperRequest({
+    method: 'GET',
+    endpoint: '/definitions/' + uuid + '/load'
+  })
+  const appLink = result.definition.app + '_setup'
+  let webLink = '/' + result.definition.app + '/setup.html'
+  if (result.definition.app === 'word_cloud_input') webLink = '/word_cloud/input/setup.html'
+  if (result.definition.app === 'word_cloud_viewer') webLink = '/word_cloud/viewer/setup.html'
 
   if (exCommon.config.remoteDisplay === true) {
     // Switch webpages in the browser
 
-    const endpoint = el.getAttribute('data-web-link')
-    window.open(window.location.origin + endpoint, '_blank').focus()
+    window.open(window.location.origin + webLink + '?definition=' + uuid, '_blank').focus()
   } else {
     // Launch the appropriate webview page in the app
 
-    const page = el.getAttribute('data-app-link')
-    let reload = false
-    if (page === 'app') {
-      reload = true
-    }
     exCommon.makeHelperRequest({
       method: 'POST',
-      endpoint: '/app/showWindow/' + page,
-      params: { reload }
+      api: '',
+      endpoint: '/app/showWindow/' + appLink,
+      params: {
+        parameters: { definition: uuid },
+        reload: false
+      }
     })
   }
 }
@@ -387,7 +474,7 @@ function configureUser (user) {
   })
     .then((response) => {
       let groups = []
-      if ('success' in response) {
+      if (response.success) {
         groups = response.groups
       }
 
@@ -410,9 +497,13 @@ function configureUser (user) {
           document.getElementById('helpInsufficientPermissionstMessage').style.display = 'block'
         }
         document.getElementById('nav-settings-tab').style.setProperty('display', 'none', 'important')
-        document.getElementById('nav-apps-tab').style.setProperty('display', 'none', 'important')
+        document.getElementById('nav-data-tab').style.setProperty('display', 'none', 'important')
+        document.getElementById('nav-lighting-tab').style.setProperty('display', 'none', 'important')
         setTimeout(() => {
-          $('#nav-help-tab').tab('show')
+          // She the help tab
+          const helpTab = document.getElementById('nav-help-tab')
+          const tabTrigger = bootstrap.Tab.getOrCreateInstance(helpTab)
+          tabTrigger.show()
         }, 20)
       }
     })
@@ -445,12 +536,14 @@ exCommon.askForDefaults(false)
     } else {
       // Hide the login details
       document.getElementById('loginMenu').style.display = 'none'
+      document.getElementById('helpNewAccountMessage').style.display = 'none'
     }
   })
 loadVersion()
 populateHelpTab()
 populateAvailableData()
 populateAvailableDefinitions()
+populateAvailableDMXScenes()
 
 // Add event handlers
 exSetup.createLoginEventListeners()
@@ -458,8 +551,18 @@ exSetup.createLoginEventListeners()
 // Activate app links
 Array.from(document.querySelectorAll('.app-link')).forEach((el) => {
   el.addEventListener('click', (event) => {
-    gotoAppLink(event.target)
+    console.log('here')
+    exSetup.gotoAppLink(event.target)
   })
+})
+
+// Definition actions
+document.getElementById('definitionSetButton').addEventListener('click', ev => {
+  setDefinition()
+})
+document.getElementById('definitionEditButton').addEventListener('click', ev => {
+  const def = document.getElementById('definitionSelect').value
+  editDefintion(def)
 })
 
 // Settings page
@@ -479,12 +582,31 @@ Array.from(document.querySelectorAll('.gui-toggle')).forEach((el) => {
 document.getElementById('smartRestartStateSelect').addEventListener('change', (event) => {
   configureInterface()
 })
+document.getElementById('useHubToggle').addEventListener('change', (event) => {
+  document.getElementById('restartRequiredWarning').style.display = 'block'
+})
 document.getElementById('useRemoteDisplayToggle').addEventListener('change', (event) => {
-  document.getElementById('remoteDisplayRestartRequiredWarning').style.display = 'block'
+  document.getElementById('restartRequiredWarning').style.display = 'block'
+  configureInterface()
+})
+document.getElementById('debugModeToggle').addEventListener('change', (event) => {
+  document.getElementById('restartRequiredWarning').style.display = 'block'
+})
+document.getElementById('startFullscreenToggle').addEventListener('change', (event) => {
+  document.getElementById('restartRequiredWarning').style.display = 'block'
 })
 
-// Apps page
-document.getElementById('votingKioskCSVDownloadButton').addEventListener('click', downloadDataAsCSV)
+// Data page
+document.getElementById('dataDownloadButton').addEventListener('click', downloadDataAsCSV)
+document.getElementById('dataSelectListRefreshButton').addEventListener('click', populateAvailableData)
+document.getElementById('dataDeleteShowModalButton').addEventListener('click', showDeleteDataModal)
+document.getElementById('deleteDataFromModalButton').addEventListener('click', deleteDataFromModal)
+
+// Lighting page
+document.getElementById('dmxSceneSelectListRefresh').addEventListener('click', populateAvailableDMXScenes)
+document.getElementById('dmxSceneSetButton').addEventListener('click', () => {
+  setDMXScene()
+})
 
 // Set color mode
 if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {

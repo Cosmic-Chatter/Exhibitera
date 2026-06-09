@@ -1,3 +1,92 @@
+# **Exhibitera 6**
+_Exhibitera Hub and Apps must all be upgraded to version 6 at the same time._
+
+## Hub
+
+### Core API
+The Core API provides a stable API that enables developers to provide basic integration with Exhibitera for their applications. Calls to this API are guaranteed to remain compatible with future versions of Hub.
+
+### Exhibitions
+- _Exhibits_ are now called _Exhibitions_
+- Changing a component's definition now creates an _exhibition modification_. Modifications are not permanently stored in the exhibition; instead, they will be cleared the next time the exhibition changes. This enables you to make a temporary change (such as with the _Set definition_ schedule action) without it permanently affecting the exhibition. 
+
+### Schedules
+- Download schedules for upcoming dates from the future dates manager
+- Clear all exhibition modifications with a new schedule action
+
+
+## Apps
+
+### General
+- Apps that support language selection now properly display right-to-left text for Arabic and Hebrew
+- Spiffy new default color scheme
+- Easily launch Apps fullscreen on Windows
+- Creating, editing, and setting definitions is now much easier when not using Hub
+- Easily access DMX lighting scenes when not using Hub 
+- When using Hub, Apps now gracefully recovers to the last used definition if Hub is unavailable
+- Use *Shift-click* to easily select multiple files in the file picker
+- Drag and drop files on the file picker to start an upload
+
+### Core API
+The Core API provides a stable API that enables developers to provide basic integration with Exhibitera for their applications. Calls to this API are guaranteed to remain compatible with future versions of Hub.
+
+### Custom Apps
+- Turn simple HTML files into an app without needing to implement the Exhibitera APIs
+- New URL option enables you to embed a webpage into your exhibition (limitations apply)
+- Guided setup makes things easier than ever
+
+### DMX Control
+- Scenes are now separated from groups
+
+### InfoStation
+- Easily reorder your tabs
+- Embed videos in the same way as images
+- Rich text formatting for media captions
+- Adjust the width of the sidebar in landscape view
+- Adjust the height of the toolbar at the bottom 
+- Adjust the corner radius of sections
+- Customize the look of captions
+- Guided setup makes things easier than ever
+- Copy InfoStation definitions to other PCs
+
+### Media Browser
+- Support for audio files
+- Use pinch-to-zoom to explore media in more detail
+- Add a custom thumbnail separate from the main media
+- Add items individually or use a spreadsheet for bulk import
+- Reorder your items
+- Copy Media Browser definitions to other PCs
+
+### Media Player
+- Track progress through a playlist and the current item with a progress indicator
+- Adjust the opacity of watermarks
+- Annotate media with custom text
+- Expand videos and images to fill the display
+- Guided setup makes things easier than ever
+
+### Survey Kiosk
+_This brand-new app extends Voting Kiosk to multiple survey questions, with new features and customizations._
+
+- Text screens allow you to set up a question before options are presented
+- Allow users to select multiple answer options
+- Choose to randomize the order of the options for each user
+- Control the appearance of each option
+- Support for multiple languages
+
+### Timelapse Viewer
+- Choose between filling the screen with the video or letterboxing it to show the whole video
+- Guided setup makes things easier than ever
+
+### Timeline Explorer
+- Timeline items can now include videos in addition to images
+- Show media edge-to-edge for a more polished look
+- Add items individually or use a spreadsheet for bulk import 
+- Reorder your items
+- Copy Timeline Explorer definitions to other PCs
+
+### Word Cloud
+- Switched profanity filtering library, so please check your word clouds
+
 # **Exhibitera 5.3**
 
 ## Hub

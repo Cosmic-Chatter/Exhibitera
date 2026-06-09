@@ -2,7 +2,7 @@
 
 // Manage the addition of languages for definitions
 
-import * as exCommon from './exhibitera_app_common.js'
+import * as exUtilities from '../../common/utilities.js'
 import * as exSetup from './exhibitera_setup_common.js'
 
 export const config = {
@@ -78,14 +78,15 @@ export function createLanguagePicker (parent, callbacks = {}) {
 
   // callbacks is an object with the following fields:
   // callbacks = {
-  //              onLanguageAdd:     function(code, displayName, englishName),
-  //              onLanguageDelete:  function(languageOrder),
-  //              onLanguageReorder: function(languageOrder),
-  //              onLanguageRebuild: function(languageOrder),
+  //              beforeLanguageDelete: function(code)
+  //              onLanguageAdd:        function(code, displayName, englishName),
+  //              onLanguageDelete:     function(languageOrder, deletedCode),
+  //              onLanguageReorder:    function(languageOrder),
+  //              onLanguageRebuild:    function(languageOrder),
   //             }
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
-  const uuid = exCommon.uuid()
+  const workingDefinition = exSetup.config.workingDefinition
+  const uuid = exUtilities.uuid()
   parent.innerHTML = ''
 
   const row = document.createElement('div')
@@ -233,9 +234,7 @@ export function createLanguagePicker (parent, callbacks = {}) {
     }
 
     addLanguage(languageList, code, displayName, displayNameEn, callbacks)
-    if (callbacks.onLanguageAdd) {
-      callbacks.onLanguageAdd(code, displayName, displayNameEn)
-    }
+
     // Reset fields
     languageSelect.value = 'en-gb'
     languageCodeInput.value = ''
@@ -246,6 +245,10 @@ export function createLanguagePicker (parent, callbacks = {}) {
     languageEnglishNameInputCol.style.display = 'none'
     warningCol.style.display = 'none'
   })
+
+  // Activate tooltips
+  const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+  const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
 }
 
 export function clearLanguagePicker (el) {
@@ -356,8 +359,8 @@ function changeLanguageOrder (languageList, code, dir, callbacks = {}) {
   // dir = 1 means move down the list by one place; dir = -1 is moves up the list.
   // callback should take one parameter, language_order
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
-  const arr = workingDefinition?.language_order || []
+  const workingDefinition = exSetup.config.workingDefinition
+  const arr = workingDefinition?.language_order ?? []
 
   const index = arr.indexOf(code)
 
@@ -382,7 +385,7 @@ function changeLanguageOrder (languageList, code, dir, callbacks = {}) {
 function addLanguage (languageList, code, displayName, englishName, callbacks) {
   // Add a new language to the definition
 
-  const definition = $('#definitionSaveButton').data('workingDefinition')
+  const definition = exSetup.config.workingDefinition
 
   exSetup.updateWorkingDefinition(['languages', code], {
     code,
@@ -392,8 +395,8 @@ function addLanguage (languageList, code, displayName, englishName, callbacks) {
   definition.language_order.push(code)
 
   createLanguageHTML(languageList, code, displayName, englishName, definition.language_order.length === 1, callbacks)
-  rebuildLanguageList(languageList, callbacks)
   if (callbacks.onLanguageAdd) callbacks.onLanguageAdd(code, displayName, englishName)
+  rebuildLanguageList(languageList, callbacks)
   exSetup.previewDefinition(true)
 }
 
@@ -401,7 +404,9 @@ function deleteLanguage (languageList, code, callbacks = {}) {
   // Remove this language from the working defintion and destroy its GUI representation.
   // Callback should take one parameter, language_order
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+  const workingDefinition = exSetup.config.workingDefinition
+
+  if (callbacks.beforeLanguageDelete) callbacks.beforeLanguageDelete(code)
 
   delete workingDefinition.languages[code]
   workingDefinition.language_order = workingDefinition.language_order.filter(lang => lang !== code)
@@ -415,11 +420,12 @@ function rebuildLanguageList (languageList, callbacks = {}) {
   // Use the definition to rebuild the GUI representation for each language
   // and add it to the specified div, which should be a DOM element
 
-  const def = $('#definitionSaveButton').data('workingDefinition')
+  const def = exSetup.config.workingDefinition
+
   if (def == null) return
-  languageList.innerHTML = ''
+  languageList.innerText = ''
   let i = 0
-  for (const code of (def?.language_order || [])) {
+  for (const code of (def?.language_order ?? [])) {
     const lang = def.languages[code]
     createLanguageHTML(languageList, code, lang.display_name, lang.english_name, i === 0, callbacks)
     i++

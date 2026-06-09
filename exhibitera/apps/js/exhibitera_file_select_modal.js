@@ -1,13 +1,19 @@
 /* global bootstrap */
+import exConfig from '../../common/config.js'
+import * as exFiles from '../../common/files.js'
 import * as exCommon from './exhibitera_app_common.js'
+
+let lastClickedSelectBox = null // For handling multiple selection on shift-click
 
 export function createFileSelectionModal (userOptions) {
   // Build a standard Exhibitera file selection modal
 
   let options = {
+    directory: 'content', // Choice of 'content' or 'static'
     filetypes: [], // List of file types to allow ([] for all)
     manage: false, // Allow uploading, deleting, and renaming, but not selecting
-    multiple: true // Select multiple files?
+    multiple: true, // Select multiple files?
+    upload_any: false // If false, users may only upload files matching filetypes.
   }
 
   // Merge in user options
@@ -20,7 +26,19 @@ export function createFileSelectionModal (userOptions) {
     modal.setAttribute('id', 'exFileSelectModal')
     modal.setAttribute('tabindex', '-1000') // Always on top
     modal.innerHTML = `
-      <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-dialog modal-dialog-centered modal-lg modal-fullscreen-lg-down">
+        <div id="exFileSelectModalDropOverlay"
+            class="position-absolute top-0 start-0 w-100 h-100 align-items-center justify-content-center rounded"
+            style="
+              display:none!important;
+              z-index:1056;
+              background: rgba(0,0,0,0.6);
+              border: 3px dashed #0d6efd;
+              color: white;
+              font-size: 1.5rem;
+              pointer-events:none;">
+          Drop files to upload
+        </div>
         <div class="modal-content">
           <div class="modal-header">
             <h5 id="exFileSelectModalTitle" class="modal-title">Select Files</h5>
@@ -28,7 +46,7 @@ export function createFileSelectionModal (userOptions) {
           </div>
           <div class="modal-body">
             <div class="row mb-2">
-              <div class='col-4 col-sm-3 col-lg-2'>
+              <div class='col-4 col-sm-3 col-md-2'>
                 <div class="form-check">
                   <input class="form-check-input" type="checkbox" value="" id="exFileSelectModalThumbnailCheckbox" checked>
                   <label class="form-check-label" for="exFileSelectModalThumbnailCheckbox">
@@ -36,7 +54,7 @@ export function createFileSelectionModal (userOptions) {
                   </label>
                 </div>
               </div>
-              <div class='col-4 col-md-3 col-lg-2'>
+              <div class='col-4 col-sm-3 col-md-2'>
                 <div id="selectAllCol" class="dropdown">
                   <button class="btn btn-sm btn-primary w-100 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                     Multiple
@@ -48,20 +66,20 @@ export function createFileSelectionModal (userOptions) {
                   </ul>
                 </div>
               </div>
-              <div class="col-4 col-sm-5 col-md-6 offset-lg-4 col-lg-4">
+              <div class="col-4 col-sm-6 col-md-4 offset-md-3 offset-lg-4">
               <div class="input-group input-group-sm">
                 <input id="exFileSelectModalSearchField" type="text" placeholder="Search" class="form-control" aria-label="Search">
               </div>
                 
               </div>
             </div>
-            <div class="row flex-column-reverse flex-lg-row">
-            <div class="col-12 col-lg-8" style="max-height: 55vh; overflow-y: auto;">
+            <div class="row flex-column-reverse flex-md-row">
+            <div class="col-12 col-md-8" style="max-height: 55vh; overflow-y: auto;">
               <div id="exFileSelectModalFileList"  class='row'></div>
             </div>
-            <div id="exFileSelectModalFilePreview" class="col-12 col-lg-4 mb-3">
+            <div id="exFileSelectModalFilePreview" class="col-12 col-md-4 mb-3">
               <div class="row justify-content-center">
-                <div class='col-6 col-lg-12'>
+                <div class='col-6 col-md-12'>
                   <img id="exFileSelectModalFilePreviewImage" style="width: 100%; height: 200px; object-fit: contain;">
                   <video id="exFileSelectModalFilePreviewVideo" loop autoplay muted disablePictureInPicture="true" webkit-playsinline="true" playsinline="true" style="width: 100%; height: 200px; object-fit: contain;"></video>
                   <div style="height: 200px; display: flex; justify-content: center; align-items: center;">
@@ -72,9 +90,11 @@ export function createFileSelectionModal (userOptions) {
                     <p>The quick brown fox jumps over the lazy dog.</p>
                   </div>
                 </div>
-                <div class='col-6 col-lg-12 mt-2 text-center h6' style="word-wrap: break-word">
-                  <div id="exFileSelectModalFilePreviewFilename" ></div>
-                  <div id="exFileSelectModalFilePreviewFilesize" class="text-secondary mt-1 small"></div>
+                <div class='col-6 col-md-12 mt-2 text-center h6' style="word-wrap: break-word">
+                  <div style="height: 60px; overflow-y: auto;">
+                    <div id="exFileSelectModalFilePreviewFilename" ></div>
+                    <div id="exFileSelectModalFilePreviewFilesize" class="text-secondary mt-1 small"></div>
+                  </div>
                   <div id="exFileSelectModalFilePreviewEditContainer" class='row align-items-center'>
                     <div class='col-12'>
                       <input id="exFileSelectModalFilePreviewEditField" type='text' class='form-control'>
@@ -107,10 +127,10 @@ export function createFileSelectionModal (userOptions) {
             </div>
           </div>
           <div class="modal-footer">
-            <div class='row w-100 px-0'>
-              <div class='col-12 col-lg-9 ps-0'>
+            <div class='row w-100 gy-2 px-0'>
+              <div class='col-12 col-md-8 col-lg-9 ps-0'>
                 <div id="exFileSelectModalUploadInterface" class="form-group">
-                  <div class="row align-middle d-flex">
+                  <div class="row gy-2 align-middle d-flex">
                     <div class="col-6 col-md-4">
                       <label class="btn btn-outline-secondary w-100">
                         <span id="exFileSelectModalUploadfilename" style="overflow-wrap: break-word!important;">Upload new</span>
@@ -187,12 +207,16 @@ export function createFileSelectionModal (userOptions) {
       // Need to configure the accept= property to limit which file types can be uploaded.
 
       let acceptStr = ''
-      options.filetypes.forEach((type) => {
-        if (type === 'audio' || type === 'image' || type === 'video') acceptStr += type + '/*, '
-        else acceptStr += '.' + type + ', '
-      })
+      if (options.upload_any === false) {
+        for (const type of options.filetypes) {
+          if (type === 'audio' || type === 'image' || type === 'video') acceptStr += type + '/*, '
+          else acceptStr += '.' + type + ', '
+        }
+      }
+
       document.getElementById('exFileSelectModalUpload').setAttribute('accept', acceptStr)
     }
+    setupDragAndDrop(modal, options)
 
     // File rename
     document.getElementById('exFileSelectModalFilePreviewEditContainer').style.display = 'none'
@@ -285,6 +309,119 @@ export function createFileSelectionModal (userOptions) {
   })
 }
 
+function setupDragAndDrop (modal, options) {
+  const overlay = modal.querySelector('#exFileSelectModalDropOverlay')
+  const fileInput = document.getElementById('exFileSelectModalUpload')
+
+  let dragCounter = 0
+  let rejectFlashTimeout = null
+
+  // Enable smooth visual transitions (inline, self-contained)
+  overlay.style.transition =
+  'background-color 180ms ease, border-color 180ms ease'
+
+  // Cache base styles so we can restore them reliably
+  const baseBackground = overlay.style.background || 'rgba(13,110,253,0.15)'
+  const baseBorder = overlay.style.border || '3px dashed #0d6efd'
+  const baseText = overlay.textContent
+
+  const showOverlay = () => {
+    overlay.style.display = 'flex'
+  }
+
+  const hideOverlay = () => {
+    overlay.style.display = 'none'
+  }
+
+  const flashReject = () => {
+    // Clear any in-flight flash
+    if (rejectFlashTimeout) {
+      clearTimeout(rejectFlashTimeout)
+      rejectFlashTimeout = null
+    }
+
+    // Apply error state
+    overlay.style.background = 'rgba(220,53,69,0.25)' // Bootstrap danger red
+    overlay.style.border = '3px dashed #dc3545'
+    overlay.textContent = 'Invalid file type dropped'
+
+    rejectFlashTimeout = setTimeout(() => {
+      overlay.style.background = baseBackground
+      overlay.style.border = baseBorder
+      overlay.textContent = baseText
+      rejectFlashTimeout = null
+    }, 950)
+  }
+
+  const matchesFiletypes = (file) => {
+    if (options.filetypes.length === 0 || options.upload_any === true) return true
+
+    const ext = file.name.split('.').pop().toLowerCase()
+    const mimetype = file.type.split('/')[0]
+
+    return options.filetypes.some(type => type === ext || type === mimetype)
+  }
+
+  modal.addEventListener('dragenter', (e) => {
+    if (!e.dataTransfer?.types?.includes('Files')) return
+    e.preventDefault()
+    dragCounter++
+    showOverlay()
+  })
+
+  modal.addEventListener('dragleave', (e) => {
+    e.preventDefault()
+    dragCounter--
+    if (dragCounter <= 0) {
+      dragCounter = 0
+      hideOverlay()
+    }
+  })
+
+  modal.addEventListener('dragover', (e) => {
+    if (!e.dataTransfer?.types?.includes('Files')) return
+    e.preventDefault()
+  })
+
+  modal.addEventListener('drop', (e) => {
+    if (!e.dataTransfer?.types?.includes('Files')) return
+    e.preventDefault()
+
+    dragCounter = 0
+    hideOverlay()
+
+    const droppedFiles = Array.from(e.dataTransfer.files)
+    if (droppedFiles.length === 0) return
+
+    const accepted = []
+    const rejected = []
+
+    for (const file of droppedFiles) {
+      if (matchesFiletypes(file)) accepted.push(file)
+      else rejected.push(file)
+    }
+
+    if (rejected.length > 0) {
+      // Briefly re-show overlay to display the rejection flash
+      showOverlay()
+      flashReject()
+
+      // Hide again after the flash completes
+      setTimeout(() => {
+        hideOverlay()
+      }, 950)
+    }
+
+    if (accepted.length === 0) return
+
+    const dataTransfer = new DataTransfer()
+    accepted.forEach(file => dataTransfer.items.add(file))
+    fileInput.files = dataTransfer.files
+
+    onUploadContentChange()
+  })
+}
+
 function filterComponentContent (strToMatch) {
   // Use CSS to hide any files that don't include the given string.
 
@@ -305,7 +442,7 @@ function populateComponentContent (options) {
 
   return exCommon.makeHelperRequest({
     method: 'GET',
-    endpoint: '/getAvailableContent'
+    endpoint: '/files/availableContent'
   })
     .then((result) => {
       _populateComponentContent(result, options)
@@ -314,12 +451,18 @@ function populateComponentContent (options) {
 }
 
 function _populateComponentContent (fileDict, options) {
-  // Build HTML elements for every file in fileDict.all_exhibits, modified by
+  // Build HTML elements for every file, modified by
   // the options passed in from createFileSelectionModal()
 
   const fileRow = document.getElementById('exFileSelectModalFileList')
+
+  let fileDirectory
+  if (options.directory === 'content') {
+    fileDirectory = fileDict.content_details
+  } else fileDirectory = fileDict.static_details
+
   // Alphabetize the list
-  const fileList = fileDict.content_details.sort(function (a, b) { return a.name.localeCompare(b.name) })
+  const fileList = fileDirectory.sort(function (a, b) { return a.name.localeCompare(b.name) })
 
   // Clear any existing files
   fileRow.innerHTML = ''
@@ -328,7 +471,7 @@ function _populateComponentContent (fileDict, options) {
   fileList.forEach((fileDetails) => {
     const file = fileDetails.name
     const extension = file.split('.').slice(-1)[0].toLowerCase()
-    const mimetype = exCommon.guessMimetype(file)
+    const mimetype = exFiles.guessMimetype(file)
 
     // If we are provided a list of allowable filetypes, reject any files
     // that are not of an acceptable type.
@@ -379,7 +522,7 @@ function _populateComponentContent (fileDict, options) {
     check.setAttribute('data-filename', file)
 
     entry.addEventListener('click', (event) => {
-      selectFile(check, options.multiple)
+      selectFile(check, options.multiple, event)
     })
 
     // Thumbnail
@@ -400,12 +543,12 @@ function _populateThumbnail (file, thumbContainer) {
   // given by retries. This gives time for a thumbnail to be generated after an upload.
 
   let thumb
-  const mimetype = exCommon.guessMimetype(file)
+  const mimetype = exFiles.guessMimetype(file)
   thumbContainer.innerHTML = '' // Clear in case we're replacing an existing thumbnail
 
   if (mimetype === 'image') {
     thumb = document.createElement('img')
-    thumb.src = exCommon.config.helperAddress + '/files/' + file + '/thumbnail/240'
+    thumb.src = exCommon.config.helperAddress + exConfig.api + '/files/' + file + '/thumbnail/240'
   } else if (mimetype === 'video') {
     thumb = document.createElement('video')
     thumb.setAttribute('loop', true)
@@ -413,7 +556,7 @@ function _populateThumbnail (file, thumbContainer) {
     thumb.setAttribute('disablePictureInPicture', true)
     thumb.setAttribute('webkit-playsinline', true)
     thumb.setAttribute('playsinline', true)
-    thumb.src = exCommon.config.helperAddress + '/files/' + file + '/thumbnail/240'
+    thumb.src = exCommon.config.helperAddress + exConfig.api + '/files/' + file + '/thumbnail/240'
   } else if (mimetype === 'audio') {
     thumb = document.createElement('img')
     thumb.src = exCommon.config.helperAddress + getDefaultAudioIcon()
@@ -439,7 +582,7 @@ function _populateThumbnail (file, thumbContainer) {
   } else {
     // We don't have a thumbnail
     thumb = document.createElement('img')
-    thumb.src = exCommon.config.helperAddress + getDefaultDocumentImage()
+    thumb.src = exCommon.config.helperAddress + getDefaultDocumentImage(file)
   }
   thumbContainer.appendChild(thumb)
   thumb.style.width = '100%'
@@ -479,20 +622,20 @@ function previewFile (fileDetails) {
   download.href = exCommon.config.helperAddress + '/content/' + file
   download.download = file
 
-  const mimetype = exCommon.guessMimetype(file)
+  const mimetype = exFiles.guessMimetype(file)
 
   if (mimetype === 'image') {
     img.style.display = 'block'
     vid.style.display = 'none'
     font.style.display = 'none'
     aud.parentElement.style.display = 'none'
-    img.src = exCommon.config.helperAddress + '/files/' + file + '/thumbnail/240'
+    img.src = exCommon.config.helperAddress + exConfig.api + '/files/' + file + '/thumbnail/240'
   } else if (mimetype === 'video') {
     img.style.display = 'none'
     vid.style.display = 'block'
     font.style.display = 'none'
     aud.parentElement.style.display = 'none'
-    vid.src = exCommon.config.helperAddress + '/files/' + file + '/thumbnail/240'
+    vid.src = exCommon.config.helperAddress + exConfig.api + '/files/' + file + '/thumbnail/240'
   } else if (mimetype === 'audio') {
     img.style.display = 'none'
     vid.style.display = 'none'
@@ -526,20 +669,34 @@ function previewFile (fileDetails) {
     vid.style.display = 'none'
     aud.parentElement.style.display = 'none'
     font.style.display = 'none'
-    img.src = exCommon.config.helperAddress + getDefaultDocumentImage()
+    img.src = exCommon.config.helperAddress + getDefaultDocumentImage(file)
   }
 }
 
-function getDefaultDocumentImage (png = false) {
+function getDefaultDocumentImage (file = '', png = false) {
   // Return the approriate thumbnail based on whether dark mode is enabled.
+  // If a file is passed, try to populate an image based on the extension.
 
   let ext = 'svg'
   if (png === true) ext = 'png'
 
+  let fileExt = ''
+  if (file !== '') {
+    fileExt = file.split('.').slice(-1)[0].toLowerCase()
+  }
+  const icons = {
+    css: 'css',
+    html: 'html',
+    js: 'js',
+    md: 'md'
+  }
+  let icon = icons[fileExt]
+  if (icon == null) icon = 'document'
+
   const mode = document.querySelector('html').getAttribute('data-bs-theme')
-  if (mode === 'dark') return '/_static/icons/document_white.' + ext
+  if (mode === 'dark') return '/_static/icons/' + icon + '_white.' + ext
   else if (mode === 'light') return '/_static/icons/document_black.' + ext
-  else return '/_static/icons/document_black.' + ext
+  else return '/_static/icons/' + icon + '_black.' + ext
 }
 
 function getDefaultSpreadsheetImage () {
@@ -575,24 +732,50 @@ export function getDefaultModelIcon (png = false) {
   else return '/_static/icons/model_black.' + ext
 }
 
-function selectFile (target, allowMultiple) {
+function selectFile (target, allowMultiple, clickEvent) {
   // Called when the user clicks on a file. If allowMultiple=false,
   // selecting one file unselects the others.
+  // If shift is held and allowMultiple=true, select a range of files.
 
-  if (target.classList.contains('const-file-selected')) {
-    target.classList.remove('const-file-selected', 'bg-success')
-    target.innerHTML = ''
-  } else {
-    if (allowMultiple === false) {
-      document.querySelectorAll('.const-file-select-box').forEach((el) => {
-        el.classList.remove('const-file-selected', 'bg-success')
-        el.innerHTML = ''
-      })
+  document.getSelection().removeAllRanges() // Clear any text selection from a shift-click
+
+  const fileList = document.getElementById('exFileSelectModalFileList')
+  const allSelectBoxes = Array.from(fileList.querySelectorAll('.const-file-entry:not([data-filtered-out="true"]) .const-file-select-box'))
+
+  // Handle shift+click range selection
+  if (clickEvent.shiftKey && allowMultiple && lastClickedSelectBox !== null) {
+    const lastIndex = allSelectBoxes.indexOf(lastClickedSelectBox)
+    const currentIndex = allSelectBoxes.indexOf(target)
+
+    if (lastIndex !== -1 && currentIndex !== -1) {
+      const start = Math.min(lastIndex, currentIndex)
+      const end = Math.max(lastIndex, currentIndex)
+
+      // Select all items in the range
+      for (let i = start; i <= end; i++) {
+        allSelectBoxes[i].classList.add('const-file-selected', 'bg-success')
+        allSelectBoxes[i].innerHTML = '✓'
+      }
     }
-
-    target.classList.add('const-file-selected', 'bg-success')
-    target.innerHTML = '✓'
+  } else {
+    // Normal click behavior
+    if (target.classList.contains('const-file-selected')) {
+      target.classList.remove('const-file-selected', 'bg-success')
+      target.innerHTML = ''
+    } else {
+      if (allowMultiple === false) {
+        document.querySelectorAll('.const-file-select-box').forEach((el) => {
+          el.classList.remove('const-file-selected', 'bg-success')
+          el.innerHTML = ''
+        })
+      }
+      target.classList.add('const-file-selected', 'bg-success')
+      target.innerHTML = '✓'
+    }
   }
+
+  // Update last clicked reference
+  lastClickedSelectBox = target
 
   // Check if multiple files are selected and show/hide the delete multiple button
   if (allowMultiple === true) {
@@ -675,6 +858,7 @@ function uploadFile (options) {
     document.getElementById('exFileSelectModalUploadProgressBarContainer').style.display = 'block'
 
     const formData = new FormData()
+    formData.append('path', options.directory)
 
     for (let i = 0; i < fileInput.files.length; i++) {
       const file = fileInput.files[i]
@@ -682,14 +866,14 @@ function uploadFile (options) {
     }
 
     const xhr = new XMLHttpRequest()
-    xhr.open('POST', exCommon.config.helperAddress + '/upload', true)
+    xhr.open('POST', exCommon.config.helperAddress + exConfig.api + '/files/upload', true)
 
     xhr.onreadystatechange = function () {
       if (this.readyState !== 4) return
       if (this.status === 200) {
         const response = JSON.parse(this.responseText)
 
-        if ('success' in response) {
+        if (response.success) {
           document.getElementById('exFileSelectModalUploadProgressBarContainer').style.display = 'none'
           document.getElementById('exFileSelectModalUploadfilename').innerHTML = 'Upload new'
           populateComponentContent(options)
@@ -717,19 +901,20 @@ function uploadFile (options) {
 function deleteFiles (files) {
   // Delete the given files
 
+  const exFileSelectModal = document.getElementById('exFileSelectModal')
   exCommon.makeHelperRequest({
     method: 'POST',
-    endpoint: '/file/delete',
+    endpoint: '/files/delete',
     params: { file: files }
   })
     .then((result) => {
-      if ('success' in result && result.success === true) {
-        files.forEach((file) => {
-          const entry = document.getElementById('exFileSelectModal').querySelector(`.const-file-entry[data-filename="${file}"]`)
-          previewFile({})
-          document.getElementById('exFileSelectModalFilePreview').setAttribute('data-filename', '')
+      if (result?.success === true) {
+        for (const file of files) {
+          const entry = exFileSelectModal.querySelector(`.const-file-entry[data-filename="${file}"]`)
           entry.parentElement.removeChild(entry)
-        })
+        }
+        previewFile({})
+        document.getElementById('exFileSelectModalFilePreview').dataset.filename = ''
       }
     })
 }
@@ -739,11 +924,11 @@ function downloadMultipleFiles () {
 
   const filesToDownload = document.querySelectorAll('.const-file-select-box.const-file-selected')
   const filenamesToDownload = []
-  filesToDownload.forEach((el) => {
-    filenamesToDownload.push(el.getAttribute('data-filename'))
-  })
+  for (const el of filesToDownload) {
+    filenamesToDownload.push(el.dataset.filename)
+  }
 
-  fetch(exCommon.config.helperAddress + '/files/createZip',
+  fetch(exCommon.config.helperAddress + exConfig.api + '/files/createZip',
     {
       method: 'POST',
       headers: {
@@ -777,9 +962,9 @@ function deleteMultipleFiles () {
 
   const filesToDelete = document.querySelectorAll('.const-file-select-box.const-file-selected')
   const filenamesToDelete = []
-  filesToDelete.forEach((el) => {
-    filenamesToDelete.push(el.getAttribute('data-filename'))
-  })
+  for (const el of filesToDelete) {
+    filenamesToDelete.push(el.dataset.filename)
+  }
   deleteFiles(filenamesToDelete)
   document.getElementById('exFileSelectModalDeleteMultipleButtonCol').style.display = 'none'
   document.getElementById('exFileSelectModalDownloadMultipleButtonCol').style.display = 'none'
@@ -788,7 +973,7 @@ function deleteMultipleFiles () {
 function showRenameField () {
   // Show the rename field for the file currently being previewed.
 
-  const filename = document.getElementById('exFileSelectModalFilePreview').getAttribute('data-filename')
+  const filename = document.getElementById('exFileSelectModalFilePreview').dataset.filename
 
   if (filename === '') return
 
@@ -798,13 +983,15 @@ function showRenameField () {
 
   const fileNameWithoutExt = filename.substring(0, filename.lastIndexOf('.')) || filename
   const renameField = document.getElementById('exFileSelectModalFilePreviewEditField')
-  renameField.setAttribute('filename', filename) // Save the original name to ensure we rename the correct file
+  renameField.dataset.filename = filename // Save the original name to ensure we rename the correct file
   renameField.value = filename
   renameField.setSelectionRange(0, fileNameWithoutExt.length)
   renameField.focus()
 }
 
 function cancelFileRename () {
+  // Reset the GUI after canceling a file rename
+
   document.getElementById('exFileSelectModalFilePreviewEditContainer').style.display = 'none'
   document.getElementById('exFileSelectModalFilePreviewFilename').style.display = 'block'
 }
@@ -813,7 +1000,7 @@ function renameFile () {
   // Get the new name and send it to the helper to be changed.
 
   const renameField = document.getElementById('exFileSelectModalFilePreviewEditField')
-  const originalName = renameField.getAttribute('filename')
+  const originalName = renameField.dataset.filename
   const newName = renameField.value
 
   if (originalName === newName) {
@@ -823,35 +1010,38 @@ function renameFile () {
 
   exCommon.makeHelperRequest({
     method: 'POST',
-    endpoint: '/renameFile',
+    endpoint: '/files/' + originalName + '/rename',
     params: {
       current_name: originalName,
       new_name: newName
     }
   })
     .then((result) => {
-      if ('success' in result) {
-        if (result.success === false && result.error === 'file_exists') {
-          document.getElementById('exFileSelectModalFilePreviewEditFileExistsWarning').style.display = 'block'
-        } else if (result.success === true) {
-          // Update the preview pane
-          document.getElementById('exFileSelectModalFilePreview').setAttribute('data-filename', newName)
-
-          // Update the entry
-          const entry = document.getElementById('exFileSelectModal').querySelector(`.const-file-entry[data-filename="${originalName}"]`)
-          const fileDetails = JSON.parse(entry.getAttribute('data-details'))
-          fileDetails.name = newName
-          entry.setAttribute('data-details', JSON.stringify(fileDetails))
-          entry.setAttribute('data-filename', newName)
-          entry.querySelector('.const-file-name').title = newName
-          entry.querySelector('.const-file-name').innerHTML = shortenFilename(newName)
-          entry.querySelector('.const-file-select-box').setAttribute('data-filename', newName)
-
-          // Update the preview filename
-          document.getElementById('exFileSelectModalFilePreviewFilename').innerHTML = newName
-          document.getElementById('exFileSelectModalFilePreviewEditContainer').style.display = 'none'
-          document.getElementById('exFileSelectModalFilePreviewFilename').style.display = 'block'
+      if (!result?.success) {
+        if (result?.error === 'file_exists') {
+          document.getElementById(
+            'exFileSelectModalFilePreviewEditFileExistsWarning'
+          ).style.display = 'block'
         }
+        return
       }
+
+      // Update the preview pane
+      document.getElementById('exFileSelectModalFilePreview').setAttribute('data-filename', newName)
+
+      // Update the entry
+      const entry = document.getElementById('exFileSelectModal').querySelector(`.const-file-entry[data-filename="${originalName}"]`)
+      const fileDetails = JSON.parse(entry.getAttribute('data-details'))
+      fileDetails.name = newName
+      entry.setAttribute('data-details', JSON.stringify(fileDetails))
+      entry.setAttribute('data-filename', newName)
+      entry.querySelector('.const-file-name').title = newName
+      entry.querySelector('.const-file-name').innerHTML = shortenFilename(newName)
+      entry.querySelector('.const-file-select-box').setAttribute('data-filename', newName)
+
+      // Update the preview filename
+      document.getElementById('exFileSelectModalFilePreviewFilename').innerHTML = newName
+      document.getElementById('exFileSelectModalFilePreviewEditContainer').style.display = 'none'
+      document.getElementById('exFileSelectModalFilePreviewFilename').style.display = 'block'
     })
 }

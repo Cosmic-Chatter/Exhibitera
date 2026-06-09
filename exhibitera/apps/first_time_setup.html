@@ -8,12 +8,24 @@
 
     <meta name="description" content="First-time setup wizard for Exhibitera Apps.">
     <meta name="author" content="Morgan Rehnberg">
-    <link rel="icon" type="image/x-icon" href="/_static/favicon.ico">
+    <link rel=icon href="/_static/favicon.svg" type="image/svg+xml">
 
     <link rel="stylesheet" href="css/bootstrap_5_3/bootstrap.min.css">
 
     <style>
-
+      body {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin: 0;
+      }
+      .container {
+        flex-grow: 1;
+        display: flex;
+        align-items: center;
+        width: 100%;
+      }
     </style>
 
     <title>Exhibitera Apps Setup Wizard</title>
@@ -21,19 +33,13 @@
   </head>
 
   <body>
+    <div class="text-center mt-3"><img src="/_static/Apps_logo.svg" style="width: 80%;"></div>
     <div class="container">
       <div class="row mt-3">
-        <div class="col-12">
-          <div class="h3 text-center">
-            Exhibitera Apps
-          </div>
-        </div>
-        <div class="col-12 mt-2 mb-4">
-        </div>
         <!-- Welcome -->
         <div id="welcome" class="col-12 wizard-pane">
           <div class="alert alert-primary">
-            <div class="h5 text-center">Welcome to Exhibitera Apps!</div>
+              <div class="h5 text-center">Welcome!</div>
               <p>
                 Exhibitera Apps is a collection of software that helps you put your digital content front-and-center. It's a powerful yet intuitive way to build guest-facing digital interactives for use on the museum floor.
               </p>
@@ -61,29 +67,29 @@
               </ul>
             </p>
             <div class="text-center">
-              <button class="btn btn-secondary btn-sm">Learn more</button>
+              <a class="btn btn-secondary btn-sm" href="https://exhibitera.org/" target="_blank">Learn more</a>
             </div>
             
             <div class="row mt-4">
               <div class="col-5 d-flex align-items-center">
                 <div class="form-check form-switch">
-                  <input class="form-check-input" type="checkbox" role="switch" id="useControlServerToggle">
-                  <label class="form-check-label" for="useControlServerToggle">Use Hub</label>
+                  <input class="form-check-input" type="checkbox" role="switch" id="useHubToggle">
+                  <label class="form-check-label" for="useHubToggle">Use Hub</label>
                 </div>
               </div>
-              <div id="controlServerIPInputGroup" class="col-4"  style="display: none;">
+              <div id="hubIPInputGroup" class="col-4"  style="display: none;">
                 <div class="form-floating">
-                  <input type="text" class="form-control" id="controlServerIPInput" placeholder="IP address">
-                  <label for="controlServerIPInput">IP address</label>
+                  <input type="text" class="form-control" id="hubIPInput" placeholder="IP address">
+                  <label for="hubIPInput">IP address</label>
                 </div>
               </div>
-              <div id="controlServerPortInputGroup" class="col-3" style="display: none;">
+              <div id="hubPortInputGroup" class="col-3" style="display: none;">
                 <div class="form-floating">
-                  <input type="number" class="form-control" id="controlServerPortInput" placeholder="Port">
-                  <label for="controlServerPortInput">Port</label>
+                  <input type="number" class="form-control" id="hubPortInput" placeholder="Port">
+                  <label for="hubPortInput">Port</label>
                 </div>
               </div>
-              <div id="controlServerDetailsWarning" class="col-12 mt-3 text-warning" style="display: none;">
+              <div id="hubDetailsWarning" class="col-12 mt-3 text-warning" style="display: none;">
                 You must specifiy Hub's IP address and port. If you don't know these values, contact your system administrator.
               </div>
             </div>
@@ -174,31 +180,6 @@
             </div>
           </div>
         </div>
-        <!-- Basic settings -->
-        <div id="basic-settings" class="col-12 wizard-pane" style="display: none;">
-          <div class="alert alert-primary">
-            <div class="h5 text-center">What should we call this component?</div>
-            <p>
-              Since we're using Hub, we need to identify this component. Each app instance needs an <b>ID</b>, which uniquely identifies this component. A good ID might be something like <i>Sports Intro Video</i>.
-            </p>
-            <div class="row mt-4">
-              <div class="col-6">
-                <div class="form-floating">
-                  <input type="text" class="form-control" id="IDInput" placeholder="ID">
-                  <label for="IDInput">ID</label>
-                </div>
-              </div>
-              <div id="basicSettingsWarning" class="col-12 mt-3 text-warning" style="display: none;">
-                You must enter an ID for this component.
-              </div>
-            </div>
-            
-            <div class="text-center mt-3">
-              <button data-page="basic-settings" class="btn btn-secondary back-button me-3">Back</button>
-              <button data-page="basic-settings" class="btn btn-success next-button ms-3">Next</button>
-            </div>
-          </div>
-        </div>
         <!-- Summary -->
         <div id="summary" class="col-12 wizard-pane" style="display: none;">
           <div class="alert alert-primary">
@@ -209,10 +190,10 @@
             <div class="h6">Hub</div>
             <p>
               <em id="summaryNoControlCenter">This app will not connect to Hub.</em>
-              <div id="summaryControlServerDetails">
-                <b>IP address:</b> <span id="summaryControlServerIP"></span>
+              <div id="summaryHubDetails">
+                <b>IP address:</b> <span id="summaryHubIP"></span>
                 <br>
-                <b>Port:</b> <span id="summaryControlServerPort"></span>
+                <b>Port:</b> <span id="summaryHubPort"></span>
               </div>
             </p>
 
@@ -223,12 +204,6 @@
                 <b>Port:</b> <span id="summaryPort"></span>
               </div>
             </p>
-            <div id="summaryBasicSettings">
-              <div class="h6">Identification</div>
-              <p>
-                <b>ID:</b> <span id="summaryID"></span>
-              </p>
-            </div>
             <div class="text-center mt-3">
               <button data-page="summary" class="btn btn-secondary back-button me-3">Back</button>
               <button data-page="summary" class="btn btn-success next-button ms-3">Finish</button>
@@ -238,7 +213,6 @@
       </div>
     </div>
 
-  <script type="text/javascript" src="js/jquery-3.7.1.min.js"></script>
   <script type="text/javascript" src="js/bootstrap_5_3/bootstrap.bundle.min.js"></script>
   <script type="text/javascript" src="js/showdown.min.js"></script>
   <script type="text/javascript" src="js/platform.js"></script>

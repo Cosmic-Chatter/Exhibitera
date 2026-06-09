@@ -1,0 +1,289 @@
+:root {
+  /* Colors */
+  --header-color: #243447;
+  --footer-color: #243447;
+  --background-color: #0f1419;
+  --tab-button-color: #4b5563;
+  --tab-button-active-color: #e06a47;
+  --text-color: #e6e6e2;
+  --tab-button-text-color: #f5f5f0;
+  --caption-color: #e6e6e2;
+  --quote-color: #f5f5f0;
+  --section-header-color: #f5f5f0;
+  --section-background-color: #2f3e4f;
+  --section-border-color: #e6e6e2;
+  --section-shadow-color: #0f141900;
+
+  /* Font faces */
+  --header-font: 'header-default';
+  --body-font: 'body-default';
+  --caption-font: 'caption-default';
+  --quote-font: 'quote-default';
+  --section-header-font: 'section-header-default';
+  --button-font: 'button-default';
+
+  /* Font size */
+  --font-size-adjust: 1; /* This is an overall adjustment for the +/- GUI buttons */
+  --header-font-size-adjust: 0;
+  --section-header-font-size-adjust: 0;
+  --body-font-size-adjust: 0;
+  --caption-font-size-adjust: 0;
+  --quote-font-size-adjust: 0;
+  --tab-button-font-size-adjust: 0;
+
+  /* Misc */
+  --button-rows: 1;
+  --button-size: 30;
+  --header-height: 10;
+  --sidebar-width: 30;
+  --toolbar-height: 5;
+  --section-corner-radius: 2;
+}
+
+/* Font definitions */
+@font-face {
+  font-family: "header-default";
+  src: url("../../_fonts/OpenSans-Bold.ttf");
+}
+
+@font-face {
+  font-family: "body-default";
+  src: url("../../_fonts/OpenSans-Regular.ttf");
+}
+
+@font-face {
+  font-family: "caption-default";
+  src: url("../../_fonts/OpenSans-LightItalic.ttf");
+}
+
+@font-face {
+  font-family: "quote-default";
+  src: url("../../_fonts/OpenSans-SemiboldItalic.ttf");
+}
+
+@font-face {
+  font-family: "section-header-default";
+  src: url("../../_fonts/OpenSans-Bold.ttf");
+}
+
+@font-face {
+  font-family: "button-default";
+  src: url("../../_fonts/OpenSans-Regular.ttf");
+}
+
+body, html {
+  min-height: 100vh;
+  margin: 0px;
+  padding: 0px;
+  background: var(--background-color);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  touch-action: none;
+  overscroll-behavior: none;
+  user-select: none;
+  overflow: hidden;
+}
+blockquote>p {
+  color: var(--quote-color);
+  font-size: max(min(calc((1.6vmax + var(--quote-font-size-adjust)*1vmax) * var(--font-size-adjust)), 3.5vmax), calc(1.6vmax + var(--quote-font-size-adjust)*1vmax));
+  transition: font-size 0.1s;
+  padding-left: 5vw;
+  padding-right: 5vw;
+  font-family: var(--quote-font);
+
+}
+H1 {
+  color: var(--section-header-color);
+  font-size: max(min(calc((3.7vmax + var(--section-header-font-size-adjust)*1vmax) * var(--font-size-adjust)), 5.5vmax), calc(3.7vmax + var(--section-header-font-size-adjust)*1vmax));
+  text-align: center;
+  font-family: var(--section-header-font);
+  transition: font-size 0.1s;
+}
+H2 {
+  color: var(--section-header-color);
+  font-size: max(min(calc((2.6vmax + var(--section-header-font-size-adjust)*1vmax) * var(--font-size-adjust)), 5vmax), calc(2.6vmax + var(--section-header-font-size-adjust)*1vmax));
+  font-family: var(--section-header-font);
+  transition: font-size 0.1s;
+}
+H3 {
+  color: var(--section-header-color);
+  font-size: max(min(calc((2.3vmax + var(--section-header-font-size-adjust)*1vmax) * var(--font-size-adjust)), 4.8vmax), calc(2.3vmax + var(--section-header-font-size-adjust)*1vmax));
+  font-family: var(--section-header-font);
+  transition: font-size 0.1s;
+}
+H4 {
+  color: var(--section-header-color);
+  font-size: max(min(calc((2vmax + var(--section-header-font-size-adjust)*1vmax) * var(--font-size-adjust)), 4.5vmax), calc(2vmax + var(--section-header-font-size-adjust)*1vmax));
+  font-family: var(--section-header-font);
+  transition: font-size 0.1s;
+}
+H5 {
+  color: var(--section-header-color);
+  font-size: max(min(calc((1.7vmax + var(--section-header-font-size-adjust)*1vmax) * var(--font-size-adjust)), 4.2vmax), calc(1.7vmax + var(--section-header-font-size-adjust)*1vmax));
+  font-family: var(--section-header-font);
+  transition: font-size 0.1s;
+}
+H6 {
+  color: var(--section-header-color);
+  font-size: max(min(calc((1.4vmax + var(--section-header-font-size-adjust)*1vmax) * var(--font-size-adjust)), 3.9vmax), calc(1.4vmax + var(--section-header-font-size-adjust)*1vmax));
+  font-family: var(--section-header-font);
+  transition: font-size 0.1s;
+}
+li {
+  color: var(--text-color);
+  font-size: max(min(calc((1.1vmax + var(--body-font-size-adjust)*1vmax) * var(--font-size-adjust)), 3.5vmax), calc(1.1vmax + var(--body-font-size-adjust)*1vmax));
+  transition: font-size 0.1s;
+}
+p, div {
+  color: var(--text-color);
+  font-size: max(min(calc((1.6vmax + var(--body-font-size-adjust)*1vmax) * var(--font-size-adjust)), 3.5vmax), calc(1.6vmax + var(--body-font-size-adjust)*1vmax));
+  transition: font-size 0.1s;
+  font-family: var(--body-font);
+}
+::-webkit-scrollbar {
+  width: 0;
+}
+.bg-primary {
+  background-color: var(--tab-button-color)!important;
+  border-color: var(--tabbutton-color)!important;
+}
+.box {
+  background-color: var(--section-background-color);
+  padding: 3vmin;
+  margin-bottom: 2vmin;
+  border-style: solid;
+  border-radius: calc(1vmin * var(--section-corner-radius));
+  border-color: var(--section-border-color);
+  border-width: 0.9vmin;
+  box-shadow: 1vmin 1vmin var(--section-shadow-color);
+  overflow: auto;
+}
+.btn-primary {
+  background-color: var(--tab-button-active-color)!important;
+  border-color: var(--tab-button-active-color)!important;
+}
+.btn-secondary {
+  background-color: var(--tab-button-color)!important;
+  border-color: var(--tab-button-color)!important;
+}
+.card-img-top {
+  object-fit: contain;
+  max-height: 28vmin;
+}
+.card-title {
+  font-size: 2.3vmax;
+}
+.langSwitch-entry {
+  font-size: 3vmin;
+}
+.markdown-media-caption>div>p {
+  color: var(--caption-color);
+  font-family: var(--caption-font);
+  font-size: max(min(calc((1.5vmax + var(--caption-font-size-adjust)*1vmax) * var(--font-size-adjust)), 3.5vmax), calc(1.5vmax + var(--caption-font-size-adjust)*1vmax));;
+}
+.tabButton {
+  font-size: calc(2.5vmax + var(--tab-button-font-size-adjust) * 1vmax);
+  font-family: var(--button-font);
+  color: var(--tab-button-text-color)!important;
+
+}
+#attractorImage {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+#attractorOverlay {
+  position: fixed;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0,0,0,0.9);
+  z-index: 5;
+  cursor: pointer;
+  justify-content: center;
+  align-items: center;
+  transition: opacity 500ms;
+}
+#attractorVideo {
+  position: fixed;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+#masthead {
+  font-size: calc(6vmax + var(--header-font-size-adjust)*1vmax);
+  height: calc(1vh * var(--header-height));
+  /* line-height: calc(1vh * var(--header-height)); */
+  color: var(--text-color);
+  background-color: var(--header-color);
+  z-index: 1;
+  font-family: var(--header-font);
+  transition: font-size 0.1s;
+}
+#nav-tabContent {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+#toolbar {
+  background-color: var(--footer-color);
+  height: calc(var(--toolbar-height) * 1vmax);
+  z-index: 1;
+}
+
+/* Handle portrait and landscape orientations */
+@media (orientation: portrait) {
+  .tabButtonCol {
+    width: calc(1%*var(--button-size))
+  }
+  #buttonRow {
+    height: calc(7vmax*var(--button-rows));
+    overflow-y: auto;
+    flex-wrap: nowrap;
+    position: relative;
+  }
+  #nav-tabContent {
+    height: calc(100vh - 7vh*var(--button-rows) - var(--toolbar-height) * 1vh - 1vh * var(--header-height));
+    width: 100vw;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+}
+
+@media (orientation: landscape) {
+  .tabButtonCol {
+    width: 100%;
+    height: calc(1%*var(--button-size))
+  }
+  #mastheadDiv {
+    width:  calc(var(--sidebar-width) * 1vw);
+  }
+  #nav-tabContent {
+    position: fixed;
+    left: calc(var(--sidebar-width) * 1vw);
+    top: 0vh;
+    width: calc((100 - var(--sidebar-width))*1vw);
+    height: 100vh;
+  }
+  :dir(rtl) #nav-tabContent {
+    left: 0;
+  }
+  #buttonRow {
+    width: calc(var(--sidebar-width) * 1vw); 
+    height: calc(100vh - 1vh * var(--header-height) - var(--toolbar-height) * 1vmax);
+    overflow-y: auto;
+    --bs-gutter-y: 0.5rem;
+  }
+  #toolbar {
+    width: calc(var(--sidebar-width) * 1vw); 
+  }
+}

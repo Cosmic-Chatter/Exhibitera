@@ -16,6 +16,36 @@
     border: var(--bs-border-color);
     border-width: 1px;
     border-style: solid;
+    cursor: default;
+}
+.exAS_number {
+    font-size: 0.75rem;
+    padding: .25rem;
+    text-align: center;
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+.exAS_label {
+    font-size: 0.75rem;
+    padding: .25rem;
+    cursor: default;
+}
+.exAS_number::-webkit-inner-spin-button,
+.exAS_number::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.exRadioButton {
+    border-radius: 0.375rem;
+    outline: 1px solid #6c757d;
+}
+
+.exRadioButton:has(.form-check-input:checked) {
+    outline: 3px solid #0d6efd;
+}
+
+#helpNewAccountMessage {
+    display: none;
 }
 #previewContainer {
     width: 100%;

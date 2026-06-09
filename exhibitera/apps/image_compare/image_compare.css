@@ -6,19 +6,19 @@
     --itemList-width-portrait: 10; /* Measured out of 12 */
 
     /* Colors */
-    --background-color: black;
-    --titleColor: white;
-    --subtitleColor: white;
-    --itemNameColor: white;
-    --buttonBackgroundColor: #393a5acc;
-    --buttonTextColor: white;
-    --buttonOutlineColor: white;
-    --sliderBackgroundColor: #719bbfb3;
-    --sliderIconColor: black;
-    --labelBackgroundColor: #00000080;
-    --labelTextColor: white;
-    --infoTitleColor: white;
-    --infoBodyColor: white;
+    --background-color: #0f1419;
+    --titleColor: #f5f5f0;
+    --subtitleColor: #e6e6e2;
+    --itemNameColor: #e6e6e2;
+    --buttonBackgroundColor: #2f3e4fd8;
+    --buttonTextColor: #f5f5f0;
+    --buttonOutlineColor: #e6e6e2;
+    --sliderBackgroundColor: #5a7ba8cc;
+    --sliderIconColor: #0f1419;
+    --labelBackgroundColor: #0f141991;
+    --labelTextColor: #e6e6e2;
+    --infoTitleColor: #f5f5f0;
+    --infoBodyColor: #e6e6e2;
 
     /* Font faces */
     --title-font: 'Title-default';
@@ -319,7 +319,10 @@ html, body {
     z-index: 10;
     width: 100vw;
     height: 100vh;
-    background-color: var(--background-color);
+    background: var(--background-color);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
 }
 #subtitle {
     color: var(--subtitleColor);
@@ -345,7 +348,7 @@ html, body {
 @media (orientation: landscape) {
     #itemList {
         width: calc(var(--itemList-width-landscape)/12 * 100%);
-        margin-left: calc((12 - var(--itemList-width-landscape)) /24 * 100%);
+        margin-inline-start: calc((12 - var(--itemList-width-landscape)) /24 * 100%);
     }
     #itemList > * {
         flex: 0 0 auto;
@@ -365,7 +368,7 @@ html, body {
     }
     #itemList {
         width: calc(var(--itemList-width-portrait)/12 * 100%);
-        margin-left: calc((12 - var(--itemList-width-portrait)) /24 * 100%);
+        margin-inline-start: calc((12 - var(--itemList-width-portrait)) /24 * 100%);
     }
     #itemList > * {
         flex: 0 0 auto;

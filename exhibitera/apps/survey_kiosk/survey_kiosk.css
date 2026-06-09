@@ -1,0 +1,217 @@
+html,
+body {
+    touch-action: manipulation;
+    word-wrap: break-word;
+    font-size: 25px;
+    margin: 0px;
+    padding: 0px;
+    overflow: hidden;
+    background: var(--background-color);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.btn {
+    border-radius: 0.75vmin!important;
+}
+
+.button-col {
+    max-height: 100%;
+}
+
+.option {
+    font-family: var(--button-font);
+    border-radius: 2vmin!important;
+    background: var(--button-color);
+}
+.option-inactive {
+    transition: .5s ease-in-out all;
+}
+.option-active {
+    outline: solid 0.5vmin var(--button-selected-color);
+    transition: .1s ease-in-out all;
+}
+.option-image {
+    max-width: 100%;
+    max-height: 100%;
+    height: auto;
+    width: 100%;
+    object-fit: contain;
+}
+.option-image-container {
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5%;
+}
+
+.option-text {
+    font-size: calc(3vmax + var(--button-font-adjust)*1vmax);
+    text-align: center;
+    color: var(--button-text-color);
+    width: 100%;
+    padding-left: 5%;
+    padding-right: 5%;
+    overflow: hidden;
+}
+
+.next-button {
+    margin-bottom: 2vmin;
+    font-size: calc(2vmax + var(--next-font-adjust)*1vmax);
+    text-align: center;
+    color: var(--next-button-text-color);
+    background-color: var(--next-button-color);
+    font-family: var(--next-font);
+}
+.next-button:hover {
+    filter: brightness(90%);
+    background-color: var(--next-button-color);
+    color: var(--next-button-text-color);
+}
+.next-button:active {
+    filter: brightness(80%);
+    background-color: var(--next-button-color);
+    color: var(--next-button-text-color);
+}
+
+.noselect {
+    -webkit-touch-callout: none; /* iOS Safari */
+      -webkit-user-select: none; /* Safari */
+       -khtml-user-select: none; /* Konqueror HTML */
+         -moz-user-select: none; /* Old versions of Firefox */
+          -ms-user-select: none; /* Internet Explorer/Edge */
+              user-select: none; /* Non-prefixed version, currently
+                                    supported by Chrome, Edge, Opera and Firefox */
+}
+.question {
+    color: var(--header-color);
+    font-size: calc(5vmin + var(--header-font-adjust)*1vmin);
+    font-family: var(--header-font);
+    padding-top: 2vmin;
+    padding-bottom: 2vmin;
+}
+.rounded {
+    border-radius: 2vmin!important;
+}
+.survey-dot {
+  width: 1.5vmin;
+  height: 1.5vmin;
+  border-radius: 50%;
+  background-color: var(--inactive-dot-color);
+  margin: 0.95vmin;
+  transition: all 0.3s ease;
+}
+
+.survey-dot.active {
+  width: 3vmin;
+  height: 3vmin;
+  margin: 0.2vmin;
+  background-color: var(--active-dot-color);
+}
+
+.text-item {
+    margin-left: calc(var(--text-margin) * 1vw);
+    margin-right: calc(var(--text-margin) * 1vw);
+    color: var(--body-text-color);
+    font-family: var(--body-font);
+    font-size: 2vmax;
+    overflow-y: auto;
+}
+
+#bottomRow {
+    padding-bottom: 2vmin;
+    margin-left: 2vmin;
+    margin-right: 2vmin;
+}
+
+#cardRow {
+    height: 100%;
+    padding-left: 2vmin;
+    padding-right: 2vmin;
+    padding-bottom: 2vmin;
+}
+
+#itemDiv {
+    padding-top: 2vmin;
+    padding-bottom: 2vmin;
+}
+
+#itemPane {
+    transition: all 0.5s;
+    margin-left: 2vmin;
+    margin-right: 2vmin;
+    opacity: 1;
+    overflow: hidden;
+    background: var(--item_background)
+}
+
+.item-collapsed {
+    height: 0;
+    margin: auto 0;
+    padding: 0;
+    opacity: 0;
+}
+
+#inactivityHeader {
+    font-size: 4vmin;
+}
+
+#langSwitchDropdown {
+    width: 6vmax;
+    margin-inline-start: auto;
+}
+
+#restartButton {
+    font-size: calc(2vmax + var(--restart-font-adjust)*1vmax);
+    text-align: center;
+    color: var(--restart-button-text-color);
+    background-color: var(--restart-button-color);
+    font-family: var(--restart-font);
+}
+#restartButton:hover {
+    filter: brightness(90%);
+    background-color: var(--restart-button-color);
+    color: var(--restart-button-text-color);
+}
+#restartButton:active {
+    filter: brightness(80%);
+    background-color: var(--restart-button-color);
+    color: var(--restart-button-text-color);
+}
+
+#successMessageBody {
+    font-size: 3vmax!important;
+    font-family: var(--button-font);
+    background-color: var(--success-message-color);
+}
+
+#topRow {
+    height: 20vh;
+}
+
+@media (orientation: portrait) {
+    .question {
+        height: 10%;
+    }
+    #bottomRow {
+        height: 6vh;
+    }
+    #itemDiv {
+        height: 94vh;
+    }
+    #cardRow {
+        height: 90%;
+    }
+  }
+  
+  @media (orientation: landscape) {
+    #bottomRow {
+        height: 10vh;
+    }
+    #itemDiv {
+        height: 90vh;
+    }
+  }

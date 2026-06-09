@@ -2,29 +2,26 @@
 
 import datetime
 import threading
-from typing import Any, Union
+from typing import Any
 
-# Path to the directory where the server is being launched from
-application_path: str = ""
-# Path to the directory the code is actually running from (different from APP_PATH when using Pyinstaller)
-exec_path: str = ""
 
 # Defaults (loaded from config.json)
 defaults: dict[str, Any] = {}
-uuid: str = ''  # Loaded from configuration/uuid.txt
+uuid: str = ''
 
 commandList: list[str] = []  # List of queued commands to send to the client
 missingContentWarningList: list[dict] = []  # Holds a list of warning about missing content
-NEXT_EVENT: Union[tuple[datetime.time, list[str]], None] = None  # A tuple with the next event to occur and the time is happens
+NEXT_EVENT: tuple[datetime.time, list[str]] | None = None  # A tuple with the next event to occur and the time it happens
 schedule: list[tuple[datetime.time, str]] = []  # List of upcoming actions and their times
 thumbnail_archive: dict[str, Any] | None = None
-HELPER_SOFTWARE_VERSION: float = 5.3
+software_version: dict[str, int] = {}
 debug: bool = True
 
 # DMX resources
-dmx_universes: list = []
+dmx_universe = None
 dmx_groups: list = []
 dmx_fixtures = []
+dmx_scenes = []
 dmx_active: bool = False
 
 smart_restart: dict[str: Any] = {
@@ -38,8 +35,8 @@ smart_restart: dict[str: Any] = {
 
 software_update: dict[str, Any] = {
     "update_available": False,
-    "current_version": str(HELPER_SOFTWARE_VERSION),
-    "available_version": str(HELPER_SOFTWARE_VERSION)
+    "current_version": software_version,
+    "available_version": software_version
 }
 software_update_timer: threading.Timer | None = None
 
@@ -50,5 +47,9 @@ HELPING_REMOTE_CLIENT: bool = False
 # Threading resources
 server_process: threading.Thread
 defaults_file_lock: threading.Lock = threading.Lock()
-content_file_lock: threading.Lock = threading.Lock()
 thumbnail_lock: threading.Lock = threading.Lock()
+
+# Pywebview resources
+block_closing = True
+root_window = None
+webview_fullscreen = False

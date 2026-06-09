@@ -7,7 +7,7 @@
     <meta name="author" content="Morgan Rehnberg">
 
     <!-- Favicons -->
-    <link rel="icon" type="image/x-icon" href="icon/green.ico">
+    <link rel="icon" type="image/x-icon" href="_static/icons/green.ico">
 
     <link rel="stylesheet" href="css/bootstrap_5_3/bootstrap.min.css">
     <link rel="stylesheet" href="css/webpage.css">
@@ -25,41 +25,32 @@
         <div class="modal-dialog modal-dialog-centered exhibitera-dialog" role="document">
           <div class="modal-content">
             <div class="modal-header">
-              <h4 class="modal-title">Welcome to Exhibitera 5.3</h4>
+              <h4 class="modal-title">Welcome to Exhibitera 6</h4>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" style="max-height: 55vh; overflow-y: auto;">
-              <H5>A more personal Hub</H5>
               <p>
-                The expanded View Options menu in the <i>Components</i> tab helps you fine-tune the way Hub works and looks for you. Toggle light- or dark-mode from the new user preferences menu.
+                <i>View <a href="https://github.com/Cosmic-Chatter/Exhibitera/blob/main/exhibitera/changelog.md" target="_blank">full list</a> of changes</i>
+              </p>
+              
+              <H5><i>Exhibits</i> are now <i>Exhibitions</i></H5>
+              <p>
+                Changing a component's definition now creates an <i>exhibition modification</i>. Modifications are not permanently stored in the exhibition; instead, they will be cleared the next time the exhibition changes. This enables you to make a temporary change (such as with the <i>Set definition</i> schedule action) without it permanently affecting the exhibition.
               </p>
 
-              <H5>New Image Compare app</H5>
+              <H5>Built to last</H5>
               <p>
-                With Image Compare in Exhibitera Apps, create a before/after slider between a pair of images.
+                Exhibitera 6 lays the groundwork for long-term success. Future versions of Hub will remain compatible with Exhibitera Apps 6, meaning you can keep Hub up to date even if other components can't be upgraded.
               </p>
 
-              <H5>Rich text editing in Apps</H5>
+              <H5>New Survey Kiosk app</H5>
               <p>
-                New rich text editors during app setups give you more control over text styling across many apps. 
+                This brand-new app extends Voting Kiosk to multiple survey questions, with new features and support for multiple languages.
               </p>
 
-              <H4>Previously in Exhibitera 5...</H4>
-              <H5>Constellation is now Exhibitera</H5>
+              <H5>Support for RTL languages</H5>
               <p>
-                The name might be different, but the goal remains the same: a powerful yet flexible tool for building and maintaining museum exhibits. It's still free and open-source, built for the museum community by the community.
-              </p>
-              <H5>User management</H5>
-              <p>
-                Exhibitera 5 introduces a new user account system that enables administrators to restrict users to the tools specific to their role. Let educators create content without worrying that a mistake will affect the whole system. Give the maintenance team access to issue tracking without worrying about the schedule.
-              </p>
-              <H5>New ways to work with schedules</H5>
-              <p>
-                Create or download schedules as JSON files to work with them without having to use the web interface.
-              </p>
-              <H5>New tools for working with media</H5>
-              <p>
-                Media Player can now access files via URL and add dynamic text from JSON feeds. Users can now filter files in Media Browser with custom attributes. And new app preview layouts help ensure what you see is what your visitors will.
+                Apps that support language selection now properly display right-to-left text for Arabic and Hebrew.
               </p>
             </div>
             <div class="modal-footer">
@@ -87,6 +78,9 @@
                     <option value="light">Light</option>
                     <option value="dark">Dark</option>
                   </select>
+                </div>
+                <div class="col-6 d-flex flex-column justify-content-end">
+                  <button id="userPreferencesModalResetHintsButton" class="btn btn-primary w-100">Reset hints</button>
                 </div>
               </div>
             </div>
@@ -171,11 +165,11 @@
                         <option value="edit">Edit</option>
                       </select>
                     </div>
-                    <!-- Exhibits permission -->
+                    <!-- Exhibitions permission -->
                     <div class="col d-flex flex-column justify-content-end">
                       <label class="form-label" for="editUserPermissionExhibits">
-                        Exhibits
-                        <span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Create, edit, and switch exhibits." style="font-size: 0.55em; color: black">?</span>
+                        Exhibitions
+                        <span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Create, edit, and switch exhibitions." style="font-size: 0.55em; color: black">?</span>
                       </label>
                       <select id="editUserPermissionExhibits" class="form-select editUserField">
                         <option value="none">None</option>
@@ -352,6 +346,10 @@
                         <span class="dropdown-header ps-3 pb-0">Operating system</span>
                         <span id="componentInfoModalOperatingSystem" class="dropdown-item-text ps-3"></span>
                       </div>
+                      <div id="componentInfoModalExhibteraGroup">
+                        <span class="dropdown-header ps-3 pb-0">Exhibitera version</span>
+                        <span id="componentInfoModalExhibtera" class="dropdown-item-text ps-3"></span>
+                      </div>
                       <div id="componentInfoModalBrowserGroup">
                         <span class="dropdown-header ps-3 pb-0">Browser</span>
                         <span id="componentInfoModalBrowser" class="dropdown-item-text ps-3"></span>
@@ -371,7 +369,7 @@
                   </div>
                 </div>
                 <div class="col-12">
-                  <div id="componentInfoModalDescription">This is the description</div>
+                  <div id="componentInfoModalDescription"></div>
                 </div>
               </div>
             </div>
@@ -379,7 +377,7 @@
 
               <!-- Status messages -->
               <div class="row">
-                <div id="componentInfoStatusMessage" class='col-8 offset-2 text-center h4'>
+                <div id="componentInfoStatusMessage" class='col-8 offset-2 alert alert-warning text-center py-2'>
                 </div>
               </div>
 
@@ -389,7 +387,7 @@
                   <a class="nav-link active px-3 px-sm-4" id="componentInfoModalDefinitionsTabButton" data-bs-toggle="tab" href="#componentInfoModalDefinitionsTab" role="tab" aria-controls="Definitions" aria-selected="true">Definitions</a>
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link px-3 px-sm-4" id="componentInfoModalDMXTabButton" data-bs-toggle="tab" href="#componentInfoModalDMXTab" role="tab" aria-controls="DMX" aria-selected="false">DMX</a>
+                  <a class="nav-link px-3 px-sm-4" id="componentInfoModalDMXTabButton" data-bs-toggle="tab" href="#componentInfoModalDMXTab" role="tab" aria-controls="Lighting" aria-selected="false">Lighting</a>
                 </li>
                 <li class="nav-item">
                   <a class="nav-link px-3 px-sm-4" id="componentInfoModaProejctorTabButton" data-bs-toggle="tab" href="#componentInfoModaProejctorTab" role="tab" aria-controls="Status" aria-selected="false">Status</a>
@@ -432,11 +430,13 @@
                           <option value="infostation">Infostation</option>
                           <option value="media_browser">Media Browser</option>
                           <option value="media_player">Media Player</option>
+                          <option value="survey_kiosk">Survey Kiosk</option>
                           <option value="timelapse_viewer">Timelapse Viewer</option>
                           <option value="timeline_explorer">Timeline Explorer</option>
                           <option value="voting_kiosk">Voting Kiosk</option>
                           <option value="word_cloud_input">Word Cloud Input</option>
                           <option value="word_cloud_viewer">Word Cloud Viewer</option>
+                          <option value="other">Custom App</option>
                         </select>
                         <label class="form-check-label visually-hidden" for="definitionTabAppFilterSelect">
                           Filter by app
@@ -450,15 +450,16 @@
                         </button>
                         <div class="dropdown-menu" aria-labelledby="componentInfoModalNewDefinitionButton">
                           <a class="dropdown-item defintion-new-option" href="#" data-app="image_compare" target="_blank">Image Compare</a>
-                          <a class="dropdown-item defintion-new-option" href="#" data-app="InfoStation" target="_blank">Infostation</a>
+                          <a class="dropdown-item defintion-new-option" href="#" data-app="infostation" target="_blank">Infostation</a>
                           <a class="dropdown-item defintion-new-option" href="#" data-app="media_browser" target="_blank">Media Browser</a>
                           <a class="dropdown-item defintion-new-option" href="#" data-app="media_player" target="_blank">Media Player</a>
+                          <a class="dropdown-item defintion-new-option" href="#" data-app="survey_kiosk" target="_blank">Survey Kiosk</a>
                           <a class="dropdown-item defintion-new-option" href="#" data-app="timelapse_viewer" target="_blank">Timelapse Viewer</a>
                           <a class="dropdown-item defintion-new-option" href="#" data-app="timeline_explorer" target="_blank">Timeline Explorer</a>
                           <a class="dropdown-item defintion-new-option" href="#" data-app="voting_kiosk" target="_blank">Voting Kiosk</a>
                           <a class="dropdown-item defintion-new-option" href="#" data-app="word_cloud_input" target="_blank">Word Cloud Input</a>
                           <a class="dropdown-item defintion-new-option" href="#" data-app="word_cloud_viewer" target="_blank">Word Cloud Viewer</a>
-                          <a class="dropdown-item defintion-new-option" href="#" data-app="other" target="_blank">Other</a>
+                          <a class="dropdown-item defintion-new-option" href="#" data-app="other" target="_blank">Custom App</a>
                         </div>
                       </div>
                     </div>
@@ -469,7 +470,7 @@
 
                 <!-- DMX page -->
                 <div class="tab-pane fade" id="componentInfoModalDMXTab" role="tabpanel" aria-labelledby="componentInfoModalDMXTabButton">
-                  <div class="row mt-3">
+                  <div id="componentInfoModalDMXControls" class="row mt-3">
                     <div class="col-9">
                       <div class="mt-2">Click on a scene below to immediately show it.</div>
                     </div>
@@ -478,6 +479,17 @@
                     </div>
                     <div class="col-12">
                       <div  id="componentInfoModalDMXSceneList" class="row"></div>
+                    </div>
+                  </div>
+                  <div id="componentInfoModalDMXIntro" class="col-12 col-md-8 offset-md-2">
+                    <div class="alert alert-primary mt-5">
+                      <H5 class="text-center">DMX lighting control</H5>
+                      <span class="fw-italic">
+                        <p>Exhibitera Hub can control gallery lighting connected to a DMX lighting controller attached to this component.</p> 
+                      </span>
+                      <center>
+                        <button id="componentInfoModalDMXIntroConfigureButton" class="btn btn-primary">Configure DMX controller</button>
+                      </center>
                     </div>
                   </div>
                 </div>
@@ -499,28 +511,28 @@
 
                 <!-- Maintenance pane -->
                 <div class="tab-pane fade" id="componentInfoModalMaintenanceTab" role="tabpanel" aria-labelledby="componentInfoModalMaintenanceTabButton">
-                  <div class='row align-items-end my-3 pb-3 border-bottom' id="contentUploadSystemStatsView">
+                  <div class='row align-items-end my-3 pb-3 border-bottom' id="componentInfoModalMaintenanceSystemStatsView">
                     <div class='col-4'>
-                      <strong id="contentUploadDiskSpaceFree"></strong>
+                      <strong id="componentInfoModalMaintenanceDiskSpaceFree"></strong>
                       <div class="progress" style="height: 20px;">
-                        <div id="contentUploadDiskSpaceUsedBar" class="progress-bar bg-success" role="progressbar" style="width: 70%;" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100"></div>
-                        <div id="contentUploadDiskSpaceFreeBar" class="progress-bar bg-secondary" role="progressbar" style="width: 30%;" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100"></div>
+                        <div id="componentInfoModalMaintenanceDiskSpaceUsedBar" class="progress-bar bg-success" role="progressbar" style="width: 70%;" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100"></div>
+                        <div id="componentInfoModalMaintenanceDiskSpaceFreeBar" class="progress-bar bg-secondary" role="progressbar" style="width: 30%;" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100"></div>
                       </div>
                     </div>
     
                     <div class='col-4'>
-                      <strong id="contentUploadCPUUsed"></strong>
+                      <strong id="componentInfoModalMaintenanceRAMUsed"></strong>
                       <div class="progress" style="height: 20px;">
-                        <div id="contentUploadCPUUsedBar" class="progress-bar bg-success" role="progressbar" style="width: 70%;" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100"></div>
-                        <div id="contentUploadCPUFreeBar"class="progress-bar bg-secondary" role="progressbar" style="width: 30%;" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100"></div>
+                        <div id="componentInfoModalMaintenanceRAMUsedBar" class="progress-bar bg-success" role="progressbar" style="width: 60%;" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100"></div>
+                        <div id="componentInfoModalMaintenanceRAMFreeBar" class="progress-bar bg-secondary" role="progressbar" style="width: 40%;" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100"></div>
                       </div>
                     </div>
-    
-                    <div class='col-4'>
-                      <strong id="contentUploadRAMUsed"></strong>
+
+                    <div id="componentInfoModalMaintenanceCPUBar" class='col-4'>
+                      <strong id="componentInfoModalMaintenanceCPUUsed"></strong>
                       <div class="progress" style="height: 20px;">
-                        <div id="contentUploadRAMUsedBar" class="progress-bar bg-success" role="progressbar" style="width: 60%;" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100"></div>
-                        <div id="contentUploadRAMFreeBar" class="progress-bar bg-secondary" role="progressbar" style="width: 40%;" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100"></div>
+                        <div id="componentInfoModalMaintenanceCPUUsedBar" class="progress-bar bg-success" role="progressbar" style="width: 70%;" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100"></div>
+                        <div id="componentInfoModalMaintenanceCPUFreeBar"class="progress-bar bg-secondary" role="progressbar" style="width: 30%;" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100"></div>
                       </div>
                     </div>
                   </div>
@@ -572,7 +584,7 @@
                             <div class="col">
                               <label for="componentInfoModalBasicSettingsID" class="form-label">
                                 ID
-                                <span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Every Exhibitera component must have a unique ID." style="font-size: 0.55em; color: black">?</span>
+                                <span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Every Exhibitera component should have a unique ID." style="font-size: 0.55em; color: black">?</span>
                               </label>
                               <input id="componentInfoModalBasicSettingsID" class="form-control componentInfoBasicSetting" type="text">
                             </div>
@@ -799,19 +811,46 @@
             </div>
             <div class="modal-body" style="height:55vh;">
               <div class="row gy-2 h-100">
-                <div id="copyDefinitionModalSourceCol" class="col-12 col-md-6 border-end">
+                <div id="copyDefinitionModalSourceCol" class="col-12 col-md-6 h-100 border-end">
                   <div class='fs-5 text-center border-bottom'>Copy these files</div>
-                  <div class="row gy-2 mt-2" id="copyDefinitionModalSourceFiles"></div>
+                  <div class="mt-2" id="copyDefinitionModalSourceFiles"></div>
                 </div>
                 <div id="copyDefinitionModalDestinationCol" class="col-12 col-md-6 h-100">
                   <div class='fs-5 text-center border-bottom'>To these components</div>
-                  <div class="row gy-2 mt-2" id="copyDefinitionModalDestinations"></div>
+                  <div class="mt-2" id="copyDefinitionModalDestinations"></div>
                 </div>
               </div>
             </div>
-            <div class="modal-footer">
-              <button id="copyDefinitionModalSubmitButton" type="button" class="btn btn-primary">Copy</button>
+            <div class="modal-footer d-flex align-items-center">
+              <div id="copyProgressContainer" class="progress flex-grow-1 me-3" style="height: 20px; display: none;">
+                <div id="copyProgressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+              </div>
+              <button type="button" id="copyDefinitionModalSubmitButton" class="btn btn-primary">Copy</button>
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Exhibition modifications modal -->
+      <div class="modal" tabindex="-1" role="dialog" id="exhibitModificationsModal">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Exhibition modifications</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" style="height: 55vh; overflow-y: auto;">
+              <div class="mb-2">
+                The following components have had their definition changed since the exhibition loaded. To make these modifications part of the exhibition, click <i>Make permanent</i>. 
+              </div>
+              <div id="exhibitModificationsModalRow" class="row gy-2 row-cols-1 row-cols-lg-2"></div>
+            </div>
+            <div class="modal-footer">
+              <button id="exhibitModificationsModalApplyButton" type="button" class="btn btn-info me-auto">Make permanent</button>
+              <button id="exhibitModificationsModalSaveButton" type="button" class="btn btn-primary">Save</button>
+              <button id="exhibitModificationsModalCloseButton" type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
           </div>
           </div>
@@ -1123,14 +1162,17 @@
       <div class="row mb-2">
         <div class="col-10">
           <div id="galleryNameField"></div>
-          <div id="exhibitNameField"></div>
+          <div class="d-flex align-items-center">
+            <span id="exhibitNameField"></span>
+            <button id="exhibitModifiedButton" class="ms-2 btn btn-sm btn-outline-secondary">Modified</button>  
+          </div>
         </div>
         <div class="col-2">
           <div id="loginMenu">
-            <button class="btn btn-outline-primary btn-sm dropdown-toggle float-end" type="button" data-bs-toggle="dropdown" aria-expanded="false">Log in</button>
+            <button class="btn btn-outline-primary btn-sm dropdown-toggle float-end" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">Log in</button>
             <div class="dropdown-menu">
               <div class="px-4 py-3">
-                <form id="formTest">
+                <form id="loginForm">
                   <div class="mb-3">
                     <label for="loginDropdownUsername" class="form-label">Username</label>
                     <input type="text" class="form-control" id="loginDropdownUsername">
@@ -1139,7 +1181,7 @@
                     <label for="loginDropdownPassword" class="form-label">Password</label>
                     <input type="password" class="form-control" id="loginDropdownPassword">
                   </div>
-                  <button type="submit" id="loginSubmitButton" class="btn btn-primary">Log in</button>
+                  <button type="button" id="loginSubmitButton" class="btn btn-primary">Log in</button>
                 </form>
                 
               </div>
@@ -1174,7 +1216,7 @@
             <a class="nav-link d-block d-sm-block" id="nav-schedule-tab" data-bs-toggle="tab" href="#nav-schedule" role="tab" aria-controls="nav-schedule" aria-selected="false">Schedule</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link d-none d-sm-block" id="nav-exhibits-tab" data-bs-toggle="tab" href="#nav-exhibits" role="tab" aria-controls="nav-exhibits" aria-selected="false">Exhibits</a>
+            <a class="nav-link d-none d-sm-block" id="nav-exhibits-tab" data-bs-toggle="tab" href="#nav-exhibits" role="tab" aria-controls="nav-exhibits" aria-selected="false">Exhibitions</a>
           </li>
           <li class="nav-item">
             <a class="nav-link d-none d-sm-block" id="nav-issues-tab" data-bs-toggle="tab" href="#nav-issues" role="tab" aria-controls="nav-issues" aria-selected="false">Maintenance</a>
@@ -1197,7 +1239,7 @@
             <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">More</a>
             <div class="dropdown-menu">
               <!-- <a class="dropdown-item d-block d-sm-none" id="nav-schedule-dropdown-tab" data-bs-toggle="tab" href="#nav-schedule" role="tab" aria-controls="nav-schedule" aria-selected="false">Schedule</a> -->
-              <a class="dropdown-item d-block d-sm-none" id="nav-exhibits-dropdown-tab" data-bs-toggle="tab" href="#nav-exhibits" role="tab" aria-controls="nav-exhibits" aria-selected="false">Exhibits</a>
+              <a class="dropdown-item d-block d-sm-none" id="nav-exhibits-dropdown-tab" data-bs-toggle="tab" href="#nav-exhibits" role="tab" aria-controls="nav-exhibits" aria-selected="false">Exhibitions</a>
               <a class="dropdown-item d-block d-sm-none" id="nav-issues-dropdown-tab" data-bs-toggle="tab" href="#nav-issues" role="tab" aria-controls="nav-issues" aria-selected="false">Maintenance</a>
               <a class="dropdown-item d-block d-md-none" id="nav-analytics-dropdown-tab" data-bs-toggle="tab" href="#nav-analytics" role="tab" aria-controls="nav-analytics d-block d-md-none" aria-selected="false">Analytics</a>
               <a class="dropdown-item" id="nav-users-dropdown-tab" data-bs-toggle="tab" href="#nav-users" role="tab" aria-controls="nav-users" aria-selected="false">Users</a>
@@ -1216,77 +1258,82 @@
           <!-- Software update details modal -->
           <div class="modal" tabindex="-1" role="dialog" id="updateInfoModal">
             <div class="modal-dialog modal-dialog-centered exhibitera-dialog" role="document">
-              <div class="modal-content" style="border:black 1px solid;">
+              <div class="modal-content">
                 <div class="modal-header">
+                  <h4 class="modal-title" id="updateInfoModalTitle">Update Available: <span id="updateInfoModalTitleID"></span></h4>
+                  
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
                   <div class="row w-100">
-                    <div class="col-12">
-                      <h4 class="modal-title" id="updateInfoModalTitle">Update Available: <span id="updateInfoModalTitleID"></span></h4>
-                    </div>
-                    <div class="col-6 col-sm-4 col-md-3 pt-2">
-                      <div class="row ps-3 pe-1">
-                        <div class="col-9 bg-info font-weight-bold ps-2 py-1 rounded-start me-0 pe-0 text-dark">Your version</div>
-                        <div id="updateInfoModalCurrentVersion" class="col-3  py-1 bg-warning text-dark fw-bold rounded-end ms-0 ps-2">1.0</div>
+                    <div class="col-12 col-sm-6 col-lg-4 col-xl-3 pt-2 px-4">
+                      <div class="row">
+                        <div class="col-8 bg-info text-dark font-weight-bold ps-2 py-1 rounded-start me-0 pe-0">Your version</div>
+                        <div id="updateInfoModalCurrentVersion" class="col-4  py-1 bg-warning text-dark text-center font-weight-bold rounded-end ms-0 ps-2">1.0</div>
                       </div>
                     </div>
-                    <div class="col-6 col-sm-4 col-md-3 pt-2">
-                      <div class="row ps-1 pe-3">
-                        <div class="col-9 bg-info text-dark font-weight-bold ps-2 py-1 rounded-start me-0 pe-0">Latest version</div>
-                        <div id="updateInfoModalLatestVersion" class="col-3  py-1 bg-success text-white fw-bold rounded-end ms-0 ps-2">2.0</div>
+                    <div class="col-12 col-sm-6 col-lg-4 col-xl-3 pt-2 px-4">
+                      <div class="row">
+                        <div class="col-8 bg-info text-dark font-weight-bold ps-2 py-1 rounded-start me-0 pe-0">Latest version</div>
+                        <div id="updateInfoModalLatestVersion" class="col-4 py-1 bg-success font-weight-bold text-white text-center rounded-end ms-0 ps-2">2.0</div>
                       </div>
                     </div>
                   </div>
-                </div>
-                <div class="modal-body">
-                  <div class="row">
-                    <div id="updateInfoModalControlServerInstructions" class="col-6 border-right border-secondary">
-                      <H4>Installation instructions</H4>
-                      Follow these steps to update Hub:
-                      <ol>
-                        <li>Click <i>Download update</i> and download the correct zipped update file for your operating system.</li>
-                        <li>Unzip the download to find the <code>Exhibitera_Hub</code> executable.</li>
-                        <li>From the Hub terminal window, press <code>Ctrl-c</code> to stop the server.</li>
-                        <li>Replace the existing <code>Exhibitera_Hub</code> file with the new one.</li>
-                        <li>Launch Hub to complete the update.</li>
-                      </ol>
-                      <strong>For best results, update Hub and all its components at the same time.</strong>
+
+                  <div class="accordion mt-3" id="updateInfoModalAccordion">
+                    <!-- Installation instructions -->
+                    <div class="accordion-item">
+                      <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#updateInfoModalInstructions" aria-expanded="true" aria-controls="updateInfoModalInstructions">
+                          Instllation instructions
+                        </button>
+                      </h2>
+                      <div id="updateInfoModalInstructions" class="accordion-collapse collapse" data-bs-parent="#updateInfoModalAccordion">
+                        <div class="accordion-body">
+                          <div id="updateInfoModalHubInstructions">
+                            Follow these steps to update Hub:
+                            <ol>
+                              <li>Click <i>Download update</i> and download the correct zipped update file for your operating system.</li>
+                              <li>Unzip the download to find the <code>Exhibitera_Hub</code> executable.</li>
+                              <li>From the Hub terminal window, press <code>Ctrl-c</code> to stop the server.</li>
+                              <li>Replace the existing <code>Exhibitera_Hub</code> file with the new one.</li>
+                              <li>Launch Hub to complete the update.</li>
+                            </ol>
+                            <strong>For best results, update Hub and all its components at the same time.</strong>
+                          </div>
+                          <div id="updateInfoModalAppsInstructions">
+                            Follow these steps to update Exhibitera Apps:
+                            <ol>
+                              <li>Click <i>Download update</i> and download the correct zipped update file for your operating system.</li>
+                              <li>Unzip the download to find the <code>Exhibitera_Apps</code> executable.</li>
+                              <li>Close any app or terminal windows.</li>
+                              <li>Replace the existing <code>Exhibitera_Apps</code> file with the new one.</li>
+                              <li>Launch Exhibitera Apps to complete the update. You may need to restart your PC for the update to take full effect.</li>
+                            </ol>
+                            <strong>For best results, update Hub and all its components at the same time.</strong>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <div id="updateInfoModalAppsInstructions" class="col-6 border-right border-secondary">
-                      <H4>Installation instructions</H4>
-                      Follow these steps to update Exhibitera Apps:
-                      <ol>
-                        <li>Click <i>Download update</i> and download the correct zipped update file for your operating system.</li>
-                        <li>Unzip the download to find the <code>Exhibitera_Apps</code> executable.</li>
-                        <li>Close any app or terminal windows.</li>
-                        <li>Replace the existing <code>Exhibitera_Apps</code> file with the new one.</li>
-                        <li>Launch Exhibitera Apps to complete the update. You may need to restart your PC for the update to take full effect.</li>
-                      </ol>
-                      <strong>For best results, update Hub and all its components at the same time.</strong>
+
+                    <!-- Update details -->
+                    <div class="accordion-item">
+                      <h2 class="accordion-header">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#updateInfoModalDetails" aria-expanded="false" aria-controls="updateInfoModalDetails">
+                          Update details
+                        </button>
+                      </h2>
+                      <div id="updateInfoModalDetails" class="accordion-collapse collapse show" data-bs-parent="#updateInfoModalAccordion">
+                        <div class="accordion-body">
+                          <div id="updateInfoModalChangelogContainer"></div>
+                        </div>
+                      </div>
                     </div>
-                    <div id="updateInfoModalChangelogContainer" class="col-6"></div>
                   </div>
                 </div>
                 <div class="modal-footer">
                   <a type="button" class="btn btn-primary" id="updateInfoModalDownloadButton" target="_blank">Download update</a>
                   <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="modal" tabindex="-1" role="dialog" id="fileDeleteModal">
-            <div class="modal-dialog modal-dialog-centered" role="document">
-              <div class="modal-content" style="border:black 1px solid;">
-                <div class="modal-header">
-                  <h4 class="modal-title" id="fileDeleteModalTitle">Are you sure?</h4>
-                </div>
-                <div class="modal-body">
-                  <div class="row">
-                    <div class="col-auto" id="fileDeleteModalText"></div>
-                  </div>
-                </div>
-                <div class="modal-footer">
-                  <button type="button" class="btn btn-danger" id="fileDeleteConfirmationButton">Delete File</button>
-                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 </div>
               </div>
             </div>
@@ -1384,8 +1431,8 @@
             <!-- Notifications dropdown -->
             <div id="notificationsDropdownCol" class="col-5 col-md-3 col-xl-2">
               <div class="dropdown">
-                <button id="notificationsDropdownButton" class="btn btn-info dropdown-toggle w-100" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                  Notifications
+                <button id="notificationsDropdownButton" class="btn btn-info dropdown-toggle w-100 no-caret" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  Notifications <span id="notificationsCount" class="badge badge-sm bg-dark"></span>
                 </button>
                 <ul id="notificationDisplayRow" class="dropdown-menu">
                 </ul>
@@ -1395,12 +1442,43 @@
               
             </div>
           </div>
-
-          <div class="row" id="componentGroupsRow">
+          
+          <!-- Onboarding pane -->
+          <div id="onboarding_components" class="row mt-3" style="display: none;">
+            <div class="col-12 col-sm-10 offset-sm-1 col-md-8 offset-md-2 col-lg-6 offset-lg-3">
+              <div class="alert alert-primary alert-dismissible fade show" role="alert" >
+                <H5 class="text-center">Components</H5>
+                <p>
+                  The components tab shows the current status of each Exhibitera Apps component that is connected to Hub. By clicking on a component, you can edit its properties, create and show definitions, and update its maintenance details.
+                </p>
+                <p>
+                  By clicking the <i>Add</i> button above, you can connect projectors to Hub and add non-Apps exhibits to Hub for maintenance tracking.
+                </p>
+                <button data-name="components" type="button" class="btn-close onboarding-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            </div>
           </div>
+          
+          <div class="row" id="componentGroupsRow"></div>
         </div>
 
         <div class="tab-pane fade" id="nav-schedule" role="tabpanel" aria-labelledby="nav-schedule-tab">
+
+          <!-- Onboarding pane -->
+          <div id="onboarding_schedule" class="row mt-3" style="display: none;">
+            <div class="col-12 col-sm-10 offset-sm-1 col-md-8 offset-md-2 col-lg-6 offset-lg-3">
+              <div class="alert alert-primary alert-dismissible fade show" role="alert" >
+                <H5 class="text-center">Schedules</H5>
+                <p>
+                  Hub can execute actions at specified dates and times to modify your gallery. These actions include turning projectors on and off, modifying the content of a component, or triggering gallery lighting.
+                </p>
+                <p>
+                  By default, schedules recur weekly. So if you schedule an action for 9 AM on Monday, it will run at the same time the following Monday. To modify a schedule for just a single day, click the <i>Convert to date-specific</i> button.
+                </p>
+                <button data-name="schedule" type="button" class="btn-close onboarding-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            </div>
+          </div>
           
           <!-- Manage future date modal -->
           <div class="modal" tabindex="-1" role="dialog" id="manageFutureDateModal">
@@ -1424,11 +1502,21 @@
                         <div id="manageFutureDateCreateScheduleButtonContainer" class="col-12 text-center mt-auto">
                           <button id="manageFutureDateCreateScheduleButton" class="btn btn-primary">Create date-specific schedule</button>
                         </div>
-                        <div class="col-6">
+                        <div class="col-4">
                           <button id="manageFutureDateAddActionButton" class="btn btn-primary w-100" style="display: none;">Add action</button>
                         </div>
-                        <div class="col-6">
+                        <div class="col-5">
                           <button id="manageFutureDateDeleteScheduleButton" type="button" class="btn btn-danger w-100" data-bs-toggle="popover" title="Are you sure?" data-bs-content="<a id='manageFutureDateDeleteScheduleButtonPopover' class='btn btn-danger w-100 schedule-delete'>Confirm</a>" data-bs-trigger="focus" data-bs-html="true"  style="display: none;">Delete schedule</button>
+                        </div>
+                        <div class="col-2 offset-1 d-flex flex-column justify-content-center">
+                          <div id="manageFutureDateDownloadAsJSONDropdown" class="dropdown text-end">
+                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="true"></button>
+                            <ul class="dropdown-menu">
+                              <li>
+                                <button id="manageFutureDateDownloadAsJSONButton" class="dropdown-item">Download as JSON</button>
+                              </li>
+                            </ul>
+                          </div>
                         </div>
                       </div>
                       <div id="manageFutureDateEntryList" class="mt-3"></div>
@@ -1521,14 +1609,15 @@
                         <div class="col-6 col-md-4">
                           <label for="scheduleActionSelector">Action</label>
                           <select class="form-select" id="scheduleActionSelector">
-                            <option value="power_on">Power on</option>
-                            <option value="power_off">Power off</option>
+                            <option value="note">Add note</option>
+                            <option value="clear_exhibition_mods">Clear exhibition modifications</option>
+                            <option value="power_on">Power on components</option>
+                            <option value="power_off">Power off components</option>
                             <option value="refresh_page">Refresh components</option>
                             <option value="restart">Restart components</option>
                             <option value="set_definition">Set defintion</option>
-                            <option value="set_dmx_scene">Set DMX scene</option>
-                            <option value="set_exhibit">Set exhibit</option>
-                            <option value="note">Add note</option>
+                            <option value="set_dmx_scene">Set DMX lighting scene</option>
+                            <option value="set_exhibit">Set exhibition</option>
                           </select>
                         </div>
                         <div class="col-6 col-md-4">
@@ -1547,7 +1636,7 @@
                       </div>
                     </div>
                   </form>
-                  <div id="scheduleEditErrorAlert" class="text-danger w-100" style="display: none;"></div>
+                  <div id="scheduleEditErrorAlert" class="alert alert-danger w-100" style="display: none;"></div>
                 </div>
                 <div class="modal-footer">
                   <button type="button" class="btn btn-danger" me-auto id="scheduleEditDeleteActionButton">Delete action</button>
@@ -1558,26 +1647,29 @@
             </div>
           </div>
 
-          <div class="row mt-4 gy-2">
-            <div class='col-12'>
+          <div class="row mt-2 gy-2">
+            <div class='col-12 mb-2'>
               <h4><b>Next scheduled action: </b><span id="Schedule_next_event"></span></h4>
             </div>
-            <div class='col-6 col-sm-3 col-md-4 col-lg-3 col-xl-2 my-auto'>
+            <div class='col-6 col-sm-4 col-lg-3 col-xl-2 my-auto'>
               <button id='manageFutureDateButton' class='btn btn-primary w-100'>Manage future date</button>
             </div>
-            <div class='col-6 col-sm-4 col-md-3 col-lg-2 my-auto'>
+            <div class='col-6 col-sm-4 col-md-3 col-xl-2 my-auto'>
               <button id="showScheduleFromFileModalButton" class="btn btn-primary w-100">Create from file</button>
             </div>
-            <div id='dateSpecificScheduleAlert' class="col-sm-auto alert schedule-date-specific my-auto py-1 mt-2 mt-md-0" role="alert">
-              Date-specific schedule
+            <div id='dateSpecificScheduleAlert' class="col-sm-4 col-lg-3 my-auto" role="alert">
+              <div class="alert schedule-date-specific my-auto py-1 mt-2 mt-sm-0 text-center" role="alert">
+                Date-specific schedule
+              </div>
             </div>
           </div>
 
-          <div id='scheduleContainer' class='row mt-2'>
+          <div id='scheduleContainer' class='row mt-2 g-2'>
           </div>
         </div>
 
         <div class="tab-pane fade" id="nav-exhibits" role="tabpanel" aria-labelledby="nav-exhibits-tab">
+
           <!-- Change exhibits modal -->
           <div class="modal" tabindex="-1" role="dialog" id="changeExhibitModal">
             <div class="modal-dialog modal-dialog-centered" role="document">
@@ -1658,10 +1750,7 @@
           </div>
 
           <!-- Manage exhibit buttons -->
-          <div class="row mt-0 gy-2">
-            <div class="col-12 fst-italic">
-              Exhibits match each component in your gallery with one of its definitions. Switching exhibits makes it easy to switch the content on many components at once.
-            </div>
+          <div class="row mt-2 gy-2">
             <div class="col-6 col-sm-4 col-md-4 col-lg-3 col-xl-2">
               <select class="form-select" id="exhibitSelect"></select>
             </div>
@@ -1686,6 +1775,23 @@
               <button class='btn btn-danger w-100' id="exhibitDeleteSelectorButton">Delete</button>
             </div>
           </div>
+
+          <!-- Onboarding pane -->
+          <div id="onboarding_exhibitions" class="row mt-3" style="display: none;">
+            <div class="col-12 col-sm-10 offset-sm-1 col-md-8 offset-md-2 col-lg-6 offset-lg-3">
+              <div class="alert alert-primary alert-dismissible fade show" role="alert" >
+                <H5 class="text-center">Exhibitions</H5>
+                <p>
+                  Exhibitions enable you to set specific content for each of your components. Once you have created a definition for a component, you can add it to an exhibition. When you change exhibitions, Hub tells each component which definition to set. For example, you might create an exhibition that changes your Media Players to different signage for evening events.
+                </p>
+                <p>
+                  Exhibitions can also contain schedule actions, such as turning on projectors. 
+                </p>
+                <button data-name="exhibitions" type="button" class="btn-close onboarding-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            </div>
+          </div>
+
           <!-- Edit exhibit fields -->
            <div id="editExhibitPane" class="row gy-2 mt-2" style="display: none;">
 
@@ -1774,6 +1880,21 @@
               <select id="issueListFilterAssignedToSelect" class='form-select'>
               </select>
             </div>
+            <!-- Onboarding pane -->
+            <div id="onboarding_maintenance" class="row mt-3" style="display: none;">
+              <div class="col-12 col-sm-10 offset-sm-1 col-md-8 offset-md-2 col-lg-6 offset-lg-3">
+                <div class="alert alert-primary alert-dismissible fade show" role="alert" >
+                  <H5 class="text-center">Maintenance</H5>
+                  <p>
+                    Track the maintenance status of your gallery in this tab. Users can create issues, tag staff and components, and upload images/video to help exhibit techs diagnose the problem.
+                  </p>
+                  <p>
+                    Related issues will also show up in the components tab when clicking on a component.
+                  </p>
+                  <button data-name="maintenance" type="button" class="btn-close onboarding-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+              </div>
+            </div>
             <div class='col-12'>
               <div id='issuesRow' class='row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 mt-3'></div>
             </div>
@@ -1781,6 +1902,22 @@
         </div>
 
         <div class="tab-pane fade" id="nav-analytics" role="tabpanel" aria-labelledby="nav-analytics-tab">
+
+          <!-- Onboarding pane -->
+          <div id="onboarding_analytics" class="row mt-3" style="display: none;">
+            <div class="col-12 col-sm-10 offset-sm-1 col-md-8 offset-md-2 col-lg-6 offset-lg-3">
+              <div class="alert alert-primary alert-dismissible fade show" role="alert" >
+                <H5 class="text-center">Analytics</H5>
+                <p>
+                  The analytics tab helps you collect and manage data. Flexible Tracker enables evaluators to create custom interfaces to structure their data collection.
+                </p>
+                <p>
+                  Data collected by Flexible Tracker, as well as Exhibitera Apps such as Survey Kiosk and Voting Kiosk, can be downloaded from the <i>Data</i> section.
+                </p>
+                <button data-name="analytics" type="button" class="btn-close onboarding-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            </div>
+          </div>
 
           <!-- Edit tracker template modal -->
           <div class="modal" tabindex="-1" role="dialog" id="editTrackerTemplateModal" >
@@ -1941,10 +2078,16 @@
           </div>
 
           <H3 class='mt-4'>Groups</H3>
-          <div class="row mt-0 gy-2">
-            <div class="col-12 fst-italic">
-              Groups help you organize your components. You may choose to arrange them by location, type, content, or whatever supports your needs.
+          <!-- Onboarding pane -->
+          <div id="onboarding_groups" class="row mt-3" style="display: none;">
+            <div class="col-12">
+              <div class="alert alert-primary alert-dismissible fade show" role="alert" >
+                Groups enable you to organize your components. You might choose to create groups based on location, component type, or something else. Add components to one or more groups on the component tab.
+                <button data-name="groups" type="button" class="btn-close onboarding-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
             </div>
+          </div>
+          <div class="row mt-0 gy-2">
             <div class="col-4 col-sm-3 col-md-2 border-end">
               <button id="settingsAddGroupButton" class="btn btn-primary w-100">Add group</button>
             </div>
@@ -1957,56 +2100,73 @@
           <div class="row gy-2 row-cols-2 row-cols-md-3 row-cols-lg-5">
             <!-- IP address -->
             <div class="col">
-              <label class="form-label" for="controlServerSettingsIPAddress">
+              <label class="form-label" for="hubSettingsIPAddress">
                 IP address
                 <span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="The static IP address of the PC Hub is running on." style="font-size: 0.55em; color: black">?</span>
               </label>
-              <input id="controlServerSettingsIPAddress" type="text" class="form-control controlServerSettingsInputField"></input>
+              <input id="hubSettingsIPAddress" type="text" class="form-control hubSettingsInputField"></input>
             </div>
 
             <!-- Port -->
             <div class="col">
-              <label class="form-label" for="controlServerSettingsPort">
+              <label class="form-label" for="hubSettingsPort">
                 Port
                 <span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="The port on which Hub is listening." style="font-size: 0.55em; color: black">?</span>
               </label>
-              <input id="controlServerSettingsPort" type="number" class="form-control controlServerSettingsInputField"></input>
+              <input id="hubSettingsPort" type="number" class="form-control hubSettingsInputField"></input>
             </div>
 
             <!-- Gallery name -->
             <div class="col">
-              <label class="form-label" for="controlServerSettingsGalleryName">
+              <label class="form-label" for="hubSettingsGalleryName">
                 Gallery name
                 <span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="A name describing the space managed by Hub." style="font-size: 0.55em; color: black">?</span>
               </label>
-              <input id="controlServerSettingsGalleryName" type="text" class="form-control controlServerSettingsInputField"></input>
+              <input id="hubSettingsGalleryName" type="text" class="form-control hubSettingsInputField"></input>
             </div>
 
             <!-- Debug mode -->
             <div class="col">
-              <label class="form-label" for="controlServerSettingsDebugMode">
+              <label class="form-label" for="hubSettingsDebugMode">
                 Debug mode
                 <span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Print additional debug information to the terminal." style="font-size: 0.55em; color: black">?</span>
               </label>
-              <select id="controlServerSettingsDebugMode" class="form-select controlServerSettingsInputField">
+              <select id="hubSettingsDebugMode" class="form-select hubSettingsInputField">
                 <option value=true>Enabled</option>
                 <option value=false>Disabled</option>
               </select> 
             </div>
           </div>
-          <div id="controlServerSettingsIPWarning" class="mt-2 text-danger"> IP address field cannot be blank.</div>
-          <div id="controlServerSettingsPortWarning" class="mt-2 text-danger"> The port must be a number.</div>
-          <button id="controlServerSettingsSaveButton" class="btn btn-primary mt-2">Save changes</button>
+          <div id="hubSettingsIPWarning" class="mt-2 text-danger"> IP address field cannot be blank.</div>
+          <div id="hubSettingsPortWarning" class="mt-2 text-danger"> The port must be a number.</div>
+          <button id="hubSettingsSaveButton" class="btn btn-primary mt-2">Save changes</button>
         </div>
 
         <div class="tab-pane fade" id="nav-users" role="tabpanel" aria-labelledby="nav-users-tab">
+
+          <!-- Onboarding pane -->
+          <div id="onboarding_users" class="row mt-3" style="display: none;">
+            <div class="col-12 col-sm-10 offset-sm-1 col-md-8 offset-md-2 col-lg-6 offset-lg-3">
+              <div class="alert alert-primary alert-dismissible fade show" role="alert" >
+                <H5 class="text-center">User Accounts</H5>
+                <p>
+                  Exhibitera's user account system enables administrators to assign individuals the level of control over Hub and Apps needed to do their jobs. Through granular permissions, you can enable, for example, the marketing team to change the digital signage while allowing exhibit techs to change system settings.
+                </p>
+                <p>
+                  While care has been taken to make user accounts secure, the users system is not intended as a defense against a malicious actor.
+                </p>
+                <button data-name="users" type="button" class="btn-close onboarding-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            </div>
+          </div>
+
           <div class="row mt-3">
-            <div class="col-2">
+            <div class="col-12 col-md-4 col-lg-3">
               <button id="showEditUserModalButton" class="btn btn-primary">Create user</button>
             </div>
             <div class="col-12 mt-2">
               <h4>Users</h4>
-              <div id="usersRow" class="row gy-2 row-cols-2 row-cols-md-3 row-cols-lg-5 col-xl-6">
+              <div id="usersRow" class="row gy-2 row-cols-2 row-cols-md-3 row-cols-lg-5 row-cols-xl-6">
               </div>
             </div>
             
@@ -2014,28 +2174,34 @@
         </div>
         
         <div class="tab-pane fade" id="nav-help" role="tabpanel" aria-labelledby="nav-help-tab">
-          <div class="row mt-4">
+          <div class="row">
             <div id="helpNewAccountMessage" class="col-6 offset-3 alert alert-primary mb-4">
               <H4 class="text-center">Need an account?</H4>
               Exhibitera requires a user account to access functionality. If you need an account, or your password to be reset, please contact your system administrator.
             </div>
             <div class="col-12">
-              <span class="alert alert-secondary">Version: <span id="versionSpan"></span></span>
+              <img src="/_static/Hub_logo.svg" style="width: 400px; max-width:95%;">
+              <br class="d-md-none">
+              <span class="alert alert-secondary ms-md-4">Version: <span id="versionSpan"></span></span>
               <button class="btn btn-info ms-3" data-bs-toggle="modal" data-bs-target="#whatsNewModal">What's New</button>
             </div>
+            <div class="col-12 mt-4 mt-md-0">
+              <H3>Need help?</H3>
+              <a class="btn btn-primary" href="https://exhibitera.org/tutorials/" target="_blank">Watch tutorials</a>
+              <a class="btn btn-info ms-3" href="https://exhibitera.org/troubleshooting/" target="_blank">Solve common problems</a>
+            </div>
             
-            <div id='helpTextDiv' class='col-auto mt-3'>
+            <!-- <div id='helpTextDiv' class='col-auto mt-3'> -->
             </div>
           </div>
         </div>
       </div>
     </main>
 
-    <script type="text/javascript" src="js/jquery-3.7.1.min.js"></script>
     <script type="text/javascript" src="js/bootstrap_5_3/bootstrap.bundle.min.js"></script>
     <script type="text/javascript" src="js/showdown.min.js"></script>
 
-    <script type="module" src="webpage.js"></script>
+    <script type="module" src="js/webpage.js"></script>
 
 
 

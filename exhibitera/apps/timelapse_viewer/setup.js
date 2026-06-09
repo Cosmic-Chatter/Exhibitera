@@ -1,31 +1,115 @@
-/* global Coloris, bootstrap */
+/* global bootstrap */
 
+import exConfig from '../../common/config.js'
+import * as exUtilities from '../../common/utilities.js'
 import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exFileSelect from '../js/exhibitera_file_select_modal.js'
 import * as exSetup from '../js/exhibitera_setup_common.js'
 
 async function initializeWizard () {
-  // Set up the wizard
+  // Setup the wizard
 
-  await exSetup.initializeDefinition()
-
-  // Hide all but the welcome screen
-  Array.from(document.querySelectorAll('.wizard-pane')).forEach((el) => {
-    el.style.display = 'none'
-  })
-  document.getElementById('wizardPane_Welcome').style.display = 'block'
+  exSetup.prepareWizard()
 
   // Reset fields
   document.getElementById('wizardDefinitionNameInput').value = ''
   document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'none'
+  const firstImage = document.getElementById('wizardSelectFirstImageButton')
+  firstImage.innerText = 'Select first image'
+  firstImage.dataset.filename = ''
+  const lastImage = document.getElementById('wizardSelectLastImageButton')
+  lastImage.innerText = 'Select last image'
+  lastImage.dataset.filename = ''
+  document.getElementById('wizardMediaFileBlankWarning').style.display = 'none'
+  document.getElementById('wizardMediaSameFileWarning').style.display = 'none'
+  document.getElementById('wizardHeader').value = ''
+  document.getElementById('wizardDuration').value = 15
+}
+
+async function wizardForward (currentPage) {
+  // Check if the wizard is ready to advance and perform the move
+
+  if (currentPage === 'Welcome') {
+    const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
+    if (defName !== '') {
+      document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'none'
+      exSetup.wizardGoTo('Media')
+    } else {
+      document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'block'
+    }
+  } else if (currentPage === 'Media') {
+    const firstName = document.getElementById('wizardSelectFirstImageButton').dataset.filename
+    const lastName = document.getElementById('wizardSelectLastImageButton').dataset.filename
+    if (firstName === '' || lastName === '') {
+      document.getElementById('wizardMediaFileBlankWarning').style.display = 'block'
+      return
+    }
+    if (firstName === lastName) {
+      document.getElementById('wizardMediaSameFileWarning').style.display = 'block'
+      return
+    }
+    document.getElementById('wizardMediaFileBlankWarning').style.display = 'none'
+    document.getElementById('wizardMediaSameFileWarning').style.display = 'none'
+
+    exSetup.wizardGoTo('Attractor')
+  } else if (currentPage === 'Attractor') {
+    wizardCreateDefinition()
+  }
+}
+
+function wizardBack (currentPage) {
+  // Move the wizard back one page
+
+  if (currentPage === 'Media') {
+    exSetup.wizardGoTo('Welcome')
+  } else if (currentPage === 'Attractor') {
+    exSetup.wizardGoTo('Media')
+  }
+}
+
+async function wizardCreateDefinition () {
+  // Use the provided details to build a definition file.
+
+  // Definition name
+  const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
+  exSetup.updateWorkingDefinition(['name'], defName)
+
+  // Generate filename pattern
+  const first = document.getElementById('wizardSelectFirstImageButton').dataset.filename
+  const last = document.getElementById('wizardSelectLastImageButton').dataset.filename
+  guessFilenamePattern(first, last)
+
+  // Attractor
+  const header = document.getElementById('wizardHeader').value.trim()
+  exSetup.updateWorkingDefinition(['attractor'], {
+    attractor_background: '#000000b5',
+    attractor_height: '45',
+    text: header
+  })
+
+  exSetup.updateWorkingDefinition(['attractor', 'use_attractor'], header !== '')
+
+  // Behavior
+  exSetup.updateWorkingDefinition(['behavior'], {
+    animation_duration: parseInt(document.getElementById('wizardDuration').value),
+    video_mode: 'cover'
+  })
+
+  const uuid = exSetup.config.workingDefinition.uuid
+
+  await exSetup.saveDefinition(defName)
+  const result = await exCommon.getAvailableDefinitions('timelapse_viewer')
+  exSetup.populateAvailableDefinitions(result.definitions)
+  document.getElementById('availableDefinitionSelect').value = uuid
+
+  editDefinition(uuid)
+  exUtilities.hideModal('#setupWizardModal')
 }
 
 async function clearDefinitionInput (full = true) {
   // Clear all input related to a defnition
 
-  if (full === true) {
-    await exSetup.initializeDefinition()
-  }
+  if (full === true) exSetup.initializeDefinition()
 
   // Definition details
   document.getElementById('definitionNameInput').value = ''
@@ -34,27 +118,29 @@ async function clearDefinitionInput (full = true) {
   // Content details
   document.getElementById('filePatternInput').value = ''
   document.getElementById('filenamePatternMatches').value = null
+  document.getElementById('behaviorInput_video_mode').value = 'contain'
 
   // Attractor details
   document.getElementById('attractorInput_attractor_timeout').value = 30
   document.getElementById('attractorCheck_use_attractor').checked = false
   disableAttractorOptions(true)
   document.getElementById('attractorCheck_use_finger_animation').checked = true
-  document.getElementById('attractorInput_attractor_height').value = 40
+
   document.getElementById('attractorInput_text').value = ''
   document.getElementById('attractorInput_font_adjust').value = 0
-  document.getElementById('attractorInput_attractor_background').value = 'rgba(0, 0, 0, 0.2)'
+  document.getElementById('attractorInput_attractor_background').value = '#000000b7'
   document.querySelector('#attractorInput_attractor_background').dispatchEvent(new Event('input', { bubbles: true }))
-  document.getElementById('attractorInput_text_color').value = '#fff'
+  document.getElementById('attractorInput_text_color').value = '#f5f5f0'
   document.querySelector('#attractorInput_text_color').dispatchEvent(new Event('input', { bubbles: true }))
   exSetup.resetAdvancedFontPickers()
+  exSetup.createAdvancedSliders()
 
   // Appearance details
   exSetup.updateAdvancedColorPicker('style>background', {
     mode: 'color',
-    color: '#22222E',
-    gradient_color_1: '#22222E',
-    gradient_color_2: '#22222E'
+    color: '#0f1419',
+    gradient_color_1: '#1a2b3c',
+    gradient_color_2: '#0f1419'
   })
 }
 
@@ -63,24 +149,28 @@ function editDefinition (uuid = '') {
 
   clearDefinitionInput(false)
   const def = exSetup.getDefinitionByUUID(uuid)
-  $('#definitionSaveButton').data('initialDefinition', structuredClone(def))
-  $('#definitionSaveButton').data('workingDefinition', structuredClone(def))
+  exSetup.config.initialDefinition = structuredClone(def)
+  exSetup.config.workingDefinition = structuredClone(def)
 
-  $('#definitionNameInput').val(def.name)
+  // Configure preview behavior
+  exSetup.configurePreviewFromDefinition(def)
+
+  document.getElementById('definitionNameInput').value = def.name
   document.getElementById('filePatternInput').value = def.files
   retrieveMatchingFilesCount()
 
   // Set the appropriate values for the behavior fields
-  Object.keys(def.behavior).forEach((key) => {
-    document.getElementById('behaviorInput_' + key).value = def.behavior[key]
-  })
+  for (const key of Object.keys(def.behavior ?? {})) {
+    const el = document.getElementById('behaviorInput_' + key)
+    if (el != null) el.value = def.behavior[key]
+  }
 
   // Set the appropriate values for the attractor fields
-  Object.keys(def.attractor).forEach((key) => {
+  for (const key of Object.keys(def.attractor)) {
     let el
     if (['use_attractor', 'use_finger_animation'].includes(key)) {
       el = document.getElementById('attractorCheck_' + key)
-      el.checked = def.attractor[key]
+      if (el != null) el.checked = def.attractor[key]
 
       // If this is the Show Attractor checkbox, set the approprate state for the rest of the options
       if (key === 'use_attractor') {
@@ -92,46 +182,39 @@ function editDefinition (uuid = '') {
       }
     } else if (key === 'font') {
       const picker = document.querySelector('.AFP-select[data-path="attractor>font"')
-      exSetup.setAdvancedFontPicker(picker, def.attractor.font)
+      if (picker != null) exSetup.setAdvancedFontPicker(picker, def.attractor.font)
     } else {
       el = document.getElementById('attractorInput_' + key)
-      el.value = def.attractor[key]
+      if (el != null) el.value = def.attractor[key]
     }
 
-    // Set the appropriate values for any advanced color pickers
-    if (def?.style?.background) {
-      exSetup.updateAdvancedColorPicker('style>background', def.style.background)
-    }
-
-    if (['attractor_background', 'text_color'].includes(key)) {
+    if (['text_color'].includes(key)) {
       // Send a special event to the color picker to trigger the change
       el.dispatchEvent(new Event('input', { bubbles: true }))
     }
-  })
+  }
+
+  exSetup.updateAdvancedColorPicker('style>background', def?.style?.background, { mode: 'color', color: '#22222E' })
 
   // Configure the preview frame
-  document.getElementById('previewFrame').src = '../timelapse_viewer.html?standalone=true&definition=' + def.uuid
+  document.getElementById('previewFrame').src = 'index.html?standalone=true&definition=' + def.uuid
   exSetup.previewDefinition()
 }
 
 function disableAttractorOptions (disable) {
   // Set the disabled property for the attractor options
+
+  const attractorRow = document.getElementById('attractorRow')
+
   if (disable) {
-    Array.from(document.getElementsByClassName('attractor-input')).forEach((match) => {
-      match.disabled = true
-    })
+    attractorRow.style.display = 'none'
   } else {
-    Array.from(document.getElementsByClassName('attractor-input')).forEach((match) => {
-      match.disabled = false
-    })
+    attractorRow.style.display = 'flex'
   }
 }
 
-function guessFilenamePattern () {
+function guessFilenamePattern (first, last) {
   // Use two given filenames to guess a wildcard (*) pattern to select the range
-
-  const first = document.getElementById('selectFirstImageButton').getAttribute('data-filename')
-  const last = document.getElementById('selectLastImageButton').getAttribute('data-filename')
 
   if (first == null || last == null) return
 
@@ -164,9 +247,9 @@ function retrieveMatchingFilesCount () {
 
   exCommon.makeHelperRequest({
     method: 'GET',
-    endpoint: '/getAvailableContent'
+    endpoint: '/files/availableContent'
   }).then((result) => {
-    const content = result.all_exhibits
+    const content = result.content
     matchedFiles = content.filter((item) => {
       return item.startsWith(split[0]) && item.endsWith(split[1])
     })
@@ -174,104 +257,9 @@ function retrieveMatchingFilesCount () {
   })
 }
 
-function convertVideo () {
-  // Ask the helper to convert the video to frames and track the progress.
+function showConvertVideoModal () {
+  // Prepare and show the modal for converting videos
 
-  const filename = document.getElementById('selectConversionVideoButton').getAttribute('data-filename')
-  if (filename == null || filename.trim() === '') {
-    return
-  }
-  const button = document.getElementById('videoConversionModalSubmitButton')
-  button.innerHTML = 'Working...'
-  button.classList.add('btn-info')
-  button.classList.remove('btn-primary')
-  document.getElementById('conversionProgressBarDiv').style.display = 'flex'
-
-  exCommon.makeHelperRequest({
-    method: 'POST',
-    endpoint: '/files/convertVideoToFrames',
-    params: {
-      filename,
-      file_type: 'jpg'
-    },
-    timeout: 3.6e6 // 1 hr
-  })
-
-  const numFiles = parseInt(document.getElementById('outputFileCountField').value)
-  exCommon.makeHelperRequest({
-    method: 'GET',
-    endpoint: '/getAvailableContent'
-  }).then((result) => {
-    trackConversionProgress(numFiles, result.all_exhibits.length)
-  })
-}
-
-function trackConversionProgress (total, starting) {
-  // Track the progress of the video conversion.
-  // total is the estimated number of frames to be converted
-  // starting is the number of files when the conversion started
-  // The number completed = current total - now
-
-  exCommon.makeHelperRequest({
-    method: 'GET',
-    endpoint: '/getAvailableContent'
-  }).then((result) => {
-    const numComplete = result.all_exhibits.length - starting
-    const percent = Math.round(100 * (numComplete / total))
-    document.getElementById('conversionProgressBarDiv').setAttribute('aria-valuenow', percent)
-    document.getElementById('conversionProgressBar').style.width = String(percent) + '%'
-    if (numComplete < total - 5) {
-      // Add a little slop (5) in case the estimated number of files is wrong.
-      setTimeout(() => {
-        trackConversionProgress(total, starting)
-      }, 1000)
-    } else {
-      videoConversionModal.hide()
-    }
-  })
-}
-
-// Set up the color pickers
-function setUpColorPickers () {
-  Coloris({
-    el: '.coloris',
-    theme: 'pill',
-    themeMode: 'dark',
-    formatToggle: false,
-    clearButton: false,
-    swatches: [
-      '#000',
-      '#22222E',
-      '#393A5A',
-      '#719abf',
-      '#fff'
-    ]
-  })
-}
-
-// Set helperAddress for calls to exCommon.makeHelperRequest
-exCommon.config.helperAddress = window.location.origin
-
-let matchedFiles = []
-
-// Call with a slight delay to make sure the elements are loaded
-setTimeout(setUpColorPickers, 100)
-
-// Add event listeners
-// -------------------------------------------------------------
-
-// Behavior fields
-Array.from(document.querySelectorAll('.behavior-input')).forEach((el) => {
-  el.addEventListener('change', (event) => {
-    const key = event.target.getAttribute('data-property')
-    exSetup.updateWorkingDefinition(['behavior', key], event.target.value)
-    exSetup.previewDefinition(true)
-  })
-})
-
-// Video conversion
-const videoConversionModal = new bootstrap.Modal('#videoConversionModal')
-document.getElementById('showConvertVideoModal').addEventListener('click', (event) => {
   const convertButton = document.getElementById('videoConversionModalSubmitButton')
   document.getElementById('selectConversionVideoButton').innerHTML = 'Select video'
   document.getElementById('selectConversionVideoButton').setAttribute('data-filename', null)
@@ -285,7 +273,124 @@ document.getElementById('showConvertVideoModal').addEventListener('click', (even
   convertButton.classList.remove('btn-info')
   convertButton.classList.add('btn-primary')
 
-  videoConversionModal.show()
+  exUtilities.showModal('#videoConversionModal')
+}
+
+async function convertVideo () {
+  // Ask the helper to convert the video to frames and track the progress.
+
+  const filename = document.getElementById('selectConversionVideoButton').dataset.filename
+  if (filename == null || filename.trim() === '') {
+    return
+  }
+  const button = document.getElementById('videoConversionModalSubmitButton')
+  button.innerText = 'Working...'
+  button.classList.add('btn-info')
+  button.classList.remove('btn-primary')
+  document.getElementById('conversionProgressBarDiv').style.display = 'flex'
+
+  const numFilesToCreate = parseInt(document.getElementById('outputFileCountField').value)
+  const response = await exCommon.makeHelperRequest({
+    method: 'GET',
+    endpoint: '/files/availableContent'
+  })
+  const numFilesCurrent = response.content.length
+
+  trackConversionProgress(numFilesToCreate, numFilesCurrent)
+
+  exCommon.makeHelperRequest({
+    method: 'POST',
+    endpoint: '/files/' + filename + '/convertVideoToFrames',
+    params: {
+      file_type: 'jpg'
+    },
+    timeout: 3.6e6 // 1 hr
+  })
+}
+
+async function trackConversionProgress (total, starting) {
+  // Track the progress of the video conversion.
+  // total is the estimated number of frames to be converted
+  // starting is the number of files when the conversion started
+  // The number completed = current total - now
+
+  const result = await exCommon.makeHelperRequest({
+    method: 'GET',
+    endpoint: '/files/availableContent'
+  })
+
+  const numComplete = result.content.length - starting
+  const percent = Math.round(100 * (numComplete / total))
+  document.getElementById('conversionProgressBarDiv').setAttribute('aria-valuenow', percent)
+  document.getElementById('conversionProgressBar').style.width = String(percent) + '%'
+
+  if (numComplete < total - 5) {
+    // Add a little slop (5) in case the estimated number of files is wrong.
+    setTimeout(() => {
+      trackConversionProgress(total, starting)
+    }, 1000)
+  } else {
+    exUtilities.hideModal('#videoConversionModal')
+  }
+}
+
+// Set helperAddress for calls to exCommon.makeHelperRequest
+exCommon.config.helperAddress = window.location.origin
+
+let matchedFiles = []
+
+// Add event listeners
+// -------------------------------------------------------------
+
+// Wizard
+
+// Connect the forward and back buttons
+Array.from(document.querySelectorAll('.wizard-forward')).forEach((el) => {
+  el.addEventListener('click', () => {
+    wizardForward(el.getAttribute('data-current-page'))
+  })
+})
+Array.from(document.querySelectorAll('.wizard-back')).forEach((el) => {
+  el.addEventListener('click', () => {
+    wizardBack(el.getAttribute('data-current-page'))
+  })
+})
+
+document.getElementById('wizardManageContentButton').addEventListener('click', () => {
+  exFileSelect.createFileSelectionModal({ manage: true, filetypes: ['image', 'video'] })
+})
+document.getElementById('wizardConvertVideoButton').addEventListener('click', () => {
+  showConvertVideoModal()
+})
+for (const id of ['wizardSelectFirstImageButton', 'wizardSelectLastImageButton']) {
+  document.getElementById(id).addEventListener('click', (event) => {
+    exFileSelect.createFileSelectionModal({ multiple: false, filetypes: ['image'] })
+      .then((result) => {
+        if (result != null && result.length > 0) {
+          event.target.setAttribute('data-filename', result[0])
+          event.target.innerHTML = result[0]
+        }
+      })
+  })
+}
+
+// Behavior fields
+Array.from(document.querySelectorAll('.behavior-input')).forEach((el) => {
+  el.addEventListener('change', (event) => {
+    const key = event.target.getAttribute('data-property')
+    exSetup.updateWorkingDefinition(['behavior', key], event.target.value)
+    exSetup.previewDefinition(true)
+  })
+})
+
+// Manage content button
+document.getElementById('manageContentButton').addEventListener('click', () => {
+  exFileSelect.createFileSelectionModal({ manage: true, filetypes: ['image', 'video'] })
+})
+
+// Video conversion
+document.getElementById('showConvertVideoModal').addEventListener('click', (event) => {
+  showConvertVideoModal()
 })
 document.getElementById('selectConversionVideoButton').addEventListener('click', (event) => {
   exFileSelect.createFileSelectionModal({ multiple: false, filetypes: ['video'] })
@@ -293,17 +398,14 @@ document.getElementById('selectConversionVideoButton').addEventListener('click',
       if (result != null && result.length > 0) {
         event.target.setAttribute('data-filename', result[0])
         event.target.innerHTML = result[0]
-        document.getElementById('fileConversionVideoPreview').src = exCommon.config.helperAddress + '/thumbnails/' + result[0].replace(/\.[^/.]+$/, '') + '.mp4'
+        document.getElementById('fileConversionVideoPreview').src = exCommon.config.helperAddress + exConfig.api + '/files/' + result[0] + '/thumbnail'
 
         exCommon.makeHelperRequest({
-          method: 'POST',
-          endpoint: '/files/getVideoDetails',
-          params: {
-            filename: result[0]
-          }
+          method: 'GET',
+          endpoint: '/files/' + result[0] + '/videoDetails'
         })
           .then((response) => {
-            if ('success' in response && response.success === true) {
+            if (response?.success) {
               const frames = Math.round(response.details.duration * response.details.fps)
               document.getElementById('outputFileCountField').value = frames
             }
@@ -356,20 +458,28 @@ document.getElementById('patternGeneratorModalSubmitButton').addEventListener('c
   if (first == null || last == null) {
     document.getElementById('patternGeneratorModalMissingFilenameWarning').style.display = 'block'
   } else {
-    guessFilenamePattern()
+    const first = document.getElementById('selectFirstImageButton').getAttribute('data-filename')
+    const last = document.getElementById('selectLastImageButton').getAttribute('data-filename')
+
+    guessFilenamePattern(first, last)
     PatternGeneratorModal.hide()
     exSetup.previewDefinition(true)
   }
 })
 
+// Video mode
+document.getElementById('behaviorInput_video_mode').addEventListener('change', (ev) => {
+  exSetup.updateWorkingDefinition(['behavior', 'video_mode'], ev.target.value)
+  exSetup.previewDefinition(true)
+})
 // Attractor
-Array.from(document.getElementsByClassName('attractor-input')).forEach((el) => {
+for (const el of document.getElementsByClassName('attractor-input')) {
   el.addEventListener('change', (event) => {
     const property = event.target.getAttribute('data-property')
     exSetup.updateWorkingDefinition(['attractor', property], event.target.value)
     exSetup.previewDefinition(true)
   })
-})
+}
 
 Array.from(document.getElementsByClassName('attractor-check')).forEach((el) => {
   el.addEventListener('change', (event) => {
@@ -402,38 +512,25 @@ Array.from(document.querySelectorAll('.realtime-slider')).forEach((el) => {
   })
 })
 
-// Set color mode
-if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-  document.querySelector('html').setAttribute('data-bs-theme', 'dark')
-} else {
-  document.querySelector('html').setAttribute('data-bs-theme', 'light')
-}
-
 exSetup.configure({
   app: 'timelapse_viewer',
   clearDefinition: clearDefinitionInput,
   initializeWizard,
   loadDefinition: editDefinition,
   blankDefinition: {
-    attractor: {},
+    attractor: {
+      attractor_background: '#000000b7',
+      font: '/_fonts/OpenSans-Bold.ttf',
+      text_color: '#f5f5f0'
+    },
     behavior: {},
     style: {
       background: {
-        mode: 'color',
-        color: '#22222E'
+        color: '#0f1419',
+        gradient_color_1: '#1a2b3c',
+        gradient_color_2: '#0f1419',
+        mode: 'color'
       }
     }
   }
 })
-
-exCommon.askForDefaults(false)
-  .then(() => {
-    if (exCommon.config.standalone === false) {
-      // We are using Hub, so attempt to log in
-      exSetup.authenticateUser()
-    } else {
-      // Hide the login details
-      document.getElementById('loginMenu').style.display = 'none'
-      document.getElementById('helpNewAccountMessage').style.display = 'none'
-    }
-  })

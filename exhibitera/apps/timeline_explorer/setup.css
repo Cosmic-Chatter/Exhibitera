@@ -1,4 +1,16 @@
-#spreadsheetSelect{
-    text-overflow: ellipsis;
-    overflow-x: hidden;
+.media-preview {
+    width: 100%;
+    max-height: 200px;
+    object-fit: contain;
+    display: none;
+    cursor: pointer;
+}
+#editPaneRow {
+    display: none;
+    max-height: 500px;
+    overflow-y: auto;
+}
+#itemsList {
+    max-height: 500px;
+    overflow-y: auto;
 }

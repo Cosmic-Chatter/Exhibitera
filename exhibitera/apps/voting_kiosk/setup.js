@@ -1,5 +1,6 @@
-/* global Coloris, bootstrap */
+/* global bootstrap */
 
+import * as exUtilities from '../../common/utilities.js'
 import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exFileSelect from '../js/exhibitera_file_select_modal.js'
 import * as exSetup from '../js/exhibitera_setup_common.js'
@@ -8,13 +9,7 @@ import * as exMarkdown from '../js/exhibitera_setup_markdown.js'
 async function initializeWizard () {
   // Setup the wizard
 
-  await exSetup.initializeDefinition()
-
-  // Hide all but the welcome screen
-  Array.from(document.querySelectorAll('.wizard-pane')).forEach((el) => {
-    el.style.display = 'none'
-  })
-  document.getElementById('wizardPane_Welcome').style.display = 'block'
+  exSetup.prepareWizard()
 
   // Reset fields
   document.getElementById('wizardDefinitionNameInput').value = ''
@@ -34,12 +29,12 @@ async function wizardForward (currentPage) {
     const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
     if (defName !== '') {
       document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'none'
-      wizardGoTo('Question')
+      exSetup.wizardGoTo('Question')
     } else {
       document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'block'
     }
   } else if (currentPage === 'Question') {
-    wizardGoTo('Answers')
+    exSetup.wizardGoTo('Answers')
   } else if (currentPage === 'Answers') {
     const answers = document.querySelectorAll('.wizard-answer-option')
     const answersType = document.getElementById('wizardAnswerTypeSelect').value
@@ -63,6 +58,8 @@ async function wizardForward (currentPage) {
         return
       }
     }
+    exSetup.wizardGoTo('ColorMode')
+  } else if (currentPage === 'ColorMode') {
     wizardCreateDefinition()
   }
 }
@@ -71,17 +68,12 @@ function wizardBack (currentPage) {
   // Move the wizard back one page
 
   if (currentPage === 'Question') {
-    wizardGoTo('Welcome')
+    exSetup.wizardGoTo('Welcome')
   } else if (currentPage === 'Answers') {
-    wizardGoTo('Question')
+    exSetup.wizardGoTo('Question')
+  } else if (currentPage === 'ColorMode') {
+    exSetup.wizardGoTo('Answers')
   }
-}
-
-function wizardGoTo (page) {
-  Array.from(document.querySelectorAll('.wizard-pane')).forEach((el) => {
-    el.style.display = 'none'
-  })
-  document.getElementById('wizardPane_' + page).style.display = 'block'
 }
 
 async function wizardCreateDefinition () {
@@ -105,7 +97,7 @@ async function wizardCreateDefinition () {
     exSetup.updateWorkingDefinition(['option_order'], [])
   }
   if (answersType === 'thumbs') {
-    const optionOrder = [exCommon.uuid(), exCommon.uuid()]
+    const optionOrder = [exUtilities.uuid(), exUtilities.uuid()]
     exSetup.updateWorkingDefinition(['option_order'], optionOrder)
     exSetup.updateWorkingDefinition(['options', optionOrder[0]], {
       icon: 'thumbs-down_red',
@@ -122,7 +114,7 @@ async function wizardCreateDefinition () {
       value: 'Good'
     })
   } else if (answersType === 'threeStars') {
-    const optionOrder = [exCommon.uuid(), exCommon.uuid(), exCommon.uuid()]
+    const optionOrder = [exUtilities.uuid(), exUtilities.uuid(), exUtilities.uuid()]
     exSetup.updateWorkingDefinition(['option_order'], optionOrder)
     exSetup.updateWorkingDefinition(['options', optionOrder[0]], {
       icon: '1-star_white',
@@ -146,7 +138,7 @@ async function wizardCreateDefinition () {
       value: '3_star'
     })
   } else if (answersType === 'fiveStars') {
-    const optionOrder = [exCommon.uuid(), exCommon.uuid(), exCommon.uuid(), exCommon.uuid(), exCommon.uuid()]
+    const optionOrder = [exUtilities.uuid(), exUtilities.uuid(), exUtilities.uuid(), exUtilities.uuid(), exUtilities.uuid()]
     exSetup.updateWorkingDefinition(['option_order'], optionOrder)
     exSetup.updateWorkingDefinition(['options', optionOrder[0]], {
       icon: '1-star_white',
@@ -184,7 +176,28 @@ async function wizardCreateDefinition () {
       value: '5_star'
     })
   }
-  const uuid = $('#definitionSaveButton').data('workingDefinition').uuid
+
+  // Switch to light color scheme if needed
+  if (document.getElementById('wizardColorModeLight').checked) {
+    exSetup.updateWorkingDefinition(['style', 'color'], {
+      'button-color': '#3b5c8a',
+      'button-text-color': '#f5f5f0',
+      'button-touched-color': '#2f3e4f',
+      'footer-color': '#0f1419',
+      'header-color': '#0f1419',
+      'subfooter-color': '#1a2b3c',
+      'subheader-color': '#1a2b3c',
+      'success-message-color': '#e06a47'
+    })
+    exSetup.updateWorkingDefinition(['style', 'background'], {
+      color: '#e6e6e2',
+      gradient_color_1: '#f5f5f0',
+      gradient_color_2: '#e6e6e2',
+      mode: 'color'
+    })
+  }
+
+  const uuid = exSetup.config.workingDefinition.uuid
 
   await exSetup.saveDefinition(defName)
   const result = await exCommon.getAvailableDefinitions('voting_kiosk')
@@ -192,16 +205,16 @@ async function wizardCreateDefinition () {
   document.getElementById('availableDefinitionSelect').value = uuid
 
   editDefinition(uuid)
-  exSetup.hideModal('#setupWizardModal')
+  exUtilities.hideModal('#setupWizardModal')
 }
 
 function wizardCreateAnswerOption (userDetails) {
   // Create the GUI representation of a new answer option in the wizard
 
-  const optionOrder = $('#definitionSaveButton').data('workingDefinition').option_order
+  const optionOrder = exSetup.config.workingDefinition.option_order
 
   const defaults = {
-    uuid: exCommon.uuid(),
+    uuid: exUtilities.uuid(),
     label: '',
     value: '',
     icon: '',
@@ -213,9 +226,9 @@ function wizardCreateAnswerOption (userDetails) {
   if (optionOrder.includes(details.uuid) === false) {
     optionOrder.push(details.uuid)
     exSetup.updateWorkingDefinition(['option_order', optionOrder])
-    Object.keys(defaults).forEach((key) => {
+    for (const key of Object.keys(defaults)) {
       exSetup.updateWorkingDefinition(['options', details.uuid, key], details[key])
-    })
+    }
   }
 
   const col = document.createElement('div')
@@ -271,12 +284,10 @@ function wizardCreateAnswerOption (userDetails) {
 async function clearDefinitionInput (full = true) {
   // Clear all input related to a defnition
 
-  if (full === true) {
-    await exSetup.initializeDefinition()
-  }
+  if (full === true) exSetup.initializeDefinition()
 
   // Definition details
-  $('#definitionNameInput').val('')
+  document.getElementById('definitionNameInput').value = ''
   document.getElementById('behaviorInput_recording_interval').value = 60
   document.getElementById('behaviorInput_touch_cooldown').value = 2
 
@@ -322,13 +333,13 @@ async function clearDefinitionInput (full = true) {
   // Reset color options
   const colorInputs = ['button-color', 'button-touched-color', 'success-message-color', 'header-color', 'subheader-color', 'footer-color', 'subfooter-color', 'button-text-color']
   colorInputs.forEach((input) => {
-    const el = $('#colorPicker_' + input)
-    el.val(el.data('default'))
-    document.querySelector('#colorPicker_' + input).dispatchEvent(new Event('input', { bubbles: true }))
+    const el = document.getElementById('colorPicker_' + input)
+    el.value = el.dataset.default
+    el.dispatchEvent(new Event('input', { bubbles: true }))
   })
   exSetup.updateAdvancedColorPicker('style>background', {
     mode: 'color',
-    color: '#22222E'
+    color: '#2f3e4f'
   })
 
   // Reset font face options
@@ -343,12 +354,7 @@ async function clearDefinitionInput (full = true) {
 
   // Reset layout options
   document.getElementById('columnCountSelect').value = 'auto'
-  document.getElementById('headerToButtonsSlider').value = 20
-  document.getElementById('headerPaddingHeightSlider').value = 5
-  document.getElementById('buttonsToFooterSlider').value = 20
-  document.getElementById('footerPaddingHeightSlider').value = 5
-  document.getElementById('buttonPaddingHeightSlider').value = 10
-  document.getElementById('imageHeightSlider').value = 90
+  exSetup.createAdvancedSliders()
 }
 
 function editDefinition (uuid = '') {
@@ -356,21 +362,19 @@ function editDefinition (uuid = '') {
 
   clearDefinitionInput(false)
   const def = exSetup.getDefinitionByUUID(uuid)
+  exSetup.config.initialDefinition = structuredClone(def)
+  exSetup.config.workingDefinition = structuredClone(def)
 
-  $('#definitionSaveButton').data('initialDefinition', structuredClone(def))
-  $('#definitionSaveButton').data('workingDefinition', structuredClone(def))
+  // Configure preview behavior
+  exSetup.configurePreviewFromDefinition(def)
 
-  $('#definitionNameInput').val(def.name)
+  document.getElementById('definitionNameInput').value = def.name
 
   // Set the appropriate values for the behavior fields
-  Object.keys(def.behavior).forEach((key) => {
-    document.getElementById('behaviorInput_' + key).value = def.behavior[key]
-  })
-
-  // Set the appropriate values for the text fields
-  // Object.keys(def.text).forEach((key) => {
-  //   document.getElementById(key + 'Input').value = def.text[key]
-  // })
+  for (const key of Object.keys(def?.behavior ?? {})) {
+    const el = document.getElementById('behaviorInput_' + key)
+    if (el != null) el.value = def.behavior[key]
+  }
 
   // Markdown fields
   for (const item of ['header', 'subheader', 'footer', 'subfooter']) {
@@ -399,47 +403,27 @@ function editDefinition (uuid = '') {
 
   // Create any existing options
   document.getElementById('optionRow').innerHTML = ''
-  def.option_order.forEach((optionUUID) => {
+  for (const optionUUID of def?.option_order ?? []) {
     const option = def.options[optionUUID]
     createSurveyOption(option)
-  })
-
-  // Set the appropriate values for the color pickers
-  for (const key of Object.keys(def?.style?.color ?? {})) {
-    const colorEl = document.getElementById('colorPicker_' + key)
-    if (colorEl == null) continue
-    colorEl.value = def.style.color[key]
-    colorEl.dispatchEvent(new Event('input', { bubbles: true }))
   }
 
-  // Set the appropriate values for any advanced color pickers
-  if (def?.style?.background) {
-    exSetup.updateAdvancedColorPicker('style>background', def.style.background)
-  }
-
-  // Set the appropriate values for the advanced font pickers
-  Object.keys(def?.style?.font ?? {}).forEach((key) => {
-    const picker = document.querySelector(`.AFP-select[data-path="style>font>${key}"`)
-    exSetup.setAdvancedFontPicker(picker, def.style.font[key])
-  })
-
-
-  // Set the appropriate values for the text size sliders
-  Object.keys(def?.style?.text_size ?? {}).forEach((key) => {
-    document.getElementById(key + 'TextSizeSlider').value = def.style.text_size[key]
-  })
+  exSetup.updateAdvancedColorPicker('style>background', def?.style?.background, { mode: 'color', color: '#22222E' })
+  exSetup.updateColorPickers(def?.style?.color ?? {})
+  exSetup.updateAdvancedFontPickers(def?.style?.font ?? {})
+  exSetup.updateTextSizeSliders(def?.style?.text_size ?? {})
 
   // Set the appropriate values for the layout options
   document.getElementById('columnCountSelect').value = def?.style?.layout?.num_columns ?? 'auto'
-  document.getElementById('headerToButtonsSlider').value = def?.style?.layout?.top_height ?? 20
-  document.getElementById('headerPaddingHeightSlider').value = def?.style?.layout?.header_padding ?? 5
-  document.getElementById('buttonsToFooterSlider').value = def?.style?.layout?.bottom_height ?? 20
-  document.getElementById('footerPaddingHeightSlider').value = def?.style?.layout?.footer_padding ?? 5
-  document.getElementById('buttonPaddingHeightSlider').value = def?.style?.layout?.button_padding ?? 10
-  document.getElementById('imageHeightSlider').value = def?.style?.layout?.image_height ?? 90
+  exSetup.createAdvancedSlider(document.getElementById('headerToButtonsSlider'), def?.style?.layout?.top_height)
+  exSetup.createAdvancedSlider(document.getElementById('headerPaddingHeightSlider'), def?.style?.layout?.header_padding)
+  exSetup.createAdvancedSlider(document.getElementById('buttonsToFooterSlider'), def?.style?.layout?.bottom_height)
+  exSetup.createAdvancedSlider(document.getElementById('footerPaddingHeightSlider'), def?.style?.layout?.footer_padding)
+  exSetup.createAdvancedSlider(document.getElementById('buttonPaddingHeightSlider'), def?.style?.layout?.button_padding)
+  exSetup.createAdvancedSlider(document.getElementById('imageHeightSlider'), def.style.layout.image_height)
 
   // Configure the preview frame
-  document.getElementById('previewFrame').src = '../voting_kiosk.html?standalone=true&definition=' + def.uuid
+  document.getElementById('previewFrame').src = 'index.html?standalone=true&definition=' + def.uuid
   exSetup.previewDefinition()
 }
 
@@ -457,10 +441,10 @@ function formatOptionHeader (details) {
 function createSurveyOption (userDetails, populateEditor = false) {
   // Create the HTML representation of a survey question and add it to the row.
 
-  const optionOrder = $('#definitionSaveButton').data('workingDefinition').option_order
+  const optionOrder = exSetup.config.workingDefinition.option_order
 
   const defaults = {
-    uuid: exCommon.uuid(),
+    uuid: exUtilities.uuid(),
     label: '',
     value: '',
     icon: '',
@@ -472,9 +456,9 @@ function createSurveyOption (userDetails, populateEditor = false) {
   if (optionOrder.includes(details.uuid) === false) {
     optionOrder.push(details.uuid)
     exSetup.updateWorkingDefinition(['option_order', optionOrder])
-    Object.keys(defaults).forEach((key) => {
+    for (const key of Object.keys(defaults)) {
       exSetup.updateWorkingDefinition(['options', details.uuid, key], details[key])
-    })
+    }
   }
 
   const col = document.createElement('div')
@@ -529,9 +513,7 @@ function createSurveyOption (userDetails, populateEditor = false) {
   deleteButton.setAttribute('data-bs-content', `<a id="DeleteOptionPopover_${details.uuid}" class="btn btn-danger w-100">Confirm</a>`)
   deleteButton.setAttribute('data-bs-trigger', 'focus')
   deleteButton.setAttribute('data-bs-html', 'true')
-  $(document).on('click', '#DeleteOptionPopover_' + details.uuid, function () {
-    deleteOption(details.uuid)
-  })
+
   deleteButton.addEventListener('click', function () { deleteButton.focus() })
   deleteCol.appendChild(deleteButton)
 
@@ -577,7 +559,7 @@ function createSurveyOption (userDetails, populateEditor = false) {
 function deleteOption (uuid, wizard = false) {
   // Delete an option and rebuild the GUI
 
-  const def = $('#definitionSaveButton').data('workingDefinition')
+  const def = exSetup.config.workingDefinition
 
   // Delete from the options dictionary
   delete def.options[uuid]
@@ -592,16 +574,16 @@ function deleteOption (uuid, wizard = false) {
   // Rebuild the options GUI
   if (wizard) {
     document.getElementById('wizardCustomAnswersRow').innerHTML = ''
-    def.option_order.forEach((optionUUID) => {
+    for (const optionUUID of def?.option_order ?? []) {
       const option = def.options[optionUUID]
       wizardCreateAnswerOption(option)
-    })
+    }
   } else {
     document.getElementById('optionRow').innerHTML = ''
-    def.option_order.forEach((optionUUID) => {
+    for (const optionUUID of def?.option_order ?? []) {
       const option = def.options[optionUUID]
       createSurveyOption(option)
-    })
+    }
     exSetup.previewDefinition(true)
   }
 }
@@ -610,7 +592,7 @@ function changeOptionOrder (uuid, direction, wizard = false) {
   // Move the option given by uuid in the direction specified
   // direction should be -1 or 1
 
-  const def = $('#definitionSaveButton').data('workingDefinition')
+  const def = exSetup.config.workingDefinition
   const searchFunc = (el) => el === uuid
   const currentIndex = def.option_order.findIndex(searchFunc)
 
@@ -627,16 +609,16 @@ function changeOptionOrder (uuid, direction, wizard = false) {
   // Rebuild the options GUI
   if (wizard) {
     document.getElementById('wizardCustomAnswersRow').innerHTML = ''
-    def.option_order.forEach((optionUUID) => {
+    for (const optionUUID of def?.option_order ?? []) {
       const option = def.options[optionUUID]
       wizardCreateAnswerOption(option)
-    })
+    }
   } else {
     document.getElementById('optionRow').innerHTML = ''
-    def.option_order.forEach((optionUUID) => {
+    for (const optionUUID of def?.option_order ?? []) {
       const option = def.options[optionUUID]
       createSurveyOption(option)
-    })
+    }
     exSetup.previewDefinition(true)
   }
 }
@@ -644,7 +626,7 @@ function changeOptionOrder (uuid, direction, wizard = false) {
 function populateOptionEditor (id) {
   // Take the details from an option and fill in the editor GUI
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+  const workingDefinition = exSetup.config.workingDefinition
   const details = workingDefinition.options[id]
   document.getElementById('optionEditor').setAttribute('data-option-id', id)
 
@@ -680,42 +662,22 @@ function setIconUserFile (file = '') {
 // Set helper address for use with exCommon.makeHelperRequest
 exCommon.config.helperAddress = window.location.origin
 
-// Set up the color pickers
-function setUpColorPickers () {
-  Coloris({
-    el: '.coloris',
-    theme: 'pill',
-    themeMode: 'dark',
-    formatToggle: false,
-    clearButton: false,
-    swatches: [
-      '#000',
-      '#22222E',
-      '#393A5A',
-      '#719abf',
-      '#fff'
-    ]
-  })
-}
-// Call with a slight delay to make sure the elements are loaded
-setTimeout(setUpColorPickers, 100)
-
 // Add event listeners
 // -------------------------------------------------------------
 
 // Wizard
 
 // Connect the forward and back buttons
-Array.from(document.querySelectorAll('.wizard-forward')).forEach((el) => {
+for (const el of document.querySelectorAll('.wizard-forward')) {
   el.addEventListener('click', () => {
     wizardForward(el.getAttribute('data-current-page'))
   })
-})
-Array.from(document.querySelectorAll('.wizard-back')).forEach((el) => {
+}
+for (const el of document.querySelectorAll('.wizard-back')) {
   el.addEventListener('click', () => {
     wizardBack(el.getAttribute('data-current-page'))
   })
-})
+}
 
 document.getElementById('wizardAnswerTypeSelect').addEventListener('change', (event) => {
   if (event.target.value === 'custom') {
@@ -749,6 +711,7 @@ Array.from(document.querySelectorAll('.definition-text-input')).forEach((el) => 
 // Option fields
 document.getElementById('addOptionButton').addEventListener('click', () => {
   createSurveyOption(null, true)
+  exSetup.previewDefinition(true)
 })
 document.getElementById('optionInput_icon_user_file').addEventListener('click', (event) => {
   exFileSelect.createFileSelectionModal({ multiple: false, filetypes: ['image'] })
@@ -771,23 +734,33 @@ document.getElementById('optionInput_icon_user_file_DeleteButton').addEventListe
   exSetup.updateWorkingDefinition(['options', id, 'icon'], '')
   exSetup.previewDefinition(true)
 })
-Array.from(document.getElementsByClassName('option-input')).forEach((el) => {
+for (const el of document.getElementsByClassName('option-input')) {
   el.addEventListener('change', (event) => {
     const id = document.getElementById('optionEditor').getAttribute('data-option-id')
     const field = event.target.getAttribute('data-field')
     if (id == null) return
     exSetup.updateWorkingDefinition(['options', id, field], event.target.value)
-    document.getElementById('OptionHeaderText_' + id).innerHTML = formatOptionHeader($('#definitionSaveButton').data('workingDefinition').options[id])
+    document.getElementById('OptionHeaderText_' + id).innerHTML = formatOptionHeader(exSetup.config.workingDefinition.options[id])
     exSetup.previewDefinition(true)
   })
+}
+document.addEventListener('click', (event) => {
+  if (event?.target?.id.startsWith('DeleteOptionPopover_')) {
+    const split = event.target.id.split('_')
+    const uuid = split[1]
+    deleteOption(uuid)
+  }
 })
 
 // Style fields
-$('.color-picker').change(function () {
-  const value = $(this).val().trim()
-  exSetup.updateWorkingDefinition(['style', 'color', $(this).data('property')], value)
-  exSetup.previewDefinition(true)
-})
+for (const el of document.querySelectorAll('.color-picker')) {
+  el.addEventListener('change', function () {
+    const value = this.value.trim()
+    const property = this.dataset.property
+    exSetup.updateWorkingDefinition(['style', 'color', property], value)
+    exSetup.previewDefinition(true)
+  })
+}
 
 document.getElementById('manageFontsButton').addEventListener('click', (event) => {
   exFileSelect.createFileSelectionModal({ filetypes: ['otf', 'ttf', 'woff', 'woff2'], manage: true })
@@ -808,30 +781,15 @@ document.getElementById('columnCountSelect').addEventListener('change', (event) 
   exSetup.updateWorkingDefinition(['style', 'layout', 'num_columns'], event.target.value)
   exSetup.previewDefinition(true)
 })
-Array.from(document.querySelectorAll('.height-slider')).forEach((el) => {
+for (const el of document.querySelectorAll('.height-slider')) {
   el.addEventListener('input', () => {
-    const headerHeight = parseInt(document.getElementById('headerToButtonsSlider').value)
-    const footerHeight = parseInt(document.getElementById('buttonsToFooterSlider').value)
+    const headerHeight = parseInt(document.getElementById('headerToButtonsSlider').querySelector('input').value)
+    const footerHeight = parseInt(document.getElementById('buttonsToFooterSlider').querySelector('input').value)
     const buttonHeight = 100 - headerHeight - footerHeight
-    exSetup.updateWorkingDefinition(['style', 'layout', 'top_height'], headerHeight)
-    exSetup.updateWorkingDefinition(['style', 'layout', 'button_height'], buttonHeight)
-    exSetup.updateWorkingDefinition(['style', 'layout', 'bottom_height'], footerHeight)
-    exSetup.previewDefinition(true)
-  })
-})
-Array.from(document.querySelectorAll('.padding-slider')).forEach((el) => {
-  el.addEventListener('input', (event) => {
-    const property = event.target.getAttribute('data-property')
-    exSetup.updateWorkingDefinition(['style', 'layout', property], parseInt(event.target.value))
-    exSetup.previewDefinition(true)
-  })
-})
 
-// Set color mode
-if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-  document.querySelector('html').setAttribute('data-bs-theme', 'dark')
-} else {
-  document.querySelector('html').setAttribute('data-bs-theme', 'light')
+    exSetup.updateWorkingDefinition(['style', 'layout', 'button_height'], buttonHeight)
+    exSetup.previewDefinition(true)
+  })
 }
 
 exSetup.configure({
@@ -845,26 +803,31 @@ exSetup.configure({
     text: {},
     style: {
       background: {
-        mode: 'color',
-        color: '#22222E'
+        color: '#2f3e4f',
+        gradient_color_1: '#2f3e4f',
+        gradient_color_2: '#243447',
+        mode: 'color'
       },
-      color: {},
-      font: {},
+      color: {
+        'button-color': '#1a2b3c',
+        'button-text-color': '#f5f5f0',
+        'button-touched-color': '#3b5c8a',
+        'footer-color': '#f5f5f0',
+        'header-color': '#f5f5f0',
+        'subfooter-color': '#e6e6e2',
+        'subheader-color': '#e6e6e2',
+        'success-message-color': '#e06a47'
+      },
+      font: {
+        button: '/_fonts/OpenSans-Regular.ttf',
+        footer: '/_fonts/OpenSans-Bold.ttf',
+        header: '/_fonts/OpenSans-Bold.ttf',
+        subfooter: '/_fonts/OpenSans-Regular.ttf',
+        subheader: '/_fonts/OpenSans-Regular.ttf'
+      },
       layout: {},
       text_size: {}
     },
     behavior: {}
   }
 })
-
-exCommon.askForDefaults(false)
-  .then(() => {
-    if (exCommon.config.standalone === false) {
-      // We are using Hub, so attempt to log in
-      exSetup.authenticateUser()
-    } else {
-      // Hide the login details
-      document.getElementById('loginMenu').style.display = 'none'
-      document.getElementById('helpNewAccountMessage').style.display = 'none'
-    }
-  })

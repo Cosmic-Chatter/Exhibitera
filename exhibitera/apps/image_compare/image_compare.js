@@ -1,4 +1,6 @@
-/* global showdown */
+import exConfig from '../../common/config.js'
+import * as exUtilities from '../../common/utilities.js'
+import * as exFiles from '../../common/files.js'
 import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exMarkdown from '../js/exhibitera_app_markdown.js'
 
@@ -6,7 +8,7 @@ const overlay = document.getElementById('overlayDiv')
 const base = document.getElementById('baseDiv')
 
 let homeScreenDisabled = false
-let currentDefintion = ''
+const currentDefintion = ''
 let clicked = 0
 let currentLang = null
 let inactivityTimer = 0 // Reference to setTimeout for reseting the view
@@ -132,7 +134,7 @@ function loadImages (item) {
   baseImg.src = exCommon.config.helperAddress + '/content/' + item.image1
 
   // Configure whether the images should be shown fullscreen
-  if ('show_fullscreen' in item && item.show_fullscreen === false) {
+  if (item?.show_fullscreen === false) {
     overlayImg.classList.add('comp-image-contain')
     baseImg.classList.add('comp-image-contain')
   } else {
@@ -191,11 +193,11 @@ function loadDefinition (definition) {
   // Configure the attractor
   inactivityTimeout = definition?.inactivity_timeout * 1000 || 30000
 
-  if ((definition?.attractor || '') !== '') {
-    if (exCommon.guessMimetype(definition.attractor) === 'video') {
+  if ((definition?.attractor ?? '') !== '') {
+    if (exFiles.guessMimetype(definition.attractor) === 'video') {
       attractorType = 'video'
 
-      document.getElementById('attractorVideo').src = 'content/' + definition.attractor
+      document.getElementById('attractorVideo').src = '../content/' + definition.attractor
       document.getElementById('attractorVideo').style.display = 'block'
       document.getElementById('attractorImage').style.display = 'none'
       document.getElementById('attractorVideo').play()
@@ -207,7 +209,7 @@ function loadDefinition (definition) {
         // Ignore the error that arises if we're pausing a video that doesn't exist.
       }
 
-      document.getElementById('attractorImage').src = 'content/' + definition.attractor
+      document.getElementById('attractorImage').src = '../content/' + definition.attractor
       document.getElementById('attractorImage').style.display = 'block'
       document.getElementById('attractorVideo').style.display = 'none'
     }
@@ -219,7 +221,7 @@ function loadDefinition (definition) {
   }
 
   exCommon.createLanguageSwitcher(definition, localize)
-  currentLang = definition?.language_order[0] || null
+  currentLang = definition?.language_order[0] ?? null
   document.getElementById('homeButton').style.display = 'block'
 
   // Configure the number of columns
@@ -254,27 +256,27 @@ function loadDefinition (definition) {
 
   // Color
   // First, reset to defaults (in case a style option doesn't exist in the definition)
-  root.style.setProperty('--background-color', 'black')
-  root.style.setProperty('--titleColor', 'white')
-  root.style.setProperty('--subtitleColor', 'white')
-  root.style.setProperty('--itemNameColor', 'white')
-  root.style.setProperty('--buttonBackgroundColor', '#393a5acc')
-  root.style.setProperty('--buttonTextColor', 'white')
-  root.style.setProperty('--buttonOutlineColor', 'white')
-  root.style.setProperty('--sliderBackgroundColor', '#719bbfb3')
-  root.style.setProperty('--sliderIconColor', 'black')
-  root.style.setProperty('--labelBackgroundColor', '#00000080')
-  root.style.setProperty('--labelTextColor', 'white')
-  root.style.setProperty('--infoTitleColor', 'white')
-  root.style.setProperty('--infoBodyColor', 'white')
+  root.style.setProperty('--background-color', '#0f1419')
+  root.style.setProperty('--titleColor', '#f5f5f0')
+  root.style.setProperty('--subtitleColor', '#e6e6e2')
+  root.style.setProperty('--itemNameColor', '#e6e6e2')
+  root.style.setProperty('--buttonBackgroundColor', '#2f3e4fd8')
+  root.style.setProperty('--buttonTextColor', '#f5f5f0')
+  root.style.setProperty('--buttonOutlineColor', '#e6e6e2')
+  root.style.setProperty('--sliderBackgroundColor', '#5a7ba8cc')
+  root.style.setProperty('--sliderIconColor', '#0f1419')
+  root.style.setProperty('--labelBackgroundColor', '#0f141991')
+  root.style.setProperty('--labelTextColor', '#e6e6e2')
+  root.style.setProperty('--infoTitleColor', '#f5f5f0')
+  root.style.setProperty('--infoBodyColor', '#e6e6e2')
 
   // Then, apply the definition settings
-  Object.keys(definition.style.color).forEach((key) => {
+  for (const key of Object.keys(definition?.style?.color ?? {})) {
     document.documentElement.style.setProperty('--' + key, definition.style.color[key])
-  })
+  }
 
   // Backgorund settings
-  if ('background' in definition.style) {
+  if (definition?.style?.background) {
     exCommon.setBackground(definition.style.background, root, '#fff', true)
   }
 
@@ -292,9 +294,9 @@ function loadDefinition (definition) {
     }
 
     if (backgroundClassification === 'light') {
-      langSwitchDropdownIcon.src = '_static/icons/translation-icon_black.svg'
+      langSwitchDropdownIcon.src = '../_static/icons/translation-icon_black.svg'
     } else {
-      langSwitchDropdownIcon.src = '_static/icons/translation-icon_white.svg'
+      langSwitchDropdownIcon.src = '../_static/icons/translation-icon_white.svg'
     }
   }, 100)
 
@@ -308,11 +310,11 @@ function loadDefinition (definition) {
   root.style.setProperty('--info_pane_body-font', 'Info_pane_body-default')
 
   // Then, apply the definition settings
-  Object.keys(definition.style.font).forEach((key) => {
+  for (const key of Object.keys(definition?.style?.font ?? {})) {
     const font = new FontFace(key, 'url(' + encodeURI(definition.style.font[key]) + ')')
     document.fonts.add(font)
     root.style.setProperty('--' + key + '-font', key)
-  })
+  }
 
   // Text size settings
   // First, reset to defaults (in case a style option doesn't exist in the definition)
@@ -324,10 +326,10 @@ function loadDefinition (definition) {
   root.style.setProperty('--info_pane_body-font-adjust', 0)
 
   // Then, apply the definition settings
-  Object.keys(definition.style.text_size).forEach((key) => {
+  for (const key of Object.keys(definition?.style?.text_size ?? {})) {
     const value = definition.style.text_size[key]
     root.style.setProperty('--' + key + '-font-adjust', value)
-  })
+  }
 
   localize(currentLang)
 
@@ -357,9 +359,9 @@ function populateItemList (def) {
     // We're in portrait
 
     if (numFiles < 5) {
-      thumbWidth = window.innerWidth
+      thumbWidth = window.innerWidth * window.devicePixelRatio
     } else {
-      thumbWidth = window.innerWidth / 2
+      thumbWidth = window.innerWidth * window.devicePixelRatio / 2
     }
   }
   thumbWidth = String(Math.round(thumbWidth))
@@ -381,12 +383,12 @@ function populateItemList (def) {
 
     const img1 = document.createElement('img')
     img1.classList = 'w-100 icon-image icon-image-top'
-    img1.src = exCommon.config.helperAddress + '/files/' + item.image1 + '/thumbnail/' + thumbWidth
+    img1.src = exCommon.config.helperAddress + exConfig.api + '/files/' + item.image1 + '/thumbnail/' + thumbWidth
     iconContainer.appendChild(img1)
 
     const img2 = document.createElement('img')
     img2.classList = 'w-100 icon-image icon-image-bottom'
-    img2.src = exCommon.config.helperAddress + '/files/' + item.image2 + '/thumbnail/' + thumbWidth
+    img2.src = exCommon.config.helperAddress + exConfig.api + '/files/' + item.image2 + '/thumbnail/' + thumbWidth
     img2.style.position = 'absolute'
     img2.style.top = 0
     img2.style.left = 0
@@ -407,7 +409,7 @@ function populateItemList (def) {
 
       const hand = document.createElement('img')
       hand.setAttribute('id', 'pulsingHand')
-      hand.src = '_static/icons/hand.svg'
+      hand.src = '../_static/icons/hand.svg'
       div.appendChild(hand)
 
       first = false
@@ -419,7 +421,8 @@ function localize (lang) {
   // Use the localization to switch to the given language
 
   currentLang = lang
-  console.log(exCommon.config)
+  exCommon.configureLanguage(lang)
+
   if (homeScreenDisabled) {
     loadImages(exCommon.config.definition.content[exCommon.config.definition.content_order[0]])
     document.getElementById('mainMenu').style.display = 'none'
@@ -444,7 +447,7 @@ function resetActivityTimer () {
 
 function resetView () {
   localize(exCommon.config.definition?.language_order[0] || 'en-uk')
-  $('#aboutModal').modal('hide')
+  exUtilities.hideModal('#aboutModal')
   document.getElementById('slidingHandContainer').style.display = 'block'
 
   if (homeScreenDisabled === false) {
@@ -495,15 +498,8 @@ function hideAttractor () {
 }
 
 function parseUpdate (update) {
-  // A function to respond to commands from Control Server.
+  // A function to respond to commands from Hub.
 
-  if ('definition' in update && update.definition !== currentDefintion) {
-    currentDefintion = update.definition
-    exCommon.loadDefinition(currentDefintion)
-      .then((result) => {
-        loadDefinition(result.definition)
-      })
-  }
 }
 
 // Bind event handlers

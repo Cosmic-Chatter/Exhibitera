@@ -1,5 +1,7 @@
-/* global bootstrap, showdown */
+/* global bootstrap, Coloris, showdown */
 
+import * as exFiles from '../../common/files.js'
+import * as exUtilities from '../../common/utilities.js'
 import * as exCommon from './exhibitera_app_common.js'
 import * as exFileSelect from './exhibitera_file_select_modal.js'
 
@@ -19,9 +21,11 @@ HTMLElement.prototype.visibleHeight = function () {
 export const config = {
   availableDefinitions: {},
   clearDefinition: null,
+  initialDefinition: null,
   loadDefinition: null,
   onDefinitionSave: null,
   fontCache: {}, // Keys with any value indicate that font has already been made
+  workingDefinition: null,
   languages: [
     { code: 'af', name: 'Afrikaans', name_en: 'Afrikaans' },
     { code: 'sq', name: 'Shqip', name_en: 'Albanian' },
@@ -92,6 +96,23 @@ export const config = {
 export async function configure (options) {
   // Set up the common fields for the setup app.
 
+  // Set color mode ASAP to minimize any flash
+  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    document.querySelector('html').setAttribute('data-bs-theme', 'dark')
+  } else {
+    document.querySelector('html').setAttribute('data-bs-theme', 'light')
+  }
+
+  await exCommon.askForDefaults(false)
+  if (exCommon.config.standalone === false) {
+    // We are using Hub, so attempt to log in
+    await authenticateUser()
+  } else {
+    // Hide the login details
+    document.getElementById('loginMenu').style.display = 'none'
+    document.getElementById('helpNewAccountMessage').style.display = 'none'
+  }
+
   const defaults = {
     app: null,
     blankDefinition: {},
@@ -116,11 +137,12 @@ export async function configure (options) {
   config.loadDefinition = options.loadDefinition
   if (options.onDefinitionSave != null) config.onDefinitionSave = options.onDefinitionSave
 
-  await initializeDefinition()
+  initializeDefinition()
   const userFonts = await getUserFonts()
 
   createAdvancedColorPickers()
   createAdvancedFontPickers(userFonts)
+  createAdvancedSliders()
   createDefinitionDeletePopup()
   createLoginEventListeners()
   createEventListeners()
@@ -128,13 +150,85 @@ export async function configure (options) {
 
   exCommon.getAvailableDefinitions(options.app)
     .then((response) => {
-      if ('success' in response && response.success === true) {
+      if (response?.success === true) {
         populateAvailableDefinitions(response.definitions)
       }
     })
     .then(() => {
       configureFromQueryString()
     })
+
+  // Set up the color pickers
+  // Call with a slight delay to make sure the elements are loaded
+  setTimeout(setUpColorPickers, 100)
+
+  // If we're using Hub, display the component ID
+  if (exCommon.config.standalone === false) {
+    const idField = document.getElementById('setupComponentID')
+    if (idField) {
+      setTimeout(() => {
+        idField.innerText = exCommon.config?.id ?? ''
+      }, 10)
+    }
+  }
+}
+
+export function gotoAppLink (el) {
+  // Navigate to the link given by element el, either in the browser or in the webview
+
+  if (exCommon.config.remoteDisplay === true) {
+    // Switch webpages in the browser
+
+    const endpoint = el.getAttribute('data-web-link')
+    window.open(window.location.origin + endpoint, '_blank').focus()
+  } else {
+    // Launch the appropriate webview page in the app
+
+    const page = el.getAttribute('data-app-link')
+    let reload = false
+    if (page === 'app') {
+      reload = true
+    }
+    exCommon.makeHelperRequest({
+      method: 'POST',
+      api: '',
+      endpoint: '/app/showWindow/' + page,
+      params: {
+        parameters: {},
+        reload
+      }
+    })
+  }
+}
+
+export function setUpColorPickers () {
+  // Find all the color picker divs and apply the Coloris style
+
+  try {
+    Coloris({
+      el: '.coloris',
+      theme: 'pill',
+      themeMode: 'dark',
+      formatToggle: false,
+      clearButton: false,
+      swatches: [
+        '#0F1419',
+        '#1A2B3C',
+        '#243447',
+        '#2F3E4F',
+        '#E6E6E2',
+        '#F5F5F0',
+        '#4B5563',
+        '#6B7280',
+        '#C3512F',
+        '#E06A47',
+        '#3B5C8A',
+        '#5A7BA8'
+      ]
+    })
+  } catch {
+    // Will fail if we aren't using any color pickers
+  }
 }
 
 function configureGUIForUser (user) {
@@ -147,7 +241,7 @@ function configureGUIForUser (user) {
   })
     .then((response) => {
       let groups = []
-      if ('success' in response) {
+      if (response?.success) {
         groups = response.groups
       }
 
@@ -187,10 +281,11 @@ export function showAppHelpModal (app) {
   const endpointStems = {
     dmx_control: '/dmx_control/',
     image_compare: '/image_compare/',
-    infostation: '/InfoStation/',
+    infostation: '/infostation/',
     media_browser: '/media_browser/',
     media_player: '/media_player/',
     other: '/other/',
+    survey_kiosk: '/survey_kiosk/',
     timelapse_viewer: '/timelapse_viewer/',
     timeline_explorer: '/timeline_explorer/',
     voting_kiosk: '/voting_kiosk/',
@@ -201,6 +296,7 @@ export function showAppHelpModal (app) {
 
   exCommon.makeHelperRequest({
     method: 'GET',
+    api: '',
     endpoint: endpointStems[app] + 'README.md',
     rawResponse: true
   })
@@ -221,14 +317,14 @@ export function showAppHelpModal (app) {
       }
     })
 
-  showModal('#appHelpModal')
+  exUtilities.showModal('#appHelpModal')
 }
 
 export function populateAvailableDefinitions (definitions) {
   // Take a list of definitions and add them to the select.
 
-  const availableDefinitionSelect = document.getElementById('availableDefinitionSelect')
-  availableDefinitionSelect.innerHTML = ''
+  const select = document.getElementById('availableDefinitionSelect')
+  select.innerText = ''
   config.availableDefinitions = definitions
   const keys = Object.keys(definitions).sort((a, b) => {
     const aName = definitions[a].name.toLowerCase()
@@ -242,7 +338,7 @@ export function populateAvailableDefinitions (definitions) {
     if (uuid.startsWith('__preview') || uuid.trim() === '') continue
 
     const option = new Option(definitions[uuid].name, uuid)
-    availableDefinitionSelect.appendChild(option)
+    select.appendChild(option)
   }
 }
 
@@ -257,8 +353,9 @@ export function configureFromQueryString () {
     document.getElementById('availableDefinitionSelect').value = searchParams.get('definition')
   } else {
     if (config.clearDefinition != null) config.clearDefinition()
-    if (config.loggedIn) {
-      showModal('#appWelcomeModal')
+    if (exCommon.config.standalone === true || config.loggedIn) {
+      const modal = document.getElementById('appWelcomeModal')
+      if (modal) exUtilities.showModal(modal)
     }
   }
 }
@@ -279,11 +376,32 @@ export function getDefinitionByUUID (uuid = '') {
   return matchedDef
 }
 
+export function prepareWizard () {
+  // Perform some common setup actions to prepare the wizard
+
+  initializeDefinition()
+
+  // Hide all but the welcome screen
+  for (const el of document.querySelectorAll('.wizard-pane') ?? []) {
+    el.style.display = 'none'
+  }
+  document.getElementById('wizardPane_Welcome').style.display = 'block'
+}
+
 async function showSetupWizard () {
   // Show the modal for the setup wizard
 
   await config.initializeWizard()
-  showModal('#setupWizardModal')
+  exUtilities.showModal('#setupWizardModal')
+}
+
+export function wizardGoTo (page) {
+  // Navigate to the given wizard page, hiding all other pages.
+
+  for (const el of document.querySelectorAll('.wizard-pane')) {
+    el.style.display = 'none'
+  }
+  document.getElementById('wizardPane_' + page).style.display = 'block'
 }
 
 export function addWizardLanguage () {
@@ -329,21 +447,12 @@ export function addWizardLanguage () {
 export function initializeDefinition () {
   // Create a blank definition at save it to workingDefinition.
 
-  return new Promise(function (resolve, reject) {
-    // Get a new temporary uuid
-    exCommon.makeHelperRequest({
-      method: 'GET',
-      endpoint: '/uuid/new'
-    })
-      .then((response) => {
-        const temp = structuredClone(config.blankDefinition)
-        temp.uuid = response.uuid
-        $('#definitionSaveButton').data('initialDefinition', temp)
-        $('#definitionSaveButton').data('workingDefinition', temp)
-        previewDefinition(false)
-        resolve()
-      })
-  })
+  const temp = structuredClone(config.blankDefinition)
+  if (temp == null) return
+  temp.uuid = exUtilities.uuid()
+  config.initialDefinition = temp
+  config.workingDefinition = temp
+  previewDefinition(false)
 }
 
 function deleteDefinition () {
@@ -358,7 +467,7 @@ function deleteDefinition () {
     .then(() => {
       exCommon.getAvailableDefinitions(config.app)
         .then((response) => {
-          if ('success' in response && response.success === true) {
+          if (response?.success) {
             populateAvailableDefinitions(response.definitions)
           }
         })
@@ -378,10 +487,10 @@ function cloneDefinition () {
 
   exCommon.writeDefinition(defToClone)
     .then((result) => {
-      if ('success' in result && result.success === true) {
+      if (result?.success) {
         exCommon.getAvailableDefinitions(config.app)
           .then((response) => {
-            if ('success' in response && response.success === true) {
+            if (response?.success) {
               populateAvailableDefinitions(response.definitions)
               document.getElementById('availableDefinitionSelect').value = result.uuid
               config.loadDefinition(result.uuid)
@@ -393,39 +502,38 @@ function cloneDefinition () {
 
 export function updateWorkingDefinition (property, value) {
   // Update a field in the working defintion.
-  // 'property' should be an array of subproperties, e.g., ["style", "color", 'headerColor']
-  // for definition.style.color.headerColor
+  // 'property' should be an array of subproperties, e.g., ["style", "color", 'header']
+  // for definition.style.color.header
 
   if (property && property[0].length <= 1) {
-    // occasionally the color library is providing a poperty with a large amount of single entries that clog up the definition json
-    console.log(`skipping ${property}`)
+    // occasionally the color library is providing a property with a large amount of single entries that clog up the definition json
     return
   }
-  exCommon.setObjectProperty($('#definitionSaveButton').data('workingDefinition'), property, value)
+  exUtilities.setObjectProperty(config.workingDefinition, property, value)
 }
 
 export async function saveDefinition (name = '') {
   // Collect inputted information to save the definition
 
-  const definition = $('#definitionSaveButton').data('workingDefinition')
-  const initialDefinition = $('#definitionSaveButton').data('initialDefinition')
+  const definition = config.workingDefinition
+  const initialDefinition = config.initialDefinition
   definition.app = config.app
   if (name === '') definition.name = document.getElementById('definitionNameInput').value
   definition.uuid = initialDefinition.uuid
-  console.log(name, definition)
 
   return exCommon.writeDefinition(definition)
     .then((result) => {
-      if ('success' in result && result.success === true) {
+      if (result?.success) {
         // Update the UUID in case we have created a new definition
-        $('#definitionSaveButton').data('initialDefinition', structuredClone(definition))
+        config.initialDefinition = structuredClone(definition)
 
         // If we have a completion handler, call it with the definition
-        if (config.onDefinitionSave != null) config.onDefinitionSave($('#definitionSaveButton').data('workingDefinition'))
+        if (config.onDefinitionSave != null) config.onDefinitionSave(config.workingDefinition)
         exCommon.getAvailableDefinitions(config.app)
           .then((response) => {
-            if ('success' in response && response.success === true) {
+            if (response?.success) {
               populateAvailableDefinitions(response.definitions)
+              document.getElementById('availableDefinitionSelect').value = definition.uuid
             }
           })
       }
@@ -437,6 +545,12 @@ export function createLoginEventListeners () {
 
   // Login
   document.getElementById('loginSubmitButton').addEventListener('click', loginFromDropdown)
+  document.getElementById('loginForm').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+      e.preventDefault() // Prevents form from reloading the page
+      document.getElementById('loginSubmitButton').click() // Trigger form submission programmatically
+    }
+  })
   document.getElementById('logoutButton').addEventListener('click', logoutUser)
 
   document.getElementById('changePasswordButton').addEventListener('click', showPasswordChangeModal)
@@ -457,7 +571,7 @@ function createEventListeners () {
   }
   try {
     document.getElementById('appWelcomeModalWizardButton').addEventListener('click', () => {
-      hideModal('#appWelcomeModal')
+      exUtilities.hideModal('#appWelcomeModal')
       showSetupWizard()
     })
   } catch {
@@ -507,10 +621,9 @@ function createEventListeners () {
   })
 
   document.getElementById('refreshOnChangeCheckbox').addEventListener('change', () => {
-    const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
     let previewRatio = '16x9'
     const autoRefresh = refreshOnChangeCheckbox.checked
-    if ('setup' in workingDefinition) previewRatio = workingDefinition.setup.preview_ratio
+    if (config.workingDefinition?.setup) previewRatio = config.workingDefinition.setup.preview_ratio
     if (autoRefresh === true) configurePreview(previewRatio, autoRefresh)
   })
 
@@ -528,6 +641,13 @@ function createEventListeners () {
   const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
   tooltipTriggerList.map(function (tooltipTriggerEl) {
     return new bootstrap.Tooltip(tooltipTriggerEl)
+  })
+
+  // Activate app links
+  Array.from(document.querySelectorAll('.app-link')).forEach((el) => {
+    el.addEventListener('click', (event) => {
+      gotoAppLink(event.target)
+    })
   })
 }
 
@@ -580,14 +700,10 @@ export function configurePreviewFromDefinition (def) {
   // Use the setup section of def to configur the preview behavior
 
   const behavior = {
-    preview_ratio: '16x9',
-    auto_refresh: true
+    preview_ratio: def?.setup?.preview_ratio ?? '16x9',
+    auto_refresh: def?.setup?.auto_refresh ?? true
   }
 
-  if ('setup' in def) {
-    if ('preview_ratio' in def.setup) behavior.preview_ratio = def.setup.preview_ratio
-    if ('auto_refresh' in def.setup) behavior.auto_refresh = def.setup.auto_refresh
-  }
   configurePreview(behavior.preview_ratio, behavior.auto_refresh)
 }
 
@@ -634,40 +750,42 @@ export function previewDefinition (automatic = false) {
     return
   }
 
-  const def = structuredClone($('#definitionSaveButton').data('workingDefinition'))
+  const def = structuredClone(config.workingDefinition)
 
   // Set the uuid to a temp one
   def.uuid = '__preview_' + config.app
   exCommon.writeDefinition(def)
     .then((result) => {
-      if ('success' in result && result.success === true) {
+      if (result.success && result.success === true) {
         // Configure the preview frame
-        if (config.app !== 'other') {
-          document.getElementById('previewFrame').src = '../' + config.app + '.html?standalone=true&definition=' + '__preview_' + config.app
+        if (config.app === 'word_cloud_input') {
+          document.getElementById('previewFrame').src = '/word_cloud/input?standalone=true&definition=' + '__preview_' + config.app
+        } else if (config.app === 'word_cloud_viewer') {
+          document.getElementById('previewFrame').src = '/word_cloud/viewer?standalone=true&definition=' + '__preview_' + config.app
         } else {
-          if (def.path === '') return
-          document.getElementById('previewFrame').src = '../' + def.path + '?standalone=true&definition=' + '__preview_other'
+          document.getElementById('previewFrame').src = '/' + config.app + '?standalone=true&definition=' + '__preview_' + config.app
         }
       }
     })
 }
 
-function createAdvancedColorPickers () {
+export function createAdvancedColorPickers () {
   // Look for advanced-color-picker elements and fill them with the combo widget.
+  // Note that this will replace existing ACPs, resetting them to the detaul values.
 
-  Array.from(document.querySelectorAll('.advanced-color-picker')).forEach((el) => {
+  for (const el of document.querySelectorAll('.advanced-color-picker')) {
     const name = el.getAttribute('data-constACP-name')
     const path = el.getAttribute('data-constACP-path').split('>')
-    _createAdvancedColorPicker(el, name, path)
-  })
+    createAdvancedColorPicker(el, name, path)
+  }
 }
 
-function _createAdvancedColorPicker (el, name, path) {
+export function createAdvancedColorPicker (el, name, path) {
   // Create the GUI for an advanced color picker
   // 'name' is the name of the picker to be displayed in the label
   // 'path' is the definition path to be prepended to the elements.
 
-  const id = String(Math.round(Math.random() * 1e10))
+  const id = exUtilities.uuid()
   el.setAttribute('data-constACP-id', id)
 
   el.innerHTML = `
@@ -706,11 +824,18 @@ function _createAdvancedColorPicker (el, name, path) {
 
   // Add event listeners
   document.getElementById(`ACPModeSelect_${id}`).addEventListener('change', (event) => {
-    _onAdvancedColorPickerModeChange(id, path, event.target.value)
+    const els = getAdvancedColorPickersByPath(path.join('>'))
+    for (const el of els) {
+      // Make sure all ACPs for this path are updated to stay in sync
+      _onAdvancedColorPickerModeChange(el.getAttribute('data-constACP-id'), path, event.target.value)
+    }
   })
 
   document.getElementById(`ACPColor_${id}`).addEventListener('change', (event) => {
     updateWorkingDefinition([...path, 'color'], event.target.value)
+
+    // Make sure all ACPs for this path are updated to stay in sync
+    updateAdvancedColorPicker(path.join('>'), exUtilities.getObjectProperty(config.workingDefinition, path))
     previewDefinition(true)
   })
 
@@ -719,21 +844,34 @@ function _createAdvancedColorPicker (el, name, path) {
       .then((result) => {
         if (result != null && result.length > 0) {
           updateWorkingDefinition([...path, 'image'], result[0])
-          event.target.innerHTML = result[0]
+          const els = getAdvancedColorPickersByPath(path.join('>'))
+          for (const el of els) {
+            // Make sure all ACPs for this path are updated to stay in sync
+            el.querySelector('.constACP-image').innerText = result[0]
+          }
           previewDefinition(true)
         }
       })
   })
   document.getElementById(`ACPGradient_gradient1_${id}`).addEventListener('change', (event) => {
     updateWorkingDefinition([...path, 'gradient_color_1'], event.target.value)
+    // Make sure all ACPs for this path are updated to stay in sync
+    updateAdvancedColorPicker(path.join('>'), exUtilities.getObjectProperty(config.workingDefinition, path))
+
     previewDefinition(true)
   })
   document.getElementById(`ACPGradient_gradient2_${id}`).addEventListener('change', (event) => {
     updateWorkingDefinition([...path, 'gradient_color_2'], event.target.value)
+    // Make sure all ACPs for this path are updated to stay in sync
+    updateAdvancedColorPicker(path.join('>'), exUtilities.getObjectProperty(config.workingDefinition, path))
+
     previewDefinition(true)
   })
   document.getElementById(`ACPAnglePicker_${id}`).addEventListener('change', (event) => {
     updateWorkingDefinition([...path, 'gradient_angle'], event.target.value % 360)
+    // Make sure all ACPs for this path are updated to stay in sync
+    updateAdvancedColorPicker(path.join('>'), exUtilities.getObjectProperty(config.workingDefinition, path))
+
     previewDefinition(true)
   })
 }
@@ -762,39 +900,69 @@ function _onAdvancedColorPickerModeChange (id, path, value) {
   previewDefinition(true)
 }
 
-export function updateAdvancedColorPicker (path, details) {
+export function updateAdvancedColorPicker (path,
+  details,
+  userDefaults) {
   // Update the color picker defined by path using the values in details.
 
-  const el = document.querySelector(`.advanced-color-picker[data-constACP-path="${path}"]`)
-  if (el.childNodes.length === 0) return
-
-  if ('mode' in details) {
-    el.querySelector('.constACP-mode').value = details.mode
+  const baseDefaults = {
+    mode: 'color',
+    color: '#e6e6e2',
+    gradient_color_1: '#f5f5f0',
+    gradient_color_2: '#e6e6e2',
+    image: 'Select file'
   }
-  if ('color' in details) {
+
+  let defaults
+  if (typeof userDefaults === 'object') {
+    defaults = { ...baseDefaults, ...userDefaults }
+  } else defaults = baseDefaults
+
+  // We may have multiple ACPs that coorespond to the same path
+  const els = getAdvancedColorPickersByPath(path)
+  if (els.length === 0) return
+
+  for (const el of els) {
+    if (el.childNodes.length === 0) return
+
+    el.querySelector('.constACP-mode').value = details?.mode ?? defaults?.mode
+
     const solidColorPicker = el.querySelector('.constACP-color')
-    solidColorPicker.value = details.color
+    solidColorPicker.value = details?.color ?? defaults?.color
     solidColorPicker.dispatchEvent(new Event('input', { bubbles: true }))
-  }
-  if ('gradient_color_1' in details) {
-    const gradientPicker1 = el.querySelector('.constACP-gradient1')
-    gradientPicker1.value = details.gradient_color_1
-    gradientPicker1.dispatchEvent(new Event('input', { bubbles: true }))
-  }
-  if ('gradient_color_2' in details) {
-    const gradientPicker2 = el.querySelector('.constACP-gradient2')
-    gradientPicker2.value = details.gradient_color_2
-    gradientPicker2.dispatchEvent(new Event('input', { bubbles: true }))
-  }
-  if ('gradient_angle' in details) {
-    el.querySelector('.constACP-angle').value = details.gradient_angle
-  }
-  if ('image' in details) {
-    el.querySelector('.constACP-image').innerHTML = details.image
-  }
 
-  const id = el.getAttribute('data-constACP-id')
-  _onAdvancedColorPickerModeChange(id, path, details.mode)
+    const gradientPicker1 = el.querySelector('.constACP-gradient1')
+    gradientPicker1.value = details?.gradient_color_1 ?? defaults?.gradient_color_1
+    gradientPicker1.dispatchEvent(new Event('input', { bubbles: true }))
+
+    const gradientPicker2 = el.querySelector('.constACP-gradient2')
+    gradientPicker2.value = details?.gradient_color_2 ?? defaults?.gradient_color_2
+    gradientPicker2.dispatchEvent(new Event('input', { bubbles: true }))
+
+    el.querySelector('.constACP-angle').value = details?.gradient_angle ?? defaults?.gradient_angle
+
+    el.querySelector('.constACP-image').innerHTML = details?.image ?? defaults?.image
+
+    const id = el.getAttribute('data-constACP-id')
+    _onAdvancedColorPickerModeChange(id, path, details?.mode ?? defaults.mode)
+  }
+}
+
+function getAdvancedColorPickersByPath (path) {
+  // Return a NodeList of ACPs that match the given path
+
+  return document.querySelectorAll(`.advanced-color-picker[data-constACP-path="${path}"]`)
+}
+
+export function updateColorPickers (colors) {
+  // Take a dictionary of colors and update the corresponding color pickers
+
+  for (const key of Object.keys(colors)) {
+    const el = document.getElementById('colorPicker_' + key)
+    if (el == null) continue
+    el.value = colors[key]
+    el.dispatchEvent(new Event('input', { bubbles: true }))
+  }
 }
 
 function createAdvancedFontPickers (userFonts) {
@@ -813,7 +981,7 @@ function createAdvancedFontPickers (userFonts) {
 export function createAdvancedFontPicker (details) {
   // Create an advanced font select
 
-  const id = exCommon.uuid()
+  const id = exUtilities.uuid()
   details.parent.setAttribute('data-constAFP-id', id)
 
   details.parent.innerHTML = `
@@ -821,7 +989,9 @@ export function createAdvancedFontPicker (details) {
     <select id="AFPSelect_${id}" class="form-select AFP-select" data-default="${details.default}"></select>
   `
   const el = document.getElementById(`AFPSelect_${id}`)
-  el.setAttribute('data-path', details.path)
+  el.dataset.path = details.path
+  if (details.value) el.value = details.value
+
   // Add event listeners
   el.addEventListener('change', (event) => {
     _onAdvancedFontPickerChange(event.target)
@@ -834,12 +1004,12 @@ function getUserFonts () {
   return new Promise(function (resolve, reject) {
     exCommon.makeHelperRequest({
       method: 'GET',
-      endpoint: '/getAvailableContent'
+      endpoint: '/files/availableContent'
     })
       .then((result) => {
         const availableFonts = []
-        result.all_exhibits.forEach((item) => {
-          if (exCommon.guessMimetype(item) === 'font') {
+        result.content.forEach((item) => {
+          if (exFiles.guessMimetype(item) === 'font') {
             availableFonts.push(item)
           }
         })
@@ -863,7 +1033,7 @@ export async function refreshAdvancedFontPickers () {
     const picker = document.getElementById(id)
     // Check if option still exists (font may have been deleted)
     if (Array.from(picker.options).map(o => o.value).includes(currentDict[id]) === false) {
-      picker.value = '../_fonts/' + picker.getAttribute('data-default')
+      picker.value = '/_fonts/' + picker.getAttribute('data-default')
     } else {
       picker.value = currentDict[id]
     }
@@ -894,7 +1064,7 @@ function populateAdvancedFontPickers (userFonts) {
 
     // First, add the detault
     const defaultFont = parent.getAttribute('data-default')
-    _createAdvancedFontOption(parent, 'Default', '../_fonts/' + defaultFont)
+    _createAdvancedFontOption(parent, 'Default', '/_fonts/' + defaultFont)
 
     // Then, add the user fonts
     if (userFonts.length > 0) {
@@ -903,7 +1073,7 @@ function populateAdvancedFontPickers (userFonts) {
       parent.appendChild(user)
 
       userFonts.forEach((font) => {
-        _createAdvancedFontOption(parent, font, '../content/' + font)
+        _createAdvancedFontOption(parent, font, '/content/' + font)
       })
     }
 
@@ -912,7 +1082,7 @@ function populateAdvancedFontPickers (userFonts) {
     builtInLabel.setAttribute('disabled', true)
     parent.appendChild(builtInLabel)
     builtInFonts.forEach((font) => {
-      _createAdvancedFontOption(parent, font.name, '../_fonts/' + font.path)
+      _createAdvancedFontOption(parent, font.name, '/_fonts/' + font.path)
     })
 
     _onAdvancedFontPickerChange(parent, false)
@@ -945,6 +1115,8 @@ function _onAdvancedFontPickerChange (el, saveChange = true) {
   // Respond to a change in an advanced font select.
   // Set writeChange = false when first setting up the element
 
+  if (el.selectedIndex < 0) return
+
   const path = el.getAttribute('data-path').split('>')
 
   if (saveChange) {
@@ -961,6 +1133,16 @@ function _onAdvancedFontPickerChange (el, saveChange = true) {
   el.style.fontFamily = safeName
 }
 
+export function updateAdvancedFontPickers (fonts, path = 'style>font') {
+  // Take a dictionary of fonts and update the corresponding font pickers
+
+  if (fonts == null) return
+  for (const key of Object.keys(fonts)) {
+    const picker = document.querySelector(`.AFP-select[data-path="${path}>${key}"`)
+    if (picker != null) setAdvancedFontPicker(picker, fonts[key])
+  }
+}
+
 export function setAdvancedFontPicker (el, value) {
   // Set the given advanced font picker to the specified font.
 
@@ -968,11 +1150,109 @@ export function setAdvancedFontPicker (el, value) {
   _onAdvancedFontPickerChange(el)
 }
 
+export function updateTextSizeSliders (sizes) {
+  // Take a dictionary of text sizes and update the matching sliders
+
+  for (const key of Object.keys(sizes)) {
+    const el = document.getElementById(key + 'TextSizeSlider')
+    if (el != null) el.value = sizes[key]
+  }
+}
+
 export function resetAdvancedFontPickers () {
   // Find and reset all advanced font pickers to their default values.
   Array.from(document.querySelectorAll('.AFP-select')).forEach((el) => {
-    const defaultFont = '../_fonts/' + el.getAttribute('data-default')
+    const defaultFont = '/_fonts/' + el.getAttribute('data-default')
     setAdvancedFontPicker(el, defaultFont)
+  })
+}
+
+export function createAdvancedSliders () {
+  // Create an Advanced Slider at each marked point
+
+  for (const el of document.querySelectorAll('.advanced-slider')) {
+    createAdvancedSlider(el)
+  }
+}
+
+export function createAdvancedSlider (el, value = null) {
+  // Create the HTML for an Advanced Slider based on the data properties of
+  // the given element and a possible current value
+
+  if (el == null) return
+
+  // Reset the element in case we're updating an existing slider
+  el.innerHTML = ''
+
+  const id = exUtilities.uuid()
+  el.dataset.exASID = id
+
+  const path = el.dataset.path.split('>')
+
+  let labelHTML = ''
+  let sliderWidth = 8
+  let numberWidth = 4
+  if (el.dataset?.unit) {
+    labelHTML = `<span class="input-group-text exAS_label">${el.dataset.unit}</span>`
+    sliderWidth = 7
+    numberWidth = 5
+  }
+  let noteHTML = ''
+  if (el.dataset?.note) {
+    noteHTML =
+    `
+    <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="${el.dataset.note}" style="font-size: 0.55em;">?</span>
+    `
+  }
+  el.innerHTML = `
+      <label class="form-label">
+        ${el.dataset.name}
+        ${noteHTML}
+      </label>
+      <div class="row">
+        <div class="col-${String(sliderWidth + 1)} col-sm-${String(sliderWidth)} col-xl-${String(sliderWidth + 1)}  pe-0 d-flex align-items-center">
+          <input type="range" id="exAS_slider_${id}" class="form-range w-100 exAS_slider" min="${el.dataset.min}" max="${el.dataset.max}" start="${value ?? el.dataset.start}" step="${el.dataset.step}">
+          </input>
+        </div>
+        <div class="col-${String(numberWidth - 1)} col-sm-${String(numberWidth)} col-xl-${String(numberWidth - 1)} ps-1 d-flex align-items-center">
+          <div class='input-group'>
+            <input type="number" id="exAS_number_${id}" class="form-control exAS_number" min="${el.dataset.min}" max="${el.dataset.max}" start="${value ?? el.dataset.start}" step="${el.dataset.step}">
+            ${labelHTML}
+          </div>
+          
+          </input>
+        </div>
+      </div>
+  `
+
+  const slider = document.getElementById(`exAS_slider_${id}`)
+  const number = document.getElementById(`exAS_number_${id}`)
+
+  number.value = value ?? el.dataset.start
+  slider.value = value ?? el.dataset.start
+
+  // Activate tooltips
+  const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+  tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl)
+  })
+
+  // Add event listeners
+  slider.addEventListener('input', (event) => {
+    if (path[0] !== '') {
+      updateWorkingDefinition([...path], event.target.value)
+    }
+    number.value = event.target.value
+    el.value = event.target.value
+    previewDefinition(true)
+  })
+  number.addEventListener('input', (event) => {
+    if (path[0] !== '') {
+      updateWorkingDefinition([...path], event.target.value)
+    }
+    slider.value = event.target.value
+    el.value = event.target.value
+    previewDefinition(true)
   })
 }
 
@@ -1102,7 +1382,7 @@ export function showPasswordChangeModal () {
   document.getElementById('passwordChangeModalPassMismatchWarning').style.display = 'none'
   document.getElementById('passwordChangeModalBadCurrentPassWarning').style.display = 'none'
 
-  showModal('#passwordChangeModal')
+  exUtilities.showModal('#passwordChangeModal')
 }
 
 export function submitUserPasswordChange () {
@@ -1144,27 +1424,44 @@ export function submitUserPasswordChange () {
           document.getElementById('passwordChangeModalBadCurrentPassWarning').style.display = 'block'
         }
       } else {
-        hideModal('#changePasswordModal')
+        exUtilities.hideModal('#passwordChangeModal')
         logoutUser()
       }
     })
 }
 
-export function showModal (modal) {
-  // Show the given Bootstrap modal
-  // Modal can either be a string starting with # (e.g., '#myID') or a DOM element
+export function downloadPlaintextFile (plaintext, filename) {
+  // Download the given string as a plaintext file.
+  // Choose download method depending on whetehr we're using a remote display.
+  // `filename` is the name the file should have when downloaded.
 
-  const myModal = new bootstrap.Modal(modal)
-  myModal.show()
+  if (exCommon.config.remoteDisplay === false) {
+    // Ask the app to create a save dialog
+    exCommon.makeHelperRequest({
+      method: 'POST',
+      endpoint: '/app/saveFile',
+      api: '',
+      params: {
+        data: plaintext,
+        filename
+      }
+    })
+  } else {
+    // Ask the browser to initiate a download
+    const fileBlob = new Blob([plaintext], {
+      type: 'text/plain'
+    })
+    const a = document.createElement('a')
+    a.href = window.URL.createObjectURL(fileBlob)
+    a.download = filename
+    a.click()
+  }
 }
 
-export function hideModal (modal) {
-  // Hide the given Bootstrap modal
-  // Modal can either be a string starting with # (e.g., '#myID') or a DOM element
-
-  const myModal = bootstrap.Modal.getInstance(modal)
-  myModal.hide()
+let markdownConverter
+try {
+  markdownConverter = new showdown.Converter()
+  markdownConverter.setFlavor('github')
+} catch {
+  console.log('showdown library not loaded')
 }
-
-const markdownConverter = new showdown.Converter()
-markdownConverter.setFlavor('github')

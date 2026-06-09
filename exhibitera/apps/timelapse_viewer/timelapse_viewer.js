@@ -3,13 +3,6 @@ import * as exCommon from '../js/exhibitera_app_common.js'
 function updateFunc (update) {
   // Function to parse timelapse-specific updates
 
-  if ('definition' in update && update.definition !== currentDefintion) {
-    currentDefintion = update.definition
-    exCommon.loadDefinition(currentDefintion)
-      .then((result) => {
-        loadDefinition(result.definition)
-      })
-  }
 }
 
 function loadDefinition (definition) {
@@ -17,7 +10,7 @@ function loadDefinition (definition) {
 
   const root = document.querySelector(':root')
 
-  if ('files' in definition) {
+  if (definition?.files) {
     updateSourceList(definition.files)
   }
   if ('animation_duration' in definition.behavior) {
@@ -25,36 +18,20 @@ function loadDefinition (definition) {
   } else {
     animationCustomDuration = null
   }
-  if ('attractor_timeout' in definition.attractor) {
-    attractorTimeout = parseFloat(definition.attractor.attractor_timeout * 1000)
-  } else {
-    attractorTimeout = 30000
-  }
-  if ('use_attractor' in definition.attractor) {
-    attractorAvailable = definition.attractor.use_attractor
-  } else {
-    attractorAvailable = false
-  }
-  if ('use_finger_animation' in definition.attractor) {
-    showFingerAnimation = definition.attractor.use_finger_animation
-  } else {
-    showFingerAnimation = true
-  }
-  if ('attractor_background' in definition.attractor) {
-    root.style.setProperty('--attractor-background', definition.attractor.attractor_background)
-  } else {
-    root.style.setProperty('--attractor-background', 'rgba(0, 0, 0, 0.2)')
-  }
-  if ('attractor_height' in definition.attractor) {
-    root.style.setProperty('--attractor-height', parseFloat(definition.attractor.attractor_height))
-  } else {
-    root.style.setProperty('--attractor-height', 70)
-  }
-  if ('font_adjust' in definition.attractor) {
-    root.style.setProperty('--attractor-font-adjust', parseFloat(definition.attractor.font_adjust))
-  } else {
-    root.style.setProperty('--attractor-font-adjust', 0)
-  }
+  root.style.setProperty('--video-fit-mode', definition?.behavior?.video_mode ?? 'contain'
+
+  )
+
+  attractorTimeout = parseFloat(definition?.attractor?.attractor_timeout ?? 30) * 1000
+  attractorAvailable = definition?.attractor?.use_attractor ?? false
+  showFingerAnimation = definition?.attractor?.use_finger_animation ?? true
+
+  root.style.setProperty('--attractor-background', definition?.attractor?.attractor_background ?? '#000000b7')
+  root.style.setProperty('--attractor-height', parseFloat(definition?.attractor?.attractor_height ?? 70))
+  root.style.setProperty('--attractor-font-adjust', parseFloat(definition?.attractor?.font_adjust ?? 0))
+  document.getElementById('attractor').innerHTML = definition?.attractor?.text ?? ''
+  root.style.setProperty('--attractor-text-color', definition?.attractor?.text_color ?? '#f5f5f0')
+
   if ('font' in definition.attractor) {
     const font = new FontFace('attractor-font', 'url(' + encodeURI(definition.attractor.font) + ')')
     document.fonts.add(font)
@@ -62,20 +39,10 @@ function loadDefinition (definition) {
   } else {
     root.style.setProperty('--attractor-font', 'attractor-default')
   }
-  if ('text' in definition.attractor) {
-    document.getElementById('attractor').innerHTML = definition.attractor.text
-  } else {
-    document.getElementById('attractor').innerHTML = ''
-  }
-  if ('text_color' in definition.attractor) {
-    root.style.setProperty('--attractor-text-color', definition.attractor.text_color)
-  } else {
-    root.style.setProperty('--attractor-text-color', 'white')
-  }
 
-  // Background settings
-  if (definition?.style?.background) {
-    exCommon.setBackground(definition.style.background, root, '#22222E', true)
+  // Backgorund settings
+  if ('background' in definition.style) {
+    exCommon.setBackground(definition.style.background, root, '#0f1419', true)
   }
 
   showAttractor()
@@ -89,10 +56,10 @@ function updateSourceList (matchString) {
 
   exCommon.makeHelperRequest({
     method: 'GET',
-    endpoint: '/getAvailableContent'
+    endpoint: '/files/availableContent'
   })
     .then((content) => {
-      sourceList = content.all_exhibits.filter(
+      sourceList = content.content.filter(
         item => new RegExp('^' + matchString.replace(/\*/g, '.*') + '$').test(item)
       ).sort(function (a, b) {
         return a.localeCompare(b)
@@ -287,24 +254,15 @@ function displayImage (file) {
   // Handle switching the src on the appropriate image tag to `file`.
 
   if (file == null) return
+  const nextIndex = activeViewerIndex === 0 ? 1 : 0
+  activeViewerIndex = nextIndex
 
-  if (activeViewerIndex === 0) {
-    activeViewerIndex = 1
-    loadImage('content/' + file).then(newImage => {
-      viewerList[1].src = newImage.src
-      viewerList[1].style.display = 'block'
-      viewerList[0].style.display = 'none'
-      stopInput = false
-    })
-  } else {
-    activeViewerIndex = 0
-    loadImage('content/' + file).then(newImage => {
-      viewerList[0].src = newImage.src
-      viewerList[0].style.display = 'block'
-      viewerList[1].style.display = 'none'
-      stopInput = false
-    })
-  }
+  loadImage('/content/' + file).then(newImage => {
+    viewerList[nextIndex].src = newImage.src
+    viewerList[nextIndex].style.display = 'block'
+    viewerList[1 - nextIndex].style.display = 'none'
+    stopInput = false
+  })
 }
 
 function changeSource (dist) {
@@ -414,7 +372,7 @@ let lastTouchX = null // X cordinate of the last touchmove event
 let currentClick = false
 let stopInput = false
 
-let currentDefintion = ''
+const currentDefintion = ''
 let continueAnimating = true // true when we are animating for the attractor
 let animationFramerate = 30
 let animationStepSize = 1
@@ -441,12 +399,13 @@ exCommon.configureApp({
 })
 
 // Create event listeners
-$('body')
-  .on('touchstart', handleTouchStart)
-  .on('touchmove', handleTouchMove)
-  .on('touchend', handleTouchEnd)
-  .on('wheel', handleScroll)
-  .on('keydown', handleKeyDown)
-  .on('mousedown', function (event) { handleTouchStart(event, false) })
-  .on('mousemove', function (event) { handleTouchMove(event, false) })
-  .on('mouseup', handleTouchEnd)
+const body = document.body
+
+body.addEventListener('touchstart', handleTouchStart)
+body.addEventListener('touchmove', handleTouchMove)
+body.addEventListener('touchend', handleTouchEnd)
+body.addEventListener('wheel', handleScroll)
+body.addEventListener('keydown', handleKeyDown)
+body.addEventListener('mousedown', (event) => handleTouchStart(event, false))
+body.addEventListener('mousemove', (event) => handleTouchMove(event, false))
+body.addEventListener('mouseup', handleTouchEnd)

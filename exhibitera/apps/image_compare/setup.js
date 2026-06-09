@@ -1,5 +1,7 @@
-/* global bootstrap, Coloris, showdown */
+/* global bootstrap, showdown */
 
+import exConfig from '../../common/config.js'
+import * as exUtilities from '../../common/utilities.js'
 import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exFileSelect from '../js/exhibitera_file_select_modal.js'
 import * as exSetup from '../js/exhibitera_setup_common.js'
@@ -11,14 +13,7 @@ const markdownConverter = new showdown.Converter({ parseImgDimensions: true })
 async function initializeWizard () {
   // Set up the wizard
 
-  await exSetup.initializeDefinition()
-
-  // Hide all but the welcome screen
-  for (const el of document.querySelectorAll('.wizard-pane')) {
-    el.style.display = 'none'
-  }
-  document.getElementById('wizardPane_Welcome').style.display = 'block'
-
+  exSetup.prepareWizard()
   resetWizardFields()
 }
 
@@ -42,13 +37,13 @@ function resetWizardFields () {
 async function wizardForward (currentPage) {
   // Check if the wizard is ready to advance and perform the move
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+  const workingDefinition = exSetup.config.workingDefinition
 
   if (currentPage === 'Welcome') {
     const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
     if (defName !== '') {
       document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'none'
-      wizardGoTo('Languages')
+      exSetup.wizardGoTo('Languages')
     } else {
       document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'block'
     }
@@ -70,7 +65,7 @@ async function wizardForward (currentPage) {
         exSetup.updateWorkingDefinition(['languages', code], langDef)
       }
       exSetup.updateWorkingDefinition(['language_order'], langOrder)
-      wizardGoTo('SelectImages')
+      exSetup.wizardGoTo('SelectImages')
     } else {
       document.getElementById('wizardLanguagesBlankWarning').style.display = 'block'
     }
@@ -96,15 +91,17 @@ async function wizardForward (currentPage) {
     }
 
     wizardBuildPairDetailsPage()
-    wizardGoTo('PairDetails')
+    exSetup.wizardGoTo('PairDetails')
   } else if (currentPage === 'PairDetails') {
     const nav = document.getElementById('wizardHomeDetailsNav')
     nav.innerHTML = ''
     const content = document.getElementById('wizardHomeDetailsNavContent')
     content.innerHTML = ''
     createHomeTextLocalizationHTML(nav, content)
-    wizardGoTo('HomeDetails')
+    exSetup.wizardGoTo('HomeDetails')
   } else if (currentPage === 'HomeDetails') {
+    exSetup.wizardGoTo('ColorMode')
+  } else if (currentPage === 'ColorMode') {
     wizardCreateDefinition()
   }
 }
@@ -113,33 +110,52 @@ function wizardBack (currentPage) {
   // Move the wizard back one page
 
   if (currentPage === 'Languages') {
-    wizardGoTo('Welcome')
+    exSetup.wizardGoTo('Welcome')
   } else if (currentPage === 'SelectImages') {
-    wizardGoTo('Languages')
+    exSetup.wizardGoTo('Languages')
   } else if (currentPage === 'PairDetails') {
-    wizardGoTo('SelectImages')
+    exSetup.wizardGoTo('SelectImages')
   } else if (currentPage === 'HomeDetails') {
-    wizardGoTo('PairDetails')
+    exSetup.wizardGoTo('PairDetails')
+  } else if (currentPage === 'ColorMode') {
+    exSetup.wizardGoTo('HomeDetails')
   }
-}
-
-function wizardGoTo (page) {
-  for (const el of document.querySelectorAll('.wizard-pane')) {
-    el.style.display = 'none'
-  }
-  document.getElementById('wizardPane_' + page).style.display = 'block'
 }
 
 async function wizardCreateDefinition () {
   // Use the provided details to build a definition file.
 
-  const uuid = $('#definitionSaveButton').data('workingDefinition').uuid
+  const uuid = exSetup.config.workingDefinition.uuid
 
   // Definition name
   const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
   exSetup.updateWorkingDefinition(['name'], defName)
 
-  exSetup.hideModal('#setupWizardModal')
+  // Switch to light color scheme if needed
+  if (document.getElementById('wizardColorModeLight').checked) {
+    exSetup.updateWorkingDefinition(['style', 'color'], {
+      buttonBackgroundColor: '#2f3e4fd8',
+      buttonOutlineColor: '#e6e6e2',
+      buttonTextColor: '#f5f5f0',
+      infoBodyColor: '#e6e6e2',
+      infoTitleColor: '#f5f5f0',
+      itemNameColor: '#0f1419',
+      labelBackgroundColor: '#0f141991',
+      labelTextColor: '#e6e6e2',
+      sliderBackgroundColor: '#5a7ba8cc',
+      sliderIconColor: '#0f1419',
+      subtitleColor: '#1a2b3c',
+      titleColor: '#0f1419'
+    })
+    exSetup.updateWorkingDefinition(['style', 'background'], {
+      color: '#e6e6e2',
+      gradient_color_1: '#f5f5f0',
+      gradient_color_2: '#e6e6e2',
+      mode: 'color'
+    })
+  }
+
+  exUtilities.hideModal('#setupWizardModal')
   resetWizardFields() // Must clear navs before building new ones for the main editor
 
   await exSetup.saveDefinition(defName)
@@ -147,14 +163,14 @@ async function wizardCreateDefinition () {
   exSetup.populateAvailableDefinitions(result.definitions)
   document.getElementById('availableDefinitionSelect').value = uuid
   editDefinition(uuid)
-  exSetup.hideModal('#setupWizardModal')
+  exUtilities.hideModal('#setupWizardModal')
 }
 
 function wizardBuildPairDetailsPage () {
   // Take the working definition and build a nested set of tabs for the user
   // to add details for each language.
 
-  const workingDef = $('#definitionSaveButton').data('workingDefinition')
+  const workingDef = exSetup.config.workingDefinition
 
   const nav = document.getElementById('wizardPairDetailsNav')
   nav.innerHTML = ''
@@ -202,7 +218,7 @@ function wizardBuildPairDetailsPage () {
 
     const image1 = document.createElement('img')
     image1.classList = 'w-100'
-    image1.src = exCommon.config.helperAddress + '/files/' + item.image1 + '/thumbnail'
+    image1.src = exCommon.config.helperAddress + exConfig.api + '/files/' + item.image1 + '/thumbnail'
     image1Col.appendChild(image1)
 
     const image1Label = document.createElement('label')
@@ -216,7 +232,7 @@ function wizardBuildPairDetailsPage () {
 
     const image2 = document.createElement('img')
     image2.classList = 'w-100'
-    image2.src = exCommon.config.helperAddress + '/files/' + item.image2 + '/thumbnail'
+    image2.src = exCommon.config.helperAddress + exConfig.api + '/files/' + item.image2 + '/thumbnail'
     image2Col.appendChild(image2)
 
     const image2Label = document.createElement('label')
@@ -243,17 +259,15 @@ function wizardBuildPairDetailsPage () {
 async function clearDefinitionInput (full = true) {
   // Clear all input related to a defnition
 
-  if (full === true) {
-    await exSetup.initializeDefinition()
-  }
+  if (full === true) exSetup.initializeDefinition()
 
   // Definition details
-  $('#definitionNameInput').val('')
+  document.getElementById('definitionNameInput').value = ''
 
   // Attractor
   document.getElementById('inactivityTimeoutField').value = 30
   const attractorSelect = document.getElementById('attractorSelect')
-  attractorSelect.innerHTML = 'Select file'
+  attractorSelect.innerText = 'Select file'
   attractorSelect.dataset.filename = ''
 
   // Language
@@ -270,9 +284,9 @@ async function clearDefinitionInput (full = true) {
 
   exSetup.updateAdvancedColorPicker('style>background', {
     mode: 'color',
-    color: '#000',
-    gradient_color_1: '#000',
-    gradient_color_2: '#000'
+    color: '#0f1419',
+    gradient_color_1: '#1a2b3c',
+    gradient_color_2: '#0f1419'
   })
 
   // Reset font face options
@@ -289,21 +303,24 @@ function editDefinition (uuid = '') {
 
   clearDefinitionInput(false)
   const def = exSetup.getDefinitionByUUID(uuid)
-  console.log(def)
-  $('#definitionSaveButton').data('initialDefinition', structuredClone(def))
-  $('#definitionSaveButton').data('workingDefinition', structuredClone(def))
+
+  exSetup.config.initialDefinition = structuredClone(def)
+  exSetup.config.workingDefinition = structuredClone(def)
+
+  // Configure preview behavior
+  exSetup.configurePreviewFromDefinition(def)
 
   document.getElementById('definitionNameInput').value = def.name
 
   // Attractor
   const attractorSelect = document.getElementById('attractorSelect')
-  if ('attractor' in def && def.attractor.trim() !== '') {
+  if (def.attractor && def.attractor.trim() !== '') {
     attractorSelect.innerHTML = def.attractor
   } else {
     attractorSelect.innerHTML = 'Select file'
   }
   attractorSelect.dataset.filename = def.attractor
-  document.getElementById('inactivityTimeoutField').value = def?.inactivity_timeout || 30
+  document.getElementById('inactivityTimeoutField').value = def?.inactivity_timeout ?? 30
 
   rebuildItemList()
   const langSelect = document.getElementById('language-select')
@@ -313,45 +330,18 @@ function editDefinition (uuid = '') {
     }
   )
 
-  if ('style' in def === false) {
-    def.style = {
-      background: {
-        mode: 'color',
-        color: '#000'
-      }
-    }
-    exSetup.updateWorkingDefinition(['style', 'background', 'mode'], 'color')
-    exSetup.updateWorkingDefinition(['style', 'background', 'color'], '#000')
-  }
-
-  // Set the appropriate values for the color pickers
-  for (const key of Object.keys(def.style.color)) {
-    const el = document.getElementById('colorPicker_' + key)
-    if (el == null) continue
-    el.value = def.style.color[key]
-    el.dispatchEvent(new Event('input', { bubbles: true }))
-  }
-
-  // Set the appropriate values for any advanced color pickers
-  if ('background' in def.style) {
-    exSetup.updateAdvancedColorPicker('style>background', def.style.background)
-  }
-
-  // Set the appropriate values for the advanced font pickers
-  if ('font' in def.style) {
-    for (const key of Object.keys(def.style.font)) {
-      const picker = document.querySelector(`.AFP-select[data-path="style>font>${key}"`)
-      exSetup.setAdvancedFontPicker(picker, def.style.font[key])
-    }
-  }
-
-  // Set the appropriate values for the text size selects
-  for (const key of Object.keys(def.style.text_size)) {
-    document.getElementById(key + 'TextSizeSlider').value = def.style.text_size?.[key] ?? 0
-  }
+  exSetup.updateAdvancedColorPicker('style>background',
+    def?.style?.background,
+    {
+      mode: 'color',
+      color: '#000'
+    })
+  exSetup.updateColorPickers(def?.style?.color ?? {})
+  exSetup.updateAdvancedFontPickers(def?.style?.font ?? {})
+  exSetup.updateTextSizeSliders(def?.style?.text_size ?? {})
 
   // Configure the preview frame
-  document.getElementById('previewFrame').src = '../image_compare.html?standalone=true&definition=' + def.uuid
+  document.getElementById('previewFrame').src = 'index.html?standalone=true&definition=' + def.uuid
 }
 
 function rebuildLanguageElements () {
@@ -364,7 +354,7 @@ function rebuildLanguageElements () {
 function addItem (wizard = false) {
   // Add an item to the working defintiion
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+  const workingDefinition = exSetup.config.workingDefinition
 
   if (workingDefinition.content_order.length > 7) {
     // We've reached the max number of items
@@ -377,7 +367,7 @@ function addItem (wizard = false) {
   }
 
   const item = {
-    uuid: exCommon.uuid(),
+    uuid: exUtilities.uuid(),
     image1: '',
     image2: ''
   }
@@ -390,7 +380,7 @@ function addItem (wizard = false) {
 function createItemHTML (item, num, show = false, wizard = false) {
   // Create an item tab and pane
 
-  const def = $('#definitionSaveButton').data('workingDefinition')
+  const def = exSetup.config.workingDefinition
 
   // Create the tab button
   const tabButton = document.createElement('button')
@@ -402,7 +392,7 @@ function createItemHTML (item, num, show = false, wizard = false) {
   tabButton.setAttribute('role', 'tab')
   // Convert possible Markdown-formatted name
   const temp = document.createElement('div')
-  temp.innerHTML = markdownConverter.makeHtml(item?.localization?.[def?.language_order?.[0] || null]?.name || String(num))
+  temp.innerHTML = markdownConverter.makeHtml(item?.localization?.[def?.language_order?.[0] ?? null]?.name || String(num))
   tabButton.innerHTML = temp.firstElementChild.innerHTML
 
   if (wizard === false) {
@@ -445,7 +435,7 @@ function createItemHTML (item, num, show = false, wizard = false) {
   image1.style.width = '100%'
   image1.style.objectFit = 'contain'
   if ((item.image1 !== '') && (item.image1 != null)) {
-    image1.src = exCommon.config.helperAddress + '/files/' + item.image1 + '/thumbnail'
+    image1.src = exCommon.config.helperAddress + exConfig.api + '/files/' + item.image1 + '/thumbnail'
   } else {
     image1.style.display = 'none'
   }
@@ -470,7 +460,7 @@ function createItemHTML (item, num, show = false, wizard = false) {
         const file = result[0]
         if (file == null) return
         selectImage1Button.innerHTML = file
-        image1.src = exCommon.config.helperAddress + '/files/' + file + '/thumbnail'
+        image1.src = exCommon.config.helperAddress + exConfig.api + '/files/' + file + '/thumbnail'
         exSetup.updateWorkingDefinition(['content', item.uuid, 'image1'], file)
         image1.style.display = 'block'
         exSetup.previewDefinition(true)
@@ -495,7 +485,7 @@ function createItemHTML (item, num, show = false, wizard = false) {
   image2.style.width = '100%'
   image2.style.objectFit = 'contain'
   if ((item.image2 !== '') && (item.image2 != null)) {
-    image2.src = exCommon.config.helperAddress + '/files/' + item.image2 + '/thumbnail'
+    image2.src = exCommon.config.helperAddress + exConfig.api + '/files/' + item.image2 + '/thumbnail'
   } else {
     image2.style.display = 'none'
   }
@@ -518,7 +508,7 @@ function createItemHTML (item, num, show = false, wizard = false) {
         const file = result[0]
         if (file == null) return
         selectImage2Button.innerHTML = file
-        image2.src = exCommon.config.helperAddress + '/files/' + file + '/thumbnail'
+        image2.src = exCommon.config.helperAddress + exConfig.api + '/files/' + file + '/thumbnail'
         exSetup.updateWorkingDefinition(['content', item.uuid, 'image2'], file)
         image2.style.display = 'block'
         exSetup.previewDefinition(true)
@@ -645,7 +635,7 @@ function createItemHTML (item, num, show = false, wizard = false) {
 function createItemLocalizationHTML (item, pane, itemNum) {
   // Create the GUI for editing the localization of an item.
 
-  const def = $('#definitionSaveButton').data('workingDefinition')
+  const def = exSetup.config.workingDefinition
 
   // Make sure we have at least one language
   if (def.language_order.length === 0) {
@@ -859,7 +849,7 @@ function createItemLocalizationHTML (item, pane, itemNum) {
 function createHomeTextLocalizationHTML (tabList = null, navContent = null) {
   // Create the GUI for editing the localization of the home screen text.
 
-  const def = $('#definitionSaveButton').data('workingDefinition')
+  const def = exSetup.config.workingDefinition
 
   // Get the basic elements
   if (tabList == null) tabList = document.getElementById('homeTextNav')
@@ -869,7 +859,7 @@ function createHomeTextLocalizationHTML (tabList = null, navContent = null) {
   navContent.innerHTML = ''
 
   let i = 0
-  for (const code of def.language_order) {
+  for (const code of (def?.language_order ?? [])) {
     const lang = def.languages[code]
 
     // Create the tab button
@@ -957,7 +947,7 @@ function createHomeTextLocalizationHTML (tabList = null, navContent = null) {
 function deleteItem (uuid, wizard = false) {
   // Remove this item from the working defintion and destroy its GUI representation.
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+  const workingDefinition = exSetup.config.workingDefinition
 
   delete workingDefinition.content[uuid]
   workingDefinition.content_order = workingDefinition.content_order.filter(item => item !== uuid)
@@ -970,7 +960,7 @@ function deleteItem (uuid, wizard = false) {
 function changeItemOrder (uuid, dir) {
   // Move the location of the given item.
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+  const workingDefinition = exSetup.config.workingDefinition
 
   const uuidIndex = workingDefinition.content_order.indexOf(uuid)
   if (dir === -1 && uuidIndex === 0) return
@@ -986,14 +976,14 @@ function changeItemOrder (uuid, dir) {
 function rebuildItemList () {
   // Use the definition to rebuild the GUI representations of each item
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+  const workingDefinition = exSetup.config.workingDefinition
 
   // Clear any existing items
   document.getElementById('contentNav').innerHTML = ''
   document.getElementById('contentNavContent').innerHTML = ''
 
   let num = 1
-  for (const uuid of workingDefinition.content_order) {
+  for (const uuid of (workingDefinition?.content_order ?? [])) {
     const item = workingDefinition.content[uuid]
     createItemHTML(item, num, num === 1)
     num += 1
@@ -1004,19 +994,9 @@ function onAttractorFileChange () {
   // Called when a new image or video is selected.
 
   const file = document.getElementById('attractorSelect').dataset.filename
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
-
-  workingDefinition.attractor = file
-  $('#definitionSaveButton').data('workingDefinition', structuredClone(workingDefinition))
+  exSetup.config.workingDefinition.attractor = file
 
   exSetup.previewDefinition(true)
-}
-
-// Set color mode
-if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-  document.querySelector('html').setAttribute('data-bs-theme', 'dark')
-} else {
-  document.querySelector('html').setAttribute('data-bs-theme', 'light')
 }
 
 // Set helper address for use with exCommon.makeHelperRequest
@@ -1027,26 +1007,6 @@ const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-tog
 tooltipTriggerList.map(function (tooltipTriggerEl) {
   return new bootstrap.Tooltip(tooltipTriggerEl)
 })
-
-// Set up the color pickers
-function setUpColorPickers () {
-  Coloris({
-    el: '.coloris',
-    theme: 'pill',
-    themeMode: 'dark',
-    formatToggle: false,
-    clearButton: false,
-    swatches: [
-      '#000',
-      '#22222E',
-      '#393A5A',
-      '#719abf',
-      '#fff'
-    ]
-  })
-}
-// Call with a slight delay to make sure the elements are loaded
-setTimeout(setUpColorPickers, 100)
 
 exLang.createLanguagePicker(document.getElementById('language-select'), rebuildItemList)
 
@@ -1137,8 +1097,6 @@ for (const el of document.querySelectorAll('.text-size-slider')) {
 // Set helper address for use with exCommon.makeHelperRequest
 exCommon.config.helperAddress = window.location.origin
 
-clearDefinitionInput()
-
 exSetup.configure({
   app: 'image_compare',
   clearDefinition: clearDefinitionInput,
@@ -1151,24 +1109,33 @@ exSetup.configure({
     language_order: [],
     style: {
       background: {
-        color: '#000',
+        color: '#0f1419',
         mode: 'color'
       },
-      color: {},
-      font: {},
+      color: {
+        buttonBackgroundColor: '#2f3e4fd8',
+        buttonOutlineColor: '#e6e6e2',
+        buttonTextColor: '#f5f5f0',
+        infoBodyColor: '#e6e6e2',
+        infoTitleColor: '#f5f5f0',
+        itemNameColor: '#e6e6e2',
+        labelBackgroundColor: '#0f141991',
+        labelTextColor: '#e6e6e2',
+        sliderBackgroundColor: '#5a7ba8cc',
+        sliderIconColor: '#0f1419',
+        subtitleColor: '#e6e6e2',
+        titleColor: '#f5f5f0'
+      },
+      font: {
+        info_pane_body: '/_fonts/OpenSans-Regular.ttf',
+        info_pane_title: '/_fonts/OpenSans-Bold.ttf',
+        item_name: '/_fonts/OpenSans-Regular.ttf',
+        label: '/_fonts/OpenSans-Regular.ttf',
+        subtitle: '/_fonts/OpenSans-Regular.ttf',
+        title: '/_fonts/OpenSans-Bold.ttf'
+      },
       text_size: {}
     }
   }
 })
-
-exCommon.askForDefaults(false)
-  .then(() => {
-    if (exCommon.config.standalone === false) {
-      // We are using Hub, so attempt to log in
-      exSetup.authenticateUser()
-    } else {
-      // Hide the login details
-      document.getElementById('loginMenu').style.display = 'none'
-      document.getElementById('helpNewAccountMessage').style.display = 'none'
-    }
-  })
+clearDefinitionInput()

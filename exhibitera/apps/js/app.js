@@ -1,4 +1,5 @@
 import * as exCommon from '../js/exhibitera_app_common.js'
+import * as exSetup from '../js/exhibitera_setup_common.js'
 
 function updateParser (update) {
   // Read updates
@@ -18,12 +19,24 @@ exCommon.config.helperAddress = window.location.origin
 
 exCommon.askForDefaults()
   .then(() => {
-    console.log(exCommon.config)
+    if (exCommon.config.definitionUUID !== '') {
+      exCommon.loadDefinition(exCommon?.config?.definitionUUID)
+        .then((result) => {
+          if (result?.success !== true) return
+
+          const def = result.definition
+          if (def.app && def.app !== '') {
+            exCommon.gotoApp(def.app)
+          }
+        })
+    }
+
+    // Handle the case where we don't have a definitoin already
     if (exCommon.config.standalone === false) {
       // Using Hub
       document.getElementById('standaloneWelcome').style.display = 'none'
-      document.getElementById('controlServerWelcome').style.display = 'block'
-      document.getElementById('controlServerAddress').innerHTML = exCommon.config.serverAddress
+      document.getElementById('hubWelcome').style.display = 'block'
+      document.getElementById('hubAddress').innerHTML = exCommon.config.serverAddress
 
       exCommon.sendPing()
       setInterval(exCommon.sendPing, 5000)
@@ -31,23 +44,13 @@ exCommon.askForDefaults()
     } else {
       // Not using Hub
       document.getElementById('standaloneWelcome').style.display = 'block'
-      document.getElementById('controlServerWelcome').style.display = 'none'
-      exCommon.loadDefinition(exCommon.config.currentDefinition)
+      document.getElementById('hubWelcome').style.display = 'none'
     }
   })
 
-document.getElementById('settingsButton').addEventListener('click', (event) => {
-  if (exCommon.config.remoteDisplay === true) {
-    // Switch webpages in the browser
-
-    window.open(window.location.origin + '/setup.html', '_blank').focus()
-  } else {
-    // Launch the appropriate webview page in the app
-
-    exCommon.makeHelperRequest({
-      method: 'POST',
-      endpoint: '/app/showWindow/settings',
-      params: { reload: true }
-    })
-  }
+// Activate app links
+Array.from(document.querySelectorAll('.app-link')).forEach((el) => {
+  el.addEventListener('click', (event) => {
+    exSetup.gotoAppLink(event.target)
+  })
 })

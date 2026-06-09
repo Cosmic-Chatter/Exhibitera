@@ -8,11 +8,12 @@
 
     <meta name="description" content="">
     <meta name="author" content="Morgan Rehnberg">
-    <link rel="icon" type="image/x-icon" href="../_static/favicon.ico">
+    <link rel=icon href="/_static/favicon.svg" type="image/svg+xml">
 
-    <link rel="stylesheet" href="../css/bootstrap_5_3/bootstrap.min.css">
-    <link rel="stylesheet" href="../css/coloris.min.css">
-    <link rel="stylesheet" href="../css/setup.css">
+    <link rel="stylesheet" href="/css/bootstrap_5_3/bootstrap.min.css">
+    <link rel="stylesheet" href="/css/tiny-mde-Exhiibtera.css">
+    <link rel="stylesheet" href="/css/coloris.min.css">
+    <link rel="stylesheet" href="/css/setup.css">
     <link rel="stylesheet" href="setup.css">
 
     <title>Media Player Setup</title>
@@ -190,6 +191,7 @@
         </div>
       </div>
 
+      <!-- Help modal -->
       <div id="appHelpModal" class="modal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered mw-100 w-75">
           <div class="modal-content">
@@ -210,26 +212,197 @@
         </div>
       </div>
 
+      <!-- Welcome modal -->
+      <div id="appWelcomeModal" class="modal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Welcome to Media Player</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body"  style="max-height: 70vh; overflow-y: auto;">
+              <div class="row gy-2 row-cols-1 row-cols-md-2">
+                <div class="col">
+                  <div class="card h-100">
+                    <div class="card-body d-flex flex-column">
+                      <h5 class="card-title text-center">Guided Setup</h5>
+                      <p class="card-text">Get started with step-by-step instructions. You can always fine-tune things afterwards.</p>
+                      <button id="appWelcomeModalWizardButton" class="btn btn-primary w-100 mt-auto">Start Guided Setup</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="col">
+                  <div class="card h-100">
+                    <div class="card-body d-flex flex-column">
+                      <h5 class="card-title text-center">Custom Setup</h5>
+                      <p class="card-text">Fully control all attributes from the beginning. <span class='badge text-bg-secondary'>Advanced</span></p>
+                      <button class="btn btn-primary w-100 mt-auto" data-bs-dismiss="modal">Start Custom Setup</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Setup wizard modal -->
+      <div id="setupWizardModal" class="modal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Create a new definition</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div id="setupWizardModalBody" class="modal-body">
+
+              <!-- Welcome -->
+              <div id="wizardPane_Welcome" class="row wizard-pane">
+                <div class="col-8 offset-2 mt-3">
+                  <H4 class="text-center">Welcome to Media Player!</H4>
+                  <i>
+                    <p>
+                      Media Player is a powerful and flexible digital signage option for playing videos, images, audio, and more.
+                    </p>
+                    <p>
+                      To create a Media Player, you will need:
+                      <ul>
+                        <li>The files you want to display.</li>
+                      </ul>
+                    </p>
+                  </i>
+                  <div class="row">
+                    <div class="col-6 offset-3">
+                      <label class="form-label" for="wizardDefinitionNameInput">Definition name</label>
+                      <input class="form-control" id="wizardDefinitionNameInput" type="text">
+                    </div>
+                    <div id="wizardDefinitionNameBlankWarning" class="col-12 text-warning mt-2" style="display: none;">
+                      Definition name must not be blank.
+                    </div>
+                  </div>
+                  <div class="text-center mt-4">
+                    <button class="btn btn-primary wizard-forward" data-current-page="Welcome">Get started</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Content -->
+              <div id="wizardPane_Content" class="row wizard-pane">
+                <div class="col-8 offset-2 mt-3">
+                  <H4 class="text-center">What content should be displayed?</H4>
+                  <i>
+                    <p>
+                      Media Player can play common video, image, and audio formats, as well as 3D models in the GLB and OBJ formats.
+                    </p>
+                  </i>
+                  <button id="wizardAddContentBUtton" class="btn btn-primary">Choose content</button>
+                  <div id="wizardContentRow" class="row row-cols-2 row-cols-lg-3 row-cols-xl-4 gy-2 mt-2 mx-0"></div>
+                  
+                  <div id="wizardMediaBlankWarning" class="mt-2 text-warning" style="display: none;">
+                    You must add at least one media item.
+                  </div>
+                  <div class="text-center mt-4">
+                    <button class="btn btn-secondary me-4 wizard-back" data-current-page="Content">Back</button>
+                    <button class="btn btn-primary ms-4 wizard-forward" data-current-page="Content">Next</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Duration -->
+              <div id="wizardPane_Duration" class="row wizard-pane">
+                <div class="col-8 offset-2 mt-3">
+                  <H4 class="text-center">How long should each item be shown?</H4>
+                  <i>
+                    <p>
+                      Videos and audio clips will always play for their full duration. The entire playlist will loop once it is completed.
+                    </p>
+                  </i>
+
+                  <div class="row gy-2">
+                    <div class="col-12 col-md-10 offset-md-1 col-lg-6 offset-lg-3">
+                      <div id="wizardDurationSlider" class="advanced-slider" data-name="Item duration" data-path="" data-min="1" data-max="300" data-start="30" data-step="1" data-unit="seconds" data-note=""></div>
+                    </div>
+                  </div>
+                  
+                  <div class="text-center mt-4">
+                    <button class="btn btn-secondary me-4 wizard-back" data-current-page="Duration">Back</button>
+                    <button class="btn btn-primary ms-4 wizard-forward" data-current-page="Duration">Next</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Color Mode -->
+              <div id="wizardPane_ColorMode" class="row wizard-pane">
+                <div class="col-8 offset-2 mt-3">
+                  <H4 class="text-center">Choose a color scheme</H4>
+
+                  <i>
+                    <p>
+                      You will be able to fine-tune colors later.
+                    </p>
+                  </i>
+                  <div class="exRadioButton form-check py-3 px-3 mt-2" style="background-color: #e6e6e2; color: #0f1419;">
+                    <input class="form-check-input d-none" type="radio" name="wizardColorMode" id="wizardColorModeLight" checked value="light">
+                    <label class="form-check-label w-100" for="wizardColorModeLight">
+                      <div class="row">
+                        <div class="col-12 col-md-3 col-lg-2 d-flex justify-content-center align-items-center" style="color: #c3512f;">
+                          <b>Light</b>
+                        </div>
+                        <div class="col-12 col-md-9 col-lg-10">
+                          Great for brighter galleries or making darker media stand out.
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+                  <div class="exRadioButton form-check py-3 px-3 mt-2" style="background-color: #1a2b3c; color: #e6e6e2;">
+                    <input class="form-check-input d-none" type="radio" name="wizardColorMode" id="wizardColorModeDark" value="dark">
+                    <label class="form-check-label w-100" for="wizardColorModeDark">
+                      <div class="row">
+                        <div class="col-12 col-md-3 col-lg-2 d-flex justify-content-center align-items-center" style="color: #f5f5f0">
+                          <b>Dark</b>
+                        </div>
+                        <div class="col-12 col-md-9 col-lg-10">
+                          Great for darker galleries or making bright media stand out.
+                        </div>
+                      </div>
+                    </label>
+                  </div>                  
+                  
+                  <div class="text-center mt-4">
+                    <button class="btn btn-secondary me-4 wizard-back" data-current-page="ColorMode">Back</button>
+                    <button class="btn btn-primary ms-4 wizard-forward" data-current-page="ColorMode">Finish</button>
+                  </div>
+                </div>
+              </div>
+              
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="row">
         <div class="col-10" id="setupHeader">
-          <H2>Media Player  Setup</H2>
-          Use this utility to create and edit Media Player configurations.
+          <div id="setupComponentID" class="fs-5"></div>
+          <H2>Media Player Setup</H2>
           </div>
 
         <div class="col-2">
           <div id="loginMenu">
-            <button class="btn btn-outline-primary btn-sm dropdown-toggle float-end" type="button" data-bs-toggle="dropdown" aria-expanded="false">Log in</button>
+            <button class="btn btn-outline-primary btn-sm dropdown-toggle float-end" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">Log in</button>
             <div class="dropdown-menu">
               <div class="px-4 py-3">
-                <div class="mb-3">
-                  <label for="loginDropdownUsername" class="form-label">Username</label>
-                  <input type="text" class="form-control" id="loginDropdownUsername">
-                </div>
-                <div class="mb-3">
-                  <label for="loginDropdownPassword" class="form-label">Password</label>
-                  <input type="password" class="form-control" id="loginDropdownPassword">
-                </div>
-                <button id="loginSubmitButton" class="btn btn-primary">Log in</button>
+                <form id="loginForm">
+                  <div class="mb-3">
+                    <label for="loginDropdownUsername" class="form-label">Username</label>
+                    <input type="text" class="form-control" id="loginDropdownUsername">
+                  </div>
+                  <div class="mb-3">
+                    <label for="loginDropdownPassword" class="form-label">Password</label>
+                    <input type="password" class="form-control" id="loginDropdownPassword">
+                  </div>
+                  <button type="button" id="loginSubmitButton" class="btn btn-primary">Log in</button>
+                </form>
+                
               </div>
               <div class="dropdown-divider"></div>
               <div class="dropdown-item text-center" data-bs-toggle="tooltip" data-bs-placement="top" title="To create an account or reset your password, contact your system administrator. To log in as the administrator, use the username 'admin'.">
@@ -267,6 +440,9 @@
               <span class="d-none d-sm-inline d-lg-none">New</span>
             </button>
             <ul class="dropdown-menu">
+              <li><h6 class="dropdown-header">Basic</h6></li>
+              <li><a id="showWizardButton" class="dropdown-item" href="#">Guided setup</a></li>
+              <li><h6 class="dropdown-header">Advanced</h6></li>
               <li><a id="newDefinitionButton" class="dropdown-item" href="#">Create blank definition</a></li>
               <li><a id="cloneDefinitionButton" class="dropdown-item" href="#">Clone selected definition</a></li>
             </ul>
@@ -327,79 +503,168 @@
       </div>
       <div class="row align-items-start">
         <div id='editPane' class="col-6 col-lg-7">
-          <div class="row gy-2">
-            <div class="col-12 col-md-6">
-              <label for="definitionNameInput" class="form-label">Definition name</label>
-              <input type="text" class="form-control" id="definitionNameInput">
+
+          <div class="accordion mt-3" id="topLevelAccordion">
+            <!-- Basic details -->
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#basicDetails" aria-expanded="true" aria-controls="basicDetails">
+                  Basic details
+                  <div class="accordion-detail">Configure the definition name and add a watermark.</div>
+                </button>
+              </h2>
+              <div id="basicDetails" class="accordion-collapse collapse show" data-bs-parent="#topLevelAccordion">
+                <div class="accordion-body">
+                  <div class="row gy-2">
+                    <div class="col-12 col-md-6">
+                      <label for="definitionNameInput" class="form-label">Definition name</label>
+                      <input type="text" class="form-control" id="definitionNameInput">
+                    </div>
+
+                    <div class="col-12">
+                      <label class="form-label">
+                        Watermark
+                        <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="Add a small image, such as a logo, somewhere on the screen." style="font-size: 0.55em;">?</span>
+                      </label>
+                      <div class="row gy-2 mx-1 pb-2 border border-secondary rounded">
+                        <div class="col-8 col-md-9 col-lg-6 pe-0">
+                          <button id="watermarkSelect" class="btn btn-outline-primary w-100">Select file</button>
+                        </div>
+                        <div class="col-4 col-md-3 col-lg-2">
+                          <button id="watermarkSelectClear" class="btn btn-danger align-self-center w-100">✕</button>
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-4 d-md-flex align-items-end">
+                          <div id="watermarkOpacity" class="advanced-slider" data-name="Opacity" data-path="watermark>opacity" data-min="10" data-max="100" data-start="100" data-step="1" data-unit="%"></div>
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-4 col-lg-4">
+                          <div id="watermarkXPos" class="advanced-slider" data-name="Horizontal position" data-path="watermark>x_position" data-min="0" data-max="100" data-start="80" data-step="1" data-unit="%"></div>
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-4">
+                          <div id="watermarkYPos" class="advanced-slider" data-name="Vertical position" data-path="watermark>y_position" data-min="0" data-max="100" data-start="80" data-step="1" data-unit="%"></div>
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-4">
+                          <div id="watermarkSize" class="advanced-slider" data-name="Height" data-path="watermark>size" data-min="5" data-max="100" data-start="10" data-step="1" data-unit="%"></div>
+                        </div>
+                        
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div class="col-12 mt-2">
-              <h3>Content</h3>
-              <div class="row gy-2 align-items-center">
-                <div class="col-12 col-md-6 col-lg-4 col-xxl-3">
-                  <button id="manageContentButton" class="btn btn-primary w-100">Manage content</button>
-                </div>
-              </div>
-              <div class="row mt-2 gy-2 align-items-top">
-                <div class="col-12">Add and arrange the content for your definition:</div>
-                <div class="col-12 col-md-6 col-lg-4 col-xxl-3">
-                  <button id="addItemButton" class="btn btn-primary w-100">Add item</button>
-                </div>
-                <div id="itemList" class="col-12 row gy-2 align-items-start"></div>
-              </div>
-              <h4 class="mt-2">Watermark</h4>
-              <i>Add a small image, such as a logo, somewhere on the screen.</i>
-              <div class="row gy-2 mt-1">
-                <div class="col-12 col-md-8 col-lg-6">
-                  <div class="row">
-                    <div class="col-8 col-sm-9 col-md-8 col-lg-9 col-xxl-10 pe-0">
-                      <button id="watermarkSelect" class="btn btn-outline-primary w-100">Select file</button>
+            <!-- Content -->
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#content" aria-expanded="false" aria-controls="content">
+                  Content
+                  <div class="accordion-detail">Add, order, and customize the media items you want to display</div>
+                </button>
+              </h2>
+              <div id="content" class="accordion-collapse collapse" data-bs-parent="#topLevelAccordion">
+                <div class="accordion-body">
+                  <div class="row gy-2">
+                    <div class="col-12 col-md-6 col-lg-4 col-xxl-3">
+                      <button id="addItemButton" class="btn btn-primary w-100">Add item</button>
                     </div>
-                    <div class="col-4 col-sm-3 col-md-4 col-lg-3 col-xxl-2">
-                      <button id="watermarkSelectClear" class="btn btn-danger align-self-center w-100">✕</button>
+                    <div class="col-12 col-md-6 col-lg-4 col-xxl-3">
+                      <button id="manageContentButton" class="btn btn-info w-100">Manage content</button>
                     </div>
-                  </div>
+                    <div class="col-12">
+                      <div id="itemList" class="row gy-2 align-items-start"></div>
+                    </div>
+                  </div>   
                 </div>
               </div>
-              <div class="row gy-2 mt-2">
-                <div class="col-12 col-md-4">
-                  <label for="watermarkXPos" class="form-label">Horizontal position</label>
-                  <input id="watermarkXPos" type="range" class="form-input w-100 watermark-slider" min="0" max="100" value="80" data-field="x_position">
-                </div>
-                <div class="col-12 col-md-4">
-                  <label for="watermarkYPos" class="form-label">Vertical position</label>
-                  <input id="watermarkYPos" type="range" class="form-input w-100 watermark-slider" min="0" max="100" value="80" data-field="y_position">
-                </div>
-                <div class="col-12 col-md-4">
-                  <label for="watermarkSize" class="form-label">Size</label>
-                  <input id="watermarkSize" type="range" class="form-input w-100 watermark-slider" min="5" max="20" value="10" step="2.5" data-field="size">
-                </div>
-              </div>
-              <h3 class="mt-3">Appearance</h3>
-              <h4>Colors</h4>
-              <div class="row gy-2 mb-3">
-                <div class="col-12 col-lg-8 advanced-color-picker" data-constACP-name="Background" data-constACP-path="style>background"></div>
-                <div class="col-12 col-sm-6 col-lg-4">
-                  <label for="colorPicker_subtitleColor" class="form-label">Subtitle text</label>
-                  <div>
-                    <input id="colorPicker_subtitleColor" type="text" class="coloris form-control" value="#fff" data-property="subtitleColor" data-default="#fff">
-                  </div>
-                </div>
-              </div>
-              <h4>Fonts</h4>
-              <div class="row gy-2 mb-3">
-                <div class="col-12 col-md-6 col-lg-4 col-xl-3">
-                  <button id="manageFontsButton" class="btn btn-info w-100">Manage fonts</button>
-                </div>
-                <div class="col-0 col-lg-9"></div>
+            </div>
 
-                <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Subtitle text" data-constAFP-path="style>font>subtitle" data-default="OpenSans-Regular.ttf"></div>
-              </div>
-              <h4 class="mt-2">Text size</h4>
-              <div class="row gy-2">
-                <div class="col-12 col-md-6 col-lg-4">
-                  <label for="subtitleTextSizeSlider" class="form-label">Subtitle text</label>
-                  <input id="subtitleTextSizeSlider" type="range" class="form-range text-size-slider" data-property="subtitle" min="-1", max="2" start="0" step="0.25">
+            <!-- Appearance -->
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#appearance" aria-expanded="false" aria-controls="appearance">
+                  Appearance
+                  <div class="accordion-detail">Adjust colors, fonts, and text sizes, as well as add a progress indicator.</div>
+                </button>
+              </h2>
+              <div id="appearance" class="accordion-collapse collapse" data-bs-parent="#topLevelAccordion">
+                <div class="accordion-body">
+                  <div class="row gy-2 mb-3">
+                    <div class="col-12">
+                      <div class="row gy-2">
+                        <div class="col-4">
+                          <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="" id="showProgressCheckbox">
+                            <label class="form-check-label" for="showProgressCheckbox">
+                              Progress indicator
+                            </label>
+                          </div>
+                        </div>
+                        <div id="progressIndicatorPosCol" class="col-4">
+                          <label class="form-label" for="progressIndicatorPosSelect">Indicator position</label>
+                          <select class="form-select" id="progressIndicatorPosSelect">
+                            <option value="top_left">Top left</option>
+                            <option value="top_middle">Top middle</option>
+                            <option value="top_right">Top right</option>
+                            <option value="bottom_left">Bottom left</option>
+                            <option value="bottom_middle">Bottom middle</option>
+                            <option value="bottom_right">Bottom right</option>
+                          </select>
+                        </div>
+                        <div id="progressIndicatorSizeCol" class="col-4">
+                          <label class="form-label" for="progressIndicatorSizeSelect">Indicator size</label>
+                          <select class="form-select" id="progressIndicatorSizeSelect">
+                            <option value="1">Small</option>
+                            <option value="1.25">Medium</option>
+                            <option value="1.5">Large</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <h4>Colors</h4>
+                  <div class="row gy-2 mb-3">
+                    <div class="col-12 col-lg-8 advanced-color-picker" data-constACP-name="Background" data-constACP-path="style>background"></div>
+                    <div class="col-12 col-sm-6 col-lg-4">
+                      <label for="colorPicker_subtitleColor" class="form-label">Subtitle text</label>
+                      <div>
+                        <input id="colorPicker_subtitleColor" type="text" class="coloris form-control" value="#f5f5f0" data-property="subtitleColor" data-default="#f5f5f0">
+                      </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-lg-4">
+                      <label for="colorPicker_progressBackgroundColor" class="form-label">Progress indcator background</label>
+                      <div>
+                        <input id="colorPicker_progressBackgroundColor" type="text" class="coloris form-control" value="#1a2b3cc4" data-property="progressBackgroundColor" data-default="#1a2b3cc4">
+                      </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-lg-4">
+                      <label for="colorPicker_progressInactiveColor" class="form-label">Progress indicator inactive</label>
+                      <div>
+                        <input id="colorPicker_progressInactiveColor" type="text" class="coloris form-control" value="#6b7280" data-property="progressInactiveColor" data-default="#6b7280">
+                      </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-lg-4">
+                      <label for="colorPicker_progressActiveColor" class="form-label">Progress indicator active</label>
+                      <div>
+                        <input id="colorPicker_progressActiveColor" type="text" class="coloris form-control" value="#c3512f" data-property="progressActiveColor" data-default="#c3512f">
+                      </div>
+                    </div>
+                  </div>
+                  <h4>Fonts</h4>
+                  <div class="row gy-2 mb-3">
+                    <div class="col-12 col-md-6 col-lg-4 col-xl-3">
+                      <button id="manageFontsButton" class="btn btn-info w-100">Manage fonts</button>
+                    </div>
+                    <div class="col-0 col-lg-9"></div>
+
+                    <div class="col-12 col-md-6 col-xl-3 advanced-font-picker" data-constAFP-name="Subtitle text" data-constAFP-path="style>font>subtitle" data-default="OpenSans-Regular.ttf"></div>
+                  </div>
+                  <h4 class="mt-2">Text size</h4>
+                  <div class="row gy-2">
+                    <div class="col-12 col-md-6 col-lg-4">
+                      <label for="subtitleTextSizeSlider" class="form-label">Subtitle text</label>
+                      <input id="subtitleTextSizeSlider" type="range" class="form-range text-size-slider" data-property="subtitle" min="-1", max="2" start="0" step="0.25">
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -407,17 +672,17 @@
         </div>
         <div id='previewPane' class="col-6 col-lg-5 sticky-top" style="z-index: 1;">
           <div id="previewContainer">
-            <iframe id="previewFrame" class="mt-3 preview-16x9" src="../media_player.html?standalone=true"></iframe>
+            <iframe id="previewFrame" class="mt-3 preview-16x9" src="index.html?standalone=true"></iframe>
           </div>
         </div>
       </div>
     </div>
 
-  <script type="text/javascript" src="../js/jquery-3.7.1.min.js"></script>
-  <script type="text/javascript" src="../js/bootstrap_5_3/bootstrap.bundle.min.js"></script>
-  <script type="text/javascript" src="../js/showdown.min.js"></script>
-  <script type="text/javascript" src="../js/platform.js"></script>
-  <script type="text/javascript" src="../js/coloris.min.js"></script>
+  <script type="text/javascript" src="/js/bootstrap_5_3/bootstrap.bundle.min.js"></script>
+  <script type="text/javascript" src="/js/showdown.min.js"></script>
+  <script type="text/javascript" src="/js/platform.js"></script>
+  <script type="text/javascript" src="/js/coloris.min.js"></script>
+  <script type="text/javascript" src="/js/tiny-mde.min.js"></script>
   <script type="module" src="setup.js"></script>
 
   </body>

@@ -1,36 +1,36 @@
 /* global bootstrap textFit */
 
+import exConfig from '../../common/config.js'
+import * as exFiles from '../../common/files.js'
+import * as exUtilities from '../../common/utilities.js'
 import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exMarkdown from '../js/exhibitera_app_markdown.js'
 
-function changePage (val) {
-  switch (val) {
-    case 0:
-      currentPage = 0
-      break
-    case 1:
-      currentPage += 1
-      if (currentPage * cardsPerPage >= spreadsheet.length) {
-        if (('behavior' in exCommon.config.definition) && ('loop_results' in exCommon.config.definition.behavior) && (exCommon.config.definition.behavior.loop_results === false)) {
-          currentPage -= 1
-        } else {
-          // If there are not more cards to show, go page to the first page.
-          currentPage = 0
-        }
+function changePage (direction) {
+  // Display a new page of results
+
+  const numItems = exCommon.config.definition.content_order.length
+
+  if (direction === 'forward') {
+    currentPage += 1
+    if (currentPage * cardsPerPage >= numItems) {
+      if ((exCommon.config.definition?.behavior?.loop_results ?? true) === false) {
+        currentPage -= 1
+      } else {
+        // If there are not more cards to show, go page to the first page.
+        currentPage = 0
       }
-      break
-    case -1:
-      currentPage -= 1
-      if (currentPage < 0) {
-        if (('behavior' in exCommon.config.definition) && ('loop_results' in exCommon.config.definition.behavior) && (exCommon.config.definition.behavior.loop_results === false)) {
-          currentPage = 0
-        } else {
-          // Loop back to last page
-          currentPage = Math.floor((spreadsheet.length - 1 / cardsPerPage))
-        }
+    }
+  } else {
+    currentPage -= 1
+    if (currentPage < 0) {
+      if ((exCommon.config.definition?.behavior?.loop_results ?? true) === false) {
+        currentPage = 0
+      } else {
+        // Loop back to last page
+        currentPage = Math.floor(((numItems - 1) / cardsPerPage))
       }
-      break
-    default:
+    }
   }
   populateResultsRow()
 }
@@ -53,28 +53,22 @@ function createCard (obj) {
   // Take a JSON object and turn it into a card in the resultsRow
 
   const def = exCommon.config.definition
-  let thumb
 
-  if (thumbnailKey != null && thumbnailKey !== '' && String(obj[thumbnailKey]).trim() !== '') {
+  // Get a thumbnail
+  let thumbName
+  if (obj.custom_thumbnail !== '') {
     // Use a user-supplied thumbnail
-    thumb = exCommon.config.helperAddress + '/thumbnails/' + String(obj[thumbnailKey])
+    thumbName = obj.custom_thumbnail
   } else {
     // Pull the default thumbnail
-
-    const numCols = def?.layout?.num_columns ?? 3
-    const iconWidth = String(Math.round(window.innerWidth / numCols))
-    const thumbName = String(obj[mediaKey])
-    thumb = exCommon.config.helperAddress + '/files/' + thumbName + '/thumbnail/' + iconWidth
+    thumbName = obj.filename
   }
 
-  let title = ''
-  if (titleKey != null && titleKey !== '') {
-    title = exMarkdown.formatText(obj[titleKey] ?? '', { string: true, removeParagraph: true })
-  }
+  const iconWidth = String(Math.round(window.innerWidth * window.devicePixelRatio / numCols))
 
-  const id = String(Math.round(Date.now() * Math.random()))
+  const thumb = exCommon.config.helperAddress + exConfig.api + '/files/' + thumbName + '/thumbnail/' + iconWidth + '?force_image=true'
 
-  obj.uniqueMediaBrowserID = id
+  const title = exMarkdown.formatText(def.languages?.[currentLang]?.content?.[obj.uuid]?.title ?? '', { string: true, removeParagraph: true })
 
   const col = document.createElement('div')
   col.classList = 'cardCol col align-items-center justify-content-center d-flex'
@@ -83,36 +77,29 @@ function createCard (obj) {
   const card = document.createElement('div')
   card.classList = 'resultCard row w-100 d-flex align-content-center'
   card.addEventListener('click', function () {
-    displayMedia(id)
+    displayMedia(obj.uuid)
   })
   col.appendChild(card)
 
   const imgCol = document.createElement('div')
   imgCol.classList = 'col col-12 d-flex justify-content-center align-items-end'
-
-  if ('image_height' in def.style.layout) {
-    imgCol.style.height = String(def.style.layout.image_height) + '%'
-  } else {
-    imgCol.style.height = '70%'
-  }
+  imgCol.style.height = String(def?.style?.layout?.image_height ?? 70) + '%'
   card.appendChild(imgCol)
 
   const img = document.createElement('img')
   img.classList = 'resultImg'
   img.src = thumb
-  img.setAttribute('id', 'Entry_' + id)
+  img.setAttribute('id', 'Entry_' + obj.uuid)
 
-  if ('corner_radius' in def.style.layout) {
-    img.style.borderRadius = String(def.style.layout.corner_radius) + '%'
-  } else {
-    img.style.borderRadius = '0%'
-  }
-  if ('thumbnail_shape' in def.style.layout) {
-    if (def.style.layout.thumbnail_shape === 'orignal') {
+  img.style.borderRadius = String(def?.style?.layout?.corner_radius ?? 0) + '%'
+
+  const thumbShape = def.style.layout.thumbnail_shape
+  if (thumbShape) {
+    if (thumbShape === 'orignal') {
       img.style.aspectRatio = ''
-    } else if (def.style.layout.thumbnail_shape === 'square') {
+    } else if (thumbShape === 'square') {
       img.style.aspectRatio = 1
-    } else if (def.style.layout.thumbnail_shape === 'viewport') {
+    } else if (thumbShape === 'viewport') {
       const height = window.innerHeight
       const width = window.innerWidth
       if (width >= height) {
@@ -120,7 +107,7 @@ function createCard (obj) {
       } else {
         img.style.aspectRatio = String(height / width)
       }
-    } else if (def.style.layout.thumbnail_shape === 'anti-viewport') {
+    } else if (thumbShape === 'anti-viewport') {
       const height = window.innerHeight
       const width = window.innerWidth
       if (width >= height) {
@@ -136,14 +123,13 @@ function createCard (obj) {
   imgCol.appendChild(img)
 
   let titleSpan
-  if (('image_height' in def.style.layout && def.style.layout.image_height < 100) || !('image_height' in def.style.layout)) {
+  if ((def.style.layout.image_height && def.style.layout.image_height < 100) || !def.style.layout.image_height) {
     const titleCol = document.createElement('div')
     titleCol.classList = 'col col-12 text-center cardTitleContainer'
 
-    let imageHeight = 70
-    if ('image_height' in def.style.layout) imageHeight = def.style.layout.image_height
+    const imageHeight = def?.style?.layout?.image_height ?? 70
 
-    if ('title_height' in def.style.layout) {
+    if (def?.style?.layout?.title_height) {
       titleCol.style.height = String(Math.round((100 - imageHeight) * def.style.layout.title_height / 100)) + '%'
     } else {
       titleCol.style.height = '50%'
@@ -164,6 +150,10 @@ function hideMediaLightBox () {
 
   const video = document.getElementById('mediaLightboxVideo')
   video.pause()
+  videoPlaying = false
+
+  const audio = document.getElementById('mediaLightboxAudio')
+  audio.pause()
   videoPlaying = false
 
   const mediaLightbox = document.getElementById('mediaLightbox')
@@ -200,12 +190,12 @@ function populateFilterOptions (order, filters) {
 
     const select = document.createElement('select')
     select.classList = 'form-select filter-entry'
-    select.setAttribute('id', 'filterSelect_' + uuid)
-    select.setAttribute('data-key', details.key)
+    select.dataset.uuid = details.uuid
+    select.id = 'filterSelect_' + uuid
     select.addEventListener('change', onFilterOptionChange)
     div.appendChild(select)
 
-    const options = _getFilterOptions(details.key)
+    const options = _getFilterOptions(details.uuid)
 
     const blank = new Option('-', '')
     select.append(blank)
@@ -231,15 +221,21 @@ function populateFilterOptions (order, filters) {
   div.appendChild(clearButton)
 }
 
-function _getFilterOptions (key) {
-  // For a given spreadsheet key, get a list of the unique options for the select.
+function _getFilterOptions (filterUUID) {
+  // For a given filter, get a list of the unique options for the select.
 
-  const resultDict = {} // Will hold unique entries without duplicates
+  const uniqueValues = new Set()
+  // Iterate through all content items
+  for (const itemUuid of exCommon.config.definition.content_order) {
+    const item = exCommon.config.definition.content[itemUuid]
 
-  for (const row of spreadsheet) {
-    if (key in row) resultDict[row[key]] = 1
+    // Check if this item has filter_data and the specific filter
+    if (item.filter_data && item.filter_data[filterUUID]) {
+      uniqueValues.add(item.filter_data[filterUUID].value)
+    }
   }
-  return exCommon.sortAlphabetically(Object.keys(resultDict))
+
+  return exUtilities.sortAlphabetically(Array.from(uniqueValues))
 }
 
 function clearFilters () {
@@ -258,62 +254,41 @@ function _populateResultsRow (currentKey) {
 
   document.getElementById('resultsRow').innerHTML = ''
 
-  // const input = document.getElementById('searchInput').value
-  // // Filter on search terms
-  // const searchTerms = (input).split(' ')
-  // const searchedData = []
-  // spreadsheet.forEach((item, i) => {
-  //   let matchCount = 0
-  //   searchTerms.forEach((term, i) => {
-  //     if (term !== '' || (term === '' && searchTerms.length === 1)) {
-  //       // Strip out non-letters, since the keyboard doesn't allow them
-  //       if (item.searchData.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z\s]/ig, '').toLowerCase().includes(term.replace(/[^A-Za-z]/ig, '').toLowerCase())) {
-  //         matchCount += 1
-  //       }
-  //     }
-  //   })
-  //   if (matchCount > 0) {
-  //     item.matchCount = matchCount
-  //     searchedData.push(item)
-  //   }
-  // })
-
   // Filter on filter options
   const filters = Array.from(document.getElementsByClassName('filter-entry'))
   const filteredData = []
-  let thisKey, selectedValue, filterMathces
+  let selectedValue, filterMathces
 
-  // Iterate through the remaining data and make sure it matches at least
-  // one filtered value.
-  spreadsheet.forEach((item) => {
+  // Iterate through the data and make sure it matches at least one filtered value.
+  for (const itemUUID of exCommon.config.definition.content_order) {
+    const item = exCommon.config.definition.content[itemUUID]
+
+    // Discard any entries that don't have a filename set
+    if (!item.filename || item.filename === '') continue
+
     filterMathces = {}
-    filters.forEach((filter) => {
-      thisKey = filter.getAttribute('data-key')
-      filterMathces[thisKey] = 0
+    for (const filter of filters) {
+      const filterUUID = filter.dataset.uuid
+      filterMathces[filterUUID] = 0 // This will be set to 1 if the filter matches
 
       selectedValue = filter.value // Can only select one for now
-
       if (selectedValue != null && selectedValue !== '') {
-        if (selectedValue.includes(item[thisKey])) {
-          filterMathces[thisKey] = 1
+        if (item?.filter_data?.[filterUUID]?.value === selectedValue) {
+          filterMathces[filterUUID] = 1
         }
       } else {
         // If no values are selected for this filter, pass all matches through
-        filterMathces[thisKey] = 1
+        filterMathces[filterUUID] = 1
       }
-    })
+    }
 
     // Iterate through the matches to make sure we've matched on every filter
     let totalMathces = 0
     for (const [matchKey, matchValue] of Object.entries(filterMathces)) {
-      if (matchValue === 1) {
-        totalMathces += 1
-      }
+      if (matchValue === 1) totalMathces += 1
     }
-    if (totalMathces === filters.length) {
-      filteredData.push(item)
-    }
-  })
+    if (totalMathces === filters.length) filteredData.push(item)
+  }
 
   // Sort by the number of matches, so better results rise to the top.
   filteredData.sort((a, b) => b.matchCount - a.matchCount)
@@ -331,9 +306,9 @@ function _populateResultsRow (currentKey) {
   const displayedResults = filteredData.slice(cardsPerPage * currentPage, cardsPerPage * (currentPage + 1))
 
   // Create a card for each item and add it to the display
-  displayedResults.forEach((item, i) => {
+  for (const item of displayedResults) {
     createCard(item)
-  })
+  }
 
   // Adjust card title font size to avoid overflows
   // Don't allow text to get larger than wha the user has set.
@@ -342,11 +317,15 @@ function _populateResultsRow (currentKey) {
   if (titles.length > 0) {
     const fontSize = parseFloat(window.getComputedStyle(titles[0], null).getPropertyValue('font-size'))
     resultsRow.style.opacity = 1
-    textFit(titles, { maxFontSize: fontSize })
-    // Sometimes need to run twice on first load
-    setTimeout(() => {
+    try {
       textFit(titles, { maxFontSize: fontSize })
-    }, 10)
+      // Sometimes need to run twice on first load
+      setTimeout(() => {
+        textFit(titles, { maxFontSize: fontSize })
+      }, 10)
+    } catch {
+
+    }
   } else {
     resultsRow.style.opacity = 1
   }
@@ -359,34 +338,26 @@ function populateResultsRow (currentKey = '') {
   setTimeout(() => { _populateResultsRow(currentKey) }, 300)
 }
 
-function displayMedia (id) {
-  // Take the given id and display the media in the overlay.
+function displayMedia (uuid) {
+  // Take the given uuid and display the media in the overlay.
 
-  const obj = spreadsheet.filter(function (item) {
-    return item.uniqueMediaBrowserID === id
-  })[0]
+  const def = exCommon.config.definition
+  const obj = def.content[uuid]
 
-  const title = exMarkdown.formatText(obj[titleKey] ?? '', { string: true, removeParagraph: true })
-  const caption = exMarkdown.formatText(obj[captionKey] ?? '', { string: true, removeParagraph: true })
-  const credit = exMarkdown.formatText(obj[creditKey] ?? '', { string: true, removeParagraph: true })
+  const title = exMarkdown.formatText(def.languages?.[currentLang].content?.[uuid]?.title ?? '', { string: true, removeParagraph: true })
 
-  const media = String(obj[mediaKey])
-  showMediaInLightbox(media, title, caption, credit)
+  const caption = exMarkdown.formatText(def.languages?.[currentLang].content?.[uuid]?.caption ?? '', { string: true, removeParagraph: true })
+  const credit = exMarkdown.formatText(def.languages?.[currentLang].content?.[uuid]?.credit ?? '', { string: true, removeParagraph: true })
+
+  showMediaInLightbox(obj.filename, { title, caption, credit, thumbnail: obj?.custom_thumbnail })
 }
 
 function updateParser (update) {
   // Read updates specific to the media browser
 
-  if ('definition' in update && update.definition !== currentDefinition) {
-    currentDefinition = update.definition
-    exCommon.loadDefinition(currentDefinition)
-      .then((result) => {
-        loadDefinition(result.definition)
-      })
-  }
-
-  if ('permissions' in update && 'audio' in update.permissions) {
+  if (update?.permissions?.audio) {
     document.getElementById('mediaLightboxVideo').muted = !update.permissions.audio
+    document.getElementById('mediaLightboxAudio').muted = !update.permissions.audio
   }
 }
 
@@ -403,14 +374,13 @@ function loadDefinition (def) {
   exCommon.createLanguageSwitcher(def, localize)
 
   // Configure the attractor
-  if ('inactivity_timeout' in def) {
-    inactivityTimeout = def.inactivity_timeout * 1000
-  }
-  if ('attractor' in def && def.attractor.trim() !== '') {
-    if (exCommon.guessMimetype(def.attractor) === 'video') {
+  inactivityTimeout = (def?.inactivity_timeout ?? 30) * 1000
+
+  if ((def?.attractor ?? '').trim() !== '') {
+    if (exFiles.guessMimetype(def.attractor) === 'video') {
       attractorType = 'video'
 
-      document.getElementById('attractorVideo').src = 'content/' + def.attractor
+      document.getElementById('attractorVideo').src = '/content/' + def.attractor
       document.getElementById('attractorVideo').style.display = 'block'
       document.getElementById('attractorImage').style.display = 'none'
       document.getElementById('attractorVideo').play()
@@ -432,65 +402,46 @@ function loadDefinition (def) {
     hideAttractor()
     attractorAvailable = false
   }
-  console.log(def)
-  if ('num_columns' in def.style.layout) {
-    document.getElementById('resultsRow').classList = 'h-100 row row-cols-' + String(def.style.layout.num_columns)
-    numCols = def.style.layout.num_columns
-  } else {
-    document.getElementById('resultsRow').classList = 'h-100 row row-cols-3'
-    numCols = 3
-  }
-  if ('items_per_page' in def.style.layout) {
-    cardsPerPage = parseInt(def.style.layout.items_per_page)
-  } else {
-    cardsPerPage = 6
-  }
+
+  numCols = def?.style?.layout?.num_columns ?? 3
+  document.getElementById('resultsRow').classList = 'h-100 row row-cols-' + String(numCols)
+
+  cardsPerPage = parseInt(def?.style?.layout?.items_per_page ?? 6)
   numRows = Math.ceil(cardsPerPage / numCols)
 
-  if ('lightbox_title_height' in def.style.layout) {
-    document.getElementById('mediaLightboxTitle').style.height = String(def.style.layout.lightbox_title_height) + '%'
+  document.getElementById('mediaLightboxTitle').style.height = String(def?.style?.layout?.lightbox_title_height ?? 9) + '%'
+  document.getElementById('mediaLightboxCaption').style.height = String(def?.style?.layout?.lightbox_caption_height ?? 15) + '%'
+  document.getElementById('mediaLightboxCredit').style.height = String(def?.style?.layout?.lightbox_credit_height ?? 6) + '%'
+
+  if (def.style.layout.lightbox_image_height) {
+    document.getElementById('zoomContainer').style.height = String(def.style.layout.lightbox_image_height) + '%'
   } else {
-    document.getElementById('mediaLightboxTitle').style.height = '9%'
-  }
-  if ('lightbox_caption_height' in def.style.layout) {
-    document.getElementById('mediaLightboxCaption').style.height = String(def.style.layout.lightbox_caption_height) + '%'
-  } else {
-    document.getElementById('mediaLightboxCaption').style.height = '15%'
-  }
-  if ('lightbox_credit_height' in def.style.layout) {
-    document.getElementById('mediaLightboxCredit').style.height = String(def.style.layout.lightbox_credit_height) + '%'
-  } else {
-    document.getElementById('mediaLightboxCredit').style.height = '6%'
-  }
-  if ('lightbox_image_height' in def.style.layout) {
-    document.getElementById('mediaLightboxImage').style.height = String(def.style.layout.lightbox_image_height) + '%'
-    document.getElementById('mediaLightboxVideo').style.height = String(def.style.layout.lightbox_image_height) + '%'
-  } else {
-    document.getElementById('mediaLightboxVideo').style.height = '70%'
+    document.getElementById('zoomContainer').style.height = '70%'
   }
 
   // Modify the style
 
   // Color
   // First, reset to defaults (in case a style option doesn't exist in the definition)
-  root.style.setProperty('--background-color', 'white')
-  root.style.setProperty('--titleColor', 'black')
-  root.style.setProperty('--filterBackgroundColor', 'white')
-  root.style.setProperty('--filterLabelColor', 'black')
-  root.style.setProperty('--filterTextColor', 'black')
+  root.style.setProperty('--background-color', '#0f1419')
+  root.style.setProperty('--titleColor', '#f5f5f0')
+  root.style.setProperty('--filterBackgroundColor', '#e6e6e2')
+  root.style.setProperty('--filterLabelColor', '#0f1419')
+  root.style.setProperty('--filterTextColor', '#0f1419')
+  root.style.setProperty('--lightboxBackgroundColor', '#0f1419f9')
+  root.style.setProperty('--lightboxTitleColor', '#f5f5f0')
+  root.style.setProperty('--lightboxCaptionColor', '#e6e6e2')
+  root.style.setProperty('--lightboxCreditColor', '#6b7280')
 
   // Then, apply the definition settings
-  Object.keys(def.style.color).forEach((key) => {
+  for (let key of Object.keys(def.style.color)) {
     // Fix for change from backgroundColor to background-color in v4
     if (key === 'backgroundColor') key = 'background-color'
-
     document.documentElement.style.setProperty('--' + key, def.style.color[key])
-  })
+  }
 
   // Backgorund settings
-  if ('background' in def.style) {
-    exCommon.setBackground(def.style.background, root, '#fff', true)
-  }
+  exCommon.setBackground(def?.style?.background, root, '#0f1419', true)
 
   // Set icon colors based on the background color.
   let backgroundClassification = 'dark'
@@ -502,11 +453,11 @@ function loadDefinition (def) {
   }
 
   if (backgroundClassification === 'light') {
-    document.getElementById('langSwitchDropdownIcon').src = '_static/icons/translation-icon_black.svg'
-    document.getElementById('filterDropdownIcon').src = '_static/icons/filter_black.svg'
+    document.getElementById('langSwitchDropdownIcon').src = '../_static/icons/translation-icon_black.svg'
+    document.getElementById('filterDropdownIcon').src = '../_static/icons/filter_black.svg'
   } else {
-    document.getElementById('langSwitchDropdownIcon').src = '_static/icons/translation-icon_white.svg'
-    document.getElementById('filterDropdownIcon').src = '_static/icons/filter_white.svg'
+    document.getElementById('langSwitchDropdownIcon').src = '../_static/icons/translation-icon_white.svg'
+    document.getElementById('filterDropdownIcon').src = '../_static/icons/filter_white.svg'
   }
 
   // Font
@@ -521,11 +472,11 @@ function loadDefinition (def) {
   root.style.setProperty('--filter_text-font', 'filter_text-default')
 
   // Then, apply the definition settings
-  Object.keys(def.style.font).forEach((key) => {
+  for (const key of Object.keys(def.style.font)) {
     const font = new FontFace(key, 'url(' + encodeURI(def.style.font[key]) + ')')
     document.fonts.add(font)
     root.style.setProperty('--' + key + '-font', key)
-  })
+  }
 
   // Text size settings
 
@@ -539,70 +490,29 @@ function loadDefinition (def) {
   root.style.setProperty('--filter_text-font-adjust', 0)
 
   // Then, apply the definition settings
-  Object.keys(def.style.text_size).forEach((key) => {
+  for (const key of Object.keys(def.style.text_size)) {
     const value = def.style.text_size[key]
     root.style.setProperty('--' + key + '-font-adjust', value)
-  })
-
-  // Find the default language
-  if ('language_order' in def) {
-    defaultLang = def.language_order[0]
-  } else {
-    // Deprecated in Ex5.3
-    Object.keys(def.languages).forEach((lang) => {
-      if (def.languages[lang].default === true) defaultLang = lang
-    })
   }
 
-  // Load the CSV file containing the items ad build the results row
-  exCommon.makeHelperRequest({
-    method: 'GET',
-    endpoint: '/content/' + def.spreadsheet,
-    rawResponse: true,
-    noCache: true
-  })
-    .then((response) => {
-      const csvAsJSON = exCommon.csvToJSON(response)
-      spreadsheet = csvAsJSON.json // Global property
-      localize(defaultLang)
+  // Find the default language
+  defaultLang = def.language_order[0]
 
-      // Send a thumbnail to the helper
-      setTimeout(() => exCommon.saveScreenshotAsThumbnail(def.uuid + '.png'), 500)
-    })
+  localize(defaultLang)
+
+  // Send a thumbnail to the helper
+  setTimeout(() => exCommon.saveScreenshotAsThumbnail(def.uuid + '.png'), 500)
 }
 
 function localize (lang) {
-  // Use the spreadsheet and definition to set the content to the given language
+  // Set the content to the given language
+
+  exCommon.configureLanguage(lang)
+  currentLang = lang
 
   const definition = exCommon.config.definition
 
-  if ('media_key' in definition.languages[lang]) {
-    mediaKey = definition.languages[lang].media_key
-  } else {
-    mediaKey = null
-  }
-  if ('thumbnail_key' in definition.languages[lang]) {
-    thumbnailKey = definition.languages[lang].thumbnail_key
-  } else {
-    thumbnailKey = null
-  }
-  if ('title_key' in definition.languages[lang]) {
-    titleKey = definition.languages[lang].title_key
-  } else {
-    titleKey = null
-  }
-  if ('caption_key' in definition.languages[lang]) {
-    captionKey = definition.languages[lang].caption_key
-  } else {
-    captionKey = null
-  }
-  if ('credit_key' in definition.languages[lang]) {
-    creditKey = definition.languages[lang].credit_key
-  } else {
-    creditKey = null
-  }
-
-  if ('filter_order' in definition.languages[lang] && definition.languages[lang].filter_order.length > 0) {
+  if ((definition?.languages?.[lang]?.filter_order?.length ?? 0) > 0) {
     // Show the filter icon
     document.getElementById('filterDropdown').style.display = 'block'
     populateFilterOptions(definition.languages[lang].filter_order, definition.languages[lang].filters)
@@ -635,16 +545,19 @@ function showAttractor () {
           attractorOverlay.style.display = 'flex'
           setTimeout(() => { attractorOverlay.style.opacity = 1 }, 0)
           hideMediaLightBox()
+          resetZoom()
           clear()
         })
     } else {
       attractorOverlay.style.display = 'flex'
       setTimeout(() => { attractorOverlay.style.opacity = 1 }, 0)
       hideMediaLightBox()
+      resetZoom()
       clear()
     }
   } else {
     hideMediaLightBox()
+    resetZoom()
     clear()
   }
 }
@@ -669,7 +582,7 @@ function resetActivityTimer () {
   inactivityTimer = setTimeout(showAttractor, inactivityTimeout)
 }
 
-function showMediaInLightbox (media, title = '', caption = '', credit = '') {
+function showMediaInLightbox (media, details = {}) {
   // Set the img or video source to the provided media, set the caption, and reveal the light box.
 
   // Hide elements until image is loaded
@@ -682,28 +595,41 @@ function showMediaInLightbox (media, title = '', caption = '', credit = '') {
   })
 
   const lightbox = document.getElementById('mediaLightbox')
+  const audioEl = document.getElementById('mediaLightboxAudio')
   const imageEl = document.getElementById('mediaLightboxImage')
   const videoEl = document.getElementById('mediaLightboxVideo')
   const titleDiv = document.getElementById('mediaLightboxTitle')
   const captionDiv = document.getElementById('mediaLightboxCaption')
   const creditDiv = document.getElementById('mediaLightboxCredit')
-  titleDiv.innerHTML = title
+  titleDiv.innerHTML = details?.title ?? ''
 
-  captionDiv.innerHTML = caption
-
-  if (credit !== '' && credit != null) {
-    creditDiv.innerHTML = 'Credit: ' + credit
-  } else {
-    creditDiv.innerHTML = ''
-  }
+  captionDiv.innerHTML = details?.caption ?? ''
+  creditDiv.innerHTML = details?.credit ?? ''
 
   // Load the media with a callback to fade it in when it is loaded
-  const mimetype = exCommon.guessMimetype(media)
-  if (mimetype === 'image') {
-    imageEl.src = 'content/' + media
+  const mimetype = exFiles.guessMimetype(media)
+  if (mimetype === 'audio') {
+    videoPlaying = true
+    audioEl.src = '/content/' + media
+    audioEl.load()
+    audioEl.play()
+    document.querySelectorAll('.lightbox-text').forEach((el) => {
+      el.style.opacity = 1
+    })
+    imageEl.style.display = 'block'
+    if (details.thumbnail) {
+      imageEl.src = '/content/' + details.thumbnail
+      imageEl.style.opacity = 1
+    } else {
+    // No image to show, so make invisible (but still active to claim space)
+      imageEl.style.opacity = 0
+    }
+  } else if (mimetype === 'image') {
+    imageEl.src = '/content/' + media
+    imageEl.style.opacity = 1
   } else if (mimetype === 'video') {
     videoPlaying = true
-    videoEl.src = 'content/' + media
+    videoEl.src = '/content/' + media
     videoEl.load()
     videoEl.play()
     document.querySelectorAll('.lightbox-text').forEach((el) => {
@@ -731,15 +657,15 @@ function fixLightboxTextSize (titleDiv, creditDiv) {
   titleDiv.style.whiteSpace = 'normal'
   creditDiv.style.whiteSpace = 'normal'
 
-  if ('layout' in def.style) {
-    if ('lightbox_title_height' in def.style.layout && def.style.layout.lightbox_title_height > 0) {
+  if (def.style.layout) {
+    if ((def?.style?.layout?.lightbox_title_height ?? 0) > 0) {
       try {
         textFit(titleDiv, { maxFontSize: titleFontSize })
       } catch {
         // Ignore a failed resize
       }
     }
-    if ('lightbox_credit_height' in def.style.layout && def.style.layout.lightbox_credit_height > 0) {
+    if ((def?.style?.layout?.lightbox_credit_height ?? 0) > 0) {
       try {
         textFit(creditDiv, { maxFontSize: creditFontSize })
       } catch {
@@ -788,10 +714,139 @@ function fixLightboxTextSize (titleDiv, creditDiv) {
 //   }
 // })
 
-let spreadsheet, mediaKey, thumbnailKey, titleKey, captionKey, creditKey
+function resetZoom () {
+  // Zoom back out in the media lightbox
+
+  const mediaEl = document.getElementById('mediaLightboxVideo').style.display === 'block'
+    ? document.getElementById('mediaLightboxVideo')
+    : document.getElementById('mediaLightboxImage')
+
+  // Add the animation class
+  mediaEl.classList.add('smooth-zoom')
+
+  // Reset state
+  zoomState = { scale: 1, x: 0, y: 0 }
+
+  // Apply the transform
+  updateZoomTransform()
+
+  // Remove the class after the transition (400ms) so manual zoom remains snappy
+  setTimeout(() => {
+    mediaEl.classList.remove('smooth-zoom')
+  }, 400)
+}
+
+function constrainBounds (mediaEl) {
+  // Make sure that, when zoomed in, the media can't be scrolled off the screen.
+
+  const container = document.getElementById('zoomContainer')
+  const cRect = container.getBoundingClientRect()
+  // We use clientWidth/Height * scale for the "virtual" size
+  const vWidth = mediaEl.clientWidth * zoomState.scale
+  const vHeight = mediaEl.clientHeight * zoomState.scale
+
+  if (vWidth > cRect.width) {
+    const maxX = (vWidth - cRect.width) / 2
+    zoomState.x = Math.min(Math.max(zoomState.x, -maxX), maxX)
+  } else {
+    zoomState.x = 0
+  }
+
+  if (vHeight > cRect.height) {
+    const maxY = (vHeight - cRect.height) / 2
+    zoomState.y = Math.min(Math.max(zoomState.y, -maxY), maxY)
+  } else {
+    zoomState.y = 0
+  }
+}
+
+function updateZoomTransform () {
+  // Convert the position of the zoomed image to the position of the zoomIndicator
+
+  const mediaEl = document.getElementById('mediaLightboxVideo').style.display === 'block'
+    ? document.getElementById('mediaLightboxVideo')
+    : document.getElementById('mediaLightboxImage')
+
+  const container = document.getElementById('zoomContainer')
+
+  if (zoomState.scale > 1) {
+    constrainBounds(mediaEl)
+  }
+
+  mediaEl.style.transform = `translate(${zoomState.x}px, ${zoomState.y}px) scale(${zoomState.scale})`
+
+  // Update Indicator
+  const indicator = document.getElementById('zoomIndicator')
+  const box = document.getElementById('zoomIndicatorBox')
+
+  if (zoomState.scale > 1) {
+    indicator.style.display = 'block'
+
+    // 1. Calculate the box size as a percentage (e.g., at 2x zoom, box is 50% of indicator)
+    const boxSize = 100 / zoomState.scale
+    box.style.width = `${boxSize}%`
+    box.style.height = `${boxSize}%`
+
+    // 2. Determine the current maximum possible pan distance (in pixels)
+    // We use getBoundingClientRect to get the actual scaled size on screen
+    const mediaRect = mediaEl.getBoundingClientRect()
+    const containerRect = container.getBoundingClientRect()
+
+    const maxDeltaX = (mediaRect.width - containerRect.width) / 2
+    const maxDeltaY = (mediaRect.height - containerRect.height) / 2
+
+    // 3. Map translation to the indicator position
+    // We want to map zoomState.x (which goes from +maxDeltaX to -maxDeltaX)
+    // to the CSS 'left' property (which should go from 0% to 100% - boxSize)
+
+    // Calculate the 'available track' for the indicator box to move in
+    const trackX = 100 - boxSize
+    const trackY = 100 - boxSize
+
+    // Map: x = maxDeltaX (left edge) -> left = 0
+    //      x = -maxDeltaX (right edge) -> left = trackX
+    const leftPercent = maxDeltaX !== 0
+      ? ((zoomState.x / maxDeltaX) * -0.5 + 0.5) * trackX
+      : trackX / 2
+
+    const topPercent = maxDeltaY !== 0
+      ? ((zoomState.y / maxDeltaY) * -0.5 + 0.5) * trackY
+      : trackY / 2
+
+    box.style.left = `${leftPercent}%`
+    box.style.top = `${topPercent}%`
+  } else {
+    indicator.style.display = 'none'
+  }
+}
+
+function updateIndicatorAspectRatio (mediaEl) {
+  // Adjust the shape of the zoomIndicator to match the shape of the loaded media file
+
+  const indicator = document.getElementById('zoomIndicator')
+  const maxSize = 5 // The maximum dimension in vmax
+
+  // Get natural dimensions (works for both <img> and <video>)
+  const naturalWidth = mediaEl.naturalWidth || mediaEl.videoWidth
+  const naturalHeight = mediaEl.naturalHeight || mediaEl.videoHeight
+
+  if (!naturalWidth || !naturalHeight) return
+
+  const aspectRatio = naturalWidth / naturalHeight
+
+  if (aspectRatio > 1) {
+    // Landscape
+    indicator.style.width = `${maxSize}vmax`
+    indicator.style.height = `${maxSize / aspectRatio}vmax`
+  } else {
+    // Portrait
+    indicator.style.width = `${maxSize * aspectRatio}vmax`
+    indicator.style.height = `${maxSize}vmax`
+  }
+}
+
 let currentPage = 0
 let cardsPerPage, numCols, numRows
-let defaultLang = ''
 
 exCommon.configureApp({
   name: 'media_browser',
@@ -800,7 +855,8 @@ exCommon.configureApp({
   parseUpdate: updateParser
 })
 
-let currentDefinition = ''
+let defaultLang = ''
+let currentLang = ''
 
 let inactivityTimer = null
 let inactivityTimeout = 30000
@@ -808,19 +864,34 @@ let attractorAvailable = false
 let attractorType = 'image'
 let videoPlaying = false
 
+let zoomState = { scale: 1, x: 0, y: 0 }
+const lastTouch = { distance: 0, x: 0, y: 0 }
+let tapCount = 0
+let tapTimeout
+
 // Attach event listeners
 document.getElementById('previousPageButton').addEventListener('click', () => {
-  changePage(-1)
+  changePage('backward')
 })
 document.getElementById('nextPageButton').addEventListener('click', () => {
-  changePage(1)
+  changePage('forward')
 })
 document.body.addEventListener('click', resetActivityTimer)
 document.getElementById('attractorOverlay').addEventListener('click', hideAttractor)
+document.getElementById('mediaLightboxImage').addEventListener('load', (e) => {
+  updateIndicatorAspectRatio(e.target)
+})
+document.getElementById('mediaLightboxVideo').addEventListener('loadedmetadata', (e) => {
+  updateIndicatorAspectRatio(e.target)
+})
 document.querySelectorAll('.hideLightboxTrigger').forEach((el) => {
   el.addEventListener('click', hideMediaLightBox)
 })
 document.getElementById('mediaLightboxVideo').addEventListener('ended', (event) => {
+  resetActivityTimer()
+  videoPlaying = false
+})
+document.getElementById('mediaLightboxAudio').addEventListener('ended', (event) => {
   resetActivityTimer()
   videoPlaying = false
 })
@@ -834,4 +905,75 @@ document.getElementById('mediaLightboxImage').addEventListener('load', (ev) => {
     el.style.opacity = '1'
   })
   ev.target.style.display = 'block'
+})
+
+const zoomContainer = document.getElementById('zoomContainer')
+
+zoomContainer.addEventListener('click', (e) => {
+  resetActivityTimer()
+  e.stopPropagation()
+
+  tapCount++
+  if (tapCount === 1) {
+    tapTimeout = setTimeout(() => {
+      // Single tap: The user wants to close the lightbox
+      hideMediaLightBox()
+      resetZoom()
+      tapCount = 0
+    }, 300) // 300ms window to detect the second tap
+  } else {
+    // Double tap: The user wants to zoom out
+    clearTimeout(tapTimeout)
+    resetZoom()
+    tapCount = 0
+  }
+})
+
+zoomContainer.addEventListener('touchstart', (e) => {
+  resetActivityTimer()
+
+  // Always refresh the anchor point for the primary finger
+  // relative to the current zoomState
+  lastTouch.x = e.touches[0].pageX - zoomState.x
+  lastTouch.y = e.touches[0].pageY - zoomState.y
+
+  if (e.touches.length === 2) {
+    lastTouch.distance = Math.hypot(
+      e.touches[0].pageX - e.touches[1].pageX,
+      e.touches[0].pageY - e.touches[1].pageY
+    )
+  }
+})
+
+zoomContainer.addEventListener('touchend', (e) => {
+  resetActivityTimer()
+
+  // If one finger remains on the screen after the other is lifted
+  if (e.touches.length === 1) {
+    // Re-anchor the remaining finger to prevent the "snap" jump
+    lastTouch.x = e.touches[0].pageX - zoomState.x
+    lastTouch.y = e.touches[0].pageY - zoomState.y
+  }
+})
+
+zoomContainer.addEventListener('touchmove', (e) => {
+  resetActivityTimer()
+  e.preventDefault()
+
+  // Handle pinch-to-zoom
+  if (e.touches.length === 2) {
+    const dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY)
+    const delta = dist / lastTouch.distance
+    zoomState.scale = Math.min(Math.max(1, zoomState.scale * delta), 5)
+    lastTouch.distance = dist
+  } else if (e.touches.length === 1 && zoomState.scale > 1) {
+    zoomState.x = e.touches[0].pageX - lastTouch.x
+    zoomState.y = e.touches[0].pageY - lastTouch.y
+  }
+  updateZoomTransform()
+}, { passive: false })
+
+// Ensure zoom resets when closing lightbox
+document.querySelectorAll('.hideLightboxTrigger').forEach((el) => {
+  el.addEventListener('click', resetZoom)
 })

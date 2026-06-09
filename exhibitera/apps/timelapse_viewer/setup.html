@@ -8,11 +8,11 @@
 
     <meta name="description" content="">
     <meta name="author" content="Morgan Rehnberg">
-    <link rel="icon" type="image/x-icon" href="../_static/favicon.ico">
+    <link rel=icon href="/_static/favicon.svg" type="image/svg+xml">
 
-    <link rel="stylesheet" href="../css/bootstrap_5_3/bootstrap.min.css">
-    <link rel="stylesheet" href="../css/coloris.min.css">
-    <link rel="stylesheet" href="../css/setup.css">
+    <link rel="stylesheet" href="/css/bootstrap_5_3/bootstrap.min.css">
+    <link rel="stylesheet" href="/css/coloris.min.css">
+    <link rel="stylesheet" href="/css/setup.css">
 
     <title>Timelapse Viewer Setup</title>
 
@@ -83,6 +83,168 @@
         </div>
       </div>
 
+      <div id="appHelpModal" class="modal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered mw-100 w-75">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Help</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body"  style="max-height: 70vh; overflow-y: auto;">
+              <div class="row">
+                <div id='helpTextDiv' class="col-12"></div>
+              </div>
+
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Welcome modal -->
+      <div id="appWelcomeModal" class="modal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Welcome to Timelapse Viewer</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body"  style="max-height: 70vh; overflow-y: auto;">
+              <div class="row gy-2 row-cols-1 row-cols-md-2">
+                <div class="col">
+                  <div class="card h-100">
+                    <div class="card-body d-flex flex-column">
+                      <h5 class="card-title text-center">Guided Setup</h5>
+                      <p class="card-text">Get started with step-by-step instructions. You can always fine-tune things afterwards.</p>
+                      <button id="appWelcomeModalWizardButton" class="btn btn-primary w-100 mt-auto">Start Guided Setup</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="col">
+                  <div class="card h-100">
+                    <div class="card-body d-flex flex-column">
+                      <h5 class="card-title text-center">Custom Setup</h5>
+                      <p class="card-text">Fully control all attributes from the beginning. <span class='badge text-bg-secondary'>Advanced</span></p>
+                      <button class="btn btn-primary w-100 mt-auto" data-bs-dismiss="modal">Start Custom Setup</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Setup wizard modal -->
+      <div id="setupWizardModal" class="modal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Create a new definition</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div id="setupWizardModalBody" class="modal-body">
+
+              <!-- Welcome -->
+              <div id="wizardPane_Welcome" class="row wizard-pane">
+                <div class="col-8 offset-2 mt-3">
+                  <H4 class="text-center">Welcome to Timelapse Viewer!</H4>
+                  <i>
+                    <p>
+                      Timelapse Viewer lets you turn a video or image sequence into a touchscreen interactive.
+                    </p>
+                    <p>
+                      To create a Timelapse Viewer, you will need:
+                      <ul>
+                        <li>The video file or images you want to visualize.</li>
+                        <li>The title text that should be displayed.</li>
+                      </ul>
+                    </p>
+                  </i>
+                  <div class="row">
+                    <div class="col-6 offset-3">
+                      <label class="form-label" for="wizardDefinitionNameInput">Definition name</label>
+                      <input class="form-control" id="wizardDefinitionNameInput" type="text">
+                    </div>
+                    <div id="wizardDefinitionNameBlankWarning" class="col-12 text-warning mt-2" style="display: none;">
+                      Definition name must not be blank.
+                    </div>
+                  </div>
+                  <div class="text-center mt-4">
+                    <button class="btn btn-primary wizard-forward" data-current-page="Welcome">Get started</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Media -->
+              <div id="wizardPane_Media" class="row wizard-pane">
+                <div class="col-8 offset-2 mt-3">
+                  <H4 class="text-center">What files will you use?</H4>
+                  <i>
+                    <p>
+                      Timelapse Viewer uses an image sequence. If you have a video, first convert it to images. Then, select the first and last image file in your sequence.
+                    </p>
+                  </i>
+                  <div class="row gy-2">
+                    <div class="col-12 col-md-6 col-lg-4">
+                      <button id="wizardManageContentButton" class="btn btn-info w-100">Upload files</button>
+                    </div>
+                    <div class="col-12 col-md-6 col-lg-4">
+                      <button id="wizardConvertVideoButton" class="btn btn-info w-100">Convert video</button>
+                    </div>
+                    <div class="col-12 col-lg-6">
+                      <button id="wizardSelectFirstImageButton" class="btn btn-outline-primary w-100 text-break">Select first image</button>
+                    </div>
+                    <div class="col-12 col-lg-6">
+                      <button id="wizardSelectLastImageButton" class="btn btn-outline-primary w-100 text-break">Select last image</button>
+                    </div>
+                  </div>
+                  <div id="wizardMediaFileBlankWarning" class="col-12 text-warning mt-2" style="display: none;">
+                    You must select both the first and the last file in your sequence.
+                  </div>
+                  <div id="wizardMediaSameFileWarning" class="col-12 text-warning mt-2" style="display: none;">
+                    The first and last files cannot be the same.
+                  </div>
+                  <div class="text-center mt-4">
+                    <button class="btn btn-secondary me-4 wizard-back" data-current-page="Media">Back</button>
+                    <button class="btn btn-primary ms-4 wizard-forward" data-current-page="Media">Next</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Attractor -->
+              <div id="wizardPane_Attractor" class="row wizard-pane">
+                <div class="col-8 offset-2 mt-3">
+                  <H4 class="text-center">Configure the attractor</H4>
+                  <i>
+                    <p>
+                      When no one is interacting with the timelapse, it will loop through your image sequence automatically. You have the option to display a short text header, such as "See a Flower Bloom", on top of the amimation.
+                    </p>
+                  </i>
+                  <div class="row gy-2">
+                    <div class="col-12 col-lg-5 col-xl-4">
+                      <label class="form-label" for="wizardDuration">Animation duration (sec)</label>
+                      <input id="wizardDuration" class="form-control" type="number" value="15" min="5">
+                    </div>
+                    <div class="col-12 col-lg-7 col-xl-8">
+                      <label class="form-label" for="wizardHeader">Header</label>
+                      <input id="wizardHeader" class="form-control" type="text">
+                    </div>
+                  </div>
+                  <div class="text-center mt-4">
+                    <button class="btn btn-secondary me-4 wizard-back" data-current-page="Attractor">Back</button>
+                    <button class="btn btn-primary ms-4 wizard-forward" data-current-page="Attractor">Finish</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Video conversion modal -->
       <div class="modal" tabindex="-1" id="videoConversionModal">
         <div class="modal-dialog modal-dialog-centered">
           <div class="modal-content">
@@ -91,7 +253,9 @@
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-              <div class="row mt-2">
+              <div class="row">
+                <p class="fst-italic">Timelapse Viewer works with a series of images. If you have a video, use this tool to convert it into an image sequence.</p>
+
                 <div class="col-6">
                   <div class="row">
                     <div class="col-12">
@@ -121,46 +285,29 @@
         </div>
       </div>
 
-      <div id="appHelpModal" class="modal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered mw-100 w-75">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title">Help</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body"  style="max-height: 70vh; overflow-y: auto;">
-              <div class="row">
-                <div id='helpTextDiv' class="col-12"></div>
-              </div>
-
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <div class="row">
         <div class="col-10" id="setupHeader">
+          <div id="setupComponentID" class="fs-5"></div>
           <H2>Timelapse Viewer Setup</H2>
-          Use this utility to create and edit Timelapse Viewer configurations.
         </div>
 
         <div class="col-2">
           <div id="loginMenu">
-            <button class="btn btn-outline-primary btn-sm dropdown-toggle float-end" type="button" data-bs-toggle="dropdown" aria-expanded="false">Log in</button>
+            <button class="btn btn-outline-primary btn-sm dropdown-toggle float-end" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">Log in</button>
             <div class="dropdown-menu">
               <div class="px-4 py-3">
-                <div class="mb-3">
-                  <label for="loginDropdownUsername" class="form-label">Username</label>
-                  <input type="text" class="form-control" id="loginDropdownUsername">
-                </div>
-                <div class="mb-3">
-                  <label for="loginDropdownPassword" class="form-label">Password</label>
-                  <input type="password" class="form-control" id="loginDropdownPassword">
-                </div>
-                <button id="loginSubmitButton" class="btn btn-primary">Log in</button>
+                <form id="loginForm">
+                  <div class="mb-3">
+                    <label for="loginDropdownUsername" class="form-label">Username</label>
+                    <input type="text" class="form-control" id="loginDropdownUsername">
+                  </div>
+                  <div class="mb-3">
+                    <label for="loginDropdownPassword" class="form-label">Password</label>
+                    <input type="password" class="form-control" id="loginDropdownPassword">
+                  </div>
+                  <button type="button" id="loginSubmitButton" class="btn btn-primary">Log in</button>
+                </form>
+                
               </div>
               <div class="dropdown-divider"></div>
               <div class="dropdown-item text-center" data-bs-toggle="tooltip" data-bs-placement="top" title="To create an account or reset your password, contact your system administrator. To log in as the administrator, use the username 'admin'.">
@@ -180,6 +327,7 @@
             </div>
           </div>
         </div>
+
         <div id="helpNewAccountMessage" class="col-6 offset-3 alert alert-primary my-4">
           <H4 class="text-center">Need an account?</H4>
           Exhibitera requires a user account to access functionality. If you need an account, or your password to be reset, please contact your system administrator.
@@ -198,6 +346,9 @@
               <span class="d-none d-sm-inline d-lg-none">New</span>
             </button>
             <ul class="dropdown-menu">
+              <li><h6 class="dropdown-header">Basic</h6></li>
+              <li><a id="showWizardButton" class="dropdown-item" href="#">Guided setup</a></li>
+              <li><h6 class="dropdown-header">Advanced</h6></li>
               <li><a id="newDefinitionButton" class="dropdown-item" href="#">Create blank definition</a></li>
               <li><a id="cloneDefinitionButton" class="dropdown-item" href="#">Clone selected definition</a></li>
             </ul>
@@ -258,116 +409,156 @@
       </div>
       <div class="row align-items-start">
         <div id='editPane' class="col-6 col-lg-7">
-          <div class="row gy-2">
-            <div class="col-12 mt-2">
 
-              <h3>Settings</h3>
-              <div class="row gy-2">
-                <div class="col-12 col-md-6 col-lg-4">
-                  <label for="definitionNameInput" class="form-label">Definition name</label>
-                  <input type="text" class="form-control" id="definitionNameInput">
-                </div>
-                <div class="col-12 col-md-6 col-lg-4">
-                  <label for="behaviorInput_animation_duration" class="form-label">
-                    Animation duration
-                    <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="The duration in seconds of the attractor animation." style="font-size: 0.55em;">?</span>
-                  </label>
-                  <input type="number" min="5" value="15" class="form-control behavior-input" data-property="animation_duration" id="behaviorInput_animation_duration">
-                </div>
-              </div>
-
-              <h3 class="mt-2">Content</h3>
-              <i>The timelapse must be in the form of a sequence of image files. If you have a video, Timelapse Viewer can convert it for you.</i>
-              <div class="row mt-2">
-                <div class="col-12 col-lg-4">
-                  <button id="showConvertVideoModal" class='btn btn-info w-100'>Convert video</button>
-                </div>
-              </div>
-              <div class="row mt-2">
-                <div class="col-12 col-lg-4 mt-auto">
-                  <button id="showPatternGeneratorModal" class='btn btn-primary w-100'>Pattern generator</button>
-                </div>
-                <div class="col-12 col-lg-4">
-                  <label for="filePatternInput" class="form-label">
-                    Filename pattern
-                    <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="A wildcard (*) search pattern that will select the files that should be part of the timelapse. If you don't know what this is, use the automatic generator." style="font-size: 0.55em;">?</span>
-                  </label>
-                  <input type="text" id="filePatternInput" class='form-control'>
-                </div>
-                <div class="col-12 col-lg-4">
-                  <label for="filenamePatternMatches" class="form-label">
-                    Number of files
-                  </label>
-                  <input disabled type="number" id="filenamePatternMatches" class='form-control'>
-                </div>             
-              </div>
-
-              <h3>Appearance</h3>
-              <h4>Colors</h4>
-              <div class="row gy-2 mb-3">
-                <div class="col-12 col-lg-8 advanced-color-picker" data-constACP-name="Background" data-constACP-path="style>background"></div>
-              </div>
-
-              <h3 class="mt-2">Attractor</h3>
-              <div class="row">
-                <div class="col-12 col-lg-4">
-                  <div class="form-check mb-0">
-                    <input class="form-check-input attractor-check" type="checkbox" value="" id="attractorCheck_use_attractor" checked data-property="use_attractor">
-                    <label class="form-check-label" for="attractorCheck_use_attractor">
-                      Show attractor
-                    </label>
-                  </div>
-                </div>
-                <div class="col-12 col-lg-5">
-                  <div class="form-check mb-0">
-                    <input class="form-check-input attractor-check" type="checkbox" value="" id="attractorCheck_use_finger_animation" checked data-property="use_finger_animation">
-                    <label class="form-check-label" for="attractorCheck_use_finger_animation">
-                      Show finger animation
-                    </label>
-                  </div>
-                </div>
-              </div>
-              <div class="row mt-2 gy-2">
-                <div class="col-12 col-md-6 col-lg-3">
-                  <label for="attractorInput_attractor_timeout" class="form-label">
-                    Timeout
-                    <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="The length of time in seconds before the attractor animation should start playing." style="font-size: 0.55em;">?</span>
-                  </label>
-                  <input type="number" min="5" value="30" class="form-control attractor-input" id="attractorInput_attractor_timeout" data-property="attractor_timeout">
-                </div>
-                <div class="col-12 col-md-6 col-lg-4">
-                  <label for="attractorInput_attractor_height" class="form-label">Height</label>
-                  <input id="attractorInput_attractor_height" type="range" class="form-range attractor-input realtime-slider" data-property="attractor_height" min="0", max="100" start="40" step="5">
-                </div>
-                <div class="col-12 col-lg-5">
-                  <label for="attractorInput_text" class="form-label">Text</label>
-                  <input type="text" class="form-control attractor-input" id="attractorInput_text" data-property="text">
-                </div>
-              </div>
-              <div class="row mt-2 gy-2">
-                <div class="col-12 col-md-6 col-lg-4">
-                  <label for="attractorInput_font_adjust" class="form-label">Text size</label>
-                  <input id="attractorInput_font_adjust" type="range" class="form-range attractor-input realtime-slider" data-property="font_adjust" min="-2", max="4" start="0" step="0.5">
-                </div>
-                <div class="col-12 col-md-6 col-lg-4">
-                  <label for="attractorInput_attractor_background" class="form-label">Background color</label>
-                  <div>
-                    <input id="attractorInput_attractor_background" type="text" class="coloris form-control attractor-input" value="rgba(0, 0, 0, 0.2)" data-property="attractor_background" data-default="rgba(0, 0, 0, 0.2)">
-                  </div>
-                </div>
-                <div class="col-12 col-md-6 col-lg-4">
-                  <label for="attractorInput_text_color" class="form-label">Text color</label>
-                  <div>
-                    <input id="attractorInput_text_color" type="text" class="coloris form-control attractor-input" value="#fff" data-property="text_color" data-default="#fff">
-                  </div>
-                </div>
-                <div class="col-lg-12">
+          <div class="accordion mt-3" id="topLevelAccordion">
+            <!-- Basic details -->
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#basicDetails" aria-expanded="true" aria-controls="basicDetails">
+                  Basic details
+                  <div class="accordion-detail">Set the definition name and the duration of the timelapse.</div>
+                </button>
+              </h2>
+              <div id="basicDetails" class="accordion-collapse collapse show" data-bs-parent="#topLevelAccordion">
+                <div class="accordion-body">
                   <div class="row gy-2">
-                    <div class="col-12 col-md-7 col-lg-6 col-xl-4 advanced-font-picker" data-constAFP-name="Font" data-constAFP-path="attractor>font" data-default="OpenSans-Bold.ttf"></div>
-
-                    <div class="col-12 col-md-5 col-lg-4 col-xl-3 d-flex align-items-end">
-                      <button id="manageFontsButton" class="btn btn-info w-100">Manage fonts</button>
+                    <div class="col-12 col-md-6 col-lg-4 d-flex flex-column justify-content-end">
+                      <label for="definitionNameInput" class="form-label">Definition name</label>
+                      <input type="text" class="form-control" id="definitionNameInput">
                     </div>
+                    <div class="col-12 col-md-6 col-lg-5 col-xl-4 col-xxl-3">
+                      <label for="behaviorInput_animation_duration" class="form-label">
+                        Animation duration
+                        <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="The duration in seconds of the attractor animation." style="font-size: 0.55em;">?</span>
+                      </label>
+                      <input type="number" min="5" value="15" class="form-control behavior-input" data-property="animation_duration" id="behaviorInput_animation_duration">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Content -->
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#content" aria-expanded="false" aria-controls="content">
+                  Content
+                  <div class="accordion-detail">Select your video or images and configure the attractor.</div>
+                </button>
+              </h2>
+              <div id="content" class="accordion-collapse collapse" data-bs-parent="#topLevelAccordion">
+                <div class="accordion-body">
+                  <div class="row gy-2">
+                    <div class="col-12 col-lg-4">
+                      <button id="manageContentButton" class='btn btn-info w-100'>Manage content</button>
+                    </div>
+                    <div class="col-12 col-lg-6">
+                      <button id="showConvertVideoModal" class='btn btn-info w-100'>Convert video to images</button>
+                    </div>
+                  </div>
+                  <div class="row gy-2 mt-2">
+                    <div class="col-12 col-lg-4 mt-auto">
+                      <button id="showPatternGeneratorModal" class='btn btn-primary w-100'>Select images</button>
+                    </div>
+                    <div class="col-12 col-lg-4">
+                      <label for="filePatternInput" class="form-label">
+                        Filename pattern
+                        <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="A wildcard (*) search pattern that will select the files that should be part of the timelapse. If you don't know what this is, use the automatic generator." style="font-size: 0.55em;">?</span>
+                      </label>
+                      <input type="text" id="filePatternInput" class='form-control'>
+                    </div>
+                    <div class="col-12 col-lg-4">
+                      <label for="filenamePatternMatches" class="form-label">
+                        Number of files
+                      </label>
+                      <input disabled type="number" id="filenamePatternMatches" class='form-control'>
+                    </div>
+                    <div class="col-12 col-lg-6 col-xl-4">
+                      <label class="form-label" for="videoFitModeSelect">Display mode</label>
+                      <select id="behaviorInput_video_mode" class="form-select">
+                        <option value="contain">Show entire image</option>
+                        <option value="cover">Fill entire screen</option>
+                      </select>
+                    </div>         
+                  </div>
+
+                  <h4 class="mt-2">Attractor</h4>
+                    <div class="row">
+                      <div class="col-12 col-lg-4">
+                        <div class="form-check mb-0">
+                          <input class="form-check-input attractor-check" type="checkbox" value="" id="attractorCheck_use_attractor" checked data-property="use_attractor">
+                          <label class="form-check-label" for="attractorCheck_use_attractor">
+                            Show attractor
+                          </label>
+                        </div>
+                      </div>
+                      <div class="col-12 col-lg-5">
+                        <div class="form-check mb-0">
+                          <input class="form-check-input attractor-check" type="checkbox" value="" id="attractorCheck_use_finger_animation" checked data-property="use_finger_animation">
+                          <label class="form-check-label" for="attractorCheck_use_finger_animation">
+                            Show finger animation
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                    <div id="attractorRow" class="row mt-2 gy-2">
+                      <div class="col-12 col-md-6 col-lg-3">
+                        <label for="attractorInput_attractor_timeout" class="form-label">
+                          Timeout
+                          <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="The length of time in seconds before the attractor animation should start playing." style="font-size: 0.55em;">?</span>
+                        </label>
+                        <input type="number" min="5" value="30" class="form-control attractor-input" id="attractorInput_attractor_timeout" data-property="attractor_timeout">
+                      </div>
+                      <div class="col-12 col-md-6 col-lg-4">
+                        <div id="attractorInput_attractor_height" class="advanced-slider" data-name="Height" data-path="attractor>attractor_height" data-min="0" data-max="100" data-start="40" data-step="1" data-unit="%" data-note="The amount of vertical space covered by the attractor."></div>
+                      </div>
+                      <div class="col-12 col-lg-5">
+                        <label for="attractorInput_text" class="form-label">Text</label>
+                        <input type="text" class="form-control attractor-input" id="attractorInput_text" data-property="text">
+                      </div>
+
+                      <div class="col-12 col-md-6 col-lg-4">
+                        <label for="attractorInput_font_adjust" class="form-label">Text size</label>
+                        <input id="attractorInput_font_adjust" type="range" class="form-range attractor-input realtime-slider" data-property="font_adjust" min="-2", max="4" start="0" step="0.5">
+                      </div>
+                      <div class="col-12 col-md-6 col-lg-4">
+                        <label for="attractorInput_attractor_background" class="form-label">Background color</label>
+                        <div>
+                          <input id="attractorInput_attractor_background" type="text" class="coloris form-control attractor-input" value="#000000b7" data-property="attractor_background" data-default="#000000b7">
+                        </div>
+                      </div>
+                      <div class="col-12 col-md-6 col-lg-4">
+                        <label for="attractorInput_text_color" class="form-label">Text color</label>
+                        <div>
+                          <input id="attractorInput_text_color" type="text" class="coloris form-control attractor-input" value="#f5f5f0" data-property="text_color" data-default="#f5f5f0">
+                        </div>
+                      </div>
+                      <div class="col-lg-12">
+                        <div class="row gy-2">
+                          <div class="col-12 col-md-7 col-lg-6 col-xl-4 advanced-font-picker" data-constAFP-name="Font" data-constAFP-path="attractor>font" data-default="OpenSans-Bold.ttf"></div>
+
+                          <div class="col-12 col-md-5 col-lg-4 col-xl-3 d-flex align-items-end">
+                            <button id="manageFontsButton" class="btn btn-info w-100">Manage fonts</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Appearance -->
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#appearance" aria-expanded="false" aria-controls="appearance">
+                  Appearance
+                  <div class="accordion-detail">Adjust the background color.</div>
+                </button>
+              </h2>
+              <div id="appearance" class="accordion-collapse collapse" data-bs-parent="#topLevelAccordion">
+                <div class="accordion-body">
+                  <div class="row gy-2">
+                    <div class="col-12 col-lg-8 advanced-color-picker" data-constACP-name="Background" data-constACP-path="style>background"></div>
                   </div>
                 </div>
               </div>
@@ -376,17 +567,16 @@
         </div>
         <div id='previewPane' class="col-6 col-lg-5 sticky-top" style="z-index: 1;">
           <div id="previewContainer" class="">
-            <iframe id="previewFrame" class="mt-3 preview-16x9" src="../timelapse_viewer.html?standalone=true"></iframe>
+            <iframe id="previewFrame" class="mt-3 preview-16x9" src="index.html?standalone=true"></iframe>
           </div>
         </div>
       </div>
     </div>
 
-  <script type="text/javascript" src="../js/jquery-3.7.1.min.js"></script>
-  <script type="text/javascript" src="../js/bootstrap_5_3/bootstrap.bundle.min.js"></script>
-  <script type="text/javascript" src="../js/showdown.min.js"></script>
-  <script type="text/javascript" src="../js/platform.js"></script>
-  <script type="text/javascript" src="../js/coloris.min.js"></script>
+  <script type="text/javascript" src="/js/bootstrap_5_3/bootstrap.bundle.min.js"></script>
+  <script type="text/javascript" src="/js/showdown.min.js"></script>
+  <script type="text/javascript" src="/js/platform.js"></script>
+  <script type="text/javascript" src="/js/coloris.min.js"></script>
   <script type="module" src="setup.js"></script>
 
   </body>

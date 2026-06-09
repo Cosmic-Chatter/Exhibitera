@@ -8,12 +8,12 @@
 
     <meta name="description" content="">
     <meta name="author" content="Morgan Rehnberg">
-    <link rel="icon" type="image/x-icon" href="../_static/favicon.ico">
+    <link rel=icon href="/_static/favicon.svg" type="image/svg+xml">
 
-    <link rel="stylesheet" href="../css/bootstrap_5_3/bootstrap.min.css">
-    <link rel="stylesheet" href="../css/coloris.min.css">
-    <link rel="stylesheet" href="../css/setup.css">
-    <link rel="stylesheet" href="../css/tiny-mde-Exhiibtera.css">
+    <link rel="stylesheet" href="/css/bootstrap_5_3/bootstrap.min.css">
+    <link rel="stylesheet" href="/css/coloris.min.css">
+    <link rel="stylesheet" href="/css/setup.css">
+    <link rel="stylesheet" href="/css/tiny-mde-Exhiibtera.css">
 
     <title>Voting Kiosk Setup</title>
 
@@ -217,7 +217,51 @@
                   </div>
                   <div class="text-center mt-4">
                     <button class="btn btn-secondary me-4 wizard-back" data-current-page="Answers">Back</button>
-                    <button class="btn btn-primary ms-4 wizard-forward" data-current-page="Answers">Finish</button>
+                    <button class="btn btn-primary ms-4 wizard-forward" data-current-page="Answers">Next</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Color Mode -->
+              <div id="wizardPane_ColorMode" class="row wizard-pane">
+                <div class="col-8 offset-2 mt-3">
+                  <H4 class="text-center">Choose a color scheme</H4>
+
+                  <i>
+                    <p>
+                      You will be able to fine-tune colors later.
+                    </p>
+                  </i>
+                  <div class="exRadioButton form-check py-3 px-3 mt-2" style="background-color: #e6e6e2; color: #0f1419;">
+                    <input class="form-check-input d-none" type="radio" name="wizardColorMode" id="wizardColorModeLight" checked value="light">
+                    <label class="form-check-label w-100" for="wizardColorModeLight">
+                      <div class="row">
+                        <div class="col-12 col-md-3 col-lg-2 d-flex justify-content-center align-items-center" style="color: #c3512f;">
+                          <b>Light</b>
+                        </div>
+                        <div class="col-12 col-md-9 col-lg-10">
+                          Great for brighter galleries or making darker media stand out.
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+                  <div class="exRadioButton form-check py-3 px-3 mt-2" style="background-color: #1a2b3c; color: #e6e6e2;">
+                    <input class="form-check-input d-none" type="radio" name="wizardColorMode" id="wizardColorModeDark" value="dark">
+                    <label class="form-check-label w-100" for="wizardColorModeDark">
+                      <div class="row">
+                        <div class="col-12 col-md-3 col-lg-2 d-flex justify-content-center align-items-center" style="color: #f5f5f0">
+                          <b>Dark</b>
+                        </div>
+                        <div class="col-12 col-md-9 col-lg-10">
+                          Great for darker galleries or making bright media stand out.
+                        </div>
+                      </div>
+                    </label>
+                  </div>                  
+                  
+                  <div class="text-center mt-4">
+                    <button class="btn btn-secondary me-4 wizard-back" data-current-page="ColorMode">Back</button>
+                    <button class="btn btn-primary ms-4 wizard-forward" data-current-page="ColorMode">Finish</button>
                   </div>
                 </div>
               </div>
@@ -229,24 +273,27 @@
 
       <div class="row">
         <div class="col-10" id="setupHeader">
+          <div id="setupComponentID" class="fs-5"></div>
           <H2>Voting Kiosk Setup</H2>
-          Use this utility to create and edit voting kiosk configurations.
         </div>
 
         <div class="col-2">
           <div id="loginMenu">
-            <button class="btn btn-outline-primary btn-sm dropdown-toggle float-end" type="button" data-bs-toggle="dropdown" aria-expanded="false">Log in</button>
+            <button class="btn btn-outline-primary btn-sm dropdown-toggle float-end" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">Log in</button>
             <div class="dropdown-menu">
               <div class="px-4 py-3">
-                <div class="mb-3">
-                  <label for="loginDropdownUsername" class="form-label">Username</label>
-                  <input type="text" class="form-control" id="loginDropdownUsername">
-                </div>
-                <div class="mb-3">
-                  <label for="loginDropdownPassword" class="form-label">Password</label>
-                  <input type="password" class="form-control" id="loginDropdownPassword">
-                </div>
-                <button id="loginSubmitButton" class="btn btn-primary">Log in</button>
+                <form id="loginForm">
+                  <div class="mb-3">
+                    <label for="loginDropdownUsername" class="form-label">Username</label>
+                    <input type="text" class="form-control" id="loginDropdownUsername">
+                  </div>
+                  <div class="mb-3">
+                    <label for="loginDropdownPassword" class="form-label">Password</label>
+                    <input type="password" class="form-control" id="loginDropdownPassword">
+                  </div>
+                  <button type="button" id="loginSubmitButton" class="btn btn-primary">Log in</button>
+                </form>
+                
               </div>
               <div class="dropdown-divider"></div>
               <div class="dropdown-item text-center" data-bs-toggle="tooltip" data-bs-placement="top" title="To create an account or reset your password, contact your system administrator. To log in as the administrator, use the username 'admin'.">
@@ -498,55 +545,126 @@
               </h2>
               <div id="appearance" class="accordion-collapse collapse" data-bs-parent="#topLevelAccordion">
                 <div class="accordion-body">
+
+                  <h4>Layout</h4>
+                  <div class="row gy-2 mt-2">
+                    <div class="col-12 col-md-6 col-lg-4">
+                      <label for="columnCountSelect" class="form-label">Number of columns</label>
+                      <select id="columnCountSelect" class="form-select">
+                        <option value="auto">Auto</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                      </select>
+                    </div>
+                    <div class="col-12 col-md-6 col-lg-4">
+                      <!-- <label for="headerToButtonsSlider" class="form-label">
+                        Header height
+                        <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="The amount of space allocated to the header and subheader." style="font-size: 0.55em;">?</span>
+                      </label>
+                      <input id="headerToButtonsSlider" type="range" class="form-range height-slider" min="0", max="50" start="20" step="5"> -->
+
+                      <div id="headerToButtonsSlider" class="advanced-slider height-slider" data-name="Header height" data-path="style>layout>top_height" data-min="0" data-max="50" data-start="20" data-step="1" data-unit="%" data-note="The percent of vertical space allocated to the header and subheader."></div>
+                    </div>
+                    <div class="col-12 col-md-6 col-lg-4">
+                      <!-- <label for="headerPaddingHeightSlider" class="form-label">
+                        Header padding
+                        <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="Padding from the top of the display." style="font-size: 0.55em;">?</span>
+                      </label>
+                      <input id="headerPaddingHeightSlider" type="range" class="form-range padding-slider" data-property="header_padding" min="0", max="15" start="5" step="5" value="5"> -->
+
+                      <div id="headerPaddingHeightSlider" class="advanced-slider" data-name="Header padding" data-path="style>layout>header_padding" data-min="0" data-max="15" data-start="5" data-step="1" data-unit="%" data-note="Padding from the top of the display to the top of the header."></div>
+                    </div>
+                    <div class="col-12 col-md-6 col-lg-4">
+                      <!-- <label for="buttonsToFooterSlider" class="form-label">
+                        Footer height
+                        <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="The amount of space allocated to the footer and subfooter." style="font-size: 0.55em;">?</span>
+                      </label>
+                      <input id="buttonsToFooterSlider" type="range" class="form-range height-slider" min="0", max="50" start="20" step="5"> -->
+
+                      <div id="buttonsToFooterSlider" class="advanced-slider height-slider" data-name="Footer height" data-path="style>layout>bottom_height" data-min="0" data-max="50" data-start="20" data-step="1" data-unit="%" data-note="The amount of vertical space allocated to the footer and subfooter."></div>
+                    </div>
+                    <div class="col-12 col-md-6 col-lg-4">
+                      <!-- <label for="footerPaddingHeightSlider" class="form-label">
+                        Footer padding
+                        <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="Padding from the bottom of the display." style="font-size: 0.55em;">?</span>
+                      </label>
+                      <input id="footerPaddingHeightSlider" type="range" class="form-range padding-slider" data-property="footer_padding" min="0", max="15" start="5" step="5" value="5"> -->
+
+                      <div id="footerPaddingHeightSlider" class="advanced-slider" data-name="Footer padding" data-path="style>layout>footer_padding" data-min="0" data-max="15" data-start="5" data-step="1" data-unit="%" data-note="Padding from the bottom of the display to the bottom of the subfooter."></div>
+                    </div>
+                    <div class="col-12 col-md-6 col-lg-4">
+                      <!-- <label for="buttonPaddingHeightSlider" class="form-label">
+                        Button padding
+                        <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="Padding above and below the buttons." style="font-size: 0.55em;">?</span>
+                      </label>
+                      <input id="buttonPaddingHeightSlider" type="range" class="form-range padding-slider" data-property="button_padding" min="0", max="30" start="10" step="5"> -->
+
+                      <div id="buttonPaddingHeightSlider" class="advanced-slider" data-name="Button padding" data-path="style>layout>button_padding" data-min="0" data-max="30" data-start="10" data-step="1" data-unit="%" data-note="Padding above and below the buttons."></div>
+                    </div>
+                    <div class="col-12 col-md-6 col-lg-4">
+                      <!-- <label for="imageHeightSlider" class="form-label">
+                        Image size
+                        <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="The maximum height allowed for images." style="font-size: 0.55em;">?</span>
+                      </label>
+                      <input id="imageHeightSlider" type="range" class="form-range padding-slider" data-property="image_height" min="10", max="100" start="90" step="5"> -->
+
+                      <div id="imageHeightSlider" class="advanced-slider" data-name="Image size" data-path="style>layout>image_height" data-min="10" data-max="100" data-start="90" data-step="1" data-unit="%" data-note="The maximum height allowed for images."></div>
+                    </div>
+                  </div>
+                   
                   <h4>Colors</h4>
                   <div class="row gy-2 mb-3">
                     <div class="col-12 col-lg-8 advanced-color-picker" data-constACP-name="Background" data-constACP-path="style>background"></div>
                     <div class="col-12 col-sm-6 col-lg-4">
                       <label for="colorPicker_button-color" class="form-label">Buttons</label>
                       <div>
-                        <input id="colorPicker_button-color" type="text" class="coloris color-picker form-control" value="#393A5A" data-property="button-color" data-default="#393A5A">
+                        <input id="colorPicker_button-color" type="text" class="coloris color-picker form-control" value="#1a2b3c" data-property="button-color" data-default="#1a2b3c">
                       </div>
                     </div>
                     <div class="col-12 col-sm-6 col-lg-4">
                       <label for="colorPicker_button-touched-color" class="form-label">Buttons (touched)</label>
                       <div>
-                        <input id="colorPicker_button-touched-color" type="text" class="coloris color-picker form-control" value="#706F8E" data-property="button-touched-color" data-default="#706F8E">
+                        <input id="colorPicker_button-touched-color" type="text" class="coloris color-picker form-control" value="#3b5c8a" data-property="button-touched-color" data-default="#3b5c8a">
                       </div>
                     </div>
                     <div class="col-12 col-sm-6 col-lg-4">
                       <label for="colorPicker_success-message-color" class="form-label">Success message</label>
                       <div>
-                        <input id="colorPicker_success-message-color" type="text" class="coloris color-picker form-control" value="#528e54" data-property="success-message-color" data-default="#528e54">
+                        <input id="colorPicker_success-message-color" type="text" class="coloris color-picker form-control" value="#e06a47" data-property="success-message-color" data-default="#e06a47">
                       </div>
                     </div>
                     <div class="col-12 col-sm-6 col-lg-4">
                       <label for="colorPicker_header-color" class="form-label">Header text</label>
                       <div>
-                        <input id="colorPicker_header-color" type="text" class="coloris color-picker form-control" value="#fff" data-property="header-color" data-default="#fff">
+                        <input id="colorPicker_header-color" type="text" class="coloris color-picker form-control" value="#f5f5f0" data-property="header-color" data-default="#f5f5f0">
                       </div>
                     </div>
                     <div class="col-12 col-sm-6 col-lg-4">
                       <label for="colorPicker_subheader-color" class="form-label">Subheader text</label>
                       <div>
-                        <input id="colorPicker_subheader-color" type="text" class="coloris color-picker form-control" value="#fff" data-property="subheader-color" data-default="#fff">
+                        <input id="colorPicker_subheader-color" type="text" class="coloris color-picker form-control" value="#e6e6e2" data-property="subheader-color" data-default="#e6e6e2">
                       </div>
                     </div>
                     <div class="col-12 col-sm-6 col-lg-4">
                       <label for="colorPicker_footer-color" class="form-label">Footer text</label>
                       <div>
-                        <input id="colorPicker_footer-color" type="text" class="coloris color-picker form-control" value="#fff" data-property="footer-color" data-default="#fff">
+                        <input id="colorPicker_footer-color" type="text" class="coloris color-picker form-control" value="#f5f5f0" data-property="footer-color" data-default="#f5f5f0">
                       </div>
                     </div>
                     <div class="col-12 col-sm-6 col-lg-4">
                       <label for="colorPicker_subfooter-color" class="form-label">Subfooter text</label>
                       <div>
-                        <input id="colorPicker_subfooter-color" type="text" class="coloris color-picker form-control" value="#fff" data-property="subfooter-color" data-default="#fff">
+                        <input id="colorPicker_subfooter-color" type="text" class="coloris color-picker form-control" value="#e6e6e2" data-property="subfooter-color" data-default="#e6e6e2">
                       </div>
                     </div>
                     <div class="col-12 col-sm-6 col-lg-4">
                       <label for="colorPicker_button-text-color" class="form-label">Button text</label>
                       <div>
-                        <input id="colorPicker_button-text-color" type="text" class="coloris color-picker form-control" value="#fff" data-property="button-text-color" data-default="#fff">
+                        <input id="colorPicker_button-text-color" type="text" class="coloris color-picker form-control" value="#f5f5f0" data-property="button-text-color" data-default="#f5f5f0">
                       </div>
                     </div>
                   </div>
@@ -592,64 +710,6 @@
                       <input id="buttonTextSizeSlider" type="range" class="form-range text-size-slider" data-property="button" min="-2", max="3" start="0" step="0.5">
                     </div>
                   </div>
-
-                  <h4 class="mt-2">Layout</h4>
-                  <div class="row gy-2 mt-2">
-                    <div class="col-12 col-md-6 col-lg-4">
-                      <label for="columnCountSelect" class="form-label">Number of columns</label>
-                      <select id="columnCountSelect" class="form-select">
-                        <option value="auto">Auto</option>
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value="3">3</option>
-                        <option value="4">4</option>
-                        <option value="5">5</option>
-                        <option value="6">6</option>
-                      </select>
-                    </div>
-                    <div class="col-12 col-md-6 col-lg-4">
-                      <label for="headerToButtonsSlider" class="form-label">
-                        Header height
-                        <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="The amount of space allocated to the header and subheader." style="font-size: 0.55em;">?</span>
-                      </label>
-                      <input id="headerToButtonsSlider" type="range" class="form-range height-slider" min="0", max="50" start="20" step="5">
-                    </div>
-                    <div class="col-12 col-md-6 col-lg-4">
-                      <label for="headerPaddingHeightSlider" class="form-label">
-                        Header padding
-                        <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="Padding from the top of the display." style="font-size: 0.55em;">?</span>
-                      </label>
-                      <input id="headerPaddingHeightSlider" type="range" class="form-range padding-slider" data-property="header_padding" min="0", max="15" start="5" step="5" value="5">
-                    </div>
-                    <div class="col-12 col-md-6 col-lg-4">
-                      <label for="buttonsToFooterSlider" class="form-label">
-                        Footer height
-                        <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="The amount of space allocated to the footer and subfooter." style="font-size: 0.55em;">?</span>
-                      </label>
-                      <input id="buttonsToFooterSlider" type="range" class="form-range height-slider" min="0", max="50" start="20" step="5">
-                    </div>
-                    <div class="col-12 col-md-6 col-lg-4">
-                      <label for="footerPaddingHeightSlider" class="form-label">
-                        Footer padding
-                        <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="Padding from the bottom of the display." style="font-size: 0.55em;">?</span>
-                      </label>
-                      <input id="footerPaddingHeightSlider" type="range" class="form-range padding-slider" data-property="footer_padding" min="0", max="15" start="5" step="5" value="5">
-                    </div>
-                    <div class="col-12 col-md-6 col-lg-4">
-                      <label for="buttonPaddingHeightSlider" class="form-label">
-                        Button padding
-                        <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="Padding above and below the buttons." style="font-size: 0.55em;">?</span>
-                      </label>
-                      <input id="buttonPaddingHeightSlider" type="range" class="form-range padding-slider" data-property="button_padding" min="0", max="30" start="10" step="5">
-                    </div>
-                    <div class="col-12 col-md-6 col-lg-4">
-                      <label for="imageHeightSlider" class="form-label">
-                        Image size
-                        <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="The maximum height allowed for images." style="font-size: 0.55em;">?</span>
-                      </label>
-                      <input id="imageHeightSlider" type="range" class="form-range padding-slider" data-property="image_height" min="10", max="100" start="90" step="5">
-                    </div>
-                  </div>
                 </div>
               </div>
             </div>
@@ -657,18 +717,17 @@
         </div>
         <div id='previewPane' class="col-6 col-lg-5 sticky-top" style="z-index: 1;">
           <div id="previewContainer" class="">
-            <iframe id="previewFrame" class="mt-3 preview-16x9" src="../voting_kiosk.html?standalone=true"></iframe>
+            <iframe id="previewFrame" class="mt-3 preview-16x9" src="index.html?standalone=true"></iframe>
           </div>
         </div>
       </div>
     </div>
 
-  <script type="text/javascript" src="../js/jquery-3.7.1.min.js"></script>
-  <script type="text/javascript" src="../js/bootstrap_5_3/bootstrap.bundle.min.js"></script>
-  <script type="text/javascript" src="../js/showdown.min.js"></script>
-  <script type="text/javascript" src="../js/platform.js"></script>
-  <script type="text/javascript" src="../js/coloris.min.js"></script>
-  <script type="text/javascript" src="../js/tiny-mde.min.js"></script>
+  <script type="text/javascript" src="/js/bootstrap_5_3/bootstrap.bundle.min.js"></script>
+  <script type="text/javascript" src="/js/showdown.min.js"></script>
+  <script type="text/javascript" src="/js/platform.js"></script>
+  <script type="text/javascript" src="/js/coloris.min.js"></script>
+  <script type="text/javascript" src="/js/tiny-mde.min.js"></script>
   <script type="module" src="setup.js"></script>
 
   </body>

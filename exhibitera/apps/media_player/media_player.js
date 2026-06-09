@@ -1,18 +1,12 @@
 /* global Js3dModelViewer */
-import * as exCommon from '../js/exhibitera_app_common.js'
+import * as exFiles from '../../common/files.js'
+import * as appsCommon from '../js/exhibitera_app_common.js'
+import * as appsMarkdown from '../js/exhibitera_app_markdown.js'
 
 function updateParser (update) {
   // Read updates specific to the media player
 
-  if ('definition' in update && update.definition !== currentDefintion) {
-    currentDefintion = update.definition
-    exCommon.loadDefinition(currentDefintion)
-      .then((result) => {
-        loadDefinition(result.definition)
-      })
-  }
-
-  if ('permissions' in update && 'audio' in update.permissions) {
+  if ('audio' in update?.permissions) {
     document.getElementById('fullscreenVideo').muted = !update.permissions.audio
     document.getElementById('audioPlayer').muted = !update.permissions.audio
   }
@@ -23,33 +17,69 @@ function loadDefinition (def) {
 
   const root = document.querySelector(':root')
 
-  exCommon.config.definition = def
-  exCommon.config.sourceList = []
+  appsCommon.config.definition = def
+  appsCommon.config.sourceList = []
   def.content_order.forEach((uuid) => {
-    exCommon.config.sourceList.push(def.content[uuid])
+    appsCommon.config.sourceList.push(def.content[uuid])
   })
+
+  // Create tne progress indicators
+  const progressContainer = document.getElementById('progressContainer')
+  const progressIndicator = document.getElementById('progressIndicator')
+  progressIndicator.innerText = ''
+
+  for (let i = 0; i < def.content_order.length; i++) {
+    const dot = document.createElement('div')
+    dot.classList = 'progress-dot'
+    progressIndicator.appendChild(dot)
+  }
+
+  // Indicator position
+  const posSplit = (def?.behavior?.progress_indicator?.position ?? 'bottom_left').split('_')
+  const vertPos = posSplit[0]
+  const horizPos = posSplit[1]
+
+  if (vertPos === 'top') {
+    progressContainer.style.top = 0
+  } else {
+    progressContainer.style.bottom = 0
+  }
+  if (horizPos === 'left') {
+    progressContainer.classList.add('justify-content-start')
+    progressContainer.classList.remove('justify-content-center')
+    progressContainer.classList.remove('justify-content-end')
+  } else if (horizPos === 'middle') {
+    progressContainer.classList.add('justify-content-center')
+    progressContainer.classList.remove('justify-content-start')
+    progressContainer.classList.remove('justify-content-end')
+  } else if (horizPos === 'right') {
+    progressContainer.classList.add('justify-content-end')
+    progressContainer.classList.remove('justify-content-start')
+    progressContainer.classList.remove('justify-content-center')
+  }
+
+  // Indicator size
+  const indicatorSize = parseFloat(def?.behavior?.progress_indicator?.size ?? 1)
+  root.style.setProperty('--progress-indicator-size', indicatorSize)
+  progressIndicator.style.width = 'max-content'
+
+  // Indicator visibility
+  if (def?.behavior?.progress_indicator?.visible ?? false) {
+    progressContainer.style.display = 'flex'
+  } else {
+    progressContainer.style.display = 'none'
+  }
 
   // Watermark settings
   const watermarkEl = document.getElementById('watermark')
-  if ('watermark' in def && 'file' in def.watermark && def.watermark.file !== '') {
+  if ((def?.watermark?.file ?? '') !== '') {
     watermarkEl.style.display = 'block'
-    watermarkEl.src = 'content/' + def.watermark.file
+    watermarkEl.src = '../content/' + def.watermark.file
 
-    if ('x_position' in def.watermark) {
-      watermarkEl.style.left = String(def.watermark.x_position) + 'vw'
-    } else {
-      watermarkEl.style.left = '80vw'
-    }
-    if ('y_position' in def.watermark) {
-      watermarkEl.style.top = String(def.watermark.y_position) + 'vh'
-    } else {
-      watermarkEl.style.top = '80vh'
-    }
-    if ('size' in def.watermark) {
-      watermarkEl.style.height = String(def.watermark.size) + 'vh'
-    } else {
-      watermarkEl.style.height = '10vh'
-    }
+    watermarkEl.style.left = String(def?.watermark?.x_position ?? 80) + 'vw'
+    watermarkEl.style.top = String(def?.watermark?.y_position ?? 80) + 'vh'
+    watermarkEl.style.height = String(def?.watermark?.size ?? 10) + 'vh'
+    watermarkEl.style.opacity = parseFloat(def?.watermark?.opacity) / 100 ?? 1
   } else {
     watermarkEl.style.display = 'none'
   }
@@ -58,17 +88,16 @@ function loadDefinition (def) {
 
   // Color
   // First, reset to defaults (in case a style option doesn't exist in the definition)
-  root.style.setProperty('--subtitle-color', 'white')
+  root.style.setProperty('--subtitleColor', '#f5f5f0')
+  root.style.setProperty('--progressBackgroundColor', '#1a2b3cc4')
+  root.style.setProperty('--progressActiveColor', '#c3512f')
+  root.style.setProperty('--progressInactiveColor', '#6b7280')
 
   // Then, apply the definition settings
   Object.keys(def?.style?.color ?? []).forEach((key) => {
-    console.log(def.style.color[key])
     document.documentElement.style.setProperty('--' + key, def.style.color[key])
   })
-
-  if ('style' in def && 'background' in def.style) {
-    exCommon.setBackground(def.style.background, root, '#000', true)
-  }
+  appsCommon.setBackground(def?.style?.background ?? {}, root, '#0f1419', true)
 
   // Font
 
@@ -101,13 +130,26 @@ function gotoSource (index) {
   // Make sure the index is an integer
   index = parseInt(index)
 
-  if (exCommon.config.debug) {
+  if (appsCommon.config.debug) {
     console.log('gotoSource', index)
   }
 
-  if (index < exCommon.config.sourceList.length) {
-    exCommon.config.activeIndex = index
-    changeMedia(exCommon.config.sourceList[index])
+  if (index < appsCommon.config.sourceList.length) {
+    appsCommon.config.activeIndex = index
+
+    // Update the progress indicator to show the current progress
+    const dots = document.querySelectorAll('.progress-dot')
+    if (dots.length === 0) return
+    for (const dot of dots) {
+      dot.classList.remove('active')
+      dot.innerText = ''
+    }
+    dots[index].classList.add('active')
+    const fillEl = document.createElement('div')
+    fillEl.classList = 'fill'
+    dots[index].appendChild(fillEl)
+
+    changeMedia(index)
   }
 }
 
@@ -115,20 +157,22 @@ function gotoNextSource () {
   // Display the next file in sourceList, looping to the beginning if
   // necessary
 
-  if (exCommon.config.activeIndex + 1 >= exCommon.config.sourceList.length) {
-    exCommon.config.activeIndex = 0
+  if (appsCommon.config.activeIndex + 1 >= appsCommon.config.sourceList.length) {
+    appsCommon.config.activeIndex = 0
   } else {
-    exCommon.config.activeIndex += 1
+    appsCommon.config.activeIndex += 1
   }
 
-  gotoSource(exCommon.config.activeIndex)
+  gotoSource(appsCommon.config.activeIndex)
 }
 
-async function changeMedia (source) {
+async function changeMedia (index) {
   // Load and play a media file given in source
   // delayPlay and playOnly are used when synchronizing multiple displays
 
-  if (exCommon.config.debug) {
+  const source = appsCommon.config.sourceList[index]
+
+  if (appsCommon.config.debug) {
     console.log('changeMedia', source)
   }
 
@@ -142,20 +186,25 @@ async function changeMedia (source) {
 
   let filename
   if (('type' in source) === false || source.type === 'file') {
-    filename = exCommon.config.helperAddress + '/content/' + source.filename
+    filename = appsCommon.config.helperAddress + '/content/' + source.filename
   } else if (source.type === 'url') {
     filename = source.filename
   }
 
-  if ('no_cache' in source && source.no_cache === true) {
+  if (source?.no_cache === true) {
     filename += (/\?/.test(filename) ? '&' : '?') + new Date().getTime()
+  }
+
+  const mimetype = exFiles.guessMimetype(source.filename)
+  if (['audio', 'image', 'model', 'video'].includes(mimetype) === false) {
+    console.log(`File ${source.filename} has an invalid mimetype of ${mimetype}`)
   }
 
   // Split off the extension
   const split = source.filename.split('.')
   const ext = split[split.length - 1].toLowerCase()
 
-  if (['mp4', 'mpeg', 'm4v', 'webm', 'mov', 'ogv', 'mpg'].includes(ext)) {
+  if (mimetype === 'video') {
     // Video file
     clearTimeout(sourceAdvanceTimer) // Only used for pictures
     videoContainer.style.opacity = 1
@@ -166,20 +215,22 @@ async function changeMedia (source) {
       video.pause()
       video.src = filename
       video.load()
-      video.play()
     }
+    video.play()
+    video.style.objectFit = source?.fill_mode ?? 'contain'
+
     // Subtitles
     if (subtitleEl != null) subtitleEl.remove()
     if (source?.subtitles?.filename != null) {
       subtitleEl = document.createElement('track')
-      subtitleEl.src = exCommon.config.helperAddress + '/content/' + source.subtitles.filename
+      subtitleEl.src = appsCommon.config.helperAddress + '/content/' + source.subtitles.filename
       video.appendChild(subtitleEl)
       video.textTracks[0].mode = 'showing'
     }
-    if (exCommon.config.sourceList.length > 1) { // Don't loop or onended will never fire
+    if (appsCommon.config.sourceList.length > 1) { // Don't loop or onended will never fire
       video.loop = false
       video.onended = function () {
-        if (exCommon.config.autoplayEnabled === true) {
+        if (appsCommon.config.autoplayEnabled === true) {
           gotoNextSource()
         } else {
           video.play()
@@ -188,17 +239,20 @@ async function changeMedia (source) {
     } else {
       video.loop = true
     }
-  } else if (['png', 'jpg', 'jpeg', 'tiff', 'tif', 'bmp', 'heic', 'webp'].includes(ext)) {
+  } else if (mimetype === 'image') {
     // Image file
     video.pause()
     audio.pause()
     videoContainer.style.opacity = 0
     modelContainer.style.opacity = 0
     image.src = filename
+
+    image.style.objectFit = source?.fill_mode ?? 'contain'
     imageContainer.style.opacity = 1
     clearTimeout(sourceAdvanceTimer)
     sourceAdvanceTimer = setTimeout(gotoNextSource, source.duration * 1000)
-  } else if (['aac', 'm4a', 'mp3', 'oga', 'ogg', 'weba', 'wav'].includes(ext)) {
+    trackProgress(index, source.duration * 1000)
+  } else if (mimetype === 'audio') {
     // Audio file
     video.pause()
     videoContainer.style.opacity = 0
@@ -209,12 +263,13 @@ async function changeMedia (source) {
       audio.pause()
       audio.src = filename
       audio.load()
-      audio.play()
     }
-    if (exCommon.config.sourceList.length > 1) { // Don't loop or onended will never fire
+    audio.play()
+
+    if (appsCommon.config.sourceList.length > 1) { // Don't loop or onended will never fire
       audio.loop = false
       audio.onended = function () {
-        if (exCommon.config.autoplayEnabled === true) {
+        if (appsCommon.config.autoplayEnabled === true) {
           gotoNextSource()
         } else {
           audio.play()
@@ -223,15 +278,15 @@ async function changeMedia (source) {
     } else {
       audio.loop = true
     }
-  } else if (['obj', 'glb'].includes(ext)) {
+  } else if (mimetype === 'model') {
     // 3D model
     videoContainer.style.opacity = 0
     imageContainer.style.opacity = 0
     modelContainer.style.opacity = 1
 
     let backgroundColor = 'rgb(0, 0, 0)'
-    if (exCommon.config.definition.style.background.mode === 'color') {
-      backgroundColor = exCommon.config.definition.style.background.color
+    if (appsCommon.config.definition.style.background.mode === 'color') {
+      backgroundColor = appsCommon.config.definition.style.background.color
     }
 
     const scene = Js3dModelViewer.prepareScene(model, {
@@ -270,6 +325,7 @@ async function changeMedia (source) {
         document.getElementById('modelViewer').innerHTML = ''
       }, 500)
     }, source.duration * 1000)
+    trackProgress(index, source.duration * 1000)
   }
 
   // Annotations
@@ -278,52 +334,54 @@ async function changeMedia (source) {
   document.querySelectorAll('.annotation').forEach(function (a) {
     a.remove()
   })
-  if ('annotations' in source) {
-    for (const key of Object.keys(source.annotations)) {
-      const annotation = source.annotations[key]
+  for (const key of Object.keys(source?.annotations ?? {})) {
+    const annotation = source.annotations[key]
+    if (['file', 'url'].includes(annotation.type)) {
       annotation.value = await fetchAnnotation(annotation)
-      createAnnotation(annotation)
-    }
+    } else annotation.value = annotation.text
+    createAnnotation(annotation)
   }
+}
+
+function trackProgress (index, total, elapsed = 0) {
+  // Track the progress of an image or model and update the progress dot
+
+  clearTimeout(progressTimer)
+
+  const activeDot = document.querySelector('.progress-dot.active .fill')
+  const pct = (elapsed / total) * 100
+  activeDot.style.width = `${pct}%`
+
+  progressTimer = setTimeout(() => trackProgress(index, total, elapsed + 100), 100)
 }
 
 function createAnnotation (details) {
   // Render an annotation on the display.
 
   const annotation = document.createElement('div')
-  annotation.classList = 'annotation'
-  annotation.innerHTML = details.value
+  annotation.classList = 'annotation text-center'
+  annotation.innerHTML = appsMarkdown.formatText(String(details.value), { removeParagraph: true, string: true })
   annotation.style.position = 'absolute'
 
-  let xPos, ypos
-  if ('x_position' in details) {
-    xPos = details.x_position
-  } else xPos = 50
+  const xPos = details?.x_position ?? 50
   annotation.style.left = xPos + 'vw'
-  if ('y_position' in details) {
-    ypos = details.y_position
-  } else ypos = 50
+
+  const ypos = details?.y_position ?? 50
   annotation.style.top = ypos + 'vh'
-  if ('align' in details) {
-    if (details.align === 'center') annotation.classList.add('align-center')
-    if (details.align === 'right') annotation.classList.add('align-right')
+
+  if (details.align === 'center') {
+    annotation.classList.add('align-center')
+  } else if (details.align === 'right') {
+    annotation.classList.add('align-right')
   }
 
-  if ('font' in details) {
-    annotation.style.fontFamily = exCommon.createFont(details.font, details.font)
+  if (details?.font) {
+    annotation.style.fontFamily = appsCommon.createFont(details.font, details.font)
   } else {
     annotation.style.fontFamily = 'annotation-default'
   }
-  if ('color' in details) {
-    annotation.style.color = details.color
-  } else {
-    annotation.style.color = 'black'
-  }
-  if ('font_size' in details) {
-    annotation.style.fontSize = details.font_size + 'px'
-  } else {
-    annotation.style.fontSize = '20px'
-  }
+  annotation.style.color = details?.color ?? 'black'
+  annotation.style.fontSize = (details?.font_size ?? '20') + 'px'
 
   document.body.appendChild(annotation)
 }
@@ -333,8 +391,9 @@ function fetchAnnotation (details) {
 
   return new Promise((resolve, reject) => {
     if (details.type === 'file') {
-      exCommon.makeHelperRequest({
+      appsCommon.makeHelperRequest({
         method: 'GET',
+        api: '',
         endpoint: '/content/' + details.file,
         noCache: true
       })
@@ -343,34 +402,59 @@ function fetchAnnotation (details) {
           for (const key of details.path) {
             subset = subset[key]
           }
-          resolve(subset)
+          resolve(String(subset))
         })
         .catch(() => {
           reject(new Error('Bad file fetch'))
         })
     } else {
-      $.getJSON(details.file, function (text) {
-        let subset = text
-        for (const key of details.path) {
-          subset = subset[key]
-        }
-        resolve(subset)
-      })
+      fetch(details.file)
+        .then(response => {
+          if (!response.ok) throw new Error('Network response was not ok')
+          return response.json()
+        })
+        .then(text => {
+          let subset = text
+          for (const key of details.path) {
+            subset = subset[key]
+          }
+          resolve(String(subset))
+        })
+        .catch(error => {
+          console.error('Error fetching JSON:', error)
+        })
     }
   })
 }
 
-exCommon.config.activeIndex = 0 // Index of the file from the source list currently showing
-exCommon.config.sourceList = []
-exCommon.config.autoplayEnabled = true
+appsCommon.config.activeIndex = 0 // Index of the file from the source list currently showing
+appsCommon.config.sourceList = []
+appsCommon.config.autoplayEnabled = true
 let subtitleEl = null
 
-exCommon.configureApp({
+appsCommon.configureApp({
   name: 'media_player',
   debug: true,
   loadDefinition,
   parseUpdate: updateParser
 })
 
-let currentDefintion = ''
+const currentDefintion = ''
 let sourceAdvanceTimer = null // Will hold reference to a setTimeout instance to move to the next media.
+let progressTimer = null // Will track the progress of a source towards completion
+
+// Bind event listeners
+const video = document.getElementById('fullscreenVideo')
+video.addEventListener('timeupdate', () => {
+  clearTimeout(progressTimer)
+  const activeDot = document.querySelector('.progress-dot.active .fill')
+  const pct = (video.currentTime / video.duration) * 100
+  activeDot.style.width = `${pct}%`
+})
+const audio = document.getElementById('audioPlayer')
+audio.addEventListener('timeupdate', () => {
+  clearTimeout(progressTimer)
+  const activeDot = document.querySelector('.progress-dot.active .fill')
+  const pct = (audio.currentTime / audio.duration) * 100
+  activeDot.style.width = `${pct}%`
+})

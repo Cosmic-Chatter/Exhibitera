@@ -1,37 +1,272 @@
-/* global bootstrap, Coloris */
+/* global bootstrap */
 
+import exConfig from '../../common/config.js'
+import * as exFiles from '../../common/files.js'
+import * as exUtilities from '../../common/utilities.js'
 import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exFileSelect from '../js/exhibitera_file_select_modal.js'
 import * as exSetup from '../js/exhibitera_setup_common.js'
+import * as exMarkdown from '../js/exhibitera_setup_markdown.js'
 
 async function initializeWizard () {
   // Set up the wizard
 
-  await exSetup.initializeDefinition()
-
-  // Hide all but the welcome screen
-  Array.from(document.querySelectorAll('.wizard-pane')).forEach((el) => {
-    el.style.display = 'none'
-  })
-  document.getElementById('wizardPane_Welcome').style.display = 'block'
+  exSetup.prepareWizard()
 
   // Reset fields
   document.getElementById('wizardDefinitionNameInput').value = ''
   document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'none'
 }
 
+function wizardPopulateContent (files, clear = false) {
+  // Take an array of files and build an HTML representation for the wizard.
+
+  document.getElementById('wizardMediaBlankWarning').style.display = 'none'
+
+  const wizardContentRow = document.getElementById('wizardContentRow')
+  let fileList = JSON.parse(wizardContentRow.dataset?.files ?? '[]')
+  if (clear) {
+    fileList = files
+  } else {
+    for (const filename of files) {
+      if (!fileList.includes(filename)) fileList.push(filename)
+    }
+  }
+  wizardContentRow.dataset.files = JSON.stringify(fileList)
+
+  wizardContentRow.innerText = ''
+
+  for (const filename of fileList) {
+    const col = document.createElement('div')
+    col.classList = 'col px-3'
+    wizardContentRow.appendChild(col)
+
+    const row = document.createElement('div')
+    row.classList = 'row border rounded py-2'
+    col.appendChild(row)
+
+    const thumbCol = document.createElement('div')
+    thumbCol.classList = 'col-12'
+    row.appendChild(thumbCol)
+
+    let thumb
+    if (exFiles.guessMimetype(filename) === 'video') {
+      thumb = document.createElement('video')
+      thumb.classList = 'w-100 rounded'
+      thumb.loop = true
+      thumb.muted = true
+      thumb.controls = false
+      thumb.autoplay = true
+      thumb.disablePictureInPicture = true
+      thumb.disableremoteplayback = true
+    } else {
+      thumb = document.createElement('img')
+      thumb.classList = 'w-100 rounded'
+    }
+    thumb.src = exConfig.api + '/files/' + filename + '/thumbnail'
+    thumbCol.appendChild(thumb)
+
+    const titleCol = document.createElement('div')
+    titleCol.classList = 'col-12 text-center my-2 text-break'
+    titleCol.innerText = filename
+    row.appendChild(titleCol)
+
+    const buttonCol = document.createElement('div')
+    buttonCol.classList = 'col-12 d-flex justify-content-between'
+    row.appendChild(buttonCol)
+
+    const leftButton = document.createElement('button')
+    leftButton.classList = 'btn btn-sm btn-outline-info'
+    leftButton.style.width = '30%'
+    leftButton.innerText = '◀'
+    leftButton.addEventListener('click', (ev) => {
+      wizardRearrageFiles(filename, 'left')
+    })
+    buttonCol.appendChild(leftButton)
+
+    const rightButton = document.createElement('button')
+    rightButton.classList = 'btn btn-sm btn-outline-info'
+    rightButton.style.width = '30%'
+    rightButton.innerText = '▶'
+    rightButton.addEventListener('click', (ev) => {
+      wizardRearrageFiles(filename, 'right')
+    })
+    buttonCol.appendChild(rightButton)
+
+    const deleteButton = document.createElement('button')
+    deleteButton.classList = 'btn btn-sm btn-outline-danger'
+    deleteButton.style.width = '30%'
+    deleteButton.innerText = '✕'
+    deleteButton.addEventListener('click', () => {
+      const wizardContentRow = document.getElementById('wizardContentRow')
+      const arr = JSON.parse(wizardContentRow.dataset?.files ?? '[]')
+      wizardPopulateContent(arr.filter(item => item !== filename), true)
+    })
+    buttonCol.appendChild(deleteButton)
+  }
+}
+
+function wizardRearrageFiles (value, direction) {
+  const wizardContentRow = document.getElementById('wizardContentRow')
+  const arr = JSON.parse(wizardContentRow.dataset?.files ?? '[]')
+
+  const index = arr.indexOf(value)
+  if (index === -1) return arr // not found
+
+  const isLeft = direction === 'left'
+  const isRight = direction === 'right'
+
+  if (!isLeft && !isRight) return arr // invalid direction
+
+  const newIndex = isLeft ? index - 1 : index + 1
+
+  // boundary check
+  if (newIndex < 0 || newIndex >= arr.length) return arr
+
+  // swap
+  const temp = arr[newIndex]
+  arr[newIndex] = arr[index]
+  arr[index] = temp
+
+  wizardPopulateContent(arr, true)
+}
+
+async function wizardForward (currentPage) {
+  // Check if the wizard is ready to advance and perform the move
+
+  if (currentPage === 'Welcome') {
+    const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
+    if (defName !== '') {
+      document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'none'
+      exSetup.wizardGoTo('Content')
+    } else {
+      document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'block'
+    }
+  } else if (currentPage === 'Content') {
+    const wizardContentRow = document.getElementById('wizardContentRow')
+    if (wizardContentRow.children.length === 0) {
+      document.getElementById('wizardMediaBlankWarning').style.display = 'block'
+      return
+    } else document.getElementById('wizardMediaBlankWarning').style.display = 'none'
+
+    // Check if there are images or 3D models which need a duration set.
+    const files = JSON.parse(wizardContentRow.dataset?.files ?? '[]')
+
+    if (files.length === 1) {
+      document.getElementById('wizardDurationSlider').value = 30
+      exSetup.wizardGoTo('ColorMode')
+    } else {
+      let timedFile = false
+      for (const file of files) {
+        if (['model', 'image'].includes(exFiles.guessMimetype(file))) timedFile = true
+      }
+      if (timedFile) {
+        exSetup.createAdvancedSlider(document.getElementById('wizardDurationSlider'))
+        exSetup.wizardGoTo('Duration')
+      } else {
+        document.getElementById('wizardDurationSlider').value = 30
+        exSetup.wizardGoTo('ColorMode')
+      }
+    }
+  } else if (currentPage === 'Duration') {
+    exSetup.wizardGoTo('ColorMode')
+  } else if (currentPage === 'ColorMode') {
+    wizardCreateDefinition()
+  }
+}
+
+function wizardBack (currentPage) {
+  // Move the wizard back one page
+
+  if (currentPage === 'Content') {
+    exSetup.wizardGoTo('Welcome')
+  } else if (currentPage === 'Duration') {
+    exSetup.wizardGoTo('Content')
+  } else if (currentPage === 'ColorMode') {
+    exSetup.wizardGoTo('Content')
+  }
+}
+
+async function wizardCreateDefinition () {
+  // Use the provided details to build a definition file.
+
+  // Definition name
+  const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
+  exSetup.updateWorkingDefinition(['name'], defName)
+
+  // Cycle the list of files and build an entry for each
+  const wizardContentRow = document.getElementById('wizardContentRow')
+  const files = JSON.parse(wizardContentRow.dataset?.files ?? '[]')
+  const content = {}
+  const contentOrder = []
+  for (const file of files) {
+    const itemUUID = exUtilities.uuid()
+    const mimetype = exFiles.guessMimetype(file)
+
+    contentOrder.push(itemUUID)
+    content[itemUUID] = {
+      filename: file,
+      mimetype,
+      type: 'file',
+      uuid: itemUUID
+    }
+
+    // Handle mimetype-specific attributes
+    if (mimetype === 'image') {
+      content[itemUUID].duration = parseFloat(document.getElementById('wizardDurationSlider').value)
+      content[itemUUID].fill_mode = 'contain'
+    } else if (mimetype === 'video') {
+      content[itemUUID].fill_mode = 'contain'
+    } else if (mimetype === 'model') {
+      content[itemUUID].duration = parseFloat(document.getElementById('wizardDurationSlider').value)
+    }
+  }
+  exSetup.updateWorkingDefinition(['content'], content)
+  exSetup.updateWorkingDefinition(['content_order'], contentOrder)
+
+  // Switch to light color scheme if needed
+  if (document.getElementById('wizardColorModeLight').checked) {
+    exSetup.updateWorkingDefinition(['style', 'color'], {
+      progressActiveColor: '#c3512f',
+      progressBackgroundColor: '#f5f5f0e5',
+      progressInactiveColor: '#6b7280',
+      subtitleColor: '#0f1419'
+    })
+    exSetup.updateWorkingDefinition(['style', 'background'], {
+      color: '#e6e6e2',
+      gradient_color_1: '#f5f5f0',
+      gradient_color_2: '#e6e6e2',
+      mode: 'color'
+    })
+  }
+
+  const uuid = exSetup.config.workingDefinition.uuid
+
+  await exSetup.saveDefinition(defName)
+  const result = await exCommon.getAvailableDefinitions('media_player')
+  exSetup.populateAvailableDefinitions(result.definitions)
+  document.getElementById('availableDefinitionSelect').value = uuid
+
+  editDefinition(uuid)
+  exUtilities.hideModal('#setupWizardModal')
+}
+
 async function clearDefinitionInput (full = true) {
   // Clear all input related to a defnition
 
-  if (full === true) {
-    await exSetup.initializeDefinition()
-  }
+  if (full === true) exSetup.initializeDefinition()
 
   // Definition details
-  $('#definitionNameInput').val('')
+  document.getElementById('definitionNameInput').value = ''
 
   // Reset style options
-  const colorInputs = ['subtitleColor']
+  document.getElementById('showProgressCheckbox').checked = false
+  document.getElementById('progressIndicatorPosSelect').value = 'bottom_left'
+  document.getElementById('progressIndicatorSizeSelect').value = '1'
+  document.getElementById('progressIndicatorPosCol').style.display = 'none'
+  document.getElementById('progressIndicatorSizeCol').style.display = 'none'
+
+  const colorInputs = ['subtitleColor', 'progressBackgroundColor', 'progressInactiveColor', 'progressActiveColor']
   colorInputs.forEach((input) => {
     const el = document.getElementById('colorPicker_' + input)
     el.value = el.getAttribute('data-default')
@@ -40,9 +275,9 @@ async function clearDefinitionInput (full = true) {
 
   exSetup.updateAdvancedColorPicker('style>background', {
     mode: 'color',
-    color: '#000',
-    gradient_color_1: '#000',
-    gradient_color_2: '#000'
+    color: '#0f1419',
+    gradient_color_1: '#1a2b3c',
+    gradient_color_2: '#0f1419'
   })
 
   // Reset font face options
@@ -55,9 +290,7 @@ async function clearDefinitionInput (full = true) {
   const watermarkSelect = document.getElementById('watermarkSelect')
   watermarkSelect.innerHTML = 'Select file'
   watermarkSelect.setAttribute('data-filename', '')
-  document.getElementById('watermarkXPos').value = '80'
-  document.getElementById('watermarkYPos').value = '80'
-  document.getElementById('watermarkSize').value = '10'
+  exSetup.createAdvancedSliders()
 }
 
 function editDefinition (uuid = '') {
@@ -66,77 +299,64 @@ function editDefinition (uuid = '') {
   clearDefinitionInput(false)
   const def = exSetup.getDefinitionByUUID(uuid)
 
-  $('#definitionSaveButton').data('initialDefinition', structuredClone(def))
-  $('#definitionSaveButton').data('workingDefinition', structuredClone(def))
+  exSetup.config.initialDefinition = structuredClone(def)
+  exSetup.config.workingDefinition = structuredClone(def)
 
-  $('#definitionNameInput').val(def.name)
+  // Configure preview behavior
+  exSetup.configurePreviewFromDefinition(def)
+
+  document.getElementById('definitionNameInput').value = def.name
   rebuildItemList()
 
-  if ('style' in def === false) {
-    def.style = {
-      background: {
-        mode: 'color',
-        color: '#000'
-      }
-    }
-    exSetup.updateWorkingDefinition(['style', 'background', 'mode'], 'color')
-    exSetup.updateWorkingDefinition(['style', 'background', 'color'], '#000')
+  // Progress indicator
+  document.getElementById('showProgressCheckbox').checked = def?.behavior?.progress_indicator?.visible ?? false
+  const posCol = document.getElementById('progressIndicatorPosCol')
+  const sizeCol = document.getElementById('progressIndicatorSizeCol')
+  if (def?.behavior?.progress_indicator?.visible ?? false) {
+    posCol.style.display = 'block'
+    sizeCol.style.display = 'block'
+  } else {
+    posCol.style.display = 'none'
+    sizeCol.style.display = 'none'
   }
 
-  // Set the appropriate values for any advanced color pickers
-  if (def?.style?.background) {
-    exSetup.updateAdvancedColorPicker('style>background', def.style.background)
-  }
+  document.getElementById('progressIndicatorPosSelect').value = def?.behavior?.progress_indicator?.position ?? 'bottom_left'
+  document.getElementById('progressIndicatorSizeSelect').value = def?.behavior?.progress_indicator?.size ?? '1'
+
+  exSetup.updateAdvancedColorPicker('style>background', def?.style?.background)
+  exSetup.updateColorPickers(def?.style?.color ?? {})
+  exSetup.updateAdvancedFontPickers(def?.style?.font ?? {})
+  exSetup.updateTextSizeSliders(def?.style?.text_size ?? {}, { mode: 'color', color: '#000' })
 
   // Set the appropriate values for the watermark
-  if (def?.watermark?.file && def.watermark.file !== '') {
+  if ((def?.watermark?.file ?? '') !== '') {
     const watermarkSelect = document.getElementById('watermarkSelect')
     watermarkSelect.innerHTML = def.watermark.file
     watermarkSelect.setAttribute('data-filename', def.watermark.file)
   }
-  document.getElementById('watermarkXPos').value = def?.watermark?.x_position ?? '80'
-  document.getElementById('watermarkYPos').value = def?.watermark?.y_position ?? '80'
-  document.getElementById('watermarkSize').value = def?.watermark?.size ?? '10'
-
-  // Set the appropriate values for the color pickers
-  for (const key of Object.keys(def.style.color)) {
-    const el = document.getElementById('colorPicker_' + key)
-    if (el == null) continue
-    el.value = def.style.color[key]
-    el.dispatchEvent(new Event('input', { bubbles: true }))
-  }
-
-  // Set the appropriate values for the advanced font pickers
-  if (def?.style?.font) {
-    Object.keys(def.style.font).forEach((key) => {
-      const picker = document.querySelector(`.AFP-select[data-path="style>font>${key}"`)
-      exSetup.setAdvancedFontPicker(picker, def.style.font[key])
-    })
-  }
-
-  // Set the appropriate values for the text size selects
-  Object.keys(def.style.text_size).forEach((key) => {
-    document.getElementById(key + 'TextSizeSlider').value = def.style.text_size[key]
-  })
+  exSetup.createAdvancedSlider(document.getElementById('watermarkXPos'), def?.watermark?.x_position)
+  exSetup.createAdvancedSlider(document.getElementById('watermarkYPos'), def?.watermark?.y_position)
+  exSetup.createAdvancedSlider(document.getElementById('watermarkSize'), def?.watermark?.size)
+  exSetup.createAdvancedSlider(document.getElementById('watermarkOpacity'), def?.watermark?.opacity)
 
   // Configure the preview frame
-  document.getElementById('previewFrame').src = '../media_player.html?standalone=true&definition=' + def.uuid
+  document.getElementById('previewFrame').src = 'index.html?standalone=true&definition=' + def.uuid
 }
 
 function createThumbnail () {
   // Ask the helper to createa video thumbnail based on the thumbnails of all the selected media.
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+  const workingDefinition = exSetup.config.workingDefinition
   const files = []
-  workingDefinition.content_order.forEach((uuid) => {
-    if (exCommon.guessMimetype(workingDefinition.content[uuid].filename) === 'audio') {
+  for (const uuid of workingDefinition?.content_order ?? []) {
+    if (exFiles.guessMimetype(workingDefinition.content[uuid].filename) === 'audio') {
       // Pass
-    } else if (exCommon.guessMimetype(workingDefinition.content[uuid].filename) === 'model') {
+    } else if (exFiles.guessMimetype(workingDefinition.content[uuid].filename) === 'model') {
       // Pass
     } else {
       files.push(workingDefinition.content[uuid].filename)
     }
-  })
+  }
 
   exCommon.makeHelperRequest({
     method: 'POST',
@@ -151,10 +371,10 @@ function createThumbnail () {
 function addItem () {
   // Add an item to the working defintiion
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+  const workingDefinition = exSetup.config.workingDefinition
 
   const item = {
-    uuid: exCommon.uuid(),
+    uuid: exUtilities.uuid(),
     filename: '',
     duration: 30
   }
@@ -162,11 +382,11 @@ function addItem () {
   workingDefinition.content_order.push(item.uuid)
 
   createItemHTML(item, workingDefinition.content_order.length)
-  console.log($('#definitionSaveButton').data('workingDefinition'))
 }
 
 function createItemHTML (item, num) {
   // Add a blank item to the itemList
+
   const itemCol = document.createElement('div')
   itemCol.classList = 'col-12 content-item'
   itemCol.setAttribute('id', 'Item_' + item.uuid)
@@ -189,25 +409,75 @@ function createItemHTML (item, num) {
   numberCol.appendChild(number)
 
   const nameCol = document.createElement('div')
-  nameCol.classList = 'col-11'
+  nameCol.classList = 'col-10 col-lg-9'
   cardBody.appendChild(nameCol)
 
   const name = document.createElement('div')
-  name.classList = 'w-100 mb-3 file-field'
+  name.classList = 'w-100 file-field'
   name.innerHTML = item.filename
   nameCol.appendChild(name)
 
-  const modifyPane = document.createElement('div')
-  modifyPane.classList = 'col-12 col-md-6'
-  cardBody.appendChild(modifyPane)
+  const orderButtonsCol = document.createElement('div')
+  orderButtonsCol.classList = 'col-12 col-lg-2 mb-2 mb-lg-0 d-flex align-items-start justify-content-end'
+  cardBody.appendChild(orderButtonsCol)
 
-  const modifyRow = document.createElement('div')
-  modifyRow.classList = 'row gy-2'
-  modifyPane.appendChild(modifyRow)
+  const orderButtonLeft = document.createElement('button')
+  orderButtonLeft.classList = 'btn btn-outline-info btn-sm'
+  orderButtonLeft.innerHTML = '▲'
+  orderButtonLeft.setAttribute('data-bs-toggle', 'tooltip')
+  orderButtonLeft.setAttribute('title', 'Move item up')
+  orderButtonLeft.addEventListener('click', (event) => {
+    changeItemOrder(item.uuid, -1)
+  })
+  orderButtonsCol.appendChild(orderButtonLeft)
+
+  const orderButtonRight = document.createElement('button')
+  orderButtonRight.classList = 'btn btn-outline-info btn-sm ms-1'
+  orderButtonRight.innerHTML = '▼'
+  orderButtonRight.setAttribute('data-bs-toggle', 'tooltip')
+  orderButtonRight.setAttribute('title', 'Move item down')
+  orderButtonRight.addEventListener('click', (event) => {
+    changeItemOrder(item.uuid, 1)
+  })
+  orderButtonsCol.appendChild(orderButtonRight)
+
+  const deleteButton = document.createElement('button')
+  deleteButton.classList = 'btn btn-outline-danger btn-sm ms-3'
+  deleteButton.innerHTML = 'Delete'
+  deleteButton.addEventListener('click', (event) => {
+    deleteitem(item.uuid)
+  })
+  orderButtonsCol.appendChild(deleteButton)
+
+  const previewCol = document.createElement('div')
+  previewCol.classList = 'col-12 col-md-6'
+  cardBody.appendChild(previewCol)
+
+  const image = document.createElement('img')
+  image.classList = 'image-preview'
+  image.style.maxHeight = '200px'
+  image.style.width = '100%'
+  image.style.objectFit = 'contain'
+  image.style.display = 'none'
+  previewCol.appendChild(image)
+
+  const video = document.createElement('video')
+  video.classList = 'video-preview'
+  video.style.maxHeight = '200px'
+  video.style.width = '100%'
+  video.style.display = 'none'
+  video.style.objectFit = 'contain'
+  video.setAttribute('autoplay', true)
+  video.muted = 'true'
+  video.setAttribute('loop', 'true')
+  video.setAttribute('playsinline', 'true')
+  video.setAttribute('webkit-playsinline', 'true')
+  video.setAttribute('disablePictureInPicture', 'true')
+  previewCol.appendChild(video)
 
   const selectButtonCol = document.createElement('div')
   selectButtonCol.classList = 'col-12 mt-2'
-  modifyRow.appendChild(selectButtonCol)
+  previewCol.appendChild(selectButtonCol)
 
   const selectDropdown = document.createElement('div')
   selectDropdown.classList = 'dropdown w-100'
@@ -256,40 +526,70 @@ function createItemHTML (item, num) {
   })
   li1.appendChild(selectURL)
 
-  const orderButtonsCol = document.createElement('div')
-  orderButtonsCol.classList = 'col-12 mt-2'
-  modifyRow.appendChild(orderButtonsCol)
+  // Cache
+  const cacheCol = document.createElement('div')
+  cacheCol.classList = 'col-12 mt-2 cache-col'
+  previewCol.appendChild(cacheCol)
 
-  const orderButtonsRow = document.createElement('div')
-  orderButtonsRow.classList = 'row'
-  orderButtonsCol.appendChild(orderButtonsRow)
+  const cacheGroup = document.createElement('div')
+  cacheGroup.classList = 'form-check'
+  cacheCol.appendChild(cacheGroup)
 
-  const orderButtonLeftCol = document.createElement('div')
-  orderButtonLeftCol.classList = 'col-6'
-  orderButtonsRow.appendChild(orderButtonLeftCol)
-
-  const orderButtonLeft = document.createElement('button')
-  orderButtonLeft.classList = 'btn btn-info btn-sm w-100'
-  orderButtonLeft.innerHTML = '◀'
-  orderButtonLeft.addEventListener('click', (event) => {
-    changeItemOrder(item.uuid, -1)
+  const cacheCheck = document.createElement('input')
+  cacheCheck.classList = 'form-check-input'
+  cacheCheck.setAttribute('type', 'checkbox')
+  if ('no_cache' in item && item.no_cache === true) cacheCheck.checked = true
+  cacheCheck.addEventListener('change', (event) => {
+    exSetup.updateWorkingDefinition(['content', item.uuid, 'no_cache'], cacheCheck.checked)
+    exSetup.previewDefinition(true)
   })
-  orderButtonLeftCol.appendChild(orderButtonLeft)
+  cacheGroup.appendChild(cacheCheck)
 
-  const orderButtonRightCol = document.createElement('div')
-  orderButtonRightCol.classList = 'col-6'
-  orderButtonsRow.appendChild(orderButtonRightCol)
+  const cacheLabel = document.createElement('label')
+  cacheLabel.classList = 'form-check-label'
+  cacheLabel.innerHTML = `
+  Disable cache
+  <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="Force the media to reload every time. Choose this option only if the media will change. Please respect usage limits for linked media." style="font-size: 0.55em;">?</span>
+  `
+  cacheGroup.appendChild(cacheLabel)
 
-  const orderButtonRight = document.createElement('button')
-  orderButtonRight.classList = 'btn btn-info btn-sm w-100'
-  orderButtonRight.innerHTML = '▶'
-  orderButtonRight.addEventListener('click', (event) => {
-    changeItemOrder(item.uuid, 1)
+  const modifyPane = document.createElement('div')
+  modifyPane.classList = 'col-12 col-md-6'
+  cardBody.appendChild(modifyPane)
+
+  const modifyRow = document.createElement('div')
+  modifyRow.classList = 'row gy-2'
+  modifyPane.appendChild(modifyRow)
+
+  // Fill mode
+  const fillCol = document.createElement('div')
+  fillCol.classList = 'col-12 mt-2 fill-col'
+  modifyRow.appendChild(fillCol)
+
+  const fillLabel = document.createElement('label')
+  fillLabel.classList = 'form-label'
+  fillLabel.innerText = 'Fill mode'
+  fillCol.appendChild(fillLabel)
+
+  const fillSelect = document.createElement('select')
+  fillSelect.classList = 'form-select'
+  fillSelect.appendChild(new Option('Show entire image', 'contain'))
+  fillSelect.appendChild(new Option('Fill entire screen', 'cover'))
+  fillSelect.addEventListener('change', (ev) => {
+    exSetup.updateWorkingDefinition(['content', item.uuid, 'fill_mode'], ev.target.value)
+    exSetup.previewDefinition(true)
   })
-  orderButtonRightCol.appendChild(orderButtonRight)
+  fillCol.appendChild(fillSelect)
 
+  if (['image', 'video'].includes(exFiles.guessMimetype(item.filename))) {
+    fillCol.style.display = 'block'
+  } else {
+    fillCol.style.display = 'none'
+  }
+
+  // Duration
   const durationCol = document.createElement('div')
-  durationCol.classList = 'col-12 mt-2 duration-col'
+  durationCol.classList = 'col-12 col-lg-6 mt-2 duration-col'
   modifyRow.appendChild(durationCol)
 
   const durationLabel = document.createElement('label')
@@ -319,7 +619,7 @@ function createItemHTML (item, num) {
   })
 
   durationCol.appendChild(durationInput)
-  if (['image', 'model'].includes(exCommon.guessMimetype(item.filename))) {
+  if (['image', 'model'].includes(exFiles.guessMimetype(item.filename))) {
     durationCol.style.display = 'block'
   } else {
     durationCol.style.display = 'none'
@@ -327,13 +627,13 @@ function createItemHTML (item, num) {
 
   // Rotation
   const rotationCol = document.createElement('div')
-  rotationCol.classList = 'col-12 mt-2 rotation-col'
+  rotationCol.classList = 'col-12 col-lg-6 mt-2 rotation-col'
   modifyRow.appendChild(rotationCol)
 
   const rotationLabel = document.createElement('label')
   rotationLabel.classList = 'form-label'
   rotationLabel.innerHTML = `
-  Rotation
+  Rotations
   <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="The number of rotations of the model to perform." style="font-size: 0.55em;">?</span>
   `
   rotationCol.appendChild(rotationLabel)
@@ -356,7 +656,7 @@ function createItemHTML (item, num) {
     exSetup.previewDefinition(true)
   })
   rotationCol.appendChild(rotationInput)
-  if (['model'].includes(exCommon.guessMimetype(item.filename))) {
+  if (['model'].includes(exFiles.guessMimetype(item.filename))) {
     rotationCol.style.display = 'block'
   } else {
     rotationCol.style.display = 'none'
@@ -424,33 +724,6 @@ function createItemHTML (item, num) {
     materialCol.style.display = 'none'
   }
 
-  // Cache
-  const cacheCol = document.createElement('div')
-  cacheCol.classList = 'col-12 mt-2 cache-col'
-  modifyRow.appendChild(cacheCol)
-
-  const cacheGroup = document.createElement('div')
-  cacheGroup.classList = 'form-check'
-  cacheCol.appendChild(cacheGroup)
-
-  const cacheCheck = document.createElement('input')
-  cacheCheck.classList = 'form-check-input'
-  cacheCheck.setAttribute('type', 'checkbox')
-  if ('no_cache' in item && item.no_cache === true) cacheCheck.checked = true
-  cacheCheck.addEventListener('change', (event) => {
-    exSetup.updateWorkingDefinition(['content', item.uuid, 'no_cache'], cacheCheck.checked)
-    exSetup.previewDefinition(true)
-  })
-  cacheGroup.appendChild(cacheCheck)
-
-  const cacheLabel = document.createElement('label')
-  cacheLabel.classList = 'form-check-label'
-  cacheLabel.innerHTML = `
-  Disable cache
-  <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="Choose this option only if the media will change. Please respect usage limits for linked media." style="font-size: 0.55em;">?</span>
-  `
-  cacheGroup.appendChild(cacheLabel)
-
   const subtitleCol = document.createElement('div')
   subtitleCol.classList = 'col-12 subtitle-col'
   modifyRow.appendChild(subtitleCol)
@@ -467,7 +740,7 @@ function createItemHTML (item, num) {
     showConfigureSubtitlesModal(item.uuid)
   })
   subtitleCol.appendChild(subtitleButton)
-  if ((item?.mimetype ?? exCommon.guessMimetype(item.filename)) !== 'video') {
+  if ((item?.mimetype ?? exFiles.guessMimetype(item.filename)) !== 'video') {
     subtitleCol.style.display = 'none'
   }
 
@@ -475,54 +748,45 @@ function createItemHTML (item, num) {
   annotateCol.classList = 'col-12'
   modifyRow.appendChild(annotateCol)
 
-  const annotateButton = document.createElement('button')
-  annotateButton.classList = 'btn btn-primary w-100'
-  annotateButton.innerHTML = 'Add annotation'
-  annotateButton.addEventListener('click', () => {
+  const annotateDropdown = document.createElement('div')
+  annotateDropdown.classList = 'dropdown w-100'
+  annotateCol.appendChild(annotateDropdown)
+
+  const annotatebutton = document.createElement('button')
+  annotatebutton.classList = 'btn btn-primary dropdown-toggle w-100 mt-2'
+  annotatebutton.setAttribute('type', 'button')
+  annotatebutton.setAttribute('data-bs-toggle', 'dropdown')
+  annotatebutton.setAttribute('aria-expanded', false)
+  annotatebutton.innerHTML = 'Add annotation'
+  annotateDropdown.appendChild(annotatebutton)
+
+  const annotateMenu = document.createElement('ul')
+  annotateMenu.classList = 'dropdown-menu'
+  annotateDropdown.appendChild(annotateMenu)
+
+  const annotateLi1 = document.createElement('li')
+  const annotateLi2 = document.createElement('li')
+  annotateMenu.appendChild(annotateLi1)
+  annotateMenu.appendChild(annotateLi2)
+
+  const annotateTextAction = document.createElement('button')
+  annotateTextAction.classList = 'dropdown-item'
+  annotateTextAction.innerHTML = 'Enter text'
+  annotateTextAction.addEventListener('click', () => {
+    addTextAnnotation(item.uuid)
+  })
+  annotateLi2.appendChild(annotateTextAction)
+
+  const annotateJSONAction = document.createElement('button')
+  annotateJSONAction.classList = 'dropdown-item'
+  annotateJSONAction.innerHTML = 'From JSON'
+  annotateJSONAction.addEventListener('click', () => {
     showAnnotateFromJSONModal(item.uuid)
   })
-  annotateCol.appendChild(annotateButton)
-
-  const previewCol = document.createElement('div')
-  previewCol.classList = 'col-12 col-md-6'
-  cardBody.appendChild(previewCol)
-
-  const image = document.createElement('img')
-  image.classList = 'image-preview'
-  image.style.maxHeight = '200px'
-  image.style.width = '100%'
-  image.style.objectFit = 'contain'
-  image.style.display = 'none'
-  previewCol.appendChild(image)
-
-  const video = document.createElement('video')
-  video.classList = 'video-preview'
-  video.style.maxHeight = '200px'
-  video.style.width = '100%'
-  video.style.display = 'none'
-  video.style.objectFit = 'contain'
-  video.setAttribute('autoplay', true)
-  video.muted = 'true'
-  video.setAttribute('loop', 'true')
-  video.setAttribute('playsinline', 'true')
-  video.setAttribute('webkit-playsinline', 'true')
-  video.setAttribute('disablePictureInPicture', 'true')
-  previewCol.appendChild(video)
-
-  const deleteCol = document.createElement('div')
-  deleteCol.classList = 'col-12'
-  modifyRow.appendChild(deleteCol)
-
-  const deleteButton = document.createElement('button')
-  deleteButton.classList = 'btn btn-danger btn-sm w-100 my-2'
-  deleteButton.innerHTML = 'Delete'
-  deleteButton.addEventListener('click', (event) => {
-    deleteitem(item.uuid)
-  })
-  previewCol.appendChild(deleteButton)
+  annotateLi2.appendChild(annotateJSONAction)
 
   const annotationsPane = document.createElement('div')
-  annotationsPane.classList = 'col-12'
+  annotationsPane.classList = 'col-12 mt-2'
   cardBody.appendChild(annotationsPane)
 
   const annotationsRow = document.createElement('div')
@@ -535,10 +799,8 @@ function createItemHTML (item, num) {
   document.getElementById('itemList').appendChild(itemCol)
 
   // Annotations
-  if ('annotations' in item) {
-    for (const key of Object.keys(item.annotations)) {
-      createAnnoationHTML(item.uuid, item.annotations[key])
-    }
+  for (const key of Object.keys(item?.annotations ?? {})) {
+    createAnnoationHTML(item.uuid, item.annotations[key])
   }
 
   // Activate tooltips
@@ -551,20 +813,19 @@ function createItemHTML (item, num) {
 function showConfigureSubtitlesModal (itemUUID) {
   // Prepare and show the modal for setting up video subtitles.
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
   const modal = document.getElementById('configureSubtitlesModal')
   const selectButton = document.getElementById('configureSubtitlesModalSelectButton')
 
   modal.setAttribute('data-uuid', itemUUID)
 
   // Add any existing subtitles
-  if (workingDefinition.content[itemUUID]?.subtitles?.filename != null) {
-    selectButton.innerHTML = workingDefinition.content[itemUUID].subtitles.filename
+  if (exSetup.config.workingDefinition?.content?.[itemUUID]?.subtitles?.filename) {
+    selectButton.innerHTML = exSetup.config.workingDefinition.content[itemUUID].subtitles.filename
   } else {
     selectButton.innerHTML = 'Select subtitles file'
   }
 
-  $(modal).modal('show')
+  exUtilities.showModal(modal)
 }
 
 function selectSubtitlesFile () {
@@ -575,8 +836,9 @@ function selectSubtitlesFile () {
   exFileSelect.createFileSelectionModal({ multiple: false, filetypes: ['vtt'] })
     .then((files) => {
       if (files.length === 0) return
-      document.getElementById('configureSubtitlesModalSelectButton').innerHTML = files[0]
-      modal.setAttribute('data-filename', files[0])
+
+      document.getElementById('configureSubtitlesModalSelectButton').innerText = files[0]
+      modal.dataset.filename = files[0]
     })
 }
 
@@ -584,32 +846,30 @@ function submitSubtitlesFromModal () {
   // Gather subtitle information and update the definition.
 
   const modal = document.getElementById('configureSubtitlesModal')
-  const itemUUID = modal.getAttribute('data-uuid')
-  const filename = modal.getAttribute('data-filename')
+  const itemUUID = modal.dataset.uuid
+  const filename = modal.dataset.filename
 
   exSetup.updateWorkingDefinition(['content', itemUUID, 'subtitles', 'filename'], filename)
   exSetup.previewDefinition(true)
-  $(modal).modal('hide')
+  exUtilities.hideModal(modal)
 }
 
 function showAnnotateFromJSONModal (itemUUID, annotationUUID = null) {
   // Prepare and show the modal for creating an annotation from JSON.
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
-
   const urlInput = document.getElementById('annotateFromJSONModalURLInput')
   const path = document.getElementById('annotateFromJSONModalPath')
   const title = document.getElementById('annotateFromJSONModalTitle')
   const button = document.getElementById('annotateFromJSONModalSubmitButton')
-  document.getElementById('annotateFromJSONModalTreeView').innerHTML = ''
+  document.getElementById('annotateFromJSONModalTreeView').innerText = ''
   path.setAttribute('data-itemUUID', itemUUID)
 
   if (annotationUUID != null) {
     // We are editing rather than creating new
 
-    const details = workingDefinition.content[itemUUID].annotations[annotationUUID]
-    title.innerHTML = 'Update a JSON annotation'
-    button.innerHTML = 'Update'
+    const details = exSetup.config.workingDefinition.content[itemUUID].annotations[annotationUUID]
+    title.innerText = 'Update a JSON annotation'
+    button.innerText = 'Update'
     path.value = details.path.join(' > ')
     if (details.type === 'url') {
       urlInput.value = details.file
@@ -626,7 +886,7 @@ function showAnnotateFromJSONModal (itemUUID, annotationUUID = null) {
     path.setAttribute('data-annotationUUID', '')
   }
 
-  $('#annotateFromJSONModal').modal('show')
+  exUtilities.showModal('#annotateFromJSONModal')
 }
 
 function populateAnnotateFromJSONModal (file, type = 'file') {
@@ -635,8 +895,8 @@ function populateAnnotateFromJSONModal (file, type = 'file') {
 
   // Store the file for later use.
   const el = document.getElementById('annotateFromJSONModalPath')
-  el.setAttribute('data-file', file)
-  el.setAttribute('data-type', type)
+  el.dataset.file = file
+  el.dataset.type = type
 
   const parent = document.getElementById('annotateFromJSONModalTreeView')
   parent.innerHTML = ''
@@ -644,6 +904,7 @@ function populateAnnotateFromJSONModal (file, type = 'file') {
   if (type === 'file') {
     exCommon.makeHelperRequest({
       method: 'GET',
+      api: '',
       endpoint: '/content/' + file,
       noCache: true
     })
@@ -651,14 +912,21 @@ function populateAnnotateFromJSONModal (file, type = 'file') {
         createTreeSubEntries(parent, text)
       })
   } else if (type === 'url') {
-    $.getJSON(file, function (text) {
-      createTreeSubEntries(parent, text)
-    })
-      .fail((error) => {
+    fetch(file)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(response.statusText || 'Fetch error')
+        }
+        return response.json()
+      })
+      .then(text => {
+        createTreeSubEntries(parent, text)
+      })
+      .catch(error => {
         console.log(error)
-        if (error.statusText === 'Not Found') {
+        if (error.message === 'Not Found') {
           parent.innerHTML = 'The entered URL is unreachable.'
-        } else if (error.statusText === 'parsererror') {
+        } else if (error.message === 'Unexpected token' || error instanceof SyntaxError) {
           parent.innerHTML = 'The entered URL does not return valid JSON.'
         } else {
           parent.innerHTML = 'An unknown error has occurred. This often occurs because a CORS request has been blocked. Make sure the server you are accessing allows cross-origin requests.'
@@ -706,25 +974,43 @@ function selectAnnotationJSONPath (path) {
 
   const el = document.getElementById('annotateFromJSONModalPath')
   el.value = path.join(' > ')
-  el.setAttribute('data-path', JSON.stringify(path))
+  el.dataset.path = JSON.stringify(path)
+}
+
+function addTextAnnotation (itemUUID) {
+  // Create a blank text annotation
+
+  const annotationUUID = exUtilities.uuid()
+  const annotation = {
+    uuid: annotationUUID,
+    text: '',
+    type: 'text'
+  }
+  createAnnoationHTML(itemUUID, annotation)
+
+  const annotations = exSetup.config.workingDefinition?.content?.[itemUUID]?.annotations ?? {}
+  annotations[annotationUUID] = annotation
+
+  exSetup.updateWorkingDefinition(['content', itemUUID, 'annotations'], annotations)
+  exSetup.previewDefinition(true)
 }
 
 function addAnnotationFromModal () {
   // Collect the needed information and add the annotation.
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+  const workingDefinition = exSetup.config.workingDefinition
 
   const el = document.getElementById('annotateFromJSONModalPath')
   const itemUUID = el.getAttribute('data-itemUUID')
   const path = JSON.parse(el.getAttribute('data-path'))
-  const file = el.getAttribute('data-file')
-  const type = el.getAttribute('data-type')
+  const file = el.dataset.file
+  const type = el.dataset.type
   let annotationUUID = el.getAttribute('data-annotationUUID')
   let annotation
 
   if ((annotationUUID == null) || (annotationUUID === '')) {
     // We are creating a new annotation.
-    annotationUUID = exCommon.uuid()
+    annotationUUID = exUtilities.uuid()
     annotation = {
       uuid: annotationUUID,
       path,
@@ -741,21 +1027,16 @@ function addAnnotationFromModal () {
     document.getElementById('Annotation' + annotation.uuid + 'Title').innerHTML = '<b>Annotation: </b>' + path.slice(-1)
   }
 
-  let annotations
-  if ('annotations' in workingDefinition.content[itemUUID]) {
-    annotations = workingDefinition.content[itemUUID].annotations
-    annotations[annotationUUID] = annotation
-  } else {
-    annotations = {}
-    annotations[annotationUUID] = annotation
-  }
+  const annotations = workingDefinition?.content?.[itemUUID]?.annotations ?? {}
+  annotations[annotationUUID] = annotation
+
   exSetup.updateWorkingDefinition(['content', itemUUID, 'annotations'], annotations)
   exSetup.previewDefinition(true)
-  document.getElementById('annotateFromJSONModalTreeView').innerHTML = ''
-  $('#annotateFromJSONModal').modal('hide')
+  document.getElementById('annotateFromJSONModalTreeView').innerText = ''
+  exUtilities.hideModal('#annotateFromJSONModal')
 }
 
-function createAnnoationHTML (itemUUID, details) {
+async function createAnnoationHTML (itemUUID, details) {
   // Create the HTML represetnation of an annotation and add it to the item.
 
   const col = document.createElement('div')
@@ -767,74 +1048,89 @@ function createAnnoationHTML (itemUUID, details) {
   col.appendChild(row)
 
   const title = document.createElement('div')
-  title.classList = 'col-12 text-center'
+  title.classList = 'col-10 offset-1 text-center'
   title.setAttribute('id', 'Annotation' + details.uuid + 'Title')
-  title.innerHTML = '<b>Annotation: </b>' + details.path.slice(-1)
+  let titleText
+  if (details.type === 'text') {
+    titleText = '<b>Text Annotation: </b>' + exMarkdown.formatText(details.text, { removeParagraph: true, string: true })
+  } else titleText = '<b>JSON Annotation: </b>' + details.path.slice(-1)
+  title.innerHTML = titleText
   row.appendChild(title)
 
-  const xPosCol = document.createElement('div')
-  xPosCol.classList = 'col-12 col-md-6 col-lg-3 d-flex align-items-end'
-  row.appendChild(xPosCol)
+  const actionCol = document.createElement('div')
+  actionCol.classList = 'col-1 ps-0 pe-1'
+  row.appendChild(actionCol)
 
-  const xPosDiv = document.createElement('div')
-  xPosDiv.classList = 'w-100'
-  xPosCol.appendChild(xPosDiv)
+  const actionDropdown = document.createElement('div')
+  actionDropdown.classList = 'dropdown w-100'
+  actionCol.appendChild(actionDropdown)
 
-  const xPosLabel = document.createElement('label')
-  xPosLabel.classList = 'form-label'
-  xPosLabel.innerHTML = 'Horizontal position'
-  xPosLabel.setAttribute('for', 'xPosInput' + details.uuid)
-  xPosDiv.appendChild(xPosLabel)
+  const actionButton = document.createElement('button')
+  actionButton.classList = 'btn px-0 py-0 btn-outline-secondary btn-sm dropdown-toggle w-100'
+  actionButton.setAttribute('type', 'button')
+  actionButton.setAttribute('data-bs-toggle', 'dropdown')
+  actionButton.setAttribute('aria-expanded', false)
+  actionDropdown.appendChild(actionButton)
 
-  const xPosInput = document.createElement('input')
-  xPosInput.classList = 'form-control'
-  xPosInput.setAttribute('type', 'number')
-  xPosInput.setAttribute('id', 'xPosInput' + details.uuid)
-  xPosInput.setAttribute('min', '0')
-  xPosInput.setAttribute('max', '100')
-  xPosInput.setAttribute('step', '1')
-  if ('x_position' in details) {
-    xPosInput.value = details.x_position
-  } else {
-    xPosInput.value = 50
+  const actionMenu = document.createElement('ul')
+  actionMenu.classList = 'dropdown-menu'
+  actionDropdown.appendChild(actionMenu)
+
+  const li1 = document.createElement('li')
+  const li2 = document.createElement('li')
+  actionMenu.appendChild(li1)
+  actionMenu.appendChild(li2)
+
+  if (['file', 'url'].includes(details.type)) {
+    const editAction = document.createElement('a')
+    editAction.classList = 'dropdown-item text-info'
+    editAction.innerHTML = 'Edit JSON field'
+    editAction.style.cursor = 'pointer'
+    editAction.addEventListener('click', () => {
+      showAnnotateFromJSONModal(itemUUID, details.uuid)
+    })
+    li1.appendChild(editAction)
   }
-  xPosInput.addEventListener('change', (event) => {
-    exSetup.updateWorkingDefinition(['content', itemUUID, 'annotations', details.uuid, 'x_position'], event.target.value)
-    exSetup.previewDefinition(true)
+
+  const deleteAction = document.createElement('a')
+  deleteAction.classList = 'dropdown-item text-danger'
+  deleteAction.innerText = 'Delete'
+  deleteAction.style.cursor = 'pointer'
+  deleteAction.addEventListener('click', () => {
+    document.getElementById('deleteAnnotationModal').setAttribute('data-annotationUUID', details.uuid)
+    document.getElementById('deleteAnnotationModal').setAttribute('data-itemUUID', itemUUID)
+    exUtilities.showModal('#deleteAnnotationModal')
   })
-  xPosDiv.appendChild(xPosInput)
+  li1.appendChild(deleteAction)
 
-  const yPosCol = document.createElement('div')
-  yPosCol.classList = 'col-12 col-md-6 col-lg-3 d-flex align-items-end'
-  row.appendChild(yPosCol)
+  if (details.type === 'text') {
+    const textCol = document.createElement('div')
+    textCol.classList = 'col-12 col-lg-8'
+    row.appendChild(textCol)
 
-  const yPosDiv = document.createElement('div')
-  yPosDiv.classList = 'w-100'
-  yPosCol.appendChild(yPosDiv)
+    const textLabel = document.createElement('label')
+    textLabel.classList = 'form-label'
+    textLabel.innerText = 'Text'
+    textCol.appendChild(textLabel)
 
-  const yPosLabel = document.createElement('label')
-  yPosLabel.classList = 'form-label'
-  yPosLabel.innerHTML = 'Vertical position'
-  yPosLabel.setAttribute('for', 'yPosInput' + details.uuid)
-  yPosDiv.appendChild(yPosLabel)
+    const textCommandBar = document.createElement('div')
+    textCol.appendChild(textCommandBar)
 
-  const yPosInput = document.createElement('input')
-  yPosInput.classList = 'form-control'
-  yPosInput.setAttribute('type', 'number')
-  yPosInput.setAttribute('id', 'yPosInput' + details.uuid)
-  yPosInput.setAttribute('min', '0')
-  yPosInput.setAttribute('max', '100')
-  yPosInput.setAttribute('step', '1')
-  if ('y_position' in details) {
-    yPosInput.value = details.y_position
-  } else {
-    yPosInput.value = 50
+    const textInput = document.createElement('div')
+    textCol.appendChild(textInput)
+
+    const textEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+      content: details?.text ?? '',
+      editorDiv: textInput,
+      commandDiv: textCommandBar,
+      commands: ['basic'],
+      callback: (content) => {
+        exSetup.updateWorkingDefinition(['content', itemUUID, 'annotations', details.uuid, 'text'], content)
+        exSetup.previewDefinition(true)
+        title.innerHTML = '<b>Text Annotation: </b>' + exMarkdown.formatText(content, { removeParagraph: true, string: true })
+      }
+    })
   }
-  yPosInput.addEventListener('change', (event) => {
-    exSetup.updateWorkingDefinition(['content', itemUUID, 'annotations', details.uuid, 'y_position'], event.target.value)
-    exSetup.previewDefinition(true)
-  })
-  yPosDiv.appendChild(yPosInput)
 
   const alignCol = document.createElement('div')
   alignCol.classList = 'col-12 col-md-6 col-lg-3 d-flex align-items-end'
@@ -846,7 +1142,7 @@ function createAnnoationHTML (itemUUID, details) {
 
   const alignLabel = document.createElement('label')
   alignLabel.classList = 'form-label'
-  alignLabel.innerHTML = 'Text alignment'
+  alignLabel.innerText = 'Text alignment'
   alignLabel.setAttribute('for', 'alignSelect' + details.uuid)
   alignDiv.appendChild(alignLabel)
 
@@ -855,14 +1151,43 @@ function createAnnoationHTML (itemUUID, details) {
   alignSelect.appendChild(new Option('Left', 'left'))
   alignSelect.appendChild(new Option('Center', 'center'))
   alignSelect.appendChild(new Option('Right', 'right'))
-  if ('align' in details) {
-    alignSelect.value = details.align
-  }
+  alignSelect.value = details?.align ?? 'left'
+
   alignSelect.addEventListener('change', (event) => {
     exSetup.updateWorkingDefinition(['content', itemUUID, 'annotations', details.uuid, 'align'], event.target.value)
     exSetup.previewDefinition(true)
   })
   alignDiv.appendChild(alignSelect)
+
+  const xPosCol = document.createElement('div')
+  xPosCol.classList = 'col-12 col-md-6 col-lg-4 d-flex align-items-end'
+  row.appendChild(xPosCol)
+
+  const xPosInput = document.createElement('div')
+  xPosInput.classList = 'advanced-slider'
+  xPosInput.dataset.name = 'Horizontal position'
+  xPosInput.dataset.path = `content>${itemUUID}>annotations>${details.uuid}>x_position`
+  xPosInput.dataset.min = '0'
+  xPosInput.dataset.max = '100'
+  xPosInput.dataset.start = '50'
+  xPosInput.dataset.step = '1'
+  xPosInput.dataset.unit = '%'
+  xPosCol.appendChild(xPosInput)
+
+  const yPosCol = document.createElement('div')
+  yPosCol.classList = 'col-12 col-md-6 col-lg-4 d-flex align-items-end'
+  row.appendChild(yPosCol)
+
+  const yPosInput = document.createElement('div')
+  yPosInput.classList = 'advanced-slider'
+  yPosInput.dataset.name = 'Vertical position'
+  yPosInput.dataset.path = `content>${itemUUID}>annotations>${details.uuid}>y_position`
+  yPosInput.dataset.min = '0'
+  yPosInput.dataset.max = '100'
+  yPosInput.dataset.start = '50'
+  yPosInput.dataset.step = '1'
+  yPosInput.dataset.unit = '%'
+  yPosCol.appendChild(yPosInput)
 
   const fontSizeCol = document.createElement('div')
   fontSizeCol.classList = 'col-12 col-md-6 col-lg-3 d-flex align-items-end'
@@ -873,7 +1198,7 @@ function createAnnoationHTML (itemUUID, details) {
 
   const fontSizeLabel = document.createElement('label')
   fontSizeLabel.classList = 'form-label'
-  fontSizeLabel.innerHTML = 'Text size'
+  fontSizeLabel.innerText = 'Text size'
   fontSizeLabel.setAttribute('for', 'fontSizeInput' + details.uuid)
   fontSizeDiv.appendChild(fontSizeLabel)
 
@@ -883,11 +1208,8 @@ function createAnnoationHTML (itemUUID, details) {
   fontSizeInput.setAttribute('id', 'fontSizeInput' + details.uuid)
   fontSizeInput.setAttribute('min', '1')
   fontSizeInput.setAttribute('step', '1')
-  if ('font_size' in details) {
-    fontSizeInput.value = details.font_size
-  } else {
-    fontSizeInput.value = 20
-  }
+  fontSizeInput.value = details?.font_size ?? 20
+
   fontSizeInput.addEventListener('change', (event) => {
     exSetup.updateWorkingDefinition(['content', itemUUID, 'annotations', details.uuid, 'font_size'], event.target.value)
     exSetup.previewDefinition(true)
@@ -903,7 +1225,7 @@ function createAnnoationHTML (itemUUID, details) {
 
   const fontColorLabel = document.createElement('label')
   fontColorLabel.classList = 'form-label'
-  fontColorLabel.innerHTML = 'Text color'
+  fontColorLabel.innerText = 'Text color'
   fontColorLabel.setAttribute('for', 'fontColorInput' + details.uuid)
   fontColorDiv.appendChild(fontColorLabel)
 
@@ -911,70 +1233,25 @@ function createAnnoationHTML (itemUUID, details) {
   fontColorInput.classList = 'coloris'
   fontColorInput.style.height = '35px'
   fontColorInput.setAttribute('id', 'fontColorInput' + details.uuid)
-  if ('color' in details) {
-    fontColorInput.value = details.color
-  } else {
-    fontColorInput.value = 'black'
-  }
+  fontColorInput.value = details?.color ?? 'black'
+
   fontColorInput.addEventListener('change', (event) => {
     exSetup.updateWorkingDefinition(['content', itemUUID, 'annotations', details.uuid, 'color'], event.target.value)
     exSetup.previewDefinition(true)
   })
   fontColorDiv.appendChild(fontColorInput)
-  setTimeout(setUpColorPickers, 100)
+  // setTimeout(exSetup.setUpColorPickers, 2000)
 
   const fontFaceCol = document.createElement('div')
   fontFaceCol.classList = 'col-12 col-md-6'
   row.appendChild(fontFaceCol)
 
-  const actionCol = document.createElement('div')
-  actionCol.classList = 'col-12 col-md-6 col-lg-3 d-flex align-items-end'
-  row.appendChild(actionCol)
-
-  const actionDropdown = document.createElement('div')
-  actionDropdown.classList = 'dropdown w-100'
-  actionCol.appendChild(actionDropdown)
-
-  const actionButton = document.createElement('button')
-  actionButton.classList = 'btn btn-primary dropdown-toggle w-100'
-  actionButton.setAttribute('type', 'button')
-  actionButton.setAttribute('data-bs-toggle', 'dropdown')
-  actionButton.setAttribute('aria-expanded', false)
-  actionButton.innerHTML = 'Action'
-  actionDropdown.appendChild(actionButton)
-
-  const actionMenu = document.createElement('ul')
-  actionMenu.classList = 'dropdown-menu'
-  actionDropdown.appendChild(actionMenu)
-
-  const li1 = document.createElement('li')
-  const li2 = document.createElement('li')
-  actionMenu.appendChild(li1)
-  actionMenu.appendChild(li2)
-
-  const editAction = document.createElement('a')
-  editAction.classList = 'dropdown-item text-info'
-  editAction.innerHTML = 'Edit JSON field'
-  editAction.style.cursor = 'pointer'
-  editAction.addEventListener('click', () => {
-    showAnnotateFromJSONModal(itemUUID, details.uuid)
-  })
-  li1.appendChild(editAction)
-
-  const deleteAction = document.createElement('a')
-  deleteAction.classList = 'dropdown-item text-danger'
-  deleteAction.innerHTML = 'Delete'
-  deleteAction.style.cursor = 'pointer'
-  deleteAction.addEventListener('click', () => {
-    document.getElementById('deleteAnnotationModal').setAttribute('data-annotationUUID', details.uuid)
-    document.getElementById('deleteAnnotationModal').setAttribute('data-itemUUID', itemUUID)
-    $('#deleteAnnotationModal').modal('show')
-  })
-  li1.appendChild(deleteAction)
-
   document.getElementById('annotationRow_' + itemUUID).appendChild(col)
 
   // Must be after we had the main element to the DOM
+  exSetup.createAdvancedSlider(xPosInput)
+  exSetup.createAdvancedSlider(yPosInput)
+  exSetup.setUpColorPickers()
 
   exSetup.createAdvancedFontPicker({
     parent: fontFaceCol,
@@ -982,7 +1259,11 @@ function createAnnoationHTML (itemUUID, details) {
     path: `content>${itemUUID}>annotations>${details.uuid}>font`,
     default: 'OpenSans-Regular.ttf'
   })
-  exSetup.refreshAdvancedFontPickers()
+  const font = details.font
+  await exSetup.refreshAdvancedFontPickers()
+  if (font) {
+    exSetup.updateAdvancedFontPickers({ font }, `content>${itemUUID}>annotations>${details.uuid}`)
+  }
 }
 
 function showChooseURLModal (uuid) {
@@ -995,7 +1276,7 @@ function showChooseURLModal (uuid) {
   document.getElementById('chooseURLModalPreviewAudio').style.display = 'none'
   document.getElementById('chooseURLModalError').style.display = 'none'
 
-  $('#chooseURLModal').modal('show')
+  exUtilities.showModal('#chooseURLModal')
 }
 
 async function fetchContentFromURL () {
@@ -1008,9 +1289,9 @@ async function fetchContentFromURL () {
   const modal = document.getElementById('chooseURLModal')
   const error = document.getElementById('chooseURLModalError')
 
-  const mimetype = exCommon.guessMimetype(url)
-  modal.setAttribute('data-mimetype', mimetype)
-  console.log(mimetype)
+  const mimetype = exFiles.guessMimetype(url)
+  modal.dataset.mimetype = mimetype
+
   if (mimetype === 'video') {
     video.src = url
     error.style.display = 'none'
@@ -1048,17 +1329,17 @@ function setContentFromURLModal () {
   // Set the currently selected file as the item's content.
 
   const url = document.getElementById('chooseURLModalInput').value.trim()
-  const uuid = document.getElementById('chooseURLModal').getAttribute('data-uuid')
+  const uuid = document.getElementById('chooseURLModal').dataset.uuid
   const itemEl = document.getElementById('Item_' + uuid)
   setItemContent(uuid, itemEl, url, 'url')
 
-  $('#chooseURLModal').modal('hide')
+  exUtilities.hideModal('#chooseURLModal')
 }
 
 function setItemContent (uuid, itemEl, file, type = 'file') {
   // Populate the given element, item, with content.
 
-  const mimetype = exCommon.guessMimetype(file)
+  const mimetype = exFiles.guessMimetype(file)
   exSetup.updateWorkingDefinition(['content', uuid, 'filename'], file)
   exSetup.updateWorkingDefinition(['content', uuid, 'type'], type)
   exSetup.updateWorkingDefinition(['content', uuid, 'mimetype'], mimetype)
@@ -1078,16 +1359,18 @@ function setItemContent (uuid, itemEl, file, type = 'file') {
     video.style.display = 'none'
     // Hide the duration input
     itemEl.querySelector('.duration-col').style.display = 'none'
+    // Hide the fill mode input
+    itemEl.querySelector('.fill-col').style.display = 'none'
     // Hide the rotation input
     itemEl.querySelector('.rotation-col').style.display = 'none'
     // Hide the material input
     itemEl.querySelector('.material-col').style.display = 'none'
     // Hide the subtitle input
     itemEl.querySelector('.subtitle-col').style.display = 'none'
-    exSetup.updateWorkingDefinition(['content', uuid, 'subtitles'], null)
+    exSetup.updateWorkingDefinition(['content', uuid, 'subtitles'], {})
   } else if (mimetype === 'image') {
     if (type === 'file') {
-      image.src = '/thumbnails/' + exCommon.withExtension(file, 'jpg')
+      image.src = exCommon.config.helperAddress + exConfig.api + '/files/' + file + '/thumbnail'
     } else if (type === 'url') {
       image.src = file
     }
@@ -1095,22 +1378,26 @@ function setItemContent (uuid, itemEl, file, type = 'file') {
     video.style.display = 'none'
     // Show the duration input
     itemEl.querySelector('.duration-col').style.display = 'block'
+    // Show the fill mode input
+    itemEl.querySelector('.fill-col').style.display = 'block'
     // Hide the rotation input
     itemEl.querySelector('.rotation-col').style.display = 'none'
     // Hide the material input
     itemEl.querySelector('.material-col').style.display = 'none'
     // Hide the subtitle input
     itemEl.querySelector('.subtitle-col').style.display = 'none'
-    exSetup.updateWorkingDefinition(['content', uuid, 'subtitles'], null)
+    exSetup.updateWorkingDefinition(['content', uuid, 'subtitles'], {})
   } else if (mimetype === 'model') {
     image.src = exFileSelect.getDefaultModelIcon()
     image.style.display = 'block'
     video.style.display = 'none'
     // Hide the subtitle input
     itemEl.querySelector('.subtitle-col').style.display = 'none'
-    exSetup.updateWorkingDefinition(['content', uuid, 'subtitles'], null)
+    exSetup.updateWorkingDefinition(['content', uuid, 'subtitles'], {})
     // Show the duration input
     itemEl.querySelector('.duration-col').style.display = 'block'
+    // Hide the fill mode input
+    itemEl.querySelector('.fill-col').style.display = 'none'
     // Show the rotation input
     itemEl.querySelector('.rotation-col').style.display = 'block'
     if (file.toLowerCase().endsWith('obj')) {
@@ -1118,7 +1405,7 @@ function setItemContent (uuid, itemEl, file, type = 'file') {
     } else itemEl.querySelector('.material-col').style.display = 'none'
   } else if (mimetype === 'video') {
     if (type === 'file') {
-      video.src = '/thumbnails/' + exCommon.withExtension(file, 'mp4')
+      video.src = exCommon.config.helperAddress + exConfig.api + '/files/' + file + '/thumbnail'
     } else if (type === 'url') {
       video.src = file
     }
@@ -1126,6 +1413,8 @@ function setItemContent (uuid, itemEl, file, type = 'file') {
     image.style.display = 'none'
     // Hide the duration input
     itemEl.querySelector('.duration-col').style.display = 'none'
+    // Show the fill mode input
+    itemEl.querySelector('.fill-col').style.display = 'block'
     // Hide the rotation input
     itemEl.querySelector('.rotation-col').style.display = 'none'
     // Hide the material input
@@ -1138,18 +1427,18 @@ function setItemContent (uuid, itemEl, file, type = 'file') {
 function deleteitem (uuid) {
   // Remove this item from the working defintion and destroy its GUI representation.
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+  const workingDefinition = exSetup.config.workingDefinition
 
   delete workingDefinition.content[uuid]
   workingDefinition.content_order = workingDefinition.content_order.filter(item => item !== uuid)
   rebuildItemList()
-  console.log(workingDefinition)
+  exSetup.previewDefinition(true)
 }
 
 function changeItemOrder (uuid, dir) {
   // Move the location of the given item.
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+  const workingDefinition = exSetup.config.workingDefinition
 
   const uuidIndex = workingDefinition.content_order.indexOf(uuid)
   if (dir === -1 && uuidIndex === 0) return
@@ -1165,7 +1454,7 @@ function changeItemOrder (uuid, dir) {
 function rebuildItemList () {
   // Use the definition to rebuild the GUI representations of each item
 
-  const workingDefinition = $('#definitionSaveButton').data('workingDefinition')
+  const workingDefinition = exSetup.config.workingDefinition
 
   // Clear any existing items
   document.getElementById('itemList').innerHTML = ''
@@ -1187,13 +1476,6 @@ function onWatermarkFileChange () {
   exSetup.previewDefinition(true)
 }
 
-// Set color mode
-if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-  document.querySelector('html').setAttribute('data-bs-theme', 'dark')
-} else {
-  document.querySelector('html').setAttribute('data-bs-theme', 'light')
-}
-
 // Set helper address for use with exCommon.makeHelperRequest
 exCommon.config.helperAddress = window.location.origin
 
@@ -1203,28 +1485,30 @@ tooltipTriggerList.map(function (tooltipTriggerEl) {
   return new bootstrap.Tooltip(tooltipTriggerEl)
 })
 
-// Set up the color pickers
-function setUpColorPickers () {
-  Coloris({
-    el: '.coloris',
-    theme: 'pill',
-    themeMode: 'dark',
-    formatToggle: false,
-    clearButton: false,
-    swatches: [
-      '#000',
-      '#22222E',
-      '#393A5A',
-      '#719abf',
-      '#fff'
-    ]
-  })
-}
-// Call with a slight delay to make sure the elements are loaded
-setTimeout(setUpColorPickers, 100)
-
 // Add event listeners
 // -------------------------------------------------------------
+
+// Wizard
+
+// Connect the forward and back buttons
+for (const el of document.querySelectorAll('.wizard-forward')) {
+  el.addEventListener('click', () => {
+    wizardForward(el.getAttribute('data-current-page'))
+  })
+}
+for (const el of document.querySelectorAll('.wizard-back')) {
+  el.addEventListener('click', () => {
+    wizardBack(el.getAttribute('data-current-page'))
+  })
+}
+document.getElementById('wizardAddContentBUtton').addEventListener('click', () => {
+  exFileSelect.createFileSelectionModal({
+    filetypes: ['audio', 'image', 'video', 'glb', 'mtl', 'obj']
+  })
+    .then((files) => {
+      if (files.length > 0) wizardPopulateContent(files)
+    })
+})
 
 // Main buttons
 
@@ -1248,8 +1532,8 @@ document.getElementById('configureSubtitlesModalDeleteButton').addEventListener(
   const modal = document.getElementById('configureSubtitlesModal')
   const itemUUID = modal.getAttribute('data-uuid')
   document.getElementById('subttileButton_' + itemUUID).innerHTML = 'Add subtitles'
-  exSetup.updateWorkingDefinition(['content', itemUUID, 'subtitles'], null)
-  $(modal).modal('hide')
+  exSetup.updateWorkingDefinition(['content', itemUUID, 'subtitles'], {})
+  exUtilities.hideModal(modal)
   exSetup.previewDefinition(true)
 })
 
@@ -1269,16 +1553,15 @@ document.getElementById('annotateFromJSONModalFetchURLButton').addEventListener(
 })
 document.getElementById('deleteAnnotationModalSubmitButton').addEventListener('click', () => {
   const modal = document.getElementById('deleteAnnotationModal')
-  const definition = $('#definitionSaveButton').data('workingDefinition')
   const itemUUID = modal.getAttribute('data-itemUUID')
   const annotationUUID = modal.getAttribute('data-annotationUUID')
-  const annotations = definition.content[itemUUID].annotations
+  const annotations = exSetup.config.workingDefinition.content[itemUUID].annotations
   delete annotations[annotationUUID]
 
   exSetup.updateWorkingDefinition(['content', itemUUID, 'annotations'], annotations)
   exSetup.previewDefinition(true)
   document.getElementById('Annotation' + annotationUUID).remove()
-  $(modal).modal('hide')
+  exUtilities.hideModal(modal)
 })
 document.getElementById('annotateFromJSONModalCloseButton').addEventListener('click', () => {
   // When we close the annotate from JSON modal, clear the tree, as complex JSON structures can limit performance.
@@ -1311,6 +1594,28 @@ Array.from(document.querySelectorAll('.watermark-slider')).forEach((el) => {
 })
 
 // Style fields
+document.getElementById('showProgressCheckbox').addEventListener('change', (ev) => {
+  const posCol = document.getElementById('progressIndicatorPosCol')
+  const sizeCol = document.getElementById('progressIndicatorSizeCol')
+  exSetup.updateWorkingDefinition(['behavior', 'progress_indicator', 'visible'], ev.target.checked)
+  if (ev.target.checked) {
+    posCol.style.display = 'block'
+    sizeCol.style.display = 'block'
+  } else {
+    posCol.style.display = 'none'
+    sizeCol.style.display = 'none'
+  }
+  exSetup.previewDefinition(true)
+})
+document.getElementById('progressIndicatorPosSelect').addEventListener('change', (ev) => {
+  exSetup.updateWorkingDefinition(['behavior', 'progress_indicator', 'position'], ev.target.value)
+  exSetup.previewDefinition(true)
+})
+document.getElementById('progressIndicatorSizeSelect').addEventListener('change', (ev) => {
+  exSetup.updateWorkingDefinition(['behavior', 'progress_indicator', 'size'], ev.target.value)
+  exSetup.previewDefinition(true)
+})
+
 document.querySelectorAll('.coloris').forEach((element) => {
   element.addEventListener('change', function () {
     const value = this.value.trim()
@@ -1346,22 +1651,19 @@ exSetup.configure({
     content_order: [],
     style: {
       background: {
-        mode: 'color',
-        color: '#000'
+        color: '#0f1419',
+        mode: 'color'
+      },
+      color: {
+        progressActiveColor: '#c3512f',
+        progressBackgroundColor: '#1a2b3cc4',
+        progressInactiveColor: '#6b7280',
+        subtitleColor: '#f5f5f0'
+      },
+      font: {
+        subtitle: '/_fonts/OpenSans-Regular.ttf'
       }
     },
     watermark: {}
   }
 })
-
-exCommon.askForDefaults(false)
-  .then(() => {
-    if (exCommon.config.standalone === false) {
-      // We are using Hub, so attempt to log in
-      exSetup.authenticateUser()
-    } else {
-      // Hide the login details
-      document.getElementById('loginMenu').style.display = 'none'
-      document.getElementById('helpNewAccountMessage').style.display = 'none'
-    }
-  })

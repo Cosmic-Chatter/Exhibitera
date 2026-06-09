@@ -1,13 +1,13 @@
 :root {
-    --background-color: #22222E;
-    --button-color: #393A5A;
-    --button-touched-color: #706F8E;
-    --success-message-color: #528e54;
-    --header-color: white;
-    --subheader-color: white;
-    --footer-color: white;
-    --subfooter-color: white;
-    --button-text-color: white;
+    --background-color: #2f3e4f;
+    --button-color: #1a2b3c;
+    --button-touched-color: #3b5c8a;
+    --success-message-color: #e06a47;
+    --header-color: #f5f5f0;
+    --subheader-color: #e6e6e2;
+    --footer-color: #f5f5f0;
+    --subfooter-color: #e6e6e2;
+    --button-text-color: #f5f5f0;
     --header-font: 'header-default';
     --subheader-font: "subheader-default";
     --footer-font: 'footer-default';
