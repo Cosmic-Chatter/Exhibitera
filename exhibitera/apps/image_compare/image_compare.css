@@ -207,6 +207,9 @@ html, body {
     align-items: center;
     justify-content: center;
 }
+.smooth-slide {
+    transition: clip-path 0.1s ease-out, left 0.1s ease-out !important;
+}
 #aboutModalBody {
     font-size: calc(2vmax + var(--info_pane_body-font-adjust) * 1vmax);
     font-family: var(--info_pane_body-font);

@@ -22,6 +22,9 @@ const w = overlay.offsetWidth
 const h = overlay.offsetHeight
 const overlayImg = document.getElementById('overlayImg')
 
+let currentX = w / 2
+const keyStep = w * 0.05
+
 /* Position the slider in the middle: */
 const slider = document.getElementById('slider')
 slider.style.top = (h / 2) - (slider.offsetHeight / 2) + 'px'
@@ -56,8 +59,12 @@ document.getElementById('homeButton').addEventListener('click', () => {
 })
 
 function slideReady (e) {
-  /* Prevent any other actions that may occur when moving over the image: */
   e.preventDefault()
+
+  // If we are sliding with finger/mouse, disable animation used for keyboard
+  document.getElementById('overlayImg').classList.remove('smooth-slide')
+  document.getElementById('slider').classList.remove('smooth-slide')
+
   slide(getCursorPos(e))
   /* The slider is now clicked and ready to move: */
   clicked = 1
@@ -98,6 +105,7 @@ function getCursorPos (e) {
 function slide (x) {
   // Adjust the view based on the current input position
 
+  currentX = x
   const xPercent = 100 * x / w
   const xPercentStr = String(xPercent) + '%'
 
@@ -218,6 +226,10 @@ function loadDefinition (definition) {
   } else {
     hideAttractor()
     attractorAvailable = false
+  }
+
+  if ((definition?.hardware_control_enabled ?? false) === false) {
+    document.getElementById('slidingHandContainer').style.display = 'block'
   }
 
   exCommon.createLanguageSwitcher(definition, localize)
@@ -448,7 +460,9 @@ function resetActivityTimer () {
 function resetView () {
   localize(exCommon.config.definition?.language_order[0] || 'en-uk')
   exUtilities.hideModal('#aboutModal')
-  document.getElementById('slidingHandContainer').style.display = 'block'
+  if ((exCommon.config.definition?.hardware_control_enabled ?? false) === false) {
+    document.getElementById('slidingHandContainer').style.display = 'block'
+  }
 
   if (homeScreenDisabled === false) {
     document.getElementById('mainMenu').style.display = 'block'
@@ -504,6 +518,82 @@ function parseUpdate (update) {
 
 // Bind event handlers
 document.getElementById('attractorOverlay').addEventListener('click', hideAttractor)
+
+// Listen for keyboard input (Arrow keys for slider, 1-8 for home screen selection)
+document.addEventListener('keydown', (e) => {
+  if (!(exCommon.config.definition?.hardware_control_enabled ?? false)) return
+
+  const mainMenu = document.getElementById('mainMenu')
+  const aboutButton = document.getElementById('aboutButton')
+  const aboutModal = document.getElementById('aboutModal')
+
+  if (mainMenu.style.display !== 'none') {
+    // Convert the key pressed into an integer
+    const keyNum = parseInt(e.key, 10)
+
+    // Check if the key is between 1 and 8
+    if (keyNum >= 1 && keyNum <= 8) {
+      const contentOrder = exCommon.config.definition.content_order
+      const index = keyNum - 1 // Arrays are 0-indexed
+
+      // Ensure the number pressed corresponds to an available image pair
+      if (index < contentOrder.length) {
+        // Fetch the item using the UUID from the definition
+        const uuid = contentOrder[index]
+        const item = exCommon.config.definition.content[uuid]
+
+        loadImages(item)
+        resetActivityTimer()
+      }
+    }
+
+    // Return early so we don't process Arrow keys while on the main menu
+    return
+  }
+
+  // Return to the home screen
+  if (e.key === ' ' || e.code === 'Space') {
+    e.preventDefault() // Prevent the browser from scrolling down
+    if (exCommon.config.definition.content_order.length <= 1) return // No home menu
+
+    exUtilities.hideModal(aboutModal) // Make sure the aboutModal isn't showing
+    mainMenu.style.display = 'block'
+    resetActivityTimer()
+    return
+  }
+
+  // View the about panel
+  if (e.key === 'i' && aboutButton.style.display === 'flex') {
+    e.preventDefault() // Prevent the browser from scrolling down
+    if (aboutModal.classList.contains('show')) {
+      exUtilities.hideModal(aboutModal)
+    } else {
+      exUtilities.showModal(aboutModal)
+    }
+    resetActivityTimer()
+    return
+  }
+
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+    e.preventDefault()
+
+    // Add animation class for smooth keyboard swipes
+    document.getElementById('overlayImg').classList.add('smooth-slide')
+    document.getElementById('slider').classList.add('smooth-slide')
+
+    if (e.key === 'ArrowLeft') {
+      currentX -= keyStep
+    } else if (e.key === 'ArrowRight') {
+      currentX += keyStep
+    }
+
+    if (currentX < 0) currentX = 0
+    if (currentX > w) currentX = w
+
+    slide(currentX)
+    resetActivityTimer()
+  }
+})
 
 exCommon.configureApp({
   name: 'image_compare',

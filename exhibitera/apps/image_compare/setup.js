@@ -1059,6 +1059,10 @@ document.getElementById('inactivityTimeoutField').addEventListener('change', (ev
   exSetup.updateWorkingDefinition(['inactivity_timeout'], event.target.value)
   exSetup.previewDefinition(true)
 })
+document.getElementById('enableHardwareControlCheckbox').addEventListener('click', (event) => {
+  exSetup.updateWorkingDefinition(['hardware_control_enabled'], event.target.checked)
+  exSetup.previewDefinition(true)
+})
 
 // Content
 document.getElementById('addItemButton').addEventListener('click', (event) => {
