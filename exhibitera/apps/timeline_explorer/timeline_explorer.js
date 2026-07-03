@@ -1,4 +1,4 @@
-/* global showdown textFit */
+/* global textFit */
 
 import exConfig from '../../common/config.js'
 import * as exFiles from '../../common/files.js'
@@ -77,7 +77,16 @@ function loadDefinition (def) {
   const langs = Object.keys(def.languages)
   if (langs.length === 0) return
 
-  exCommon.createLanguageSwitcher(def, localize)
+  if (def.hardware_control_enabled) {
+    exCommon.enableHardwareControl({
+      language: localize,
+      size: adjustFontSize
+    })
+    root.style.setProperty('--footer-height', '0vmax')
+  } else {
+    exCommon.createLanguageSwitcher(def, localize)
+    root.style.setProperty('--footer-height', '5vmax')
+  }
 
   // Find the default language
   defaultLang = def.language_order[0]
@@ -326,6 +335,116 @@ document.getElementById('attractorOverlay').addEventListener('click', hideAttrac
 document.addEventListener('touchstart', resetInactivityTimer)
 document.addEventListener('click', resetInactivityTimer)
 
+// Keyboard navigation
+const timelinePane = document.getElementById('timeline-pane')
+const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false }
+
+let isScrolling = false
+let targetX = 0
+let targetY = 0
+
+// Sync targets if the user manually swipes the touchscreen
+timelinePane.addEventListener('scroll', () => {
+  if (!isScrolling) {
+    targetX = timelinePane.scrollLeft
+    targetY = timelinePane.scrollTop
+  }
+}, { passive: true })
+
+// Interrupt keyboard scroll if user touches the screen
+function interruptScroll () {
+  Object.keys(keys).forEach(k => keys[k] = false)
+  isScrolling = false // Instantly kill the animation loop
+
+  // Sync the target coordinates to the exact pixel the user touched
+  targetX = timelinePane.scrollLeft
+  targetY = timelinePane.scrollTop
+}
+
+timelinePane.addEventListener('touchstart', interruptScroll, { passive: true })
+timelinePane.addEventListener('wheel', interruptScroll, { passive: true })
+
+function updateScrollTarget () {
+  const speed = Math.max(window.innerWidth, window.innerHeight) * 0.02
+  let isInputActive = false
+
+  // Determine current orientation to match your CSS media queries
+  const isLandscape = window.innerWidth > window.innerHeight
+
+  if (isLandscape) {
+    // Landscape: Only allow horizontal scrolling
+    if (keys.ArrowLeft) { targetX -= speed; isInputActive = true }
+    if (keys.ArrowRight) { targetX += speed; isInputActive = true }
+  } else {
+    // Portrait: Only allow vertical scrolling
+    if (keys.ArrowUp) { targetY -= speed; isInputActive = true }
+    if (keys.ArrowDown) { targetY += speed; isInputActive = true }
+  }
+
+  // Clamp the target to scroll boundaries to prevent rubber-banding at the edges
+  const maxX = timelinePane.scrollWidth - timelinePane.clientWidth
+  const maxY = timelinePane.scrollHeight - timelinePane.clientHeight
+  targetX = Math.max(0, Math.min(targetX, maxX))
+  targetY = Math.max(0, Math.min(targetY, maxY))
+
+  return isInputActive
+}
+
+function scrollRenderLoop () {
+  if (!isScrolling) return
+
+  const isInputActive = updateScrollTarget()
+
+  const currentX = timelinePane.scrollLeft
+  const currentY = timelinePane.scrollTop
+
+  // The "glide" factor. Lower = smoother/floatier. Higher = snappier.
+  const ease = 0.15
+  const diffX = targetX - currentX
+  const diffY = targetY - currentY
+
+  // If we are close enough to the target and keys are released, snap to end the loop
+  if (Math.abs(diffX) < 1 && Math.abs(diffY) < 1 && !isInputActive) {
+    timelinePane.scrollTo({ left: targetX, top: targetY, behavior: 'auto' })
+    isScrolling = false
+    return
+  }
+
+  // Lerp equation: calculate the next frame's position
+  const nextX = currentX + (diffX * ease)
+  const nextY = currentY + (diffY * ease)
+
+  timelinePane.scrollTo({ left: nextX, top: nextY, behavior: 'auto' })
+  requestAnimationFrame(scrollRenderLoop)
+}
+
+document.addEventListener('keydown', (e) => {
+  if (keys.hasOwnProperty(e.key)) {
+    e.preventDefault() // Stop native jagged scroll
+    keys[e.key] = true
+
+    if (!isScrolling) {
+      isScrolling = true
+      // Sync target to current position before starting to prevent jumping
+      targetX = timelinePane.scrollLeft
+      targetY = timelinePane.scrollTop
+      requestAnimationFrame(scrollRenderLoop)
+    }
+    resetInactivityTimer()
+  }
+})
+
+document.addEventListener('keyup', (e) => {
+  if (keys.hasOwnProperty(e.key)) {
+    keys[e.key] = false
+  }
+})
+
+// Stop scrolling if the window loses focus
+window.addEventListener('blur', () => {
+  Object.keys(keys).forEach(k => keys[k] = false)
+})
+
 // Attractor
 let attractorAvailable = false
 let attractorTimer = null
@@ -341,8 +460,6 @@ exCommon.configureApp({
   loadDefinition,
   parseUpdate: updateFunc
 })
-
-const currentDefintion = ''
 
 adjustFontSize(-100) // Make sure the font modifier is at 1 to start
 hideAttractor()

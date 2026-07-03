@@ -28,8 +28,9 @@
   --body-font-adjust: 0;
 
   /* Misc */
-  --header-height: 0vh; /* Set to 7.5vh in javascript when a header is given */
-  --item-border-radius: 1vh;
+  --header-height: 0vmax; /* Set to 7.5vmax in javascript when a header is given */
+  --footer-height: 5vmax;
+  --item-border-radius: 1vmax;
 }
 
 /* Font definitions */
@@ -217,7 +218,7 @@ time {
   height: var(--header-height);
 }
 #timeline-pane {
-  height: calc(100vh - var(--header-height) - 5vmax);
+  height: calc(100vh - var(--header-height) - var(--footer-height));
 
 }
 #tools-pane {
@@ -361,12 +362,12 @@ time {
     }
     #timeline-pane {
         /* Total height (100) - Header - Toolbar (6) */
-        height: calc(100vh - var(--header-height) - 6vh);
+        height: calc(100vh - var(--header-height) - var(--footer-height));
         overflow-y: auto;
         overflow-x: hidden;
     }
     #tools-pane {
-        height: 6vh;
+        height: 5vh;
     }
 
     .timeline ul {

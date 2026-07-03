@@ -322,6 +322,8 @@ function editDefinition (uuid = '') {
   attractorSelect.dataset.filename = def.attractor
   document.getElementById('inactivityTimeoutField').value = def?.inactivity_timeout ?? 30
 
+  document.getElementById('enableHardwareControlCheckbox').checked = def?.hardware_control_enabled ?? false
+
   rebuildItemList()
   const langSelect = document.getElementById('language-select')
   exLang.createLanguagePicker(langSelect,

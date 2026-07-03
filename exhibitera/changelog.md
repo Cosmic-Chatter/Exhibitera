@@ -11,6 +11,9 @@ _If you are upgrading from Exhibitera 5.3, Hub and Apps must all be upgraded at 
 ### Image Compare
 - Enable hardware control to use physical buttons to select an image pair and swipe between images.
 
+### Timeline Explorer
+- Enable hardware control to move the timeline using physical buttons.
+
 
 # **Exhibitera 6**
 _Exhibitera Hub and Apps must all be upgraded to version 6 at the same time._

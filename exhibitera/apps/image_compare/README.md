@@ -14,6 +14,7 @@ By default, Image Compare responds to taps and swipes on the touchscreen. By ena
 | Swipe between the two parts of an image pair | Left and right arrow keys                                        |
 | View/hide the Info Pane for an image pair    | "i" key                                                          |
 | Return to the home screen                    | Space bar                                                        |
+| Switch to the next language                  | l key (lowercase "L")                                            |
 
 ## Supported image types
 Exhibitera Apps recognizes the following image file formats:

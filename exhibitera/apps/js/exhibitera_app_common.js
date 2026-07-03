@@ -672,6 +672,30 @@ export function createLanguageSwitcher (def, localize) {
   }
 }
 
+export function enableHardwareControl (options = {}) {
+  // Create event listeners for requested hardware features
+  // options = {
+  //  language: localize() function
+  //  size: adjustFontSize() function
+  // }
+  // Omit any options you don't want to provide hardware control for
+
+  document.addEventListener('keydown', (ev) => {
+    if (ev.key === 'l' && options.language != null) {
+      const currentLangIndex = Math.max(config.definition.language_order.indexOf(document.documentElement.lang), 0)
+      let nextLangIndex = currentLangIndex + 1
+      if (nextLangIndex === config.definition.language_order.length) nextLangIndex = 0
+      options.language(config.definition.language_order[nextLangIndex])
+    } else if (options.size != null) {
+      if (ev.key === 'o') {
+        options.size(-0.1)
+      } else if (ev.key === 'p') {
+        options.size(0.1)
+      }
+    }
+  })
+}
+
 export function getColorAsRGBA (el, prop) {
   // Look up the given CSS property on the given element and return an object with the RGBA values.
 

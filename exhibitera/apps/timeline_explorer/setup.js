@@ -334,6 +334,8 @@ function editDefinition (uuid = '') {
   attractorSelect.dataset.filename = def.attractor
   document.getElementById('inactivityTimeoutField').value = def?.inactivity_timeout ?? 30
 
+  document.getElementById('enableHardwareControlCheckbox').checked = def?.hardware_control_enabled ?? false
+
   exSetup.updateAdvancedColorPicker('style>background', def?.style?.background, { mode: 'color', color: '#719abf' })
   exSetup.updateColorPickers(def?.style?.color ?? {})
   exSetup.updateAdvancedFontPickers(def?.style?.font ?? {})
@@ -1012,6 +1014,10 @@ document.getElementById('attractorSelectClear').addEventListener('click', (event
 
 document.getElementById('inactivityTimeoutField').addEventListener('change', (event) => {
   exSetup.updateWorkingDefinition(['inactivity_timeout'], event.target.value)
+  exSetup.previewDefinition(true)
+})
+document.getElementById('enableHardwareControlCheckbox').addEventListener('click', (event) => {
+  exSetup.updateWorkingDefinition(['hardware_control_enabled'], event.target.checked)
   exSetup.previewDefinition(true)
 })
 

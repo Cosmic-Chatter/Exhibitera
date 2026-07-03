@@ -232,9 +232,22 @@ function loadDefinition (definition) {
     document.getElementById('slidingHandContainer').style.display = 'block'
   }
 
-  exCommon.createLanguageSwitcher(definition, localize)
+  if (definition.hardware_control_enabled) {
+    exCommon.enableHardwareControl({
+      language: localize
+    })
+    root.style.setProperty('--footer-height', '0vmax')
+    document.getElementById('langSwitchDropdownButton').style.display = 'none'
+    document.getElementById('homeButton').style.display = 'none'
+    document.getElementById('aboutButton').style.opacity = 0
+  } else {
+    exCommon.createLanguageSwitcher(definition, localize)
+    document.getElementById('langSwitchDropdownButton').style.display = 'block'
+    document.getElementById('homeButton').style.display = 'block'
+    document.getElementById('aboutButton').style.opacity = 1
+  }
+
   currentLang = definition?.language_order[0] ?? null
-  document.getElementById('homeButton').style.display = 'block'
 
   // Configure the number of columns
   const numItems = definition.content_order.length
@@ -434,6 +447,8 @@ function localize (lang) {
 
   currentLang = lang
   exCommon.configureLanguage(lang)
+
+  exUtilities.hideModal('#aboutModal')
 
   if (homeScreenDisabled) {
     loadImages(exCommon.config.definition.content[exCommon.config.definition.content_order[0]])
