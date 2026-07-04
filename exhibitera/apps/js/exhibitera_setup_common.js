@@ -979,22 +979,43 @@ function createAdvancedFontPickers (userFonts) {
 }
 
 export function createAdvancedFontPicker (details) {
-  // Create an advanced font select
+  // Create an advanced font select with rich previews
 
   const id = exUtilities.uuid()
   details.parent.setAttribute('data-constAFP-id', id)
 
   details.parent.innerHTML = `
-    <label for="AFPSelect_${id}" class="form-label">${details.name}</label>
-    <select id="AFPSelect_${id}" class="form-select AFP-select" data-default="${details.default}"></select>
+    <label class="form-label">${details.name}</label>
+    <div class="dropdown w-100">
+      <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start d-flex justify-content-between align-items-center AFP-dropdown-toggle text-light" type="button" data-bs-toggle="dropdown" aria-expanded="false" id="AFPBtn_${id}">
+        <span class="AFP-btn-text text-truncate pe-2" style="max-width: 90%;">Select Font</span>
+      </button>
+      <ul class="dropdown-menu w-100 AFP-menu shadow" aria-labelledby="AFPBtn_${id}" style="max-height: 300px; overflow-y: auto;"></ul>
+    </div>
+    <input type="hidden" id="AFPSelect_${id}" class="AFP-select" data-default="${details.default}" data-path="${details.path}">
   `
-  const el = document.getElementById(`AFPSelect_${id}`)
-  el.dataset.path = details.path
-  if (details.value) el.value = details.value
 
-  // Add event listeners
-  el.addEventListener('change', (event) => {
-    _onAdvancedFontPickerChange(event.target)
+  const inputEl = document.getElementById(`AFPSelect_${id}`)
+  if (details.value) inputEl.value = details.value
+
+  // Event delegation for the dropdown items
+  const menuEl = details.parent.querySelector('.AFP-menu')
+  menuEl.addEventListener('click', (event) => {
+    const item = event.target.closest('.dropdown-item')
+    if (!item) return
+
+    inputEl.value = item.dataset.value
+    _onAdvancedFontPickerChange(inputEl, true)
+  })
+
+  // Auto-scroll to the selected font when the dropdown opens
+  const toggleBtn = details.parent.querySelector('.AFP-dropdown-toggle')
+  toggleBtn.addEventListener('shown.bs.dropdown', () => {
+    const activeItem = menuEl.querySelector('.active')
+    if (activeItem) {
+      // Scroll the menu so the active item is roughly in the middle of the view
+      menuEl.scrollTop = activeItem.offsetTop - (menuEl.clientHeight / 2) + (activeItem.clientHeight / 2)
+    }
   })
 }
 
@@ -1059,45 +1080,46 @@ function populateAdvancedFontPickers (userFonts) {
     { name: 'Open Sans Extra Bold Italic', path: 'OpenSans-ExtraBoldItalic.ttf' }
   ]
 
-  Array.from(document.querySelectorAll('.AFP-select')).forEach((parent) => {
-    parent.innerHTML = ''
+  Array.from(document.querySelectorAll('.advanced-font-picker')).forEach((parentDiv) => {
+    const menu = parentDiv.querySelector('.AFP-menu')
+    const inputEl = parentDiv.querySelector('.AFP-select')
 
-    // First, add the detault
-    const defaultFont = parent.getAttribute('data-default')
-    _createAdvancedFontOption(parent, 'Default', '/_fonts/' + defaultFont)
+    if (!menu || !inputEl) return
+    menu.innerHTML = ''
+
+    // First, add the default
+    const defaultFont = inputEl.getAttribute('data-default')
+    _createAdvancedFontOption(menu, 'Default', '/_fonts/' + defaultFont, inputEl)
 
     // Then, add the user fonts
     if (userFonts.length > 0) {
-      const user = new Option('User-provided')
-      user.setAttribute('disabled', true)
-      parent.appendChild(user)
+      menu.insertAdjacentHTML('beforeend', '<li><hr class="dropdown-divider"></li>')
+      menu.insertAdjacentHTML('beforeend', '<li><h6 class="dropdown-header">User-provided</h6></li>')
 
       userFonts.forEach((font) => {
-        _createAdvancedFontOption(parent, font, '/content/' + font)
+        _createAdvancedFontOption(menu, font, '/content/' + font, inputEl)
       })
     }
 
     // Finally, add the built-in font list
-    const builtInLabel = new Option('Built-in')
-    builtInLabel.setAttribute('disabled', true)
-    parent.appendChild(builtInLabel)
+    menu.insertAdjacentHTML('beforeend', '<li><hr class="dropdown-divider"></li>')
+    menu.insertAdjacentHTML('beforeend', '<li><h6 class="dropdown-header">Built-in</h6></li>')
+
     builtInFonts.forEach((font) => {
-      _createAdvancedFontOption(parent, font.name, '/_fonts/' + font.path)
+      _createAdvancedFontOption(menu, font.name, '/_fonts/' + font.path, inputEl)
     })
 
-    _onAdvancedFontPickerChange(parent, false)
+    _onAdvancedFontPickerChange(inputEl, false)
   })
 }
 
-function _createAdvancedFontOption (parent, name, path) {
-  // Create a stylized option to represent the font and add it to the parent select.
+function _createAdvancedFontOption (menu, name, path, inputEl) {
+  // Create a stylized dropdown item to represent the font and add it to the parent menu.
 
   let safeName = name.replaceAll(' ', '').replaceAll('.', '').replaceAll('/', '').replaceAll('\\', '')
   if (safeName === 'Default') {
-    safeName += parent.getAttribute('id').slice(10)
+    safeName += inputEl.getAttribute('id').slice(10)
   }
-
-  const option = new Option(name, path)
 
   // Check if font already exists
   if (!(safeName in config.fontCache)) {
@@ -1105,32 +1127,77 @@ function _createAdvancedFontOption (parent, name, path) {
     document.fonts.add(fontDef)
     config.fontCache[safeName] = true
   }
-  option.style.fontFamily = safeName
-  option.setAttribute('data-safeName', safeName)
 
-  parent.appendChild(option)
+  const li = document.createElement('li')
+
+  const btn = document.createElement('button')
+  btn.classList = 'dropdown-item d-flex flex-column align-items-start py-2'
+  btn.type = 'button'
+  btn.dataset.value = path
+  btn.dataset.safeName = safeName
+  btn.dataset.name = name
+
+  // UI readable name
+  const nameSpan = document.createElement('span')
+  nameSpan.innerText = name
+  btn.appendChild(nameSpan)
+
+  // Custom font preview (We will make this dynamic for RTL later)
+  const previewSpan = document.createElement('span')
+  previewSpan.innerText = 'AaBbCc 123'
+  previewSpan.style.fontFamily = safeName
+  previewSpan.style.fontSize = '1.2em'
+  previewSpan.classList.add('text-muted', 'mt-1', 'w-100', 'text-truncate')
+  btn.appendChild(previewSpan)
+
+  li.appendChild(btn)
+  menu.appendChild(li)
 }
 
 function _onAdvancedFontPickerChange (el, saveChange = true) {
-  // Respond to a change in an advanced font select.
-  // Set writeChange = false when first setting up the element
+  // Respond to a change in an advanced font hidden input.
 
-  if (el.selectedIndex < 0) return
+  const val = el.value
+  if (!val) return
 
   const path = el.getAttribute('data-path').split('>')
 
   if (saveChange) {
-  // Save the change
-    updateWorkingDefinition([...path], el.value)
+    // Save the change
+    updateWorkingDefinition([...path], val)
     previewDefinition(true)
   }
 
-  // Change the select font to match this font
-  let safeName = el.options[el.selectedIndex].getAttribute('data-safeName')
-  if (safeName === 'Default') {
-    safeName += el.getAttribute('id').slice(10)
+  // Find parent container to update the visual button
+  const parentDiv = el.closest('.advanced-font-picker')
+  const btnText = parentDiv.querySelector('.AFP-btn-text')
+  const toggleBtn = parentDiv.querySelector('.AFP-dropdown-toggle')
+
+  // Find the selected menu item to get its metadata
+  const menuItem = parentDiv.querySelector(`.dropdown-item[data-value="${val}"]`)
+
+  if (menuItem) {
+    // 1. Clear the active state from all items in this specific dropdown
+    const allItems = parentDiv.querySelectorAll('.dropdown-item')
+    allItems.forEach(item => {
+      item.classList.remove('active')
+      // Restore the muted text color for non-active items
+      const preview = item.querySelector('span:nth-child(2)')
+      if (preview) preview.classList.add('text-muted')
+    })
+
+    // 2. Highlight the currently selected item
+    menuItem.classList.add('active')
+
+    // Remove text-muted so the preview text doesn't clash with Bootstrap's dark active background
+    const activePreview = menuItem.querySelector('span:nth-child(2)')
+    if (activePreview) activePreview.classList.remove('text-muted')
+
+    // 3. Update the toggle button's text and font family
+    const safeName = menuItem.dataset.safeName
+    btnText.innerText = menuItem.dataset.name
+    toggleBtn.style.fontFamily = safeName
   }
-  el.style.fontFamily = safeName
 }
 
 export function updateAdvancedFontPickers (fonts, path = 'style>font') {
