@@ -141,7 +141,6 @@ __________________________________________________*/
   bottom: 0;
   visibility: hidden;
   opacity: 0;
-  overflow: hidden;
   transition: all 0.5s ease-in-out;
   background: var(--itemColor);
 }
@@ -267,7 +266,7 @@ time {
         position: absolute;
         left: 50%!important; /* Position relative to the center of the LI */
         width: 26vmax;
-        max-height: 35vh;
+        max-height: calc((100vh - var(--header-height) - var(--footer-height)) * 0.45);
         display: flex;
         flex-direction: row;
         transform: translateX(-50%); /* Initial animation state */
@@ -326,7 +325,7 @@ time {
     .timeline-element > .text-col {
         display: flex;
         flex-direction: column;
-        max-height: 35vh;
+        max-height: calc((100vh - var(--header-height) - var(--footer-height)) * 0.45);
         overflow: hidden;
     }
     
