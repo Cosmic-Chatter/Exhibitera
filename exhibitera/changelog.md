@@ -13,6 +13,7 @@ _If you are upgrading from Exhibitera 5.3, Hub and Apps must all be upgraded at 
 
 ### Timeline Explorer
 - Enable hardware control to move the timeline using physical buttons.
+- Support for ultra-wide or ultra-tall displays.
 
 
 # **Exhibitera 6**

@@ -28,9 +28,10 @@
   --body-font-adjust: 0;
 
   /* Misc */
+    --base-unit: min(1vmax, 1.77vh); /* Caps scaling at a standard 16:9 ratio (1vw = ~1.77vh) */
   --header-height: 0vmax; /* Set to 7.5vmax in javascript when a header is given */
-  --footer-height: 5vmax;
-  --item-border-radius: 1vmax;
+  --footer-height: calc(5 * var(--base-unit));
+  --item-border-radius: calc(1 * var(--base-unit));
 }
 
 /* Font definitions */
@@ -72,7 +73,7 @@ button:active {
 }
 
 h1 {
-  font-size: min(calc(4.5vmax * var(--fontModifier)), 5vmax);;
+  font-size: min(calc(4.5 * var(--base-unit) * var(--fontModifier)), calc(5 * var(--base-unit)));;
 }
 
 /* ATTRACTOR
@@ -119,8 +120,8 @@ __________________________________________________*/
 .timeline ul li::after {
   content: "";
   position: absolute;
-  width: 1.6vmax;
-  height: 1.6vmax;
+  width: calc(1.6 * var(--base-unit));
+  height: calc(1.6 * var(--base-unit));
   border-radius: 50%;
   background: inherit;
   z-index: 1;
@@ -154,7 +155,7 @@ __________________________________________________*/
 }
 
 .timeline-body {
-  font-size: calc((calc(var(--body-font-adjust) + 1) * 0.85vmax) * var(--fontModifier));
+  font-size: calc((calc(var(--body-font-adjust) + 1) * calc(0.85 * var(--base-unit))) * var(--fontModifier));
   margin-bottom: 0px;
 }
 
@@ -162,11 +163,11 @@ time {
   display: block;
   font-weight: bold;
   font-family: var(--Time-font);
-  font-size: calc((1vmax + var(--time-font-adjust)*1vmax) * var(--fontModifier));
+  font-size: calc((1 * var(--base-unit) + var(--time-font-adjust) * 1 * var(--base-unit)) * var(--fontModifier));
 }
 
 .text-col {
-  padding: 1vmax;
+  padding: calc(1 * var(--base-unit));
 }
 
 .timeline-item-header {
@@ -195,22 +196,22 @@ time {
     font-family: var(--Header-font);
 }
 #headerText {
-  font-size: 4vmax;
+  font-size: calc(4 * var(--base-unit));
   height: 90%;
 }
 .size1 {
-  font-size: calc((calc(var(--title-font-adjust) + 1) * 2vmax) * var(--fontModifier));
+  font-size: calc((var(--title-font-adjust) + 1) * 2 * var(--base-unit) * var(--fontModifier));
   font-weight: bold;
 }
 .size2 {
-  font-size: calc((calc(var(--title-font-adjust) + 1) * 1.7vmax) * var(--fontModifier));
+  font-size: calc((var(--title-font-adjust) + 1) * 1.7 * var(--base-unit) * var(--fontModifier));
   font-weight: bold;
 }
 .size3 {
-  font-size: calc((calc(var(--title-font-adjust) + 1) * 1.6vmax) * var(--fontModifier)); font-weight: bold;
+  font-size: calc((var(--title-font-adjust) + 1) * 1.6 * var(--base-unit) * var(--fontModifier));font-weight: bold;
 }
 .size4 {
-  font-size: calc((calc(var(--title-font-adjust) + 1) * 1.3vmax) * var(--fontModifier));
+  font-size: calc((var(--title-font-adjust) + 1) * 1.3 * var(--base-unit) * var(--fontModifier));
   font-weight: bold;
 }
 #header-pane {
@@ -222,7 +223,7 @@ time {
 }
 #tools-pane {
     background-color: var(--footerColor);
-    height: 5vmax;
+    height: calc(5 * var(--base-unit));
 }
 
 
@@ -242,15 +243,15 @@ time {
         display: flex;
         flex-direction: row;
         width: max-content;
-        padding: 0 20vw; 
+        padding: 0 calc(20 * var(--base-unit)); 
         margin: 0;
         height: 100%;
         align-items: center; /* Center the 'li' line segments */
     }
 
     .timeline ul li { 
-        flex: 0 0 23.4375vmax; 
-        height: 1vh; /* The thickness of the timeline line */
+        flex: 0 0 calc(23.4375 * var(--base-unit)); 
+        height: 1vmin; /* The thickness of the timeline line */
         padding: 0;
     }
 
@@ -265,29 +266,29 @@ time {
     .timeline ul li div.timeline-element {
         position: absolute;
         left: 50%!important; /* Position relative to the center of the LI */
-        width: 26vmax;
+        width: calc(26 * var(--base-unit));
         max-height: calc((100vh - var(--header-height) - var(--footer-height)) * 0.45);
         display: flex;
         flex-direction: row;
         transform: translateX(-50%); /* Initial animation state */
     }
     .timeline ul li div.timeline-element.with-media {
-      width: 32.3vmax;
+      width: calc(32.3 * var(--base-unit));
     }
     
     /* Position ODD items ABOVE the line */
     .timeline ul li:nth-child(odd) div.timeline-element {
-        bottom: 1.9vmax; /* Distance above the line */
+        bottom: calc(1.9 * var(--base-unit)); /* Distance above the line */
         top: auto;
-        transform: translate3d(-50%, -5.2vmax, 0) !important;
+        transform: translate3d(-50%, calc(-5.2 * var(--base-unit)), 0) !important;
     }
 
 
     /* Position EVEN items BELOW the line */
     .timeline ul li:nth-child(even) div.timeline-element {
-        top: 1.9vmax; /* Distance below the line */
+        top: calc(1.9 * var(--base-unit)); /* Distance below the line */
         bottom: auto;
-        transform: translate3d(-50%, 5.2vmax, 0) !important;
+        transform: translate3d(-50%, calc(5.2 * var(--base-unit)), 0) !important;
     }
 
     .timeline ul li.in-view div.timeline-element {
@@ -305,15 +306,15 @@ time {
 
     /* Pointers for boxes ABOVE the line (pointing down) */
     .timeline ul li:nth-child(odd) div.timeline-element::before {
-        bottom: -.78vmax;
-        border-width: .78vmax .78vmax 0 .78vmax;
+        bottom: calc(-.78 * var(--base-unit));
+        border-width: calc(.78 * var(--base-unit)) calc(-.78 * var(--base-unit)) calc(-.78 * var(--base-unit));
         border-color: var(--itemColor) transparent transparent transparent;
     }
 
     /* Pointers for boxes BELOW the line (pointing up) */
     .timeline ul li:nth-child(even) div.timeline-element::before {
-        top: -.78vmax;
-        border-width: 0 .78vmax .78vmax .78vmax;
+        top: calc(-.78 * var(--base-unit));
+        border-width: 0 calc(.78 * var(--base-unit)) calc(.78 * var(--base-unit)) calc(-.78 * var(--base-unit));
         border-color: transparent transparent var(--itemColor) transparent;
     }
 
@@ -348,9 +349,9 @@ time {
       overflow: hidden;
     }
     .media-contain {
-      padding-right: 1vmax;
-      padding-top: 1vmax;
-      padding-bottom: 1vmax;
+      padding-right: calc(1 * var(--base-unit));
+      padding-top: calc(1 * var(--base-unit));
+      padding-bottom: calc(1 * var(--base-unit));
     }
 }
 
@@ -392,7 +393,7 @@ time {
         width: 1vw;
         margin: 0 auto;
         background: none;
-        height: 18vmax; 
+        height: calc(18 * var(--base-unit)); 
     }
 
     /* The Dot */
@@ -402,8 +403,8 @@ time {
         left: 50%;
         bottom: 0;
         transform: translate(-50%, 50%);
-        width: 2.1vmax;
-        height: 2.1vmax;
+        width: calc(2.1 * var(--base-unit));
+        height: calc(2.1 * var(--base-unit));
         border-radius: 50%;
         background: var(--lineColor);
         z-index: 10;
@@ -423,11 +424,11 @@ time {
 
     /* Entrance Animations and Horizontal Offsets */
     :dir(ltr) .timeline ul li:nth-child(odd) div.timeline-element {
-        left: 2.09vmax;
-        transform: translate3d(10.4vmax, 50%, 0); 
+        left: calc(2.09 * var(--base-unit));
+        transform: translate3d(calc(10.4 * var(--base-unit)), 50%, 0); 
     }
     :dir(ltr) .timeline ul li:nth-child(even) div.timeline-element {
-        left: calc(-40vw - 1.51vmax);
+        left: calc(-40vw - calc(1.51 * var(--base-unit)));
         transform: translate3d(-10.4vmax, 50%, 0);
     }
 
@@ -442,7 +443,7 @@ time {
         content: "";
         position: absolute;
         top: 50%;
-        margin-top: -.78vmax;
+        margin-top: calc(-.78 * var(--base-unit));
         width: 0;
         height: 0;
         border-style: solid;
@@ -450,13 +451,13 @@ time {
     }
 
     :dir(ltr) .timeline ul li:nth-child(odd) div.timeline-element::before {
-        left: -.78vmax;
-        border-width: .78vmax .78vmax .78vmax 0;
+        left: calc(-.78 * var(--base-unit));
+        border-width: calc(.78 * var(--base-unit)) calc(.78 * var(--base-unit)) calc(.78 * var(--base-unit)) 0;
         border-color: transparent var(--itemColor) transparent transparent;
     }
     :dir(ltr) .timeline ul li:nth-child(even) div.timeline-element::before {
-        right: -.78vmax;
-        border-width: .78vmax 0 .78vmax .78vmax;
+        right: calc(-.78 * var(--base-unit));
+        border-width: calc(.78 * var(--base-unit)) 0 calc(.78 * var(--base-unit)) calc(.78 * var(--base-unit));
         border-color: transparent transparent transparent var(--itemColor);
     }
 
@@ -464,23 +465,23 @@ time {
     :dir(rtl) .timeline ul li:nth-child(odd) div.timeline-element {
         right: 4.5vw;
         left: auto;
-        transform: translate3d(-10.4vmax, 50%, 0);
+        transform: translate3d(calc(-10.4 * var(--base-unit)), 50%, 0);
     }
     :dir(rtl) .timeline ul li:nth-child(even) div.timeline-element {
         right: -44.5vw;
         left: auto;
-        transform: translate3d(10.4vmax, 50%, 0);
+        transform: translate3d(calc(10.4 * var(--base-unit)), 50%, 0);
     }
     :dir(rtl) .timeline ul li:nth-child(odd) div.timeline-element::before {
-        right: -.78vmax;
+        right: calc(-.78 * var(--base-unit));
         left: auto;
-        border-width: .78vmax 0 .78vmax .78vmax;
+        border-width: calc(.78 * var(--base-unit)) calc(.78 * var(--base-unit)) calc(.78 * var(--base-unit));
         border-color: transparent transparent transparent var(--itemColor);
     }
     :dir(rtl) .timeline ul li:nth-child(even) div.timeline-element::before {
-        left: -.78vmax;
+        left: calc(-.78 * var(--base-unit));
         right: auto;
-        border-width: .78vmax .78vmax .78vmax 0;
+        border-width: calc(.78 * var(--base-unit)) calc(.78 * var(--base-unit)) calc(.78 * var(--base-unit)) 0;
         border-color: transparent var(--itemColor) transparent transparent;
     }
 
@@ -488,29 +489,29 @@ time {
       border-bottom-left-radius: var(--item-border-radius);
       border-bottom-right-radius: var(--item-border-radius);
       overflow: hidden;
-      max-height: 18vmax;
+      max-height: calc(18 * var(--base-unit));
     }
     .media-col img {
       width: 100%;
       height: auto;
-      max-height: 18vmax;
+      max-height: calc(18 * var(--base-unit));
     }
     .media-col video {
       width: 100%;
       height: auto;
-      max-height: 18vmax;
+      max-height: calc(18 * var(--base-unit));
     }
     .media-contain {
-      padding-bottom: 1vmax;
-      padding-left: 1vmax;
-      padding-right: 1vmax;
+      padding-bottom: calc(1 * var(--base-unit));
+      padding-left: calc(1 * var(--base-unit));
+      padding-right: calc(1 * var(--base-unit));
     }
     .timeline-element > .text-col > .timeline-body {
-      max-height: 23vmax;
+      max-height: calc(23 * var(--base-unit));
       overflow-y: auto;
     }
     .timeline-element.with-media > .text-col > .timeline-body {
-      max-height: 8vmax;
+      max-height: calc(8 * var(--base-unit));
       overflow-y: auto;
     }
 }
@@ -518,8 +519,8 @@ time {
 /* EXTRA/CLIP PATH STYLES
 –––––––––––––––––––––––––––––––––––––––––––––––––– */
 .timeline-clippy ul li::after {
-  width: 2.1vmax;
-  height: 2.1vmax;
+  width: calc(2.1 * var(--base-unit));
+  height: calc(2.1 * var(--base-unit));
   border-radius: 0;
 }
 
@@ -528,7 +529,7 @@ time {
 }
 
 .timeline-rhombus ul li div.timeline-element::before {
-  bottom: .625vmax;
+  bottom: calc(.625 * var(--base-unit));
 }
 
 

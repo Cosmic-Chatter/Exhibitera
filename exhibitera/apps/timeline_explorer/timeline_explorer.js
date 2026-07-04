@@ -82,10 +82,10 @@ function loadDefinition (def) {
       language: localize,
       size: adjustFontSize
     })
-    root.style.setProperty('--footer-height', '0vmax')
+    root.style.setProperty('--footer-height', '0px')
   } else {
     exCommon.createLanguageSwitcher(def, localize)
-    root.style.setProperty('--footer-height', '5vmax')
+    root.style.setProperty('--footer-height', 'calc(5 * var(--base-unit))')
   }
 
   // Find the default language
@@ -144,10 +144,10 @@ function localize (lang) {
 
   header.innerHTML = headerText
   if (headerText !== '') {
-    root.style.setProperty('--header-height', '7.5vmax')
-    textFit(header)
+    root.style.setProperty('--header-height', 'calc(7.5 * var(--base-unit))')
+    textFit(header, { maxFontSize: 1000 })
   } else {
-    root.style.setProperty('--header-height', '0vmax')
+    root.style.setProperty('--header-height', '0px')
   }
 }
 
