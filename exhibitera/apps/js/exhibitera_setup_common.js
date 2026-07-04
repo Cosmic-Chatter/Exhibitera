@@ -1230,6 +1230,7 @@ export function createAdvancedSlider (el, value = null) {
 
   number.value = value ?? el.dataset.start
   slider.value = value ?? el.dataset.start
+  el.value = value ?? el.dataset.start
 
   // Activate tooltips
   const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
