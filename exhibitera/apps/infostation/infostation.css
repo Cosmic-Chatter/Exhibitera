@@ -223,7 +223,6 @@ p, div {
 #masthead {
   font-size: calc(6vmax + var(--header-font-size-adjust)*1vmax);
   height: calc(1vh * var(--header-height));
-  /* line-height: calc(1vh * var(--header-height)); */
   color: var(--text-color);
   background-color: var(--header-color);
   z-index: 1;

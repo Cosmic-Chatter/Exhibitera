@@ -991,7 +991,7 @@ export function createAdvancedFontPicker (details) {
       <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start d-flex justify-content-between align-items-center AFP-dropdown-toggle text-light" type="button" data-bs-toggle="dropdown" aria-expanded="false" id="AFPBtn_${id}">
         <span class="AFP-btn-text text-truncate pe-2" style="max-width: 90%;">Select Font</span>
       </button>
-      <ul class="dropdown-menu w-100 AFP-menu shadow" aria-labelledby="AFPBtn_${id}" style="max-height: 300px; overflow-y: auto;"></ul>
+      <ul class="dropdown-menu AFP-menu shadow p-0" aria-labelledby="AFPBtn_${id}"></ul>
     </div>
     <input type="hidden" id="AFPSelect_${id}" class="AFP-select" data-default="${details.default}" data-path="${details.path}">
   `
@@ -1012,10 +1012,15 @@ export function createAdvancedFontPicker (details) {
   // Auto-scroll to the selected font when the dropdown opens
   const toggleBtn = details.parent.querySelector('.AFP-dropdown-toggle')
   toggleBtn.addEventListener('shown.bs.dropdown', () => {
-    const activeItem = menuEl.querySelector('.active')
-    if (activeItem) {
-      // Scroll the menu so the active item is roughly in the middle of the view
-      menuEl.scrollTop = activeItem.offsetTop - (menuEl.clientHeight / 2) + (activeItem.clientHeight / 2)
+    // Target the inner scroll zone we created earlier
+    const scrollZone = menuEl.querySelector('.AFP-scroll-zone')
+
+    // Only look for the active item inside the scroll zone
+    const activeItem = scrollZone ? scrollZone.querySelector('.active') : null
+
+    if (activeItem && scrollZone) {
+      // Scroll the inner zone so the active item is roughly in the middle of the view
+      scrollZone.scrollTop = activeItem.offsetTop - (scrollZone.clientHeight / 2) + (activeItem.clientHeight / 2)
     }
   })
 }
@@ -1088,27 +1093,58 @@ function populateAdvancedFontPickers (userFonts) {
     if (!menu || !inputEl) return
     menu.innerHTML = ''
 
-    // First, add the default
+    // 1. Create a scrollable inner zone for standard fonts
+    const scrollableWrapper = document.createElement('li')
+    scrollableWrapper.innerHTML = '<ul class="list-unstyled mb-0 py-2 AFP-scroll-zone" style="max-height: 250px; overflow-y: auto; overflow-x: hidden;"></ul>'
+    menu.appendChild(scrollableWrapper)
+
+    const scrollZone = scrollableWrapper.querySelector('.AFP-scroll-zone')
+
+    // Add the default font to the scroll zone
     const defaultFont = inputEl.getAttribute('data-default')
-    _createAdvancedFontOption(menu, 'Default', '/_fonts/' + defaultFont, inputEl)
+    _createAdvancedFontOption(scrollZone, 'Default', '/_fonts/' + defaultFont, inputEl)
 
-    // Then, add the user fonts
-    if (userFonts.length > 0) {
-      menu.insertAdjacentHTML('beforeend', '<li><hr class="dropdown-divider"></li>')
-      menu.insertAdjacentHTML('beforeend', '<li><h6 class="dropdown-header">User-provided</h6></li>')
-
-      userFonts.forEach((font) => {
-        _createAdvancedFontOption(menu, font, '/content/' + font, inputEl)
-      })
-    }
-
-    // Finally, add the built-in font list
-    menu.insertAdjacentHTML('beforeend', '<li><hr class="dropdown-divider"></li>')
-    menu.insertAdjacentHTML('beforeend', '<li><h6 class="dropdown-header">Built-in</h6></li>')
+    // Add the built-in font list to the scroll zone
+    scrollZone.insertAdjacentHTML('beforeend', '<li><hr class="dropdown-divider"></li>')
+    scrollZone.insertAdjacentHTML('beforeend', '<li><h6 class="dropdown-header">Built-in</h6></li>')
 
     builtInFonts.forEach((font) => {
-      _createAdvancedFontOption(menu, font.name, '/_fonts/' + font.path, inputEl)
+      _createAdvancedFontOption(scrollZone, font.name, '/_fonts/' + font.path, inputEl)
     })
+
+    // 2. Add User-provided fonts as a sticky footer (Outside the scroll zone)
+    if (userFonts.length > 0) {
+      menu.insertAdjacentHTML('beforeend', '<li><hr class="dropdown-divider m-0"></li>')
+
+      // Create the submenu container
+      const submenuLi = document.createElement('li')
+      submenuLi.classList.add('dropdown-submenu', 'py-1')
+
+      // Create the toggle button for the flyout.
+      // Note: We also give the flyout itself a scrollbar just in case they have 50 custom fonts!
+      submenuLi.innerHTML = `
+          <button class="dropdown-item d-flex justify-content-between align-items-center w-100 user-font-toggle py-2" type="button">
+            <span>User-provided</span>
+            <span>▶</span>
+          </button>
+          <ul class="dropdown-menu shadow user-font-menu" style="max-height: 250px; overflow-y: auto;"></ul>
+        `
+      menu.appendChild(submenuLi)
+
+      // Prevent closing the main dropdown when interacting with the flyout toggle
+      const userFontToggle = submenuLi.querySelector('.user-font-toggle')
+      userFontToggle.addEventListener('click', (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        submenuLi.classList.toggle('open')
+      })
+
+      // Populate the nested menu
+      const submenuMenu = submenuLi.querySelector('.user-font-menu')
+      userFonts.forEach((font) => {
+        _createAdvancedFontOption(submenuMenu, font, '/content/' + font, inputEl)
+      })
+    }
 
     _onAdvancedFontPickerChange(inputEl, false)
   })

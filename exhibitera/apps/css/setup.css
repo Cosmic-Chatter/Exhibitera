@@ -18,6 +18,21 @@
     border-style: solid;
     cursor: default;
 }
+.dropdown-submenu {
+  position: relative;
+}
+
+.dropdown-submenu .dropdown-menu {
+  bottom: 0;
+  left: 100%;
+  margin-bottom: -8px; /* Aligns the bottom of the flyout with the toggle item */
+  display: none; 
+}
+
+.dropdown-submenu:hover > .dropdown-menu,
+.dropdown-submenu.open > .dropdown-menu {
+  display: block;
+}
 .exAS_number {
     font-size: 0.75rem;
     padding: .25rem;
