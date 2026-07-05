@@ -8,6 +8,7 @@ _If you are upgrading from Exhibitera 5.3, Hub and Apps must all be upgraded at 
 ### General
 - Integrate your app with physical exhibit buttons by using a Makey Makey or similar device. An option to enable hardware control has been added to select apps to allow for tactile interaction.
 - Rich previews when selecting a font during setup.
+- Support for Chinese (Hong Kong)
 
 ### Image Compare
 - Enable hardware control to use physical buttons to select an image pair and swipe between images.

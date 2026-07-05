@@ -38,6 +38,7 @@ export const config = {
     { code: 'bg', name: 'български език', name_en: 'Bulgarian' },
     { code: 'ca', name: 'Català', name_en: 'Catalan' },
     { code: 'zh', name: '中国人', name_en: 'Chinese (China)' },
+    { code: 'zh-hk', name: '中国人', name_en: 'Chinese (Hong Kong)' },
     { code: 'zh-tw', name: '中国人', name_en: 'Chinese (Taiwan)' },
     { code: 'hr', name: 'Hrvatski', name_en: 'Croatian' },
     { code: 'cs', name: 'Čeština', name_en: 'Czech' },
