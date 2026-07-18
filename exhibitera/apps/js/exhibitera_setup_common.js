@@ -1,5 +1,7 @@
 /* global bootstrap, Coloris, showdown */
 
+import opentype from './opentype@1.3.1.js'
+
 import * as exFiles from '../../common/files.js'
 import * as exUtilities from '../../common/utilities.js'
 import * as exCommon from './exhibitera_app_common.js'
@@ -25,6 +27,8 @@ export const config = {
   loadDefinition: null,
   onDefinitionSave: null,
   fontCache: {}, // Keys with any value indicate that font has already been made
+  fontAxesCache: {}, // Axes data for variable fonts
+  fontNameCache: {}, // English names of fonts
   workingDefinition: null,
   languages: [
     { code: 'af', name: 'Afrikaans', name_en: 'Afrikaans' },
@@ -972,8 +976,9 @@ function createAdvancedFontPickers (userFonts) {
   Array.from(document.querySelectorAll('.advanced-font-picker')).forEach((el) => {
     const name = el.getAttribute('data-constAFP-name')
     const path = el.getAttribute('data-constAFP-path')
-    const defaultFont = el.getAttribute('data-default')
-    createAdvancedFontPicker({ parent: el, name, path, default: defaultFont })
+    const defaultFont = el.getAttribute('data-default-font')
+    const defaultAxes = el.getAttribute('data-default-axes')
+    createAdvancedFontPicker({ parent: el, name, path, font: defaultFont, axes: defaultAxes })
   })
 
   populateAdvancedFontPickers(userFonts)
@@ -993,7 +998,8 @@ export function createAdvancedFontPicker (details) {
       </button>
       <ul class="dropdown-menu AFP-menu shadow p-0" aria-labelledby="AFPBtn_${id}"></ul>
     </div>
-    <input type="hidden" id="AFPSelect_${id}" class="AFP-select" data-default="${details.default}" data-path="${details.path}">
+    <input type="hidden" id="AFPSelect_${id}" class="AFP-select" data-default-font="${details.font}" data-default-axes="${details.axes}" data-path="${details.path}">
+    <div class="AFP-axes-container mt-2" id="AFPAxes_${id}"></div>
   `
 
   const inputEl = document.getElementById(`AFPSelect_${id}`)
@@ -1045,8 +1051,114 @@ function getUserFonts () {
   })
 }
 
+async function getVariableFontAxes (fontPath) {
+  // Query the given font path to determine if it is a variable font and return its axes.
+
+  // Return cached axes configuration if available to optimize low-power devices
+  if (config.fontAxesCache && config.fontAxesCache[fontPath]) {
+    return config.fontAxesCache[fontPath]
+  }
+
+  try {
+    const font = await opentype.load(fontPath)
+
+    // Check if the uploaded file contains the font variations (fvar) table
+    if (font.tables && font.tables.fvar && font.tables.fvar.axes) {
+      const axes = font.tables.fvar.axes.map(axis => {
+        let axisName = axis.tag
+        if (font.names && font.names.fontFamily) {
+          axisName = axis.name ? (axis.name.en || axis.name.ja || axis.tag) : axis.tag
+        }
+
+        const min = parseFloat(axis.minValue.toFixed(2))
+        const max = parseFloat(axis.maxValue.toFixed(2))
+        const range = max - min
+
+        let step = 1
+
+        if (range > 0) {
+          const idealStep = range / 8
+
+          if (idealStep >= 75) {
+            step = 100 // Standard 100-step weights (e.g., range 100-900 -> step 100)
+          } else if (idealStep >= 35) {
+            step = 50 // Half-steps for smaller weight spans
+          } else if (idealStep >= 7.5) {
+            step = 10 // Good for optical sizes or width ranges
+          } else {
+            // For fractional widths, slants, or custom axes, divide the range
+            // into exactly 10 clean parts, rounded to 2 decimal places.
+            step = parseFloat((range / 10).toFixed(2))
+          }
+        }
+
+        return {
+          tag: axis.tag,
+          name: axisName,
+          min,
+          max,
+          default: axis.defaultValue,
+          step
+        }
+      })
+
+      // Commit to runtime cache configuration
+      if (!config.fontAxesCache) config.fontAxesCache = {}
+      config.fontAxesCache[fontPath] = axes
+
+      return axes
+    }
+  } catch (err) {
+    console.error(`Opentype module failed to parse font variations at: ${fontPath}`, err)
+  }
+
+  return null // static font
+}
+
+async function getFontHumanName (fontPath) {
+  // Use opentype to look up the English name of the given font path
+
+  // Try cache first
+  if (config.fontNameCache && config.fontNameCache[fontPath]) {
+    return config.fontNameCache[fontPath]
+  }
+
+  try {
+    const otInstance = opentype.load ? opentype : opentype.default
+    if (otInstance && typeof otInstance.load === 'function') {
+      const font = await otInstance.load(fontPath)
+
+      if (font.names) {
+        // Try to fetch full font name or family name in English
+        let humanName = font.names.fullName?.en ||
+                          font.names.fontFamily?.en ||
+                          font.names.postScriptName?.en
+
+        if (humanName) {
+          // Set custom names for the built-in fonts
+          if (humanName === 'Noto Sans Regular') {
+            humanName = 'Sans Serif'
+          } else if (humanName === 'Noto Serif Regular') {
+            humanName = 'Serif'
+          } else if (humanName === 'Noto Sans Mono Regular') {
+            humanName = 'Mono'
+          }
+          if (!config.fontNameCache) config.fontNameCache = {}
+          config.fontNameCache[fontPath] = humanName.trim()
+          return config.fontNameCache[fontPath]
+        }
+      }
+    }
+  } catch (err) {
+    console.warn(`Could not extract typographic name for file: ${fontPath}. Falling back to filename.`, err)
+  }
+
+  // Fallback: strip the directory track and file extension if parsing fails
+  return fontPath.split('/').pop().replace(/\.[^/.]+$/, '')
+}
+
 export async function refreshAdvancedFontPickers () {
-  // Retrive any new fonts and update the pickers
+  // Retrieve any new fonts and update the pickers
 
   const userFonts = await getUserFonts()
 
@@ -1060,7 +1172,7 @@ export async function refreshAdvancedFontPickers () {
     const picker = document.getElementById(id)
     // Check if option still exists (font may have been deleted)
     if (Array.from(picker.options).map(o => o.value).includes(currentDict[id]) === false) {
-      picker.value = '/_fonts/' + picker.getAttribute('data-default')
+      picker.value = '/_fonts/' + picker.getAttribute('data-defaultFont')
     } else {
       picker.value = currentDict[id]
     }
@@ -1072,18 +1184,9 @@ function populateAdvancedFontPickers (userFonts) {
   // Add user and default fonts
 
   const builtInFonts = [
-    { name: 'Open Sans Light', path: 'OpenSans-Light.ttf' },
-    { name: 'Open Sans Light Italic', path: 'OpenSans-LightItalic.ttf' },
-    { name: 'Open Sans Regular', path: 'OpenSans-Regular.ttf' },
-    { name: 'Open Sans Italic', path: 'OpenSans-Italic.ttf' },
-    { name: 'Open Sans Medium', path: 'OpenSans-Medium.ttf' },
-    { name: 'Open Sans Medium Italic', path: 'OpenSans-MediumItalic.ttf' },
-    { name: 'Open Sans Semibold', path: 'OpenSans-SemiBold.ttf' },
-    { name: 'Open Sans Semibold Italic', path: 'OpenSans-SemiBoldItalic.ttf' },
-    { name: 'Open Sans Bold', path: 'OpenSans-Bold.ttf' },
-    { name: 'Open Sans Bold Italic', path: 'OpenSans-BoldItalic.ttf' },
-    { name: 'Open Sans Extra Bold', path: 'OpenSans-ExtraBold.ttf' },
-    { name: 'Open Sans Extra Bold Italic', path: 'OpenSans-ExtraBoldItalic.ttf' }
+    { name: 'Sans Serif', path: 'Noto/NotoSans-VariableFont_wdth,wght.ttf' },
+    { name: 'Serif', path: 'Noto/NotoSerif-VariableFont_wdth,wght.ttf' },
+    { name: 'Monospace', path: 'Noto/NotoSansMono-VariableFont_wdth,wght.ttf' }
   ]
 
   Array.from(document.querySelectorAll('.advanced-font-picker')).forEach((parentDiv) => {
@@ -1093,26 +1196,17 @@ function populateAdvancedFontPickers (userFonts) {
     if (!menu || !inputEl) return
     menu.innerHTML = ''
 
-    // 1. Create a scrollable inner zone for standard fonts
+    // Create a scrollable inner zone for standard fonts
     const scrollableWrapper = document.createElement('li')
     scrollableWrapper.innerHTML = '<ul class="list-unstyled mb-0 py-2 AFP-scroll-zone" style="max-height: 250px; overflow-y: auto; overflow-x: hidden;"></ul>'
     menu.appendChild(scrollableWrapper)
 
     const scrollZone = scrollableWrapper.querySelector('.AFP-scroll-zone')
-
-    // Add the default font to the scroll zone
-    const defaultFont = inputEl.getAttribute('data-default')
-    _createAdvancedFontOption(scrollZone, 'Default', '/_fonts/' + defaultFont, inputEl)
-
-    // Add the built-in font list to the scroll zone
-    scrollZone.insertAdjacentHTML('beforeend', '<li><hr class="dropdown-divider"></li>')
-    scrollZone.insertAdjacentHTML('beforeend', '<li><h6 class="dropdown-header">Built-in</h6></li>')
-
     builtInFonts.forEach((font) => {
       _createAdvancedFontOption(scrollZone, font.name, '/_fonts/' + font.path, inputEl)
     })
 
-    // 2. Add User-provided fonts as a sticky footer (Outside the scroll zone)
+    // Add User-provided fonts as a sticky footer
     if (userFonts.length > 0) {
       menu.insertAdjacentHTML('beforeend', '<li><hr class="dropdown-divider m-0"></li>')
 
@@ -1121,7 +1215,6 @@ function populateAdvancedFontPickers (userFonts) {
       submenuLi.classList.add('dropdown-submenu', 'py-1')
 
       // Create the toggle button for the flyout.
-      // Note: We also give the flyout itself a scrollbar just in case they have 50 custom fonts!
       submenuLi.innerHTML = `
           <button class="dropdown-item d-flex justify-content-between align-items-center w-100 user-font-toggle py-2" type="button">
             <span>User-provided</span>
@@ -1179,61 +1272,195 @@ function _createAdvancedFontOption (menu, name, path, inputEl) {
   nameSpan.innerText = name
   btn.appendChild(nameSpan)
 
-  // Custom font preview (We will make this dynamic for RTL later)
+  // Custom font preview
   const previewSpan = document.createElement('span')
   previewSpan.innerText = 'AaBbCc 123'
   previewSpan.style.fontFamily = safeName
-  previewSpan.style.fontSize = '1.2em'
+  previewSpan.style.fontSize = '1em'
   previewSpan.classList.add('text-muted', 'mt-1', 'w-100', 'text-truncate')
   btn.appendChild(previewSpan)
 
   li.appendChild(btn)
   menu.appendChild(li)
+
+  getFontHumanName(path).then((realName) => {
+    if (realName && realName !== name) {
+      // Update the dropdown option UI elements
+      btn.dataset.name = realName
+      nameSpan.innerText = realName
+
+      // If this font happens to be the currently active selection for this picker,
+      // update the main dropdown button's display text to match immediately.
+      const currentSelection = inputEl.value
+      let isSelected = false
+
+      if (currentSelection) {
+        // Handle both the raw path string (legacy) and the object schema string
+        if (currentSelection.startsWith('{')) {
+          try {
+            const parsed = JSON.parse(currentSelection)
+            if (parsed.path === path) isSelected = true
+          } catch (e) {}
+        } else if (currentSelection === path) {
+          isSelected = true
+        }
+      }
+
+      if (isSelected) {
+        const parentDiv = inputEl.closest('.advanced-font-picker')
+        if (parentDiv) {
+          const mainBtnText = parentDiv.querySelector('.AFP-btn-text')
+          if (mainBtnText) {
+            mainBtnText.innerText = realName
+          }
+        }
+      }
+    }
+  }).catch((err) => {
+    console.warn('Background font name metadata look up failed for:', path, err)
+  })
 }
 
-function _onAdvancedFontPickerChange (el, saveChange = true) {
-  // Respond to a change in an advanced font hidden input.
+async function _onAdvancedFontPickerChange (el, saveChange = true) {
+  // Process the change in an advanced font picker hidden input
 
-  const val = el.value
-  if (!val) return
+  let fontData = el.value
+  if (!fontData) return
 
+  // Parse if it's a JSON string
+  try {
+    if (typeof fontData === 'string' && fontData.startsWith('{')) {
+      fontData = JSON.parse(fontData)
+    }
+  } catch (e) {
+    console.error('Failed to parse font data JSON:', e)
+  }
+
+  // Guarantee an object with {path, axes}
+  const fontDef = exCommon.normalizeFontDefinition(fontData)
   const path = el.getAttribute('data-path').split('>')
 
+  // Save changes to the definition and trigger a preview update
   if (saveChange) {
-    // Save the change
-    updateWorkingDefinition([...path], val)
+    updateWorkingDefinition([...path], fontDef)
     previewDefinition(true)
   }
 
-  // Find parent container to update the visual button
+  // Update the font picker GUI
   const parentDiv = el.closest('.advanced-font-picker')
+  if (!parentDiv) return
+
   const btnText = parentDiv.querySelector('.AFP-btn-text')
   const toggleBtn = parentDiv.querySelector('.AFP-dropdown-toggle')
+  const axesContainer = parentDiv.querySelector('.AFP-axes-container')
 
-  // Find the selected menu item to get its metadata
-  const menuItem = parentDiv.querySelector(`.dropdown-item[data-value="${val}"]`)
+  // Find the selected menu item using the path string
+  const menuItem = parentDiv.querySelector(`.dropdown-item[data-value="${fontDef.path}"]`)
 
   if (menuItem) {
-    // 1. Clear the active state from all items in this specific dropdown
     const allItems = parentDiv.querySelectorAll('.dropdown-item')
     allItems.forEach(item => {
       item.classList.remove('active')
-      // Restore the muted text color for non-active items
       const preview = item.querySelector('span:nth-child(2)')
       if (preview) preview.classList.add('text-muted')
     })
 
-    // 2. Highlight the currently selected item
     menuItem.classList.add('active')
-
-    // Remove text-muted so the preview text doesn't clash with Bootstrap's dark active background
     const activePreview = menuItem.querySelector('span:nth-child(2)')
     if (activePreview) activePreview.classList.remove('text-muted')
 
-    // 3. Update the toggle button's text and font family
-    const safeName = menuItem.dataset.safeName
-    btnText.innerText = menuItem.dataset.name
-    toggleBtn.style.fontFamily = safeName
+    const safeName = menuItem.dataset.safeName || ''
+    if (btnText) btnText.innerText = menuItem.dataset.name || 'Select Font'
+    if (toggleBtn) toggleBtn.style.fontFamily = safeName
+
+    // Apply axes to the dropdown button text for immediate UI feedback
+    if (toggleBtn) {
+      const axisString = Object.entries(fontDef.axes || {})
+        .map(([axis, val]) => `"${axis}" ${val}`)
+        .join(', ')
+      toggleBtn.style.fontVariationSettings = axisString || 'normal'
+    }
+  }
+
+  // Now populate any variable font axes
+  if (!axesContainer) return
+
+  axesContainer.innerHTML = '<small class="text-muted">Analyzing font...</small>'
+
+  // Dynamically fetch the axes directly from the selected file
+  const availableAxes = await getVariableFontAxes(fontDef.path)
+
+  axesContainer.innerHTML = '' // Clear loading text
+
+  // If the font is variable, generate the sliders
+  if (availableAxes && availableAxes.length > 0) {
+    availableAxes.forEach(axis => {
+      // Determine what to set the slider to:
+      // 1: Existing value from the definition
+      // 2: If this is a standard font, use the defaults from the element
+      // 3: Fallback to the font's native default
+
+      let currentValue
+      if (fontDef.axes[axis.tag]) {
+        // Option 1
+        currentValue = fontDef.axes[axis.tag]
+      } else if (fontDef.path.includes('/Noto/')) {
+        // Option 2
+        if (typeof el.dataset.defaultAxes === 'string' && el.dataset.defaultAxes.startsWith('{')) {
+          // Fix the bad JSON (no quotes around the keys) and then parse
+          const jsonString = el.dataset.defaultAxes.replace(/([a-zA-Z0-9_]+)(?=\s*:)/g, '"$1"')
+          const axes = JSON.parse(jsonString)
+          currentValue = axes?.[axis.tag] ?? axis.default
+        }
+      } else {
+        // Option 3
+        currentValue = axis.default
+      }
+      // const currentValue = fontDef.axes[axis.tag] ?? axis.default
+      const sliderHTML = `
+        <div class="row align-items-center mb-1">
+          <div class="col-4 text-end">
+            <small class="text-muted" title="${axis.tag}">${axis.name}</small>
+          </div>
+          <div class="col-8">
+            <input type="range" class="form-range font-axis-slider" 
+              data-axis="${axis.tag}" 
+              min="${axis.min}" max="${axis.max}" 
+              step="${axis.step}" value="${currentValue}">
+          </div>
+        </div>
+      `
+      axesContainer.insertAdjacentHTML('beforeend', sliderHTML)
+    })
+
+    // Bind event listeners to the newly injected sliders
+    const sliders = axesContainer.querySelectorAll('.font-axis-slider')
+    sliders.forEach(slider => {
+      slider.addEventListener('input', (e) => {
+        // Build updated axes object from all sliders
+        const newAxes = {}
+        sliders.forEach(s => {
+          newAxes[s.dataset.axis] = parseFloat(s.value)
+        })
+
+        const updatedFontDef = { path: fontDef.path, axes: newAxes }
+
+        // Update hidden input (stringify so it parses correctly on subsequent calls)
+        el.value = JSON.stringify(updatedFontDef)
+
+        // Save and preview changes live
+        updateWorkingDefinition([...path], updatedFontDef)
+        previewDefinition(true)
+
+        // Live update the dropdown button preview to match the slider movements
+        if (toggleBtn) {
+          const newAxisString = Object.entries(newAxes)
+            .map(([axis, val]) => `"${axis}" ${val}`)
+            .join(', ')
+          toggleBtn.style.fontVariationSettings = newAxisString || 'normal'
+        }
+      })
+    })
   }
 }
 
@@ -1250,7 +1477,12 @@ export function updateAdvancedFontPickers (fonts, path = 'style>font') {
 export function setAdvancedFontPicker (el, value) {
   // Set the given advanced font picker to the specified font.
 
-  el.value = value
+  if (typeof value === 'object' && value !== null) {
+    el.value = JSON.stringify(value)
+  } else {
+    el.value = value
+  }
+
   _onAdvancedFontPickerChange(el)
 }
 
@@ -1266,7 +1498,7 @@ export function updateTextSizeSliders (sizes) {
 export function resetAdvancedFontPickers () {
   // Find and reset all advanced font pickers to their default values.
   Array.from(document.querySelectorAll('.AFP-select')).forEach((el) => {
-    const defaultFont = '/_fonts/' + el.getAttribute('data-default')
+    const defaultFont = '/_fonts/' + el.getAttribute('data-default-font')
     setAdvancedFontPicker(el, defaultFont)
   })
 }

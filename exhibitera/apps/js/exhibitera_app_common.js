@@ -33,6 +33,22 @@ export const config = {
   uuid: ''
 }
 
+// Ex6.1: map old Open Sans fonts into a related Noto Sans style
+const legacyFontMap = {
+  '/_fonts/OpenSans-Light.ttf': { path: '/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf', axes: { wght: 300, wdth: 100 } },
+  '/_fonts/OpenSans-LightItalic.ttf': { path: '/_fonts/Noto/NotoSans-Italic-VariableFont_wdth,wght.ttf', axes: { wght: 300, wdth: 100 } },
+  '/_fonts/OpenSans-Regular.ttf': { path: '/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf', axes: { wght: 400, wdth: 100 } },
+  '/_fonts/OpenSans-Italic.ttf': { path: '/_fonts/Noto/NotoSans-Italic-VariableFont_wdth,wght.ttf', axes: { wght: 400, wdth: 100 } },
+  '/_fonts/OpenSans-Medium.ttf': { path: '/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf', axes: { wght: 500, wdth: 100 } },
+  '/_fonts/OpenSans-MediumItalic.ttf': { path: '/_fonts/Noto/NotoSans-Italic-VariableFont_wdth,wght.ttf', axes: { wght: 500, wdth: 100 } },
+  '/_fonts/OpenSans-SemiBold.ttf': { path: '/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf', axes: { wght: 600, wdth: 100 } },
+  '/_fonts/OpenSans-SemiBoldItalic.ttf': { path: '/_fonts/Noto/NotoSans-Italic-VariableFont_wdth,wght.ttf', axes: { wght: 600, wdth: 100 } },
+  '/_fonts/OpenSans-Bold.ttf': { path: '/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf', axes: { wght: 700, wdth: 100 } },
+  '/_fonts/OpenSans-BoldItalic.ttf': { path: '/_fonts/Noto/NotoSans-Italic-VariableFont_wdth,wght.ttf', axes: { wght: 700, wdth: 100 } },
+  '/_fonts/OpenSans-ExtraBold.ttf': { path: '/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf', axes: { wght: 800, wdth: 100 } },
+  '/_fonts/OpenSans-ExtraBoldItalic.ttf': { path: '/_fonts/Noto/NotoSans-Italic-VariableFont_wdth,wght.ttf', axes: { wght: 800, wdth: 100 } }
+}
+
 // Load the current software version
 const versionResponse = await exUtilities.makeRequest({
   api: '',
@@ -795,13 +811,38 @@ export function setELementBackground (details, el, defaultColor = '#22222E') {
   }
 }
 
-export function createFont (name, font) {
+export function normalizeFontDefinition (fontValue) {
+  // Take pre-Ex6.1 font definitions and convert them to the new object format
+
+  if (typeof fontValue === 'object' && fontValue !== null && fontValue.path) {
+    return fontValue
+  }
+
+  // If it's a string, check if it's a known legacy font that needs upgrading
+  if (typeof fontValue === 'string') {
+    if (legacyFontMap[fontValue]) {
+      return legacyFontMap[fontValue]
+    }
+
+    // If it's a string but NOT in the map (e.g., a custom user-uploaded static font),
+    // wrap it in the new schema format with empty axes to prevent breaking.
+    return {
+      path: fontValue,
+      axes: {}
+    }
+  }
+
+  // Fallback for undefined/corrupted data
+  return legacyFontMap['/_fonts/OpenSans-Regular.ttf']
+}
+
+export function createFont (name, fontPath) {
   // Create the desired font, if it doesn't already exist.
 
   const safeName = name.replaceAll(' ', '').replaceAll('.', '').replaceAll('/', '').replaceAll('\\', '')
 
   if ((safeName in config.fontCache) === false) {
-    const fontDef = new FontFace(safeName, 'url(' + encodeURI(font) + ')')
+    const fontDef = new FontFace(safeName, 'url(' + encodeURI(fontPath) + ')')
     document.fonts.add(fontDef)
     config.fontCache[safeName] = true
   }

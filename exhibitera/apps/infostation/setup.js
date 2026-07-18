@@ -811,12 +811,12 @@ exSetup.configure({
 
       },
       font: {
-        body: '/_fonts/OpenSans-Regular.ttf',
-        button: '/_fonts/OpenSans-Regular.ttf',
-        caption: '/_fonts/OpenSans-LightItalic.ttf',
-        header: '/_fonts/OpenSans-Bold.ttf',
-        quote: '/_fonts/OpenSans-SemiboldItalic.ttf',
-        'section-header': '/_fonts/OpenSans-Bold.ttf'
+        body: { path: '/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf', axes: { wght: 400, wdth: 100 } },
+        button: { path: '/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf', axes: { wght: 400, wdth: 100 } },
+        caption: { path: '/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf', axes: { wght: 300, wdth: 100 } },
+        header: { path: '/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf', axes: { wght: 700, wdth: 100 } },
+        quote: { path: '/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf', axes: { wght: 600, wdth: 100 } },
+        'section-header': { path: '/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf', axes: { wght: 700, wdth: 100 } }
       },
       text_size: {}
     },
