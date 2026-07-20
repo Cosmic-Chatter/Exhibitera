@@ -90,36 +90,7 @@ function loadDefinition (definition) {
     exCommon.setBackground(definition.style.background, root, '#719abf')
   }
 
-  Object.keys(definition.style.font).forEach((key) => {
-    // Convert from pre-Ex6.1 format if needed
-    const fontDef = exCommon.normalizeFontDefinition(definition.style.font[key])
-
-    // Intercept Noto fonts and instead use the pre-built font stacks
-    // that contain all character sets
-    const pathLower = (fontDef.path || '').toLowerCase()
-
-    if (pathLower.includes('notosans-')) {
-      document.documentElement.style.setProperty('--' + key + '-font', 'var(--font-stack-sans)')
-    } else if (pathLower.includes('notoserif-')) {
-      document.documentElement.style.setProperty('--' + key + '-font', 'var(--font-stack-serif)')
-    } else if (pathLower.includes('notosansmono-')) {
-      document.documentElement.style.setProperty('--' + key + '-font', 'var(--font-stack-mono)')
-    } else {
-      // Create and load a custom user font
-      exCommon.createFont(key, fontDef.path)
-      document.documentElement.style.setProperty('--' + key + '-font', key)
-    }
-
-    // Apply the axes if this is a variable font
-    if (Object.keys(fontDef.axes).length > 0) {
-      const axisString = Object.entries(fontDef.axes)
-        .map(([axis, val]) => `"${axis}" ${val}`)
-        .join(', ')
-      document.documentElement.style.setProperty(`--${key}-font-axes`, axisString)
-    } else {
-      document.documentElement.style.setProperty(`--${key}-font-axes`, 'normal')
-    }
-  })
+  exCommon.configureFonts(definition.style.font)
 
   Object.keys(definition.style.text_size).forEach((key) => {
     document.documentElement.style.setProperty('--' + key + '-font-size-adjust', definition.style.text_size[key])

@@ -1396,9 +1396,9 @@ async function _onAdvancedFontPickerChange (el, saveChange = true) {
   if (availableAxes && availableAxes.length > 0) {
     availableAxes.forEach(axis => {
       // Determine what to set the slider to:
-      // 1: Existing value from the definition
-      // 2: If this is a standard font, use the defaults from the element
-      // 3: Fallback to the font's native default
+      //  1: Existing value from the definition
+      //  2: If this is a standard font, use the defaults from the element
+      //  3: Fallback to the font's native default
 
       let currentValue
       if (fontDef.axes[axis.tag]) {
@@ -1416,7 +1416,7 @@ async function _onAdvancedFontPickerChange (el, saveChange = true) {
         // Option 3
         currentValue = axis.default
       }
-      // const currentValue = fontDef.axes[axis.tag] ?? axis.default
+
       const sliderHTML = `
         <div class="row align-items-center mb-1">
           <div class="col-4 text-end">

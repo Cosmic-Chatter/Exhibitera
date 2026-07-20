@@ -848,3 +848,54 @@ export function createFont (name, fontPath) {
   }
   return safeName
 }
+
+export function configureFonts (fontDict) {
+  // Take the definition.style.font object and set up the fonts
+  // needed for this definition
+
+  Object.keys(fontDict).forEach((key) => {
+    // Convert from pre-Ex6.1 format if needed
+    const fontDef = normalizeFontDefinition(fontDict[key])
+
+    const fontVar = _getFontCSSName(key, fontDef.path)
+    document.documentElement.style.setProperty('--' + key + '-font', fontVar)
+
+    // Apply the axes if this is a variable font
+    const axesVar = _getFontCSSAxesString(fontDef.axes)
+    document.documentElement.style.setProperty(`--${key}-font-axes`, axesVar)
+  })
+}
+
+function _getFontCSSName (key, fontPath) {
+  // Get the CSS name of a font derived from the given font path
+  // Returns a Noto font stack if a default font is passed or the
+  // name of a (new or existing) font variable
+
+  const pathLower = (fontPath || '').toLowerCase()
+
+  if (pathLower.includes('notosans-')) {
+    return 'var(--font-stack-sans)'
+  } else if (pathLower.includes('notoserif-')) {
+    return 'var(--font-stack-serif)'
+  } else if (pathLower.includes('notosansmono-')) {
+    return 'var(--font-stack-mono)'
+  }
+
+  // Create and load a custom user font
+  createFont(key, fontPath)
+  return key
+}
+
+function _getFontCSSAxesString (fontAxes) {
+  // Return a string that should be the value of the
+  // font-variation-settings CSS parameter
+
+  if (Object.keys(fontAxes).length > 0) {
+    const axisString = Object.entries(fontAxes)
+      .map(([axis, val]) => `"${axis}" ${val}`)
+      .join(', ')
+    return axisString
+  }
+
+  return 'normal'
+}

@@ -1,3 +1,45 @@
+:root {
+    /* Font stacks */
+  --font-stack-sans: 
+    'Noto Sans', 
+    'Noto Sans Arabic', 
+    'Noto Sans Bengali', 
+    'Noto Sans Hebrew', 
+    'Noto Sans HK', 
+    'Noto Sans JP', 
+    'Noto Sans KR', 
+    'Noto Sans SC', 
+    'Noto Sans TC', 
+    'Noto Sans Thai', 
+    sans-serif;
+
+  --font-stack-serif: 
+    'Noto Serif', 
+    'Noto Sans Arabic', 
+    'Noto Sans Bengali', 
+    'Noto Sans Hebrew', 
+    'Noto Sans HK', 
+    'Noto Sans JP', 
+    'Noto Sans KR', 
+    'Noto Sans SC', 
+    'Noto Sans TC', 
+    'Noto Sans Thai', 
+    serif;
+
+  --font-stack-mono: 
+    'Noto Sans Mono', 
+    'Noto Sans Arabic', 
+    'Noto Sans Bengali', 
+    'Noto Sans Hebrew', 
+    'Noto Sans HK', 
+    'Noto Sans JP', 
+    'Noto Sans KR', 
+    'Noto Sans SC', 
+    'Noto Sans TC', 
+    'Noto Sans Thai', 
+    monospace;
+}
+
 ol, ul {
   list-style-position: inside;
 }
@@ -103,4 +145,151 @@ ol, ul {
 }
 #langSwitchOptions {
     width: 20vmax;
+}
+
+/* Font definitions */
+
+/* =========================================
+   1. PRIMARY LATIN FONTS (SANS, SERIF, MONO)
+   ========================================= */
+@font-face {
+  font-family: 'Noto Sans';
+  src: url('/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf') format('truetype');
+  font-weight: 100 900; 
+  font-stretch: 62.5% 100%; 
+  font-style: normal;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Noto Sans';
+  src: url('/_fonts/Noto/NotoSans-Italic-VariableFont_wdth,wght.ttf') format('truetype');
+  font-weight: 100 900; 
+  font-stretch: 62.5% 100%; 
+  font-style: italic;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Noto Serif';
+  font-style: normal;
+  font-weight: 100 900;
+  font-stretch: 62.5% 100%;
+  src: url('/_fonts/Noto/NotoSerif-VariableFont_wdth,wght.ttf') format('truetype');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD, U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: 'Noto Serif';
+  font-style: italic;
+  font-weight: 100 900;
+  font-stretch: 62.5% 100%;
+  src: url('/_fonts/Noto/NotoSerif-Italic-VariableFont_wdth,wght.ttf') format('truetype');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD, U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: 'Noto Sans Mono';
+  font-style: normal;
+  font-weight: 100 900;
+  font-stretch: 62.5% 100%;
+  src: url('/_fonts/Noto/NotoSansMono-VariableFont_wdth,wght.ttf') format('truetype');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD, U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* =========================================
+   2. REGIONAL FALLBACKS (NOTO SANS)
+   ========================================= */
+
+/* Noto Sans Arabic */
+@font-face {
+  font-family: 'Noto Sans Arabic';
+  font-style: normal;
+  font-weight: 100 900;
+  font-stretch: 62.5% 100%;
+  src: url('/_fonts/Noto/NotoSansArabic-VariableFont_wdth,wght.ttf') format('truetype');
+  unicode-range: U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0898-08E1, U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FEFF;
+}
+
+/* Noto Sans Bengali */
+@font-face {
+  font-family: 'Noto Sans Bengali';
+  font-style: normal;
+  font-weight: 100 900;
+  font-stretch: 62.5% 100%;
+  src: url('/_fonts/Noto/NotoSansBengali-VariableFont_wdth,wght.ttf') format('truetype');
+  unicode-range: U+0964-0965, U+0981-09FB, U+200C-200D, U+20B9, U+25CC;
+}
+
+/* Noto Sans Hebrew */
+@font-face {
+  font-family: 'Noto Sans Hebrew';
+  font-style: normal;
+  font-weight: 100 900;
+  font-stretch: 62.5% 100%;
+  src: url('/_fonts/Noto/NotoSansHebrew-VariableFont_wdth,wght.ttf') format('truetype');
+  unicode-range: U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F;
+}
+
+/* Noto Sans Thai */
+@font-face {
+  font-family: 'Noto Sans Thai';
+  font-style: normal;
+  font-weight: 100 900;
+  font-stretch: 62.5% 100%;
+  src: url('/_fonts/Noto/NotoSansThai-VariableFont_wdth,wght.ttf') format('truetype');
+  unicode-range: U+0E01-0E5B, U+200C-200D, U+25CC;
+}
+
+/* =========================================
+   3. CJK REGIONAL FALLBACKS (NOTO SANS)
+   ========================================= */
+
+/* Noto Sans JP (Japanese) */
+@font-face {
+  font-family: 'Noto Sans JP';
+  font-style: normal;
+  font-weight: 100 900;
+  font-stretch: 62.5% 100%;
+  src: url('/_fonts/Noto/NotoSansJP-VariableFont_wght.ttf') format('truetype');
+  unicode-range: U+3000-303F, U+3040-309F, U+30A0-30FF, U+FF00-FF9F, U+4E00-9FAF, U+3400-4DBF;
+}
+
+/* Noto Sans KR (Korean) */
+@font-face {
+  font-family: 'Noto Sans KR';
+  font-style: normal;
+  font-weight: 100 900;
+  font-stretch: 62.5% 100%;
+  src: url('/_fonts/Noto/NotoSansKR-VariableFont_wght.ttf') format('truetype');
+  unicode-range: U+1100-11FF, U+3130-318F, U+A960-A97F, U+AC00-D7A3, U+D7B0-D7FF;
+}
+
+/* Noto Sans SC (Simplified Chinese) */
+@font-face {
+  font-family: 'Noto Sans SC';
+  font-style: normal;
+  font-weight: 100 900;
+  font-stretch: 62.5% 100%;
+  src: url('/_fonts/Noto/NotoSansSC-VariableFont_wght.ttf') format('truetype');
+  unicode-range: U+4E00-9FFF, U+3400-4DBF, U+20000-2A6DF, U+3000-303F;
+}
+
+/* Noto Sans TC (Traditional Chinese) */
+@font-face {
+  font-family: 'Noto Sans TC';
+  font-style: normal;
+  font-weight: 100 900;
+  font-stretch: 62.5% 100%;
+  src: url('/_fonts/Noto/NotoSansTC-VariableFont_wght.ttf') format('truetype');
+  unicode-range: U+3100-312F, U+31A0-31BF, U+4E00-9FFF, U+3400-4DBF, U+20000-2A6DF, U+3000-303F;
+}
+
+/* Noto Sans HK (Traditional Chinese - Hong Kong Variant) */
+@font-face {
+  font-family: 'Noto Sans HK';
+  font-style: normal;
+  font-weight: 100 900;
+  font-stretch: 62.5% 100%;
+  src: url('/_fonts/noto/NotoSansHK-VariableFont_wght.ttf') format('truetype');
+  unicode-range: U+3100-312F, U+31A0-31BF, U+4E00-9FFF, U+3400-4DBF, U+20000-2A6DF, U+3000-303F;
 }
