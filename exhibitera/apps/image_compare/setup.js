@@ -1133,12 +1133,12 @@ exSetup.configure({
         titleColor: '#f5f5f0'
       },
       font: {
-        info_pane_body: '/_fonts/OpenSans-Regular.ttf',
-        info_pane_title: '/_fonts/OpenSans-Bold.ttf',
-        item_name: '/_fonts/OpenSans-Regular.ttf',
-        label: '/_fonts/OpenSans-Regular.ttf',
-        subtitle: '/_fonts/OpenSans-Regular.ttf',
-        title: '/_fonts/OpenSans-Bold.ttf'
+        info_pane_body: { path: '/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf', axes: { wght: 400, wdth: 100 } },
+        info_pane_title: { path: '/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf', axes: { wght: 700, wdth: 100 } },
+        item_name: { path: '/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf', axes: { wght: 400, wdth: 100 } },
+        label: { path: '/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf', axes: { wght: 400, wdth: 100 } },
+        subtitle: { path: '/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf', axes: { wght: 400, wdth: 100 } },
+        title: { path: '/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf', axes: { wght: 700, wdth: 100 } }
       },
       text_size: {}
     }

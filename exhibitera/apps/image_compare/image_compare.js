@@ -327,19 +327,15 @@ function loadDefinition (definition) {
 
   // Font
   // First, reset to defaults (in case a style option doesn't exist in the definition)
-  root.style.setProperty('--title-font', 'Title-default')
-  root.style.setProperty('--subtitle-font', 'Subtitle-default')
-  root.style.setProperty('--item_name-font', 'Item_name-default')
-  root.style.setProperty('--label-font', 'Label-default')
-  root.style.setProperty('--info_pane_title-font', 'Info_pane_title-default')
-  root.style.setProperty('--info_pane_body-font', 'Info_pane_body-default')
+  root.style.setProperty('--title-font', 'var(--font-stack-sans)')
+  root.style.setProperty('--subtitle-font', 'var(--font-stack-sans)')
+  root.style.setProperty('--item_name-font', 'var(--font-stack-sans)')
+  root.style.setProperty('--label-font', 'var(--font-stack-sans)')
+  root.style.setProperty('--info_pane_title-font', 'var(--font-stack-sans)')
+  root.style.setProperty('--info_pane_body-font', 'var(--font-stack-sans)')
 
   // Then, apply the definition settings
-  for (const key of Object.keys(definition?.style?.font ?? {})) {
-    const font = new FontFace(key, 'url(' + encodeURI(definition.style.font[key]) + ')')
-    document.fonts.add(font)
-    root.style.setProperty('--' + key + '-font', key)
-  }
+  exCommon.configureFonts(definition?.style?.font ?? {})
 
   // Text size settings
   // First, reset to defaults (in case a style option doesn't exist in the definition)
