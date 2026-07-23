@@ -11,59 +11,29 @@
     --lightboxCreditColor: #6b7280;
 
     /* Font faces */
-    --Header-font: 'Header-default';
-    --Title-font: "Title-default";
-    --Lightbox_title-font: "Lightbox_title-default";
-    --Lightbox_caption-font: "Lightbox_caption-default";
-    --Lightbox_credit-font: "Lightbox_credit-default";
-    --filter_label-font: "filter_label-default";
-    --filter_text-font: "filter_text-default";
+    --Title-font: var(--font-stack-sans);
+    --Lightbox_title-font: var(--font-stack-sans);
+    --Lightbox_caption-font: var(--font-stack-sans);
+    --Lightbox_credit-font: var(--font-stack-sans);
+    --filter_label-font: var(--font-stack-sans);
+    --filter_text-font: var(--font-stack-sans);
+
+    /* Variable font axes */
+    --Title-font-axes: "wght" 700;
+    --Lightbox_title-font-axes: "wght" 700;
+    --Lightbox_caption-font-axes: "wght" 700;
+    --Lightbox_credit-font-axes: "wght" 700;
+    --filter_label-font-axes: "wght" 700;
+    --filter_text-font-axes: "wght" 700;
 
     /* Font modifiers */
     --fontModifier: '1.0';
-    --Header-font-adjust: 0;
     --Title-font-adjust: 0;
     --Lightbox_title-font-adjust: 0;
     --Lightbox_caption-font-adjust: 0;
     --Lightbox_credit-font-adjust: 0;
     --filter_label-font-adjust: 0;
     --filter_text-font-adjust: 0;
-}
-
-/* Font definitions */
-@font-face {
-    font-family: "Header-default";
-    src: url("../_fonts/OpenSans-Bold.ttf");
-}
-
-@font-face {
-    font-family: "Title-default";
-    src: url("../_fonts/OpenSans-Bold.ttf");
-}
-
-@font-face {
-    font-family: "Lightbox_title-default";
-    src: url("../_fonts/OpenSans-Bold.ttf");
-}
-
-@font-face {
-    font-family: "Lightbox_caption-default";
-    src: url("../_fonts/OpenSans-Regular.ttf");
-}
-
-@font-face {
-    font-family: "Lightbox_credit-default";
-    src: url("../_fonts/OpenSans-LightItalic.ttf");
-}
-
-@font-face {
-    font-family: "filter_label-default";
-    src: url("../_fonts/OpenSans-Bold.ttf");
-}
-
-@font-face {
-    font-family: "filter_text-default";
-    src: url("../_fonts/OpenSans-Regular.ttf");
 }
 
 html {
@@ -87,6 +57,7 @@ body {
 .cardTitle {
     font-size: calc(3vmax + var(--Title-font-adjust)*1vmax);
     font-family: var(--Title-font);
+    font-variation-settings: var(--Title-font-axes);
     color: var(--titleColor);
     height: 80%;
 }
@@ -109,6 +80,7 @@ body {
 }
 .filter-entry {
     font-family: var(--filter_text-font);
+    font-variation-settings: var(--filter_text-font-axes);
     font-size: calc(3vmin + var(--filter_text-font-adjust)*1vmin);
     color: var(--filterTextColor);
     /* Prevent font scaling in mobile/small viewports */
@@ -117,6 +89,7 @@ body {
   }
 .filter-label {
     font-family: var(--filter_label-font);
+    font-variation-settings: var(--filter_label-font-axes);
     font-size: calc(3vmin + var(--filter_label-font-adjust)*1vmin);
     color: var(--filterLabelColor);
 }
@@ -203,6 +176,7 @@ body {
     overflow-y: auto;
     height: 15%;
     font-family: var(--Lightbox_caption-font);
+    font-variation-settings: var(--Lightbox_caption-font-axes);
 }
 #mediaLightboxCredit {
     font-size: calc(1.5vmax + var(--Lightbox_credit-font-adjust)*1vmax);
@@ -210,6 +184,7 @@ body {
     padding-top: 10px;
     height: 6%;
     font-family: var(--Lightbox_credit-font);
+    font-variation-settings: var(--Lightbox_credit-font-axes);
 }
 .lightboxMedia {
     width: auto;
@@ -230,6 +205,7 @@ body {
     color: var(--lightboxTitleColor);
     height: 9%;
     font-family: var(--Lightbox_title-font);
+    font-variation-settings: var(--Lightbox_title-font-axes);
 }
 #filterDropdown {
     position: absolute;

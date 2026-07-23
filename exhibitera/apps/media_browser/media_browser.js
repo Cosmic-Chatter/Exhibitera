@@ -463,20 +463,15 @@ function loadDefinition (def) {
   // Font
 
   // First, reset to defaults (in case a style option doesn't exist in the definition)
-  root.style.setProperty('--Header-font', 'Header-default')
-  root.style.setProperty('--Title-font', 'Title-default')
-  root.style.setProperty('--Lightbox_title-font', 'Lightbox_title-default')
-  root.style.setProperty('--Lightbox_caption-font', 'Lightbox_caption-default')
-  root.style.setProperty('--Lightbox_credit-font', 'Lightbox_credit-default')
-  root.style.setProperty('--filter_label-font', 'filter_label-default')
-  root.style.setProperty('--filter_text-font', 'filter_text-default')
+  root.style.setProperty('--Header-font', 'var(--font-stack-sans)')
+  root.style.setProperty('--Title-font', 'var(--font-stack-sans)')
+  root.style.setProperty('--Lightbox_title-font', 'var(--font-stack-sans)')
+  root.style.setProperty('--Lightbox_caption-font', 'var(--font-stack-sans)')
+  root.style.setProperty('--Lightbox_credit-font', 'var(--font-stack-sans)')
+  root.style.setProperty('--filter_label-font', 'var(--font-stack-sans)')
+  root.style.setProperty('--filter_text-font', 'var(--font-stack-sans)')
 
-  // Then, apply the definition settings
-  for (const key of Object.keys(def.style.font)) {
-    const font = new FontFace(key, 'url(' + encodeURI(def.style.font[key]) + ')')
-    document.fonts.add(font)
-    root.style.setProperty('--' + key + '-font', key)
-  }
+  exCommon.configureFonts(def.style.font)
 
   // Text size settings
 

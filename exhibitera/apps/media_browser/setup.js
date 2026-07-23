@@ -1530,12 +1530,12 @@ exSetup.configure({
         titleColor: '#f5f5f0'
       },
       font: {
-        Lightbox_caption: '/_fonts/OpenSans-Regular.ttf',
-        Lightbox_credit: '/_fonts/OpenSans-LightItalic.ttf',
-        Lightbox_title: '/_fonts/OpenSans-Bold.ttf',
-        Title: '/_fonts/OpenSans-Bold.ttf',
-        filter_label: '/_fonts/OpenSans-Bold.ttf',
-        filter_text: '/_fonts/OpenSans-Regular.ttf'
+        Lightbox_caption: { path: '/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf', axes: { wght: 400, wdth: 100 } },
+        Lightbox_credit: { path: '/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf', axes: { wght: 200, wdth: 100 } },
+        Lightbox_title: { path: '/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf', axes: { wght: 700, wdth: 100 } },
+        Title: { path: '/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf', axes: { wght: 700, wdth: 100 } },
+        filter_label: { path: '/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf', axes: { wght: 700, wdth: 100 } },
+        filter_text: { path: '/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf', axes: { wght: 400, wdth: 100 } }
       },
       layout: {},
       text_size: {}
