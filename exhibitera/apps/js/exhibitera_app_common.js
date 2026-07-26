@@ -839,6 +839,19 @@ export function normalizeFontDefinition (fontValue) {
 export function createFont (name, fontPath) {
   // Create the desired font, if it doesn't already exist.
 
+  // First check is this is a built-in Noto font and divert to the correct
+  // pre-configured font stack
+
+  if (fontPath.includes('NotoSans-VariableFont')) {
+    return 'var(--font-stack-sans)'
+  } else if (fontPath.includes('NotoSerif-VariableFont')) {
+    return 'var(--font-stack-serif)'
+  } else if (fontPath.includes('NotoSansMono-VariableFont')) {
+    return 'var(--font-stack-mono)'
+  }
+
+  // If not, load the font and return a reference
+
   const safeName = name.replaceAll(' ', '').replaceAll('.', '').replaceAll('/', '').replaceAll('\\', '')
 
   if ((safeName in config.fontCache) === false) {
@@ -861,7 +874,7 @@ export function configureFonts (fontDict) {
     document.documentElement.style.setProperty('--' + key + '-font', fontVar)
 
     // Apply the axes if this is a variable font
-    const axesVar = _getFontCSSAxesString(fontDef.axes)
+    const axesVar = getFontCSSAxesString(fontDef.axes)
     document.documentElement.style.setProperty(`--${key}-font-axes`, axesVar)
   })
 }
@@ -886,7 +899,7 @@ function _getFontCSSName (key, fontPath) {
   return key
 }
 
-function _getFontCSSAxesString (fontAxes) {
+export function getFontCSSAxesString (fontAxes) {
   // Return a string that should be the value of the
   // font-variation-settings CSS parameter
 

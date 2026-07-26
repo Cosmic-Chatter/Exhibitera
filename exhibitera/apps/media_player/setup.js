@@ -450,7 +450,7 @@ function createItemHTML (item, num) {
   orderButtonsCol.appendChild(deleteButton)
 
   const previewCol = document.createElement('div')
-  previewCol.classList = 'col-12 col-md-6'
+  previewCol.classList = 'col-12 col-lg-6'
   cardBody.appendChild(previewCol)
 
   const image = document.createElement('img')
@@ -554,7 +554,7 @@ function createItemHTML (item, num) {
   cacheGroup.appendChild(cacheLabel)
 
   const modifyPane = document.createElement('div')
-  modifyPane.classList = 'col-12 col-md-6'
+  modifyPane.classList = 'col-12 col-lg-6'
   cardBody.appendChild(modifyPane)
 
   const modifyRow = document.createElement('div')
@@ -1160,7 +1160,7 @@ async function createAnnoationHTML (itemUUID, details) {
   alignDiv.appendChild(alignSelect)
 
   const xPosCol = document.createElement('div')
-  xPosCol.classList = 'col-12 col-md-6 col-lg-4 d-flex align-items-end'
+  xPosCol.classList = 'col-12 col-lg-4 d-flex align-items-end'
   row.appendChild(xPosCol)
 
   const xPosInput = document.createElement('div')
@@ -1175,7 +1175,7 @@ async function createAnnoationHTML (itemUUID, details) {
   xPosCol.appendChild(xPosInput)
 
   const yPosCol = document.createElement('div')
-  yPosCol.classList = 'col-12 col-md-6 col-lg-4 d-flex align-items-end'
+  yPosCol.classList = 'col-12 col-lg-4 d-flex align-items-end'
   row.appendChild(yPosCol)
 
   const yPosInput = document.createElement('div')
@@ -1217,7 +1217,7 @@ async function createAnnoationHTML (itemUUID, details) {
   fontSizeDiv.appendChild(fontSizeInput)
 
   const fontColorCol = document.createElement('div')
-  fontColorCol.classList = 'col-12 col-md-6 col-lg-3 d-flex align-items-end'
+  fontColorCol.classList = 'col-12 col-md-6 col-lg-3 d-flex align-items-start'
   row.appendChild(fontColorCol)
 
   const fontColorDiv = document.createElement('div')
@@ -1240,10 +1240,9 @@ async function createAnnoationHTML (itemUUID, details) {
     exSetup.previewDefinition(true)
   })
   fontColorDiv.appendChild(fontColorInput)
-  // setTimeout(exSetup.setUpColorPickers, 2000)
 
   const fontFaceCol = document.createElement('div')
-  fontFaceCol.classList = 'col-12 col-md-6'
+  fontFaceCol.classList = 'col-12 col-lg-6 advanced-font-picker'
   row.appendChild(fontFaceCol)
 
   document.getElementById('annotationRow_' + itemUUID).appendChild(col)
@@ -1257,8 +1256,10 @@ async function createAnnoationHTML (itemUUID, details) {
     parent: fontFaceCol,
     name: 'Font',
     path: `content>${itemUUID}>annotations>${details.uuid}>font`,
-    default: 'OpenSans-Regular.ttf'
+    font: 'Noto/NotoSans-VariableFont_wdth,wght.ttf',
+    axes: '{ wght: 600, wdth: 100 }'
   })
+
   const font = details.font
   await exSetup.refreshAdvancedFontPickers()
   if (font) {

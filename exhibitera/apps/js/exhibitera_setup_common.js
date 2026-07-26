@@ -143,10 +143,9 @@ export async function configure (options) {
   if (options.onDefinitionSave != null) config.onDefinitionSave = options.onDefinitionSave
 
   initializeDefinition()
-  const userFonts = await getUserFonts()
 
   createAdvancedColorPickers()
-  createAdvancedFontPickers(userFonts)
+  await createAdvancedFontPickers()
   createAdvancedSliders()
   createDefinitionDeletePopup()
   createLoginEventListeners()
@@ -970,7 +969,7 @@ export function updateColorPickers (colors) {
   }
 }
 
-function createAdvancedFontPickers (userFonts) {
+async function createAdvancedFontPickers () {
   // Automatically create advanced font pickers for all marked elements
 
   Array.from(document.querySelectorAll('.advanced-font-picker')).forEach((el) => {
@@ -981,7 +980,7 @@ function createAdvancedFontPickers (userFonts) {
     createAdvancedFontPicker({ parent: el, name, path, font: defaultFont, axes: defaultAxes })
   })
 
-  populateAdvancedFontPickers(userFonts)
+  await populateAdvancedFontPickers()
 }
 
 export function createAdvancedFontPicker (details) {
@@ -1160,18 +1159,19 @@ async function getFontHumanName (fontPath) {
 export async function refreshAdvancedFontPickers () {
   // Retrieve any new fonts and update the pickers
 
-  const userFonts = await getUserFonts()
-
   // Cache the current values
   const currentDict = {}
   Array.from(document.querySelectorAll('.AFP-select')).forEach((el) => {
     currentDict[el.getAttribute('id')] = el.value
   })
-  populateAdvancedFontPickers(userFonts)
+
+  await populateAdvancedFontPickers()
+
   for (const id of Object.keys(currentDict)) {
     const picker = document.getElementById(id)
+
     // Check if option still exists (font may have been deleted)
-    if (Array.from(picker.options).map(o => o.value).includes(currentDict[id]) === false) {
+    if (picker.options && Array.from(picker.options).map(o => o.value).includes(currentDict[id]) === false) {
       picker.value = '/_fonts/' + picker.getAttribute('data-defaultFont')
     } else {
       picker.value = currentDict[id]
@@ -1180,8 +1180,23 @@ export async function refreshAdvancedFontPickers () {
   }
 }
 
-function populateAdvancedFontPickers (userFonts) {
-  // Add user and default fonts
+async function populateAdvancedFontPickers () {
+  // Add user and default fonts for all advancedFontPickers
+
+  // Fetch userFonts once for all pickers to improve performance
+  const userFonts = await getUserFonts()
+
+  for (const parentDiv of document.querySelectorAll('.advanced-font-picker')) {
+    await populateAdvancedFontPicker(parentDiv, userFonts)
+  }
+}
+
+async function populateAdvancedFontPicker (parentDiv, userFonts = null) {
+  // Add the user and default fonts to a single advancedFontPicker
+
+  if (!userFonts) {
+    userFonts = await getUserFonts()
+  }
 
   const builtInFonts = [
     { name: 'Sans Serif', path: 'Noto/NotoSans-VariableFont_wdth,wght.ttf' },
@@ -1189,58 +1204,56 @@ function populateAdvancedFontPickers (userFonts) {
     { name: 'Monospace', path: 'Noto/NotoSansMono-VariableFont_wdth,wght.ttf' }
   ]
 
-  Array.from(document.querySelectorAll('.advanced-font-picker')).forEach((parentDiv) => {
-    const menu = parentDiv.querySelector('.AFP-menu')
-    const inputEl = parentDiv.querySelector('.AFP-select')
+  const menu = parentDiv.querySelector('.AFP-menu')
+  const inputEl = parentDiv.querySelector('.AFP-select')
 
-    if (!menu || !inputEl) return
-    menu.innerHTML = ''
+  if (!menu || !inputEl) return
+  menu.innerHTML = ''
 
-    // Create a scrollable inner zone for standard fonts
-    const scrollableWrapper = document.createElement('li')
-    scrollableWrapper.innerHTML = '<ul class="list-unstyled mb-0 py-2 AFP-scroll-zone" style="max-height: 250px; overflow-y: auto; overflow-x: hidden;"></ul>'
-    menu.appendChild(scrollableWrapper)
+  // Create a scrollable inner zone for standard fonts
+  const scrollableWrapper = document.createElement('li')
+  scrollableWrapper.innerHTML = '<ul class="list-unstyled mb-0 py-2 AFP-scroll-zone" style="max-height: 250px; overflow-y: auto; overflow-x: hidden;"></ul>'
+  menu.appendChild(scrollableWrapper)
 
-    const scrollZone = scrollableWrapper.querySelector('.AFP-scroll-zone')
-    builtInFonts.forEach((font) => {
-      _createAdvancedFontOption(scrollZone, font.name, '/_fonts/' + font.path, inputEl)
-    })
+  const scrollZone = scrollableWrapper.querySelector('.AFP-scroll-zone')
+  builtInFonts.forEach((font) => {
+    _createAdvancedFontOption(scrollZone, font.name, '/_fonts/' + font.path, inputEl)
+  })
 
-    // Add User-provided fonts as a sticky footer
-    if (userFonts.length > 0) {
-      menu.insertAdjacentHTML('beforeend', '<li><hr class="dropdown-divider m-0"></li>')
+  // Add User-provided fonts as a sticky footer
+  if (userFonts.length > 0) {
+    menu.insertAdjacentHTML('beforeend', '<li><hr class="dropdown-divider m-0"></li>')
 
-      // Create the submenu container
-      const submenuLi = document.createElement('li')
-      submenuLi.classList.add('dropdown-submenu', 'py-1')
+    // Create the submenu container
+    const submenuLi = document.createElement('li')
+    submenuLi.classList.add('dropdown-submenu', 'py-1')
 
-      // Create the toggle button for the flyout.
-      submenuLi.innerHTML = `
+    // Create the toggle button for the flyout.
+    submenuLi.innerHTML = `
           <button class="dropdown-item d-flex justify-content-between align-items-center w-100 user-font-toggle py-2" type="button">
             <span>User-provided</span>
             <span>▶</span>
           </button>
           <ul class="dropdown-menu shadow user-font-menu" style="max-height: 250px; overflow-y: auto;"></ul>
         `
-      menu.appendChild(submenuLi)
+    menu.appendChild(submenuLi)
 
-      // Prevent closing the main dropdown when interacting with the flyout toggle
-      const userFontToggle = submenuLi.querySelector('.user-font-toggle')
-      userFontToggle.addEventListener('click', (e) => {
-        e.preventDefault()
-        e.stopPropagation()
-        submenuLi.classList.toggle('open')
-      })
+    // Prevent closing the main dropdown when interacting with the flyout toggle
+    const userFontToggle = submenuLi.querySelector('.user-font-toggle')
+    userFontToggle.addEventListener('click', (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+      submenuLi.classList.toggle('open')
+    })
 
-      // Populate the nested menu
-      const submenuMenu = submenuLi.querySelector('.user-font-menu')
-      userFonts.forEach((font) => {
-        _createAdvancedFontOption(submenuMenu, font, '/content/' + font, inputEl)
-      })
-    }
+    // Populate the nested menu
+    const submenuMenu = submenuLi.querySelector('.user-font-menu')
+    userFonts.forEach((font) => {
+      _createAdvancedFontOption(submenuMenu, font, '/content/' + font, inputEl)
+    })
+  }
 
-    _onAdvancedFontPickerChange(inputEl, false)
-  })
+  _onAdvancedFontPickerChange(inputEl, false)
 }
 
 function _createAdvancedFontOption (menu, name, path, inputEl) {

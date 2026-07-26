@@ -102,14 +102,9 @@ function loadDefinition (def) {
   // Font
 
   // First, reset to defaults (in case a style option doesn't exist in the definition)
-  root.style.setProperty('--subtitle-font', 'subtitles-default')
+  root.style.setProperty('--subtitle-font', 'var(--font-stack-sans)')
 
-  // Then, apply the definition settings
-  Object.keys(def?.style?.font ?? []).forEach((key) => {
-    const font = new FontFace(key, 'url(' + encodeURI(def.style.font[key]) + ')')
-    document.fonts.add(font)
-    root.style.setProperty('--' + key + '-font', key)
-  })
+  appsCommon.configureFonts(def.style.font)
 
   // Text size
   // First, reset to defaults (in case a style option doesn't exist in the definition)
@@ -376,9 +371,12 @@ function createAnnotation (details) {
   }
 
   if (details?.font) {
-    annotation.style.fontFamily = appsCommon.createFont(details.font, details.font)
+    annotation.style.fontFamily = appsCommon.createFont(details.font.path, details.font.path)
+    // Apply the axes if this is a variable font
+    const axesVar = appsCommon.getFontCSSAxesString(details?.font?.axes)
+    document.documentElement.style.setProperty('font-variation-settings', axesVar)
   } else {
-    annotation.style.fontFamily = 'annotation-default'
+    annotation.style.fontFamily = 'var(--font-stack-mono)'
   }
   annotation.style.color = details?.color ?? 'black'
   annotation.style.fontSize = (details?.font_size ?? '20') + 'px'

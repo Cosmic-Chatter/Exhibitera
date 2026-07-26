@@ -6,8 +6,11 @@
     --progressInactiveColor: #6b7280;
     --progressBackgroundColor: #1a2b3cc4;
 
-    /* Font facts */
-    --subtitle-font: "subtitles-default";
+    /* Font faces */
+    --subtitle-font: var(--font-stack-sans);
+
+    /* Variable font axes */
+  --subtitle-font-axes: "wght" 500;
 
     /* Font modifiers */
     --subtitle-font-adjust: 0;
@@ -15,16 +18,6 @@
     /* Misc modifiers */
     --progress-indicator-size: 1;
   }
-
-/* Font definitions */
-@font-face {
-    font-family: "annotation-default";
-    src: url("../_fonts/OpenSans-Regular.ttf");
-}
-@font-face {
-    font-family: "subtitles-default";
-    src: url("../_fonts/OpenSans-Regular.ttf");
-}
 
 body,html {
     margin: 0;
@@ -120,11 +113,11 @@ body,html {
     width: 100%;
     height: 100%;
     user-select: none;
-    webkit-user-select: none;
 }
 #fullscreenVideo::cue {
     font-size: calc(6vh + var(--subtitle-font-adjust) * 1vmax);
     font-family: var(--subtitle-font);
+    font-variation-settings: var(--subtitle-font-axes);
     color: var(--subtitleColor);
 }
 #progressContainer {
