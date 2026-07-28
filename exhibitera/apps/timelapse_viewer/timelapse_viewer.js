@@ -32,13 +32,12 @@ function loadDefinition (definition) {
   document.getElementById('attractor').innerHTML = definition?.attractor?.text ?? ''
   root.style.setProperty('--attractor-text-color', definition?.attractor?.text_color ?? '#f5f5f0')
 
-  if ('font' in definition.attractor) {
-    const font = new FontFace('attractor-font', 'url(' + encodeURI(definition.attractor.font) + ')')
-    document.fonts.add(font)
-    root.style.setProperty('--attractor-font', 'attractor-font')
-  } else {
-    root.style.setProperty('--attractor-font', 'attractor-default')
-  }
+  // Fonts
+  root.style.setProperty('--attractor-font', 'var(--font-stack-sans)')
+  root.style.setProperty('--attractor-font-axes', '"wght" 700')
+
+  const fontDict = { attractor: definition.attractor?.font ?? { path: '/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf', axes: { wght: 700 } } }
+  exCommon.configureFonts(fontDict)
 
   // Backgorund settings
   if ('background' in definition.style) {

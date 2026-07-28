@@ -520,7 +520,7 @@ exSetup.configure({
   blankDefinition: {
     attractor: {
       attractor_background: '#000000b7',
-      font: '/_fonts/OpenSans-Bold.ttf',
+      font: { path: '/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf', axes: { wght: 700, wdth: 100 } },
       text_color: '#f5f5f0'
     },
     behavior: {},
