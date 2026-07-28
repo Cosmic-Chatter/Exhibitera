@@ -458,17 +458,20 @@ function loadDefinition (definition) {
   // Font settings
 
   // First, reset to defaults (in case a style option doesn't exist in the definition)
-  root.style.setProperty('--header-font', 'header-default')
-  root.style.setProperty('--body-font', 'body-default')
-  root.style.setProperty('--button-font', 'button-default')
-  root.style.setProperty('--next-font', 'next-default')
+  root.style.setProperty('--header-font', 'var(--font-stack-sans)')
+  root.style.setProperty('--body-font', 'var(--font-stack-sans)')
+  root.style.setProperty('--button-font', 'var(--font-stack-sans)')
+  root.style.setProperty('--next-font', 'var(--font-stack-sans)')
+  root.style.setProperty('--restart-font', 'var(--font-stack-sans)')
+
+  root.style.setProperty('--header-font-axes', '"wght" 700')
+  root.style.setProperty('--body-font-axes', '"wght" 400')
+  root.style.setProperty('--button-font-axes', '"wght" 400')
+  root.style.setProperty('--next-font-axes', '"wght" 400')
+  root.style.setProperty('--restart-font-axes', '"wght" 400')
 
   // Then, apply the definition settings
-  for (const key of Object.keys(definition.style.font)) {
-    const font = new FontFace(key, 'url(' + encodeURI(definition.style.font[key]) + ')')
-    document.fonts.add(font)
-    root.style.setProperty('--' + key + '-font', key)
-  }
+  exCommon.configureFonts(definition.style.font)
 
   // Text size settings
 

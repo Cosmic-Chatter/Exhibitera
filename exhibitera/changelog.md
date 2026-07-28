@@ -1,5 +1,5 @@
 # **Exhibitera 6.1**
-_If you are upgrading from Exhibitera 5.3, Hub and Apps must all be upgraded at the same time._
+_If you are upgrading from Exhibitera 5.3, Hub and Apps must all be upgraded at the same time. If you are upgrading from Exhibitera 5.2 or earlier, install and launch 5.3 once before installing 6.1._
 
 ## Hub
 

@@ -1662,7 +1662,7 @@ exSetup.configure({
         subtitleColor: '#f5f5f0'
       },
       font: {
-        subtitle: '/_fonts/OpenSans-Regular.ttf'
+        subtitle: { path: '/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf', axes: { wght: 500, wdth: 100 } }
       }
     },
     watermark: {}

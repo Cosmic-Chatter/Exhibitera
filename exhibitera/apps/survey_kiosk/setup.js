@@ -1652,11 +1652,11 @@ exSetup.configure({
         'restart-button-text-color': '#f5f5f0'
       },
       font: {
-        body: '/_fonts/OpenSans-Regular.ttf',
-        button: '/_fonts/OpenSans-Regular.ttf',
-        header: '/_fonts/OpenSans-Bold.ttf',
-        next: '/_fonts/OpenSans-Regular.ttf',
-        restart: '/_fonts/OpenSans-Regular.ttf'
+        body: { path: '/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf', axes: { wght: 400, wdth: 100 } },
+        button: { path: '/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf', axes: { wght: 400, wdth: 100 } },
+        header: { path: '/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf', axes: { wght: 700, wdth: 100 } },
+        next: { path: '/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf', axes: { wght: 400, wdth: 100 } },
+        restart: { path: '/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf', axes: { wght: 400, wdth: 100 } }
       },
       item_background: {
         color: '#2f3e4f',
