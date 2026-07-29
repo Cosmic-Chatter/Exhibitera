@@ -819,11 +819,11 @@ exSetup.configure({
         'success-message-color': '#e06a47'
       },
       font: {
-        button: '/_fonts/OpenSans-Regular.ttf',
-        footer: '/_fonts/OpenSans-Bold.ttf',
-        header: '/_fonts/OpenSans-Bold.ttf',
-        subfooter: '/_fonts/OpenSans-Regular.ttf',
-        subheader: '/_fonts/OpenSans-Regular.ttf'
+        button: { path: '/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf', axes: { wght: 700, wdth: 100 } },
+        footer: { path: '/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf', axes: { wght: 700, wdth: 100 } },
+        header: { path: '/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf', axes: { wght: 700, wdth: 100 } },
+        subfooter: { path: '/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf', axes: { wght: 400, wdth: 100 } },
+        subheader: { path: '/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf', axes: { wght: 400, wdth: 100 } }
       },
       layout: {},
       text_size: {}
