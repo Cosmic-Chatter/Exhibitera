@@ -189,18 +189,17 @@ function loadDefinition (definition) {
 
   // Font settings
   // First, reset to defaults (in case a style option doesn't exist in the definition)
-  root.style.setProperty('--prompt-font', 'prompt-default')
-  root.style.setProperty('--input-font', 'input-default')
-  root.style.setProperty('--submit-font', 'submit-default')
-  root.style.setProperty('--clear-font', 'clear-default')
+  root.style.setProperty('--prompt-font', 'var(--font-stack-sans)')
+  root.style.setProperty('--input-font', 'var(--font-stack-sans)')
+  root.style.setProperty('--submit-font', 'var(--font-stack-sans)')
+  root.style.setProperty('--clear-font', 'var(--font-stack-sans)')
+  root.style.setProperty('--prompt-font-axes', '"wght" 700')
+  root.style.setProperty('--input-font-axes', '"wght" 400')
+  root.style.setProperty('--submit-font-axes', '"wght" 400')
+  root.style.setProperty('--clear-font-axes', '"wght" 400')
 
   // Then, apply the definition settings
-
-  for (const key of Object.keys(definition?.style?.font ?? {})) {
-    const font = new FontFace(key, 'url(' + encodeURI(definition.style.font[key]) + ')')
-    document.fonts.add(font)
-    root.style.setProperty('--' + key + '-font', key)
-  }
+  exCommon.configureFonts(definition?.style?.font ?? {})
 
   // Text size settings
 

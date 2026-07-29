@@ -207,22 +207,19 @@ function loadDefinition (definition) {
 
   // Font settings
   // First, reset to defaults (in case a style option doesn't exist in the definition)
-  root.style.setProperty('--prompt-font', 'prompt-default')
-  WordCloudOptions.fontFamily = 'words-default'
+  root.style.setProperty('--prompt-font', 'var(--font-stack-sans)')
+  WordCloudOptions.fontFamily = 'var(--font-stack-sans)'
+  WordCloudOptions.fontWeight = '400'
 
   // Then, apply the definition settings
-  if ('font' in definition.style) {
-    if (definition.style?.font?.prompt) {
-      const font = new FontFace('prompt', 'url(' + encodeURI(definition.style.font.prompt) + ')')
-      document.fonts.add(font)
-      root.style.setProperty('--prompt-font', 'prompt')
-    }
-    if (definition.style?.font?.words) {
-      const font = new FontFace('words', 'url(' + encodeURI(definition.style.font.words) + ')')
-      document.fonts.add(font)
-      WordCloudOptions.fontFamily = 'words'
-    }
-  }
+  exCommon.configureFonts(definition.style?.font ?? {})
+  const wordsFont = definition.style?.font?.words ?? { path: '/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf', axes: { wght: 400, wdth: 100 } }
+
+  const font = new FontFace('words', 'url(' + encodeURI(wordsFont.path) + ')')
+  document.fonts.add(font)
+  WordCloudOptions.fontFamily = 'words'
+  WordCloudOptions.fontWeight = wordsFont.axes?.wght ?? 400
+
   root.style.setProperty('--prompt-font-adjust', definition?.style?.text_size?.prompt ?? 0)
 
   getTextUpdateFromServer()
@@ -247,7 +244,8 @@ const WordCloudOptions = {
   shrinkToFit: true,
   shuffle: true,
   backgroundColor: 'white',
-  fontFamily: 'words-default'
+  fontFamily: 'var(--words-font)',
+  fontWeight: '400'
 }
 
 const currentDefinition = ''

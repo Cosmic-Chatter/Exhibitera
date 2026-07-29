@@ -1,4 +1,5 @@
 :root {
+    /* Colors */
     --background-color: #1a2b3c;
     --prompt-color: #f5f5f0;
     --input-color: #0f1419;
@@ -11,10 +12,20 @@
     --keyboard-key-color: #0f1419;
     --keyboard-key-background-color: #f5f5f0;
     --keyboard-background-color: #6b7280;
-    --prompt-font: 'prompt-default';
-    --submit-font: "submit-default";
-    --clear-font: 'clear-default';
-    --input-font: "input-default";
+
+    /* Fonts */
+    --prompt-font: var(--font-stack-sans);
+    --submit-font: var(--font-stack-sans);
+    --clear-font: var(--font-stack-sans);
+    --input-font: var(--font-stack-sans);
+
+    /* Variable font axes */
+    --prompt-font-axes: "wght" 700;
+    --submit-font-axes: "wght" 400;
+    --clear-font-axes: "wght" 400;
+    --input-font-axes: "wght" 400;
+
+    /* Font size */
     --prompt-font-adjust: 0;
 }
 
@@ -46,6 +57,7 @@ html {
   #inputField {
     font-size: 3vmax;
     font-family: var(--input-font);
+    font-variation-settings: var(--input-font-axes);
     background-color: var(--input-background-color);
     color: var(--input-color);
   }
@@ -55,11 +67,13 @@ html {
     right: 2rem;
     font-size: 2vmax;
     font-family: var(--input-font);
+    font-variation-settings: var(--input-font-axes);
     color: var(--input-font-hint-color);
   }
   #clearButton {
     font-size: 3vmax;
     font-family: var(--clear-font);
+    font-variation-settings: var(--clear-font-axes);
     color: var(--clear-color);
     background-color: var(--clear-background-color);
     border-color: var(--clear-background-color);
@@ -92,6 +106,7 @@ html {
     font-size: calc(10vmin + var(--prompt-font-adjust)*1vmin);
     text-align: center;
     font-family: var(--prompt-font);
+    font-variation-settings: var(--prompt-font-axes);
     font-weight: bold;
     color: var(--prompt-color);
   }
@@ -101,23 +116,8 @@ html {
   #submitButton {
     font-size: 3vmax;
     font-family: var(--submit-font);
+    font-variation-settings: var(--submit-font-axes);
     background-color: var(--submit-background-color);
     border-color: var(--submit-background-color);
     color: var(--submit-color);
-  }
-  @font-face {
-    font-family: prompt-default;
-    src: url(../../_fonts/OpenSans-Bold.ttf);
-  }
-  @font-face {
-    font-family: submit-default;
-    src: url(../../_fonts/OpenSans-Regular.ttf);
-  }
-  @font-face {
-    font-family: clear-default;
-    src: url(../../_fonts/OpenSans-Regular.ttf);
-  }
-  @font-face {
-    font-family: input-default;
-    src: url(../../_fonts/OpenSans-Regular.ttf);
   }

@@ -1,7 +1,17 @@
 :root {
+    /* Colors */
     --background-color: #1a2b3c;
     --prompt-color: #f5f5f0;
-    --prompt-font: 'prompt-default';
+
+    /* Fonts */
+    --prompt-font: var(--font-stack-sans);
+    --words-font: var(--font-stack-sans);
+
+    /* Variable font axes */
+    --prompt-font-axes: "wght" 700;
+    --words-font-axes: "wght" 400;
+
+    /* Font sizes */
     --prompt-font-adjust: 0;
 }
 
@@ -42,6 +52,7 @@ body {
   text-align: center;
   font-weight: bold;
   font-family: var(--prompt-font);
+  font-variation-settings: var(--prompt-font-axes);
   color: var(--prompt-color);
 }
 #wordCloudContainer {
@@ -50,6 +61,7 @@ body {
   margin-right: 2.5vw;
   overflow: visible;
 }
+
 .promptText-full {
   margin: 2.5vw;
   height: 12vh;
@@ -70,13 +82,4 @@ body {
   height: 76.5vh;
   margin-top: 0vh;
   margin-bottom: 2.5vh;
-}
-
-@font-face {
-  font-family: prompt-default;
-  src: url(../../_fonts/OpenSans-Bold.ttf);
-}
-@font-face {
-  font-family: words-default;
-  src: url(../../_fonts/OpenSans-Regular.ttf);
 }

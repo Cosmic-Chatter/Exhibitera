@@ -437,6 +437,10 @@ exSetup.configure({
         prompt: '#f5f5f0',
         words: 'random-light'
       },
+      font: {
+        prompt: { path: '/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf', axes: { wght: 700, wdth: 100 } },
+        words: { path: '/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf', axes: { wght: 400, wdth: 100 } }
+      },
       rotation: 'horizontal',
       text_case: 'lowercase',
       text_size: {}

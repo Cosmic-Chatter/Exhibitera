@@ -300,10 +300,10 @@ exSetup.configure({
         'submit-background': '#6b7280'
       },
       font: {
-        clear: '/_fonts/OpenSans-Regular.ttf',
-        input: '/_fonts/OpenSans-Regular.ttf',
-        prompt: '/_fonts/OpenSans-Bold.ttf',
-        submit: '/_fonts/OpenSans-Regular.ttf'
+        clear: { path: '/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf', axes: { wght: 400, wdth: 100 } },
+        input: { path: '/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf', axes: { wght: 400, wdth: 100 } },
+        prompt: { path: '/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf', axes: { wght: 700, wdth: 100 } },
+        submit: { path: '/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf', axes: { wght: 400, wdth: 100 } }
       }
     },
     attractor: {},
