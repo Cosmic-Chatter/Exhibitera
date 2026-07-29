@@ -50,16 +50,17 @@ function loadDefinition (def) {
   // Font
 
   // First, reset to defaults (in case a style option doesn't exist in the definition)
-  root.style.setProperty('--Header-font', 'Header-default')
-  root.style.setProperty('--Title-font', 'Title-default')
-  root.style.setProperty('--Time-font', 'Time-default')
-  root.style.setProperty('--Body-font', 'Body-default')
+  root.style.setProperty('--Header-font', 'var(--font-stack-sans)')
+  root.style.setProperty('--Title-font', 'var(--font-stack-sans)')
+  root.style.setProperty('--Time-font', 'var(--font-stack-sans)')
+  root.style.setProperty('--Body-font', 'var(--font-stack-sans)')
+  root.style.setProperty('--Header-font-axes', '"wght" 700')
+  root.style.setProperty('--Title-font-axes', '"wght" 700')
+  root.style.setProperty('--Time-font-axes', '"wght" 400')
+  root.style.setProperty('--Body-font-axes', '"wght" 400')
+
   // Then, apply the definition settings
-  Object.keys(def.style.font).forEach((key) => {
-    const font = new FontFace(key, 'url(' + encodeURI(def.style.font[key]) + ')')
-    document.fonts.add(font)
-    root.style.setProperty('--' + key + '-font', key)
-  })
+  exCommon.configureFonts(def.style.font)
 
   // Text size settings
 

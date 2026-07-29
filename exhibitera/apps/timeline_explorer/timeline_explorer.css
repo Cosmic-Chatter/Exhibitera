@@ -16,10 +16,16 @@
   --textColor: #e6e6e2;
 
   /* Font faces */
-  --Header-font: 'Header-default';
-  --Title-font: "Title-default";
-  --Time-font: "Time-default";
-  --Body-font: "Body-default";
+  --Header-font: var(--font-stack-sans);
+  --Title-font: var(--font-stack-sans);
+  --Time-font: var(--font-stack-sans);
+  --Body-font: var(--font-stack-sans);
+
+  /* Font axes */
+  --Header-font-axes: "wght" 700;
+  --Title-font-axes: "wght" 700;
+  --Time-font-axes: "wght" 400;
+  --Body-font-axes: "wght" 400;
 
   /* Font modifiers */
   --fontModifier: '1.0';
@@ -28,32 +34,10 @@
   --body-font-adjust: 0;
 
   /* Misc */
-    --base-unit: min(1vmax, 1.77vh); /* Caps scaling at a standard 16:9 ratio (1vw = ~1.77vh) */
+  --base-unit: min(1vmax, 1.77vh); /* Caps scaling at a standard 16:9 ratio (1vw = ~1.77vh) */
   --header-height: 0vmax; /* Set to 7.5vmax in javascript when a header is given */
   --footer-height: calc(5 * var(--base-unit));
   --item-border-radius: calc(1 * var(--base-unit));
-}
-
-/* Font definitions */
-@font-face {
-  font-family: "Header-default";
-  src: url("../_fonts/OpenSans-Bold.ttf");
-}
-
-@font-face {
-  font-family: "Title-default";
-  src: url("../_fonts/OpenSans-Bold.ttf");
-}
-
-@font-face {
-  font-family: "Time-default";
-  src: url("../_fonts/OpenSans-Regular.ttf");
-}
-
-
-@font-face {
-  font-family: "Body-default";
-  src: url("../_fonts/OpenSans-Regular.ttf");
 }
 
 body {
@@ -65,6 +49,7 @@ body {
   overflow-x: hidden;
   overflow-y: hidden;
   font-family: var(--Body-font);
+  font-variation-settings: var(--Body-font-axes);
 }
 
 button:active {
@@ -163,6 +148,7 @@ time {
   display: block;
   font-weight: bold;
   font-family: var(--Time-font);
+  font-variation-settings: var(--Time-font-axes);
   font-size: calc((1 * var(--base-unit) + var(--time-font-adjust) * 1 * var(--base-unit)) * var(--fontModifier));
 }
 
@@ -173,6 +159,7 @@ time {
 .timeline-item-header {
   font-weight: bold;
   font-family: var(--Title-font);
+  font-variation-settings: var(--Title-font-axes);
 }
 .langSwitch-entry {
   font-size: 3vmin;
@@ -194,6 +181,7 @@ time {
 #header-pane {
     background-color: var(--headerColor);
     font-family: var(--Header-font);
+    font-variation-settings: var(--Header-font-axes);
 }
 #headerText {
   font-size: calc(4 * var(--base-unit));
@@ -307,14 +295,14 @@ time {
     /* Pointers for boxes ABOVE the line (pointing down) */
     .timeline ul li:nth-child(odd) div.timeline-element::before {
         bottom: calc(-.78 * var(--base-unit));
-        border-width: calc(.78 * var(--base-unit)) calc(-.78 * var(--base-unit)) calc(-.78 * var(--base-unit));
+        border-width: calc(.78 * var(--base-unit)) calc(.78 * var(--base-unit)) 0 calc(.78 * var(--base-unit));
         border-color: var(--itemColor) transparent transparent transparent;
     }
 
     /* Pointers for boxes BELOW the line (pointing up) */
     .timeline ul li:nth-child(even) div.timeline-element::before {
         top: calc(-.78 * var(--base-unit));
-        border-width: 0 calc(.78 * var(--base-unit)) calc(.78 * var(--base-unit)) calc(-.78 * var(--base-unit));
+        border-width: 0 calc(.78 * var(--base-unit)) calc(.78 * var(--base-unit)) calc(.78 * var(--base-unit));
         border-color: transparent transparent var(--itemColor) transparent;
     }
 

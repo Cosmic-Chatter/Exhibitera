@@ -1211,10 +1211,10 @@ exSetup.configure({
         textColor: '#e6e6e2'
       },
       font: {
-        Body: '/_fonts/OpenSans-Regular.ttf',
-        Header: '/_fonts/OpenSans-Bold.ttf',
-        Time: '/_fonts/OpenSans-Regular.ttf',
-        Title: '/_fonts/OpenSans-Bold.ttf'
+        Body: { path: '/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf', axes: { wght: 400, wdth: 100 } },
+        Header: { path: '/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf', axes: { wght: 700, wdth: 100 } },
+        Time: { path: '/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf', axes: { wght: 400, wdth: 100 } },
+        Title: { path: '/_fonts/Noto/NotoSans-VariableFont_wdth,wght.ttf', axes: { wght: 700, wdth: 100 } }
       },
       text_size: {}
     }
