@@ -141,6 +141,11 @@ app.include_router(definitions_v6.router, prefix='/v6')
 app.include_router(dmx_v6.router, prefix='/v6')
 app.include_router(files_v6.router, prefix='/v6')
 app.include_router(system_v6.router, prefix='/v6')
+app.include_router(data_v6.router, prefix='/v6.1')
+app.include_router(definitions_v6.router, prefix='/v6.1')
+app.include_router(dmx_v6.router, prefix='/v6.1')
+app.include_router(files_v6.router, prefix='/v6.1')
+app.include_router(system_v6.router, prefix='/v6.1')
 
 
 @lru_cache()
