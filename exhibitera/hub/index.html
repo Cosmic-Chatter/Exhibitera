@@ -1207,49 +1207,39 @@
       </div>
 
       <!-- Top navigation bar -->
-      <nav>
-        <ul class="nav nav-tabs" id="nav-tab" role="tablist">
+      <nav id="dynamic-nav">
+        <ul class="nav nav-tabs flex-nowrap" id="nav-tab" role="tablist">
           <li class="nav-item">
             <a class="nav-link active" id="nav-components-tab" data-bs-toggle="tab" href="#nav-components" role="tab" aria-controls="nav-components" aria-selected="true">Components</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link d-block d-sm-block" id="nav-schedule-tab" data-bs-toggle="tab" href="#nav-schedule" role="tab" aria-controls="nav-schedule" aria-selected="false">Schedule</a>
+            <a class="nav-link" id="nav-schedule-tab" data-bs-toggle="tab" href="#nav-schedule" role="tab" aria-controls="nav-schedule" aria-selected="false">Schedule</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link d-none d-sm-block" id="nav-exhibits-tab" data-bs-toggle="tab" href="#nav-exhibits" role="tab" aria-controls="nav-exhibits" aria-selected="false">Exhibitions</a>
+            <a class="nav-link" id="nav-exhibits-tab" data-bs-toggle="tab" href="#nav-exhibits" role="tab" aria-controls="nav-exhibits" aria-selected="false">Exhibitions</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link d-none d-sm-block" id="nav-programs-tab" data-bs-toggle="tab" href="#nav-programs" role="tab" aria-controls="nav-programs" aria-selected="false">Programs</a>
+            <a class="nav-link" id="nav-programs-tab" data-bs-toggle="tab" href="#nav-programs" role="tab" aria-controls="nav-programs" aria-selected="false">Programs</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link d-none d-sm-block" id="nav-issues-tab" data-bs-toggle="tab" href="#nav-issues" role="tab" aria-controls="nav-issues" aria-selected="false">Maintenance</a>
+            <a class="nav-link" id="nav-issues-tab" data-bs-toggle="tab" href="#nav-issues" role="tab" aria-controls="nav-issues" aria-selected="false">Maintenance</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link d-none d-md-block" id="nav-analytics-tab" data-bs-toggle="tab" href="#nav-analytics" role="tab" aria-controls="nav-analytics" aria-selected="false">Analytics</a>
+            <a class="nav-link" id="nav-analytics-tab" data-bs-toggle="tab" href="#nav-analytics" role="tab" aria-controls="nav-analytics" aria-selected="false">Analytics</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link d-none d-lg-block" id="nav-users-tab" data-bs-toggle="tab" href="#nav-users" role="tab" aria-controls="nav-users" aria-selected="false">Users</a>
+            <a class="nav-link" id="nav-users-tab" data-bs-toggle="tab" href="#nav-users" role="tab" aria-controls="nav-users" aria-selected="false">Users</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link d-none d-lg-block" id="nav-settings-tab" data-bs-toggle="tab" href="#nav-settings" role="tab" aria-controls="nav-settings" aria-selected="false">Settings</a>
+            <a class="nav-link" id="nav-settings-tab" data-bs-toggle="tab" href="#nav-settings" role="tab" aria-controls="nav-settings" aria-selected="false">Settings</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link d-none d-lg-block" id="nav-help-tab" data-bs-toggle="tab" href="#nav-help" role="tab" aria-controls="nav-help" aria-selected="false">Help</a>
+            <a class="nav-link" id="nav-help-tab" data-bs-toggle="tab" href="#nav-help" role="tab" aria-controls="nav-help" aria-selected="false">Help</a>
           </li>
-          
-          <!-- Dropdown for overflow items -->
-          <li class="nav-item dropdown d-block d-lg-none">
-            <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">More</a>
-            <div class="dropdown-menu">
-              <!-- <a class="dropdown-item d-block d-sm-none" id="nav-schedule-dropdown-tab" data-bs-toggle="tab" href="#nav-schedule" role="tab" aria-controls="nav-schedule" aria-selected="false">Schedule</a> -->
-              <a class="dropdown-item d-block d-sm-none" id="nav-exhibits-dropdown-tab" data-bs-toggle="tab" href="#nav-exhibits" role="tab" aria-controls="nav-exhibits" aria-selected="false">Exhibitions</a>
-              <a class="dropdown-item d-block d-sm-none" id="nav-programs-dropdown-tab" data-bs-toggle="tab" href="#nav-programs" role="tab" aria-controls="nav-programs" aria-selected="false">Programs</a>
-              <a class="dropdown-item d-block d-sm-none" id="nav-issues-dropdown-tab" data-bs-toggle="tab" href="#nav-issues" role="tab" aria-controls="nav-issues" aria-selected="false">Maintenance</a>
-              <a class="dropdown-item d-block d-md-none" id="nav-analytics-dropdown-tab" data-bs-toggle="tab" href="#nav-analytics" role="tab" aria-controls="nav-analytics d-block d-md-none" aria-selected="false">Analytics</a>
-              <a class="dropdown-item" id="nav-users-dropdown-tab" data-bs-toggle="tab" href="#nav-users" role="tab" aria-controls="nav-users" aria-selected="false">Users</a>
-              <a class="dropdown-item" id="nav-settings-dropdown-tab" data-bs-toggle="tab" href="#nav-settings" role="tab" aria-controls="nav-settings" aria-selected="false">Settings</a>
-              <a class="dropdown-item" id="nav-help-dropdown-tab" data-bs-toggle="tab" href="#nav-help" role="tab" aria-controls="nav-help" aria-selected="false">Help</a>
-            </div>
+          <!-- Dropdown menu -->
+          <li class="nav-item dropdown id-overflow-dropdown d-none">
+            <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button">More</a>
+            <div class="dropdown-menu dropdown-menu-end" id="overflow-menu"></div>
           </li>
         </ul>
       </nav>

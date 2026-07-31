@@ -60,6 +60,15 @@ tr, td, th {
 .schedule-date-specific {
     background-color: rgba(91, 192, 222, 0.2);
 }
+/* Custom active highlight for the "More" nav tab */
+.id-overflow-dropdown .dropdown-toggle.active {
+  color: var(--bs-nav-tabs-link-active-color, #495057) !important;
+  background-color: var(--bs-nav-tabs-link-active-bg, #fff) !important;
+  border-color: var(--bs-nav-tabs-link-active-border-color, #dee2e6 #dee2e6 #fff) !important;
+}
+.nav-tabs .nav-link.active {
+  z-index: 2;
+}
 #completedIssuesModalIssueRow {
     max-height: 55vh;
     min-height: 35vh;

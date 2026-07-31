@@ -832,9 +832,79 @@ function loadVersion () {
     })
 }
 
+function checkNavOverflow () {
+  // Move items that have overflowed the nav bar into a "More" menu
+
+  const nav = document.getElementById('nav-tab')
+  const dropdown = nav.querySelector('.id-overflow-dropdown')
+  const dropdownMenu = document.getElementById('overflow-menu')
+  const navItems = Array.from(nav.querySelectorAll('.nav-item:not(.id-overflow-dropdown)'))
+
+  // Temporarily restore all items to main nav to calculate raw widths
+  navItems.forEach(item => {
+    const link = item.querySelector('.nav-link, .dropdown-item')
+    if (link) {
+      link.classList.remove('dropdown-item')
+      link.classList.add('nav-link')
+    }
+    nav.insertBefore(item, dropdown)
+  })
+
+  dropdown.classList.add('d-none')
+
+  const navWidth = nav.clientWidth
+  let totalWidth = dropdown.offsetWidth || 80
+
+  // Move overflowing items into the dropdown
+  navItems.forEach((item) => {
+    totalWidth += item.offsetWidth
+
+    if (totalWidth > navWidth) {
+      dropdown.classList.remove('d-none')
+
+      const link = item.querySelector('.nav-link')
+      if (link) {
+        link.classList.remove('nav-link')
+        link.classList.add('dropdown-item')
+      }
+      dropdownMenu.appendChild(item)
+    }
+  })
+
+  // Sync active state immediately after reflow
+  updateNavDropdownActiveState()
+}
+
+// Check active state inside the dropdown and update the dropdown toggle
+function updateNavDropdownActiveState () {
+  // If the active tab is inside the nav bar "More" dropdown, highlight it
+
+  const dropdown = document.querySelector('.id-overflow-dropdown')
+  if (!dropdown) return
+
+  const dropdownToggle = dropdown.querySelector('.dropdown-toggle')
+  // Check if any item in the dropdown menu currently has the 'active' class
+  const activeDropdownItem = dropdown.querySelector('#overflow-menu .dropdown-item.active')
+
+  if (activeDropdownItem) {
+    dropdownToggle.classList.add('active')
+  } else {
+    dropdownToggle.classList.remove('active')
+  }
+}
+
 exTools.rebuildNotificationList()
 
 // Bind event listeners
+
+// Nav bar
+const navObserver = new ResizeObserver(() => checkNavOverflow())
+navObserver.observe(document.getElementById('nav-tab'))
+
+document.getElementById('nav-tab').addEventListener('shown.bs.tab', (event) => {
+  // Clear lingering active state on dropdown toggle if the newly shown tab is NOT inside the dropdown
+  updateNavDropdownActiveState()
+})
 
 // Login
 document.getElementById('loginForm').addEventListener('keydown', function (e) {

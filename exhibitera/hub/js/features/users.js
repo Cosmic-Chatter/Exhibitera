@@ -509,48 +509,38 @@ function configureUser (userDict, login = true) {
 
   if (exTools.checkPermission('exhibits', 'view')) {
     document.getElementById('nav-exhibits-tab').style.display = 'block'
-    document.getElementById('nav-exhibits-dropdown-tab').style.display = 'block'
     if (match === '') match = 'exhibits'
   } else {
     document.getElementById('nav-exhibits-tab').style.setProperty('display', 'none', 'important')
-    document.getElementById('nav-exhibits-dropdown-tab').style.setProperty('display', 'none', 'important')
   }
 
   if (exTools.checkPermission('maintenance', 'view')) {
     document.getElementById('nav-issues-tab').style.display = 'block'
-    document.getElementById('nav-issues-dropdown-tab').style.display = 'block'
     configureMaintenancePermissions()
     if (match === '') match = 'issues'
   } else {
     document.getElementById('nav-issues-tab').style.setProperty('display', 'none', 'important')
-    document.getElementById('nav-issues-dropdown-tab').style.setProperty('display', 'none', 'important')
   }
 
   if (exTools.checkPermission('analytics', 'view')) {
     document.getElementById('nav-analytics-tab').style.display = 'block'
-    document.getElementById('nav-analytics-dropdown-tab').style.display = 'block'
     if (match === '') match = 'analytics'
   } else {
     document.getElementById('nav-analytics-tab').style.setProperty('display', 'none', 'important')
-    document.getElementById('nav-analytics-dropdown-tab').style.setProperty('display', 'none', 'important')
   }
 
   if (exTools.checkPermission('users', 'view')) {
     document.getElementById('nav-users-tab').style.display = 'block'
-    document.getElementById('nav-users-dropdown-tab').style.display = 'block'
     if (match === '') match = 'users'
   } else {
     document.getElementById('nav-users-tab').style.setProperty('display', 'none', 'important')
-    document.getElementById('nav-users-dropdown-tab').style.setProperty('display', 'none', 'important')
   }
 
   if (exTools.checkPermission('settings', 'view')) {
     document.getElementById('nav-settings-tab').style.display = 'block'
-    document.getElementById('nav-settings-dropdown-tab').style.display = 'block'
     if (match === '') match = 'settings'
   } else {
     document.getElementById('nav-settings-tab').style.setProperty('display', 'none', 'important')
-    document.getElementById('nav-settings-dropdown-tab').style.setProperty('display', 'none', 'important')
   }
   if (match === '') match = 'help'
   _showTab(match)
