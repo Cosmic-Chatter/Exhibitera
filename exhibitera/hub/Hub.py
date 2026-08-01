@@ -109,6 +109,7 @@ def load_default_configuration() -> None:
     hub_legacy.convert_schedule_targets_to_json()
     hub_legacy.convert_legacy_tracker_templates_to_json()
     hub_legacy.migrate_tracker_data()
+    hub_legacy.add_programs_permission()
 
     hub_tools.start_debug_loop()
     hub_schedule.retrieve_json_schedule()

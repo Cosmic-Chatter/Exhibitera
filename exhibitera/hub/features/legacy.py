@@ -298,3 +298,23 @@ def migrate_tracker_data():
 
     rename_old = ex_files.get_path(["flexible-tracker", "old_data"], user_file=True)
     os.rename(old_data, rename_old)
+
+
+# Added in Ex6.1 to add the programs permission
+def add_programs_permission():
+    """Iterate the users list and ensure all users have a programs permission set."""
+
+    users_path = ex_files.get_path(["configuration", "users.json"], user_file=True)
+    if not os.path.exists(users_path):
+        return
+
+    users: list[dict] = ex_files.load_json(users_path)
+    change_made = False
+
+    for user in users:
+        if user["permissions"].get('programs', None) is None:
+            user["permissions"]["programs"] = "view"
+            change_made = True
+
+    if change_made:
+        ex_files.write_json(users, users_path)

@@ -131,6 +131,7 @@ function configureEditUserModalForNewUser () {
   document.getElementById('editUserPermissionAnalytics').value = 'none'
   document.getElementById('editUserPermissionExhibits').value = 'none'
   document.getElementById('editUserPermissionMaintenance').value = 'none'
+  document.getElementById('editUserPermissionPrograms').value = 'none'
   document.getElementById('editUserPermissionSchedule').value = 'none'
   document.getElementById('editUserPermissionSettings').value = 'none'
   document.getElementById('editUserPermissionUsers').value = 'none'
@@ -153,6 +154,7 @@ function configureEditUserModalForExistingUser (user) {
   document.getElementById('editUserPermissionAnalytics').value = user.permissions.analytics
   document.getElementById('editUserPermissionExhibits').value = user.permissions.exhibits
   document.getElementById('editUserPermissionMaintenance').value = user.permissions.maintenance
+  document.getElementById('editUserPermissionPrograms').value = user.permissions.programs
   document.getElementById('editUserPermissionSchedule').value = user.permissions.schedule
   document.getElementById('editUserPermissionSettings').value = user.permissions.settings
   document.getElementById('editUserPermissionUsers').value = user.permissions.users
@@ -253,6 +255,7 @@ export function submitChangeFromEditUserModal () {
       analytics: document.getElementById('editUserPermissionAnalytics').value,
       exhibits: document.getElementById('editUserPermissionExhibits').value,
       maintenance: document.getElementById('editUserPermissionMaintenance').value,
+      programs: document.getElementById('editUserPermissionPrograms').value,
       schedule: document.getElementById('editUserPermissionSchedule').value,
       settings: document.getElementById('editUserPermissionSettings').value,
       users: document.getElementById('editUserPermissionUsers').value
@@ -462,6 +465,7 @@ function configureUser (userDict, login = true) {
       },
       exhibits: 'none',
       maintenance: 'none',
+      programs: 'none',
       schedule: 'none',
       settings: 'none',
       users: 'none'
@@ -610,7 +614,7 @@ function configureUserPreferences () {
   document.getElementById('componentsTabSettingsSizeSelect').value = checkUserPreference('components_size')
 
   // onboarding
-  for (const key of ['analytics', 'components', 'exhibitions', 'groups', 'maintenance', 'schedule', 'users']) {
+  for (const key of ['analytics', 'components', 'exhibitions', 'groups', 'maintenance', 'programs', 'schedule', 'users']) {
     const dismissed = Object.keys(exConfig.user.preferences?.onboarding ?? {})// Items in this dict have already been dismissed by the user
 
     if (!dismissed.includes(key)) {
