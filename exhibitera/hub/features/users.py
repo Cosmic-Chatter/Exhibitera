@@ -43,6 +43,7 @@ class User:
                 },
                 "exhibits": "none",
                 "maintenance": "none",
+                "programs": "none",
                 "schedule": "view",
                 "settings": "none",
                 "users": "none"
@@ -68,6 +69,8 @@ class User:
             self.uuid = uuid_str
 
     def authenticate(self, password: str) -> bool:
+        """Check whether the provided password is correct."""
+
         try:
             result = password_hasher.verify(self.password_hash, password)
             self.update_last_activity()
@@ -152,7 +155,7 @@ class User:
         return this_dict
 
     def update_last_activity(self):
-        """Set the last activity time ot now."""
+        """Set the last activity time to now."""
 
         self.last_activity = datetime.datetime.now().isoformat()
 
@@ -259,6 +262,7 @@ def check_for_first_user():
         },
         "exhibits": "edit",
         "maintenance": "edit",
+        "programs": "edit",
         "schedule": "edit",
         "settings": "edit",
         "users": "edit"
@@ -480,6 +484,7 @@ def get_admin():
         },
         "exhibits": "edit",
         "maintenance": "edit",
+        "programs": "edit",
         "schedule": "edit",
         "settings": "edit",
         "users": "edit"

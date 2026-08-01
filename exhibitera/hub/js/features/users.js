@@ -514,6 +514,13 @@ function configureUser (userDict, login = true) {
     document.getElementById('nav-exhibits-tab').style.setProperty('display', 'none', 'important')
   }
 
+  if (exTools.checkPermission('programs', 'view')) {
+    document.getElementById('nav-programs-tab').style.display = 'block'
+    if (match === '') match = 'exhibits'
+  } else {
+    document.getElementById('nav-programs-tab').style.setProperty('display', 'none', 'important')
+  }
+
   if (exTools.checkPermission('maintenance', 'view')) {
     document.getElementById('nav-issues-tab').style.display = 'block'
     configureMaintenancePermissions()

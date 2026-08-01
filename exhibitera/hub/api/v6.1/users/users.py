@@ -94,7 +94,7 @@ def edit_user(request: Request,
         user.permissions = permissions
     hub_users.save_users()
 
-    return {"success": success, "user": user.get_dict()}
+    return {"success": True, "user": user.get_dict()}
 
 
 @router.post("/user/{uuid_str}/editPreferences")
@@ -146,7 +146,6 @@ def list_users(permissions: dict[str, str] = Body(description="A dictionary of p
     for user in hub_config.user_list:
         error = False
         for key in permissions:
-
             if user.check_permission(key, permissions[key]) is False:
                 error = True
         if not error:
@@ -166,12 +165,29 @@ def get_user_display_name(user_uuid: str):
 
 
 @router.post('/user/{user_uuid}/changePassword')
-def change_user_password(user_uuid: str,
+def change_user_password(request: Request,
+                         user_uuid: str,
                          current_password: str = Body(description="The plaintext of the current password."),
                          new_password: str = Body(description="The plaintext of the password to set.")):
     """Change the password for the given user"""
 
+    # Check which user is requesting this change
+    token = request.cookies.get("authToken", "")
+    # Permission level of "none" is correct because users can change their own
+    # password even if they don't have any access to other users
+    success, authorizing_user, reason = hub_users.check_user_permission("users", "none", token=token)
+    if success is False:
+        return {"success": False, "reason": reason}
+
+    # If this is not the user changing their own password, check that they have permissions
+    if user_uuid != authorizing_user:
+        success, _, reason = hub_users.check_user_permission("users", "edit", token=token)
+        if success is False:
+            return {"success": False, "reason": "invalid_credentials"}
+
     user = hub_users.get_user(uuid_str=user_uuid)
+    if user is None:
+        return {"success": False, "reason": "user_does_not_exist"}
 
     # First, check that the current password is correct
     if hub_users.hash_password(current_password) != user.password_hash:
