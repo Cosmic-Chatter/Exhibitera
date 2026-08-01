@@ -37,12 +37,10 @@ def create_schedule(name: str, entries: dict[str, dict]) -> tuple[bool, dict]:
 def retrieve_json_schedule():
     """Build a schedule for the next 21 days based on the available json schedule files and queue today's events"""
 
-    with hub_config.scheduleLock:
-        hub_config.scheduleUpdateTime = time.time()
-        hub_config.json_schedule_list = []
+    today = datetime.datetime.today().date()
+    upcoming_days = [today + datetime.timedelta(days=x) for x in range(21)]
+    new_schedule_list = []
 
-        today = datetime.datetime.today().date()
-        upcoming_days = [today + datetime.timedelta(days=x) for x in range(21)]
 
     for day in upcoming_days:
         day_dict = {"date": day.isoformat(),
@@ -69,7 +67,11 @@ def retrieve_json_schedule():
         if schedule_to_read is not None:
             _, day_dict["schedule"] = load_json_schedule(schedule_to_read)
 
-        hub_config.json_schedule_list.append(day_dict)
+        new_schedule_list.append(day_dict)
+
+    with hub_config.scheduleLock:
+        hub_config.scheduleUpdateTime = time.time()
+        hub_config.json_schedule_list = new_schedule_list
 
     queue_json_schedule((hub_config.json_schedule_list[0])["schedule"])
 
@@ -106,14 +108,34 @@ def get_available_date_specific_schedules(all: bool = False) -> list[str]:
 def load_json_schedule(schedule_name: str) -> tuple[bool, dict]:
     """Load and parse the appropriate schedule file and return it"""
 
+    with hub_config.scheduleLock:
+        return _load_json_schedule_unlocked(schedule_name)
+
+
+def _load_json_schedule_unlocked(schedule_name: str) -> tuple[bool, dict]:
+    """Load the schedule without holding hub_config.scheduleLock.
+
+    Useful when loading schedules in more complicated situations where
+    hub_config.scheduleLock is already held.
+    """
+
     schedule_path = ex_files.get_path(["schedules", schedule_name], user_file=True)
     if not os.path.exists(schedule_path):
         return False, {}
 
-    with hub_config.scheduleLock:
-        events = ex_files.load_json(schedule_path)
-        if events is None:
-            events = {}
+    events = ex_files.load_json(schedule_path)
+    if events is None:
+        events = {}
+
+    # Ensure time_in_seconds is present for all events
+    for key in events:
+        if "time_in_seconds" not in events[key]:
+            try:
+                events[key]["time_in_seconds"] = seconds_from_midnight(events[key]["time"])
+            except (KeyError, ValueError):
+                # Malformed entry — log and skip
+                logging.error(f"Schedule entry {key} in {schedule_name} missing 'time' field")
+                events[key]["time_in_seconds"] = 0  # Safe default
 
     return True, events
 
@@ -121,9 +143,19 @@ def load_json_schedule(schedule_name: str) -> tuple[bool, dict]:
 def write_json_schedule(schedule_name: str, schedule: dict) -> bool:
     """Take a json schedule dictionary and write it to file"""
 
-    schedule_path = ex_files.get_path(["schedules", schedule_name], user_file=True)
     with hub_config.scheduleLock:
-        success, reason = ex_files.write_json(schedule, schedule_path)
+        return _write_json_schedule_unlocked(schedule_name, schedule)
+
+
+def _write_json_schedule_unlocked(schedule_name: str, schedule: dict) -> bool:
+    """Write the schedule without holding hub_config.scheduleLock.
+
+    Useful when writing schedules in more complicated situations where
+    hub_config.scheduleLock is already held.
+    """
+
+    schedule_path = ex_files.get_path(["schedules", schedule_name], user_file=True)
+    success, reason = ex_files.write_json(schedule, schedule_path)
 
     return success
 
@@ -131,25 +163,28 @@ def write_json_schedule(schedule_name: str, schedule: dict) -> bool:
 def update_json_schedule(schedule_name: str, updates: dict) -> dict:
     """Write schedule updates to disk and return the updated schedule"""
 
-    _, schedule = load_json_schedule(schedule_name)
+    with hub_config.scheduleLock:
 
-    # The keys should be the schedule_ids for the items to be updated
-    for key in updates:
-        update = updates[key]
-        if "time" not in update or "action" not in update:
-            continue
-        if "target" not in update:
-            update["target"] = None
-        if "value" not in update:
-            update["value"] = None
+        _, schedule = _load_json_schedule_unlocked(schedule_name)
 
-        # Calculate the time from midnight for use when sorting, etc.
-        update["time_in_seconds"] = seconds_from_midnight(update["time"])
+        # The keys should be the schedule_ids for the items to be updated
+        for key in updates:
+            update = updates[key]
+            if "time" not in update or "action" not in update:
+                continue
+            if "target" not in update:
+                update["target"] = None
+            if "value" not in update:
+                update["value"] = None
+
+            # Calculate the time from midnight for use when sorting, etc.
+            update["time_in_seconds"] = seconds_from_midnight(update["time"])
 
         schedule[key] = update
 
-    write_json_schedule(schedule_name, schedule)
-    hub_config.last_update_time = time.time()
+        _write_json_schedule_unlocked(schedule_name, schedule)
+        hub_config.last_update_time = time.time()
+
     return schedule
 
 
@@ -169,16 +204,20 @@ def delete_json_schedule_event(schedule_name: str, schedule_id: str) -> dict:
 def queue_json_schedule(schedule: dict) -> None:
     """Take a schedule dict and create a timer to execute it"""
 
+    local_tz = dateutil.tz.tzlocal()
+    now = datetime.datetime.now(tz=local_tz)
+
     new_timers = []
     for key in schedule:
         event = schedule[key]
         if event["action"] == "note":
             # Don't queue notes
             continue
-        event_time = dateutil.parser.parse(event["time"])
-        seconds_from_now = (event_time - datetime.datetime.now()).total_seconds()
-        if seconds_from_now >= 0:
 
+        event_time = dateutil.parser.parse(event["time"]).replace(tzinfo=local_tz)
+        seconds_from_now = (event_time - now).total_seconds()
+
+        if seconds_from_now >= 0:
             timer = threading.Timer(seconds_from_now,
                                     execute_scheduled_action,
                                     args=(event["action"], event["target"], event["value"]))
@@ -189,8 +228,11 @@ def queue_json_schedule(schedule: dict) -> None:
     get_next_scheduled_action()  # Update the config.json_next_event field
 
     # Add a timer to reload the schedule
-    midnight = datetime.datetime.combine(datetime.datetime.now() + datetime.timedelta(days=1), datetime.time.min)
-    seconds_until_midnight = (midnight - datetime.datetime.now()).total_seconds()
+    tomorrow_midnight = datetime.datetime.combine(
+        now.date() + datetime.timedelta(days=1), datetime.time.min
+    ).replace(tzinfo=local_tz)
+    seconds_until_midnight = (tomorrow_midnight - now).total_seconds()
+
     timer = threading.Timer(seconds_until_midnight, retrieve_json_schedule)
     timer.daemon = True
     timer.start()
@@ -252,6 +294,8 @@ def get_next_scheduled_action():
     """Search today's schedule for the next scheduled action, update the apps_config, and return it."""
 
     schedule = (hub_config.json_schedule_list[0])["schedule"]
+    local_tz = dateutil.tz.tzlocal()
+    now = datetime.datetime.now(tz=local_tz)
 
     hub_config.json_next_event = []
     for key in schedule:
@@ -259,10 +303,11 @@ def get_next_scheduled_action():
         if event["action"] == "note":
             # Don't queue notes
             continue
-        event_time = dateutil.parser.parse(event["time"])
-        seconds_from_now = (event_time - datetime.datetime.now()).total_seconds()
-        if seconds_from_now >= 0:
 
+        event_time = dateutil.parser.parse(event["time"]).replace(tzinfo=local_tz)
+        seconds_from_now = (event_time - now).total_seconds()
+
+        if seconds_from_now >= 0:
             # Check if this is the next event
             if len(hub_config.json_next_event) == 0:
                 hub_config.json_next_event.append(event)

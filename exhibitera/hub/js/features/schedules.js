@@ -2,7 +2,6 @@
 
 import * as exUtilities from '../../../common/utilities.js'
 import exConfig from '../../config.js'
-import * as exExhibit from './exhibits.js'
 import * as exTools from '../tools.js'
 
 export function deleteSchedule (name) {
@@ -49,7 +48,7 @@ export function scheduleConvertToDateSpecific (date, dayName) {
 export function populateSchedule (schedule) {
   // Take a provided schedule and build the interface to show it.
 
-  document.getElementById('scheduleContainer').innerHTML = ''
+  document.getElementById('scheduleContainer').textContent = ''
   document.getElementById('dateSpecificScheduleAlert').style.display = 'none'
 
   const allowEdit = exTools.checkPermission('schedule', 'edit')
@@ -110,7 +109,7 @@ export function populateSchedule (schedule) {
 
     const dayNameSpan = document.createElement('span')
     dayNameSpan.style.fontSize = '24px'
-    dayNameSpan.innerHTML = dateStr
+    dayNameSpan.textContent = dateStr
     dayNameCol.appendChild(dayNameSpan)
 
     const menuCol = document.createElement('div')
@@ -137,7 +136,7 @@ export function populateSchedule (schedule) {
 
     const json = document.createElement('button')
     json.classList = 'dropdown-item'
-    json.innerHTML = 'Download as JSON'
+    json.textContent = 'Download as JSON'
     json.addEventListener('click', () => {
       downloadScheduleAsJSON(scheduleName)
     })
@@ -151,7 +150,7 @@ export function populateSchedule (schedule) {
       const editButton = document.createElement('button')
       editButton.classList = 'btn btn-primary btn-sm w-100'
       editButton.setAttribute('type', 'button')
-      editButton.innerHTML = addItemText
+      editButton.textContent = addItemText
       editButton.addEventListener('click', function () {
         scheduleConfigureEditModal(scheduleName, day.source)
       })
@@ -165,7 +164,7 @@ export function populateSchedule (schedule) {
       const convertButton = document.createElement('button')
       convertButton.classList = 'btn btn-warning btn-sm w-100'
       convertButton.setAttribute('type', 'button')
-      convertButton.innerHTML = 'Convert to date-specific'
+      convertButton.textContent = 'Convert to date-specific'
       convertButton.addEventListener('click', function () {
         scheduleConvertToDateSpecific(day.date, day.dayName)
       })
@@ -179,7 +178,7 @@ export function populateSchedule (schedule) {
       const deleteButton = document.createElement('button')
       deleteButton.classList = 'btn btn-danger btn-sm w-100'
       deleteButton.setAttribute('type', 'button')
-      deleteButton.innerHTML = 'Delete date-specific'
+      deleteButton.textContent = 'Delete date-specific'
       deleteButton.setAttribute('data-bs-toggle', 'popover')
       deleteButton.setAttribute('title', 'Are you sure?')
       deleteButton.setAttribute('data-bs-content', `<a id="Popover${day.date}" class='btn btn-danger w-100 schedule-delete'>Confirm</a>`)
@@ -204,7 +203,7 @@ export function populateSchedule (schedule) {
     if (scheduleIDs.length === 0) {
       const noneContainer = document.createElement('div')
       noneContainer.classList = 'flex-grow-1 d-flex align-items-center justify-content-center fst-italic py-3'
-      noneContainer.innerHTML = 'No scheduled actions'
+      noneContainer.textContent = 'No scheduled actions'
       dayContainer.appendChild(noneContainer)
     } else {
       const entriesDiv = document.createElement('div')
@@ -228,7 +227,7 @@ export function populateSchedule (schedule) {
     }
   }
 
-  document.getElementById('Schedule_next_event').innerHTML = populateScheduleDescriptionHelper(schedule.nextEvent, true)
+  document.getElementById('Schedule_next_event').textContent = populateScheduleDescriptionHelper(schedule.nextEvent, true)
 }
 
 function createScheduleEntryHTML (item, scheduleID, scheduleName, scheduleType, allowEdit = exTools.checkPermission('schedule', 'edit')) {
@@ -276,7 +275,7 @@ function createScheduleEntryHTML (item, scheduleID, scheduleName, scheduleType, 
     eventDescriptionOuterContainer.appendChild(eventDescriptionInnerContainer)
 
     const eventDescription = document.createElement('center')
-    eventDescription.innerHTML = description
+    eventDescription.textContent = description
     eventDescriptionOuterContainer.appendChild(eventDescription)
   } else {
     const eventTimeCol = document.createElement('div')
@@ -289,7 +288,7 @@ function createScheduleEntryHTML (item, scheduleID, scheduleName, scheduleType, 
 
     const eventTime = document.createElement('div')
     eventTime.classList = 'align-self-center justify-content-center'
-    eventTime.innerHTML = item.time
+    eventTime.textContent = item.time
     eventTimeContainer.appendChild(eventTime)
 
     const eventDescriptionCol = document.createElement('div')
@@ -309,7 +308,7 @@ function createScheduleEntryHTML (item, scheduleID, scheduleName, scheduleType, 
     eventDescriptionOuterContainer.appendChild(eventDescriptionInnerContainer)
 
     const eventDescription = document.createElement('center')
-    eventDescription.innerHTML = description
+    eventDescription.textContent = description
     eventDescriptionOuterContainer.appendChild(eventDescription)
   }
 
@@ -323,7 +322,7 @@ function createScheduleEntryHTML (item, scheduleID, scheduleName, scheduleType, 
     eventEditButton.setAttribute('type', 'button')
     eventEditButton.style.borderStyle = 'solid'
     eventEditButton.style.border = '0px'
-    eventEditButton.innerHTML = 'Edit'
+    eventEditButton.textContent = 'Edit'
     eventEditButton.addEventListener('click', function () {
       scheduleConfigureEditModal(scheduleName, scheduleType, false, scheduleID, item.time, action, target, value)
     })
@@ -614,7 +613,7 @@ export async function setScheduleActionValueSelector (action = null, target = nu
 
   const errorAlert = document.getElementById('scheduleEditErrorAlert')
   if (component == null || (component?.helperAddress ?? '') === '') {
-    errorAlert.innerHTML = 'This component is not responding'
+    errorAlert.textContent = 'This component is not responding'
     errorAlert.style.display = 'block'
     valueSelector.style.display = 'none'
     valueSelectorLabel.style.display = 'none'
@@ -720,9 +719,9 @@ export function scheduleConfigureEditModal (scheduleName,
     const dateSplit = scheduleName.split('-')
     const date = new Date(parseInt(dateSplit[0]), parseInt(dateSplit[1]) - 1, parseInt(dateSplit[2]))
     const dateStr = date.toLocaleDateString(undefined, dateOptions)
-    document.getElementById('scheduleEditScopeAlert').innerHTML = `This change will only affect ${dateStr}`
+    document.getElementById('scheduleEditScopeAlert').textContent = `This change will only affect ${dateStr}`
   } else {
-    document.getElementById('scheduleEditScopeAlert').innerHTML = `This change will affect all ${scheduleName.charAt(0).toUpperCase() + scheduleName.slice(1)}s`
+    document.getElementById('scheduleEditScopeAlert').textContent = `This change will affect all ${scheduleName.charAt(0).toUpperCase() + scheduleName.slice(1)}s`
   }
 
   // If we're editing an existing action, pre-fill the current options
@@ -871,7 +870,7 @@ export function showManageFutureDateModal () {
   const allowEdit = exTools.checkPermission('schedule', 'edit')
 
   // Clear any existing entries
-  document.getElementById('manageFutureDateEntryList').innerHTML = ''
+  document.getElementById('manageFutureDateEntryList').textContent = ''
   document.getElementById('manageFutureDateCalendarInput').value = ''
   populateFutureDatesList()
   document.getElementById('manageFutureDateAddActionButton').style.display = 'none'
@@ -879,11 +878,11 @@ export function showManageFutureDateModal () {
   document.getElementById('manageFutureDateDownloadAsJSONDropdown').style.display = 'none'
 
   if (allowEdit) {
-    document.getElementById('manageFutureDateModal').querySelector('.modal-title').innerHTML = 'Manage a future date'
+    document.getElementById('manageFutureDateModal').querySelector('.modal-title').textContent = 'Manage a future date'
     document.getElementById('manageFutureDateCreateScheduleButtonContainer').style.display = 'block'
     document.getElementById('manageFutureDateEntryList').classList.add('mt-3')
   } else {
-    document.getElementById('manageFutureDateModal').querySelector('.modal-title').innerHTML = 'View a future date'
+    document.getElementById('manageFutureDateModal').querySelector('.modal-title').textContent = 'View a future date'
     document.getElementById('manageFutureDateCreateScheduleButtonContainer').style.display = 'none'
     document.getElementById('manageFutureDateCalendarInput').style.display = 'none'
     document.getElementById('manageFutureDateEntryList').classList.remove('mt-3')
@@ -902,7 +901,7 @@ function populateFutureDatesList () {
     .then((result) => {
       if (result.success === true) {
         const availableDatesList = document.getElementById('manageFutureDateAvailableSchedulesList')
-        availableDatesList.innerHTML = ''
+        availableDatesList.textContent = ''
         const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }
 
         const sortedSchedules = result.schedules.sort((date1, date2) => {
@@ -915,7 +914,7 @@ function populateFutureDatesList () {
 
           // Build the date string
           const dateObj = new Date(date + 'T00:00')
-          button.innerHTML = dateObj.toLocaleDateString(undefined, options)
+          button.textContent = dateObj.toLocaleDateString(undefined, options)
 
           button.addEventListener('click', (event) => {
             document.getElementById('manageFutureDateCalendarInput').value = date
@@ -941,7 +940,7 @@ export function populateFutureDateCalendarInput () {
 
   const date = document.getElementById('manageFutureDateCalendarInput').value
   const scheduleList = document.getElementById('manageFutureDateEntryList')
-  scheduleList.innerHTML = ''
+  scheduleList.textContent = ''
   const availableDatesList = document.getElementById('manageFutureDateAvailableSchedulesList')
 
   for (const el of availableDatesList.querySelectorAll('.futureEventDateButton')) {
@@ -1031,9 +1030,11 @@ export function downloadScheduleAsJSON (name) {
           type: 'text/plain'
         })
         const a = document.createElement('a')
-        a.href = window.URL.createObjectURL(fileBlob)
+        const objectUrl = window.URL.createObjectURL(fileBlob)
+        a.href = objectUrl
         a.download = name + '.json'
         a.click()
+        window.URL.revokeObjectURL(objectUrl)
       }
     })
 }
@@ -1047,9 +1048,9 @@ export function showScheduleFromFileModal () {
   const fileDateSelect = document.getElementById('scheduleFromFileDateSelect')
   fileDateSelect.value = null
   fileDateSelect.style.display = 'none'
-  document.getElementById('scheduleFromFileModalFileInputLabel').innerHTML = 'Select file'
+  document.getElementById('scheduleFromFileModalFileInputLabel').textContent = 'Select file'
   document.getElementById('scheduleFromFileModalFileInput').value = null
-  document.getElementById('scheduleFromFileNewSchedule').innerHTML = ''
+  document.getElementById('scheduleFromFileNewSchedule').textContent = ''
   document.getElementById('scheduleFromFileModal').dataset.schedule = ''
   document.getElementById('scheduleFromFileModalSubmitButton').style.display = 'none'
 
@@ -1061,7 +1062,7 @@ export function onScheduleFromFileModalFileInputChange (event) {
 
   const file = event.target.files[0]
 
-  document.getElementById('scheduleFromFileModalFileInputLabel').innerHTML = file.name
+  document.getElementById('scheduleFromFileModalFileInputLabel').textContent = file.name
 }
 
 export function onscheduleFromFileDateSelectChange () {
@@ -1127,7 +1128,7 @@ async function previewJSONSchedule (jsonStr) {
 
   const newScheduleEl = document.getElementById('scheduleFromFileNewSchedule')
   const type = document.getElementById('scheduleFromFileKindSelect').value
-  newScheduleEl.innerHTML = ''
+  newScheduleEl.textContent = ''
 
   // Sort schedule IDs in time order
   const scheduleIDs = Object.keys(schedule)
@@ -1167,7 +1168,7 @@ export function onCreateScheduleFromFileTypeSelect () {
 
   if (name === 'date-specific') {
     document.getElementById('scheduleFromFileDateSelect').style.display = 'block'
-    document.getElementById('scheduleFromFileCurrentSchedule').innerHTML = ''
+    document.getElementById('scheduleFromFileCurrentSchedule').textContent = ''
     return
   }
   document.getElementById('scheduleFromFileDateSelect').style.display = 'none'
@@ -1185,7 +1186,7 @@ function _scheduleFromFilePreviewCurrentSchedule (name, kind, retry = false) {
   })
     .then((response) => {
       if (response.success === true) {
-        currentScheduleEl.innerHTML = ''
+        currentScheduleEl.textContent = ''
 
         // Loop through the schedule elements and add a row for each
         const scheduleIDs = Object.keys(response.schedule)

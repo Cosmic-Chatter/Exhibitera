@@ -27,8 +27,11 @@ async def get_specific_schedule(request: Request, schedule_name: str):
     if success is False:
         return {"success": False, "reason": reason}
 
-    if not schedule_name.endswith('.json'):
-        schedule_name += '.json'
+    if ex_files.filename_safe(schedule_name) is False:
+        return {"success": False, "reason": "unsafe_filename"}
+
+    schedule_name = ex_files.with_extension(schedule_name, 'json')
+
     success, schedule = hub_schedule.load_json_schedule(schedule_name)
 
     return {"success": success, "schedule": schedule}
@@ -50,7 +53,10 @@ async def delete_schedule(request: Request, schedule_name: str):
 
     with hub_config.scheduleLock:
         json_schedule_path = ex_files.get_path(["schedules", ex_files.with_extension(schedule_name, 'json')], user_file=True)
-        os.remove(json_schedule_path)
+        try:
+            os.remove(json_schedule_path)
+        except FileNotFoundError:
+            pass
 
     # Reload the schedule from disk
     hub_schedule.retrieve_json_schedule()
@@ -77,6 +83,9 @@ async def convert_schedule(
     success, authorizing_user, reason = hub_users.check_user_permission("schedule", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}
+
+    if ex_files.filename_safe(date) is False or ex_files.filename_safe(convert_from) is False:
+        return {"success": False, "reason": "unsafe_filename"}
 
     with hub_config.scheduleLock:
         shutil.copy(ex_files.get_path(["schedules", convert_from.lower() + ".json"], user_file=True),
@@ -134,6 +143,9 @@ async def get_schedule_as_json_string(request: Request,
     if success is False:
         return {"success": False, "reason": reason}
 
+    if ex_files.filename_safe(schedule_name) is False:
+        return {"success": False, "reason": "unsafe_filename"}
+
     success, schedule = hub_schedule.load_json_schedule(schedule_name + '.json')
     result = {}
 
@@ -156,6 +168,9 @@ async def delete_schedule_action(request: Request, schedule_name: str, action_id
     success, authorizing_user, reason = hub_users.check_user_permission("schedule", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}
+
+    if ex_files.filename_safe(schedule_name) is False:
+        return {"success": False, "reason": "unsafe_filename"}
 
     hub_schedule.delete_json_schedule_event(ex_files.with_extension(schedule_name, 'json'), action_id)
     hub_schedule.retrieve_json_schedule()
@@ -203,10 +218,13 @@ async def update_schedule(
     if success is False:
         return {"success": False, "reason": reason}
 
+    if ex_files.filename_safe(schedule_name) is False:
+        return {"success": False, "reason": "unsafe_filename"}
+
     # Make sure we were given a valid time to parse
     try:
         dateutil.parser.parse(time_to_set)
-    except dateutil.parser._parser.ParserError:
+    except (ValueError, OverflowError, dateutil.parser.ParserError):
         response_dict = {"success": False,
                          "reason": "Time not valid"}
         return response_dict
