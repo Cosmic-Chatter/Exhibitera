@@ -324,7 +324,12 @@ def execute_scheduled_action(action: str,
                              value: list | str | None):
     """Dispatch the appropriate action when called by a schedule timer"""
 
-    hub_exhibitions.execute_action(action, target, value)
+    try:
+        hub_exhibitions.execute_action(action, target, value)
+    except Exception as e:
+        logging.error(e)
+        print(e)
+
     get_next_scheduled_action()
     hub_config.scheduleUpdateTime = time.time()
 
