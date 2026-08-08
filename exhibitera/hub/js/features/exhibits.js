@@ -1073,17 +1073,7 @@ function configureComponentInfoModalForExhibitComponent (obj, permission) {
   document.getElementById('componentInfoModalBasicSettingsID').value = obj.id
 
   const groupSelect = document.getElementById('componentInfoModalBasicSettingsGroup')
-  groupSelect.innerHTML = ''
-  const defaultOption = new Option('Default', 'Default')
-  if (obj.groups.includes('Default')) defaultOption.selected = true
-  groupSelect.appendChild(defaultOption)
-  for (const group of hubConfig.groups) {
-    const option = new Option(group.name, group.uuid)
-    if (obj.groups.includes(group.uuid)) {
-      option.selected = true
-    }
-    groupSelect.appendChild(option)
-  }
+  hubGroups.populateGroupsForSelect(groupSelect, obj.groups)
 
   document.getElementById('componentInfoModalFullSettingsButton').setAttribute('href', obj.helperAddress + '?showSettings=true')
   document.getElementById('componentInfoModalSettingsAutoplayAudio').value = String(obj.permissions.audio)

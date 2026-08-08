@@ -84,7 +84,15 @@ export function populateGroupsRow () {
 
   if (exConfig.groups == null) exConfig.groups = []
 
-  for (const group of exConfig.groups) {
+  const sorted = exConfig.groups.sort((a, b) => {
+    try {
+      return a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+    } catch {
+      return 0
+    }
+  })
+
+  for (const group of sorted) {
     const groupCol = document.createElement('div')
     groupCol.classList = 'col'
     groupRow.appendChild(groupCol)
@@ -170,17 +178,34 @@ export function deleteGroupFromModal () {
     })
 }
 
-export function populateGroupsForSelect (select) {
+export function populateGroupsForSelect (select, selected = []) {
   // Create Option entries for the given select corresponding to the groups.
   // 'select' should the the DOM element that will hold the options
+  // 'selected' is an option array of uuids to set as selected
 
   // Clear the select
   select.innerHTML = ''
-  select.appendChild(new Option('Default', 'Default'))
+
+  const defaultOption = new Option('Default', 'Default')
+  if (selected.includes('Default')) defaultOption.selected = true
+  select.appendChild(defaultOption)
 
   if (exConfig.groups == null) exConfig.groups = []
 
-  for (const group of exConfig.groups) {
-    select.appendChild(new Option(group.name, group.uuid))
+  const sorted = exConfig.groups.sort((a, b) => {
+    try {
+      return a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+    } catch {
+      return 0
+    }
+  })
+
+  for (const group of sorted) {
+    const option = new Option(group.name, group.uuid)
+    if (selected.includes(group.uuid)) {
+      option.selected = true
+    }
+
+    select.appendChild(option)
   }
 }
