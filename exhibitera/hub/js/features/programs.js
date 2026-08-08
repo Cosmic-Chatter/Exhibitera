@@ -88,7 +88,6 @@ export async function updateProgram () {
     endpoint: '/program/' + uuid + '/update',
     params: { update }
   })
-  console.log(result)
 }
 
 function populateLocations () {
@@ -96,7 +95,7 @@ function populateLocations () {
 
   const locationSelect = document.getElementById('editProgramLocationField')
 
-  locationSelect.appendChild(new Option('None', ''))
+  locationSelect.appendChild(new Option('No location', ''))
   for (const group of exConfig.groups) {
     const option = new Option(group.name, group.uuid)
     locationSelect.appendChild(option)

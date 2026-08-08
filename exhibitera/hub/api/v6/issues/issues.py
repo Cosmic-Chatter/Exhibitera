@@ -27,7 +27,8 @@ async def create_issue(request: Request, details: dict[str, Any] = Body(embed=Tr
         return {"success": False, "reason": reason}
 
     hub_issues.create_issue(details, username=authorizing_user)
-    hub_issues.save_issue_list()
+    with hub_config.issueLock:
+        hub_issues.save_issue_list()
     return {"success": True}
 
 
@@ -55,6 +56,11 @@ async def archive_issue(request: Request, issue_id: str):
     if success is False:
         return {"success": False, "reason": reason}
 
+    # Check that the issue exists
+    issue = hub_issues.get_issue(issue_id)
+    if issue is None:
+        return {"success": False, "reason": 'does_not_exist'}
+
     hub_issues.archive_issue(issue_id, authorizing_user)
     return {"success": True}
 
@@ -69,8 +75,8 @@ async def restore_issue(request: Request, issue_id: str):
     if success is False:
         return {"success": False, "reason": reason}
 
-    hub_issues.restore_issue(issue_id)
-    return {"success": True}
+    success = hub_issues.restore_issue(issue_id)
+    return {"success": success}
 
 
 @router.post("/deleteMedia")
@@ -85,6 +91,10 @@ async def delete_issue_media(request: Request,
     success, authorizing_user, reason = hub_users.check_user_permission("maintenance", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}
+
+    for filename in filenames:
+        if ex_files.filename_safe(filename) is False:
+            return {"success": False, "reason": "unsafe_filename"}
 
     hub_issues.delete_issue_media_file(filenames, owner=owner)
     return {"success": True}
@@ -101,16 +111,17 @@ async def edit_issue(request: Request,
     if success is False:
         return {"success": False, "reason": reason}
 
-    if "id" in details:
-        hub_issues.edit_issue(details, authorizing_user)
+    if "id" not in details:
+        return {"success": False, "reason": "'details' must include property 'id'"}
+
+    issue = hub_issues.get_issue(details["id"])
+    if issue is None:
+        return {"success": False, "reason": 'does_not_exist'}
+
+    hub_issues.edit_issue(details, authorizing_user)
+    with hub_config.issueLock:
         hub_issues.save_issue_list()
-        response_dict = {"success": True}
-    else:
-        response_dict = {
-            "success": False,
-            "reason": "'details' must include property 'id'"
-        }
-    return response_dict
+    return {"success": True}
 
 
 @router.get("/list/{match_uuid}")

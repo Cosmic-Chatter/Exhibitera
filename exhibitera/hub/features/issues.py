@@ -72,7 +72,7 @@ def create_issue(details: dict[str, Any], username: str = "") -> Issue:
     """Create a new issue and add it to hub_config.issue_list"""
 
     if username != "":
-        details["createdUsername"] = username
+        details = {**details, "createdUsername": username}
     with hub_config.issueLock:
         new_issue = Issue(details)
         hub_config.issue_list.append(new_issue)
@@ -85,6 +85,11 @@ def edit_issue(details: dict, username: str) -> None:
 
     details["lastUpdateUsername"] = username
     issue = get_issue(details["id"])
+
+    if issue is None:
+        logging.error("edit_issue: issue ID not found: " + details["id"])
+        return
+
     with hub_config.issueLock:
         issue.details = issue.details | details
         issue.refresh_last_update_date()
@@ -117,12 +122,10 @@ def remove_issue(this_id: str) -> None:
 def archive_issue(this_id: str, username: str) -> None:
     """Move the given issue from issues.json to archived.json."""
 
-    details = get_issue(this_id).details.copy()
-    now_date = datetime.datetime.now().isoformat()
-    details["archiveDate"] = now_date
-    details["lastUpdateDate"] = now_date
-    details["media"] = []
-    details["archivedUsername"] = username
+    issue = get_issue(this_id)
+    if issue is None:
+        logging.error("archive_issue: issue ID not found: " + this_id)
+        return
 
     # First, load the current archive
     archive_file = ex_files.get_path(["issues", "archived.json"], user_file=True)
@@ -138,6 +141,13 @@ def archive_issue(this_id: str, username: str) -> None:
             # File does not exist
             archive = []
 
+        details = issue.details.copy()
+        now_date = datetime.datetime.now().isoformat()
+        details["archiveDate"] = now_date
+        details["lastUpdateDate"] = now_date
+        details["media"] = []
+        details["archivedUsername"] = username
+
         # Next, append the newly-archived issue
         archive.append(details)
 
@@ -149,7 +159,7 @@ def archive_issue(this_id: str, username: str) -> None:
     remove_issue(this_id)
 
 
-def restore_issue(this_id: str) -> None:
+def restore_issue(this_id: str) -> bool:
     """Move the given issue from the archive back to hub_config.issue_list"""
 
     archive_file = ex_files.get_path(["issues", "archived.json"], user_file=True)
@@ -162,9 +172,14 @@ def restore_issue(this_id: str) -> None:
         except (FileNotFoundError, json.JSONDecodeError):
             archive_list = []
 
-        issue = [x for x in archive_list if x["id"] == this_id][0]
+        issue = next((x for x in archive_list if x["id"] == this_id), None)
+
+    if issue is None:
+        return False
+
     create_issue(issue)
-    save_issue_list()
+    with hub_config.issueLock:
+        save_issue_list()
 
     with hub_config.issueLock:
         # Then, remove the issue from the archive
@@ -174,6 +189,7 @@ def restore_issue(this_id: str) -> None:
         with open(archive_file, "w", encoding="UTF-8") as file_object:
             json.dump(new_archive, file_object, indent=2, sort_keys=True)
 
+    return True
 
 def read_issue_list() -> None:
     """Read issues.json and set up hub_config.issue_list"""
