@@ -1772,7 +1772,7 @@
                   Create
                 </button>
                 <ul class="dropdown-menu w-100">
-                  <li><button id="createExhibitButton" class='dropdown-item'>Create empty</button></li>
+                  <li><button id="createExhibitButton" class='dropdown-item'>Create new</button></li>
                   <li><button id="cloneExhibitButton" class='dropdown-item'>Clone selected</button></li>
                 </ul>
               </div>
@@ -1799,7 +1799,7 @@
           </div>
 
           <!-- Edit exhibit fields -->
-           <div id="editExhibitPane" class="row gy-2 mt-2" style="display: none;">
+          <div id="editExhibitPane" class="row gy-2 mt-2" style="display: none;">
 
             <div class="col-12">
               <hr class="mt-0">
@@ -1860,10 +1860,85 @@
               </H4>
               <div id="editExhibitActionsList"></div>
             </div>
-           </div>
+          </div>
         </div>
 
         <div class="tab-pane fade" id="nav-programs" role="tabpanel" aria-labelledby="nav-programs-tab">
+          
+          <div class="row mt-2 gy-2">
+            <div class="col-6 col-sm-4 col-md-4 col-xl-3 d-flex">
+              <select class="form-select" id="programSelect"></select>
+              <button id="refreshProgramSelect" class="btn btn-outline-secondary ms-1">↻</button>
+            </div>
+            <div class="col-3 col-sm-2 col-md-2">
+              <button id="editProgramButton" class="btn btn-primary w-100">Edit</button>
+            </div>
+            <div class='col-4 col-sm-3 col-md-2'>
+              <div class="dropdown w-100">
+                <button class="btn btn-primary dropdown-toggle w-100" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  Create
+                </button>
+                <ul class="dropdown-menu w-100">
+                  <li><button id="createProgramButton" class='dropdown-item'>Create new</button></li>
+                  <li><button id="cloneProgramButton" class='dropdown-item'>Clone selected</button></li>
+                </ul>
+              </div>
+            </div>
+            <div class="col-4 col-sm-3 col-md-2">
+              <button class='btn btn-danger w-100' id="deleteSelectedProgramButton">Delete</button>
+            </div>
+            <div class="col-4 col-sm-3 col-md-2">
+              <button class='btn btn-success w-100' id="saveProgramButton">Save</button>
+            </div>
+          </div>
+
+          <div id="editProgramPane" class="row gy-2 mt-2">
+            <div class="col-3 border-end">
+              <label class="form-label" for="editProgramNameField">
+                Name
+              </label>
+              <input type="text" class="form-control" id="editProgramNameField">
+              <label class="form-label mt-2" for="editProgramDescriptionField">
+                Description
+              </label>
+              <textarea class="form-control" id="editProgramDescriptionField"></textarea>
+              <label class="form-label mt-2" for="editProgramLocationField">
+                Location
+                <span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="To add a location, as an administrator to create a group." style="font-size: 0.55em; color: black">?</span>
+              </label>
+              <select id="editProgramLocationField" class="form-select"></select>
+            </div>
+
+            <div class="col-5 border-end">
+              <div class="row">
+                <div class="col-6">
+                  <label class="form-label" for="editProgramDurationField">
+                    Duration (min)
+                  </label>
+                  <input type="number" id="editProgramDurationField" class="form-control" min="1" step="1" value="60">
+                </div>
+                <div class="col-6">
+                  <label class="form-label" for="editProgramCapacityField">
+                    Capacity
+                  </label>
+                  <input type="number" id="editProgramCapacityField" class="form-control" min="1" step="1">
+                </div>
+              </div>
+
+              <div class="row mt-2">
+                <div class="col-6">
+                  <button class="btn btn-outline-primary w-100" id="editProgramThumbnailButton">Select thumbnail</button>
+                </div>
+                <div class="col-6">
+                  <button class="btn btn-outline-primary w-100" id="editProgramTrailerButton">Select trailer</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-4">
+              <button class="btn btn-primary" id="editProgramAddActionButton">Add action</button>
+            </div>
+          </div>
           
           <!-- Onboarding pane -->
           <div id="onboarding_programs" class="row mt-3" style="display: none;">

@@ -34,6 +34,7 @@ import exhibitera.hub.features.exhibitions as hub_exhibitions
 import exhibitera.hub.features.groups as hub_group
 import exhibitera.hub.features.issues as hub_issues
 import exhibitera.hub.features.legacy as hub_legacy
+import exhibitera.hub.features.programs as hub_programs
 import exhibitera.hub.features.projectors as hub_proj
 import exhibitera.hub.features.schedules as hub_schedule
 import exhibitera.hub.features.system as hub_system
@@ -43,6 +44,7 @@ import exhibitera.hub.features.users as hub_users
 # API modules
 from exhibitera.hub.api.core import core as core_api
 
+# API version 6
 from exhibitera.hub.api.v6.analytics import analytics as analytics_v6
 from exhibitera.hub.api.v6.components import components as components_v6
 from exhibitera.hub.api.v6.data import data as data_v6
@@ -56,6 +58,20 @@ from exhibitera.hub.api.v6.system import system as system_v6
 from exhibitera.hub.api.v6.tracker import tracker as tracker_v6
 from exhibitera.hub.api.v6.users import users as users_v6
 
+# API version 6.1
+from exhibitera.hub.api.v6_1.analytics import analytics as analytics_v6_1
+from exhibitera.hub.api.v6_1.components import components as components_v6_1
+from exhibitera.hub.api.v6_1.data import data as data_v6_1
+from exhibitera.hub.api.v6_1.exhibitions import exhibitions as exhibitions_v6_1
+from exhibitera.hub.api.v6_1.groups import groups as groups_v6_1
+from exhibitera.hub.api.v6_1.issues import issues as issues_v6_1
+from exhibitera.hub.api.v6_1.maintenance import maintenance as maintenance_v6_1
+from exhibitera.hub.api.v6_1.programs import programs as programs_v6_1
+from exhibitera.hub.api.v6_1.projectors import projectors as projectors_v6_1
+from exhibitera.hub.api.v6_1.schedule import schedule as schedule_v6_1
+from exhibitera.hub.api.v6_1.system import system as system_v6_1
+from exhibitera.hub.api.v6_1.tracker import tracker as tracker_v6_1
+from exhibitera.hub.api.v6_1.users import users as users_v6_1
 
 # Set up the automatic documentation
 def exhibitera_schema():
@@ -115,8 +131,9 @@ def load_default_configuration() -> None:
     hub_schedule.retrieve_json_schedule()
     hub_exhibitions.load_exhibition(hub_config.current_exhibit)
 
-    # Build any existing issues
+    # Build any existing issues and programs
     hub_issues.read_issue_list()
+    hub_programs.read_program_list()
 
     # Save the current software version in .last_ver
     last_ver_path = ex_files.get_path(["configuration", ".last_ver"], user_file=True)
@@ -198,6 +215,7 @@ app.openapi = exhibitera_schema
 # Link API routers
 app.include_router(core_api.router, prefix='/core')
 
+# API version 6
 app.include_router(analytics_v6.router, prefix='/v6')
 app.include_router(components_v6.router, prefix='/v6')
 app.include_router(data_v6.router, prefix='/v6')
@@ -210,18 +228,21 @@ app.include_router(schedule_v6.router, prefix='/v6')
 app.include_router(system_v6.router, prefix='/v6')
 app.include_router(tracker_v6.router, prefix='/v6')
 app.include_router(users_v6.router, prefix='/v6')
-app.include_router(analytics_v6.router, prefix='/v6.1')
-app.include_router(components_v6.router, prefix='/v6.1')
-app.include_router(data_v6.router, prefix='/v6.1')
-app.include_router(exhibitions_v6.router, prefix='/v6.1')
-app.include_router(groups_v6.router, prefix='/v6.1')
-app.include_router(issues_v6.router, prefix='/v6.1')
-app.include_router(maintenance_v6.router, prefix='/v6.1')
-app.include_router(projectors_v6.router, prefix='/v6.1')
-app.include_router(schedule_v6.router, prefix='/v6.1')
-app.include_router(system_v6.router, prefix='/v6.1')
-app.include_router(tracker_v6.router, prefix='/v6.1')
-app.include_router(users_v6.router, prefix='/v6.1')
+
+# API version 6.1
+app.include_router(analytics_v6_1.router, prefix='/v6.1')
+app.include_router(components_v6_1.router, prefix='/v6.1')
+app.include_router(data_v6_1.router, prefix='/v6.1')
+app.include_router(exhibitions_v6_1.router, prefix='/v6.1')
+app.include_router(groups_v6_1.router, prefix='/v6.1')
+app.include_router(issues_v6_1.router, prefix='/v6.1')
+app.include_router(maintenance_v6_1.router, prefix='/v6.1')
+app.include_router(programs_v6_1.router, prefix='/v6.1')
+app.include_router(projectors_v6_1.router, prefix='/v6.1')
+app.include_router(schedule_v6_1.router, prefix='/v6.1')
+app.include_router(system_v6_1.router, prefix='/v6.1')
+app.include_router(tracker_v6_1.router, prefix='/v6.1')
+app.include_router(users_v6_1.router, prefix='/v6.1')
 
 
 @lru_cache()

@@ -22,6 +22,7 @@ galleryConfigurationLock: threading.Lock = threading.Lock()
 trackerTemplateWriteLock: threading.Lock = threading.Lock()
 scheduleLock: threading.Lock = threading.Lock()
 issueLock: threading.Lock = threading.Lock()
+programLock: threading.Lock = threading.Lock()
 exhibitionsLock: threading.Lock = threading.Lock()
 maintenanceLock: threading.Lock = threading.Lock()
 issueMediaLock: threading.Lock = threading.Lock()
@@ -42,6 +43,10 @@ notifications: dict = {}
 # Issue stuff
 issue_list_last_update_date: str = datetime.datetime.now().isoformat()
 issue_list: list = []
+
+# Programs stuff
+program_list_last_update_date: str = datetime.datetime.now().isoformat()
+program_list: list = []
 
 # Schedule stuff
 schedule_timers: list[threading.Timer] = []

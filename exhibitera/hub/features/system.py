@@ -86,6 +86,7 @@ def check_file_structure() -> None:
                  "flexible-tracker/templates": ex_files.get_path(["flexible-tracker", "templates"], user_file=True),
                  "issues": ex_files.get_path(["issues"], user_file=True),
                  "issues/media": ex_files.get_path(["issues", "media"], user_file=True),
+                 "programs": ex_files.get_path(["programs"], user_file=True),
                  "static": ex_files.get_path(["static"], user_file=True)}
 
     try:

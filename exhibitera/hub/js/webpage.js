@@ -7,6 +7,7 @@ import * as exExhibit from './features/exhibits.js'
 import * as exGroup from './features/groups.js'
 import * as exIssues from './features/issues.js'
 import * as exMaintenance from './features/maintenance.js'
+import * as exPrograms from './features/programs.js'
 import * as exProjector from './features/projectors.js'
 import * as exSchedule from './features/schedules.js'
 import * as exTools from './tools.js'
@@ -1140,6 +1141,21 @@ document.getElementById('editExhibitActionEditDeleteActionButton').addEventListe
 document.getElementById('editExhibitActionEditSubmitButton').addEventListener('click', editExhibitActionSubmit)
 document.getElementById('exhibitModificationsModalSaveButton').addEventListener('click', exExhibit.removeExhibitionModifications)
 document.getElementById('exhibitModificationsModalApplyButton').addEventListener('click', exExhibit.applyExhibitionModifications)
+
+// Programs tab
+// =========================
+document.getElementById('refreshProgramSelect').addEventListener('click', () => {
+  exPrograms.populatePrograms()
+})
+document.getElementById('createProgramButton').addEventListener('click', () => {
+  exPrograms.createProgram()
+})
+document.getElementById('editProgramButton').addEventListener('click', () => {
+  exPrograms.editProgram()
+})
+document.getElementById('saveProgramButton').addEventListener('click', () => {
+  exPrograms.updateProgram()
+})
 
 // Maintenance tab
 // =========================

@@ -191,7 +191,10 @@ def read_issue_list() -> None:
                 latest_update = update_datetime
             create_issue(issue)
     except FileNotFoundError:
-        print("No stored issues to read")
+        print("No stored issues to load")
+    except json.decoder.JSONDecodeError:
+        print("issues.json is incorrectly formatted or blank.")
+        logging.error("issues.json is incorrectly formatted or blank.")
     hub_config.issue_list_last_update_date = latest_update
 
 
