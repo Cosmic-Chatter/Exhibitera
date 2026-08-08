@@ -226,6 +226,8 @@ def execute_action(action: str,
         if component is not None:
             component.queue_command("set_dmx_scene__" + value)
     elif action == 'set_exhibit' and target is not None:
+        if isinstance(target, list) and len(target) > 0:
+            target = target[0]
         print("Changing exhibit to:", target["value"])
         logging.info("Changing exhibition to %s", target["value"])
         load_exhibition(target["value"])
