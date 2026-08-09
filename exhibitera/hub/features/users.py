@@ -8,6 +8,7 @@ import uuid
 # Non-standard modules
 import argon2
 from cryptography.fernet import Fernet, InvalidToken
+from fastapi import Cookie
 
 # Exhibitera modules
 import exhibitera.common.files as ex_files
@@ -465,6 +466,21 @@ def check_user_permission(action: str,
         return False, user_uuid, "insufficient_permission"
 
     return True, user_uuid, ""
+
+
+def require_permission(category: str, action: str):
+    """Factory for a FastAPI dependency that checks a permission and returns
+    a dict shaped like the old manual check, so failing endpoints can
+    `return` it directly without changing the response contract."""
+
+    def _check(authToken: str = Cookie(default="")) -> dict:
+        success, authorizing_user, reason = check_user_permission(
+            category, action, token=authToken
+        )
+
+        return {"success": success, "user": authorizing_user, "reason": reason}
+
+    return _check
 
 
 def get_admin():

@@ -6,6 +6,7 @@ import threading
 from typing import Any
 
 
+
 debug: bool = False  # True means print various debug info
 gallery_name: str = "Exhibitera"
 port: int = 8000

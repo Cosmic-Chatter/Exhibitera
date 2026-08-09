@@ -64,8 +64,8 @@ async def check_connection():
     """Confirm that the connection is active and provide the supported API levels"""
 
     return {"success": True,
-            "supported_apis": [ex_config.api],
-            "supported_api_levels": [ex_config.api_level]}
+            "supported_apis": ['/core', '/v6', '/v6.1'],
+            "supported_api_levels": [0, 6, 6.1]}
 
 
 @router.post("/data/{name}/rawText")

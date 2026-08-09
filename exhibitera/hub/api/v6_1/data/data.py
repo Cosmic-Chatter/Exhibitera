@@ -4,7 +4,7 @@ import os
 from typing import Any
 
 # Third-party modules
-from fastapi import APIRouter, Body, Request
+from fastapi import APIRouter, Body, Depends
 
 # Exhibitera modules
 import exhibitera.common.config as ex_config
@@ -24,20 +24,17 @@ router = APIRouter(prefix='/data')
 
 
 @router.delete("/{name}")
-async def delete_data(request: Request, name: str):
+async def delete_data(
+        name: str,
+        permission: dict = Depends(hub_users.require_permission("analytics", "edit"))
+):
     """Delete the specified data file."""
 
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = hub_users.check_user_permission("analytics", "edit", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
+    if not permission["success"]:
+        return {"success": False, "reason": permission["reason"]}
 
     if not ex_files.filename_safe(name):
         return {"success": False, "reason": "unsafe_filename"}
-
-    if name is None or name.strip() == "":
-        return {"success": False, "reason": "'name' field is blank."}
 
     data_path = ex_files.get_path(["data", ex_files.with_extension(name, 'txt')], user_file=True)
 
@@ -65,9 +62,6 @@ async def append_data(name: str,
 
     if not ex_files.filename_safe(name):
         return {"success": False, "reason": "unsafe_filename"}
-
-    if name is None or name.strip() == "":
-        return {"success": False, "reason": "'name' field is blank."}
 
     file_path = ex_files.get_path(["data", ex_files.with_extension(name, 'txt')], user_file=True)
     success, reason = ex_files.write_json(data, file_path, append=True, indent=None)
@@ -97,6 +91,9 @@ async def submit_raw_text(name: str,
 async def get_raw_text(name: str):
     """Load the given file and return the raw text."""
 
+    if not ex_files.filename_safe(name):
+        return {"success": False, "reason": "unsafe_filename"}
+
     file_path = ex_files.get_path(["data", ex_files.with_extension(name, 'txt')], user_file=True)
     result, success, reason = ex_files.get_text(file_path)
     return {"success": success, "reason": reason, "text": result}
@@ -105,6 +102,9 @@ async def get_raw_text(name: str):
 @router.get("/{name}/csv")
 async def get_tracker_data_csv(name: str):
     """Return the requested data file as a CSV string."""
+
+    if not ex_files.filename_safe(name):
+        return {"success": False, "reason": "unsafe_filename"}
 
     data_path = ex_files.get_path(["data", ex_files.with_extension(name, 'txt')], user_file=True)
     if not os.path.exists(data_path):

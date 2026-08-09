@@ -6,7 +6,7 @@ import time
 
 # Third-party modules
 import dateutil
-from fastapi import APIRouter, Body, Request
+from fastapi import APIRouter, Body, Depends
 
 # Exhibitera modules
 import exhibitera.common.files as ex_files
@@ -18,14 +18,14 @@ router = APIRouter(prefix="/schedule")
 
 
 @router.get("/{schedule_name}")
-async def get_specific_schedule(request: Request, schedule_name: str):
+async def get_specific_schedule(
+        schedule_name: str,
+        permission: dict = Depends(hub_users.require_permission("schedule", "view"))
+):
     """Retrieve the given schedule and return it as a dictionary."""
 
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = hub_users.check_user_permission("schedule", "view", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
+    if not permission["success"]:
+        return {"success": False, "reason": permission["reason"]}
 
     if ex_files.filename_safe(schedule_name) is False:
         return {"success": False, "reason": "unsafe_filename"}
@@ -38,14 +38,14 @@ async def get_specific_schedule(request: Request, schedule_name: str):
 
 
 @router.delete("/{schedule_name}")
-async def delete_schedule(request: Request, schedule_name: str):
+async def delete_schedule(
+        schedule_name: str,
+        permission: dict = Depends(hub_users.require_permission("schedule", "edit"))
+):
     """Delete the given schedule."""
 
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = hub_users.check_user_permission("schedule", "edit", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
+    if not permission["success"]:
+        return {"success": False, "reason": permission["reason"]}
 
     # Check filename is safe
     if ex_files.filename_safe(schedule_name) is False:
@@ -73,16 +73,14 @@ async def delete_schedule(request: Request, schedule_name: str):
 
 @router.post("/convert")
 async def convert_schedule(
-        request: Request,
         date: str = Body(description="The date of the schedule to create, in the form of YYYY-MM-DD."),
-        convert_from: str = Body(description="The name of the schedule to clone to the new date.")):
+        convert_from: str = Body(description="The name of the schedule to clone to the new date."),
+        permission: dict = Depends(hub_users.require_permission("schedule", "edit"))
+):
     """Convert between date- and day-specific schedules."""
 
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = hub_users.check_user_permission("schedule", "edit", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
+    if not permission["success"]:
+        return {"success": False, "reason": permission["reason"]}
 
     if ex_files.filename_safe(date) is False or ex_files.filename_safe(convert_from) is False:
         return {"success": False, "reason": "unsafe_filename"}
@@ -105,17 +103,15 @@ async def convert_schedule(
 
 
 @router.post("/create")
-async def create_schedule(request: Request,
-                          entries: dict[str, dict] = Body(
-                              description="A dict of dicts that each define one entry in the schedule."),
-                          name: str = Body(description="The name for the schedule to be created.")):
+async def create_schedule(
+        entries: dict[str, dict] = Body(description="A dict of dicts that each define one entry in the schedule."),
+        name: str = Body(description="The name for the schedule to be created."),
+        permission: dict = Depends(hub_users.require_permission("schedule", "edit"))
+):
     """Create a new schedule from an uploaded CSV file"""
 
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = hub_users.check_user_permission("schedule", "edit", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
+    if not permission["success"]:
+        return {"success": False, "reason": permission["reason"]}
 
     success, schedule = hub_schedule.create_schedule(ex_files.with_extension(name, 'json'), entries)
     hub_schedule.retrieve_json_schedule()
@@ -133,15 +129,14 @@ async def get_seconds_from_midnight(time_str: str = Body(description="The time t
 
 
 @router.get("/{schedule_name}/JSONString")
-async def get_schedule_as_json_string(request: Request,
-                                      schedule_name: str):
+async def get_schedule_as_json_string(
+        schedule_name: str,
+        permission: dict = Depends(hub_users.require_permission("schedule", "view"))
+):
     """Return the requested schedule as a JSON, excluding unnecessary fields."""
 
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = hub_users.check_user_permission("schedule", "view", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
+    if not permission["success"]:
+        return {"success": False, "reason": permission["reason"]}
 
     if ex_files.filename_safe(schedule_name) is False:
         return {"success": False, "reason": "unsafe_filename"}
@@ -160,14 +155,14 @@ async def get_schedule_as_json_string(request: Request,
 
 
 @router.delete("/{schedule_name}/action/{action_id}")
-async def delete_schedule_action(request: Request, schedule_name: str, action_id: str):
+async def delete_schedule_action(
+        schedule_name: str, action_id: str,
+        permission: dict = Depends(hub_users.require_permission("schedule", "edit"))
+):
     """Delete the given action from the specified schedule."""
 
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = hub_users.check_user_permission("schedule", "edit", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
+    if not permission["success"]:
+        return {"success": False, "reason": permission["reason"]}
 
     if ex_files.filename_safe(schedule_name) is False:
         return {"success": False, "reason": "unsafe_filename"}
@@ -185,38 +180,35 @@ async def delete_schedule_action(request: Request, schedule_name: str, action_id
 
 
 @router.get("/date_specific/list")
-async def get_date_specific_schedules(request: Request):
+async def get_date_specific_schedules(
+    permission: dict = Depends(hub_users.require_permission("schedule", "view"))
+):
     """Retrieve a list of available date-specific schedules"""
 
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = hub_users.check_user_permission("schedule", "view", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
+    if not permission["success"]:
+        return {"success": False, "reason": permission["reason"]}
 
     return {"success": True, "schedules": hub_schedule.get_available_date_specific_schedules()}
 
 
 @router.post("/{schedule_name}/action/{action_id}/update")
 async def update_schedule(
-        request: Request,
         schedule_name: str,
         action_id: str,
         time_to_set: str = Body(description="The time of the action to set, expressed in any normal way."),
         action_to_set: str = Body(description="The action to set."),
         target_to_set: list[dict] | dict | None = Body(default=None,
                                                        description="The details of the component(s) that should be acted upon."),
-        value_to_set: str = Body(default="", description="A value corresponding to the action.")):
+        value_to_set: str = Body(default="", description="A value corresponding to the action."),
+        permission: dict = Depends(hub_users.require_permission("schedule", "edit"))
+):
     """Write a schedule update to disk.
 
     This command handles both adding a new scheduled action and editing an existing action
     """
 
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = hub_users.check_user_permission("schedule", "edit", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
+    if not permission["success"]:
+        return {"success": False, "reason": permission["reason"]}
 
     if ex_files.filename_safe(schedule_name) is False:
         return {"success": False, "reason": "unsafe_filename"}
@@ -250,4 +242,5 @@ async def update_schedule(
     else:
         response_dict["success"] = False
         response_dict["reason"] = error_message
+
     return response_dict

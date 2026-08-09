@@ -2,7 +2,7 @@
 from typing import Any
 
 # Third-party modules
-from fastapi import APIRouter, Body, Request, Response
+from fastapi import APIRouter, Body, Depends, Request, Response
 
 # Exhibitera modules
 import exhibitera.common.config as ex_config
@@ -40,18 +40,17 @@ def log_in(response: Response,
 
 
 @router.post("/user/create")
-def create_user(request: Request,
-                username: str = Body(description="The username"),
-                password: str = Body(description="The password for the account to create."),
-                display_name: str = Body(description="The name of the account holder."),
-                permissions: dict | None = Body(description="A dictionary of permissions for the new account.",
-                                                default=None)):
+def create_user(
+        username: str = Body(description="The username"),
+        password: str = Body(description="The password for the account to create."),
+        display_name: str = Body(description="The name of the account holder."),
+        permissions: dict | None = Body(description="A dictionary of permissions for the new account.", default=None),
+        permission: dict = Depends(hub_users.require_permission("users", "edit"))
+):
     """Create a new user account."""
 
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = hub_users.check_user_permission("users", "edit", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
+    if not permission["success"]:
+        return {"success": False, "reason": permission["reason"]}
 
     success, user_dict = hub_users.create_user(username, display_name, password, permissions=permissions)
 
@@ -62,19 +61,18 @@ def create_user(request: Request,
 
 
 @router.post("/user/{uuid_str}/edit")
-def edit_user(request: Request,
-              uuid_str: str,
-              username: str | None = Body(description="The username", default=None),
-              password: str | None = Body(description="A new password.", default=None),
-              display_name: str | None = Body(description="The name of the account holder.", default=None),
-              permissions: dict | None = Body(description="A dictionary of permissions for the account.",
-                                              default=None)):
+def edit_user(
+        uuid_str: str,
+        username: str | None = Body(description="The username", default=None),
+        password: str | None = Body(description="A new password.", default=None),
+        display_name: str | None = Body(description="The name of the account holder.", default=None),
+        permissions: dict | None = Body(description="A dictionary of permissions for the account.", default=None),
+        permission: dict = Depends(hub_users.require_permission("users", "edit"))
+):
     """Edit the given user."""
 
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = hub_users.check_user_permission("users", "edit", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
+    if not permission["success"]:
+        return {"success": False, "reason": permission["reason"]}
 
     user = hub_users.get_user(uuid_str=uuid_str)
     if user is None:
@@ -124,13 +122,13 @@ def edit_user_preferences(request: Request,
 
 
 @router.delete("/user/{uuid_str}")
-def delete_user(request: Request, uuid_str: str):
+def delete_user(uuid_str: str,
+                permission: dict = Depends(hub_users.require_permission("users", "edit"))
+                ):
     """Delete the given user"""
 
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = hub_users.check_user_permission("users", "edit", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
+    if not permission["success"]:
+        return {"success": False, "reason": permission["reason"]}
 
     return {"success": hub_users.delete_user(uuid_str)}
 

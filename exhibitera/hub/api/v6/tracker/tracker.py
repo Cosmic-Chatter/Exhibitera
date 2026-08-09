@@ -4,7 +4,7 @@ import os
 from typing import Any
 
 # Third-party modules
-from fastapi import APIRouter, Body, Request
+from fastapi import APIRouter, Body, Depends
 
 # Exhibitera modules
 import exhibitera.common.files as ex_files
@@ -23,16 +23,15 @@ router = APIRouter(prefix='/tracker')
 
 
 @router.post("/template/create")
-async def create_tracker_template(request: Request,
-                                  template: dict[str, Any] = Body(description='A dictionary containing the template'),
-                                  tracker_uuid: str = Body(description='The UUID for the template we are creating.')):
+async def create_tracker_template(
+        template: dict[str, Any] = Body(description='A dictionary containing the template'),
+        tracker_uuid: str = Body(description='The UUID for the template we are creating.'),
+        permission: dict = Depends(hub_users.require_permission("analytics", "edit"))
+):
     """Write the given tracker template to file"""
 
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = hub_users.check_user_permission("analytics", "edit", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
+    if not permission["success"]:
+        return {"success": False, "reason": permission["reason"]}
 
     template_path = ex_files.get_path(
         ["flexible-tracker", "templates", ex_files.with_extension(tracker_uuid, 'json')],
@@ -42,14 +41,14 @@ async def create_tracker_template(request: Request,
 
 
 @router.delete("/template/{tracker_uuid}")
-async def delete_tracker_template(request: Request, tracker_uuid: str):
+async def delete_tracker_template(
+        tracker_uuid: str,
+        permission: dict = Depends(hub_users.require_permission("analytics", "edit"))
+):
     """Delete the specified tracker template."""
 
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = hub_users.check_user_permission("analytics", "edit", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
+    if not permission["success"]:
+        return {"success": False, "reason": permission["reason"]}
 
     file_path = ex_files.get_path(["flexible-tracker", "templates", ex_files.with_extension(tracker_uuid, 'json')], user_file=True)
     with hub_config.trackerTemplateWriteLock:

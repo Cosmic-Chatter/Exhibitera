@@ -6,7 +6,7 @@ from typing import Any
 import uuid
 
 # Third-party modules
-from fastapi import APIRouter, Body, File, Request, UploadFile
+from fastapi import APIRouter, Body, Depends, File, UploadFile
 
 # Exhibitera modules
 import exhibitera.common.files as ex_files
@@ -17,80 +17,78 @@ import exhibitera.hub.features.users as hub_users
 router = APIRouter(prefix="/issue")
 
 @router.post("/create")
-async def create_issue(request: Request, details: dict[str, Any] = Body(embed=True)):
+async def create_issue(
+        details: dict[str, Any] = Body(embed=True),
+        permission: dict = Depends(hub_users.require_permission("maintenance", "edit"))
+):
     """Create a new issue."""
 
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = hub_users.check_user_permission("maintenance", "edit", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
+    if not permission["success"]:
+        return {"success": False, "reason": permission["reason"]}
 
-    hub_issues.create_issue(details, username=authorizing_user)
+    hub_issues.create_issue(details, username=permission["user"])
     with hub_config.issueLock:
         hub_issues.save_issue_list()
     return {"success": True}
 
 
 @router.get("/{issue_id}/delete")
-async def delete_issue(request: Request, issue_id: str):
+async def delete_issue(
+        issue_id: str,
+        permission: dict = Depends(hub_users.require_permission("maintenance", "edit"))
+):
     """Delete an issue."""
 
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = hub_users.check_user_permission("maintenance", "edit", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
+    if not permission["success"]:
+        return {"success": False, "reason": permission["reason"]}
 
     hub_issues.remove_issue(issue_id)
     return {"success": True, "reason": ""}
 
 
 @router.get("/{issue_id}/archive")
-async def archive_issue(request: Request, issue_id: str):
+async def archive_issue(
+        issue_id: str,
+        permission: dict = Depends(hub_users.require_permission("maintenance", "edit"))
+):
     """Move the given issue to the archive."""
 
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = hub_users.check_user_permission("maintenance", "edit", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
+    if not permission["success"]:
+        return {"success": False, "reason": permission["reason"]}
 
     # Check that the issue exists
     issue = hub_issues.get_issue(issue_id)
     if issue is None:
         return {"success": False, "reason": 'does_not_exist'}
 
-    hub_issues.archive_issue(issue_id, authorizing_user)
+    hub_issues.archive_issue(issue_id, permission["user"])
     return {"success": True}
 
 
 @router.get("/{issue_id}/restore")
-async def restore_issue(request: Request, issue_id: str):
+async def restore_issue(
+        issue_id: str,
+        permission: dict = Depends(hub_users.require_permission("maintenance", "edit"))
+):
     """Move the given issue from the archive to the issue list."""
 
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = hub_users.check_user_permission("maintenance", "edit", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
+    if not permission["success"]:
+        return {"success": False, "reason": permission["reason"]}
 
     success = hub_issues.restore_issue(issue_id)
     return {"success": success}
 
 
 @router.post("/deleteMedia")
-async def delete_issue_media(request: Request,
-                             filenames: list[str] = Body(description="The filenames to be deleted."),
-                             owner: str | None = Body(default=None,
-                                                            description="The ID of the Issue this media file belonged to.")):
+async def delete_issue_media(
+        filenames: list[str] = Body(description="The filenames to be deleted."),
+        owner: str | None = Body(default=None, description="The ID of the Issue this media file belonged to."),
+        permission: dict = Depends(hub_users.require_permission("maintenance", "edit"))
+):
     """Delete the media files linked to an issue and remove the reference."""
 
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = hub_users.check_user_permission("maintenance", "edit", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
+    if not permission["success"]:
+        return {"success": False, "reason": permission["reason"]}
 
     for filename in filenames:
         if ex_files.filename_safe(filename) is False:
@@ -101,15 +99,14 @@ async def delete_issue_media(request: Request,
 
 
 @router.post("/edit")
-async def edit_issue(request: Request,
-                     details: dict[str, Any] = Body(description="The details to be changed.", embed=True)):
+async def edit_issue(
+        details: dict[str, Any] = Body(description="The details to be changed.", embed=True),
+        permission: dict = Depends(hub_users.require_permission("maintenance", "edit"))
+):
     """Make changes to an existing issue."""
 
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = hub_users.check_user_permission("maintenance", "edit", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
+    if not permission["success"]:
+        return {"success": False, "reason": permission["reason"]}
 
     if "id" not in details:
         return {"success": False, "reason": "'details' must include property 'id'"}
@@ -118,21 +115,21 @@ async def edit_issue(request: Request,
     if issue is None:
         return {"success": False, "reason": 'does_not_exist'}
 
-    hub_issues.edit_issue(details, authorizing_user)
+    hub_issues.edit_issue(details, permission["user"])
     with hub_config.issueLock:
         hub_issues.save_issue_list()
     return {"success": True}
 
 
 @router.get("/list/{match_uuid}")
-async def get_issue_list(request: Request, match_uuid: str):
+async def get_issue_list(
+        match_uuid: str,
+        permission: dict = Depends(hub_users.require_permission("maintenance", "view"))
+):
     """Return a list of open issues."""
 
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = hub_users.check_user_permission("maintenance", "view", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
+    if not permission["success"]:
+        return {"success": False, "reason": permission["reason"]}
 
     if match_uuid != "__all":
         matched_issues = []
@@ -142,22 +139,18 @@ async def get_issue_list(request: Request, match_uuid: str):
     else:
         matched_issues = [x.details for x in hub_config.issue_list]
 
-    response = {
-        "success": True,
-        "issue_list": matched_issues
-    }
-    return response
+    return {"success": True, "issue_list": matched_issues}
 
 
 @router.get("/archive/list/{match_uuid}")
-async def get_archived_issues(request: Request, match_uuid: str):
+async def get_archived_issues(
+        match_uuid: str,
+        permission: dict = Depends(hub_users.require_permission("maintenance", "view"))
+):
     """Return a list of open issues."""
 
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = hub_users.check_user_permission("maintenance", "view", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
+    if not permission["success"]:
+        return {"success": False, "reason": permission["reason"]}
 
     archive_file = ex_files.get_path(["issues", "archived.json"], user_file=True)
 
@@ -176,22 +169,18 @@ async def get_archived_issues(request: Request, match_uuid: str):
     else:
         matched_issues = archive_list
 
-    response = {
-        "success": True,
-        "issues": matched_issues
-    }
-    return response
+    return {"success": True,  "issues": matched_issues}
 
 
 @router.get("/{issue_id}/media")
-async def get_issue_media(request: Request, issue_id: str):
+async def get_issue_media(
+        issue_id: str,
+        permission: dict = Depends(hub_users.require_permission("maintenance", "view"))
+):
     """Return a list of media files connected to the given ID."""
 
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = hub_users.check_user_permission("maintenance", "view", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
+    if not permission["success"]:
+        return {"success": False, "reason": permission["reason"]}
 
     issue = hub_issues.get_issue(issue_id)
 
@@ -202,14 +191,14 @@ async def get_issue_media(request: Request, issue_id: str):
 
 
 @router.post("/uploadMedia")
-async def upload_issue_media(request: Request, files: list[UploadFile] = File()):
+async def upload_issue_media(
+        files: list[UploadFile] = File(),
+        permission: dict = Depends(hub_users.require_permission("maintenance", "edit"))
+):
     """Upload issue media files."""
 
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = hub_users.check_user_permission("maintenance", "edit", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
+    if not permission["success"]:
+        return {"success": False, "reason": permission["reason"]}
 
     filenames = []
     for file in files:

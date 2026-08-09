@@ -2,7 +2,7 @@
 import time
 
 # Third-party modules
-from fastapi import APIRouter, Body, Request
+from fastapi import APIRouter, Body, Depends, Request
 
 # Exhibitera modules
 import exhibitera.hub.config as hub_config
@@ -12,18 +12,17 @@ import exhibitera.hub.features.users as hub_users
 router = APIRouter(prefix="/projector")
 
 @router.post("/create")
-async def create_projector(request: Request,
-                           id: str = Body(description="The ID of the projector to add."),
-                           groups: list[str] = Body(description="The groups of the projector to add."),
-                           ip_address: str = Body(description="The IP address for the projector."),
-                           password: str = Body(description="The PJLink password", default="")):
+async def create_projector(
+        id: str = Body(description="The ID of the projector to add."),
+        groups: list[str] = Body(description="The groups of the projector to add."),
+        ip_address: str = Body(description="The IP address for the projector."),
+        password: str = Body(description="The PJLink password", default=""),
+        permission: dict = Depends(hub_users.require_permission("settings", "edit"))
+):
     """Create a new projector."""
 
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = hub_users.check_user_permission("settings", "edit", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
+    if not permission["success"]:
+        return {"success": False, "reason": permission["reason"]}
 
     proj = hub_components.add_projector(id, groups, ip_address, password=password)
 
@@ -66,4 +65,5 @@ async def edit_projector(request: Request,
         proj.config["description"] = description
     proj.save()
     hub_config.last_update_time = time.time()
+
     return {"success": True}

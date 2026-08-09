@@ -121,8 +121,8 @@ async def check_connection():
     """Confirm that the connection is active and provide the supported API levels"""
 
     return {"success": True,
-            "supported_apis": [ex_config.api],
-            "supported_api_levels": [ex_config.api_level]}
+            "supported_apis": ['/core', '/v6'],
+            "supported_api_levels": [0, 6]}
 
 
 @router.get("/configuration/{target}")

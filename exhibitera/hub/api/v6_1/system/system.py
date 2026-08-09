@@ -121,8 +121,8 @@ async def check_connection():
     """Confirm that the connection is active and provide the supported API levels"""
 
     return {"success": True,
-            "supported_apis": [ex_config.api],
-            "supported_api_levels": [ex_config.api_level]}
+            "supported_apis": ['/core', '/v6', '/v6.1'],
+            "supported_api_levels": [0, 6, 6.1]}
 
 
 @router.get("/configuration/{target}")
@@ -142,6 +142,7 @@ async def get_json_configuration(target: str):
 @router.get("/getHelpText")
 async def get_help_text():
     """Send the contents of README.md"""
+
     try:
         readme_path = ex_files.get_path(["README.md"])
         with open(readme_path, 'r', encoding='UTF-8') as f:

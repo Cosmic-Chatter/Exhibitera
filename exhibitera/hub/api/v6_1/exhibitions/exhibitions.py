@@ -3,7 +3,7 @@ import time
 from typing import Any
 
 # Third-party modules
-from fastapi import APIRouter, Body, Request
+from fastapi import APIRouter, Body, Depends
 
 # Exhibitera modules
 import exhibitera.common.files as ex_files
@@ -16,33 +16,29 @@ router = APIRouter(prefix="/exhibition")
 
 
 @router.post("/create")
-async def create_exhibition(request: Request,
-                         name: str = Body(description="The name of the exhibition."),
-                         clone_from: str | None = Body(default=None, description="The name of the exhibition to clone.")):
+async def create_exhibition(
+        name: str = Body(description="The name of the exhibition."),
+        clone_from: str | None = Body(default=None, description="The name of the exhibition to clone."),
+        permission: dict = Depends(hub_users.require_permission("exhibits", "edit"))
+):
     """Create a new exhibition JSON file."""
 
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = hub_users.check_user_permission("exhibits", "edit", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
+    if not permission["success"]:
+        return {"success": False, "reason": permission["reason"]}
 
     uuid_str = hub_exhibitions.create_exhibition(name, clone_from)
     return {"success": True, "reason": "", "uuid": uuid_str}
 
 
 @router.post("/{uuid_str}/edit")
-async def edit_exhibition(request: Request,
-                       uuid_str: str,
-                       details: dict[str, Any] = Body(
-                           description="A dictionary specifying the details of the exhibition.", embed=True)):
+async def edit_exhibition(uuid_str: str,
+                          details: dict[str, Any] = Body(
+                           description="A dictionary specifying the details of the exhibition.", embed=True),
+                          permission: dict = Depends(hub_users.require_permission("exhibits", "edit"))):
     """Update the given exhibition with the specified details."""
 
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = hub_users.check_user_permission("exhibits", "edit", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
+    if not permission["success"]:
+        return {"success": False, "reason": permission["reason"]}
 
     path = ex_files.get_path(["exhibits", ex_files.with_extension(uuid_str, '.json')], user_file=True)
     ex_files.write_json(details, path)
@@ -53,56 +49,51 @@ async def edit_exhibition(request: Request,
 
 
 @router.post("/applyModifications")
-async def apply_exhibition_modifications(request: Request):
+async def apply_exhibition_modifications(
+        permission: dict = Depends(hub_users.require_permission("exhibits", "edit"))
+):
     """Update any modifications to the current exhibition."""
 
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = hub_users.check_user_permission("exhibits", "edit", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
+    if not permission["success"]:
+        return {"success": False, "reason": permission["reason"]}
 
     hub_exhibitions.update_exhibition_from_modifications()
     return {"success": True}
 
 
 @router.get("/modifications")
-async def get_exhibition_modifications(request: Request):
+async def get_exhibition_modifications(permission: dict = Depends(hub_users.require_permission("exhibits", "view"))):
     """Update any modifications to the current exhibition."""
 
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = hub_users.check_user_permission("exhibits", "view", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
+    if not permission["success"]:
+        return {"success": False, "reason": permission["reason"]}
 
     return {"success": True, "modifications": hub_config.exhibit_modifications}
 
 
 @router.delete("/modifications")
-async def delete_exhibition_modifications(request: Request,
-                                          to_remove: list[str] = Body(description="Component UUIDs of modifications to remove", embed=True)):
+async def delete_exhibition_modifications(
+        to_remove: list[str] = Body(description="Component UUIDs of modifications to remove", embed=True),
+        permission: dict = Depends(hub_users.require_permission("exhibits", "edit"))
+):
     """Delete the given modifications from the modification list."""
 
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = hub_users.check_user_permission("exhibits", "edit", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
+    if not permission["success"]:
+        return {"success": False, "reason": permission["reason"]}
 
     hub_exhibitions.remove_modifications(to_remove)
     return {"success": True}
 
 
 @router.delete("/{uuid_str}")
-async def delete_exhibition(request: Request, uuid_str: str):
+async def delete_exhibition(
+        uuid_str: str,
+        permission: dict = Depends(hub_users.require_permission("exhibits", "edit"))
+):
     """Delete the specified exhibition."""
 
-    # Check permission
-    token = request.cookies.get("authToken", "")
-    success, authorizing_user, reason = hub_users.check_user_permission("exhibits", "edit", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
+    if not permission["success"]:
+        return {"success": False, "reason": permission["reason"]}
 
     hub_exhibitions.delete_exhibition(uuid_str)
     return {"success": True, "reason": ""}
