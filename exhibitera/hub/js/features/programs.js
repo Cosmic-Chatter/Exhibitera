@@ -1,7 +1,8 @@
 /* global bootstrap */
 
+import exConfig from '../../../common/config.js'
 import * as exUtilities from '../../../common/utilities.js'
-import exConfig from '../../config.js'
+import hubConfig from '../../config.js'
 import * as exTools from '../tools.js'
 
 export async function populatePrograms (programs = null) {
@@ -96,8 +97,65 @@ function populateLocations () {
   const locationSelect = document.getElementById('editProgramLocationField')
 
   locationSelect.appendChild(new Option('No location', ''))
-  for (const group of exConfig.groups) {
+  for (const group of hubConfig.groups) {
     const option = new Option(group.name, group.uuid)
     locationSelect.appendChild(option)
   }
+}
+
+export function uploadProgramMediaFile (button, purpose) {
+  // Send an program media file to Hub for storage
+
+  if (!purpose) {
+    console.log('uploadProgramMediaFile: missing field: purpose')
+    return
+  }
+
+  if (button.files[0] == null) {
+    console.log('uploadProgramMediaFile: no file to upload')
+    return
+  }
+
+  const formData = new FormData()
+
+  formData.append('file', button.files[0])
+  formData.append('purpose', purpose)
+  formData.append('program_uuid', document.getElementById('saveProgramButton').dataset.uuid)
+
+  const xhr = new XMLHttpRequest()
+  xhr.open('POST', hubConfig.serverAddress + exConfig.api + '/program/uploadMedia', true)
+  xhr.onreadystatechange = function () {
+    if (this.readyState !== 4) return
+    if (this.status === 200) {
+      const response = JSON.parse(this.responseText)
+
+      if (response.success) {
+        const preview = document.getElementById('programMediaPreview_' + purpose)
+        preview.src = '/programs/media/' + response.filename
+        preview.style.display = 'block'
+      }
+
+      const progressBarContainer = document.getElementById('programUploadProgressBarContainer_' + purpose)
+
+      progressBarContainer.style.display = 'none'
+    }
+  }
+
+  xhr.upload.addEventListener('progress', function (evt) {
+    if (evt.lengthComputable) {
+      let percentComplete = evt.loaded / evt.total
+      percentComplete = parseInt(percentComplete * 100)
+      const progressBar = document.getElementById('programUploadProgressBar_' + purpose)
+      const progressBarContainer = document.getElementById('programUploadProgressBarContainer_' + purpose)
+
+      progressBar.style.width = `${percentComplete}%`
+      if (percentComplete > 0) {
+        progressBarContainer.style.display = 'block'
+      } else if (percentComplete === 100) {
+        progressBarContainer.style.display = 'none'
+      }
+    }
+  }, false)
+
+  xhr.send(formData)
 }

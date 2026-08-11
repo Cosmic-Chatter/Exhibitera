@@ -87,6 +87,7 @@ def check_file_structure() -> None:
                  "issues": ex_files.get_path(["issues"], user_file=True),
                  "issues/media": ex_files.get_path(["issues", "media"], user_file=True),
                  "programs": ex_files.get_path(["programs"], user_file=True),
+                 "programs/media": ex_files.get_path(["programs", "media"], user_file=True),
                  "static": ex_files.get_path(["static"], user_file=True)}
 
     try:

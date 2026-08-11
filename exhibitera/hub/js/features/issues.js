@@ -550,7 +550,7 @@ export function uploadIssueMediaFile () {
   // Send an issue media file to Hub for storage
 
   const fileInput = document.getElementById('issueMediaUpload')
-  console.log(fileInput)
+
   if (fileInput.files[0] != null) {
     const submitButton = document.getElementById('issueMediaUploadSubmitButton')
     submitButton.disabled = true

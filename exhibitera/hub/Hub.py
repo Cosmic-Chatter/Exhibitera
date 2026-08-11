@@ -278,6 +278,14 @@ except RuntimeError:
     os.mkdir(ex_files.get_path(["issues"], user_file=True))
     app.mount("/issues", StaticFiles(directory=ex_files.get_path(["issues"], user_file=True)),
               name="issues")
+try:
+    app.mount("/programs", StaticFiles(directory=ex_files.get_path(["programs"], user_file=True)),
+              name="programs")
+except RuntimeError:
+    # Directory does not exist, so create it
+    os.mkdir(ex_files.get_path(["programs"], user_file=True))
+    app.mount("/programs", StaticFiles(directory=ex_files.get_path(["issues"], user_file=True)),
+              name="programs")
 app.mount("/",
           StaticFiles(directory=ex_files.get_path([""]), html=True),
           name="root")

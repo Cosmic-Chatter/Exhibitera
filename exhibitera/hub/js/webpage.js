@@ -1156,6 +1156,12 @@ document.getElementById('editProgramButton').addEventListener('click', () => {
 document.getElementById('saveProgramButton').addEventListener('click', () => {
   exPrograms.updateProgram()
 })
+document.getElementById('editProgramThumbnailButton').addEventListener('change', ev => {
+  exPrograms.uploadProgramMediaFile(ev.target, 'thumbnail')
+})
+document.getElementById('editProgramTrailerButton').addEventListener('change', ev => {
+  exPrograms.uploadProgramMediaFile(ev.target, 'trailer')
+})
 
 // Maintenance tab
 // =========================

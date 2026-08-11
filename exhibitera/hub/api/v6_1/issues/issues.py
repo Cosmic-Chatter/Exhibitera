@@ -211,4 +211,5 @@ async def upload_issue_media(
             async with aiofiles.open(file_path, 'wb') as out_file:
                 content = await file.read()  # async read
                 await out_file.write(content)  # async write
+
     return {"success": True, "filenames": filenames}
