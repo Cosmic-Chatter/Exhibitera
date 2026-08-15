@@ -3,6 +3,7 @@
 import exConfig from '../../common/config.js'
 import * as exUtilities from '../../common/utilities.js'
 import hubConfig from '../config.js'
+import * as exComponents from './features/components.js'
 import * as exExhibit from './features/exhibits.js'
 import * as exGroup from './features/groups.js'
 import * as exIssues from './features/issues.js'
@@ -631,13 +632,13 @@ function parseUpdate (update) {
     let numComps = 0
     let numOnline = 0
 
-    exExhibit.checkForRemovedComponents(update.components)
+    exComponents.checkForRemovedComponents(update.components)
     for (const component of update.components) {
       numComps += 1
       if ((component.status === hubConfig.STATUS.ONLINE.name) || (component.status === hubConfig.STATUS.STANDBY.name) || (component.status === hubConfig.STATUS['SYSTEM ON'].name) || (component.status === hubConfig.STATUS.STATIC.name)) {
         numOnline += 1
       }
-      exExhibit.updateComponentFromServer(component)
+      exComponents.updateComponentFromServer(component)
     }
 
     // Set the favicon to reflect the aggregate status
@@ -1045,7 +1046,7 @@ document.getElementById('componentsTabSettingsSortSelect').addEventListener('cha
   exUsers.updateUserPreferences({ sort_order: document.getElementById('componentsTabSettingsSortSelect').value })
     .then(() => {
       // Rebuild the interface with the new option
-      exExhibit.rebuildComponentInterface()
+      exComponents.rebuildComponentInterface()
     })
 })
 document.getElementById('componentsTabSettingsLayoutSelect').addEventListener('change', () => {
@@ -1053,7 +1054,7 @@ document.getElementById('componentsTabSettingsLayoutSelect').addEventListener('c
   exUsers.updateUserPreferences({ components_layout: document.getElementById('componentsTabSettingsLayoutSelect').value })
     .then(() => {
       // Rebuild the interface with the new option
-      exExhibit.rebuildComponentInterface()
+      exComponents.rebuildComponentInterface()
     })
 })
 document.getElementById('componentsTabSettingsSizeSelect').addEventListener('change', () => {
@@ -1061,7 +1062,7 @@ document.getElementById('componentsTabSettingsSizeSelect').addEventListener('cha
   exUsers.updateUserPreferences({ components_size: document.getElementById('componentsTabSettingsSizeSelect').value })
     .then(() => {
       // Rebuild the interface with the new option
-      exExhibit.rebuildComponentInterface()
+      exComponents.rebuildComponentInterface()
     })
 })
 document.getElementById('componentsTabSettingsShowStatic').addEventListener('change', () => {
@@ -1069,7 +1070,7 @@ document.getElementById('componentsTabSettingsShowStatic').addEventListener('cha
   exUsers.updateUserPreferences({ show_static: document.getElementById('componentsTabSettingsShowStatic').checked })
     .then(() => {
       // Rebuild the interface with the new option
-      exExhibit.rebuildComponentInterface()
+      exComponents.rebuildComponentInterface()
     })
 })
 
@@ -1080,7 +1081,7 @@ for (const el of document.querySelectorAll('.view-mode-radio')) {
       mode = 'realtime'
     }
     exUsers.updateUserPreferences({ status_mode: mode })
-      .then(exExhibit.rebuildComponentInterface)
+      .then(exComponents.rebuildComponentInterface)
   })
 }
 
