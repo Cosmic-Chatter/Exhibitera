@@ -345,6 +345,9 @@ async function showEditExhibitActionModal (actionDict = null) {
   // Configure the modal for editing an action and show it.
 
   const actionSelector = document.getElementById('editExhibitActionSelector')
+  const modalTitle = document.getElementById('editExhibitActionModalTitle')
+  modalTitle.innerText = 'Add action'
+
   actionSelector.value = null
 
   const targetSelector = document.getElementById('editExhibitActionTargetSelector')
@@ -364,6 +367,7 @@ async function showEditExhibitActionModal (actionDict = null) {
   if (actionDict != null) {
     modal.dataset.uuid = actionDict.uuid
     modal.dataset.isEdit = 'true'
+    modalTitle.innerText = 'Edit action'
 
     actionSelector.value = actionDict.action
 
@@ -669,29 +673,6 @@ function parseUpdate (update) {
   }
 }
 
-function populateHelpTab () {
-  // Ask the server to send the latest README, convert the Markdown to
-  // HTML, and add it to the Help tab.
-
-  exTools.makeServerRequest({
-    method: 'GET',
-    endpoint: '/system/getHelpText'
-  })
-    .then((result) => {
-      const helpTextDiv = document.getElementById('helpTextDiv')
-
-      if (result.success === true) {
-        const markdownConverter = new showdown.Converter()
-        markdownConverter.setFlavor('github')
-
-        const formattedText = markdownConverter.makeHtml(result.text)
-        helpTextDiv.innerHTML = formattedText
-      } else {
-        helpTextDiv.innerHTML = 'Help text not available.'
-      }
-    })
-}
-
 function createExhibit (name, cloneFrom) {
   // Ask Hub to create a new exhibit with the given name.
   // set cloneFrom = null if we are making a new exhibit from scratch.
@@ -758,6 +739,127 @@ function deleteExhibitFromModal () {
 
   deleteExhibit(UUIDToDelete)
   exUtilities.hideModal('#deleteExhibitModal')
+}
+
+async function showprogramActionEditModal (actionDict = null) {
+  // Configure the modal for editing a program action and show it.
+
+  const actionSelector = document.getElementById('programActionSelector')
+  const modalTitle = document.getElementById('programActionEditModalTitle')
+  modalTitle.innerText = 'Add action'
+
+  actionSelector.value = null
+
+  const targetSelector = document.getElementById('programActionTargetSelector')
+  targetSelector.value = null
+  targetSelector.style.display = 'none'
+  document.getElementById('programActionTargetSelectorLabel').style.display = 'none'
+
+  const valueSelector = document.getElementById('programActionValueSelector')
+  valueSelector.value = null
+  valueSelector.style.display = 'none'
+  document.getElementById('programActionValueSelectorLabel').style.display = 'none'
+
+  const modal = document.getElementById('programActionEditModal')
+  modal.dataset.uuid = exUtilities.uuid()
+  modal.dataset.isEdit = 'false'
+
+  if (actionDict != null) {
+    modal.dataset.uuid = actionDict.uuid
+    modal.dataset.isEdit = 'true'
+    modalTitle.innerText = 'Edit action'
+
+    actionSelector.value = actionDict.action
+
+    programActionConfigureTargetSelector(actionDict.action)
+    setTimeout(() => {
+      for (const target of actionDict.target) {
+        const targetStr = JSON.stringify(target)
+        for (const option of targetSelector.options) {
+          if (option.value === targetStr) option.selected = true
+        }
+      }
+    }, 0) // Make sure the DOM is updated
+
+    await programActionConfigureValueSelector(actionDict.action, actionDict.target)
+    valueSelector.value = actionDict.value
+  }
+
+  exUtilities.showModal('#programActionEditModal')
+}
+
+function programActionConfigureTargetSelector (action = null, target = null) {
+  // Show/hide the select element for picking the target of a program action when appropriate
+
+  if (action == null) action = document.getElementById('programActionSelector').value
+
+  const targetSelector = document.getElementById('programActionTargetSelector')
+  const targetSelectorLabel = document.getElementById('programActionTargetSelectorLabel')
+  targetSelector.innerHTML = ''
+
+  if (['power_on', 'power_off'].includes(action)) {
+    targetSelector.setAttribute('multiple', true)
+    exSchedule.actionTargetSelectorPopulateOptions(targetSelector, ['All', 'Groups', 'ExhibitComponents', 'Projectors'])
+  } else if (['set_dmx_scene'].includes(action)) {
+    targetSelector.removeAttribute('multiple')
+    exSchedule.actionTargetSelectorPopulateOptions(targetSelector, ['ExhibitComponents'])
+  }
+  targetSelector.style.display = 'block'
+  targetSelectorLabel.style.display = 'block'
+
+  // For certain actions, we want to then populare the value selector
+  if (['set_dmx_scene'].includes(action)) {
+    programActionConfigureValueSelector(action, target)
+  } else {
+    document.getElementById('programActionValueSelector').style.display = 'none'
+    document.getElementById('programActionValueSelectorLabel').style.display = 'none'
+  }
+}
+
+async function programActionConfigureValueSelector (action = null, target = null) {
+  // Show/hide the select element for picking the value of an action when appropriate
+
+  if (action == null) action = document.getElementById('programActionSelector').value
+  if (target == null) target = JSON.parse(document.getElementById('programActionTargetSelector').value)
+  if (Array.isArray(target)) target = target[0]
+
+  const valueSelector = document.getElementById('programActionValueSelector')
+  const valueSelectorLabel = document.getElementById('programActionValueSelectorLabel')
+  valueSelector.innerHTML = ''
+
+  if (action === 'set_dmx_scene') {
+    let component
+    try {
+      component = exTools.getExhibitComponent(target.uuid)
+    } catch {
+      return
+    }
+    if (component == null) {
+      console.log('programActionConfigureValueSelector: component not available: ', target.uuid)
+      return
+    }
+
+    let response
+    try {
+      response = await component.makeRequest({
+        method: 'GET',
+        endpoint: '/DMX/scenes'
+      })
+    } catch {
+      console.log('programActionConfigureValueSelector: invalid helper address')
+    }
+
+    if (response?.success === true) {
+      for (const scene of response.scenes) {
+        valueSelector.appendChild(new Option(scene.name, scene.uuid))
+      }
+    }
+    valueSelector.style.display = 'block'
+    valueSelectorLabel.style.display = 'block'
+  } else {
+    valueSelector.style.display = 'none'
+    valueSelectorLabel.style.display = 'none'
+  }
 }
 
 function populateHubSettings () {
@@ -895,6 +997,7 @@ function updateNavDropdownActiveState () {
 }
 
 exTools.rebuildNotificationList()
+exPrograms.populatePrograms()
 
 // Bind event listeners
 
@@ -1161,6 +1264,9 @@ document.getElementById('editProgramThumbnailButton').addEventListener('change',
 })
 document.getElementById('editProgramTrailerButton').addEventListener('change', ev => {
   exPrograms.uploadProgramMediaFile(ev.target, 'trailer')
+})
+document.getElementById('editProgramAddActionButton').addEventListener('click', () => {
+  showprogramActionEditModal()
 })
 
 // Maintenance tab

@@ -1717,7 +1717,7 @@
             <div class="modal-dialog modal-dialog-centered exhibitera-dialog" role="document">
               <div class="modal-content">
                 <div class="modal-header">
-                  <h5 id="editExhibitActionModalTitle" class="modal-title">Edit action</h5>
+                  <h5 id="editExhibitActionModalTitle" class="modal-title">Add action</h5>
                   <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -1864,6 +1864,60 @@
         </div>
 
         <div class="tab-pane fade" id="nav-programs" role="tabpanel" aria-labelledby="nav-programs-tab">
+
+          <!-- Add program action modal -->
+          <div class="modal" tabindex="-1" role="dialog" id="programActionEditModal">
+            <div class="modal-dialog modal-dialog-centered exhibitera-dialog" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 id="programActionEditModalTitle" class="modal-title">Add action</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <form id="programActionEditForm" onsubmit="event.preventDefault();">
+                    <div class="form-group">
+                      <div class="row gy-2">
+                        <div class="col-6 col-md-3 col-sm-4">
+                          <label for="programActionTimeInput">Time</label>
+                          <input type="text" class="form-control" id="programActionTimeInput" placeholder="e.g., 9:30 AM">
+                        </div>
+                        <div class="col-6 col-md-4">
+                          <label for="programActionSelector">Action</label>
+                          <select class="form-select" id="programActionSelector">
+                            <option value="note">Add note</option>
+                            <option value="power_on">Power on components</option>
+                            <option value="power_off">Power off components</option>
+                            <option value="set_definition">Set defintion</option>
+                            <option value="set_dmx_scene">Set DMX lighting scene</option>
+                            <option value="set_exhibit">Set exhibition</option>
+                          </select>
+                        </div>
+                        <div class="col-6 col-md-4">
+                          <label id="programActionTargetSelectorLabel" for="programActionTargetSelector">Target</label>
+                          <select class="form-select" id="programActionTargetSelector">
+                          </select>
+                        </div>
+                        <div class="col-6">
+                          <label id="programActionValueSelectorLabel" for="programActionValueSelector">Value</label>
+                          <select class="form-select" id="programActionValueSelector">
+                          </select>
+                        </div>
+                        <div class="col-12 mt-2">
+                          <input id="programActionNoteInput" class="form-control" type="text" placeholder="Type short comment here.">
+                        </div>
+                      </div>
+                    </div>
+                  </form>
+                  <div id="programActionEditErrorAlert" class="alert alert-danger w-100" style="display: none;"></div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-danger" me-auto id="programActionEditDeleteActionButton">Delete action</button>
+                  <button type="button" class="btn btn-primary ms-auto" id="programActionEditSubmitButton">Save changes</button>
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+              </div>
+            </div>
+          </div>
           
           <div class="row mt-2 gy-2">
             <div class="col-6 col-sm-4 col-md-4 col-xl-3 d-flex">
@@ -1892,7 +1946,7 @@
             </div>
           </div>
 
-          <div id="editProgramPane" class="row gy-2 mt-2">
+          <div id="editProgramPane" class="row gy-2 mt-2" style="display: none;">
             <div class="col-3 border-end">
               <label class="form-label" for="editProgramNameField">
                 Name
@@ -1949,7 +2003,7 @@
                     <span id="editProgramTrailerFilename" class="w-100">Select trailer</span>
                     <input hidden="" type="file" accept="video/*" class="form-control-file" id="editProgramTrailerButton">
                   </label>
-                  <video controls class="w-100 mt-2" id="programMediaPreview_trailer" style="display: none;"></video>
+                  <video controls disablePictureInPicture controlsList="nodownload noremoteplayback" class="w-100 mt-2" id="programMediaPreview_trailer" style="display: none;"></video>
                 </div>
               </div>
             </div>

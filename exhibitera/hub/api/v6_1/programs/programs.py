@@ -1,5 +1,6 @@
 # Standard modules
 import aiofiles
+import glob
 import json
 import os
 from typing import Any, Optional
@@ -105,8 +106,19 @@ async def upload_program_media(
         return {"success": False, "reason": "invalid_uuid"}
 
     ext = os.path.splitext(file.filename)[1]
-    filename = program_uuid + '_' + purpose + ext
+    file_base = program_uuid + '_' + purpose
+    filename = file_base + ext
     file_path = ex_files.get_path(["programs", "media", filename], user_file=True)
+
+    # First remove any files with the same base (e.g., file_base.mov so we can upload file_base.mp4
+    base_path = ex_files.get_path(["programs", "media", file_base + '.*'], user_file=True)
+    for old_file in glob.glob(base_path):
+        try:
+            os.remove(old_file)
+        except OSError:
+            pass
+
+    # Then, save the new file
     print(f"Saving uploaded file to {file_path}")
     with hub_config.programLock:
         async with aiofiles.open(file_path, 'wb') as out_file:

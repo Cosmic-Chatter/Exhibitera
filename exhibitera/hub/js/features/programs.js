@@ -62,11 +62,31 @@ export async function editProgram (uuid = null) {
 
   populateLocations()
 
+  const thumbnailPreview = document.getElementById('programMediaPreview_thumbnail')
+  const trailerPreview = document.getElementById('programMediaPreview_trailer')
+
   document.getElementById('editProgramNameField').value = program?.name ?? ''
   document.getElementById('editProgramDescriptionField').value = program?.description ?? ''
   document.getElementById('editProgramLocationField').value = program?.location ?? ''
   document.getElementById('editProgramDurationField').value = program?.duration ?? 60
   document.getElementById('editProgramCapacityField').value = program?.capacity ?? ''
+  thumbnailPreview.dataset.filename = program?.thumbnail ?? ''
+  trailerPreview.dataset.filename = program?.trailer ?? ''
+
+  if (program.thumbnail) {
+    thumbnailPreview.src = `/programs/media/${program.thumbnail}?t=${Date.now()}`
+    thumbnailPreview.style.display = 'block'
+  } else {
+    thumbnailPreview.style.display = 'none'
+  }
+  if (program.trailer) {
+    trailerPreview.src = `/programs/media/${program.trailer}?t=${Date.now()}`
+    trailerPreview.style.display = 'block'
+  } else {
+    trailerPreview.style.display = 'none'
+  }
+
+  document.getElementById('editProgramPane').style.display = 'flex'
 }
 
 export async function updateProgram () {
@@ -81,7 +101,9 @@ export async function updateProgram () {
     description: document.getElementById('editProgramDescriptionField').value,
     location: document.getElementById('editProgramLocationField').value,
     duration: parseFloat(document.getElementById('editProgramDurationField').value),
-    capacity: parseInt(document.getElementById('editProgramCapacityField').value) ?? null
+    capacity: parseInt(document.getElementById('editProgramCapacityField').value) ?? null,
+    thumbnail: document.getElementById('programMediaPreview_thumbnail').dataset.filename,
+    trailer: document.getElementById('programMediaPreview_trailer').dataset.filename
   }
 
   const result = await exTools.makeServerRequest({
@@ -89,6 +111,19 @@ export async function updateProgram () {
     endpoint: '/program/' + uuid + '/update',
     params: { update }
   })
+
+  if (result.success) {
+    document.getElementById('editProgramPane').style.display = 'none'
+    document.getElementById('saveProgramButton').dataset.uuid = ''
+
+    // Clear the video
+    const trailerPreview = document.getElementById('programMediaPreview_trailer')
+    try {
+      trailerPreview.pause()
+      trailerPreview.removeAttribute('src')
+      trailerPreview.load()
+    } catch {}
+  }
 }
 
 function populateLocations () {
@@ -131,8 +166,9 @@ export function uploadProgramMediaFile (button, purpose) {
 
       if (response.success) {
         const preview = document.getElementById('programMediaPreview_' + purpose)
-        preview.src = '/programs/media/' + response.filename
+        preview.src = `/programs/media/${response.filename}?t=${Date.now()}`
         preview.style.display = 'block'
+        preview.dataset.filename = response.filename
       }
 
       const progressBarContainer = document.getElementById('programUploadProgressBarContainer_' + purpose)
