@@ -6,6 +6,7 @@ import exConfig from '../../../common/config.js'
 import * as hubDMX from './dmx.js'
 import * as hubGroups from './groups.js'
 import * as hubMaint from './maintenance.js'
+import * as hubNotifications from './notifications.js'
 import * as hubTools from '../tools.js'
 import * as hubUsers from './users.js'
 
@@ -371,7 +372,7 @@ class BaseComponent {
     }
     if (update?.notifications) {
       hubConfig.notifications[this.uuid] = update.notifications
-      hubTools.rebuildNotificationList()
+      hubNotifications.rebuildNotificationList()
     }
   }
 }
@@ -500,7 +501,7 @@ class Projector extends BaseComponent {
           }
         }
         hubConfig.notifications[this.uuid] = errors
-        hubTools.rebuildNotificationList()
+        hubNotifications.rebuildNotificationList()
       }
     }
     if (update?.password) this.password = update.password

@@ -1,4 +1,4 @@
-/* global bootstrap, showdown */
+/* global bootstrap */
 
 import exConfig from '../../common/config.js'
 import * as exUtilities from '../../common/utilities.js'
@@ -7,6 +7,7 @@ import * as exExhibit from './features/exhibits.js'
 import * as exGroup from './features/groups.js'
 import * as exIssues from './features/issues.js'
 import * as exMaintenance from './features/maintenance.js'
+import * as exNotifications from './features/notifications.js'
 import * as exPrograms from './features/programs.js'
 import * as exProjector from './features/projectors.js'
 import * as exSchedule from './features/schedules.js'
@@ -588,7 +589,7 @@ function parseUpdate (update) {
         hubConfig.notifications.hub[key][key] = true
       }
     }
-    exTools.rebuildNotificationList()
+    exNotifications.rebuildNotificationList()
 
     if (update?.gallery?.software_update?.update_available) {
       const notification = {
@@ -598,13 +599,13 @@ function parseUpdate (update) {
       }
       hubConfig.notifications.hub.software_update = notification
 
-      exTools.rebuildNotificationList()
+      exNotifications.rebuildNotificationList()
     }
 
     if (update.gallery?.outdated_os) {
       hubConfig.notifications.hub.outdated_os = { outdated_os: true }
 
-      exTools.rebuildNotificationList()
+      exNotifications.rebuildNotificationList()
     }
     if (update.gallery?.exhibit_modified ?? false) {
       document.getElementById('exhibitModifiedButton').style.display = 'block'
@@ -996,7 +997,7 @@ function updateNavDropdownActiveState () {
   }
 }
 
-exTools.rebuildNotificationList()
+exNotifications.rebuildNotificationList()
 exPrograms.populatePrograms()
 
 // Bind event listeners
