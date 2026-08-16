@@ -115,7 +115,7 @@ export function populateGroupsRow () {
       showEditGroupModal(group.uuid)
     })
     name.style.fontSize = '18px'
-    name.innerHTML = group.name
+    name.textContent = group.name
     btnGroup.appendChild(name)
 
     const dropdownBtn = document.createElement('button')
@@ -158,7 +158,7 @@ export function populateGroupsRow () {
 
       const description = document.createElement('div')
       description.classList = 'bg-secondary rounded-bottom text-white px-2 py-2'
-      description.innerHTML = group.description
+      description.textContent = group.description
       descCol.appendChild(description)
     }
   }

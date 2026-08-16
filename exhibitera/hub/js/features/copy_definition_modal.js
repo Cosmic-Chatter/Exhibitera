@@ -225,7 +225,7 @@ function copyDefinitionModalCreateSourceHTML (filename, sizeText, isDefinition =
   } else {
     name.classList.add('ps-4')
   }
-  name.innerHTML = filename
+  name.textContent = filename
   row.appendChild(name)
 
   const size = document.createElement('div')

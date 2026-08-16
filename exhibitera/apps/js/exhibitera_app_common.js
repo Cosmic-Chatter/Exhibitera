@@ -189,18 +189,18 @@ export function parseQueryString () {
   return new URLSearchParams(queryString)
 }
 
-export function createNotification (message, type = 'info', notificaitonUUID = null) {
-  // Create a notificaiton and add it to config.notifications
+export function createNotification (message, type = 'info', notificationUUID = null) {
+  // Create a notification and add it to config.notifications
   // `type` should be one of ['error', 'warning', 'info']
 
-  if (!notificaitonUUID) notificaitonUUID = exUtilities.uuid()
+  if (!notificationUUID) notificationUUID = exUtilities.uuid()
 
-  const notificaiton = {
+  const notification = {
     message,
     type,
-    uuid: notificaitonUUID
+    uuid: notificationUUID
   }
-  config.notifications[notificaitonUUID] = notificaiton
+  config.notifications[notificationUUID] = notification
 }
 
 export function clearNotifications () {
@@ -209,10 +209,10 @@ export function clearNotifications () {
   config.notifications = {}
 }
 
-export function clearNotification (notificaitonUUID) {
+export function clearNotification (notificationUUID) {
   // Clear the given notification
 
-  delete config.notifications[notificaitonUUID]
+  delete config.notifications[notificationUUID]
 }
 
 export function sendPing () {

@@ -37,7 +37,7 @@ export function populateDMXScenesForInfoModal (scenes, helperURL) {
     name.classList = 'col-12 bg-primary text-white rounded-top py-1 position-relative'
     name.setAttribute('id', 'DMXEntryName_' + scene.uuid)
     name.style.fontSize = '18px'
-    name.innerHTML = scene.name
+    name.textContent = scene.name
     row.appendChild(name)
   }
 }

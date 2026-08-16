@@ -17,7 +17,7 @@ class BaseComponent {
     this.type = 'base_component'
 
     this.status = hubConfig.STATUS.OFFLINE
-    this.maintenanceStatus = hubConfig.MAINTANANCE_STATUS['Off floor, not working']
+    this.maintenanceStatus = hubConfig.MAINTENANCE_STATUS['Off floor, not working']
     this.permissions = {}
 
     this.ip_address = null
@@ -167,7 +167,7 @@ class BaseComponent {
         return this.maintenanceStatus
       }
     }
-    return hubConfig.MAINTANANCE_STATUS['Off floor, not working']
+    return hubConfig.MAINTENANCE_STATUS['Off floor, not working']
   }
 
   populateActionMenu (dropdownMenu, groupUUID, permission = 'view') {
@@ -311,7 +311,7 @@ class BaseComponent {
     const oldStatus = this.status
     this.status = hubConfig.STATUS[status]
     const oldMaintStatus = this.maintenanceStatus
-    this.maintenanceStatus = hubConfig.MAINTANANCE_STATUS[maintenanceStatus]
+    this.maintenanceStatus = hubConfig.MAINTENANCE_STATUS[maintenanceStatus]
 
     // If nothing has changed, bail out
     if ((oldStatus === this.status) && (oldMaintStatus === this.maintenanceStatus)) return

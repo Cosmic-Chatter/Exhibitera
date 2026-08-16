@@ -2,26 +2,26 @@ import * as exUtilities from '../../../common/utilities.js'
 import * as hubTools from '../tools.js'
 import hubConfig from '../../config.js'
 
-export function createNotification (componentUUID, message, type = 'info', notificaitonUUID = null) {
-  // Create a notificaiton and add it to hubConfig.notifications
+export function createNotification (componentUUID, message, type = 'info', notificationUUID = null) {
+  // Create a notification and add it to hubConfig.notifications
   // `type` should be one of ['error', 'warning', 'info']
 
-  if (!notificaitonUUID) notificaitonUUID = exUtilities.uuid()
+  if (!notificationUUID) notificationUUID = exUtilities.uuid()
 
-  const notificaiton = {
+  const notification = {
     message,
     type,
-    uuid: notificaitonUUID
+    uuid: notificationUUID
   }
   const componentNotifications = hubConfig.notifications?.[componentUUID] ?? {}
-  componentNotifications[notificaitonUUID] = notificaiton
+  componentNotifications[notificationUUID] = notification
   hubConfig.notifications[componentUUID] = componentNotifications
 }
 
-export function clearNotification (componentUUID, notificaitonUUID) {
+export function clearNotification (componentUUID, notificationUUID) {
   // Clear the given notification
 
-  delete hubConfig.notifications[componentUUID][notificaitonUUID]
+  delete hubConfig.notifications[componentUUID][notificationUUID]
   rebuildNotificationList()
 }
 
@@ -142,18 +142,18 @@ export function rebuildNotificationList () {
   }
 }
 
-function createNotificationHTML (notificaiton, componentName) {
+function createNotificationHTML (notification, componentName) {
   // Create and return a DOM element representing a notification.
 
   const colorClass = {
     error: 'btn-danger',
     info: 'btn-info',
     warning: 'btn-warning'
-  }[notificaiton.type] ?? 'btn-info'
+  }[notification.type] ?? 'btn-info'
 
   const li = document.createElement('li')
   li.classList = 'dropdown-item'
-  li.innerHTML = `<button class="btn btn-block ${colorClass}">${componentName}: ${notificaiton.message}</button>`
+  li.innerHTML = `<button class="btn btn-block ${colorClass}">${componentName}: ${notification.message}</button>`
 
   return li
 }

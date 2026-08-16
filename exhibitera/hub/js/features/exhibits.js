@@ -54,7 +54,7 @@ export function configureVisibleGroups () {
     const checkLabel = document.createElement('label')
     checkLabel.classList = 'form-check-label'
     checkLabel.setAttribute('for', 'showHideGroup_' + group.uuid)
-    checkLabel.innerHTML = group.name
+    checkLabel.textContent = group.name
     formCheck.appendChild(checkLabel)
   }
 

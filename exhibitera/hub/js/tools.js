@@ -301,6 +301,7 @@ export function getUserDisplayName (uuid) {
   // First, check the cache
     if (hubConfig.usersDisplayNameCache[uuid] !== undefined) {
       resolve(hubConfig.usersDisplayNameCache[uuid])
+      return
     }
     makeServerRequest({
       method: 'GET',
