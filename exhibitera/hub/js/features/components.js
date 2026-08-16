@@ -2,6 +2,7 @@ import * as exUtilities from '../../../common/utilities.js'
 import exConfig from '../../../common/config.js'
 
 import hubConfig from '../../config.js'
+import * as hubComponentInfo from './component_info_modal.js'
 import * as hubNotifications from './notifications.js'
 import * as hubTools from '../tools.js'
 import * as hubUsers from './users.js'
@@ -74,7 +75,7 @@ class BaseComponent {
     mainButton.setAttribute('type', 'button')
     mainButton.setAttribute('id', this.uuid + '_' + group + '_MainButton')
     mainButton.addEventListener('click', function () {
-      onComponentClicked(thisUUID, group)
+      hubComponentInfo.showExhibitComponentInfo(thisUUID, group)
     }, false)
     btnGroup.appendChild(mainButton)
 
@@ -251,7 +252,7 @@ class BaseComponent {
     detailsAction.classList = 'dropdown-item handCursor'
     detailsAction.innerHTML = 'View details'
     detailsAction.addEventListener('click', function () {
-      onComponentClicked(thisUUID, groupUUID)
+      hubComponentInfo.showExhibitComponentInfo(thisUUID, groupUUID)
     }, false)
     dropdownMenu.appendChild(detailsAction)
   }
@@ -807,11 +808,4 @@ export function checkForRemovedComponents (update) {
       component.remove(false) // Remove from interface, but not the config
     }
   }
-}
-
-// Event handlers
-let onComponentClicked = null
-
-export function setComponentClickHandler (fn) {
-  onComponentClicked = fn
 }
