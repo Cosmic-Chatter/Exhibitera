@@ -1,3 +1,5 @@
+import * as exUtilities from '../../common/utilities.js'
+
 import * as exCommon from '../js/exhibitera_app_common.js'
 
 function updateFunc (update) {
@@ -60,9 +62,9 @@ function updateSourceList (matchString) {
     .then((content) => {
       sourceList = content.content.filter(
         item => new RegExp('^' + matchString.replace(/\*/g, '.*') + '$').test(item)
-      ).sort(function (a, b) {
-        return a.localeCompare(b)
-      })
+      )
+      sourceList = exUtilities.sortAlphabetically(sourceList)
+
       sourceListLength = sourceList.length
       if (sourceListLength === 0) {
         continueAnimating = false

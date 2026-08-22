@@ -1,6 +1,7 @@
 /* global bootstrap */
 import exConfig from '../../common/config.js'
 import * as exFiles from '../../common/files.js'
+import * as exUtilities from '../../common/utilities.js'
 import * as exCommon from './exhibitera_app_common.js'
 
 let lastClickedSelectBox = null // For handling multiple selection on shift-click
@@ -462,7 +463,7 @@ function _populateComponentContent (fileDict, options) {
   } else fileDirectory = fileDict.static_details
 
   // Alphabetize the list
-  const fileList = fileDirectory.sort(function (a, b) { return a.name.localeCompare(b.name) })
+  const fileList = exUtilities.sortAlphabetically(fileDirectory, 'name')
 
   // Clear any existing files
   fileRow.innerHTML = ''

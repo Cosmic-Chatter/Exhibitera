@@ -357,7 +357,7 @@ document.getElementById('addWakeOnLANModalAddButton').addEventListener('click', 
 
 // Component info modal
 document.getElementById('componentInfoModalRemoveComponentButton')
-  .addEventListener('click', hubExhibit.removeExhibitComponentFromModal)
+  .addEventListener('click', hubComponentInfo.removeExhibitComponentFromModal)
 document.getElementById('componentInfoModalMaintenanceSaveButton')
   .addEventListener('click', function () {
     hubMaintenance.submitComponentMaintenanceStatusChange()
@@ -380,14 +380,14 @@ for (const el of settingEls) {
   })
 }
 document.getElementById('componentInfoModalSettingsSaveButton')
-  .addEventListener('click', hubExhibit.submitComponentSettingsChange)
+  .addEventListener('click', hubComponentInfo.submitComponentSettingsChange)
 document.getElementById('definitionTabAppFilterSelect').addEventListener('change', (event) => {
-  hubExhibit.filterDefinitionListByApp()
+  hubComponentInfo.filterDefinitionListByApp()
 })
 document.getElementById('definitionTabThumbnailsCheckbox').addEventListener('change', (event) => {
-  hubExhibit.onDefinitionTabThumbnailsCheckboxChange()
+  hubComponentInfo.onDefinitionTabThumbnailsCheckboxChange()
 })
-document.getElementById('componentInfoModalDefinitionSaveButton').addEventListener('click', hubExhibit.submitDefinitionSelectionFromModal)
+document.getElementById('componentInfoModalDefinitionSaveButton').addEventListener('click', hubComponentInfo.submitDefinitionSelectionFromModal)
 
 document.getElementById('componentInfoModalViewScreenshot').addEventListener('click', () => {
   const component = hubTools.getExhibitComponent(document.getElementById('componentInfoModal').dataset.uuid)
@@ -407,19 +407,19 @@ for (const el of document.querySelectorAll('.componentInfoProjectorSetting')) {
     document.getElementById('componentInfoModalProjectorSettingsSaveButton').style.display = 'block'
   })
 }
-document.getElementById('componentInfoModalProjectorSettingsSaveButton').addEventListener('click', hubExhibit.updateProjectorFromInfoModal)
+document.getElementById('componentInfoModalProjectorSettingsSaveButton').addEventListener('click', hubComponentInfo.updateProjectorFromInfoModal)
 for (const el of document.querySelectorAll('.componentInfoStaticSetting')) {
   el.addEventListener('change', () => {
     document.getElementById('componentInfoModalStaticSettingsSaveButton').style.display = 'block'
   })
 }
-document.getElementById('componentInfoModalStaticSettingsSaveButton').addEventListener('click', hubExhibit.updateStaticComponentFromInfoModal)
+document.getElementById('componentInfoModalStaticSettingsSaveButton').addEventListener('click', hubComponentInfo.updateStaticComponentFromInfoModal)
 for (const el of document.querySelectorAll('.componentInfoWakeOnLANSetting')) {
   el.addEventListener('change', () => {
     document.getElementById('componentInfoModalWakeOnLANSettingsSaveButton').style.display = 'block'
   })
 }
-document.getElementById('componentInfoModalWakeOnLANSettingsSaveButton').addEventListener('click', hubExhibit.updateWakeOnLANComponentFromInfoModal)
+document.getElementById('componentInfoModalWakeOnLANSettingsSaveButton').addEventListener('click', hubComponentInfo.updateWakeOnLANComponentFromInfoModal)
 
 // Copy definition modal
 document.getElementById('copyDefinitionModalSubmitButton').addEventListener('click', hubExhibit.copyDefinitionModalPerformCopy)

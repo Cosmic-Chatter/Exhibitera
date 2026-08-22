@@ -523,11 +523,7 @@ class ExhibitComponentGroup {
     // Sort the component list and rebuild the HTML representation
 
     if (method === 'alphabetical') {
-      this.components.sort((a, b) => {
-        const aName = a.id.toLowerCase()
-        const bName = b.id.toLowerCase()
-        return aName.localeCompare(bName)
-      })
+      this.components = exUtilities.sortAlphabetically(this.components, 'id')
     } else if (method === 'status') {
       this.components.sort((a, b) => {
         const aName = a.id.toLowerCase()

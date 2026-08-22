@@ -84,13 +84,7 @@ export function populateGroupsRow () {
 
   if (exConfig.groups == null) exConfig.groups = []
 
-  const sorted = exConfig.groups.sort((a, b) => {
-    try {
-      return a.name.toLowerCase().localeCompare(b.name.toLowerCase())
-    } catch {
-      return 0
-    }
-  })
+  const sorted = exUtilities.sortAlphabetically(exConfig.groups, 'name')
 
   for (const group of sorted) {
     const groupCol = document.createElement('div')
@@ -192,13 +186,7 @@ export function populateGroupsForSelect (select, selected = []) {
 
   if (exConfig.groups == null) exConfig.groups = []
 
-  const sorted = exConfig.groups.sort((a, b) => {
-    try {
-      return a.name.toLowerCase().localeCompare(b.name.toLowerCase())
-    } catch {
-      return 0
-    }
-  })
+  const sorted = exUtilities.sortAlphabetically(exConfig.groups, 'name')
 
   for (const group of sorted) {
     const option = new Option(group.name, group.uuid)

@@ -89,9 +89,8 @@ export async function rebuildIssueFilters () {
     }
   }
 
-  const sortedOptionsList = optionList.sort(function (a, b) {
-    return a.innerHTML.toLowerCase().localeCompare(b.innerHTML.toLowerCase())
-  })
+  const sortedOptionsList = exUtilities.sortAlphabetically(optionList, 'innerText')
+
   // Populate the filter
   for (const option of sortedOptionsList) {
     assignedToSelect.appendChild(option)
@@ -447,13 +446,8 @@ export async function showIssueEditModal (issueType, target) {
     const header = new Option(hubTools.getGroupName(group))
     header.setAttribute('disabled', true)
     issueRelatedComponentsSelector.appendChild(header)
-    const sortedGroup = components[group].sort((a, b) => {
-      const aID = a.id.toLowerCase()
-      const bID = b.id.toLowerCase()
-      if (aID > bID) return 1
-      if (aID < bID) return -1
-      return 0
-    })
+    const sortedGroup = exUtilities.sortAlphabetically(components[group], 'id')
+
     for (const component of sortedGroup) {
       const option = new Option(component.id, component.uuid)
       issueRelatedComponentsSelector.appendChild(option)
@@ -473,8 +467,10 @@ export async function showIssueEditModal (issueType, target) {
     }
   })
     .then((response) => {
-      if (response.success === true) {
-        for (const user of response.users) {
+      if (response.success) {
+        console.log(response.users)
+        const sortedUsers = exUtilities.sortAlphabetically(response.users, 'display_name')
+        for (const user of sortedUsers) {
           document.getElementById('issueAssignedToSelector').appendChild(new Option(user.display_name, user.uuid))
         }
       }

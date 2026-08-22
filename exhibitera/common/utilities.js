@@ -243,11 +243,15 @@ export function getObjectProperty (obj, keys) {
   }, obj)
 }
 
-export function sortAlphabetically (array) {
+export function sortAlphabetically (array, property = null) {
   // Sort the given array alphabetically
 
-  return array.sort((a, b) => {
+  return [...array].sort((a, b) => {
     try {
+      if (property) {
+        a = a[property]
+        b = b[property]
+      }
       return a.toLowerCase().localeCompare(b.toLowerCase())
     } catch {
       return 0
