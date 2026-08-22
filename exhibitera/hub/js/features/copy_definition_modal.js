@@ -99,7 +99,16 @@ export async function showCopyDefinitionModal (componentUUID, definitionUUID, de
     label.classList = 'text-secondary'
     destDiv.appendChild(label)
 
-    for (const comp of compsToShow) {
+    const compsToShowSorted = compsToShow.sort((a, b) => {
+      try {
+        return a.id.toLowerCase().localeCompare(b.id.toLowerCase())
+      } catch {
+        return 0
+      }
+    })
+    console.log(compsToShowSorted)
+
+    for (const comp of compsToShowSorted) {
       const col = copyDefinitionModalCreateDestinationHTML(comp, group, definitionUUID, content)
       destDiv.appendChild(col)
     }

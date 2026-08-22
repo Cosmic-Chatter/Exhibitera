@@ -5,6 +5,7 @@ import * as exUtilities from '../../common/utilities.js'
 
 import hubConfig from '../config.js'
 import * as hubComponents from './features/components.js'
+import * as hubComponentInfo from './features/component_info_modal.js'
 import * as hubExhibit from './features/exhibits.js'
 import * as hubGroup from './features/groups.js'
 import * as hubIssues from './features/issues.js'
@@ -258,7 +259,9 @@ function updateNavDropdownActiveState () {
 hubNotifications.rebuildNotificationList()
 hubPrograms.populatePrograms()
 
+// ===================================
 // Bind event listeners
+// ===================================
 
 // Nav bar
 const navObserver = new ResizeObserver(() => checkNavOverflow())
@@ -363,7 +366,8 @@ document.getElementById('componentInfoModalMaintenanceStatusSelector')
   .addEventListener('change', function () {
     document.getElementById('componentInfoModalMaintenanceSaveButton').style.display = ''
   })
-document.getElementById('componentInfoModalBasicSettingsSaveButton').addEventListener('click', hubExhibit.submitComponentBasicSettingsChange)
+document.getElementById('componentInfoModalBasicSettingsSaveButton').addEventListener('click', hubComponentInfo.submitComponentBasicSettingsChange)
+
 for (const el of document.querySelectorAll('.componentInfoBasicSetting')) {
   el.addEventListener('change', () => {
     document.getElementById('componentInfoModalBasicSettingsSaveButton').style.display = 'block'
