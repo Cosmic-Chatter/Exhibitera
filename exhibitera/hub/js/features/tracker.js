@@ -629,14 +629,8 @@ export function populateTrackerDataSelect (data) {
   const trackerDataSelect = document.getElementById('trackerDataSelect')
   trackerDataSelect.innerHTML = ''
 
-  const sortedList = data.sort((a, b) => {
-    const aVal = a.toLowerCase()
-    const bVal = b.toLowerCase()
+  const sortedList = exUtilities.sortAlphabetically(data)
 
-    if (aVal > bVal) return 1
-    if (aVal < bVal) return -1
-    return 0
-  })
   for (const item of sortedList) {
     const name = item.split('.').slice(0, -1).join('.')
     trackerDataSelect.appendChild(new Option(name, name))

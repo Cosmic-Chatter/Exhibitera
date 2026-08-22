@@ -901,13 +901,7 @@ export function updateAvailableExhibits (exhibitList) {
 
   const exhibitSelect = document.getElementById('exhibitSelect')
 
-  const sortedExhibitList = exhibitList.sort((a, b) => {
-    const aVal = a.name.toLowerCase()
-    const bVal = b.name.toLowerCase()
-    if (aVal > bVal) return 1
-    if (aVal < bVal) return -1
-    return 0
-  })
+  const sortedExhibitList = exUtilities.sortAlphabetically(exhibitList, 'name')
 
   const arr1UUIDs = []
   const arr2UUIDs = []

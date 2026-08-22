@@ -229,13 +229,7 @@ export function sortDefinitionsByApp (defDict, dropPreview = true) {
 
   // Sort the arrays
   Object.keys(result).forEach((key) => {
-    result[key] = result[key].sort((a, b) => {
-      const aName = a.name.toLowerCase()
-      const bName = b.name.toLowerCase()
-      if (aName > bName) return 1
-      if (bName > aName) return -1
-      return 0
-    })
+    result[key] = exUtilities.sortAlphabetically(result[key], 'name')
   })
 
   return result
@@ -245,18 +239,7 @@ export function sortExhibitComponentsByID () {
   // Take the list of components and return an array sorted
   // alphabetically by their ID
 
-  return hubConfig.exhibitComponents.sort(
-    function (a, b) {
-      const aID = a.id.toLowerCase()
-      const bID = b.id.toLowerCase()
-      if (aID > bID) {
-        return 1
-      } else if (bID > aID) {
-        return -1
-      }
-      return 0
-    }
-  )
+  return exUtilities.sortAlphabetically(hubConfig.exhibitComponents, 'id')
 }
 
 export function checkPermission (action, neededLevel, group = null) {
