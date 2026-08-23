@@ -4,6 +4,7 @@ _If you are upgrading from Exhibitera 5.3, Hub and Apps must all be upgraded at 
 ## Hub
 
 ### Schedule
+- Times are displayed in 12- or 24-hour format depending on your location and preference
 - Fixed issue in which scheduled actions did not occur on time on days in which a Daylight Saving Time change occurs.
 
 ## Apps
