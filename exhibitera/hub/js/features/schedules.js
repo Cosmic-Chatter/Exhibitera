@@ -1,8 +1,10 @@
 /* global bootstrap */
 
 import * as exUtilities from '../../../common/utilities.js'
-import exConfig from '../../config.js'
-import * as exTools from '../tools.js'
+
+import hubConfig from '../../config.js'
+import * as hubTools from '../tools.js'
+import * as hubUsers from './users.js'
 
 import { ModalController } from './modal_controller.js'
 
@@ -30,7 +32,7 @@ export function deleteSchedule (name) {
   // Send a message to Hub asking to delete the schedule
   // file with the given name. The name should not include ".ini"
 
-  exTools.makeServerRequest({
+  hubTools.makeServerRequest({
     method: 'DELETE',
     endpoint: '/schedule/' + name
   })
@@ -55,7 +57,7 @@ export function scheduleConvertToDateSpecific (date, dayName) {
     convert_from: dayName
   }
 
-  exTools.makeServerRequest({
+  hubTools.makeServerRequest({
     method: 'POST',
     endpoint: '/schedule/convert',
     params: requestDict
@@ -73,10 +75,10 @@ export function populateSchedule (schedule) {
   document.getElementById('scheduleContainer').textContent = ''
   document.getElementById('dateSpecificScheduleAlert').style.display = 'none'
 
-  const allowEdit = exTools.checkPermission('schedule', 'edit')
+  const allowEdit = hubTools.checkPermission('schedule', 'edit')
 
   // Record the timestamp when this schedule was generated
-  exConfig.scheduleUpdateTime = schedule.updateTime
+  hubConfig.scheduleUpdateTime = schedule.updateTime
   const sched = schedule.schedule
 
   for (const day of sched) {
@@ -246,7 +248,7 @@ export function populateSchedule (schedule) {
   document.getElementById('Schedule_next_event').textContent = populateScheduleDescriptionHelper(schedule.nextEvent, true)
 }
 
-function createScheduleEntryHTML (item, scheduleID, scheduleName, scheduleType, allowEdit = exTools.checkPermission('schedule', 'edit')) {
+function createScheduleEntryHTML (item, scheduleID, scheduleName, scheduleType, allowEdit = hubTools.checkPermission('schedule', 'edit')) {
   // Take a dictionary of properties and build an HTML representation of the schedule entry.
 
   let description = null
@@ -261,7 +263,7 @@ function createScheduleEntryHTML (item, scheduleID, scheduleName, scheduleType, 
     if (Array.isArray(target) && target.length > 0) {
       target = target[0]
     }
-    description = `Set exhibition: ${exTools.getExhibitName(target.value)}`
+    description = `Set exhibition: ${hubTools.getExhibitName(target.value)}`
   } else if (action === 'note') {
     description = item.value
   } else if (action === 'clear_exhibition_mods') {
@@ -304,7 +306,7 @@ function createScheduleEntryHTML (item, scheduleID, scheduleName, scheduleType, 
 
     const eventTime = document.createElement('div')
     eventTime.classList = 'align-self-center justify-content-center'
-    eventTime.textContent = item.time
+    eventTime.textContent = formatTimeForLocale(item.time_in_seconds)
     eventTimeContainer.appendChild(eventTime)
 
     const eventDescriptionCol = document.createElement('div')
@@ -340,7 +342,7 @@ function createScheduleEntryHTML (item, scheduleID, scheduleName, scheduleType, 
     eventEditButton.style.border = '0px'
     eventEditButton.textContent = 'Edit'
     eventEditButton.addEventListener('click', function () {
-      scheduleConfigureEditModal(scheduleName, scheduleType, false, scheduleID, item.time, action, target, value)
+      scheduleConfigureEditModal(scheduleName, scheduleType, false, scheduleID, item.time_in_seconds, action, target, value)
     })
     eventEditButtonCol.appendChild(eventEditButton)
   } else {
@@ -377,9 +379,8 @@ export function populateScheduleDescriptionHelper (eventList, includeTime) {
       description = 'Multiple actions'
     }
   }
-
   if (includeTime) {
-    description += ' at ' + eventList[0].time
+    description += ' at ' + formatTimeForLocale(eventList[0].time_in_seconds)
   }
   return description
 }
@@ -450,14 +451,14 @@ function scheduleTargetToDescription (targetList, action = '') {
   if (target.type === 'all') {
     return 'all components'
   } else if (target.type === 'group') {
-    return 'all ' + exTools.getGroupName(target.uuid)
+    return 'all ' + hubTools.getGroupName(target.uuid)
   } else if (target.type === 'component') {
     if (target?.uuid) {
-      const component = exTools.getExhibitComponent(target.uuid)
+      const component = hubTools.getExhibitComponent(target.uuid)
       if (component) return component.id
     }
   } else if (target.type === 'value') {
-    if (action === 'set_exhibit') return exTools.getExhibitName(target.value)
+    if (action === 'set_exhibit') return hubTools.getExhibitName(target.value)
     return target.value
   } else return target
 }
@@ -472,13 +473,13 @@ export function actionTargetSelectorPopulateOptions (targetSelector, optionsToAd
     const sep = new Option('Groups', null)
     sep.disabled = true
     targetSelector.appendChild(sep)
-    for (const item of exConfig.componentGroups) {
+    for (const item of hubConfig.componentGroups) {
       let groupName
       try {
         if (item.group === 'Default') {
           groupName = 'Default'
         } else {
-          groupName = exTools.getGroup(item.group).name
+          groupName = hubTools.getGroup(item.group).name
         }
       } catch {
         groupName = 'Unknown group'
@@ -496,11 +497,11 @@ export function actionTargetSelectorPopulateOptions (targetSelector, optionsToAd
     sep.disabled = true
     targetSelector.appendChild(sep)
 
-    const sortedComponents = exTools.sortExhibitComponentsByID()
+    const sortedComponents = hubTools.sortExhibitComponentsByID()
 
     if (optionsToAdd.includes('ExhibitComponents')) {
       for (const item of sortedComponents) {
-        if (item.type === 'exhibit_component' && item.status !== exConfig.STATUS.STATIC) {
+        if (item.type === 'exhibit_component' && item.status !== hubConfig.STATUS.STATIC) {
           targetSelector.appendChild(new Option(item.id, JSON.stringify(
             {
               type: 'component',
@@ -544,7 +545,7 @@ export function setScheduleActionTargetSelector (action = null, target = null) {
     const availableExhibits = Array.from(document.querySelectorAll('#exhibitSelect option'))
 
     for (const item of availableExhibits) {
-      targetSelector.appendChild(new Option(exTools.getExhibitName(item.value), JSON.stringify({
+      targetSelector.appendChild(new Option(hubTools.getExhibitName(item.value), JSON.stringify({
         type: 'value',
         value: item.value
       })))
@@ -621,7 +622,7 @@ export async function setScheduleActionValueSelector (action = null, target = nu
   let component
 
   try {
-    component = exTools.getExhibitComponent(target.uuid)
+    component = hubTools.getExhibitComponent(target.uuid)
   } catch {
     console.log('Cannot connect to component:', target)
     return
@@ -643,7 +644,7 @@ export async function setScheduleActionValueSelector (action = null, target = nu
     })
     if (response.success && response.success === true) {
       // Convert the dictionary to an array, sorted by app ID
-      const appDict = exTools.sortDefinitionsByApp(response.definitions)
+      const appDict = hubTools.sortDefinitionsByApp(response.definitions)
       for (const app of Object.keys(appDict).sort()) {
         const header = new Option(exUtilities.appNameToDisplayName(app))
         header.disabled = true
@@ -708,10 +709,10 @@ export function scheduleConfigureEditModal (scheduleName,
   scheduleEditModal.setData('scheduleName', scheduleName)
   scheduleEditModal.setData('scheduleID', currentScheduleID)
   scheduleEditModal.setData('isAddition', isAddition)
-  scheduleEditModal.setData('currentTime', currentTime)
-  scheduleEditModal.setData('currentAction', currentAction)
-  scheduleEditModal.setData('currentTarget', currentTarget)
-  scheduleEditModal.setData('currentValue', currentValue)
+  // scheduleEditModal.setData('currentTime', currentTime)
+  // scheduleEditModal.setData('currentAction', currentAction)
+  // scheduleEditModal.setData('currentTarget', currentTarget)
+  // scheduleEditModal.setData('currentValue', currentValue)
 
   if (isAddition) {
     scheduleEditModal.setTitle('Add action')
@@ -731,7 +732,7 @@ export function scheduleConfigureEditModal (scheduleName,
   // If we're editing an existing action, pre-fill the current options
   if (isAddition === false) {
     scheduleEditModal.populate([
-      { id: 'scheduleActionTimeInput', value: currentTime },
+      { id: 'scheduleActionTimeInput', value: formatTimeForLocale(currentTime) },
       { id: 'scheduleActionSelector', value: currentAction }
     ])
 
@@ -769,7 +770,7 @@ export function sendScheduleUpdateFromModal () {
   // Gather necessary info from the schedule editing modal and send a
   // message to Hub asking to add the given action
 
-  const scheduleName = document.getElementById('scheduleEditModal').dataset.scheduleName
+  const scheduleName = scheduleEditModal.getData('scheduleName')
   const time = document.getElementById('scheduleActionTimeInput').value.trim()
   const action = document.getElementById('scheduleActionSelector').value
   const targetSelector = document.getElementById('scheduleTargetSelector')
@@ -791,14 +792,14 @@ export function sendScheduleUpdateFromModal () {
   } else {
     value = document.getElementById('scheduleValueSelector').value
   }
-  const scheduleID = document.getElementById('scheduleEditModal').dataset.scheduleID
+  const scheduleID = scheduleEditModal.getData('scheduleID')
 
   const editErrorAlert = document.getElementById('scheduleEditErrorAlert')
   if (time === '' || time == null) {
     editErrorAlert.innerText = 'You must specifiy a time for the action'
     scheduleEditModal.showWarning('scheduleEditErrorAlert')
     return
-  } else if (action == null) {
+  } else if (action === '' || action == null) {
     editErrorAlert.innerText = 'You must specifiy an action'
     scheduleEditModal.showWarning('scheduleEditErrorAlert')
     return
@@ -823,7 +824,7 @@ export function sendScheduleUpdateFromModal () {
     value_to_set: value
   }
 
-  exTools.makeServerRequest({
+  hubTools.makeServerRequest({
     method: 'POST',
     endpoint: '/schedule/' + scheduleName + '/action/' + scheduleID + '/update',
     params: requestDict
@@ -847,17 +848,16 @@ export function scheduleDeleteActionFromModal () {
   // Gather necessary info from the schedule editing modal and send a
   // message to Hub asking to delete the given action
 
-  const scheduleEditModal = document.getElementById('scheduleEditModal')
-  const scheduleName = scheduleEditModal.dataset.scheduleName
-  const scheduleID = scheduleEditModal.dataset.scheduleID
+  const scheduleName = scheduleEditModal.getData('scheduleName')
+  const scheduleID = scheduleEditModal.getData('scheduleID')
 
-  exTools.makeServerRequest({
+  hubTools.makeServerRequest({
     method: 'DELETE',
     endpoint: '/schedule/' + scheduleName + '/action/' + scheduleID
   })
     .then((update) => {
-      if (update?.success) {
-        exUtilities.hideModal('#scheduleEditModal')
+      if (update.success) {
+        scheduleEditModal.hide()
         populateSchedule(update)
         if (document.getElementById('manageFutureDateModal').classList.contains('show')) {
           populateFutureDateCalendarInput()
@@ -869,7 +869,7 @@ export function scheduleDeleteActionFromModal () {
 export function showManageFutureDateModal () {
   // Prepare the modal and show it.
 
-  const allowEdit = exTools.checkPermission('schedule', 'edit')
+  const allowEdit = hubTools.checkPermission('schedule', 'edit')
 
   // Clear any existing entries
   document.getElementById('manageFutureDateEntryList').textContent = ''
@@ -896,7 +896,7 @@ export function showManageFutureDateModal () {
 function populateFutureDatesList () {
   // Get a list of upcoming dates with special schedules and build GUI elements for them.
 
-  exTools.makeServerRequest({
+  hubTools.makeServerRequest({
     method: 'GET',
     endpoint: '/schedule/date_specific/list'
   })
@@ -938,7 +938,7 @@ function populateFutureDatesList () {
 export function populateFutureDateCalendarInput () {
   // Called when the user selects a date on the manageFutureDateModal
 
-  const allowEdit = exTools.checkPermission('schedule', 'edit')
+  const allowEdit = hubTools.checkPermission('schedule', 'edit')
 
   const date = document.getElementById('manageFutureDateCalendarInput').value
   const scheduleList = document.getElementById('manageFutureDateEntryList')
@@ -957,7 +957,7 @@ export function populateFutureDateCalendarInput () {
     return
   }
 
-  exTools.makeServerRequest({
+  hubTools.makeServerRequest({
     method: 'GET',
     endpoint: '/schedule/' + date
   })
@@ -1005,7 +1005,7 @@ export function convertFutureScheduleFromModal () {
   const dateObj = new Date(date + 'T00:00')
   const dayOfWeek = dateObj.toLocaleDateString(undefined, { weekday: 'long' })
 
-  exTools.makeServerRequest({
+  hubTools.makeServerRequest({
     method: 'POST',
     endpoint: '/schedule/convert',
     params: {
@@ -1021,7 +1021,7 @@ export function convertFutureScheduleFromModal () {
 export function downloadScheduleAsJSON (name) {
   // Get the given schedule as JSON from Hub and download for the user.
 
-  exTools.makeServerRequest({
+  hubTools.makeServerRequest({
     method: 'GET',
     endpoint: '/schedule/' + name + '/JSONString'
   })
@@ -1108,7 +1108,7 @@ export function createScheduleFromFile () {
     if (name == null || name === '') return
   }
 
-  exTools.makeServerRequest({
+  hubTools.makeServerRequest({
     method: 'POST',
     endpoint: '/schedule/create',
     params: {
@@ -1152,7 +1152,7 @@ async function previewJSONSchedule (jsonStr) {
 
 function _getSecondsFromMidnight (timeString) {
   return new Promise(function (resolve, reject) {
-    exTools.makeServerRequest({
+    hubTools.makeServerRequest({
       method: 'POST',
       endpoint: '/schedule/getSecondsFromMidnight',
       params: { time_str: String(timeString) }
@@ -1182,7 +1182,7 @@ function _scheduleFromFilePreviewCurrentSchedule (name, kind, retry = false) {
   // `kind` should be one of ['day-specific', 'date-specific']
 
   const currentScheduleEl = document.getElementById('scheduleFromFileCurrentSchedule')
-  exTools.makeServerRequest({
+  hubTools.makeServerRequest({
     method: 'GET',
     endpoint: '/schedule/' + name
   })
@@ -1214,4 +1214,33 @@ function _scheduleFromFilePreviewCurrentSchedule (name, kind, retry = false) {
         _scheduleFromFilePreviewCurrentSchedule(dayStr, 'day-specific', true)
       }
     })
+}
+
+export function formatTimeForLocale (timeInSeconds, locale = navigator.language) {
+  const totalSeconds = Math.round(timeInSeconds) % 86400 // wrap in case >= 24h
+  const hours = Math.floor(totalSeconds / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+
+  const date = new Date(Date.UTC(2000, 0, 1, hours, minutes, seconds))
+
+  const options = {
+    timeZone: 'UTC',
+    hour: 'numeric',
+    minute: '2-digit'
+  }
+
+  // Format time to match the user's preference (if they have auto set, set nothing)
+  const timeFormat = hubUsers.checkUserPreference('time_format')
+  if (timeFormat === '12-hour') {
+    options.hour12 = true
+  } else if (timeFormat === '24-hour') {
+    options.hour12 = false
+  }
+
+  if (seconds !== 0) {
+    options.second = '2-digit'
+  }
+
+  return date.toLocaleTimeString(locale, options)
 }

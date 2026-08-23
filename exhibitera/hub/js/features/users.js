@@ -98,6 +98,8 @@ export function checkUserPreference (pref) {
       return prefs?.sort_order ?? 'status'
     case 'status_mode':
       return prefs?.status_mode ?? 'realtime'
+    case 'time_format':
+      return prefs?.time_format ?? 'auto'
     default:
       console.log('checkUserPreference: error: unknown preference:', pref)
   }
@@ -107,6 +109,7 @@ export function showUserPreferenceModal () {
   // Configure and display the modal for editing user preferences
 
   document.getElementById('userPreferencesModalAppearanceSelect').value = checkUserPreference('appearance')
+  document.getElementById('userPreferencesModalTimeFormatSelect').value = checkUserPreference('time_format')
 
   exUtilities.showModal('#userPreferencesModal')
 }
@@ -115,7 +118,8 @@ export function submitUserPreferencesFromModal () {
   // Collect details from the modal to update the user preferences
 
   const prefs = {
-    appearance: document.getElementById('userPreferencesModalAppearanceSelect').value
+    appearance: document.getElementById('userPreferencesModalAppearanceSelect').value,
+    time_format: document.getElementById('userPreferencesModalTimeFormatSelect').value
   }
   updateUserPreferences(prefs)
     .then(configureUserPreferences)
