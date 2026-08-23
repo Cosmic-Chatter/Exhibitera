@@ -4,6 +4,28 @@ import * as exUtilities from '../../../common/utilities.js'
 import exConfig from '../../config.js'
 import * as exTools from '../tools.js'
 
+import { ModalController } from './modal_controller.js'
+
+// Modal for creating or editing a schedule entry
+const scheduleEditModal = new ModalController({
+  id: 'scheduleEditModal',
+  defaultFields: [
+    { id: 'scheduleActionTimeInput', value: null },
+    { id: 'scheduleActionSelector', value: null },
+    { id: 'scheduleTargetSelector', value: null },
+    { id: 'scheduleValueSelector', value: null },
+    { id: 'scheduleNoteInput', value: '' }
+  ],
+  warningIDs: ['scheduleEditErrorAlert']
+})
+
+const dateOptions = {
+  weekday: 'long',
+  year: 'numeric',
+  month: 'short',
+  day: 'numeric'
+}
+
 export function deleteSchedule (name) {
   // Send a message to Hub asking to delete the schedule
   // file with the given name. The name should not include ".ini"
@@ -56,12 +78,6 @@ export function populateSchedule (schedule) {
   // Record the timestamp when this schedule was generated
   exConfig.scheduleUpdateTime = schedule.updateTime
   const sched = schedule.schedule
-  const dateOptions = {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  }
 
   for (const day of sched) {
     // Apply a background color to date-specific schedules so that we
@@ -614,13 +630,11 @@ export async function setScheduleActionValueSelector (action = null, target = nu
   const errorAlert = document.getElementById('scheduleEditErrorAlert')
   if (component == null || (component?.helperAddress ?? '') === '') {
     errorAlert.textContent = 'This component is not responding'
-    errorAlert.style.display = 'block'
+    scheduleEditModal.showWarning('scheduleEditErrorAlert')
     valueSelector.style.display = 'none'
     valueSelectorLabel.style.display = 'none'
     return
-  } else {
-    errorAlert.style.display = 'none'
-  }
+  } else scheduleEditModal.hideWarning('scheduleEditErrorAlert')
 
   if (action === 'set_definition') {
     const response = await component.makeRequest({
@@ -670,7 +684,7 @@ export function scheduleConfigureEditModal (scheduleName,
   // Set up and then show the modal that enables editing a scheduled event
   // or adding a new one
 
-  const scheduleEditModal = document.getElementById('scheduleEditModal')
+  scheduleEditModal.reset()
 
   // If currentScheduleID == null, we are adding a new schedule item, so create a unique ID
   if (currentScheduleID == null) {
@@ -684,36 +698,26 @@ export function scheduleConfigureEditModal (scheduleName,
   targetSelectorLabel.style.display = 'none'
   document.getElementById('scheduleValueSelector').style.display = 'none'
   document.getElementById('scheduleValueSelectorLabel').style.display = 'none'
-  document.getElementById('scheduleEditErrorAlert').style.display = 'none'
 
   const noteInput = document.getElementById('scheduleNoteInput')
   noteInput.style.display = 'none'
-  noteInput.value = ''
 
   // Tag the modal with a bunch of data that we can read if needed when
   // submitting the change
-  scheduleEditModal.dataset.scheduleName = scheduleName
-  scheduleEditModal.dataset.scheduleID = currentScheduleID
-  scheduleEditModal.dataset.isAddition = isAddition
-  scheduleEditModal.dataset.currentTime = currentTime
-  scheduleEditModal.dataset.currentAction = currentAction
-  scheduleEditModal.dataset.currentTarget = currentTarget
-  scheduleEditModal.dataset.currentValue = currentValue
 
-  // Set the modal title
+  scheduleEditModal.setData('scheduleName', scheduleName)
+  scheduleEditModal.setData('scheduleID', currentScheduleID)
+  scheduleEditModal.setData('isAddition', isAddition)
+  scheduleEditModal.setData('currentTime', currentTime)
+  scheduleEditModal.setData('currentAction', currentAction)
+  scheduleEditModal.setData('currentTarget', currentTarget)
+  scheduleEditModal.setData('currentValue', currentValue)
+
   if (isAddition) {
-    document.getElementById('scheduleEditModalTitle').innerText = 'Add action'
-  } else {
-    document.getElementById('scheduleEditModalTitle').innerText = 'Edit action'
-  }
+    scheduleEditModal.setTitle('Add action')
+  } else scheduleEditModal.setTitle('Edit action')
 
   // Set the scope notice so that users know what their change will affect
-  const dateOptions = {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  }
   if (type === 'date-specific') {
     // Parse the date into a string
     const dateSplit = scheduleName.split('-')
@@ -726,8 +730,10 @@ export function scheduleConfigureEditModal (scheduleName,
 
   // If we're editing an existing action, pre-fill the current options
   if (isAddition === false) {
-    document.getElementById('scheduleActionTimeInput').value = currentTime
-    document.getElementById('scheduleActionSelector').value = currentAction
+    scheduleEditModal.populate([
+      { id: 'scheduleActionTimeInput', value: currentTime },
+      { id: 'scheduleActionSelector', value: currentAction }
+    ])
 
     if (currentAction === 'note') {
       document.getElementById('scheduleNoteInput').value = currentValue
@@ -754,13 +760,9 @@ export function scheduleConfigureEditModal (scheduleName,
         targetSelectorLabel.style.display = 'block'
       }
     }
-  } else {
-    document.getElementById('scheduleActionTimeInput').value = null
-    document.getElementById('scheduleActionSelector').value = null
-    targetSelector.value = null
   }
 
-  exUtilities.showModal('#scheduleEditModal')
+  scheduleEditModal.show()
 }
 
 export function sendScheduleUpdateFromModal () {
@@ -794,23 +796,23 @@ export function sendScheduleUpdateFromModal () {
   const editErrorAlert = document.getElementById('scheduleEditErrorAlert')
   if (time === '' || time == null) {
     editErrorAlert.innerText = 'You must specifiy a time for the action'
-    editErrorAlert.style.display = 'block'
+    scheduleEditModal.showWarning('scheduleEditErrorAlert')
     return
   } else if (action == null) {
     editErrorAlert.innerText = 'You must specifiy an action'
-    editErrorAlert.style.display = 'block'
+    scheduleEditModal.showWarning('scheduleEditErrorAlert')
     return
   } else if (action === 'set_exhibit' && target == null) {
     editErrorAlert.innerText = 'You must specifiy an exhibition to set'
-    editErrorAlert.style.display = 'block'
+    scheduleEditModal.showWarning('scheduleEditErrorAlert')
     return
   } else if (['power_on', 'power_off', 'refresh_page', 'restart'].includes(action) && target == null) {
     editErrorAlert.innerText = 'You must specifiy a target for this action'
-    editErrorAlert.style.display = 'block'
+    scheduleEditModal.showWarning('scheduleEditErrorAlert')
     return
   } else if (['set_deinition', 'set_dmx_scene'].includes(value) && value == null) {
     editErrorAlert.innerText = 'You must specifiy a value for this action'
-    editErrorAlert.style.display = 'block'
+    scheduleEditModal.showWarning('scheduleEditErrorAlert')
     return
   }
 
@@ -827,8 +829,8 @@ export function sendScheduleUpdateFromModal () {
     params: requestDict
   })
     .then((update) => {
-      if (update?.success) {
-        exUtilities.hideModal('#scheduleEditModal')
+      if (update.success) {
+        scheduleEditModal.hide()
         populateSchedule(update)
         if (document.getElementById('manageFutureDateModal').classList.contains('show')) {
           populateFutureDateCalendarInput()

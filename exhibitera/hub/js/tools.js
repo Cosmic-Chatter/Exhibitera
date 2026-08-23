@@ -109,7 +109,7 @@ export function openMediaInNewTab (filenames, fileTypes) {
   imageWindow.document.write(html)
 }
 
-async function showUpdateInfoModal (id, kind, details) {
+export async function showUpdateInfoModal (id, kind, details) {
   // Populate the model with details about the update and show it.
 
   if (kind !== 'hub' && kind !== 'apps') {

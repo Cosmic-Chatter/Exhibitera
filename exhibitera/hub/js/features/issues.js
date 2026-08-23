@@ -4,6 +4,21 @@ import * as exUtilities from '../../../common/utilities.js'
 import hubConfig from '../../config.js'
 import * as hubTools from '../tools.js'
 
+import { ModalController } from './modal_controller.js'
+
+// Modal for creating or editing an issue
+const issueEditModal = new ModalController({
+  id: 'issueEditModal',
+  defaultFields: [
+    { id: 'issueTitleInput', value: '' },
+    { id: 'issueDescriptionInput', value: '' },
+    { id: 'issuePrioritySelector', value: 'low' },
+    { id: 'issueAssignedToSelector', value: null },
+    { id: 'issueRelatedComponentsSelector', value: null }
+  ],
+  warningIDs: ['issueMediaUploadHEICWarning']
+})
+
 export function rebuildIssueList () {
   // Take an array of issue dictionaries and build the GUI representation.
 
@@ -435,7 +450,7 @@ function getIssue (id) {
 export async function showIssueEditModal (issueType, target) {
   // Show the modal and configure for either "new" or "edit"
 
-  // Make sure we have all the current components listed as objections for
+  // Make sure we have all the current components listed as options for
   // the issueRelatedComponentsSelector
   const issueRelatedComponentsSelector = document.getElementById('issueRelatedComponentsSelector')
   issueRelatedComponentsSelector.innerText = ''
@@ -468,7 +483,6 @@ export async function showIssueEditModal (issueType, target) {
   })
     .then((response) => {
       if (response.success) {
-        console.log(response.users)
         const sortedUsers = exUtilities.sortAlphabetically(response.users, 'display_name')
         for (const user of sortedUsers) {
           document.getElementById('issueAssignedToSelector').appendChild(new Option(user.display_name, user.uuid))
@@ -479,7 +493,6 @@ export async function showIssueEditModal (issueType, target) {
   // Clear file upload interface elements
   document.getElementById('issueMediaUploadFilename').innerText = 'Choose files'
 
-  document.getElementById('issueMediaUploadHEICWarning').style.display = 'none'
   document.getElementById('issueMediaUploadSubmitButton').style.display = 'none'
   document.getElementById('issueMediaUploadProgressBarContainer').style.display = 'none'
   document.getElementById('issueMediaUpload').value = null
@@ -489,28 +502,27 @@ export async function showIssueEditModal (issueType, target) {
   const newElement = oldElement.cloneNode(true)
   oldElement.parentNode.replaceChild(newElement, oldElement)
 
-  if (issueType === 'new') {
-    // Clear inputs
-    document.getElementById('issueTitleInput').value = ''
-    document.getElementById('issueDescriptionInput').value = ''
-    document.getElementById('issueAssignedToSelector').value = null
-    document.getElementById('issueRelatedComponentsSelector').value = null
+  issueEditModal.reset()
 
-    document.getElementById('issueEditModal').dataset.type = 'new'
-    document.getElementById('issueEditModalTitle').innerText = 'Create Issue'
+  if (issueType === 'new') {
+    issueEditModal.setData('type', 'new')
+    issueEditModal.setTitle('Create Issue')
+
     rebuildIssueMediaUploadedList()
   } else if (target != null) {
-    const modal = document.getElementById('issueEditModal')
-    modal.dataset.type = 'edit'
-    modal.dataset.target = target
-
-    document.getElementById('issueEditModalTitle').innerHTML = 'Edit Issue'
+    issueEditModal.setData('type', 'edit')
+    issueEditModal.setData('target', target)
+    issueEditModal.setTitle('Edit Issue')
 
     const targetIssue = getIssue(target)
-    document.getElementById('issueTitleInput').value = targetIssue.issueName
-    document.getElementById('issueDescriptionInput').value = targetIssue.issueDescription
-    document.getElementById('issueAssignedToSelector').value = targetIssue.assignedTo
-    document.getElementById('issueRelatedComponentsSelector').value = targetIssue.relatedComponentUUIDs
+
+    issueEditModal.populate([
+      { id: 'issueTitleInput', value: targetIssue.issueName },
+      { id: 'issueDescriptionInput', value: targetIssue.issueDescription },
+      { id: 'issuePrioritySelector', value: targetIssue.priority },
+      { id: 'issueAssignedToSelector', value: targetIssue.assignedTo },
+      { id: 'issueRelatedComponentsSelector', value: targetIssue.relatedComponentUUIDs }
+    ])
 
     if (targetIssue.media.length > 0) {
       rebuildIssueMediaUploadedList(target)
@@ -519,7 +531,7 @@ export async function showIssueEditModal (issueType, target) {
     }
   }
 
-  exUtilities.showModal('#issueEditModal')
+  issueEditModal.show()
 }
 
 export function onIssueMediaUploadChange () {
@@ -535,11 +547,9 @@ export function onIssueMediaUploadChange () {
 
   // Check for HEIC file
   if (file.type === 'image/heic') {
-    document.getElementById('issueMediaUploadHEICWarning').style.display = 'block'
+    issueEditModal.showWarning('issueMediaUploadHEICWarning')
     document.getElementById('issueMediaUploadSubmitButton').style.display = 'none'
-  } else {
-    document.getElementById('issueMediaUploadHEICWarning').style.display = 'none'
-  }
+  } else issueEditModal.hideWarning('issueMediaUploadHEICWarning')
 }
 
 export function uploadIssueMediaFile () {
@@ -691,14 +701,13 @@ export function issueMediaDelete (filenames) {
   // Send a message to Hub, asking for the files to be deleted.
   // filenames is an array of strings
 
-  const modal = document.getElementById('issueEditModal')
   const requestDict = { filenames }
 
   // If this is an existing issue, we need to say what the issue id is
 
-  const issueType = modal.dataset.type
+  const issueType = issueEditModal.getData('type')
   if (issueType === 'edit') {
-    requestDict.owner = modal.dataset.target
+    requestDict.owner = issueEditModal.getData('target')
   }
 
   hubTools.makeServerRequest({
@@ -719,7 +728,6 @@ export function submitIssueFromModal () {
   // Take the inputs from the modal, check that we have everything we need,
   // and submit it to the server.
 
-  const modal = document.getElementById('issueEditModal')
   const issueDict = {
     issueName: document.getElementById('issueTitleInput').value,
     issueDescription: document.getElementById('issueDescriptionInput').value,
@@ -741,15 +749,15 @@ export function submitIssueFromModal () {
   }
 
   if (error === false) {
-    const issueType = modal.dataset.type
+    const issueType = issueEditModal.getData('type')
     let endpoint
     if (issueType === 'new') {
       endpoint = '/issue/create'
     } else {
-      issueDict.id = modal.dataset.target
+      issueDict.id = issueEditModal.getData('target')
       endpoint = '/issue/edit'
     }
-    exUtilities.hideModal(modal)
+    issueEditModal.hide()
 
     hubTools.makeServerRequest({
       method: 'POST',

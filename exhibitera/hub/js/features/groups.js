@@ -1,57 +1,68 @@
 import * as exUtilities from '../../../common/utilities.js'
 
-import exConfig from '../../config.js'
-import * as exTools from '../tools.js'
+import hubConfig from '../../config.js'
+import * as hubTools from '../tools.js'
+
+import { ModalController } from './modal_controller.js'
+
+// Modal for creating or editing a Group entry
+const editGroupModal = new ModalController({
+  id: 'editGroupModal',
+  defaultFields: [
+    { id: 'editGroupModalNameInput', value: '' },
+    { id: 'editGroupModalDescriptionInput', value: '' }
+  ],
+  warningIDs: ['editGroupModalNameWarning']
+})
 
 export function showEditGroupModal (uuid = '') {
   // Show the modal for creatng or editing a group
 
-  document.getElementById('editGroupModal').dataset.uuid = uuid
-  document.getElementById('editGroupModalNameWarning').style.display = 'none'
+  editGroupModal.reset()
+  editGroupModal.setData('uuid', uuid)
 
   if (uuid !== '') {
     // We are editing a group
-    document.getElementById('editGroupModalTitle').innerHTML = 'Edit group'
+    editGroupModal.setTitle('Edit group')
     document.getElementById('editGroupModalSubmitButton').innerHTML = 'Save'
 
-    exTools.makeServerRequest({
+    hubTools.makeServerRequest({
       method: 'GET',
       endpoint: '/group/' + uuid + '/details'
     })
       .then((response) => {
         if (response.success === true) {
-          document.getElementById('editGroupModalNameInput').value = response.details.name
-          document.getElementById('editGroupModalDescriptionInput').value = response.details.description
+          editGroupModal.populate([
+            { id: 'editGroupModalNameInput', value: response.details.name },
+            { id: 'editGroupModalDescriptionInput', value: response.details.description }
+          ])
         }
-        exUtilities.showModal('#editGroupModal')
+        editGroupModal.show()
       })
   } else {
     // Creating a new group
-    document.getElementById('editGroupModalTitle').innerHTML = 'Create a group'
+    editGroupModal.setTitle('Create group')
     document.getElementById('editGroupModalSubmitButton').innerHTML = 'Create'
 
-    document.getElementById('editGroupModalNameInput').value = ''
-    document.getElementById('editGroupModalDescriptionInput').value = ''
-
-    exUtilities.showModal('#editGroupModal')
+    editGroupModal.show()
   }
 }
 
 export function submitChangeFromGroupEditModal () {
   // Collect details from the group edit modal and submit them to the server
 
-  const uuid = document.getElementById('editGroupModal').dataset.uuid
+  const uuid = editGroupModal.getData('uuid')
   const name = document.getElementById('editGroupModalNameInput').value.trim()
   const description = document.getElementById('editGroupModalDescriptionInput').value.trim()
 
   if (name === '') {
-    document.getElementById('editGroupModalNameWarning').style.display = 'block'
+    editGroupModal.showWarning('editGroupModalNameWarning')
     return
   }
 
   if (uuid === '') {
     // Create new group
-    exTools.makeServerRequest({
+    hubTools.makeServerRequest({
       method: 'POST',
       endpoint: '/group/create',
       params: {
@@ -59,11 +70,11 @@ export function submitChangeFromGroupEditModal () {
       }
     })
       .then(() => {
-        exUtilities.hideModal('#editGroupModal')
+        editGroupModal.hide()
       })
   } else {
     // Edit group
-    exTools.makeServerRequest({
+    hubTools.makeServerRequest({
       method: 'POST',
       endpoint: '/group/' + uuid + '/edit',
       params: {
@@ -71,7 +82,7 @@ export function submitChangeFromGroupEditModal () {
       }
     })
       .then(() => {
-        exUtilities.hideModal('#editGroupModal')
+        editGroupModal.hide()
       })
   }
 }
@@ -82,9 +93,9 @@ export function populateGroupsRow () {
   const groupRow = document.getElementById('settingsGroupsRow')
   groupRow.innerHTML = ''
 
-  if (exConfig.groups == null) exConfig.groups = []
+  if (hubConfig.groups == null) hubConfig.groups = []
 
-  const sorted = exUtilities.sortAlphabetically(exConfig.groups, 'name')
+  const sorted = exUtilities.sortAlphabetically(hubConfig.groups, 'name')
 
   for (const group of sorted) {
     const groupCol = document.createElement('div')
@@ -163,7 +174,7 @@ export function deleteGroupFromModal () {
 
   const uuid = document.getElementById('deleteGroupModal').dataset.uuid
 
-  exTools.makeServerRequest({
+  hubTools.makeServerRequest({
     method: 'DELETE',
     endpoint: '/group/' + uuid
   })
@@ -184,9 +195,9 @@ export function populateGroupsForSelect (select, selected = []) {
   if (selected.includes('Default')) defaultOption.selected = true
   select.appendChild(defaultOption)
 
-  if (exConfig.groups == null) exConfig.groups = []
+  if (hubConfig.groups == null) hubConfig.groups = []
 
-  const sorted = exUtilities.sortAlphabetically(exConfig.groups, 'name')
+  const sorted = exUtilities.sortAlphabetically(hubConfig.groups, 'name')
 
   for (const group of sorted) {
     const option = new Option(group.name, group.uuid)

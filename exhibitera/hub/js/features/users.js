@@ -4,6 +4,32 @@ import * as exUtilities from '../../../common/utilities.js'
 import exConfig from '../../config.js'
 import * as exTools from '../tools.js'
 
+import { ModalController } from './modal_controller.js'
+
+// Modal for creating or editing a user account
+const editUserModal = new ModalController({
+  id: 'editUserModal',
+  defaultFields: [
+    { id: 'editUserUsernameInput', value: '' },
+    { id: 'editUserDisplayNameInput', value: '' },
+    { id: 'editUserPermissionAnalytics', value: 'none' },
+    { id: 'editUserPermissionExhibits', value: 'none' },
+    { id: 'editUserPermissionMaintenance', value: 'none' },
+    { id: 'editUserPermissionPrograms', value: 'none' },
+    { id: 'editUserPermissionSchedule', value: 'none' },
+    { id: 'editUserPermissionSettings', value: 'none' },
+    { id: 'editUserPermissionUsers', value: 'none' },
+    { id: 'editUserPermissionGroups', value: 'none' }
+  ],
+  warningIDs: [
+    'editUserBlankUsername',
+    'editUserBlankDisplayname',
+    'editUserPasswordMismatch',
+    'editUserBlankPassword',
+    'editUserUsernameExists'
+  ]
+})
+
 export function checkUserPermission (action, neededLevel, group = null) {
   // Return true if the user's permissions allow this action and false if they do not.
 
@@ -99,6 +125,8 @@ export function submitUserPreferencesFromModal () {
 export function showEditUserModal (user = null) {
   // Show the modal for creating a new user account.
 
+  editUserModal.reset()
+
   if (user == null) {
     // We are creating a new user.
     configureEditUserModalForNewUser()
@@ -107,35 +135,18 @@ export function showEditUserModal (user = null) {
     configureEditUserModalForExistingUser(user)
   }
 
-  document.getElementById('editUserBlankUsername').style.display = 'none'
-  document.getElementById('editUserBlankDisplayname').style.display = 'none'
-  document.getElementById('editUserPasswordMismatch').style.display = 'none'
-  document.getElementById('editUserBlankPassword').style.display = 'none'
-  document.getElementById('editUserUsernameExists').style.display = 'none'
-
   document.getElementById('editUserSubmitButton').style.display = 'none'
-  exUtilities.showModal('#editUserModal')
+  editUserModal.show()
 }
 
 function configureEditUserModalForNewUser () {
   // Set up the editUser modal for a new user.
 
-  document.getElementById('editUserModal').dataset.uuid = ''
-  document.getElementById('editUserModalTitle').innerText = 'Create a user'
+  editUserModal.setData('uuid', '')
+  editUserModal.setTitle('Create user')
+
   document.getElementById('editUserSubmitButton').innerText = 'Create'
 
-  document.getElementById('editUserUsernameInput').value = ''
-  document.getElementById('editUserDisplayNameInput').value = ''
-
-  // Permissions
-  document.getElementById('editUserPermissionAnalytics').value = 'none'
-  document.getElementById('editUserPermissionExhibits').value = 'none'
-  document.getElementById('editUserPermissionMaintenance').value = 'none'
-  document.getElementById('editUserPermissionPrograms').value = 'none'
-  document.getElementById('editUserPermissionSchedule').value = 'none'
-  document.getElementById('editUserPermissionSettings').value = 'none'
-  document.getElementById('editUserPermissionUsers').value = 'none'
-  document.getElementById('editUserPermissionGroups').value = 'none'
   document.getElementById('editUserGroupsRow').style.display = 'none'
   populateEditUserGroupsRow({ edit: [], edit_content: [], view: [] })
 }
@@ -143,22 +154,24 @@ function configureEditUserModalForNewUser () {
 function configureEditUserModalForExistingUser (user) {
   // Set up the editUser modal for editing an existing user.
 
-  document.getElementById('editUserModal').dataset.uuid = user.uuid
-  document.getElementById('editUserModalTitle').innerText = 'Edit user'
+  editUserModal.setData('uuid', user.uuid)
+  editUserModal.setTitle('Edit user')
+
   document.getElementById('editUserSubmitButton').innerText = 'Save'
 
-  document.getElementById('editUserUsernameInput').value = user.username
-  document.getElementById('editUserDisplayNameInput').value = user.display_name
+  editUserModal.populate([
+    { id: 'editUserUsernameInput', value: user.username },
+    { id: 'editUserDisplayNameInput', value: user.display_name },
+    { id: 'editUserPermissionAnalytics', value: user.permissions.analytics },
+    { id: 'editUserPermissionExhibits', value: user.permissions.exhibits },
+    { id: 'editUserPermissionMaintenance', value: user.permissions.maintenance },
+    { id: 'editUserPermissionPrograms', value: user.permissions.programs },
+    { id: 'editUserPermissionSchedule', value: user.permissions.schedule },
+    { id: 'editUserPermissionSettings', value: user.permissions.settings },
+    { id: 'editUserPermissionUsers', value: user.permissions.users }
+  ])
 
-  // Permissions
-  document.getElementById('editUserPermissionAnalytics').value = user.permissions.analytics
-  document.getElementById('editUserPermissionExhibits').value = user.permissions.exhibits
-  document.getElementById('editUserPermissionMaintenance').value = user.permissions.maintenance
-  document.getElementById('editUserPermissionPrograms').value = user.permissions.programs
-  document.getElementById('editUserPermissionSchedule').value = user.permissions.schedule
-  document.getElementById('editUserPermissionSettings').value = user.permissions.settings
-  document.getElementById('editUserPermissionUsers').value = user.permissions.users
-
+  // Component permissions
   if (user.permissions.components.edit.includes('__all')) {
     document.getElementById('editUserPermissionGroups').value = 'edit'
     document.getElementById('editUserGroupsRow').style.display = 'none'
@@ -246,7 +259,7 @@ export function updateUserPreferences (preferences) {
 export function submitChangeFromEditUserModal () {
   // Collect the necessary details and submit a new or edited user.
 
-  const uuid = document.getElementById('editUserModal').dataset.uuid
+  const uuid = editUserModal.getData('uuid')
 
   const details = {
     username: document.getElementById('editUserUsernameInput').value.trim(),
@@ -287,36 +300,31 @@ export function submitChangeFromEditUserModal () {
   }
 
   if (details.username === '') {
-    document.getElementById('editUserBlankUsername').style.display = 'block'
+    editUserModal.showWarning('editUserBlankUsername')
     return
-  } else {
-    document.getElementById('editUserBlankUsername').style.display = 'none'
-  }
+  } else editUserModal.hideWarning('editUserBlankUsername')
+
   if (details.display_name === '') {
-    document.getElementById('editUserBlankDisplayname').style.display = 'block'
+    editUserModal.showWarning('editUserBlankDisplayname')
     return
-  } else {
-    document.getElementById('editUserBlankDisplayname').style.display = 'none'
-  }
+  } else editUserModal.hideWarning('editUserBlankDisplayname')
+
   const password1 = document.getElementById('editUserPassword1Input').value
   const password2 = document.getElementById('editUserPassword2Input').value
 
   if (password1 !== password2) {
-    document.getElementById('editUserPasswordMismatch').style.display = 'block'
+    editUserModal.showWarning('editUserPasswordMismatch')
     return
-  } else {
-    document.getElementById('editUserPasswordMismatch').style.display = 'none'
-  }
+  } else editUserModal.hideWarning('editUserPasswordMismatch')
 
   if (uuid === '') {
     // Creating a new user
 
     if (password1 === '') {
-      document.getElementById('editUserBlankPassword').style.display = 'block'
+      editUserModal.showWarning('editUserBlankPassword')
       return
-    } else {
-      document.getElementById('editUserBlankPassword').style.display = 'none'
-    }
+    } else editUserModal.hideWarning('editUserBlankPassword')
+
     details.password = password1
     exTools.makeServerRequest({
       method: 'POST',
@@ -325,9 +333,9 @@ export function submitChangeFromEditUserModal () {
     })
       .then((response) => {
         if (response.success === false && response.reason === 'username_taken') {
-          document.getElementById('editUserUsernameExists').style.display = 'block'
+          editUserModal.showWarning('editUserUsernameExists')
         } else if (response.success === true) {
-          exUtilities.hideModal('#editUserModal')
+          editUserModal.hide()
           populateUsers()
         }
       })
@@ -343,11 +351,10 @@ export function submitChangeFromEditUserModal () {
       params: details
     })
       .then((response) => {
-        console.log(response)
         if (response.success === false && response.reason === 'username_taken') {
-          document.getElementById('editUserUsernameExists').style.display = 'block'
+          editUserModal.showWarning('editUserUsernameExists')
         } else if (response.success === true) {
-          exUtilities.hideModal('#editUserModal')
+          editUserModal.hide()
           populateUsers()
         }
       })
