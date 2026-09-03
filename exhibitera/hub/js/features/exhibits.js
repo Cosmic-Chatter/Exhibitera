@@ -7,6 +7,30 @@ import * as hubSchedule from './schedules.js'
 import * as hubTools from '../tools.js'
 import * as hubUsers from './users.js'
 
+import { ActionConfigurator } from './action_config.js'
+import { ModalController } from './modal_controller.js'
+
+// Action configurator for actions within exhibitions
+const exhibitActionConfigurator = new ActionConfigurator({
+  actionSelectorId: 'editExhibitActionSelector',
+  targetSelectorId: 'editExhibitActionTargetSelector',
+  targetSelectorLabelId: 'editExhibitActionTargetSelectorLabel',
+  valueSelectorId: 'editExhibitActionValueSelector',
+  valueSelectorLabelId: 'editExhibitActionValueSelectorLabel',
+  modalId: 'editExhibitActionModal'
+})
+
+// Modal for creating or editing an action in an exhibition
+const editExhibitActionModal = new ModalController({
+  id: 'editExhibitActionModal',
+  defaultFields: [
+    { id: 'editExhibitActionSelector', value: null },
+    { id: 'editExhibitActionTargetSelector', value: null },
+    { id: 'editExhibitActionValueSelector', value: null }
+  ],
+  warningIDs: []
+})
+
 export function configureVisibleGroups () {
   // Set up the show/hide groups modal and show it.
 
@@ -724,33 +748,29 @@ export function editExhibitSubmitUpdate () {
     })
 }
 
-async function showEditExhibitActionModal (actionDict = null) {
+export async function showEditExhibitActionModal (actionDict = null) {
   // Configure the modal for editing an action and show it.
 
-  const actionSelector = document.getElementById('editExhibitActionSelector')
-  const modalTitle = document.getElementById('editExhibitActionModalTitle')
-  modalTitle.innerText = 'Add action'
+  editExhibitActionModal.reset()
 
-  actionSelector.value = null
+  const actionSelector = document.getElementById('editExhibitActionSelector')
+  editExhibitActionModal.setTitle('Add action')
 
   const targetSelector = document.getElementById('editExhibitActionTargetSelector')
-  targetSelector.value = null
   targetSelector.style.display = 'none'
   document.getElementById('editExhibitActionTargetSelectorLabel').style.display = 'none'
 
   const valueSelector = document.getElementById('editExhibitActionValueSelector')
-  valueSelector.value = null
   valueSelector.style.display = 'none'
   document.getElementById('editExhibitActionValueSelectorLabel').style.display = 'none'
 
-  const modal = document.getElementById('editExhibitActionModal')
-  modal.dataset.uuid = exUtilities.uuid()
-  modal.dataset.isEdit = 'false'
+  editExhibitActionModal.setData('uuid', exUtilities.uuid())
+  editExhibitActionModal.setData('isEdit', 'false')
 
   if (actionDict != null) {
-    modal.dataset.uuid = actionDict.uuid
-    modal.dataset.isEdit = 'true'
-    modalTitle.innerText = 'Edit action'
+    editExhibitActionModal.setData('uuid', actionDict.uuid)
+    editExhibitActionModal.setData('isEdit', 'true')
+    editExhibitActionModal.setTitle('Edit action')
 
     actionSelector.value = actionDict.action
 
@@ -767,101 +787,33 @@ async function showEditExhibitActionModal (actionDict = null) {
     await editExhibitActionConfigureValueSelector(actionDict.action, actionDict.target)
     valueSelector.value = actionDict.value
   }
-
-  exUtilities.showModal('#editExhibitActionModal')
+  editExhibitActionModal.show()
 }
 
-function editExhibitActionConfigureTargetSelector (action = null, target = null) {
+export function editExhibitActionConfigureTargetSelector (action = null, target = null) {
   // Show/hide the select element for picking the target of an action when appropriate
 
-  if (action == null) action = document.getElementById('editExhibitActionSelector').value
-
-  const targetSelector = document.getElementById('editExhibitActionTargetSelector')
-  const targetSelectorLabel = document.getElementById('editExhibitActionTargetSelectorLabel')
-  targetSelector.innerHTML = ''
-
-  if (['power_on', 'power_off'].includes(action)) {
-    targetSelector.setAttribute('multiple', true)
-    hubSchedule.actionTargetSelectorPopulateOptions(targetSelector, ['All', 'Groups', 'ExhibitComponents', 'Projectors'])
-  } else if (['restart'].includes(action)) {
-    targetSelector.setAttribute('multiple', true)
-    hubSchedule.actionTargetSelectorPopulateOptions(targetSelector, ['All', 'Groups', 'ExhibitComponents'])
-  } else if (['set_dmx_scene'].includes(action)) {
-    targetSelector.removeAttribute('multiple')
-    hubSchedule.actionTargetSelectorPopulateOptions(targetSelector, ['ExhibitComponents'])
-  }
-  targetSelector.style.display = 'block'
-  targetSelectorLabel.style.display = 'block'
-
-  // For certain actions, we want to then populare the value selector
-  if (['set_dmx_scene'].includes(action)) {
-    editExhibitActionConfigureValueSelector(action, target)
-  } else {
-    document.getElementById('editExhibitActionValueSelector').style.display = 'none'
-    document.getElementById('editExhibitActionValueSelectorLabel').style.display = 'none'
-  }
+  exhibitActionConfigurator.configureTargetSelector(action, target, hubConfig)
 }
 
-async function editExhibitActionConfigureValueSelector (action = null, target = null) {
+export async function editExhibitActionConfigureValueSelector (action = null, target = null) {
   // Show/hide the select element for picking the value of an action when appropriate
 
-  if (action == null) action = document.getElementById('editExhibitActionSelector').value
-  if (target == null) target = JSON.parse(document.getElementById('editExhibitActionTargetSelector').value)
-  if (Array.isArray(target)) target = target[0]
-
-  const valueSelector = document.getElementById('editExhibitActionValueSelector')
-  const valueSelectorLabel = document.getElementById('editExhibitActionValueSelectorLabel')
-  valueSelector.innerHTML = ''
-
-  if (action === 'set_dmx_scene') {
-    let component
-    try {
-      component = hubTools.getExhibitComponent(target.uuid)
-    } catch {
-      return
-    }
-    if (component == null) {
-      console.log('editExhibitActionConfigureValueSelector: component not available: ', target.uuid)
-      return
-    }
-
-    let response
-    try {
-      response = await component.makeRequest({
-        method: 'GET',
-        endpoint: '/DMX/scenes'
-      })
-    } catch {
-      console.log('editExhibitActionConfigureValueSelector: invalid helper address')
-    //   return
-    }
-
-    if (response?.success === true) {
-      for (const scene of response.scenes) {
-        valueSelector.appendChild(new Option(scene.name, scene.uuid))
-      }
-    }
-    valueSelector.style.display = 'block'
-    valueSelectorLabel.style.display = 'block'
-  } else {
-    valueSelector.style.display = 'none'
-    valueSelectorLabel.style.display = 'none'
-  }
+  await exhibitActionConfigurator.configureValueSelector(action, target)
 }
 
 export function editExhibitActionDeleteAction (uuid) {
   // Remove the entry for the given action
 
   document.getElementById('actionListing_' + uuid).remove()
-  exUtilities.hideModal('#editExhibitActionModal')
+  editExhibitActionModal.hide()
 }
 
 export function editExhibitActionSubmit () {
   // Collect info from the edit exhibit action modal and create/update the action.
 
-  const modal = document.getElementById('editExhibitActionModal')
-  const isEdit = modal.dataset.isEdit === 'true'
-  const uuid = modal.dataset.uuid
+  const isEdit = editExhibitActionModal.getData('isEdit') === 'true'
+  const uuid = editExhibitActionModal.getData('uuid')
 
   let action, value
   const targets = []
@@ -889,7 +841,7 @@ export function editExhibitActionSubmit () {
   } else {
     document.getElementById('actionListing_' + uuid).replaceWith(actionHTML)
   }
-  exUtilities.hideModal('#editExhibitActionModal')
+  editExhibitActionModal.hide()
 }
 
 function hideEditExhibitGUI () {

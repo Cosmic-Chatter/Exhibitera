@@ -1,11 +1,19 @@
-/* global bootstrap */
-
 import exConfig from '../../../common/config.js'
 import * as exUtilities from '../../../common/utilities.js'
 
 import hubConfig from '../../config.js'
 import * as hubTools from '../tools.js'
-import * as hubSchedule from './schedules.js'
+
+import { ActionConfigurator } from '../action_config.js'
+
+const programActionConfigurator = new ActionConfigurator({
+  actionSelectorId: 'programActionSelector',
+  targetSelectorId: 'programActionTargetSelector',
+  targetSelectorLabelId: 'programActionTargetSelectorLabel',
+  valueSelectorId: 'programActionValueSelector',
+  valueSelectorLabelId: 'programActionValueSelectorLabel',
+  modalId: 'programActionEditModal'
+})
 
 export async function populatePrograms (programs = null) {
   // Retrieve a list of available programs and populate the select
@@ -228,7 +236,7 @@ export async function showprogramActionEditModal (actionDict = null) {
 
     actionSelector.value = actionDict.action
 
-    programActionConfigureTargetSelector(actionDict.action)
+    programActionConfigurator.configureTargetSelector(actionDict.action)
     setTimeout(() => {
       for (const target of actionDict.target) {
         const targetStr = JSON.stringify(target)
@@ -238,83 +246,9 @@ export async function showprogramActionEditModal (actionDict = null) {
       }
     }, 0) // Make sure the DOM is updated
 
-    await programActionConfigureValueSelector(actionDict.action, actionDict.target)
+    await programActionConfigurator.configureValueSelector(actionDict.action, actionDict.target)
     valueSelector.value = actionDict.value
   }
 
   exUtilities.showModal('#programActionEditModal')
-}
-
-function programActionConfigureTargetSelector (action = null, target = null) {
-  // Show/hide the select element for picking the target of a program action when appropriate
-
-  if (action == null) action = document.getElementById('programActionSelector').value
-
-  const targetSelector = document.getElementById('programActionTargetSelector')
-  const targetSelectorLabel = document.getElementById('programActionTargetSelectorLabel')
-  targetSelector.innerHTML = ''
-
-  if (['power_on', 'power_off'].includes(action)) {
-    targetSelector.setAttribute('multiple', true)
-    hubSchedule.actionTargetSelectorPopulateOptions(targetSelector, ['All', 'Groups', 'ExhibitComponents', 'Projectors'])
-  } else if (['set_dmx_scene'].includes(action)) {
-    targetSelector.removeAttribute('multiple')
-    hubSchedule.actionTargetSelectorPopulateOptions(targetSelector, ['ExhibitComponents'])
-  }
-  targetSelector.style.display = 'block'
-  targetSelectorLabel.style.display = 'block'
-
-  // For certain actions, we want to then populare the value selector
-  if (['set_dmx_scene'].includes(action)) {
-    programActionConfigureValueSelector(action, target)
-  } else {
-    document.getElementById('programActionValueSelector').style.display = 'none'
-    document.getElementById('programActionValueSelectorLabel').style.display = 'none'
-  }
-}
-
-async function programActionConfigureValueSelector (action = null, target = null) {
-  // Show/hide the select element for picking the value of an action when appropriate
-
-  if (action == null) action = document.getElementById('programActionSelector').value
-  if (target == null) target = JSON.parse(document.getElementById('programActionTargetSelector').value)
-  if (Array.isArray(target)) target = target[0]
-
-  const valueSelector = document.getElementById('programActionValueSelector')
-  const valueSelectorLabel = document.getElementById('programActionValueSelectorLabel')
-  valueSelector.innerHTML = ''
-
-  if (action === 'set_dmx_scene') {
-    let component
-    try {
-      component = hubTools.getExhibitComponent(target.uuid)
-    } catch {
-      return
-    }
-    if (component == null) {
-      console.log('programActionConfigureValueSelector: component not available: ', target.uuid)
-      return
-    }
-
-    let response
-    try {
-      response = await component.makeRequest({
-        method: 'GET',
-        endpoint: '/DMX/scenes'
-      })
-    } catch {
-      console.log('programActionConfigureValueSelector: invalid helper address')
-    }
-
-    if (response?.success === true) {
-      for (const scene of response.scenes) {
-        valueSelector.appendChild(new Option(scene.name, scene.uuid))
-      }
-    }
-    valueSelector.style.display = 'block'
-    valueSelectorLabel.style.display = 'block'
-  } else {
-    valueSelector.style.display = 'none'
-    valueSelectorLabel.style.display = 'none'
-  }
 }

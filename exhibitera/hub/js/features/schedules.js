@@ -6,6 +6,7 @@ import hubConfig from '../../config.js'
 import * as hubTools from '../tools.js'
 import * as hubUsers from './users.js'
 
+import { ActionConfigurator } from './action_config.js'
 import { ModalController } from './modal_controller.js'
 
 // Modal for creating or editing a schedule entry
@@ -19,6 +20,22 @@ const scheduleEditModal = new ModalController({
     { id: 'scheduleNoteInput', value: '' }
   ],
   warningIDs: ['scheduleEditErrorAlert']
+})
+
+const scheduleActionConfigurator = new ActionConfigurator({
+  actionSelectorId: 'scheduleActionSelector',
+  targetSelectorId: 'scheduleTargetSelector',
+  targetSelectorLabelId: 'scheduleTargetSelectorLabel',
+  valueSelectorId: 'scheduleValueSelector',
+  valueSelectorLabelId: 'scheduleValueSelectorLabel',
+  modalId: 'scheduleEditModal',
+  errorAlertId: 'scheduleEditErrorAlert',
+  onError: () => scheduleEditModal.showWarning('scheduleEditErrorAlert'),
+  onErrorClear: () => scheduleEditModal.hideWarning('scheduleEditErrorAlert'),
+  extraElements: {
+    note: ['scheduleNoteInput']
+    // clear_exhibition_mods needs nothing extra shown
+  }
 })
 
 const dateOptions = {
@@ -361,9 +378,9 @@ export function populateScheduleDescriptionHelper (eventList, includeTime) {
     return 'No more actions today'
   } else if (eventList.length === 1) {
     const event = eventList[0]
-    description += scheduleActionToDescription(event.action) + ' '
+    description += ActionConfigurator.actionToDescription(event.action) + ' '
     if ((description.trim() !== 'No action') && (event.action !== 'clear_exhibition_mods')) {
-      description += scheduleTargetToDescription(event.target, event.action)
+      description += ActionConfigurator.targetToDescription(event.target, event.action)
     }
   } else {
     const action = eventList[0].action
@@ -374,7 +391,7 @@ export function populateScheduleDescriptionHelper (eventList, includeTime) {
       }
     }
     if (allSame) {
-      description += scheduleActionToDescription(action) + ' multiple'
+      description += ActionConfigurator.actionToDescription(action) + ' multiple'
     } else {
       description = 'Multiple actions'
     }
@@ -385,293 +402,32 @@ export function populateScheduleDescriptionHelper (eventList, includeTime) {
   return description
 }
 
-function scheduleActionToDescription (action) {
-  // Convert actions such as "power_on" to English text like "Power on"
-
-  switch (action) {
-    case 'clear_exhibition_mods':
-      return 'Clear exhibition modifications'
-    case 'power_off':
-      return 'Power off'
-    case 'power_on':
-      return 'Power on'
-    case 'refresh_page':
-      return 'Refresh'
-    case 'restart':
-      return 'Restart'
-    case 'set_definition':
-      return 'Set defintion for'
-    case 'set_dmx_scene':
-      return 'Set DMX scene for'
-    case 'set_exhibit':
-      return 'Set exhibit'
-    case '':
-      return 'No action'
-    default:
-      return action
-  }
-}
-
-function scheduleTargetToDescription (targetList, action = '') {
-  // Convert target uuids to English words
-
-  if (targetList == null) return 'none'
-
-  let target
-  if (Array.isArray(targetList)) {
-    // We have a list of target options
-
-    // Check if they are all either components or groups
-    let allComponents = true
-    let allGroups = true
-    for (const target of targetList) {
-      if (target.type !== 'component') allComponents = false
-      if (target.type !== 'group') allGroups = false
-    }
-
-    if (targetList.length > 10) {
-      if (allComponents) return String(targetList.length) + ' components'
-      if (allGroups) return String(targetList.length) + ' groups'
-      return 'multiple components'
-    } else if (targetList.length > 1) {
-      const numberNames = { 2: 'two', 3: 'three', 4: 'four', 5: 'five', 6: 'six', 7: 'seven', 8: 'eight', 9: 'nine', 10: 'ten' }
-      if (allComponents) return numberNames[targetList.length] + ' components'
-      if (allGroups) return numberNames[targetList.length] + ' groups'
-      return 'multiple components'
-    } else if (targetList.length === 1) {
-      target = targetList[0]
-    } else {
-      return 'none'
-    }
-  } else {
-    // We have a single target object
-    target = targetList
-  }
-
-  if (target.type === 'all') {
-    return 'all components'
-  } else if (target.type === 'group') {
-    return 'all ' + hubTools.getGroupName(target.uuid)
-  } else if (target.type === 'component') {
-    if (target?.uuid) {
-      const component = hubTools.getExhibitComponent(target.uuid)
-      if (component) return component.id
-    }
-  } else if (target.type === 'value') {
-    if (action === 'set_exhibit') return hubTools.getExhibitName(target.value)
-    return target.value
-  } else return target
-}
-
-export function actionTargetSelectorPopulateOptions (targetSelector, optionsToAdd) {
-  // Helper function for setScheduleActionTargetSelector that populates the target selector with the right options.
-
-  if (optionsToAdd.includes('All')) {
-    targetSelector.appendChild(new Option('All', JSON.stringify({ type: 'all' })))
-  }
-  if (optionsToAdd.includes('Groups')) {
-    const sep = new Option('Groups', null)
-    sep.disabled = true
-    targetSelector.appendChild(sep)
-    for (const item of hubConfig.componentGroups) {
-      let groupName
-      try {
-        if (item.group === 'Default') {
-          groupName = 'Default'
-        } else {
-          groupName = hubTools.getGroup(item.group).name
-        }
-      } catch {
-        groupName = 'Unknown group'
-      }
-      targetSelector.appendChild(new Option(groupName, JSON.stringify(
-        {
-          type: 'group',
-          uuid: item.group
-        }
-      )))
-    }
-  }
-  if (optionsToAdd.includes('ExhibitComponents') || optionsToAdd.includes('Projectors')) {
-    const sep = new Option('Components', null)
-    sep.disabled = true
-    targetSelector.appendChild(sep)
-
-    const sortedComponents = hubTools.sortExhibitComponentsByID()
-
-    if (optionsToAdd.includes('ExhibitComponents')) {
-      for (const item of sortedComponents) {
-        if (item.type === 'exhibit_component' && item.status !== hubConfig.STATUS.STATIC) {
-          targetSelector.appendChild(new Option(item.id, JSON.stringify(
-            {
-              type: 'component',
-              uuid: item.uuid
-            }
-          )))
-        }
-      }
-    }
-    if (optionsToAdd.includes('Projectors')) {
-      for (const item of sortedComponents) {
-        if (item.type === 'projector') {
-          targetSelector.appendChild(new Option(item.id, JSON.stringify(
-            {
-              type: 'component',
-              uuid: item.uuid
-            }
-          )))
-        }
-      }
-    }
-  }
-}
-
 export function setScheduleActionTargetSelector (action = null, target = null) {
   // Helper function to show/hide the select element for picking the target
   // of an action when appropriate
 
-  if (action == null) action = document.getElementById('scheduleActionSelector').value
-
-  const targetSelector = document.getElementById('scheduleTargetSelector')
-  const targetSelectorLabel = document.getElementById('scheduleTargetSelectorLabel')
-  const valueSelector = document.getElementById('scheduleValueSelector')
-  const valueSelectorLabel = document.getElementById('scheduleValueSelectorLabel')
-  const noteInput = document.getElementById('scheduleNoteInput')
-
-  if (action === 'set_exhibit') {
-    // Fill the target selector with a list of available exhiits
-    targetSelector.multiple = false
-    targetSelector.innerText = ''
-    const availableExhibits = Array.from(document.querySelectorAll('#exhibitSelect option'))
-
-    for (const item of availableExhibits) {
-      targetSelector.appendChild(new Option(hubTools.getExhibitName(item.value), JSON.stringify({
-        type: 'value',
-        value: item.value
-      })))
-    }
-    targetSelector.style.display = 'block'
-    targetSelectorLabel.style.display = 'block'
-    noteInput.style.display = 'none'
-  } else if (['power_on', 'power_off', 'refresh_page', 'restart', 'set_definition', 'set_dmx_scene'].includes(action)) {
-    // Fill the target selector with the list of groups and components, plus an option for all.
-    targetSelector.innerText = ''
-
-    if (['power_on', 'power_off'].includes(action)) {
-      targetSelector.multiple = true
-      actionTargetSelectorPopulateOptions(targetSelector, ['All', 'Groups', 'ExhibitComponents', 'Projectors'])
-    } else if (['refresh_page', 'restart'].includes(action)) {
-      targetSelector.multiple = true
-      actionTargetSelectorPopulateOptions(targetSelector, ['All', 'Groups', 'ExhibitComponents'])
-    } else if (['set_definition', 'set_dmx_scene'].includes(action)) {
+  scheduleActionConfigurator.configureTargetSelector(action, target, {
+    set_exhibit: ({ targetSelector, targetSelectorLabel }) => {
       targetSelector.multiple = false
-      actionTargetSelectorPopulateOptions(targetSelector, ['ExhibitComponents'])
+      targetSelector.innerText = ''
+      const availableExhibits = Array.from(document.querySelectorAll('#exhibitSelect option'))
+      for (const item of availableExhibits) {
+        targetSelector.appendChild(new Option(hubTools.getExhibitName(item.value), JSON.stringify({
+          type: 'value',
+          value: item.value
+        })))
+      }
+      targetSelector.style.display = 'block'
+      targetSelectorLabel.style.display = 'block'
     }
-    targetSelector.style.display = 'block'
-    targetSelectorLabel.style.display = 'block'
-
-    // For certain actions, we want to then populare the value selector
-    if (['set_definition', 'set_dmx_scene'].includes(action)) {
-      setScheduleActionValueSelector(action, target)
-    } else {
-      valueSelector.style.display = 'none'
-      valueSelectorLabel.style.display = 'none'
-    }
-    noteInput.style.display = 'none'
-  } else if (action === 'note') {
-    targetSelector.style.display = 'none'
-    targetSelectorLabel.style.display = 'none'
-    targetSelector.value = null
-    valueSelector.style.display = 'none'
-    valueSelectorLabel.style.display = 'none'
-    noteInput.style.display = 'block'
-  } else if (action === 'clear_exhibition_mods') {
-    targetSelector.style.display = 'none'
-    targetSelectorLabel.style.display = 'none'
-    targetSelector.value = null
-    valueSelector.style.display = 'none'
-    valueSelectorLabel.style.display = 'none'
-    noteInput.style.display = 'none'
-  } else {
-    targetSelector.style.display = 'none'
-    targetSelectorLabel.style.display = 'none'
-    targetSelector.value = null
-    valueSelector.style.display = 'none'
-    valueSelectorLabel.style.display = 'none'
-    noteInput.style.display = 'none'
-  }
+  })
 }
 
 export async function setScheduleActionValueSelector (action = null, target = null) {
   // Helper function to show/hide the select element for picking the value
   // of an action when appropriate
 
-  if (action == null) action = document.getElementById('scheduleActionSelector').value
-  if (target == null) target = JSON.parse(document.getElementById('scheduleTargetSelector').value)
-  if (Array.isArray(target)) target = target[0]
-
-  if (['set_definition', 'set_dmx_scene'].includes(action) === false) {
-    console.log('setScheduleActionValueSelector: invalid action type!')
-    return
-  }
-
-  const valueSelector = document.getElementById('scheduleValueSelector')
-  const valueSelectorLabel = document.getElementById('scheduleValueSelector')
-  valueSelector.innerText = ''
-
-  let component
-
-  try {
-    component = hubTools.getExhibitComponent(target.uuid)
-  } catch {
-    console.log('Cannot connect to component:', target)
-    return
-  }
-
-  const errorAlert = document.getElementById('scheduleEditErrorAlert')
-  if (component == null || (component?.helperAddress ?? '') === '') {
-    errorAlert.textContent = 'This component is not responding'
-    scheduleEditModal.showWarning('scheduleEditErrorAlert')
-    valueSelector.style.display = 'none'
-    valueSelectorLabel.style.display = 'none'
-    return
-  } else scheduleEditModal.hideWarning('scheduleEditErrorAlert')
-
-  if (action === 'set_definition') {
-    const response = await component.makeRequest({
-      method: 'GET',
-      endpoint: '/definitions'
-    })
-    if (response.success && response.success === true) {
-      // Convert the dictionary to an array, sorted by app ID
-      const appDict = hubTools.sortDefinitionsByApp(response.definitions)
-      for (const app of Object.keys(appDict).sort()) {
-        const header = new Option(exUtilities.appNameToDisplayName(app))
-        header.disabled = true
-        valueSelector.appendChild(header)
-
-        for (const def of appDict[app]) {
-          const option = new Option(def.name, def.uuid)
-          valueSelector.appendChild(option)
-        }
-      }
-    }
-  } else if (action === 'set_dmx_scene') {
-    const response = await component.makeRequest({
-      method: 'GET',
-      endpoint: '/DMX/scenes'
-    })
-    if (response?.success === true) {
-      for (const scene of response.scenes) {
-        valueSelector.appendChild(new Option(scene.name, scene.uuid))
-      }
-    }
-  }
-
-  // In the case of editing an action, preselect any existing values
-  valueSelector.value = document.getElementById('scheduleEditModal').dataset.currentValue
-  valueSelector.style.display = 'block'
-  valueSelectorLabel.style.display = 'block'
+  await scheduleActionConfigurator.configureValueSelector(action, target)
 }
 
 export function scheduleConfigureEditModal (scheduleName,
