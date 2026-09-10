@@ -28,8 +28,9 @@ async def create_program(
     if not permission["success"]:
         return {"success": False, "reason": permission["reason"]}
 
-    program = hub_programs.create_program(details, username=authorizing_user)
-    hub_programs.save_program_list()
+    with hub_config.programLock:
+        program = hub_programs.create_program(details, username=permission["user"])
+        hub_programs.save_program_list()
     return {"success": True, "uuid": program.uuid}
 
 
@@ -52,12 +53,13 @@ async def get_program_list(location: Optional[str] = None):
 async def get_program_list(this_uuid: str):
     """Return a dictionary describing the given program."""
 
-    match = hub_programs.get_program(this_uuid)
+    with hub_config.programLock:
+        match = hub_programs.get_program(this_uuid)
 
-    if match is None:
-        return {"success": False, "reason": "invalid_uuid", "program": {}}
+        if match is None:
+            return {"success": False, "reason": "invalid_uuid", "program": {}}
 
-    return {"success": True, "program": match.get_dict()}
+        return {"success": True, "program": match.get_dict()}
 
 
 @router.post("/{this_uuid}/update")
@@ -71,17 +73,18 @@ async def update_program(
     if not permission["success"]:
         return {"success": False, "reason": permission["reason"]}
 
-    program = hub_programs.get_program(this_uuid)
-    if program is None:
-        return {"success": False, "reason": "invalid_uuid"}
+    with hub_config.programLock:
+        program = hub_programs.get_program(this_uuid)
+        if program is None:
+            return {"success": False, "reason": "invalid_uuid"}
 
-    try:
-        program.update(update)
-    except TypeError as e:
-        print(e)
-        return {"success": False, "reason": "type_mismatch"}
+        try:
+            program.update(update)
+        except TypeError as e:
+            print(e)
+            return {"success": False, "reason": "type_mismatch"}
 
-    hub_programs.save_program_list()
+        hub_programs.save_program_list()
 
     return {"success": True}
 
@@ -126,3 +129,53 @@ async def upload_program_media(
             await out_file.write(content)  # async write
 
     return {"success": True, "filename": filename}
+
+
+@router.post("/{program_uuid}/action")
+async def update_program_action(
+        program_uuid: str,
+        permission: dict = Depends(hub_users.require_permission("programs", "edit")),
+        action: dict = Body(description="The details of the action", embed=True)
+):
+    """Add or edit a program action."""
+
+    if not permission["success"]:
+        return {"success": False, "reason": permission["reason"]}
+
+    match = hub_programs.get_program(program_uuid)
+
+    if match is None:
+        return {"success": False, "reason": "invalid_uuid"}
+
+    success, reason = match.add_action(action)
+    if success is True:
+        hub_programs.save_program_list()
+    else:
+        return {"success": False, "reason": reason}
+
+    return {"success": True, "program": match.get_dict()}
+
+
+@router.delete("/{program_uuid}/action/{action_uuid}")
+async def delete_program_action(
+        program_uuid: str,
+        action_uuid: str,
+        permission: dict = Depends(hub_users.require_permission("programs", "edit"))
+):
+    """Remove an action from a program."""
+
+    if not permission["success"]:
+        return {"success": False, "reason": permission["reason"]}
+
+    match = hub_programs.get_program(program_uuid)
+
+    if match is None:
+        return {"success": False, "reason": "invalid_uuid"}
+
+    success = match.remove_action(action_uuid)
+    if success is True:
+        hub_programs.save_program_list()
+    else:
+        return {"success": False, "reason": "invalid_action"}
+
+    return {"success": True, "program": match.get_dict()}

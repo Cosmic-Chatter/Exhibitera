@@ -56,6 +56,34 @@ class Program:
             self.last_update_datetime = datetime.datetime.now().isoformat()
 
 
+    def add_action(self, action: dict[str, Any]) -> (bool, str):
+        """Add a new action to the program."""
+
+        action_uuid = action.get('uuid', "")
+        if action_uuid == "":
+            return False, 'no_uuid'
+
+        time_offset = action.get('time_offset', None)
+        if time_offset is None:
+            return False, 'no_time_offset'
+
+        action['time_offset_in_seconds'] = time_offset * 60
+
+        with hub_config.programLock:
+            self.actions[action_uuid] = action
+
+        return True, ""
+
+    def remove_action(self, action_uuid: str) -> bool:
+        """Remove the given action from the program."""
+
+        try:
+            with hub_config.programLock:
+                del self.actions[action_uuid]
+        except KeyError:
+            return False
+        return True
+
     def get_dict(self) -> dict[str, Any]:
         """Return a dictionary representation of this program."""
 

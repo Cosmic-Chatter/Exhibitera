@@ -22,6 +22,17 @@ const scheduleEditModal = new ModalController({
   warningIDs: ['scheduleEditErrorAlert']
 })
 
+// Modal for creating a schedule from file
+const scheduleFromFileModal = new ModalController({
+  id: 'scheduleFromFileModal',
+  defaultFields: [
+    { id: 'scheduleFromFileKindSelect', value: 'monday' },
+    { id: 'scheduleFromFileDateSelect', value: null },
+    { id: 'scheduleFromFileModalFileInput', value: null }
+  ],
+  warningIDs: []
+})
+
 const scheduleActionConfigurator = new ActionConfigurator({
   actionSelectorId: 'scheduleActionSelector',
   targetSelectorId: 'scheduleTargetSelector',
@@ -34,7 +45,6 @@ const scheduleActionConfigurator = new ActionConfigurator({
   onErrorClear: () => scheduleEditModal.hideWarning('scheduleEditErrorAlert'),
   extraElements: {
     note: ['scheduleNoteInput']
-    // clear_exhibition_mods needs nothing extra shown
   }
 })
 
@@ -563,11 +573,11 @@ export function sendScheduleUpdateFromModal () {
     editErrorAlert.innerText = 'You must specifiy an exhibition to set'
     scheduleEditModal.showWarning('scheduleEditErrorAlert')
     return
-  } else if (['power_on', 'power_off', 'refresh_page', 'restart'].includes(action) && target == null) {
+  } else if (['power_on', 'power_off', 'refresh_page', 'restart'].includes(action) && target.length === 0) {
     editErrorAlert.innerText = 'You must specifiy a target for this action'
     scheduleEditModal.showWarning('scheduleEditErrorAlert')
     return
-  } else if (['set_deinition', 'set_dmx_scene'].includes(value) && value == null) {
+  } else if (['set_definition', 'set_dmx_scene'].includes(action) && value == null) {
     editErrorAlert.innerText = 'You must specifiy a value for this action'
     scheduleEditModal.showWarning('scheduleEditErrorAlert')
     return
@@ -801,18 +811,20 @@ export function showScheduleFromFileModal () {
   // Prepare the scheduleFromFileModal and show it.
 
   // Reset fields
-  document.getElementById('scheduleFromFileKindSelect').value = 'monday'
+  scheduleFromFileModal.reset()
+
   onCreateScheduleFromFileTypeSelect()
-  const fileDateSelect = document.getElementById('scheduleFromFileDateSelect')
-  fileDateSelect.value = null
-  fileDateSelect.style.display = 'none'
+
+  document.getElementById('scheduleFromFileDateSelect').style.display = 'none'
+
   document.getElementById('scheduleFromFileModalFileInputLabel').textContent = 'Select file'
-  document.getElementById('scheduleFromFileModalFileInput').value = null
   document.getElementById('scheduleFromFileNewSchedule').textContent = ''
-  document.getElementById('scheduleFromFileModal').dataset.schedule = ''
+
   document.getElementById('scheduleFromFileModalSubmitButton').style.display = 'none'
 
-  exUtilities.showModal('#scheduleFromFileModal')
+  scheduleFromFileModal.setData('schedule', '')
+
+  scheduleFromFileModal.show()
 }
 
 export function onScheduleFromFileModalFileInputChange (event) {
@@ -851,7 +863,7 @@ export function previewScheduleFromFile () {
 export function createScheduleFromFile () {
   // Submit the upoaded schedule to Hub for creation.
 
-  const jsonStr = document.getElementById('scheduleFromFileModal').dataset.schedule
+  const jsonStr = scheduleFromFileModal.getData('schedule')
   if (jsonStr == null || jsonStr === '') return
   const schedule = JSON.parse(jsonStr)
 
@@ -874,7 +886,7 @@ export function createScheduleFromFile () {
   })
     .then((response) => {
       if (response.success === true) {
-        exUtilities.hideModal('#scheduleFromFileModal')
+        scheduleFromFileModal.hide()
       }
     })
 }

@@ -1886,8 +1886,11 @@
                     <div class="form-group">
                       <div class="row gy-2">
                         <div class="col-6 col-md-3 col-sm-4">
-                          <label for="programActionTimeInput">Time</label>
-                          <input type="text" class="form-control" id="programActionTimeInput" placeholder="e.g., 9:30 AM">
+                          <label for="programActionTimeInput">
+                            Time offset (min)
+                            <span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="When to trigger this action relative to the time of the program. E.g., set '-5' to trigger the action 5 minutes before the program starts." style="font-size: 0.55em; color: black">?</span>
+                          </label>
+                          <input type="number" class="form-control" id="programActionTimeInput">
                         </div>
                         <div class="col-6 col-md-4">
                           <label for="programActionSelector">Action</label>
@@ -2018,7 +2021,9 @@
 
             <div class="col-4">
               <button class="btn btn-primary" id="editProgramAddActionButton">Add action</button>
+              <div id="editProgramActionList"></div>
             </div>
+            
           </div>
           
           <!-- Onboarding pane -->

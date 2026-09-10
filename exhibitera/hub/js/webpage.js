@@ -531,6 +531,14 @@ document.getElementById('editProgramTrailerButton').addEventListener('change', e
 document.getElementById('editProgramAddActionButton').addEventListener('click', () => {
   hubPrograms.showprogramActionEditModal()
 })
+document.getElementById('programActionEditDeleteActionButton').addEventListener('click', hubPrograms.deleteActionFromModal)
+document.getElementById('programActionEditSubmitButton').addEventListener('click', hubPrograms.updateActionFromModal)
+document.getElementById('programActionSelector').addEventListener('change', () => {
+  hubPrograms.setActionTargetSelector()
+})
+document.getElementById('programActionTargetSelector').addEventListener('change', () => {
+  hubPrograms.setActionValueSelector()
+})
 
 // Maintenance tab
 // =========================
