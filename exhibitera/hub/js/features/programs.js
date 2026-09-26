@@ -632,3 +632,95 @@ export function deleteProgram () {
       }
     })
 }
+
+export function showArchivedProgramsModal () {
+  // Retrieve the list of archived programs, populate the modal, and display it.
+
+  hubTools.makeServerRequest({
+    method: 'GET',
+    endpoint: '/program/archive/list'
+  })
+    .then((response) => {
+      if (!response.success) return
+
+      const container = document.getElementById('archivedProgramsModalList')
+      container.textContent = ''
+
+      const programs = [...response.programs].sort((a, b) =>
+        a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+      )
+
+      if (programs.length === 0) {
+        const empty = document.createElement('p')
+        empty.classList = 'text-secondary'
+        empty.textContent = 'No archived programs.'
+        container.appendChild(empty)
+      }
+
+      for (const program of programs) {
+        container.appendChild(createArchivedProgramRow(program))
+      }
+
+      exUtilities.showModal('#archivedProgramsModal')
+    })
+}
+
+function createArchivedProgramRow (program) {
+  // Build a single row for the archived programs list, with a button to restore it.
+
+  const row = document.createElement('div')
+  row.classList = 'row gy-2 mt-1 align-items-center'
+
+  const nameCol = document.createElement('div')
+  nameCol.classList = 'col-8'
+  nameCol.appendChild(document.createTextNode(program.name))
+
+  if (program.archiveDate) {
+    const dateOptions = { year: 'numeric', month: 'short', day: 'numeric' }
+    const archivedDate = new Date(program.archiveDate)
+
+    const archivedInfo = document.createElement('div')
+    archivedInfo.classList = 'fst-italic text-secondary'
+    archivedInfo.style.fontSize = '0.7rem'
+    archivedInfo.textContent = `Archived ${archivedDate.toLocaleDateString(undefined, dateOptions)}`
+    nameCol.appendChild(archivedInfo)
+
+    if (program.archivedUsername) {
+      hubTools.getUserDisplayName(program.archivedUsername)
+        .then((displayName) => {
+          archivedInfo.textContent = `Archived ${archivedDate.toLocaleDateString(undefined, dateOptions)} by ${displayName}`
+        })
+    }
+  }
+
+  row.appendChild(nameCol)
+
+  const buttonCol = document.createElement('div')
+  buttonCol.classList = 'col-4'
+  row.appendChild(buttonCol)
+
+  const restoreButton = document.createElement('button')
+  restoreButton.classList = 'btn btn-primary btn-sm w-100'
+  restoreButton.textContent = 'Restore'
+  restoreButton.addEventListener('click', () => {
+    restoreProgram(program.uuid)
+  })
+  buttonCol.appendChild(restoreButton)
+
+  return row
+}
+
+export function restoreProgram (uuid) {
+  // Ask Hub to move the given program out of the archive and back into the active list.
+
+  hubTools.makeServerRequest({
+    method: 'GET',
+    endpoint: '/program/' + uuid + '/restore'
+  })
+    .then((result) => {
+      if (result.success) {
+        populatePrograms()
+        showArchivedProgramsModal() // Refresh the modal in place so the restored row disappears
+      }
+    })
+}

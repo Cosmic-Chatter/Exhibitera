@@ -54,6 +54,25 @@ async def get_program_list(location: Optional[str] = None):
     return {"success": True, "program_list": matched_programs}
 
 
+@router.get("/archive/list")
+async def get_archived_programs(
+        permission: dict = Depends(hub_users.require_permission("programs", "view"))
+):
+    """Return the list of archived programs."""
+
+    if not permission["success"]:
+        return {"success": False, "reason": permission["reason"]}
+
+    archive_file = ex_files.get_path(["programs", "archived.json"], user_file=True)
+
+    with hub_config.programLock:
+        archive_list = ex_files.load_json(archive_file)
+        if archive_list is None:
+            archive_list = []
+
+    return {"success": True, "programs": archive_list}
+
+
 @router.get("/{this_uuid}")
 async def get_program_dict(this_uuid: str):
     """Return a dictionary describing the given program."""
@@ -232,3 +251,18 @@ async def delete_program(
     hub_schedules.get_next_scheduled_action()
 
     return {"success": True}
+
+
+@router.get("/{this_uuid}/restore")
+async def restore_program(
+        this_uuid: str,
+        permission: dict = Depends(hub_users.require_permission("programs", "edit"))
+):
+    """Move the given program from the archive to the active program list."""
+
+    if not permission["success"]:
+        return {"success": False, "reason": permission["reason"]}
+
+    success = hub_programs.restore_program(this_uuid)
+    hub_config.program_list_last_update_date = datetime.datetime.now().isoformat()
+    return {"success": success}

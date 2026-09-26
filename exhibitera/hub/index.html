@@ -1953,10 +1953,34 @@
               </div>
             </div>
           </div>
+
+          <!-- Archived programs modal -->
+          <div class="modal" tabindex="-1" role="dialog" id="archivedProgramsModal">
+            <div class="modal-dialog modal-dialog-centered exhibitera-dialog" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">Archived programs</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <div id="archivedProgramsModalList" style="max-height: 60vh; overflow-y: auto; overflow-x: hidden;"></div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+              </div>
+            </div>
+          </div>
           
           <div class="row mt-2 gy-2">
             <div class="col-6 col-sm-4 col-md-4 col-xl-3 d-flex">
               <select class="form-select" id="programSelect"></select>
+              <div class="dropdown ps-2">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">⚙</button>
+                <ul class="dropdown-menu">
+                  <li><button id="viewProgramArchiveButton" class="dropdown-item">View archived</button></li>
+                </ul>
+              </div>
             </div>
             <div class="col-3 col-sm-2 col-md-2">
               <button id="editProgramButton" class="btn btn-primary w-100">Edit</button>

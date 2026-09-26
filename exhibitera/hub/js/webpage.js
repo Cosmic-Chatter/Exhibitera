@@ -541,6 +541,9 @@ document.getElementById('cloneProgramButton').addEventListener('click', () => {
       hubPrograms.createProgram(programDict, uuidToClone)
     })
 })
+document.getElementById('viewProgramArchiveButton').addEventListener('click', () => {
+  hubPrograms.showArchivedProgramsModal()
+})
 document.getElementById('editProgramButton').addEventListener('click', () => {
   hubPrograms.editProgram()
 })

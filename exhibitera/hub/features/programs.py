@@ -247,6 +247,33 @@ def archive_program(this_uuid: str, username: str) -> bool:
     return True
 
 
+def restore_program(this_uuid: str) -> bool:
+    """Move the given program from the archive back to hub_config.program_list."""
+
+    archive_file = ex_files.get_path(["programs", "archived.json"], user_file=True)
+
+    with hub_config.programLock:
+        archive_list = ex_files.load_json(archive_file)
+        if archive_list is None:
+            archive_list = []
+
+        details: dict = next((x for x in archive_list if x["uuid"] == this_uuid), None)
+
+    if details is None:
+        return False
+
+    # Drop archive-only fields before recreating the live program
+    details = {k: v for k, v in details.items() if k not in ("archiveDate", "archivedUsername")}
+    create_program(details)
+    with hub_config.programLock:
+        save_program_list()
+
+        new_archive = [x for x in archive_list if x["uuid"] != this_uuid]
+        ex_files.write_json(new_archive, archive_file)
+
+    return True
+
+
 # Set up log file
 log_path = ex_files.get_path(["hub.log"], user_file=True)
 logging.basicConfig(datefmt='%Y-%m-%d %H:%M:%S',
