@@ -75,6 +75,19 @@ function parseUpdate (update) {
     }
   }
 
+  if (update?.programs) {
+    // Check if the list of programs has changed.
+
+    const updateDate = new Date(update.programs.last_update_date)
+    const currentProgramsDate = new Date(hubConfig.programsLastUpdateDate)
+
+    if (updateDate > currentProgramsDate) {
+      hubConfig.programsLastUpdateDate = update.programs.last_update_date
+      hubConfig.programs = update.programs.program_list
+      hubPrograms.populatePrograms(hubConfig.programs)
+    }
+  }
+
   if (update?.components) {
     let numComps = 0
     let numOnline = 0
@@ -510,17 +523,36 @@ document.getElementById('exhibitModificationsModalApplyButton').addEventListener
 
 // Programs tab
 // =========================
-document.getElementById('refreshProgramSelect').addEventListener('click', () => {
-  hubPrograms.populatePrograms()
-})
 document.getElementById('createProgramButton').addEventListener('click', () => {
   hubPrograms.createProgram()
+})
+document.getElementById('cloneProgramButton').addEventListener('click', () => {
+  const uuidToClone = document.getElementById('programSelect').value
+  hubTools.makeServerRequest({
+    method: 'GET',
+    endpoint: '/program/' + uuidToClone
+  })
+    .then((result) => {
+      if (!result.success) return
+
+      const programDict = result.program
+      programDict.uuid = exUtilities.uuid()
+      programDict.name = 'Copy of ' + programDict.name
+      hubPrograms.createProgram(programDict, uuidToClone)
+    })
 })
 document.getElementById('editProgramButton').addEventListener('click', () => {
   hubPrograms.editProgram()
 })
 document.getElementById('saveProgramButton').addEventListener('click', () => {
   hubPrograms.updateProgram()
+})
+document.getElementById('deleteSelectedProgramButton').addEventListener('click', () => {
+  hubPrograms.showProgramDeleteModal()
+})
+document.getElementById('programDeleteModalConfirmButton').addEventListener('click', () => {
+  hubPrograms.deleteProgram()
+  exUtilities.hideModal('#programDeleteModal')
 })
 document.getElementById('editProgramThumbnailButton').addEventListener('change', ev => {
   hubPrograms.uploadProgramMediaFile(ev.target, 'thumbnail')

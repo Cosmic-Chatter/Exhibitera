@@ -4,6 +4,8 @@ export default {
   componentInfoModalStatusMessageTimer: 0, // Holds setTimeout() reference
   currentExhibit: '',
   notifications: { hub: {} },
+  programs: [],
+  programsLastUpdateDate: 0,
   exhibitComponents: [],
   groups: [],
   groupLastUpdateDate: 0,

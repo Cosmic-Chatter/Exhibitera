@@ -292,6 +292,8 @@ export class ActionConfigurator {
         return 'Refresh'
       case 'restart':
         return 'Restart'
+      case 'run_program':
+        return '' // Identify program simply by its name.
       case 'set_definition':
         return 'Set defintion for'
       case 'set_dmx_scene':
@@ -337,6 +339,7 @@ export class ActionConfigurator {
 
     if (target.type === 'all') return 'all components'
     if (target.type === 'group') return 'all ' + hubTools.getGroupName(target.uuid)
+    if (target.type === 'program') return hubTools.getProgramName(target.uuid)
     if (target.type === 'component') {
       const component = hubTools.getExhibitComponent(target.uuid)
       return component?.id ?? target.uuid

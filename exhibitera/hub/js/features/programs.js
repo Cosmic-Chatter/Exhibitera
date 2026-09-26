@@ -47,26 +47,35 @@ export async function populatePrograms (programs = null) {
     })
     if (!programsResponse.success) return
     programs = programsResponse.program_list
+
+    hubConfig.programs = programs
   }
 
   programSelect.textContent = ''
 
-  for (const program of programs) {
+  const sortedPrograms = exUtilities.sortAlphabetically(programs, 'name')
+
+  for (const program of sortedPrograms) {
     const option = new Option(program.name, program.uuid)
     programSelect.appendChild(option)
   }
+  const openProgram = document.getElementById('saveProgramButton').dataset.uuid
+  if (openProgram && openProgram !== '') programSelect.value = openProgram
 }
 
-export async function createProgram (details = {}) {
+export async function createProgram (details = {}, clonedFrom = '') {
   // Create a new program with the given details
 
   const result = await hubTools.makeServerRequest({
     method: 'POST',
     endpoint: '/program/create',
-    params: { details }
+    params: { details, cloned_from: clonedFrom }
   })
 
-  console.log(result)
+  if (result.success) {
+    document.getElementById('programSelect').value = result.uuid
+    editProgram(result.uuid)
+  }
 }
 
 export async function editProgram (uuid = null) {
@@ -78,15 +87,16 @@ export async function editProgram (uuid = null) {
 
   if (uuid === '' || uuid == null) return
 
+  // Tag the save button with the UUID for when we are ready to save
+  document.getElementById('saveProgramButton').dataset.uuid = uuid
+  document.getElementById('programSelect').value = uuid
+
   const programRequest = await hubTools.makeServerRequest({
     method: 'GET',
     endpoint: '/program/' + uuid
   })
 
   if (!programRequest.success) return
-
-  // Tag the save button with the UUID for when we are ready to save
-  document.getElementById('saveProgramButton').dataset.uuid = uuid
 
   const program = programRequest.program
 
@@ -122,6 +132,7 @@ export async function editProgram (uuid = null) {
   }
 
   document.getElementById('editProgramPane').style.display = 'flex'
+  document.getElementById('saveProgramButton').style.display = 'block'
 }
 
 export async function updateProgram () {
@@ -152,6 +163,7 @@ export async function updateProgram () {
 
   if (result.success) {
     document.getElementById('editProgramPane').style.display = 'none'
+    document.getElementById('saveProgramButton').style.display = 'none'
     document.getElementById('saveProgramButton').dataset.uuid = ''
 
     // Clear the video
@@ -549,4 +561,74 @@ function formatTimeOffset (timeOffset) {
   } else {
     return `${formattedMinutes} min before `
   }
+}
+
+function formatScheduleName (name) {
+  // Reformat recurring schedules from, e.g., "sunday" to "Sundays"
+
+  const WEEKDAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+
+  if (WEEKDAY_NAMES.includes(name.toLowerCase())) {
+    const capitalized = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase()
+    return capitalized + 's'
+  }
+  return name
+}
+
+export function showProgramDeleteModal (uuid = null) {
+  // Show the confirmation modal for deleting the given (or currently selected) program.
+  // Checks whether the program is referenced by any current/upcoming schedule
+  // and lists the affected schedules, if so.
+
+  if (!uuid) {
+    uuid = document.getElementById('programSelect').value
+  }
+  if (uuid === '' || uuid == null) return
+
+  const modal = document.getElementById('programDeleteModal')
+  modal.dataset.uuid = uuid
+
+  const warning = document.getElementById('programDeleteModalScheduleWarning')
+  const list = document.getElementById('programDeleteModalScheduleList')
+  const plural = document.getElementById('programDeleteModalScheduleWarningPlural')
+  warning.style.display = 'none'
+  list.textContent = ''
+
+  hubTools.makeServerRequest({
+    method: 'GET',
+    endpoint: '/program/' + uuid + '/checkSchedules'
+  })
+    .then((result) => {
+      if (result.success && result.schedules.length > 0) {
+        plural.textContent = result.schedules.length > 1 ? 's' : ''
+        for (const name of result.schedules) {
+          const item = document.createElement('li')
+          item.textContent = formatScheduleName(name)
+          list.appendChild(item)
+        }
+        warning.style.display = 'block'
+      }
+    })
+
+  exUtilities.showModal('#programDeleteModal')
+}
+
+export function deleteProgram () {
+  // Ask Hub to archive (delete) the program identified in the delete modal.
+
+  const uuid = document.getElementById('programDeleteModal').dataset.uuid
+  if (uuid == null || uuid === '') return
+
+  hubTools.makeServerRequest({
+    method: 'DELETE',
+    endpoint: '/program/' + uuid
+  })
+    .then((result) => {
+      if (result.success) {
+        document.getElementById('editProgramPane').style.display = 'none'
+        document.getElementById('saveProgramButton').style.display = 'none'
+        document.getElementById('saveProgramButton').dataset.uuid = ''
+        populatePrograms()
+      }
+    })
 }

@@ -107,6 +107,9 @@ def get_webpage_update():
     update_dict["groups"] = {"group_list": hub_config.group_list,
                              "last_update_date": hub_config.group_list_last_update_date}
 
+    update_dict["programs"] = {"program_list": [x.get_dict() for x in hub_config.program_list],
+                               "last_update_date": hub_config.program_list_last_update_date}
+
     with hub_config.scheduleLock:
         update_dict["schedule"] = {"updateTime": hub_config.scheduleUpdateTime,
                                    "schedule": hub_config.json_schedule_list,

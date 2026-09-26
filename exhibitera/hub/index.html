@@ -1629,6 +1629,7 @@
                             <option value="power_off">Power off components</option>
                             <option value="refresh_page">Refresh components</option>
                             <option value="restart">Restart components</option>
+                            <option value="run_program">Run program</option>
                             <option value="set_definition">Set defintion</option>
                             <option value="set_dmx_scene">Set DMX lighting scene</option>
                             <option value="set_exhibit">Set exhibition</option>
@@ -1929,11 +1930,33 @@
               </div>
             </div>
           </div>
+
+          <!-- Delete program confirmation modal -->
+          <div class="modal" tabindex="-1" role="dialog" id="programDeleteModal">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">Delete program?</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <p>Deleting a program moves it to the archive and permanently removes its thumbnail and trailer files.</p>
+                  <div id="programDeleteModalScheduleWarning" class="alert alert-warning" style="display: none;">
+                    This program is used in the following schedule<span id="programDeleteModalScheduleWarningPlural"></span>. Deleting it will remove it from these schedules:
+                      <ul id="programDeleteModalScheduleList" class="mb-0"></ul>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button id="programDeleteModalConfirmButton" type="button" class="btn btn-danger ms-auto">Delete</button>
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+              </div>
+            </div>
+          </div>
           
           <div class="row mt-2 gy-2">
             <div class="col-6 col-sm-4 col-md-4 col-xl-3 d-flex">
               <select class="form-select" id="programSelect"></select>
-              <button id="refreshProgramSelect" class="btn btn-outline-secondary ms-1">↻</button>
             </div>
             <div class="col-3 col-sm-2 col-md-2">
               <button id="editProgramButton" class="btn btn-primary w-100">Edit</button>
@@ -1953,7 +1976,7 @@
               <button class='btn btn-danger w-100' id="deleteSelectedProgramButton">Delete</button>
             </div>
             <div class="col-4 col-sm-3 col-md-2">
-              <button class='btn btn-success w-100' id="saveProgramButton">Save</button>
+              <button class='btn btn-success w-100' id="saveProgramButton" style="display: none;">Save</button>
             </div>
           </div>
 

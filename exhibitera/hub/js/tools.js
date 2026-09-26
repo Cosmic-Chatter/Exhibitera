@@ -344,3 +344,20 @@ export function getExhibitName (uuid) {
   if (exhibit == null) return 'Unknown exhibition'
   return exhibit.name
 }
+
+export function getProgram (uuid) {
+  // Search the programs list for a given uuid and return the corresponding program.
+
+  const result = hubConfig.programs.find(obj => {
+    return obj.uuid === uuid
+  })
+  return result
+}
+
+export function getProgramName (uuid) {
+  // Return the name of the specified program, if it exists.
+
+  const program = getProgram(uuid)
+  if (program == null) return 'Unknown program'
+  return program.name
+}

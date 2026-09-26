@@ -14,6 +14,7 @@ import threading
 import exhibitera.common.files as ex_files
 import exhibitera.hub.config as hub_config
 import exhibitera.hub.features.exhibitions as hub_exhibitions
+import exhibitera.hub.features.programs as hub_programs
 
 
 def create_schedule(name: str, entries: dict[str, dict]) -> tuple[bool, dict]:
@@ -207,9 +208,13 @@ def queue_json_schedule(schedule: dict) -> None:
     local_tz = dateutil.tz.tzlocal()
     now = datetime.datetime.now(tz=local_tz)
 
+    # Expand any Programs into their individual actions, scheduled relative to the
+    # Program's start time, before setting up execution timers.
+    expanded_schedule = expand_program_events(schedule)
+
     new_timers = []
-    for key in schedule:
-        event = schedule[key]
+    for key in expanded_schedule:
+        event = expanded_schedule[key]
         if event["action"] == "note":
             # Don't queue notes
             continue
@@ -290,6 +295,155 @@ def convert_schedule_to_csv(schedule_name: str) -> tuple[bool, str]:
     return True, output.getvalue()
 
 
+def get_all_schedule_names_to_check() -> list[str]:
+    """Return the filenames (without extension) of every schedule that is current or could occur in the future.
+    """
+
+    day_names = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+    date_specific = sorted(get_available_date_specific_schedules())
+    return day_names + date_specific
+
+
+def find_program_schedule_usage(this_uuid: str) -> list[str]:
+    """Search every current/future schedule file on disk for references to the given program.
+
+    Returns a list of schedule names (without extension) that contain a 'run_program' event
+    pointing at this program.
+    """
+
+    matches = []
+    for name in get_all_schedule_names_to_check():
+        filename = ex_files.with_extension(name, 'json')
+        success, schedule = load_json_schedule(filename)
+        if not success:
+            continue
+
+        for event in schedule.values():
+            if event.get("action") != "run_program":
+                continue
+            target = event.get("target")
+            if isinstance(target, list):
+                target = target[0] if len(target) > 0 else None
+            if isinstance(target, dict) and target.get("uuid") == this_uuid:
+                matches.append(name)
+                break
+
+    return matches
+
+
+def remove_program_from_schedules(this_uuid: str) -> list[str]:
+    """Remove any 'run_program' events referencing the given program from all current/future schedules.
+    """
+
+    modified = []
+    with hub_config.scheduleLock:
+        for name in get_all_schedule_names_to_check():
+            filename = ex_files.with_extension(name, 'json')
+            success, schedule = _load_json_schedule_unlocked(filename)
+            if not success or len(schedule) == 0:
+                continue
+
+            keys_to_remove = []
+            for key, event in schedule.items():
+                if event.get("action") != "run_program":
+                    continue
+                target = event.get("target")
+                if isinstance(target, list):
+                    target = target[0] if len(target) > 0 else None
+                if isinstance(target, dict) and target.get("uuid") == this_uuid:
+                    keys_to_remove.append(key)
+
+            if len(keys_to_remove) > 0:
+                for key in keys_to_remove:
+                    del schedule[key]
+                _write_json_schedule_unlocked(filename, schedule)
+                modified.append(name)
+
+    if len(modified) > 0:
+        retrieve_json_schedule()
+
+    return modified
+
+
+def expand_program_events(schedule: dict) -> dict:
+    """Expand any 'run_program' events in a schedule into their constituent actions.
+
+    A Program is stored in the schedule as a single 'run_program' event pointing at the
+    program's UUID. To actually queue or evaluate the individual actions that make up the
+    program, each of the program's actions must be turned into its own event, with a time
+    calculated by adding the action's time_offset (in seconds) to the time of the
+    'run_program' event.
+
+    This does NOT modify the schedule that is saved to disk or sent to the browser -- that
+    schedule should keep showing the program as a single entry. This expanded version is
+    only used internally, for setting up execution timers and for calculating the next
+    upcoming event.
+    """
+
+    expanded_schedule = {}
+
+    for key, event in schedule.items():
+        if event.get("action") != "run_program":
+            expanded_schedule[key] = event
+            continue
+
+        # Figure out which program this event refers to
+        target = event.get("target")
+        if isinstance(target, list):
+            target = target[0] if len(target) > 0 else None
+
+        program_uuid = None
+        if isinstance(target, dict):
+            program_uuid = target.get("uuid")
+
+        if program_uuid is None:
+            logging.warning(f"Schedule event {key} has action 'run_program' but no valid program target")
+            continue
+
+        program = hub_programs.get_program(program_uuid)
+        if program is None:
+            logging.warning(f"Schedule event {key} references program {program_uuid}, which does not exist")
+            continue
+
+        # Figure out the base time the program is set to start at
+        try:
+            base_time = dateutil.parser.parse(event["time"])
+        except (KeyError, ValueError, OverflowError, dateutil.parser.ParserError):
+            logging.warning(f"Schedule event {key} has an unparsable time; skipping program expansion")
+            continue
+
+        if "time_in_seconds" in event:
+            base_time_in_seconds = event["time_in_seconds"]
+        else:
+            base_time_in_seconds = seconds_from_midnight(event["time"])
+
+        for action_uuid, action in program.actions.items():
+            if action.get("action") == "note":
+                # Notes are informational only and are never queued or executed
+                continue
+
+            # Prefer the precomputed offset in seconds, but fall back to time_offset (in minutes)
+            offset_in_seconds = action.get("time_offset_in_seconds")
+            if offset_in_seconds is None:
+                offset_in_seconds = action.get("time_offset", 0) * 60
+
+            action_time = base_time + datetime.timedelta(seconds=offset_in_seconds)
+
+            sub_key = f"{key}__{program.uuid}__{action_uuid}"
+            expanded_schedule[sub_key] = {
+                "time": action_time.isoformat(),
+                "time_in_seconds": base_time_in_seconds + offset_in_seconds,
+                "action": action.get("action"),
+                "target": action.get("target"),
+                "value": action.get("value"),
+                "source_schedule_id": key,
+                "source_program_uuid": program.uuid,
+                "source_program_action_uuid": action_uuid
+            }
+
+    return expanded_schedule
+
+
 def get_next_scheduled_action():
     """Search today's schedule for the next scheduled action, update the apps_config, and return it."""
 
@@ -297,9 +451,14 @@ def get_next_scheduled_action():
     local_tz = dateutil.tz.tzlocal()
     now = datetime.datetime.now(tz=local_tz)
 
+    # Expand any Programs into their individual actions, scheduled relative to the
+    # program's start time, so the "next event" reflects the actual next action to run.
+    expanded_schedule = expand_program_events(schedule)
+
+    previous_next_event = hub_config.json_next_event
     hub_config.json_next_event = []
-    for key in schedule:
-        event = schedule[key]
+    for key in expanded_schedule:
+        event = expanded_schedule[key]
         if event["action"] == "note":
             # Don't queue notes
             continue
@@ -316,7 +475,35 @@ def get_next_scheduled_action():
             elif event["time_in_seconds"] == (hub_config.json_next_event[0])["time_in_seconds"]:
                 hub_config.json_next_event.append(event)
 
+    if _next_event_changed(previous_next_event, hub_config.json_next_event):
+        hub_config.scheduleUpdateTime = time.time()
+
     return hub_config.json_next_event
+
+
+def _next_event_changed(old_events: list[dict], new_events: list[dict]) -> bool:
+    """Compare two lists of 'next event' dicts and return True if they differ.
+
+    Events are compared by their action/target/value/time_in_seconds, rather than by
+    object identity, since get_next_scheduled_action() builds fresh dicts every call
+    (and program-expanded events get freshly-generated synthetic keys each time too).
+    """
+
+    if len(old_events) != len(new_events):
+        return True
+
+    def _fingerprint(event: dict) -> tuple:
+        return (
+            event.get("action"),
+            json.dumps(event.get("target"), sort_keys=True),
+            json.dumps(event.get("value"), sort_keys=True),
+            event.get("time_in_seconds")
+        )
+
+    old_fingerprints = sorted(_fingerprint(e) for e in old_events)
+    new_fingerprints = sorted(_fingerprint(e) for e in new_events)
+
+    return old_fingerprints != new_fingerprints
 
 
 def execute_scheduled_action(action: str,

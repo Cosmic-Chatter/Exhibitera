@@ -1,5 +1,6 @@
 # Standard modules
 import aiofiles
+import datetime
 import glob
 import json
 import os
@@ -13,6 +14,7 @@ from fastapi import APIRouter, Body, Depends, File, UploadFile
 import exhibitera.common.files as ex_files
 import exhibitera.hub.config as hub_config
 import exhibitera.hub.features.programs as hub_programs
+import exhibitera.hub.features.schedules as hub_schedules
 import exhibitera.hub.features.users as hub_users
 
 router = APIRouter(prefix="/program")
@@ -21,6 +23,7 @@ router = APIRouter(prefix="/program")
 @router.post("/create")
 async def create_program(
         details: dict[str, Any] = Body(embed=True),
+        cloned_from: str = Body(description="Whether this is a clone of another program", default=''),
         permission: dict = Depends(hub_users.require_permission("programs", "edit"))
 ):
     """Create a new program."""
@@ -28,9 +31,11 @@ async def create_program(
     if not permission["success"]:
         return {"success": False, "reason": permission["reason"]}
 
+    program = hub_programs.create_program(details, cloned_from=cloned_from, username=permission["user"])
     with hub_config.programLock:
-        program = hub_programs.create_program(details, username=permission["user"])
         hub_programs.save_program_list()
+    hub_schedules.get_next_scheduled_action()
+
     return {"success": True, "uuid": program.uuid}
 
 
@@ -50,7 +55,7 @@ async def get_program_list(location: Optional[str] = None):
 
 
 @router.get("/{this_uuid}")
-async def get_program_list(this_uuid: str):
+async def get_program_dict(this_uuid: str):
     """Return a dictionary describing the given program."""
 
     with hub_config.programLock:
@@ -85,6 +90,10 @@ async def update_program(
             return {"success": False, "reason": "type_mismatch"}
 
         hub_programs.save_program_list()
+
+    hub_config.program_list_last_update_date = datetime.datetime.now().isoformat()
+    hub_schedules.get_next_scheduled_action()
+
 
     return {"success": True}
 
@@ -153,6 +162,10 @@ async def update_program_action(
     else:
         return {"success": False, "reason": reason}
 
+    hub_config.program_list_last_update_date = datetime.datetime.now().isoformat()
+    hub_schedules.get_next_scheduled_action()
+
+
     return {"success": True, "program": match.get_dict()}
 
 
@@ -178,4 +191,44 @@ async def delete_program_action(
     else:
         return {"success": False, "reason": "invalid_action"}
 
+    hub_config.program_list_last_update_date = datetime.datetime.now().isoformat()
+    hub_schedules.get_next_scheduled_action()
+
+
     return {"success": True, "program": match.get_dict()}
+
+
+@router.get("/{this_uuid}/checkSchedules")
+async def check_program_schedules(
+        this_uuid: str,
+        permission: dict = Depends(hub_users.require_permission("programs", "view"))
+):
+    """Return the names of any current/future schedules that reference this program."""
+
+    if not permission["success"]:
+        return {"success": False, "reason": permission["reason"]}
+
+    matches = hub_schedules.find_program_schedule_usage(this_uuid)
+    return {"success": True, "schedules": matches}
+
+
+@router.delete("/{this_uuid}")
+async def delete_program(
+        this_uuid: str,
+        permission: dict = Depends(hub_users.require_permission("programs", "edit"))
+):
+    """Archive the given program and remove its media files."""
+
+    if not permission["success"]:
+        return {"success": False, "reason": permission["reason"]}
+
+    program = hub_programs.get_program(this_uuid)
+    if program is None:
+        return {"success": False, "reason": "invalid_uuid"}
+
+    hub_schedules.remove_program_from_schedules(this_uuid)
+    hub_programs.archive_program(this_uuid, permission["user"])
+    hub_config.program_list_last_update_date = datetime.datetime.now().isoformat()
+    hub_schedules.get_next_scheduled_action()
+
+    return {"success": True}

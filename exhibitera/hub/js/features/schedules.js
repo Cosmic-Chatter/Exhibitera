@@ -291,6 +291,11 @@ function createScheduleEntryHTML (item, scheduleID, scheduleName, scheduleType, 
       target = target[0]
     }
     description = `Set exhibition: ${hubTools.getExhibitName(target.value)}`
+  } else if (action === 'run_program') {
+    if (Array.isArray(target) && target.length > 0) {
+      target = target[0]
+    }
+    description = `Program: ${hubTools.getProgramName(target.uuid)}`
   } else if (action === 'note') {
     description = item.value
   } else if (action === 'clear_exhibition_mods') {
@@ -425,6 +430,18 @@ export function setScheduleActionTargetSelector (action = null, target = null) {
         targetSelector.appendChild(new Option(hubTools.getExhibitName(item.value), JSON.stringify({
           type: 'value',
           value: item.value
+        })))
+      }
+      targetSelector.style.display = 'block'
+      targetSelectorLabel.style.display = 'block'
+    },
+    run_program: ({ targetSelector, targetSelectorLabel }) => {
+      targetSelector.multiple = false
+      targetSelector.innerText = ''
+      for (const program of hubConfig.programs) {
+        targetSelector.appendChild(new Option(program.name, JSON.stringify({
+          type: 'program',
+          uuid: program.uuid
         })))
       }
       targetSelector.style.display = 'block'
@@ -573,7 +590,7 @@ export function sendScheduleUpdateFromModal () {
     editErrorAlert.innerText = 'You must specifiy an exhibition to set'
     scheduleEditModal.showWarning('scheduleEditErrorAlert')
     return
-  } else if (['power_on', 'power_off', 'refresh_page', 'restart'].includes(action) && target.length === 0) {
+  } else if (['power_on', 'power_off', 'refresh_page', 'restart', 'run_program'].includes(action) && target.length === 0) {
     editErrorAlert.innerText = 'You must specifiy a target for this action'
     scheduleEditModal.showWarning('scheduleEditErrorAlert')
     return

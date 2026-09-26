@@ -3,6 +3,7 @@ import datetime
 import json
 import logging
 import os
+import shutil
 import time
 import typing
 from typing import Any
@@ -115,7 +116,7 @@ def get_program(this_uuid: str, program_list: list[Program] | None = None) -> Pr
             return program
 
 
-def create_program(details: dict[str, Any], username: str = "") -> Program:
+def create_program(details: dict[str, Any], cloned_from: str = "", username: str = "") -> Program:
     """Create a new program and add it to hub_config.program_list"""
 
     if username != "":
@@ -123,7 +124,25 @@ def create_program(details: dict[str, Any], username: str = "") -> Program:
     with hub_config.programLock:
         new_program = Program(details)
         hub_config.program_list.append(new_program)
+    if cloned_from != "" and cloned_from != new_program.uuid:
+        # Copy any trailer and thumbnail to the new UUID
+        if new_program.trailer != '':
+            old_path = ex_files.get_path(["programs", "media", new_program.trailer], user_file=True)
+            new_trailer = ex_files.with_extension(new_program.uuid + "_trailer", os.path.splitext(new_program.trailer)[1])
+            new_path = ex_files.get_path(["programs", "media", new_trailer], user_file=True)
+            with hub_config.programLock:
+                shutil.copy(old_path, new_path)
+                new_program.trailer = new_trailer
+        if new_program.thumbnail != '':
+            old_path = ex_files.get_path(["programs", "media", new_program.thumbnail], user_file=True)
+            new_thumbnail = ex_files.with_extension(new_program.uuid + "_thumbnail", os.path.splitext(new_program.thumbnail)[1])
+            new_path = ex_files.get_path(["programs", "media", new_thumbnail], user_file=True)
+            with hub_config.programLock:
+                shutil.copy(old_path, new_path)
+                new_program.thumbnail = new_thumbnail
+
     hub_config.last_update_time = time.time()
+    hub_config.program_list_last_update_date = datetime.datetime.now().isoformat()
     return new_program
 
 
@@ -157,6 +176,75 @@ def save_program_list() -> None:
 
     with open(program_file, "w", encoding="UTF-8") as file_object:
         json.dump([x.get_dict() for x in hub_config.program_list], file_object, indent=2, sort_keys=True)
+
+
+def delete_program_media_file(files: list[str]) -> None:
+    """Delete the given program media files (thumbnail/trailer) from disk."""
+
+    for file in files:
+        if not file:
+            continue
+        file_path = ex_files.get_path(["programs", "media", file], user_file=True)
+        print("Deleting program media file:", file)
+        with hub_config.programLock:
+            try:
+                os.remove(file_path)
+            except OSError:
+                pass
+
+
+def remove_program(this_uuid: str) -> bool:
+    """Remove a Program from hub_config.program_list and delete its media files."""
+
+    program = get_program(this_uuid)
+    if program is None:
+        return False
+
+    delete_program_media_file([program.thumbnail, program.trailer])
+
+    with hub_config.programLock:
+        hub_config.program_list = [x for x in hub_config.program_list if x.uuid != this_uuid]
+        save_program_list()
+
+    hub_config.last_update_time = time.time()
+    hub_config.program_list_last_update_date = datetime.datetime.now().isoformat()
+    return True
+
+
+def archive_program(this_uuid: str, username: str) -> bool:
+    """Move the given program from programs.json to programs/archived.json."""
+
+    program = get_program(this_uuid)
+    if program is None:
+        return False
+
+    archive_file = ex_files.get_path(["programs", "archived.json"], user_file=True)
+    with hub_config.programLock:
+        try:
+            with open(archive_file, 'r', encoding="UTF-8") as file_object:
+                try:
+                    archive: list[dict] = json.load(file_object)
+                except json.decoder.JSONDecodeError:
+                    archive = []
+        except FileNotFoundError:
+            archive = []
+
+        details = program.get_dict()
+        now_date = datetime.datetime.now().isoformat()
+        details["archiveDate"] = now_date
+        details["last_update_datetime"] = now_date
+        details["archivedUsername"] = username
+        # Media is about to be deleted from disk, so don't keep dangling references
+        details["thumbnail"] = ""
+        details["trailer"] = ""
+
+        archive.append(details)
+
+        ex_files.write_json(archive, archive_file)
+
+    # Deletes media files and removes from the active list/save
+    remove_program(this_uuid)
+    return True
 
 
 # Set up log file
