@@ -37,13 +37,14 @@
 }
 
 html {
-    touch-action: manipulation;
+    touch-action: pan-x pan-y;
     -webkit-user-select: none;  /* Chrome all / Safari all */
     -moz-user-select: none;/* Firefox all */
     -ms-user-select: none;
     user-select: none;
 }
 body {
+    touch-action: pan-x pan-y;
     overflow: hidden;
     background: var(--background-color);
     background-size: cover;
@@ -62,7 +63,7 @@ body {
     height: 80%;
 }
 .container-fluid {
-    touch-action: manipulation;
+    touch-action: pan-x pan-y;
 }
 .display-full {
     height: 100vh;
@@ -150,6 +151,7 @@ body {
     bottom: 0;
 }
 #displayPane {
+    touch-action: pan-x pan-y;
     overflow: hidden;
     height: 100vh;
 }
@@ -169,6 +171,7 @@ body {
     align-items: center;
     opacity: 0;
     transition: 500ms;
+    touch-action: pan-x pan-y;
 }
 #mediaLightboxCaption {
     font-size: calc(2vmax + var(--Lightbox_caption-font-adjust)*1vmax);
@@ -288,8 +291,6 @@ body {
     .hg-button {
         height: 100%!important;
     }
-    .resultImg {
-    }
     .simple-keyboard {
         height: 100%;
     }
@@ -304,7 +305,5 @@ body {
     }
     .hg-standardBtn {
         height: 3.5vh!important;
-    }
-    .resultImg {
     }
 }
