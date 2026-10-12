@@ -36,7 +36,7 @@ def get_webpage_update():
                 "helperAddress": item.helper_address,
                 "id": item.id,
                 "ip_address": item.ip_address,
-                "groups": item.groups,
+                "groups": item.get_active_groups(),
                 "lastContactDateTime": item.last_contact_datetime,
                 "latency": item.latency,
                 "platform_details": item.platform_details,
@@ -57,7 +57,7 @@ def get_webpage_update():
 
     for item in hub_config.projectorList:
         temp = {"class": "projector",
-                "groups": item.groups,
+                "groups": item.get_active_groups(),
                 "id": item.id,
                 "ip_address": item.ip_address,
                 "latency": item.latency,
@@ -76,7 +76,7 @@ def get_webpage_update():
     for item in hub_config.wakeOnLANList:
         temp = {"class": "wolComponent",
                 "id": item.id,
-                "groups": item.groups,
+                "groups": item.get_active_groups(),
                 "ip_address": item.ip_address,
                 "latency": item.latency,
                 "mac_address": item.mac_address,

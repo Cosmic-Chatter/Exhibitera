@@ -2289,20 +2289,39 @@
 
         <div class="tab-pane fade" id="nav-settings" role="tabpanel" aria-labelledby="nav-settings-tab">
 
-          <!-- Delete group confirmation -->
+          <!-- Archive group confirmation -->
           <div class="modal" tabindex="-1" role="dialog" id="deleteGroupModal">
             <div class="modal-dialog modal-dialog-centered" role="document">
               <div class="modal-content">
                 <div class="modal-header">
-                  <h5 class="modal-title">Delete group?</h5>
+                  <h5 class="modal-title">Archive group?</h5>
                   <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body text-danger">
-                  Deleting a group cannot be undone.
+                <div class="modal-body">
+                  Archived groups are removed from the group list but can be restored at any time.
                 </div>
                 <div class="modal-footer">
-                  <button id="deleteGroupConfirmationButton" type="button" class="btn btn-danger ms-auto">Delete</button>
+                  <button id="deleteGroupConfirmationButton" type="button" class="btn btn-danger ms-auto">Archive</button>
                   <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+          <!-- Archived groups modal -->
+          <div class="modal" tabindex="-1" role="dialog" id="archivedGroupsModal">
+            <div class="modal-dialog modal-dialog-centered exhibitera-dialog" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">Archived groups</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <div id="archivedGroupsModalList" style="max-height: 60vh; overflow-y: auto; overflow-x: hidden;"></div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
               </div>
             </div>
@@ -2321,6 +2340,8 @@
           <div class="row mt-0 gy-2">
             <div class="col-4 col-sm-3 col-md-2 border-end">
               <button id="settingsAddGroupButton" class="btn btn-primary w-100">Add group</button>
+              <button id="settingsViewArchivedGroupsButton" class="btn btn-info w-100 mt-2">View archived</button>
+
             </div>
             <div class="col-8 col-sm-9 col-md-10">
               <div id="settingsGroupsRow" class="row gy-2 row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5"></div>

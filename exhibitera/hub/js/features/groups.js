@@ -145,7 +145,7 @@ export function populateGroupsRow () {
 
     const deleteButton = document.createElement('button')
     deleteButton.classList = 'dropdown-item text-danger'
-    deleteButton.innerHTML = 'Delete'
+    deleteButton.innerHTML = 'Archive'
     deleteButton.addEventListener('click', () => {
       document.getElementById('deleteGroupModal').dataset.uuid = group.uuid
       exUtilities.showModal('#deleteGroupModal')
@@ -158,7 +158,7 @@ export function populateGroupsRow () {
       dropdownBtn.style.borderBottomRightRadius = '0'
 
       const descCol = document.createElement('div')
-      titleCol.classList = 'col-12'
+      descCol.classList = 'col-12'
       row.appendChild(descCol)
 
       const description = document.createElement('div')
@@ -181,6 +181,111 @@ export function deleteGroupFromModal () {
     .then(() => {
       exUtilities.hideModal('#deleteGroupModal')
     })
+}
+
+export function restoreGroup (uuid) {
+  // Move a group from the archive back to the active list
+
+  return hubTools.makeServerRequest({
+    method: 'GET',
+    endpoint: '/group/' + uuid + '/restore'
+  })
+}
+
+export function getArchivedGroups () {
+  // Return a Promise resolving to the list of archived groups
+
+  return hubTools.makeServerRequest({
+    method: 'GET',
+    endpoint: '/group/archive/list'
+  })
+    .then((response) => (response.success === true ? response.groups : []))
+}
+
+export function showArchivedGroupsModal () {
+  // Load the archived groups and show them in a modal
+
+  populateArchivedGroupsList().then(() => {
+    exUtilities.showModal('#archivedGroupsModal')
+  })
+}
+
+function populateArchivedGroupsList () {
+  // Build the list of archived groups, each with a Restore button.
+
+  const list = document.getElementById('archivedGroupsModalList')
+
+  return getArchivedGroups().then((groups) => {
+    list.innerHTML = ''
+
+    if (groups.length === 0) {
+      const empty = document.createElement('div')
+      empty.classList = 'fst-italic text-center py-2'
+      empty.textContent = 'No archived groups.'
+      list.appendChild(empty)
+      return
+    }
+
+    // Most recently archived first
+    const sorted = groups.slice().sort((a, b) => new Date(b.archiveDate) - new Date(a.archiveDate))
+
+    for (const group of sorted) {
+      const row = document.createElement('div')
+      row.classList = 'row align-items-center gy-1 py-2 border-bottom mx-0'
+      list.appendChild(row)
+
+      const infoCol = document.createElement('div')
+      infoCol.classList = 'col-12 col-md-9'
+      row.appendChild(infoCol)
+
+      const name = document.createElement('div')
+      name.classList = 'fw-bold'
+      name.textContent = group.name
+      infoCol.appendChild(name)
+
+      if (group.description) {
+        const description = document.createElement('div')
+        description.textContent = group.description
+        infoCol.appendChild(description)
+      }
+
+      if (group.archiveDate) {
+        const dateOptions = { year: 'numeric', month: 'short', day: 'numeric' }
+        const archiveDate = new Date(group.archiveDate)
+
+        const date = document.createElement('div')
+        date.classList = 'small text-muted fst-italic'
+        date.textContent = `Archived ${archiveDate.toLocaleDateString(undefined, dateOptions)}`
+
+        infoCol.appendChild(date)
+
+        if (group.archivedUsername) {
+          hubTools.getUserDisplayName(group.archivedUsername)
+            .then((displayName) => {
+              date.textContent = `Archived ${archiveDate.toLocaleDateString(undefined, dateOptions)} by ${displayName}`
+            })
+        }
+      }
+
+      const buttonCol = document.createElement('div')
+      buttonCol.classList = 'col-12 col-md-3'
+      row.appendChild(buttonCol)
+
+      const restoreButton = document.createElement('button')
+      restoreButton.classList = 'btn btn-success btn-sm w-100'
+      restoreButton.textContent = 'Restore'
+      restoreButton.addEventListener('click', () => {
+        restoreGroup(group.uuid).then((response) => {
+          if (response.success === true) {
+            populateArchivedGroupsList()
+          } else {
+            console.log('Could not restore group:', response.reason)
+          }
+        })
+      })
+      buttonCol.appendChild(restoreButton)
+    }
+  })
 }
 
 export function populateGroupsForSelect (select, selected = []) {

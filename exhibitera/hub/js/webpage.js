@@ -691,6 +691,9 @@ document.getElementById('settingsAddGroupButton').addEventListener('click', () =
 })
 document.getElementById('editGroupModalSubmitButton').addEventListener('click', hubGroup.submitChangeFromGroupEditModal)
 document.getElementById('deleteGroupConfirmationButton').addEventListener('click', hubGroup.deleteGroupFromModal)
+document.getElementById('settingsViewArchivedGroupsButton').addEventListener('click', () => {
+  hubGroup.showArchivedGroupsModal()
+})
 
 // Server settings
 for (const el of document.querySelectorAll('.hubSettingsInputField')) {

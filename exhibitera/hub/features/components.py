@@ -215,6 +215,16 @@ class BaseComponent:
                 "on_floor_pct": summary["on_floor"],
                 "off_floor_pct": summary["off_floor"]}
 
+    def get_active_groups(self) -> list[str]:
+        """Return this component's groups, excluding any that were archived or deleted."""
+
+        builtin_groups: tuple[str, ...] = ("Default",)
+
+        valid = {group["uuid"] for group in (hub_config.group_list or [])}
+        visible = [group for group in self.groups if group in builtin_groups or group in valid]
+
+        return visible if visible else ["Default"]
+
     def get_dict(self) -> dict[str, Any]:
         """Return a dictionary representation of this component.
 

@@ -54,6 +54,15 @@ async def get_program_list(location: Optional[str] = None):
     return {"success": True, "program_list": matched_programs}
 
 
+@router.get("/locations")
+async def get_program_locations():
+    """Return a list of available program locations (which are all the available groups)."""
+
+    locations = [{"uuid": d["uuid"], "name": d["name"]} for d in hub_config.group_list]
+
+    return {"success": True, "locations": locations}
+
+
 @router.get("/archive/list")
 async def get_archived_programs(
         permission: dict = Depends(hub_users.require_permission("programs", "view"))
