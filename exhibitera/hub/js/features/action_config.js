@@ -87,7 +87,7 @@ export class ActionConfigurator {
       targetSelector.appendChild(sep)
 
       for (const item of hubConfig.componentGroups) {
-        const groupName = hubTools.getGroupName(item.group)
+        const groupName = hubTools.getActiveGroupName(item.group)
         targetSelector.appendChild(new Option(groupName, JSON.stringify({
           type: 'group',
           uuid: item.group
@@ -338,7 +338,7 @@ export class ActionConfigurator {
     }
 
     if (target.type === 'all') return 'all components'
-    if (target.type === 'group') return 'all ' + hubTools.getGroupName(target.uuid)
+    if (target.type === 'group') return 'all ' + hubTools.getActiveGroupName(target.uuid)
     if (target.type === 'program') return hubTools.getProgramName(target.uuid)
     if (target.type === 'component') {
       const component = hubTools.getExhibitComponent(target.uuid)

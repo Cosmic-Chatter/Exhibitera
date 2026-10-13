@@ -150,13 +150,26 @@ export async function showUpdateInfoModal (id, kind, details) {
   exUtilities.showModal('#updateInfoModal')
 }
 
-export function getGroupName (uuid) {
+export function getActiveGroupName (uuid) {
   // Return the name of a group given its UUID.
 
   for (const group of hubConfig.groups) {
     if (group.uuid === uuid) return group.name
   }
   return uuid
+}
+
+export async function getGroupName (uuid) {
+  // Return the name of a group given its UUID, even if it is archived.
+
+  const result = await makeServerRequest({
+    method: 'GET',
+    endpoint: '/group/' + uuid + '/name'
+  })
+
+  if (!result.success) return uuid
+
+  return result.name
 }
 
 export function sortComponentsByGroup () {
@@ -183,14 +196,14 @@ export function sortGroups (method) {
 
   if (method === 'alphabetical') {
     hubConfig.componentGroups.sort((a, b) => {
-      const aName = getGroupName(a.group).toLowerCase()
-      const bName = getGroupName(b.group).toLowerCase()
+      const aName = getActiveGroupName(a.group).toLowerCase()
+      const bName = getActiveGroupName(b.group).toLowerCase()
       return aName.localeCompare(bName)
     })
   } else if (method === 'status') {
     hubConfig.componentGroups.sort((a, b) => {
-      const aName = getGroupName(a.group).toLowerCase()
-      const bName = getGroupName(b.group).toLowerCase()
+      const aName = getActiveGroupName(a.group).toLowerCase()
+      const bName = getActiveGroupName(b.group).toLowerCase()
       const aStatus = a.getStatus().value
       const bStatus = b.getStatus().value
       if (aStatus > bStatus) return -1

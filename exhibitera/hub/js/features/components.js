@@ -621,7 +621,7 @@ class ExhibitComponentGroup {
       mainButton.classList.add('btn-lg')
     }
     mainButton.setAttribute('type', 'button')
-    mainButton.innerHTML = hubTools.getGroupName(this.group)
+    mainButton.innerHTML = hubTools.getActiveGroupName(this.group)
     btnGroup.appendChild(mainButton)
 
     if (permission === 'edit') {

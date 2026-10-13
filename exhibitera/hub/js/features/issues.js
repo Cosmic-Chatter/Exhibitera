@@ -458,7 +458,7 @@ export async function showIssueEditModal (issueType, target) {
   const components = hubTools.sortComponentsByGroup()
 
   for (const group of Object.keys(components).sort()) {
-    const header = new Option(hubTools.getGroupName(group))
+    const header = new Option(hubTools.getActiveGroupName(group))
     header.setAttribute('disabled', true)
     issueRelatedComponentsSelector.appendChild(header)
     const sortedGroup = exUtilities.sortAlphabetically(components[group], 'id')

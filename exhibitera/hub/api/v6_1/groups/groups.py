@@ -7,6 +7,26 @@ import exhibitera.hub.features.users as hub_users
 
 router = APIRouter(prefix="/group")
 
+@router.get("/{uuid_str}/name")
+async def get_group_name(
+        uuid_str: str,
+):
+    """Return the name of the group."""
+
+    group = hub_group.get_group(uuid_str)
+    if group is not None:
+        return {"success": True, "name": group.get("name", uuid_str)}
+
+    # Check if it's in an archived group
+    archive = hub_group.get_archived_groups()
+    group = next((x for x in archive if x["uuid"] == uuid_str), None)
+
+    if group is not None:
+        return {"success": True, "name": group.get("name", uuid_str) + " (archived)"}
+
+    return {"success": False, "name": uuid_str}
+
+
 @router.get("/{uuid_str}/details")
 async def get_group_details(
         uuid_str: str,
