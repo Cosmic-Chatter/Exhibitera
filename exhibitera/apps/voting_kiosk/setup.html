@@ -411,19 +411,18 @@
                       <label for="definitionNameInput" class="form-label">Definition name</label>
                       <input type="text" class="form-control" id="definitionNameInput">
                     </div>
-                    <div class="col-12 col-md-6 col-lg-4">
-                      <label for="behaviorInput_recording_interval" class="form-label">
-                        Recording interval
-                        <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="The interval in seconds that votes are batched and sent to Hub." style="font-size: 0.55em;">?</span>
-                      </label>
-                      <input type="number" min="5" value="60" class="form-control behavior-input" data-property="recording_interval" id="behaviorInput_recording_interval">
+                    <div class="col-12 col-lg-6 col-xl-4">
+                      <div id="behaviorInput_recording_interval" class="advanced-slider" data-name="Recording interval" data-path="behavior>recording_interval" data-min="1" data-max="300" data-start="60" data-step="1" data-unit="sec" data-note="The interval in seconds that votes are batched and sent to Hub."></div>
                     </div>
-                    <div class="col-12 col-md-6 col-lg-4">
-                      <label for="behaviorInput_touch_cooldown" class="form-label">
+                    <div class="col-12 col-lg-6 col-xl-4">
+                      <div id="behaviorInput_touch_cooldown" class="advanced-slider" data-name="Touch cooldown" data-path="behavior>touch_cooldown" data-min="0" data-max="10" data-start="2" data-step="0.5" data-unit="sec" data-note="The interval in seconds to wait before accepting another vote (helps to defeat spamming)."></div>
+
+
+                      <!-- <label for="behaviorInput_touch_cooldown" class="form-label">
                         Touch cooldown
                         <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="The interval in seconds to wait before accepting another vote (helps to defeat spamming)." style="font-size: 0.55em;">?</span>
                       </label>
-                      <input type="number" min="0" value="2" class="form-control behavior-input" id="behaviorInput_touch_cooldown" data-property="touch_cooldown">
+                      <input type="number" min="0" value="2" class="form-control behavior-input" id="behaviorInput_touch_cooldown" data-property="touch_cooldown"> -->
                     </div>
                   </div>
                 </div>

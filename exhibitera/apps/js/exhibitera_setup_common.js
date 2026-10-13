@@ -1524,9 +1524,38 @@ export function createAdvancedSliders () {
   }
 }
 
+function getAdvancedSliderNumberChars (dataset) {
+  // Return the number of characters in the widest value the number field could
+  // need to show
+
+  const countDecimals = (str) => {
+    const s = String(str ?? '')
+    if (s.includes('e-')) return parseInt(s.split('e-')[1], 10) // e.g. 1e-7
+    const parts = s.split('.')
+    return parts.length > 1 ? parts[1].length : 0
+  }
+
+  // 'any' is a valid step value and means arbitrary precision. Fall back to a
+  // reasonable allowance in that case.
+  const step = dataset.step
+  const decimals = (step == null || step === 'any')
+    ? 2
+    : Math.max(countDecimals(step), countDecimals(dataset.min), countDecimals(dataset.max))
+
+  // Format the extremes the same way the field will display them. Include start
+  // in case it falls outside the min/max range.
+  const candidates = [dataset.min, dataset.max, dataset.start]
+    .map(parseFloat)
+    .filter((n) => Number.isFinite(n))
+    .map((n) => n.toFixed(decimals)) // includes the minus sign and the decimal point
+
+  if (candidates.length === 0) return 3
+  return Math.max(...candidates.map((s) => s.length))
+}
+
 export function createAdvancedSlider (el, value = null) {
   // Create the HTML for an Advanced Slider based on the data properties of
-  // the given element and a possible current value
+  // the given element and a possible current value.
 
   if (el == null) return
 
@@ -1539,12 +1568,10 @@ export function createAdvancedSlider (el, value = null) {
   const path = el.dataset.path.split('>')
 
   let labelHTML = ''
-  let sliderWidth = 8
-  let numberWidth = 4
   if (el.dataset?.unit) {
-    labelHTML = `<span class="input-group-text exAS_label">${el.dataset.unit}</span>`
-    sliderWidth = 7
-    numberWidth = 5
+    // white-space: nowrap keeps the unit on one line; the flex-shrink rule below
+    // keeps it from being compressed.
+    labelHTML = `<span class="input-group-text exAS_label" style="flex: 0 0 auto; white-space: nowrap;">${el.dataset.unit}</span>`
   }
   let noteHTML = ''
   if (el.dataset?.note) {
@@ -1553,23 +1580,29 @@ export function createAdvancedSlider (el, value = null) {
     <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="${el.dataset.note}" style="font-size: 0.55em;">?</span>
     `
   }
+
+  // Width of the number input: widest value (in characters) plus the input's
+  // horizontal padding (.25rem each side, set by .exAS_number) and 1px borders.
+  // The 'ch' unit resolves against the input's own font-size (0.75rem), so this
+  // scales with the CSS. A half-character of slack covers fonts whose digits are
+  // slightly wider than '0'.
+  const nChars = getAdvancedSliderNumberChars(el.dataset)
+  const numberWidth = `calc(${nChars + 0.5}ch + 0.5rem + 2px)`
+
   el.innerHTML = `
       <label class="form-label">
         ${el.dataset.name}
         ${noteHTML}
       </label>
-      <div class="row">
-        <div class="col-${String(sliderWidth + 1)} col-sm-${String(sliderWidth)} col-xl-${String(sliderWidth + 1)}  pe-0 d-flex align-items-center">
+      <div class="d-flex align-items-center">
+        <div class="flex-grow-1 d-flex align-items-center" style="min-width: 0;">
           <input type="range" id="exAS_slider_${id}" class="form-range w-100 exAS_slider" min="${el.dataset.min}" max="${el.dataset.max}" start="${value ?? el.dataset.start}" step="${el.dataset.step}">
-          </input>
         </div>
-        <div class="col-${String(numberWidth - 1)} col-sm-${String(numberWidth)} col-xl-${String(numberWidth - 1)} ps-1 d-flex align-items-center">
-          <div class='input-group'>
-            <input type="number" id="exAS_number_${id}" class="form-control exAS_number" min="${el.dataset.min}" max="${el.dataset.max}" start="${value ?? el.dataset.start}" step="${el.dataset.step}">
+        <div class="ps-2 flex-shrink-0">
+          <div class="input-group flex-nowrap">
+            <input type="number" id="exAS_number_${id}" class="form-control exAS_number" style="flex: 0 0 auto; width: ${numberWidth};" min="${el.dataset.min}" max="${el.dataset.max}" start="${value ?? el.dataset.start}" step="${el.dataset.step}">
             ${labelHTML}
           </div>
-          
-          </input>
         </div>
       </div>
   `
@@ -1581,9 +1614,9 @@ export function createAdvancedSlider (el, value = null) {
   slider.value = value ?? el.dataset.start
   el.value = value ?? el.dataset.start
 
-  // Activate tooltips
-  const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-  tooltipTriggerList.map(function (tooltipTriggerEl) {
+  // Activate tooltips (scoped to this slider so we don't re-initialize
+  // tooltips belonging to other elements on every call)
+  Array.from(el.querySelectorAll('[data-bs-toggle="tooltip"]')).forEach((tooltipTriggerEl) => {
     return new bootstrap.Tooltip(tooltipTriggerEl)
   })
 

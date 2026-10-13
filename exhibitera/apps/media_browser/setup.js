@@ -1439,18 +1439,6 @@ document.getElementById('numColsSelect').addEventListener('change', (event) => {
   exSetup.updateWorkingDefinition(['style', 'layout', 'num_columns'], parseInt(event.target.value))
   exSetup.previewDefinition(true)
 })
-// document.getElementById('imageHeightSlider').addEventListener('input', (event) => {
-//   exSetup.updateWorkingDefinition(['style', 'layout', 'image_height'], parseInt(event.target.value))
-//   exSetup.previewDefinition(true)
-// })
-// document.getElementById('titleHeightSlider').addEventListener('input', (event) => {
-//   exSetup.updateWorkingDefinition(['style', 'layout', 'title_height'], parseInt(event.target.value))
-//   exSetup.previewDefinition(true)
-// })
-// document.getElementById('cornerRadiusSlider').addEventListener('input', (event) => {
-//   exSetup.updateWorkingDefinition(['style', 'layout', 'corner_radius'], parseInt(event.target.value))
-//   exSetup.previewDefinition(true)
-// })
 document.getElementById('imageShapeSelect').addEventListener('change', (event) => {
   exSetup.updateWorkingDefinition(['style', 'layout', 'thumbnail_shape'], event.target.value)
   exSetup.previewDefinition(true)

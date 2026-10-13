@@ -288,8 +288,6 @@ async function clearDefinitionInput (full = true) {
 
   // Definition details
   document.getElementById('definitionNameInput').value = ''
-  document.getElementById('behaviorInput_recording_interval').value = 60
-  document.getElementById('behaviorInput_touch_cooldown').value = 2
 
   // Markdown fields
   for (const item of ['header', 'subheader', 'footer', 'subfooter']) {
@@ -371,10 +369,8 @@ function editDefinition (uuid = '') {
   document.getElementById('definitionNameInput').value = def.name
 
   // Set the appropriate values for the behavior fields
-  for (const key of Object.keys(def?.behavior ?? {})) {
-    const el = document.getElementById('behaviorInput_' + key)
-    if (el != null) el.value = def.behavior[key]
-  }
+  exSetup.createAdvancedSlider(document.getElementById('behaviorInput_recording_interval'), def?.behavior?.recording_interval)
+  exSetup.createAdvancedSlider(document.getElementById('behaviorInput_touch_cooldown'), def?.behavior?.touch_cooldown)
 
   // Markdown fields
   for (const item of ['header', 'subheader', 'footer', 'subfooter']) {
@@ -689,15 +685,6 @@ document.getElementById('wizardAnswerTypeSelect').addEventListener('change', (ev
 document.getElementById('wizardAddAnswerOptionButton').addEventListener('click', wizardCreateAnswerOption)
 
 // Main buttons
-
-// Behavior fields
-Array.from(document.querySelectorAll('.behavior-input')).forEach((el) => {
-  el.addEventListener('change', (event) => {
-    const key = event.target.getAttribute('data-property')
-    exSetup.updateWorkingDefinition(['behavior', key], event.target.value)
-    exSetup.previewDefinition(true)
-  })
-})
 
 // Definition fields
 Array.from(document.querySelectorAll('.definition-text-input')).forEach((el) => {
