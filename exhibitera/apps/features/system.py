@@ -54,7 +54,7 @@ def shutdown():
         if sys.platform == "darwin":  # MacOS
             os.system("osascript -e 'tell app \"System Events\" to shutdown'")
         elif sys.platform == "linux":
-            os.system("systemctl shutdown -i")
+            os.system("systemctl poweroff -i")
         elif sys.platform == "win32":
             os.system("shutdown -t 0 -s")
     elif sleep_allowed:

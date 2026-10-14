@@ -6,6 +6,9 @@ import threading
 application_path: str = ""
 # Path to the directory the code is actually running from (different from APP_PATH when using Pyinstaller)
 exec_path: str = ""
+# Name of the folder in ~/Library/Application Support that holds user files for a packaged macOS build.
+# Set by the Exhibitera_Hub.py and Exhibitera_Apps.py entry points.
+user_data_folder_name: str = ""
 
 debug: bool = False
 

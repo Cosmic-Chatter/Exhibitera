@@ -48,7 +48,7 @@ async def write_definition(definition: dict[str, Any] = Body(description="The JS
     return {"success": True, "uuid": definition["uuid"]}
 
 
-@router.get("/definitions/{this_uuid}/delete")
+@router.delete("/definitions/{this_uuid}")
 async def delete_definition(this_uuid: str):
     """Delete the given definition."""
 

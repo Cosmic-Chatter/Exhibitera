@@ -30,7 +30,7 @@ def get_path(path_list: list[str], user_file: bool = False) -> str:
         if user_file:
             if sys.platform == 'darwin':
                 # macOS-specific Application Support path
-                base_dir = os.path.join(os.path.expanduser("~"), "Library", "Application Support", "Exhibitera Apps")
+                base_dir = os.path.join(os.path.expanduser("~"), "Library", "Application Support", config.user_data_folder_name)
                 os.makedirs(base_dir, exist_ok=True)
                 _path = os.path.join(base_dir, *path_list)
         else:

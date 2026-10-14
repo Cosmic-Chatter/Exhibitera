@@ -111,6 +111,7 @@ def create_zip(background_tasks: BackgroundTasks,
                zip_filename: str = Body(description="The filename of the zip file to be created.")):
     """Create a ZIP file containing the given files."""
 
+    zip_filename = ex_files.with_extension(zip_filename, 'zip')
     ex_files.create_zip(zip_filename, files)
     zip_path = ex_files.get_path(["temp", zip_filename], user_file=True)
     background_tasks.add_task(os.remove, zip_path)

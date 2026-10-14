@@ -17,7 +17,11 @@ async def queue_component_command(uuid_str: str,
                                   command: str = Body(description="The command to be sent to the specified component", embed=True)):
     """Queue the specified command for the given exhibit component."""
 
-    hub_components.get_exhibit_component(uuid_str).queue_command(command)
+    component = hub_components.get_exhibit_component(uuid_str)
+    if component is None:
+        return {"success": False, "reason": "Component does not exist"}
+
+    component.queue_command(command)
     return {"success": True, "reason": ""}
 
 
@@ -26,6 +30,9 @@ async def remove_component(uuid_str: str):
     """Remove the specified exhibit component"""
 
     to_remove = hub_components.get_exhibit_component(uuid_str)
+    if to_remove is None:
+        return {"success": False, "reason": "Component does not exist"}
+
     to_remove.remove()
     return {"success": True, "reason": ""}
 

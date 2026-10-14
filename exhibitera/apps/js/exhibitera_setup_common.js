@@ -465,8 +465,8 @@ function deleteDefinition () {
   const definition = document.getElementById('availableDefinitionSelect').value
 
   exCommon.makeHelperRequest({
-    method: 'GET',
-    endpoint: '/definitions/' + definition + '/delete'
+    method: 'DELETE',
+    endpoint: '/definitions/' + definition
   })
     .then(() => {
       exCommon.getAvailableDefinitions(config.app)

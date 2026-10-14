@@ -30,6 +30,9 @@ from exhibitera.apps.api.v6.dmx import dmx as dmx_v6
 from exhibitera.apps.api.v6.files import files as files_v6
 from exhibitera.apps.api.v6.system import system as system_v6
 
+# API version 6.1
+from exhibitera.apps.api.v6_1.definitions import definitions as definitions_v6_1
+
 # If we're not on Linux, prepare to use the webview
 if sys.platform != 'linux':
     import webview
@@ -142,7 +145,7 @@ app.include_router(dmx_v6.router, prefix='/v6')
 app.include_router(files_v6.router, prefix='/v6')
 app.include_router(system_v6.router, prefix='/v6')
 app.include_router(data_v6.router, prefix='/v6.1')
-app.include_router(definitions_v6.router, prefix='/v6.1')
+app.include_router(definitions_v6_1.router, prefix='/v6.1')
 app.include_router(dmx_v6.router, prefix='/v6.1')
 app.include_router(files_v6.router, prefix='/v6.1')
 app.include_router(system_v6.router, prefix='/v6.1')
