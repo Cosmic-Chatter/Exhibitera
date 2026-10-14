@@ -111,6 +111,9 @@ def create_zip(background_tasks: BackgroundTasks,
                zip_filename: str = Body(description="The filename of the zip file to be created.")):
     """Create a ZIP file containing the given files."""
 
+    if not ex_files.filename_safe(zip_filename) or not all(ex_files.filename_safe(x) for x in files):
+        return {"success": False, "reason": "unsafe_filename"}
+
     zip_filename = ex_files.with_extension(zip_filename, 'zip')
     ex_files.create_zip(zip_filename, files)
     zip_path = ex_files.get_path(["temp", zip_filename], user_file=True)
@@ -124,7 +127,7 @@ async def retrieve_file(file_url: Annotated[str, Body(description="The URL of th
                         config: apps_config = Depends(get_config)):
     """Download the given file and save it to disk."""
 
-    if not apps_files.path_safe(path_list):
+    if not ex_files.path_safe(path_list):
         return {"success": False, "reason": "invalid_path"}
     if not ex_files.is_url(file_url):
         return {"success": False, "reason": "invalid_url"}
@@ -138,6 +141,10 @@ async def retrieve_file(file_url: Annotated[str, Body(description="The URL of th
 @router.post("/files/delete")
 async def delete_file(file: str | list[str] = Body(description="The file(s) to delete", embed=True)):
     """Delete the specified file(s) from the content directory"""
+
+    files = file if isinstance(file, list) else [file]
+    if not all(ex_files.filename_safe(x) for x in files):
+        return {"success": False, "reason": "unsafe_filename"}
 
     if isinstance(file, list):
         for entry in file:
@@ -169,8 +176,8 @@ def upload_files(files: list[UploadFile] = File(),
     `path` should be a relative path from the Exhibitera Apps directory.
     """
 
-    if not apps_files.path_safe(path):
-        print('upload_files: error: bad path', path)
+    if not ex_files.path_safe(path):
+        return {"success": False, "reason": "invalid_path"}
 
     for file in files:
         filename = file.filename

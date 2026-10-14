@@ -29,30 +29,6 @@ except ModuleNotFoundError:
     ffmpeg_path = 'ffmpeg'
 
 
-def path_safe(path: list[str]) -> bool:
-    """Ensure the given path doesn't escape the Exhibitera Apps directory.
-
-    `path` should be a list of directories, which should not include any path separators.
-    """
-
-    if len(path) == 0:
-        return False
-
-    if path[0] not in ['content', 'data', 'definitions', 'thumbnails']:
-        return False
-
-    for item in path:
-        if not isinstance(item, str):
-            return False
-        for char in ['/', '\\', '<', '>', ':', '"', '|', '?', '*']:
-            if char in item:
-                return False
-        if item in ['.', '..']:
-            return False
-
-    return True
-
-
 def get_available_definitions(app_id: str = "all") -> dict[str, Any]:
     """Return all the *.json definition files that match the given app_id (or all of them)."""
 

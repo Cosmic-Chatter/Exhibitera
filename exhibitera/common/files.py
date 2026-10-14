@@ -47,6 +47,34 @@ def with_extension(filename: str, ext: str) -> str:
     return os.path.splitext(filename)[0] + "." + ext
 
 
+def path_safe(path: list[str]) -> bool:
+    """Ensure the given path doesn't escape the user files directory.
+
+    `path` should be a list of directories, which should not include any path separators.
+    """
+
+    if len(path) == 0:
+        return False
+
+    if path[0] not in ['content', 'data', 'definitions', 'static', 'thumbnails']:
+        return False
+
+    for item in path:
+        if not isinstance(item, str):
+            return False
+
+        # Trim any leading or trailing whitespace
+        item = item.strip()
+
+        for char in ['/', '\\', '<', '>', ':', '"', '|', '?', '*']:
+            if char in item:
+                return False
+        if item in ['', '.', '..']:
+            return False
+
+    return True
+
+
 def filename_safe(filename: str) -> bool:
     """Ensure the filename doesn't escape to another directory or is malformed.
 

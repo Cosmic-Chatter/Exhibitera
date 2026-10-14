@@ -28,6 +28,9 @@ async def get_available_definitions(app_id: str = 'all'):
 async def load_definition_as_binary(this_uuid: str):
     """Return the given definition as a binary file"""
 
+    if not ex_files.filename_safe(this_uuid):
+        return {"success": False, "reason": "unsafe_filename"}
+
     path = ex_files.get_path(["definitions", ex_files.with_extension(this_uuid, "json")], user_file=True)
 
     headers = {'Access-Control-Expose-Headers': 'Content-Disposition'}
@@ -41,6 +44,8 @@ async def write_definition(definition: dict[str, Any] = Body(description="The JS
     if "uuid" not in definition or definition["uuid"] == "" or definition["uuid"] is None:
         # Add a unique identifier
         definition["uuid"] = str(uuid.uuid4())
+    elif not ex_files.filename_safe(definition["uuid"]):
+        return {"success": False, "reason": "unsafe_filename"}
     path = ex_files.get_path(["definitions",
                                 ex_files.with_extension(definition["uuid"], ".json")],
                                user_file=True)
@@ -52,6 +57,9 @@ async def write_definition(definition: dict[str, Any] = Body(description="The JS
 async def delete_definition(this_uuid: str):
     """Delete the given definition."""
 
+    if not ex_files.filename_safe(this_uuid):
+        return {"success": False, "reason": "unsafe_filename"}
+
     path = ex_files.get_path(["definitions", ex_files.with_extension(this_uuid, "json")], user_file=True)
     apps_files.delete_file(path)
 
@@ -61,6 +69,9 @@ async def delete_definition(this_uuid: str):
 @router.get("/definitions/{this_uuid}/load")
 async def load_definition(this_uuid: str):
     """Load the given definition and return the JSON."""
+
+    if not ex_files.filename_safe(this_uuid):
+        return {"success": False, "reason": "unsafe_filename"}
 
     path = ex_files.get_path(["definitions", ex_files.with_extension(this_uuid, "json")], user_file=True)
     definition = ex_files.load_json(path)
@@ -72,6 +83,9 @@ async def load_definition(this_uuid: str):
 @router.head("/definitions/{this_uuid}/thumbnail")
 async def load_definition_thumbnail(this_uuid: str):
     """Return a thumbnail for this definition."""
+
+    if not ex_files.filename_safe(this_uuid):
+        return {"success": False, "reason": "unsafe_filename"}
 
     thumbnail_path, mimetype = apps_files.get_definition_thumbnail(this_uuid)
 
@@ -86,6 +100,9 @@ async def load_definition_thumbnail(this_uuid: str):
 @router.get("/definitions/{this_uuid}/getContentList")
 async def get_definition_content_list(this_uuid: str):
     """Return a list of all content used by the given definition."""
+
+    if not ex_files.filename_safe(this_uuid):
+        return {"success": False, "reason": "unsafe_filename"}
 
     path = ex_files.get_path(["definitions", ex_files.with_extension(this_uuid, "json")], user_file=True)
     definition = ex_files.load_json(path)
