@@ -2,7 +2,7 @@
 import time
 
 # Third-party modules
-from fastapi import APIRouter, Body, Request
+from fastapi import APIRouter, Body, Depends, Request
 
 # Exhibitera modules
 import exhibitera.hub.config as hub_config
@@ -12,7 +12,7 @@ import exhibitera.hub.features.users as hub_users
 
 router = APIRouter(prefix="/component")
 
-@router.post("/{uuid_str}/queueCommand")
+@router.post("/{uuid_str}/queueCommand", dependencies=[Depends(hub_users.require_component_permission("edit_content"))])
 async def queue_component_command(uuid_str: str,
                                   command: str = Body(description="The command to be sent to the specified component", embed=True)):
     """Queue the specified command for the given exhibit component."""
@@ -25,7 +25,7 @@ async def queue_component_command(uuid_str: str,
     return {"success": True, "reason": ""}
 
 
-@router.delete("/{uuid_str}/delete")
+@router.delete("/{uuid_str}/delete", dependencies=[Depends(hub_users.require_permission("settings", "edit"))])
 async def remove_component(uuid_str: str):
     """Remove the specified exhibit component"""
 
@@ -44,7 +44,7 @@ async def create_static_component(request: Request,
     """Create a new static component."""
 
     # Check permission
-    token = request.cookies.get("authToken", "")
+    token = hub_users.get_request_token(request)
     success, authorizing_user, reason = hub_users.check_user_permission("settings", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}
@@ -70,7 +70,7 @@ async def edit_static_component(request: Request,
         return {"success": False, "reason": "Component does not exist"}
 
     # Check permission
-    token = request.cookies.get("authToken", "")
+    token = hub_users.get_request_token(request)
     success, authorizing_user, reason = hub_users.check_user_permission("components", "edit",
                                                                         groups=component.groups, token=token)
     if success is False:
@@ -97,7 +97,7 @@ async def create_wake_on_lan_component(request: Request,
     """Create a new wake on LAN component."""
 
     # Check permission
-    token = request.cookies.get("authToken", "")
+    token = hub_users.get_request_token(request)
     success, authorizing_user, reason = hub_users.check_user_permission("settings", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}
@@ -126,7 +126,7 @@ async def edit_wake_on_lan_component(request: Request,
         return {"success": False, "reason": "Component does not exist"}
 
     # Check permission
-    token = request.cookies.get("authToken", "")
+    token = hub_users.get_request_token(request)
     success, authorizing_user, reason = hub_users.check_user_permission("components", "edit",
                                                                         groups=component.groups, token=token)
     if success is False:
@@ -175,7 +175,7 @@ async def edit_component(request: Request,
         return {"success": False, "reason": "Component does not exist"}
 
     # Check permission
-    token = request.cookies.get("authToken", "")
+    token = hub_users.get_request_token(request)
     success, authorizing_user, reason = hub_users.check_user_permission("components", "edit",
                                                                         groups=component.groups, token=token)
     if success is False:
@@ -192,7 +192,7 @@ async def edit_component(request: Request,
     return {"success": True}
 
 
-@router.post("/{component_uuid}/definition/{definition_uuid}")
+@router.post("/{component_uuid}/definition/{definition_uuid}", dependencies=[Depends(hub_users.require_component_permission("edit_content", uuid_param="component_uuid"))])
 async def set_component_definition(component_uuid: str, definition_uuid: str):
     """Set the definition for the component."""
 

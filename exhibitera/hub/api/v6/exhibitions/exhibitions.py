@@ -3,7 +3,7 @@ import time
 from typing import Any
 
 # Third-party modules
-from fastapi import APIRouter, Body, Request
+from fastapi import APIRouter, Body, Depends, Request
 
 # Exhibitera modules
 import exhibitera.common.files as ex_files
@@ -22,7 +22,7 @@ async def create_exhibition(request: Request,
     """Create a new exhibition JSON file."""
 
     # Check permission
-    token = request.cookies.get("authToken", "")
+    token = hub_users.get_request_token(request)
     success, authorizing_user, reason = hub_users.check_user_permission("exhibits", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}
@@ -39,7 +39,7 @@ async def edit_exhibition(request: Request,
     """Update the given exhibition with the specified details."""
 
     # Check permission
-    token = request.cookies.get("authToken", "")
+    token = hub_users.get_request_token(request)
     success, authorizing_user, reason = hub_users.check_user_permission("exhibits", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}
@@ -57,7 +57,7 @@ async def apply_exhibition_modifications(request: Request):
     """Update any modifications to the current exhibition."""
 
     # Check permission
-    token = request.cookies.get("authToken", "")
+    token = hub_users.get_request_token(request)
     success, authorizing_user, reason = hub_users.check_user_permission("exhibits", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}
@@ -71,7 +71,7 @@ async def get_exhibition_modifications(request: Request):
     """Update any modifications to the current exhibition."""
 
     # Check permission
-    token = request.cookies.get("authToken", "")
+    token = hub_users.get_request_token(request)
     success, authorizing_user, reason = hub_users.check_user_permission("exhibits", "view", token=token)
     if success is False:
         return {"success": False, "reason": reason}
@@ -85,7 +85,7 @@ async def delete_exhibition_modifications(request: Request,
     """Delete the given modifications from the modification list."""
 
     # Check permission
-    token = request.cookies.get("authToken", "")
+    token = hub_users.get_request_token(request)
     success, authorizing_user, reason = hub_users.check_user_permission("exhibits", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}
@@ -99,7 +99,7 @@ async def delete_exhibition(request: Request, uuid_str: str):
     """Delete the specified exhibition."""
 
     # Check permission
-    token = request.cookies.get("authToken", "")
+    token = hub_users.get_request_token(request)
     success, authorizing_user, reason = hub_users.check_user_permission("exhibits", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}
@@ -108,7 +108,7 @@ async def delete_exhibition(request: Request, uuid_str: str):
     return {"success": True, "reason": ""}
 
 
-@router.post("/{uuid_str}/set")
+@router.post("/{uuid_str}/set", dependencies=[Depends(hub_users.require_permission("exhibits", "edit"))])
 async def set_exhibition(uuid_str: str):
     """Set the specified exhibition as the current one."""
 
@@ -117,14 +117,14 @@ async def set_exhibition(uuid_str: str):
     return {"success": success, "reason": reason}
 
 
-@router.get("/available")
+@router.get("/available", dependencies=[Depends(hub_users.require_user)])
 async def get_available_exhibitions():
     """Return a list of available exhibitions."""
 
     return {"success": True, "available_exhibits": hub_config.exhibit_list}
 
 
-@router.get("/{uuid_str}/details")
+@router.get("/{uuid_str}/details", dependencies=[Depends(hub_users.require_user)])
 async def get_exhibition_details(uuid_str: str):
     """Return the JSON for a particular exhibition."""
 

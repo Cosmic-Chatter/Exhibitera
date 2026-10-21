@@ -471,7 +471,7 @@ function loadDefinition (def) {
   root.style.setProperty('--filter_label-font', 'var(--font-stack-sans)')
   root.style.setProperty('--filter_text-font', 'var(--font-stack-sans)')
 
-  exCommon.configureFonts(def.style.font)
+  exCommon.configureFonts(def?.style?.font)
 
   // Text size settings
 

@@ -99,7 +99,7 @@ async def delete_exhibition(
     return {"success": True, "reason": ""}
 
 
-@router.post("/{uuid_str}/set")
+@router.post("/{uuid_str}/set", dependencies=[Depends(hub_users.require_permission("exhibits", "edit"))])
 async def set_exhibition(uuid_str: str):
     """Set the specified exhibition as the current one."""
 
@@ -108,14 +108,14 @@ async def set_exhibition(uuid_str: str):
     return {"success": success, "reason": reason}
 
 
-@router.get("/available")
+@router.get("/available", dependencies=[Depends(hub_users.require_user)])
 async def get_available_exhibitions():
     """Return a list of available exhibitions."""
 
     return {"success": True, "available_exhibits": hub_config.exhibit_list}
 
 
-@router.get("/{uuid_str}/details")
+@router.get("/{uuid_str}/details", dependencies=[Depends(hub_users.require_user)])
 async def get_exhibition_details(uuid_str: str):
     """Return the JSON for a particular exhibition."""
 

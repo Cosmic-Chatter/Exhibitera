@@ -21,6 +21,7 @@ import distro
 from fastapi import Body, FastAPI, File, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 import requests
 
@@ -211,6 +212,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.openapi = exhibitera_schema
+
+
+@app.exception_handler(hub_users.AuthError)
+async def auth_error_handler(request: Request, exc: hub_users.AuthError):
+    """Return failed authentication in the same shape as other API errors."""
+
+    return JSONResponse({"success": False, "reason": exc.reason})
 
 # Link API routers
 app.include_router(core_api.router, prefix='/core')

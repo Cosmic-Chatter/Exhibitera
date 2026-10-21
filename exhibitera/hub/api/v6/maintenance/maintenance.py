@@ -18,7 +18,7 @@ async def get_all_maintenance_statuses(request: Request):
     """Send a list of all the maintenance statuses for known components"""
 
     # Check permission
-    token = request.cookies.get("authToken", "")
+    token = hub_users.get_request_token(request)
     success, authorizing_user, reason = hub_users.check_user_permission("maintenance", "view", token=token)
     if success is False:
         return {"success": False, "reason": reason}
@@ -38,7 +38,7 @@ async def get_maintenance_status(request: Request, uuid_str: str):
     """Return the maintenance status for the given component."""
 
     # Check permission
-    token = request.cookies.get("authToken", "")
+    token = hub_users.get_request_token(request)
     success, authorizing_user, reason = hub_users.check_user_permission("maintenance", "view", token=token)
     if success is False:
         return {"success": False, "reason": reason}
@@ -57,7 +57,7 @@ async def update_maintenance_status(request: Request,
     """Update the maintenance status for the given component."""
 
     # Check permission
-    token = request.cookies.get("authToken", "")
+    token = hub_users.get_request_token(request)
     success, authorizing_user, reason = hub_users.check_user_permission("maintenance", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}
@@ -82,7 +82,7 @@ async def delete_maintenance_record(request: Request, uuid_str: str):
     """Clear the maintenance log for the given component."""
 
     # Check permission
-    token = request.cookies.get("authToken", "")
+    token = hub_users.get_request_token(request)
     success, authorizing_user, reason = hub_users.check_user_permission("maintenance", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}

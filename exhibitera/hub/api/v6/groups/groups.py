@@ -11,7 +11,7 @@ router = APIRouter(prefix="/group")
 async def get_group_details(request: Request, uuid_str: str):
     """Return the details for the given group."""
 
-    token = request.cookies.get("authToken", "")
+    token = hub_users.get_request_token(request)
     success, authorizing_user, reason = hub_users.check_user_permission("settings", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}
@@ -29,7 +29,7 @@ async def create_group(request: Request,
                        description: str = Body("The description for the group to create.")):
     """Create a group."""
 
-    token = request.cookies.get("authToken", "")
+    token = hub_users.get_request_token(request)
     success, authorizing_user, reason = hub_users.check_user_permission("settings", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}
@@ -45,7 +45,7 @@ async def edit_group(request: Request,
                      description: str = Body(description="The description for the group to create.", default=None)):
     """Edit a group"""
 
-    token = request.cookies.get("authToken", "")
+    token = hub_users.get_request_token(request)
     success, authorizing_user, reason = hub_users.check_user_permission("settings", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}
@@ -58,7 +58,7 @@ async def edit_group(request: Request,
 async def delete_group(request: Request, uuid_str: str):
     """Delete the given group."""
 
-    token = request.cookies.get("authToken", "")
+    token = hub_users.get_request_token(request)
     success, authorizing_user, reason = hub_users.check_user_permission("settings", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}

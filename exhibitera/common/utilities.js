@@ -42,6 +42,9 @@ export function makeRequest (opt) {
     } else {
       xhr.open(opt.method, path, true)
     }
+    for (const [name, value] of Object.entries(opt?.headers ?? {})) {
+      xhr.setRequestHeader(name, value)
+    }
 
     xhr.onload = function () {
       if (xhr.status >= 200 && xhr.status < 300) {

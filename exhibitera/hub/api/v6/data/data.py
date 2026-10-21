@@ -4,7 +4,7 @@ import os
 from typing import Any
 
 # Third-party modules
-from fastapi import APIRouter, Body, Request
+from fastapi import APIRouter, Body, Depends, Request
 
 # Exhibitera modules
 import exhibitera.common.config as ex_config
@@ -28,7 +28,7 @@ async def delete_data(request: Request, name: str):
     """Delete the specified data file."""
 
     # Check permission
-    token = request.cookies.get("authToken", "")
+    token = hub_users.get_request_token(request)
     success, authorizing_user, reason = hub_users.check_user_permission("analytics", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}
@@ -45,7 +45,7 @@ async def delete_data(request: Request, name: str):
         return ex_files.delete_file(data_path)
 
 
-@router.get("/list")
+@router.get("/list", dependencies=[Depends(hub_users.require_permission("analytics", "view"))])
 async def get_available_data():
     """Send a list of all the available data files."""
 
@@ -102,7 +102,7 @@ async def get_raw_text(name: str):
     return {"success": success, "reason": reason, "text": result}
 
 
-@router.get("/{name}/csv")
+@router.get("/{name}/csv", dependencies=[Depends(hub_users.require_permission("analytics", "view"))])
 async def get_tracker_data_csv(name: str):
     """Return the requested data file as a CSV string."""
 

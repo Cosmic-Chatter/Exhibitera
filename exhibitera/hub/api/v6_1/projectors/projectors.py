@@ -47,7 +47,7 @@ async def edit_projector(request: Request,
         return {"success": False, "reason": "Projector does not exist"}
 
     # Check permission
-    token = request.cookies.get("authToken", "")
+    token = hub_users.get_request_token(request)
     success, authorizing_user, reason = hub_users.check_user_permission("components", "edit",
                                                                         groups=proj.groups, token=token)
     if success is False:

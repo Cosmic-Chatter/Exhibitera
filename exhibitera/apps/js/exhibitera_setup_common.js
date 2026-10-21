@@ -1674,8 +1674,8 @@ export function logoutUser () {
   location.reload()
 }
 
-export function authenticateUser () {
-  // If authToken exists in the cookie, use it to log in
+function getAuthToken () {
+  // Return the Hub authentication token saved in the cookie, or an empty string.
 
   let token = ''
   document.cookie.split(';').forEach((item) => {
@@ -1684,6 +1684,24 @@ export function authenticateUser () {
       token = item.slice(11, -1)
     }
   })
+  return token
+}
+
+export function makeAuthenticatedServerRequest (opt) {
+  // Make a Hub request on behalf of the logged-in user.
+  // Hub is a different origin, so it can't receive its own cookie and the token is sent as a header instead.
+
+  const token = getAuthToken()
+  if (token !== '') {
+    opt.headers = { ...(opt.headers ?? {}), Authorization: 'Bearer ' + token }
+  }
+  return exCommon.makeServerRequest(opt)
+}
+
+export function authenticateUser () {
+  // If authToken exists in the cookie, use it to log in
+
+  let token = getAuthToken()
 
   if (token === '') {
     token = 'This will fail' // Token cannot be an empty string
@@ -1793,7 +1811,7 @@ export function submitUserPasswordChange () {
     document.getElementById('passwordChangeModalPassMismatchWarning').style.display = 'none'
   }
 
-  exCommon.makeServerRequest({
+  makeAuthenticatedServerRequest({
     method: 'POST',
     endpoint: '/user/' + config.user.uuid + '/changePassword',
     params: {

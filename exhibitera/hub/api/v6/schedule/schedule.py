@@ -22,7 +22,7 @@ async def get_specific_schedule(request: Request, schedule_name: str):
     """Retrieve the given schedule and return it as a dictionary."""
 
     # Check permission
-    token = request.cookies.get("authToken", "")
+    token = hub_users.get_request_token(request)
     success, authorizing_user, reason = hub_users.check_user_permission("schedule", "view", token=token)
     if success is False:
         return {"success": False, "reason": reason}
@@ -42,7 +42,7 @@ async def delete_schedule(request: Request, schedule_name: str):
     """Delete the given schedule."""
 
     # Check permission
-    token = request.cookies.get("authToken", "")
+    token = hub_users.get_request_token(request)
     success, authorizing_user, reason = hub_users.check_user_permission("schedule", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}
@@ -79,7 +79,7 @@ async def convert_schedule(
     """Convert between date- and day-specific schedules."""
 
     # Check permission
-    token = request.cookies.get("authToken", "")
+    token = hub_users.get_request_token(request)
     success, authorizing_user, reason = hub_users.check_user_permission("schedule", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}
@@ -112,7 +112,7 @@ async def create_schedule(request: Request,
     """Create a new schedule from an uploaded CSV file"""
 
     # Check permission
-    token = request.cookies.get("authToken", "")
+    token = hub_users.get_request_token(request)
     success, authorizing_user, reason = hub_users.check_user_permission("schedule", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}
@@ -138,7 +138,7 @@ async def get_schedule_as_json_string(request: Request,
     """Return the requested schedule as a JSON, excluding unnecessary fields."""
 
     # Check permission
-    token = request.cookies.get("authToken", "")
+    token = hub_users.get_request_token(request)
     success, authorizing_user, reason = hub_users.check_user_permission("schedule", "view", token=token)
     if success is False:
         return {"success": False, "reason": reason}
@@ -164,7 +164,7 @@ async def delete_schedule_action(request: Request, schedule_name: str, action_id
     """Delete the given action from the specified schedule."""
 
     # Check permission
-    token = request.cookies.get("authToken", "")
+    token = hub_users.get_request_token(request)
     success, authorizing_user, reason = hub_users.check_user_permission("schedule", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}
@@ -189,7 +189,7 @@ async def get_date_specific_schedules(request: Request):
     """Retrieve a list of available date-specific schedules"""
 
     # Check permission
-    token = request.cookies.get("authToken", "")
+    token = hub_users.get_request_token(request)
     success, authorizing_user, reason = hub_users.check_user_permission("schedule", "view", token=token)
     if success is False:
         return {"success": False, "reason": reason}
@@ -213,7 +213,7 @@ async def update_schedule(
     """
 
     # Check permission
-    token = request.cookies.get("authToken", "")
+    token = hub_users.get_request_token(request)
     success, authorizing_user, reason = hub_users.check_user_permission("schedule", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}

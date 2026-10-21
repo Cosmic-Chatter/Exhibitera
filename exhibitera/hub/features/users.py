@@ -8,12 +8,13 @@ import uuid
 # Non-standard modules
 import argon2
 from cryptography.fernet import Fernet, InvalidToken
-from fastapi import Cookie
+from fastapi import Request
 
 # Exhibitera modules
 import exhibitera.common.files as ex_files
 import exhibitera.common.utilities as ex_utilities
 import exhibitera.hub.config as hub_config
+import exhibitera.hub.features.components as hub_components
 
 password_hasher = argon2.PasswordHasher(time_cost=1,
                                         memory_cost=1024,
@@ -468,17 +469,76 @@ def check_user_permission(action: str,
     return True, user_uuid, ""
 
 
+class AuthError(Exception):
+    """Raised by the authentication dependencies when a request is not allowed.
+
+    Hub converts this into a {"success": False, "reason": reason} response.
+    """
+
+    def __init__(self, reason: str):
+        super().__init__(reason)
+        self.reason = reason
+
+
+def get_request_token(request: Request) -> str:
+    """Return the authentication token sent with the request, or an empty string if there isn't one.
+
+    The token can come from an "Authorization: Bearer" header, which cross-origin clients like Apps
+    use, or from the authToken cookie, which the Hub web interface uses.
+    """
+
+    scheme, _, credentials = request.headers.get("Authorization", "").partition(" ")
+    if scheme.lower() == "bearer" and credentials.strip() != "":
+        return credentials.strip()
+
+    return request.cookies.get("authToken", "")
+
+
+def require_user(request: Request) -> str:
+    """FastAPI dependency that requires any logged-in user and returns their uuid."""
+
+    success, user_uuid = authenticate_user(token=get_request_token(request))
+    if success is False:
+        raise AuthError("authentication_failed")
+    return user_uuid
+
+
 def require_permission(category: str, action: str):
-    """Factory for a FastAPI dependency that checks a permission and returns
-    a dict shaped like the old manual check, so failing endpoints can
-    `return` it directly without changing the response contract."""
+    """Factory for a FastAPI dependency that requires the given permission.
 
-    def _check(authToken: str = Cookie(default="")) -> dict:
+    Raises AuthError if the check fails. Otherwise, returns a dict with the authorizing user.
+    """
+
+    def _check(request: Request) -> dict:
         success, authorizing_user, reason = check_user_permission(
-            category, action, token=authToken
+            category, action, token=get_request_token(request)
         )
+        if success is False:
+            raise AuthError(reason)
 
-        return {"success": success, "user": authorizing_user, "reason": reason}
+        return {"success": True, "user": authorizing_user, "reason": ""}
+
+    return _check
+
+
+def require_component_permission(action: str, uuid_param: str = "uuid_str"):
+    """Factory for a FastAPI dependency that requires a components permission for the
+    component whose uuid is in the path parameter `uuid_param`.
+
+    Raises AuthError if the check fails. Otherwise, returns a dict with the authorizing user.
+    """
+
+    def _check(request: Request) -> dict:
+        component = hub_components.get_exhibit_component(request.path_params.get(uuid_param, ""))
+        groups = component.groups if component is not None else None
+
+        success, authorizing_user, reason = check_user_permission(
+            "components", action, groups=groups, token=get_request_token(request)
+        )
+        if success is False:
+            raise AuthError(reason)
+
+        return {"success": True, "user": authorizing_user, "reason": ""}
 
     return _check
 

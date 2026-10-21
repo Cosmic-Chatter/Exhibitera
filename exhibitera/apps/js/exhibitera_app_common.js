@@ -864,9 +864,9 @@ export function createFont (name, fontPath) {
 
 export function configureFonts (fontDict) {
   // Take the definition.style.font object and set up the fonts
-  // needed for this definition
+  // needed for this definition. Definitions that don't customize fonts won't have one.
 
-  Object.keys(fontDict).forEach((key) => {
+  Object.keys(fontDict ?? {}).forEach((key) => {
     // Convert from pre-Ex6.1 format if needed
     const fontDef = normalizeFontDefinition(fontDict[key])
 

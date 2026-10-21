@@ -375,6 +375,7 @@ export function populateUsers () {
     method: 'POST',
     endpoint: '/users/list'
   }).then((response) => {
+    if (response.success !== true) return
     const sortedUsers = exUtilities.sortAlphabetically(response.users, 'display_name')
 
     for (const user of sortedUsers) {

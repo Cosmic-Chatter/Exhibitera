@@ -22,7 +22,7 @@ def log_in(response: Response,
     """Authenticate the user and return the permissions and an authentication token."""
 
     if token == "":
-        token = request.cookies.get("authToken", "")
+        token = hub_users.get_request_token(request)
 
     success, user_uuid = hub_users.authenticate_user(token=token, credentials=credentials)
     if success is False:
@@ -102,7 +102,7 @@ def edit_user_preferences(request: Request,
                                                              embed=True)):
     """Update the preferences for the given user."""
 
-    token = request.cookies.get("authToken", "")
+    token = hub_users.get_request_token(request)
     success, authorizing_user, reason = hub_users.check_user_permission("users", "none", token=token)
     if success is False:
         # Should fail only if the user does not exist
@@ -134,7 +134,7 @@ def delete_user(
     return {"success": hub_users.delete_user(uuid_str)}
 
 
-@router.post("/users/list")
+@router.post("/users/list", dependencies=[Depends(hub_users.require_user)])
 def list_users(permissions: dict[str, str] = Body(description="A dictionary of permissions to match.",
                                                   default={},
                                                   embed=True)):

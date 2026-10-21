@@ -60,7 +60,7 @@ function loadDefinition (def) {
   root.style.setProperty('--Body-font-axes', '"wght" 400')
 
   // Then, apply the definition settings
-  exCommon.configureFonts(def.style.font)
+  exCommon.configureFonts(def?.style?.font)
 
   // Text size settings
 

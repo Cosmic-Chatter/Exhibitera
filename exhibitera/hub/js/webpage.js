@@ -148,6 +148,7 @@ function populateHubSettings () {
     endpoint: '/system/configuration/system'
   })
     .then((result) => {
+      if (result.success !== true) return
       const config = result.configuration
 
       document.getElementById('hubSettingsIPAddress').value = config.ip_address
@@ -736,7 +737,8 @@ hubTracker.populateTrackerTemplateSelect(trackerTemplates)
 
 hubUsers.authenticateUser()
   .then(() => {
-    // Subscribe to updates from Hub once we're logged in (or not)
+    // Subscribe to updates from Hub once we're logged in
+    if (hubConfig.user?.uuid == null) return
     const eventSource = new EventSource(hubConfig.serverAddress + exConfig.api + '/system/updateStream')
     eventSource.addEventListener('update', function (event) {
       const update = JSON.parse(event.data)

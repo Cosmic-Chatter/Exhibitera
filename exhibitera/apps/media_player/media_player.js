@@ -104,7 +104,7 @@ function loadDefinition (def) {
   // First, reset to defaults (in case a style option doesn't exist in the definition)
   root.style.setProperty('--subtitle-font', 'var(--font-stack-sans)')
 
-  appsCommon.configureFonts(def.style.font)
+  appsCommon.configureFonts(def?.style?.font)
 
   // Text size
   // First, reset to defaults (in case a style option doesn't exist in the definition)

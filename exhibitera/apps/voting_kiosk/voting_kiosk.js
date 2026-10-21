@@ -261,7 +261,7 @@ function loadDefinition (definition) {
   root.style.setProperty('--button-font-axes', '"wght" 700')
 
   // Then, apply the definition settings
-  exCommon.configureFonts(definition.style.font)
+  exCommon.configureFonts(definition?.style?.font)
 
   // Text size settings
 

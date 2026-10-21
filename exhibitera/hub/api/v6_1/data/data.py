@@ -42,7 +42,7 @@ async def delete_data(
         return ex_files.delete_file(data_path)
 
 
-@router.get("/list")
+@router.get("/list", dependencies=[Depends(hub_users.require_permission("analytics", "view"))])
 async def get_available_data():
     """Send a list of all the available data files."""
 
@@ -99,7 +99,7 @@ async def get_raw_text(name: str):
     return {"success": success, "reason": reason, "text": result}
 
 
-@router.get("/{name}/csv")
+@router.get("/{name}/csv", dependencies=[Depends(hub_users.require_permission("analytics", "view"))])
 async def get_tracker_data_csv(name: str):
     """Return the requested data file as a CSV string."""
 

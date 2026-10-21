@@ -1,0 +1,3 @@
+# Dependencies for development and testing only. Not needed to run or build Hub or Apps.
+httpx
+pytest

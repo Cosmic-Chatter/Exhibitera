@@ -90,7 +90,7 @@ function loadDefinition (definition) {
     exCommon.setBackground(definition.style.background, root, '#719abf')
   }
 
-  exCommon.configureFonts(definition.style.font)
+  exCommon.configureFonts(definition?.style?.font)
 
   Object.keys(definition.style.text_size).forEach((key) => {
     document.documentElement.style.setProperty('--' + key + '-font-size-adjust', definition.style.text_size[key])

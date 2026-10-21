@@ -21,7 +21,7 @@ async def create_issue(request: Request, details: dict[str, Any] = Body(embed=Tr
     """Create a new issue."""
 
     # Check permission
-    token = request.cookies.get("authToken", "")
+    token = hub_users.get_request_token(request)
     success, authorizing_user, reason = hub_users.check_user_permission("maintenance", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}
@@ -37,7 +37,7 @@ async def delete_issue(request: Request, issue_id: str):
     """Delete an issue."""
 
     # Check permission
-    token = request.cookies.get("authToken", "")
+    token = hub_users.get_request_token(request)
     success, authorizing_user, reason = hub_users.check_user_permission("maintenance", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}
@@ -51,7 +51,7 @@ async def archive_issue(request: Request, issue_id: str):
     """Move the given issue to the archive."""
 
     # Check permission
-    token = request.cookies.get("authToken", "")
+    token = hub_users.get_request_token(request)
     success, authorizing_user, reason = hub_users.check_user_permission("maintenance", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}
@@ -70,7 +70,7 @@ async def restore_issue(request: Request, issue_id: str):
     """Move the given issue from the archive to the issue list."""
 
     # Check permission
-    token = request.cookies.get("authToken", "")
+    token = hub_users.get_request_token(request)
     success, authorizing_user, reason = hub_users.check_user_permission("maintenance", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}
@@ -87,7 +87,7 @@ async def delete_issue_media(request: Request,
     """Delete the media files linked to an issue and remove the reference."""
 
     # Check permission
-    token = request.cookies.get("authToken", "")
+    token = hub_users.get_request_token(request)
     success, authorizing_user, reason = hub_users.check_user_permission("maintenance", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}
@@ -106,7 +106,7 @@ async def edit_issue(request: Request,
     """Make changes to an existing issue."""
 
     # Check permission
-    token = request.cookies.get("authToken", "")
+    token = hub_users.get_request_token(request)
     success, authorizing_user, reason = hub_users.check_user_permission("maintenance", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}
@@ -129,7 +129,7 @@ async def get_issue_list(request: Request, match_uuid: str):
     """Return a list of open issues."""
 
     # Check permission
-    token = request.cookies.get("authToken", "")
+    token = hub_users.get_request_token(request)
     success, authorizing_user, reason = hub_users.check_user_permission("maintenance", "view", token=token)
     if success is False:
         return {"success": False, "reason": reason}
@@ -154,7 +154,7 @@ async def get_archived_issues(request: Request, match_uuid: str):
     """Return a list of open issues."""
 
     # Check permission
-    token = request.cookies.get("authToken", "")
+    token = hub_users.get_request_token(request)
     success, authorizing_user, reason = hub_users.check_user_permission("maintenance", "view", token=token)
     if success is False:
         return {"success": False, "reason": reason}
@@ -188,7 +188,7 @@ async def get_issue_media(request: Request, issue_id: str):
     """Return a list of media files connected to the given ID."""
 
     # Check permission
-    token = request.cookies.get("authToken", "")
+    token = hub_users.get_request_token(request)
     success, authorizing_user, reason = hub_users.check_user_permission("maintenance", "view", token=token)
     if success is False:
         return {"success": False, "reason": reason}
@@ -206,7 +206,7 @@ async def upload_issue_media(request: Request, files: list[UploadFile] = File())
     """Upload issue media files."""
 
     # Check permission
-    token = request.cookies.get("authToken", "")
+    token = hub_users.get_request_token(request)
     success, authorizing_user, reason = hub_users.check_user_permission("maintenance", "edit", token=token)
     if success is False:
         return {"success": False, "reason": reason}

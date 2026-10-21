@@ -5,7 +5,7 @@ import logging
 from typing import Any
 
 # Third-party modules
-from fastapi import APIRouter, Body, Request
+from fastapi import APIRouter, Body, Depends, Request
 from sse_starlette.sse import EventSourceResponse
 
 # Exhibitera modules
@@ -15,6 +15,7 @@ import exhibitera.hub.config as hub_config
 import exhibitera.hub.features.components as hub_components
 import exhibitera.hub.features.system as hub_system
 import exhibitera.hub.tools as hub_tools
+import exhibitera.hub.features.users as hub_users
 
 # Set up log file
 log_path: str = ex_files.get_path(["hub.log"], user_file=True)
@@ -128,7 +129,7 @@ async def check_connection():
             "supported_api_levels": [0, 6, 6.1]}
 
 
-@router.get("/configuration/{target}")
+@router.get("/configuration/{target}", dependencies=[Depends(hub_users.require_permission("settings", "view"))])
 async def get_json_configuration(target: str):
     """Return the requested JSON configuration."""
 
@@ -191,7 +192,7 @@ async def handle_ping(data: dict[str, Any], request: Request):
     return dict_to_send
 
 
-@router.post("/configuration/{target}/update")
+@router.post("/configuration/{target}/update", dependencies=[Depends(hub_users.require_permission("settings", "edit"))])
 async def update_system_configuration(target: str,
                                       configuration=Body(description="A JSON object specifying the configuration.", embed=True)):
     """Write the given object to the matching JSON file as the configuration."""
@@ -207,7 +208,7 @@ async def update_system_configuration(target: str,
     return {"success": True}
 
 
-@router.get('/updateStream')
+@router.get('/updateStream', dependencies=[Depends(hub_users.require_user)])
 async def send_update_stream(request: Request):
     """Create a server-side event stream to send updates to the client."""
 
