@@ -2,9 +2,12 @@
 
 # Standard modules
 import datetime
+import logging
+import logging.handlers
 import os
 import sys
 import threading
+import traceback
 
 # Non-standard modules
 import distro
@@ -13,6 +16,83 @@ import requests
 # Exhibitera modules
 import exhibitera.common.config as ex_config
 import exhibitera.common.files as ex_files
+
+
+# Modules to filter out logs from, except warnings/errors
+QUIET_LOGGERS = ["asyncio", "multipart", "PIL", "pyffmpeg", "pyggmpeg", "sse_starlette", "urllib3"]
+
+
+class _QuietLibraryFilter(logging.Filter):
+    """Drop messages below WARNING from the QUIET_LOGGERS.
+
+    This filters at the handler because some libraries (like pyffmpeg) set their own loggers to DEBUG,
+    and propagated messages bypass the root logger's level.
+    """
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        if record.levelno >= logging.WARNING:
+            return True
+        return not any(record.name == name or record.name.startswith(name + ".") for name in QUIET_LOGGERS)
+
+
+def configure_logging(filename: str,
+                      debug: bool = False,
+                      max_bytes: int = 5 * 1024 * 1024,
+                      backup_count: int = 5) -> None:
+    """Send all log messages to a rotating file with the given name in the user files directory.
+
+    Call this once the application paths have been set. Calling it again replaces the previous file.
+    """
+
+    root = logging.getLogger()
+    for handler in list(root.handlers):
+        if getattr(handler, "exhibitera_log", False):
+            root.removeHandler(handler)
+            handler.close()
+
+    handler = logging.handlers.RotatingFileHandler(ex_files.get_path([filename], user_file=True),
+                                                   maxBytes=max_bytes,
+                                                   backupCount=backup_count,
+                                                   encoding="UTF-8")
+    handler.setFormatter(logging.Formatter('%(levelname)s, %(asctime)s, %(message)s',
+                                           datefmt='%Y-%m-%d %H:%M:%S'))
+    handler.addFilter(_QuietLibraryFilter())
+    handler.exhibitera_log = True
+    root.addHandler(handler)
+
+    set_debug_logging(debug)
+
+    # Log errors that nothing else catches, including those in background threads and timers
+    def _handle_uncaught_exception(exc_type, exc_value, exc_traceback):
+        if issubclass(exc_type, KeyboardInterrupt):
+            sys.__excepthook__(exc_type, exc_value, exc_traceback)
+            return
+        _log_uncaught_exception(filename, exc_type, exc_value, exc_traceback)
+
+    def _handle_uncaught_thread_exception(args: threading.ExceptHookArgs):
+        if issubclass(args.exc_type, SystemExit):
+            return  # Threads exit this way intentionally
+        thread_name = args.thread.name if args.thread is not None else "unknown"
+        _log_uncaught_exception(filename, args.exc_type, args.exc_value, args.exc_traceback, thread_name)
+
+    sys.excepthook = _handle_uncaught_exception
+    threading.excepthook = _handle_uncaught_thread_exception
+
+
+def _log_uncaught_exception(log_filename: str, exc_type, exc_value, exc_traceback, thread_name: str = "") -> None:
+    """Log an uncaught exception's traceback as a single line."""
+
+    text = "".join(traceback.format_exception(exc_type, exc_value, exc_traceback))
+    text = text.replace('"', "'").replace("\n", "<newline>")
+    location = f" in thread {thread_name}" if thread_name != "" else ""
+    logging.error(f'Uncaught exception{location}: "{text}"')
+    print(f"Error: see {log_filename} for more details ({datetime.datetime.now()})")
+
+
+def set_debug_logging(debug: bool) -> None:
+    """Log DEBUG messages if debug is True. Otherwise, log INFO and above."""
+
+    logging.getLogger().setLevel(logging.DEBUG if debug else logging.INFO)
 
 
 def clear_terminal() -> None:

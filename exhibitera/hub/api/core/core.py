@@ -3,7 +3,6 @@ in future Exhibitera versions. It is designed for third-party app developers.
 """
 
 # Standard modules
-import logging
 from typing import Any
 
 # Third-party modules
@@ -14,11 +13,6 @@ import exhibitera.common.config as ex_config
 import exhibitera.common.files as ex_files
 import exhibitera.hub.features.components as hub_components
 
-log_path: str = ex_files.get_path(["hub.log"], user_file=True)
-logging.basicConfig(datefmt='%Y-%m-%d %H:%M:%S',
-                    filename=log_path,
-                    format='%(levelname)s, %(asctime)s, %(message)s',
-                    level=logging.INFO)
 
 router = APIRouter()
 

@@ -49,14 +49,12 @@ def delete_issue_media_file(files: list[str], owner: Union[str, None] = None) ->
     for file in files:
         file_path = ex_files.get_path(["issues", "media", file], user_file=True)
         print("Deleting issue media file:", file)
-        with hub_config.logLock:
-            logging.info("Deleting issue media file %s", file)
+        logging.info("Deleting issue media file %s", file)
         with hub_config.issueMediaLock:
             try:
                 os.remove(file_path)
             except FileNotFoundError:
-                with hub_config.logLock:
-                    logging.error("Cannot delete requested issue media file %s: file not found", file)
+                logging.error("Cannot delete requested issue media file %s: file not found", file)
                 print(f"Cannot delete requested issue media file {file}: file not found")
 
         if owner is not None:
@@ -221,11 +219,3 @@ def save_issue_list() -> None:
 
     with open(issue_file, "w", encoding="UTF-8") as file_object:
         json.dump([x.details for x in hub_config.issue_list], file_object, indent=2, sort_keys=True)
-
-
-# Set up log file
-log_path = ex_files.get_path(["hub.log"], user_file=True)
-logging.basicConfig(datefmt='%Y-%m-%d %H:%M:%S',
-                    filename=log_path,
-                    format='%(levelname)s, %(asctime)s, %(message)s',
-                    level=logging.WARNING)

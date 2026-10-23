@@ -1,5 +1,4 @@
 # Standard modules
-import logging
 from typing import Any
 
 # Third-party modules
@@ -8,12 +7,6 @@ from fastapi import APIRouter, Body, Request
 # Exhibitera modules
 import exhibitera.common.files as ex_files
 
-# Set up log file
-log_path: str = ex_files.get_path(["hub.log"], user_file=True)
-logging.basicConfig(datefmt='%Y-%m-%d %H:%M:%S',
-                    filename=log_path,
-                    format='%(levelname)s, %(asctime)s, %(message)s',
-                    level=logging.INFO)
 
 router = APIRouter(prefix='/analytics')
 

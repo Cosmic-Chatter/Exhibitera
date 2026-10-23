@@ -181,7 +181,11 @@ class BaseComponent:
 
         def latency_loop():
             while True:
-                self._poll_latency_once()
+                try:
+                    self._poll_latency_once()
+                except Exception as e:
+                    # Keep polling; a single failed check shouldn't stop latency monitoring
+                    logging.error(f"{self.id}: latency check failed: {repr(e)}")
                 time.sleep(10)
 
         self._latency_thread = threading.Thread(target=latency_loop)
@@ -396,16 +400,14 @@ class ExhibitComponent(BaseComponent):
 
         if self.mac_address is not None:
             print(f"Sending wake on LAN packet to {self.id}")
-            with hub_config.logLock:
-                logging.info(f"Sending wake on LAN packet to {self.id}")
+            logging.info(f"Sending wake on LAN packet to {self.id}")
             try:
                 wakeonlan.send_magic_packet(self.mac_address,
                                             ip_address=self.WOL_broadcast_address,
                                             port=self.WOL_port)
             except ValueError as e:
                 print(f"Wake on LAN error for component {self.id}: {str(e)}")
-                with hub_config.logLock:
-                    logging.error(f"Wake on LAN error for component {self.id}: {str(e)}")
+                logging.error(f"Wake on LAN error for component {self.id}: {str(e)}")
 
     def get_dict(self) -> dict[str, Any]:
         """Return a dictionary representation of this component.
@@ -465,20 +467,17 @@ class WakeOnLANDevice(BaseComponent):
         """Function to send a magic packet waking the device"""
 
         print(f"Sending wake on LAN packet to {self.id}")
-        with hub_config.logLock:
-            logging.info(f"Sending wake on LAN packet to {self.id}")
+        logging.info(f"Sending wake on LAN packet to {self.id}")
         try:
             wakeonlan.send_magic_packet(self.mac_address,
                                         ip_address=self.WOL_broadcast_address,
                                         port=self.WOL_port)
         except ValueError as e:
             print(f"Wake on LAN error for component {self.id}: {str(e)}")
-            with hub_config.logLock:
-                logging.error(f"Wake on LAN error for component {self.id}: {str(e)}")
+            logging.error(f"Wake on LAN error for component {self.id}: {str(e)}")
         except OSError as e:
             print(f"Wake on LAN error for component {self.id}: {str(e)}")
-            with hub_config.logLock:
-                logging.error(f"Wake on LAN error for component {self.id}: {str(e)}")
+            logging.error(f"Wake on LAN error for component {self.id}: {str(e)}")
 
     def update(self):
 
@@ -797,7 +796,6 @@ def get_wake_on_lan_component(component_uuid: str) -> WakeOnLANDevice | None:
     return next((x for x in hub_config.wakeOnLANList if x.uuid == component_uuid), None)
 
 
-
 def poll_wake_on_lan_devices():
     """Ask every Wake on LAN device to report its status at an interval.
     """
@@ -864,8 +862,7 @@ def ip_address_alive(ip_address: str) -> tuple[bool, float | None]:
         if "wake_on_lan_privilege" not in hub_config.notifications:
             print(
                 "Warning: to check the status of Wake on LAN devices, you must run Hub with administrator privileges.")
-            with hub_config.logLock:
-                logging.info(f"Need administrator privilege to check Wake on LAN status")
+            logging.info(f"Need administrator privilege to check Wake on LAN status")
             hub_config.notifications["wake_on_lan_privilege"] = True
     except icmplib.exceptions.NameLookupError:
         pass
@@ -873,10 +870,3 @@ def ip_address_alive(ip_address: str) -> tuple[bool, float | None]:
         print(f"ip_address_alive: an unknown exception occurred when pinging {ip_address}", e)
 
     return False, None
-
-# Set up log file
-log_path = ex_files.get_path(["hub.log"], user_file=True)
-logging.basicConfig(datefmt='%Y-%m-%d %H:%M:%S',
-                    filename=log_path,
-                    format='%(levelname)s, %(asctime)s, %(message)s',
-                    level=logging.WARNING)

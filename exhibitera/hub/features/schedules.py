@@ -208,31 +208,7 @@ def queue_json_schedule(schedule: dict) -> None:
     local_tz = dateutil.tz.tzlocal()
     now = datetime.datetime.now(tz=local_tz)
 
-    # Expand any Programs into their individual actions, scheduled relative to the
-    # Program's start time, before setting up execution timers.
-    expanded_schedule = expand_program_events(schedule)
-
-    new_timers = []
-    for key in expanded_schedule:
-        event = expanded_schedule[key]
-        if event["action"] == "note":
-            # Don't queue notes
-            continue
-
-        event_time = dateutil.parser.parse(event["time"]).replace(tzinfo=local_tz)
-        seconds_from_now = (event_time - now).total_seconds()
-
-        if seconds_from_now >= 0:
-            timer = threading.Timer(seconds_from_now,
-                                    execute_scheduled_action,
-                                    args=(event["action"], event["target"], event["value"]))
-            timer.daemon = True
-            timer.start()
-            new_timers.append(timer)
-
-    get_next_scheduled_action()  # Update the config.json_next_event field
-
-    # Add a timer to reload the schedule
+    # Add a timer to reload the schedule first, so that an error below can't stop tomorrow's schedule
     tomorrow_midnight = datetime.datetime.combine(
         now.date() + datetime.timedelta(days=1), datetime.time.min
     ).replace(tzinfo=local_tz)
@@ -241,7 +217,34 @@ def queue_json_schedule(schedule: dict) -> None:
     timer = threading.Timer(seconds_until_midnight, retrieve_json_schedule)
     timer.daemon = True
     timer.start()
-    new_timers.append(timer)
+    new_timers = [timer]
+
+    # Expand any Programs into their individual actions, scheduled relative to the
+    # Program's start time, before setting up execution timers.
+    expanded_schedule = expand_program_events(schedule)
+
+    for key in expanded_schedule:
+        event = expanded_schedule[key]
+        try:
+            if event["action"] == "note":
+                # Don't queue notes
+                continue
+
+            event_time = dateutil.parser.parse(event["time"]).replace(tzinfo=local_tz)
+            seconds_from_now = (event_time - now).total_seconds()
+
+            if seconds_from_now >= 0:
+                timer = threading.Timer(seconds_from_now,
+                                        execute_scheduled_action,
+                                        args=(event["action"], event["target"], event["value"]))
+                timer.daemon = True
+                timer.start()
+                new_timers.append(timer)
+        except Exception as e:
+            # Skip a malformed event rather than abandoning the rest of the schedule
+            logging.error(f"queue_json_schedule: skipping malformed event {key}: {repr(e)}")
+
+    get_next_scheduled_action()  # Update the config.json_next_event field
 
     # Stop the existing timers and switch to our new ones
     with hub_config.scheduleLock:
@@ -459,11 +462,17 @@ def get_next_scheduled_action():
     hub_config.json_next_event = []
     for key in expanded_schedule:
         event = expanded_schedule[key]
+        # Malformed events are never queued, so they can't be the next action
+        if any(field not in event for field in ["action", "target", "value", "time", "time_in_seconds"]):
+            continue
         if event["action"] == "note":
             # Don't queue notes
             continue
+        try:
+            event_time = dateutil.parser.parse(event["time"]).replace(tzinfo=local_tz)
+        except Exception:
+            continue
 
-        event_time = dateutil.parser.parse(event["time"]).replace(tzinfo=local_tz)
         seconds_from_now = (event_time - now).total_seconds()
 
         if seconds_from_now >= 0:
@@ -526,11 +535,3 @@ def seconds_from_midnight(input_time: str) -> float:
 
     time_dt = dateutil.parser.parse(input_time)
     return (time_dt - time_dt.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()
-
-
-# Set up log file
-log_path = ex_files.get_path(["hub.log"], user_file=True)
-logging.basicConfig(datefmt='%Y-%m-%d %H:%M:%S',
-                    filename=log_path,
-                    format='%(levelname)s, %(asctime)s, %(message)s',
-                    level=logging.ERROR)

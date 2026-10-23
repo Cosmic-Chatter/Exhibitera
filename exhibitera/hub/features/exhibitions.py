@@ -262,8 +262,7 @@ def command_all_components(cmd: str):
     """Queue a command for every exhibit component"""
 
     print("Sending command to all components:", cmd)
-    with hub_config.logLock:
-        logging.info("command_all_components: %s", cmd)
+    logging.info("command_all_components: %s", cmd)
 
     for component in hub_config.componentList:
         component.queue_command(cmd)

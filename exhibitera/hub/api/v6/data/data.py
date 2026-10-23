@@ -1,5 +1,4 @@
 # Standard modules
-import logging
 import os
 from typing import Any
 
@@ -13,12 +12,6 @@ import exhibitera.hub.config as hub_config
 import exhibitera.hub.tools as hub_tools
 import exhibitera.hub.features.users as hub_users
 
-# Set up log file
-log_path: str = ex_files.get_path(["hub.log"], user_file=True)
-logging.basicConfig(datefmt='%Y-%m-%d %H:%M:%S',
-                    filename=log_path,
-                    format='%(levelname)s, %(asctime)s, %(message)s',
-                    level=logging.INFO)
 
 router = APIRouter(prefix='/data')
 

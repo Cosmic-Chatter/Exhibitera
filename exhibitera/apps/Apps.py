@@ -1,6 +1,5 @@
 # Standard modules
 from functools import lru_cache, partial
-import logging
 import os
 import sys
 import threading
@@ -49,13 +48,6 @@ if getattr(sys, 'frozen', False):
 else:
     ex_config.application_path = ex_config.exec_path
 
-
-# Set up log file
-log_path: str = ex_files.get_path(["apps.log"], user_file=True)
-logging.basicConfig(datefmt='%Y-%m-%d %H:%M:%S',
-                    filename=log_path,
-                    format='%(levelname)s, %(asctime)s, %(message)s',
-                    level=logging.INFO)
 
 apps_files.check_directory_structure()
 
@@ -269,6 +261,8 @@ def create_config():
 
 def run():
     """Initialize the server"""
+
+    ex_utilities.configure_logging("apps.log")
 
     defaults_path = ex_files.get_path(['configuration', 'config.json'], user_file=True)
     if os.path.exists(defaults_path):

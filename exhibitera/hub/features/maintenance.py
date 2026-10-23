@@ -2,7 +2,6 @@
 import datetime
 import dateutil.parser
 import json
-import logging
 import os
 from typing import Any, Union
 
@@ -161,11 +160,3 @@ def convert_legacy_maintenance_log(this_id: str) -> dict[str, Any] | None:
     if len(entries) == 0:
         return None
     return {"current": entries[-1], "history": entries}
-
-
-# Set up log file
-log_path = ex_files.get_path(["hub.log"], user_file=True)
-logging.basicConfig(datefmt='%Y-%m-%d %H:%M:%S',
-                    filename=log_path,
-                    format='%(levelname)s, %(asctime)s, %(message)s',
-                    level=logging.WARNING)

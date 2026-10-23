@@ -272,11 +272,3 @@ def restore_program(this_uuid: str) -> bool:
         ex_files.write_json(new_archive, archive_file)
 
     return True
-
-
-# Set up log file
-log_path = ex_files.get_path(["hub.log"], user_file=True)
-logging.basicConfig(datefmt='%Y-%m-%d %H:%M:%S',
-                    filename=log_path,
-                    format='%(levelname)s, %(asctime)s, %(message)s',
-                    level=logging.WARNING)

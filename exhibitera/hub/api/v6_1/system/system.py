@@ -17,13 +17,6 @@ import exhibitera.hub.features.system as hub_system
 import exhibitera.hub.tools as hub_tools
 import exhibitera.hub.features.users as hub_users
 
-# Set up log file
-log_path: str = ex_files.get_path(["hub.log"], user_file=True)
-logging.basicConfig(datefmt='%Y-%m-%d %H:%M:%S',
-                    filename=log_path,
-                    format='%(levelname)s, %(asctime)s, %(message)s',
-                    level=logging.INFO)
-
 
 def get_webpage_update():
     """Collect the current exhibit status and send it back to the web client to update the page."""
@@ -153,8 +146,7 @@ async def get_help_text():
             text = f.read()
         response = {"success": True, "text": text}
     except FileNotFoundError:
-        with hub_config.logLock:
-            logging.error("Unable to read README.md")
+        logging.error("Unable to read README.md")
         response = {"success": False, "reason": "Unable to read README.md"}
     except PermissionError:
         # For some reason, Pyinstaller insists on placing the README in a directory of the same name on Windows.
@@ -164,8 +156,7 @@ async def get_help_text():
                 text = f.read()
             response = {"success": True, "text": text}
         except (FileNotFoundError, PermissionError):
-            with hub_config.logLock:
-                logging.error("Unable to read README.md")
+            logging.error("Unable to read README.md")
             response = {"success": False, "reason": "Unable to read README.md"}
 
     return response

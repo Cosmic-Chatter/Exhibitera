@@ -5,14 +5,12 @@
 
 # Standard modules
 from contextlib import asynccontextmanager
-import datetime
 import threading
 from functools import lru_cache
 import logging
 import os
 import sys
 import time
-import traceback
 from typing import Any, Union
 import uvicorn
 
@@ -158,17 +156,7 @@ def quit_handler(*args) -> None:
         component.clean_up()
         component.save()
 
-    with hub_config.logLock:
-        logging.info("Server shutdown")
-
-
-def error_handler(*exc_info) -> None:
-    """Catch errors and log them to file"""
-
-    text = "".join(traceback.format_exception(*exc_info)).replace('"', "'").replace("\n", "<newline>")
-    with hub_config.logLock:
-        logging.error(f'"{text}"')
-    print(f"Error: see hub.log for more details ({datetime.datetime.now()})")
+    logging.info("Server shutdown")
 
 
 # Check whether we have packaged with Pyinstaller and set the appropriate root path.
@@ -180,18 +168,6 @@ if getattr(sys, 'frozen', False):
     ex_config.application_path = os.path.dirname(sys.executable)
 else:
     ex_config.application_path = ex_config.exec_path
-
-# Set up log file
-log_path: str = ex_files.get_path(["hub.log"], user_file=True)
-logging.basicConfig(datefmt='%Y-%m-%d %H:%M:%S',
-                    filename=log_path,
-                    format='%(levelname)s, %(asctime)s, %(message)s',
-                    level=logging.INFO)
-
-sys.excepthook = error_handler
-
-with hub_config.logLock:
-    logging.info("Server started")
 
 
 @asynccontextmanager
@@ -299,6 +275,9 @@ app.mount("/",
           name="root")
 
 def run():
+    ex_utilities.configure_logging("hub.log")
+    logging.info("Server started")
+
     print("Checking file structure...")
     hub_system.check_file_structure()
     hub_legacy.convert_exhibit_files() # Run early before any exhibits are loaded

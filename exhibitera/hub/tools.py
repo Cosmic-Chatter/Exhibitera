@@ -11,6 +11,7 @@ import psutil
 # Exhibitera imports
 import exhibitera.common.config as ex_config
 import exhibitera.common.files as ex_files
+import exhibitera.common.utilities as ex_utilities
 import exhibitera.hub.config as hub_config
 
 
@@ -28,6 +29,7 @@ def load_system_configuration(from_dict: dict[str, Any] | None = None) -> None:
     hub_config.ip_address = system.get("ip_address", "localhost")
     hub_config.gallery_name = system.get("gallery_name", "")
     ex_config.debug = system.get("debug", False)
+    ex_utilities.set_debug_logging(ex_config.debug)
 
     if ex_config.debug:
         logging.getLogger('uvicorn').setLevel(logging.DEBUG)

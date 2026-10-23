@@ -54,7 +54,14 @@ def load_configuration() -> bool:
     defaults_path = ex_files.get_path(["configuration", "config.json"], user_file=True)
     apps_config.defaults = ex_files.load_json(defaults_path)
 
-    if apps_config.defaults["system"].get("debug", False) is True and sys.platform == "win32":
+    if not isinstance(apps_config.defaults, dict):
+        # Missing or malformed config.json
+        apps_config.defaults = None
+        return False
+
+    system = apps_config.defaults.get("system", {})
+
+    if system.get("debug", False) is True and sys.platform == "win32":
         # If we're in debug mode on Windows, attach a command prompt
 
         # Check if we already have a console; if not, create one
@@ -65,16 +72,15 @@ def load_configuration() -> bool:
             sys.stdout = open("CONOUT$", "w")
             sys.stderr = open("CONOUT$", "w")
 
-    if apps_config.defaults is None:
-        return False
+    ex_utilities.set_debug_logging(system.get("debug", False) is True)
 
     if "smart_restart" in apps_config.defaults:
         apps_config.smart_restart["mode"] = apps_config.defaults["smart_restart"]["state"]
         apps_config.smart_restart["interval"] = float(apps_config.defaults["smart_restart"]["interval"])
         apps_config.smart_restart["threshold"] = float(apps_config.defaults["smart_restart"]["threshold"])
-    if "active_hours" in apps_config.defaults["system"]:
-        apps_config.smart_restart["active_hours_start"] = apps_config.defaults["system"]["active_hours"]["start"]
-        apps_config.smart_restart["active_hours_end"] = apps_config.defaults["system"]["active_hours"]["end"]
+    if "active_hours" in system:
+        apps_config.smart_restart["active_hours_start"] = system["active_hours"]["start"]
+        apps_config.smart_restart["active_hours_end"] = system["active_hours"]["end"]
 
     return True
 

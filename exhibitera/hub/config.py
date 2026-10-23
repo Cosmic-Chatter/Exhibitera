@@ -18,7 +18,6 @@ software_update_timer: threading.Timer | None = None  # Timer reference to check
 
 # Threading resources
 polling_thread_dict: dict[str, threading.Timer] = {}
-logLock: threading.Lock = threading.Lock()
 galleryConfigurationLock: threading.Lock = threading.Lock()
 groupLock: threading.Lock = threading.Lock()
 trackerTemplateWriteLock: threading.Lock = threading.Lock()
