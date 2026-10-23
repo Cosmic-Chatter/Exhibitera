@@ -35,14 +35,6 @@ LOCKED_ENDPOINTS = [
     ("GET", "/exhibition/missing-exhibition/details", None, None),
 ]
 
-# Program endpoints only exist in v6.1
-LOCKED_ENDPOINTS_V6_1 = [
-    ("GET", "/program/", None, None),
-    ("GET", "/program/location/Lobby", None, None),
-    ("GET", "/program/locations", None, None),
-    ("GET", "/program/missing-program", None, None),
-]
-
 # Endpoints called by Apps components and kiosks, which never have a logged-in user
 OPEN_ENDPOINTS = [
     ("POST", "/system/ping", {"uuid": "{component}"}),
@@ -59,9 +51,13 @@ OPEN_ENDPOINTS = [
     ("POST", "/schedule/getSecondsFromMidnight", {"time_str": "10:00 AM"}),
 ]
 
-# Group name lookup only exists in v6.1
+# Group name lookup and programs only exist in v6.1
 OPEN_ENDPOINTS_V6_1 = [
     ("GET", "/group/missing-group/name", None),
+    ("GET", "/program/", None),
+    ("GET", "/program/location/Lobby", None),
+    ("GET", "/program/locations", None),
+    ("GET", "/program/missing-program", None),
 ]
 
 CORE_OPEN_ENDPOINTS = [
@@ -74,7 +70,6 @@ CORE_OPEN_ENDPOINTS = [
 
 def locked_cases():
     cases = [(prefix, *endpoint) for prefix in API_PREFIXES for endpoint in LOCKED_ENDPOINTS]
-    cases += [("/v6.1", *endpoint) for endpoint in LOCKED_ENDPOINTS_V6_1]
     return [pytest.param(*case, id=f"{case[1]} {case[0]}{case[2]}") for case in cases]
 
 
