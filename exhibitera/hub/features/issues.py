@@ -1,6 +1,5 @@
 # Standard imports
 import datetime
-import json
 import logging
 import os
 import time
@@ -128,15 +127,9 @@ def archive_issue(this_id: str, username: str) -> None:
     # First, load the current archive
     archive_file = ex_files.get_path(["issues", "archived.json"], user_file=True)
     with hub_config.issueLock:
-        try:
-            with open(archive_file, 'r', encoding="UTF-8") as file_object:
-                try:
-                    archive: list[dict[str, Any]] = json.load(file_object)
-                except json.decoder.JSONDecodeError:
-                    # File is blank
-                    archive = []
-        except FileNotFoundError:
-            # File does not exist
+        archive: list[dict[str, Any]] | None = ex_files.load_json(archive_file)
+        if archive is None:
+            # File does not exist or is blank
             archive = []
 
         details = issue.details.copy()
@@ -150,8 +143,7 @@ def archive_issue(this_id: str, username: str) -> None:
         archive.append(details)
 
         # Then, write the file back to disk
-        with open(archive_file, "w", encoding="UTF-8") as file_object:
-            json.dump(archive, file_object, indent=2, sort_keys=True)
+        ex_files.write_json(archive, archive_file)
 
     # Finally, delete the issue
     remove_issue(this_id)
@@ -164,10 +156,8 @@ def restore_issue(this_id: str) -> bool:
 
     # First, create the new issue
     with hub_config.issueLock:
-        try:
-            with open(archive_file, 'r', encoding='UTF-8') as file_object:
-                archive_list = json.load(file_object)
-        except (FileNotFoundError, json.JSONDecodeError):
+        archive_list = ex_files.load_json(archive_file)
+        if archive_list is None:
             archive_list = []
 
         issue = next((x for x in archive_list if x["id"] == this_id), None)
@@ -184,8 +174,7 @@ def restore_issue(this_id: str) -> bool:
         new_archive = [x for x in archive_list if x["id"] != this_id]
 
         # Finally, write the file back to disk
-        with open(archive_file, "w", encoding="UTF-8") as file_object:
-            json.dump(new_archive, file_object, indent=2, sort_keys=True)
+        ex_files.write_json(new_archive, archive_file)
 
     return True
 
@@ -194,21 +183,20 @@ def read_issue_list() -> None:
 
     latest_update = datetime.datetime(year=2000, day=1, month=1)
 
-    try:
-        issue_file = ex_files.get_path(["issues", "issues.json"], user_file=True)
-        with open(issue_file, "r", encoding="UTF-8") as file_object:
-            issues = json.load(file_object)
+    issue_file = ex_files.get_path(["issues", "issues.json"], user_file=True)
+    issues = ex_files.load_json(issue_file)  # Logs an error if the file is malformed
+    if issues is None:
+        if os.path.exists(issue_file):
+            print("issues.json is incorrectly formatted or blank.")
+        else:
+            print("No stored issues to load")
+        issues = []
 
-        for issue in issues:
-            update_datetime = datetime.datetime.fromisoformat(issue['lastUpdateDate'])
-            if update_datetime > latest_update:
-                latest_update = update_datetime
-            create_issue(issue)
-    except FileNotFoundError:
-        print("No stored issues to load")
-    except json.decoder.JSONDecodeError:
-        print("issues.json is incorrectly formatted or blank.")
-        logging.error("issues.json is incorrectly formatted or blank.")
+    for issue in issues:
+        update_datetime = datetime.datetime.fromisoformat(issue['lastUpdateDate'])
+        if update_datetime > latest_update:
+            latest_update = update_datetime
+        create_issue(issue)
     hub_config.issue_list_last_update_date = latest_update
 
 
@@ -217,5 +205,4 @@ def save_issue_list() -> None:
 
     issue_file = ex_files.get_path(["issues", "issues.json"], user_file=True)
 
-    with open(issue_file, "w", encoding="UTF-8") as file_object:
-        json.dump([x.details for x in hub_config.issue_list], file_object, indent=2, sort_keys=True)
+    ex_files.write_json([x.details for x in hub_config.issue_list], issue_file)

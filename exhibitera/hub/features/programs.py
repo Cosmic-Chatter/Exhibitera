@@ -1,7 +1,5 @@
 # Standard imports
 import datetime
-import json
-import logging
 import os
 import shutil
 import time
@@ -151,21 +149,20 @@ def read_program_list() -> None:
 
     latest_update = datetime.datetime(year=2000, day=1, month=1)
 
-    try:
-        programs_file = ex_files.get_path(["programs", "programs.json"], user_file=True)
-        with open(programs_file, "r", encoding="UTF-8") as file_object:
-            programs = json.load(file_object)
+    programs_file = ex_files.get_path(["programs", "programs.json"], user_file=True)
+    programs = ex_files.load_json(programs_file)  # Logs an error if the file is malformed
+    if programs is None:
+        if os.path.exists(programs_file):
+            print("programs.json is incorrectly formatted or blank.")
+        else:
+            print("No stored programs to load")
+        programs = []
 
-        for program in programs:
-            update_datetime = datetime.datetime.fromisoformat(program["last_update_datetime"])
-            if update_datetime > latest_update:
-                latest_update = update_datetime
-            create_program(program)
-    except FileNotFoundError:
-        print("No stored programs to load")
-    except json.decoder.JSONDecodeError:
-        print("programs.json is incorrectly formatted or blank.")
-        logging.error("programs.json is incorrectly formatted or blank.")
+    for program in programs:
+        update_datetime = datetime.datetime.fromisoformat(program["last_update_datetime"])
+        if update_datetime > latest_update:
+            latest_update = update_datetime
+        create_program(program)
     hub_config.program_list_last_update_date = latest_update
 
 
@@ -174,8 +171,7 @@ def save_program_list() -> None:
 
     program_file = ex_files.get_path(["programs", "programs.json"], user_file=True)
 
-    with open(program_file, "w", encoding="UTF-8") as file_object:
-        json.dump([x.get_dict() for x in hub_config.program_list], file_object, indent=2, sort_keys=True)
+    ex_files.write_json([x.get_dict() for x in hub_config.program_list], program_file)
 
 
 def delete_program_media_file(files: list[str]) -> None:
@@ -220,13 +216,9 @@ def archive_program(this_uuid: str, username: str) -> bool:
 
     archive_file = ex_files.get_path(["programs", "archived.json"], user_file=True)
     with hub_config.programLock:
-        try:
-            with open(archive_file, 'r', encoding="UTF-8") as file_object:
-                try:
-                    archive: list[dict] = json.load(file_object)
-                except json.decoder.JSONDecodeError:
-                    archive = []
-        except FileNotFoundError:
+        archive: list[dict] | None = ex_files.load_json(archive_file)
+        if archive is None:
+            # File does not exist or is blank
             archive = []
 
         details = program.get_dict()

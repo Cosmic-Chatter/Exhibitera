@@ -8,9 +8,11 @@ import logging
 import mimetypes
 import os
 import pathlib
+import shutil
 import sys
 from typing import Any
 import urllib
+import uuid
 import zipfile
 
 # Third-party modules
@@ -277,25 +279,30 @@ def load_json(path: str) -> dict[str, Any] | list | None:
 def write_json(data: dict[str, Any] | list,
                path: str | os.PathLike,
                append: bool = False,
-               indent: int | str | None = 2):
-    """Take the given dictionary and try to write it to a JSON file."""
+               indent: int | str | None = 2) -> tuple[bool, str]:
+    """Take the given dictionary and try to write it to a JSON file.
+
+    Unless appending, the file is replaced atomically: if the write is interrupted,
+    the file keeps its previous contents rather than being left empty or truncated.
+    """
 
     success = True
     reason = ""
 
-    if append:
-        mode = 'a'
-    else:
-        mode = 'w'
+    # Serialize first, so that bad data can't damage the existing file
+    try:
+        json_str = json.dumps(data, indent=indent, sort_keys=True) + "\n"
+    except TypeError:
+        logging.error(f"write_json: Data is not JSON serializable ({path})")
+        return False, "Data is not JSON serializable"
 
     try:
         with config.json_file_lock:
-            with open(path, mode, encoding='UTF-8') as f:
-                json_str = json.dumps(data, indent=indent, sort_keys=True)
-                f.write(json_str + "\n")
-    except TypeError:
-        success = False
-        reason = "Data is not JSON serializable"
+            if append:
+                with open(path, 'a', encoding='UTF-8') as f:
+                    f.write(json_str)
+            else:
+                _replace_file_contents(path, json_str)
     except FileNotFoundError:
         success = False
         reason = f"File {path} does not exist"
@@ -303,7 +310,33 @@ def write_json(data: dict[str, Any] | list,
         success = False
         reason = f"You do not have write permission for the file {path}"
 
+    if not success:
+        logging.error(f"write_json: {reason}")
     return success, reason
+
+
+def _replace_file_contents(path: str | os.PathLike, text: str) -> None:
+    """Atomically replace the contents of the file at path with text.
+
+    The text is written to a hidden temporary file in the same directory, which then
+    replaces the original in a single step.
+    """
+
+    directory, filename = os.path.split(os.fspath(path))
+    temp_path = os.path.join(directory, f".{filename}.{uuid.uuid4().hex}.tmp")
+
+    try:
+        with open(temp_path, 'w', encoding='UTF-8') as f:
+            f.write(text)
+            f.flush()
+            os.fsync(f.fileno())  # Make sure the data is on disk before the swap
+        if os.path.exists(path):
+            shutil.copymode(path, temp_path)
+        os.replace(temp_path, path)
+    except BaseException:
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+        raise
 
 
 def write_text(data: str, file_path: str, mode: str = "a") -> tuple[bool, str]:

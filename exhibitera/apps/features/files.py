@@ -2,7 +2,6 @@
 
 # Standard modules
 import glob
-import json
 import logging
 import os
 import pathlib
@@ -73,8 +72,7 @@ def delete_file(file: str, absolute: bool = False):
         # Write updated archive to disk
         archive_path = ex_files.get_path(["thumbnails", "v2", "thumbnail_archive.json"], user_file=True)
         with apps_config.thumbnail_lock:
-            with open(archive_path, 'w', encoding='UTF-8') as f:
-                json.dump(apps_config.thumbnail_archive, f, indent=2, sort_keys=True)
+            ex_files.write_json(apps_config.thumbnail_archive, archive_path)
 
 
 def rename_file(old_name: str, new_name: str, absolute: bool = False):
@@ -117,8 +115,7 @@ def rename_file(old_name: str, new_name: str, absolute: bool = False):
         # Write updated archive to disk
         archive_path = ex_files.get_path(["thumbnails", "v2", "thumbnail_archive.json"], user_file=True)
         with apps_config.thumbnail_lock:
-            with open(archive_path, 'w', encoding='UTF-8') as f:
-                json.dump(apps_config.thumbnail_archive, f, indent=2, sort_keys=True)
+            ex_files.write_json(apps_config.thumbnail_archive, archive_path)
 
     os.rename(old_path, new_path)
     return {"success": True}
@@ -150,8 +147,7 @@ def update_thumbnail_archive(filename: str, width: str | int, thumb_name: str, w
     if write is True:
         archive_path = ex_files.get_path(["thumbnails", "v2", "thumbnail_archive.json"], user_file=True)
         with apps_config.thumbnail_lock:
-            with open(archive_path, 'w', encoding='UTF-8') as f:
-                json.dump(apps_config.thumbnail_archive, f, indent=2, sort_keys=True)
+            ex_files.write_json(apps_config.thumbnail_archive, archive_path)
 
 
 def load_thumbnail_archive() -> None:
@@ -165,11 +161,11 @@ def load_thumbnail_archive() -> None:
 
     archive_path = ex_files.get_path(["thumbnails", "v2", "thumbnail_archive.json"], user_file=True)
     with apps_config.thumbnail_lock:
-        if os.path.exists(archive_path):
-            with open(archive_path, 'r', encoding='UTF-8') as f:
-                apps_config.thumbnail_archive = json.load(f)
-        else:
-            apps_config.thumbnail_archive = {}
+        archive = ex_files.load_json(archive_path)  # Logs an error if the file is malformed
+        if archive is None:
+            # The archive will be rebuilt as thumbnails are created
+            archive = {}
+        apps_config.thumbnail_archive = archive
 
 
 def create_definition_thumbnail(filename: str, width: int = 600) -> tuple[bool, str]:

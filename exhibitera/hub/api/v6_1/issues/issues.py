@@ -1,6 +1,5 @@
 # Standard modules
 import aiofiles
-import json
 import os
 from typing import Any
 import uuid
@@ -155,10 +154,8 @@ async def get_archived_issues(
     archive_file = ex_files.get_path(["issues", "archived.json"], user_file=True)
 
     with hub_config.issueLock:
-        try:
-            with open(archive_file, 'r', encoding='UTF-8') as file_object:
-                archive_list = json.load(file_object)
-        except (FileNotFoundError, json.JSONDecodeError):
+        archive_list = ex_files.load_json(archive_file)
+        if archive_list is None:
             archive_list = []
 
     if match_uuid != "__all":
