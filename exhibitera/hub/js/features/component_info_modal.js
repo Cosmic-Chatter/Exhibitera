@@ -316,12 +316,34 @@ function configureComponentInfoModalForProjector (obj) {
   }
 
   document.getElementById('componentInfoModalProjectorSettingsIPAddress').value = obj.ip_address
-  document.getElementById('componentInfoModalProjectorSettingsPassword').value = obj.password
+  loadProjectorPassword(obj.uuid)
   document.getElementById('componentInfoModalProjectorSettings').style.display = 'block'
   document.getElementById('componentInfoModalProjectorSettingsSaveButton').style.display = 'none'
   document.getElementById('componentInfoModalProjectorSettingsIDWarning').style.display = 'none'
   document.getElementById('componentInfoModalProjectorSettingsGroupWarning').style.display = 'none'
   document.getElementById('componentInfoModalProjectorSettingsIPWarning').style.display = 'none'
+}
+
+function loadProjectorPassword (uuid) {
+  // Fill in the projector's password, which isn't part of the update stream.
+  // The field stays disabled until it loads, so a blank field can't be saved over the real password.
+
+  const passwordField = document.getElementById('componentInfoModalProjectorSettingsPassword')
+  passwordField.value = ''
+  passwordField.disabled = true
+  passwordField.dataset.loaded = 'false'
+
+  hubTools.makeServerRequest({
+    method: 'GET',
+    endpoint: '/projector/' + uuid + '/password'
+  })
+    .then((response) => {
+      // Ignore the result if the modal has since been opened for another component
+      if (response?.success !== true || document.getElementById('componentInfoModal').dataset.uuid !== uuid) return
+      passwordField.value = response.password
+      passwordField.disabled = false
+      passwordField.dataset.loaded = 'true'
+    })
 }
 
 function configureComponentInfoModalForStatic (obj, componentPermission, maintenancePermission) {
@@ -448,9 +470,12 @@ export function updateProjectorFromInfoModal () {
     id: document.getElementById('componentInfoModalProjectorSettingsID').value.trim(),
     groups: selectedGroupUUIDs,
     ip_address: document.getElementById('componentInfoModalProjectorSettingsIPAddress').value.trim(),
-    password: document.getElementById('componentInfoModalProjectorSettingsPassword').value.trim(),
     description: document.getElementById('componentInfoModalProjectorDescriptionInput').value.trim()
   }
+
+  // Only send the password if it loaded, so that the current one isn't replaced with a blank
+  const passwordField = document.getElementById('componentInfoModalProjectorSettingsPassword')
+  if (passwordField.dataset.loaded === 'true') update.password = passwordField.value.trim()
 
   // Check that fields are properly filled out
   if (update.id === '') {

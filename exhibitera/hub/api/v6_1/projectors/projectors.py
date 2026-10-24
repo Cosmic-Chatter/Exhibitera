@@ -25,6 +25,20 @@ async def create_projector(
     return {"success": True, "uuid": proj.uuid}
 
 
+@router.get("/{uuid_str}/password", dependencies=[Depends(hub_users.require_component_permission("edit"))])
+async def get_projector_password(uuid_str: str):
+    """Return the PJLink password for the given projector, for editing its settings.
+
+    Passwords aren't included in the update stream, which every logged-in user receives.
+    """
+
+    proj = hub_components.get_projector(uuid_str)
+    if proj is None:
+        return {"success": False, "reason": "Projector does not exist"}
+
+    return {"success": True, "password": proj.password or ""}
+
+
 @router.post("/{uuid_str}/edit", dependencies=[Depends(hub_users.require_component_permission("edit"))])
 async def edit_projector(uuid_str: str,
                          id: str | None = Body(description="The ID of the projector to add.", default=None),

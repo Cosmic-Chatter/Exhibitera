@@ -170,6 +170,7 @@ PROTECTED_V6_1 = {
     ("POST", "/user/create"): ("users", "edit"),
     ("POST", "/user/{user_uuid}/changePassword"): ("user",),
     ("POST", "/user/loginHandoff"): ("user",),
+    ("GET", "/projector/{uuid_str}/password"): ("components", "edit", "group"),
     ("POST", "/user/{uuid_str}/edit"): ("users", "edit"),
     ("POST", "/user/{uuid_str}/editPreferences"): ("user",),
     ("POST", "/users/list"): ("user",),

@@ -466,7 +466,6 @@ class Projector extends BaseComponent {
 
     this.type = 'projector'
     this.exhibiteraAppID = 'projector'
-    this.password = ''
     this.protocol = 'pjlink'
     this.state = {}
   }
@@ -501,7 +500,6 @@ class Projector extends BaseComponent {
         hubNotifications.rebuildNotificationList()
       }
     }
-    if (update?.password) this.password = update.password
     if (update?.protocol) this.protocol = update.protocol
   }
 }

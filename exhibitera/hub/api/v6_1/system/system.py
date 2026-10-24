@@ -56,7 +56,6 @@ def get_webpage_update():
                 "ip_address": item.ip_address,
                 "latency": item.latency,
                 "maintenance_status": item.config.get("maintenance_status", "Off floor, not working"),
-                "password": item.password,
                 "protocol": item.connection_type,
                 "state": item.state,
                 "status": item.state["status"],
