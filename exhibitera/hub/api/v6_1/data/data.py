@@ -16,15 +16,11 @@ import exhibitera.hub.features.users as hub_users
 router = APIRouter(prefix='/data')
 
 
-@router.delete("/{name}")
+@router.delete("/{name}", dependencies=[Depends(hub_users.require_permission("analytics", "edit"))])
 async def delete_data(
-        name: str,
-        permission: dict = Depends(hub_users.require_permission("analytics", "edit"))
+        name: str
 ):
     """Delete the specified data file."""
-
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
 
     if not ex_files.filename_safe(name):
         return {"success": False, "reason": "unsafe_filename"}
@@ -49,7 +45,7 @@ async def get_available_data():
 
 @router.post("/{name}/append")
 async def append_data(name: str,
-                      data: dict[str, Any] = Body(description="The data to be appended.", embed=True),
+                      data: dict[str, Any] = Body(description="The data to be appended.", embed=True)
                       ):
     """Record the submitted data to file."""
 

@@ -503,6 +503,10 @@ def require_user(request: Request) -> str:
     return user_uuid
 
 
+# Describes the check, so that tests can verify each route's requirement
+require_user.exhibitera_permission = ("user",)
+
+
 def require_permission(category: str, action: str):
     """Factory for a FastAPI dependency that requires the given permission.
 
@@ -518,6 +522,7 @@ def require_permission(category: str, action: str):
 
         return {"success": True, "user": authorizing_user, "reason": ""}
 
+    _check.exhibitera_permission = (category, action)
     return _check
 
 
@@ -540,6 +545,7 @@ def require_component_permission(action: str, uuid_param: str = "uuid_str"):
 
         return {"success": True, "user": authorizing_user, "reason": ""}
 
+    _check.exhibitera_permission = ("components", action, "group")
     return _check
 
 

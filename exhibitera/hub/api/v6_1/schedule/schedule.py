@@ -17,15 +17,11 @@ import exhibitera.hub.features.users as hub_users
 router = APIRouter(prefix="/schedule")
 
 
-@router.get("/{schedule_name}")
+@router.get("/{schedule_name}", dependencies=[Depends(hub_users.require_permission("schedule", "view"))])
 async def get_specific_schedule(
-        schedule_name: str,
-        permission: dict = Depends(hub_users.require_permission("schedule", "view"))
+        schedule_name: str
 ):
     """Retrieve the given schedule and return it as a dictionary."""
-
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
 
     if ex_files.filename_safe(schedule_name) is False:
         return {"success": False, "reason": "unsafe_filename"}
@@ -37,15 +33,11 @@ async def get_specific_schedule(
     return {"success": success, "schedule": schedule}
 
 
-@router.delete("/{schedule_name}")
+@router.delete("/{schedule_name}", dependencies=[Depends(hub_users.require_permission("schedule", "edit"))])
 async def delete_schedule(
-        schedule_name: str,
-        permission: dict = Depends(hub_users.require_permission("schedule", "edit"))
+        schedule_name: str
 ):
     """Delete the given schedule."""
-
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
 
     # Check filename is safe
     if ex_files.filename_safe(schedule_name) is False:
@@ -71,16 +63,12 @@ async def delete_schedule(
     return response_dict
 
 
-@router.post("/convert")
+@router.post("/convert", dependencies=[Depends(hub_users.require_permission("schedule", "edit"))])
 async def convert_schedule(
         date: str = Body(description="The date of the schedule to create, in the form of YYYY-MM-DD."),
-        convert_from: str = Body(description="The name of the schedule to clone to the new date."),
-        permission: dict = Depends(hub_users.require_permission("schedule", "edit"))
+        convert_from: str = Body(description="The name of the schedule to clone to the new date.")
 ):
     """Convert between date- and day-specific schedules."""
-
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
 
     if ex_files.filename_safe(date) is False or ex_files.filename_safe(convert_from) is False:
         return {"success": False, "reason": "unsafe_filename"}
@@ -102,16 +90,12 @@ async def convert_schedule(
     return response_dict
 
 
-@router.post("/create")
+@router.post("/create", dependencies=[Depends(hub_users.require_permission("schedule", "edit"))])
 async def create_schedule(
         entries: dict[str, dict] = Body(description="A dict of dicts that each define one entry in the schedule."),
-        name: str = Body(description="The name for the schedule to be created."),
-        permission: dict = Depends(hub_users.require_permission("schedule", "edit"))
+        name: str = Body(description="The name for the schedule to be created.")
 ):
     """Create a new schedule from an uploaded CSV file"""
-
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
 
     success, schedule = hub_schedule.create_schedule(ex_files.with_extension(name, 'json'), entries)
     hub_schedule.retrieve_json_schedule()
@@ -128,15 +112,11 @@ async def get_seconds_from_midnight(time_str: str = Body(description="The time t
     return {"success": True, "seconds": hub_schedule.seconds_from_midnight(time_str)}
 
 
-@router.get("/{schedule_name}/JSONString")
+@router.get("/{schedule_name}/JSONString", dependencies=[Depends(hub_users.require_permission("schedule", "view"))])
 async def get_schedule_as_json_string(
-        schedule_name: str,
-        permission: dict = Depends(hub_users.require_permission("schedule", "view"))
+        schedule_name: str
 ):
     """Return the requested schedule as a JSON, excluding unnecessary fields."""
-
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
 
     if ex_files.filename_safe(schedule_name) is False:
         return {"success": False, "reason": "unsafe_filename"}
@@ -154,15 +134,12 @@ async def get_schedule_as_json_string(
     return {"success": success, "json": json.dumps(result, indent=2, sort_keys=True)}
 
 
-@router.delete("/{schedule_name}/action/{action_id}")
+@router.delete("/{schedule_name}/action/{action_id}",
+               dependencies=[Depends(hub_users.require_permission("schedule", "edit"))])
 async def delete_schedule_action(
-        schedule_name: str, action_id: str,
-        permission: dict = Depends(hub_users.require_permission("schedule", "edit"))
+        schedule_name: str, action_id: str
 ):
     """Delete the given action from the specified schedule."""
-
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
 
     if ex_files.filename_safe(schedule_name) is False:
         return {"success": False, "reason": "unsafe_filename"}
@@ -179,19 +156,15 @@ async def delete_schedule_action(
     return response_dict
 
 
-@router.get("/date_specific/list")
-async def get_date_specific_schedules(
-    permission: dict = Depends(hub_users.require_permission("schedule", "view"))
-):
+@router.get("/date_specific/list", dependencies=[Depends(hub_users.require_permission("schedule", "view"))])
+async def get_date_specific_schedules():
     """Retrieve a list of available date-specific schedules"""
-
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
 
     return {"success": True, "schedules": hub_schedule.get_available_date_specific_schedules()}
 
 
-@router.post("/{schedule_name}/action/{action_id}/update")
+@router.post("/{schedule_name}/action/{action_id}/update",
+             dependencies=[Depends(hub_users.require_permission("schedule", "edit"))])
 async def update_schedule(
         schedule_name: str,
         action_id: str,
@@ -199,16 +172,12 @@ async def update_schedule(
         action_to_set: str = Body(description="The action to set."),
         target_to_set: list[dict] | dict | None = Body(default=None,
                                                        description="The details of the component(s) that should be acted upon."),
-        value_to_set: str = Body(default="", description="A value corresponding to the action."),
-        permission: dict = Depends(hub_users.require_permission("schedule", "edit"))
+        value_to_set: str = Body(default="", description="A value corresponding to the action.")
 ):
     """Write a schedule update to disk.
 
     This command handles both adding a new scheduled action and editing an existing action
     """
-
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
 
     if ex_files.filename_safe(schedule_name) is False:
         return {"success": False, "reason": "unsafe_filename"}

@@ -13,14 +13,9 @@ import exhibitera.hub.features.users as hub_users
 router = APIRouter(prefix="/maintenance")
 
 
-@router.get("/")
-async def get_all_maintenance_statuses(
-        permission: dict = Depends(hub_users.require_permission("maintenance", "view"))
-):
+@router.get("/", dependencies=[Depends(hub_users.require_permission("maintenance", "view"))])
+async def get_all_maintenance_statuses():
     """Send a list of all the maintenance statuses for known components"""
-
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
 
     record_list = []
     for component in hub_config.componentList:
@@ -32,15 +27,11 @@ async def get_all_maintenance_statuses(
     return {"success": True, "records": record_list}
 
 
-@router.get("/{uuid_str}")
+@router.get("/{uuid_str}", dependencies=[Depends(hub_users.require_permission("maintenance", "view"))])
 async def get_maintenance_status(
-        uuid_str: str,
-        permission: dict = Depends(hub_users.require_permission("maintenance", "view"))
+        uuid_str: str
 ):
     """Return the maintenance status for the given component."""
-
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
 
     component = hub_components.get_exhibit_component(uuid_str)
     if component is None:
@@ -48,17 +39,13 @@ async def get_maintenance_status(
     return {"success": True, "status": component.get_maintenance_report()}
 
 
-@router.post("/{uuid_str}")
+@router.post("/{uuid_str}", dependencies=[Depends(hub_users.require_permission("maintenance", "edit"))])
 async def update_maintenance_status(
         uuid_str: str,
         notes: str = Body(description="Text notes about this component."),
-        status: str = Body(description="The status of the component."),
-        permission: dict = Depends(hub_users.require_permission("maintenance", "edit"))
+        status: str = Body(description="The status of the component.")
 ):
     """Update the maintenance status for the given component."""
-
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
 
     component = hub_components.get_exhibit_component(uuid_str)
     if component is None:
@@ -75,15 +62,11 @@ async def update_maintenance_status(
 
     return {"success": True}
 
-@router.delete("/{uuid_str}")
+@router.delete("/{uuid_str}", dependencies=[Depends(hub_users.require_permission("maintenance", "edit"))])
 async def delete_maintenance_record(
-        uuid_str: str,
-        permission: dict = Depends(hub_users.require_permission("maintenance", "edit"))
+        uuid_str: str
 ):
     """Clear the maintenance log for the given component."""
-
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
 
     component = hub_components.get_exhibit_component(uuid_str)
     if component is None:

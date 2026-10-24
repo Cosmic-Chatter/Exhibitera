@@ -9,7 +9,7 @@ router = APIRouter(prefix="/group")
 
 @router.get("/{uuid_str}/name")
 async def get_group_name(
-        uuid_str: str,
+        uuid_str: str
 ):
     """Return the name of the group."""
 
@@ -27,15 +27,11 @@ async def get_group_name(
     return {"success": False, "name": uuid_str}
 
 
-@router.get("/{uuid_str}/details")
+@router.get("/{uuid_str}/details", dependencies=[Depends(hub_users.require_permission("settings", "edit"))])
 async def get_group_details(
-        uuid_str: str,
-        permission: dict = Depends(hub_users.require_permission("settings", "edit"))
+        uuid_str: str
 ):
     """Return the details for the given group."""
-
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
 
     group = hub_group.get_group(uuid_str)
 
@@ -44,74 +40,54 @@ async def get_group_details(
     return {"success": True, "details": group}
 
 
-@router.post("/create")
+@router.post("/create", dependencies=[Depends(hub_users.require_permission("settings", "edit"))])
 async def create_group(
         name: str = Body(description="The name of the group to create"),
-        description: str = Body(description="The description for the group to create."),
-        permission: dict = Depends(hub_users.require_permission("settings", "edit"))
+        description: str = Body(description="The description for the group to create.")
 ):
     """Create a group."""
-
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
 
     group = hub_group.create_group(name, description)
     return {"success": True, "uuid": group["uuid"]}
 
 
-@router.post("/{uuid_str}/edit")
+@router.post("/{uuid_str}/edit", dependencies=[Depends(hub_users.require_permission("settings", "edit"))])
 async def edit_group(
         uuid_str: str,
         name: str = Body(description="The name of the group to create", default=None),
-        description: str = Body(description="The description for the group to create.", default=None),
-        permission: dict = Depends(hub_users.require_permission("settings", "edit"))
+        description: str = Body(description="The description for the group to create.", default=None)
 ):
     """Edit a group"""
-
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
 
     success = hub_group.edit_group(uuid_str, name=name, description=description)
     return {"success": success}
 
 
-@router.delete("/{uuid_str}")
+@router.delete("/{uuid_str}", dependencies=[Depends(hub_users.require_permission("settings", "edit"))])
 async def delete_group(
         uuid_str: str,
-        permission: dict = Depends(hub_users.require_permission("settings", "edit"))
+        authorizing_user: str = Depends(hub_users.require_user)
 ):
     """Archive the given group."""
 
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
-
-    success = hub_group.archive_group(uuid_str, permission["user"])
+    success = hub_group.archive_group(uuid_str, authorizing_user)
     if not success:
         return {"success": False, "reason": "does_not_exist"}
     return {"success": True}
 
 
-@router.get("/{uuid_str}/restore")
+@router.get("/{uuid_str}/restore", dependencies=[Depends(hub_users.require_permission("settings", "edit"))])
 async def restore_group(
-        uuid_str: str,
-        permission: dict = Depends(hub_users.require_permission("settings", "edit"))
+        uuid_str: str
 ):
     """Move the given group from the archive back to the group list."""
-
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
 
     success = hub_group.restore_group(uuid_str)
     return {"success": success}
 
 
-@router.get("/archive/list")
-async def get_archived_groups(
-        permission: dict = Depends(hub_users.require_permission("settings", "view"))
-):
+@router.get("/archive/list", dependencies=[Depends(hub_users.require_permission("settings", "view"))])
+async def get_archived_groups():
     """Return the list of archived groups."""
-
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
 
     return {"success": True, "groups": hub_group.get_archived_groups()}

@@ -3,7 +3,7 @@ import os
 from typing import Any
 
 # Third-party modules
-from fastapi import APIRouter, Body, Depends, Request
+from fastapi import APIRouter, Body, Depends
 
 # Exhibitera modules
 import exhibitera.common.config as ex_config
@@ -16,15 +16,9 @@ import exhibitera.hub.features.users as hub_users
 router = APIRouter(prefix='/data')
 
 
-@router.delete("/{name}")
-async def delete_data(request: Request, name: str):
+@router.delete("/{name}", dependencies=[Depends(hub_users.require_permission("analytics", "edit"))])
+async def delete_data(name: str):
     """Delete the specified data file."""
-
-    # Check permission
-    token = hub_users.get_request_token(request)
-    success, authorizing_user, reason = hub_users.check_user_permission("analytics", "edit", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
 
     if not ex_files.filename_safe(name):
         return {"success": False, "reason": "unsafe_filename"}
@@ -52,7 +46,7 @@ async def get_available_data():
 
 @router.post("/{name}/append")
 async def append_data(name: str,
-                      data: dict[str, Any] = Body(description="The data to be appended.", embed=True),
+                      data: dict[str, Any] = Body(description="The data to be appended.", embed=True)
                       ):
     """Record the submitted data to file."""
 

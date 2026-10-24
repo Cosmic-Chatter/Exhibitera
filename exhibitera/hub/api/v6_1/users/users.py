@@ -39,18 +39,14 @@ def log_in(response: Response,
     return response_dict
 
 
-@router.post("/user/create")
+@router.post("/user/create", dependencies=[Depends(hub_users.require_permission("users", "edit"))])
 def create_user(
         username: str = Body(description="The username"),
         password: str = Body(description="The password for the account to create."),
         display_name: str = Body(description="The name of the account holder."),
-        permissions: dict | None = Body(description="A dictionary of permissions for the new account.", default=None),
-        permission: dict = Depends(hub_users.require_permission("users", "edit"))
+        permissions: dict | None = Body(description="A dictionary of permissions for the new account.", default=None)
 ):
     """Create a new user account."""
-
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
 
     success, user_dict = hub_users.create_user(username, display_name, password, permissions=permissions)
 
@@ -60,19 +56,15 @@ def create_user(
     return response
 
 
-@router.post("/user/{uuid_str}/edit")
+@router.post("/user/{uuid_str}/edit", dependencies=[Depends(hub_users.require_permission("users", "edit"))])
 def edit_user(
         uuid_str: str,
         username: str | None = Body(description="The username", default=None),
         password: str | None = Body(description="A new password.", default=None),
         display_name: str | None = Body(description="The name of the account holder.", default=None),
-        permissions: dict | None = Body(description="A dictionary of permissions for the account.", default=None),
-        permission: dict = Depends(hub_users.require_permission("users", "edit"))
+        permissions: dict | None = Body(description="A dictionary of permissions for the account.", default=None)
 ):
     """Edit the given user."""
-
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
 
     user = hub_users.get_user(uuid_str=uuid_str)
     if user is None:
@@ -95,18 +87,13 @@ def edit_user(
     return {"success": True, "user": user.get_dict()}
 
 
-@router.post("/user/{uuid_str}/editPreferences")
-def edit_user_preferences(request: Request,
-                          uuid_str: str,
+@router.post("/user/{uuid_str}/editPreferences", dependencies=[Depends(hub_users.require_user)])
+def edit_user_preferences(uuid_str: str,
                           preferences: dict[str, Any] = Body(description="A dictionary of preferences to update.",
-                                                             embed=True)):
+                                                             embed=True),
+                          authorizing_user: str = Depends(hub_users.require_user)):
     """Update the preferences for the given user."""
 
-    token = hub_users.get_request_token(request)
-    success, authorizing_user, reason = hub_users.check_user_permission("users", "none", token=token)
-    if success is False:
-        # Should fail only if the user does not exist
-        return {"success": False, "reason": reason}
     if uuid_str != authorizing_user:
         # Only the user can change their preferences
         return {"success": False, "reason": "invalid_credentials"}
@@ -121,14 +108,10 @@ def edit_user_preferences(request: Request,
     return {"success": True, "user": user.get_dict()}
 
 
-@router.delete("/user/{uuid_str}")
-def delete_user(uuid_str: str,
-                permission: dict = Depends(hub_users.require_permission("users", "edit"))
+@router.delete("/user/{uuid_str}", dependencies=[Depends(hub_users.require_permission("users", "edit"))])
+def delete_user(uuid_str: str
                 ):
     """Delete the given user"""
-
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
 
     return {"success": hub_users.delete_user(uuid_str)}
 
@@ -162,25 +145,16 @@ def get_user_display_name(user_uuid: str):
     return {"success": True, "display_name": display_name}
 
 
-@router.post('/user/{user_uuid}/changePassword')
-def change_user_password(request: Request,
-                         user_uuid: str,
+@router.post('/user/{user_uuid}/changePassword', dependencies=[Depends(hub_users.require_user)])
+def change_user_password(user_uuid: str,
                          current_password: str = Body(description="The plaintext of the current password."),
-                         new_password: str = Body(description="The plaintext of the password to set.")):
+                         new_password: str = Body(description="The plaintext of the password to set."),
+                         authorizing_user: str = Depends(hub_users.require_user)):
     """Change the password for the given user"""
 
-    # Check which user is requesting this change
-    token = hub_users.get_request_token(request)
-    # Permission level of "none" is correct because users can change their own
-    # password even if they don't have any access to other users
-    success, authorizing_user, reason = hub_users.check_user_permission("users", "none", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
-
-    # If this is not the user changing their own password, check that they have permissions
+    # Any user can change their own password, even if they don't have any access to other users
     if user_uuid != authorizing_user:
-        success, _, reason = hub_users.check_user_permission("users", "edit", token=token)
-        if success is False:
+        if hub_users.get_user(uuid_str=authorizing_user).check_permission("users", "edit") is False:
             return {"success": False, "reason": "invalid_credentials"}
 
     user = hub_users.get_user(uuid_str=user_uuid)

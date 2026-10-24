@@ -2,7 +2,7 @@
 import time
 
 # Third-party modules
-from fastapi import APIRouter, Body, Depends, Request
+from fastapi import APIRouter, Body, Depends
 
 # Exhibitera modules
 import exhibitera.hub.config as hub_config
@@ -37,26 +37,18 @@ async def remove_component(uuid_str: str):
     return {"success": True, "reason": ""}
 
 
-@router.post("/static/create")
-async def create_static_component(request: Request,
-                                  id: str = Body(description="The ID of the projector to add."),
+@router.post("/static/create", dependencies=[Depends(hub_users.require_permission("settings", "edit"))])
+async def create_static_component(id: str = Body(description="The ID of the projector to add."),
                                   groups: list[str] = Body(description="The groups of the projector to add.")):
     """Create a new static component."""
-
-    # Check permission
-    token = hub_users.get_request_token(request)
-    success, authorizing_user, reason = hub_users.check_user_permission("settings", "edit", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
 
     component = hub_components.add_exhibit_component(id, groups, 'static')
 
     return {"success": True, "uuid": component.uuid}
 
 
-@router.post("/static/{uuid_str}/edit")
-async def edit_static_component(request: Request,
-                                uuid_str: str,
+@router.post("/static/{uuid_str}/edit", dependencies=[Depends(hub_users.require_component_permission("edit"))])
+async def edit_static_component(uuid_str: str,
                                 id: str | None = Body(description="The ID of the static component.", default=None),
                                 description: str | None = Body(description="A short description of this component.",
                                                                default=None),
@@ -64,17 +56,9 @@ async def edit_static_component(request: Request,
                                                                 default=None)):
     """Edit the given static component."""
 
-    # Load the component first, so we can use the groups to authenticate
     component = hub_components.get_exhibit_component(uuid_str)
     if component is None:
         return {"success": False, "reason": "Component does not exist"}
-
-    # Check permission
-    token = hub_users.get_request_token(request)
-    success, authorizing_user, reason = hub_users.check_user_permission("components", "edit",
-                                                                        groups=component.groups, token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
 
     if id is not None:
         component.id = id
@@ -87,29 +71,21 @@ async def edit_static_component(request: Request,
     return {"success": True}
 
 
-@router.post("/WOL/create")
-async def create_wake_on_lan_component(request: Request,
-                                       id: str = Body(description="The ID of the projector to add."),
+@router.post("/WOL/create", dependencies=[Depends(hub_users.require_permission("settings", "edit"))])
+async def create_wake_on_lan_component(id: str = Body(description="The ID of the projector to add."),
                                        groups: list[str] = Body(description="The groups of the projector to add."),
                                        mac_address: str = Body(description="The MAC address of the machine to wake."),
                                        ip_address: str = Body(description="The static IP address of the machine.",
                                                               default="")):
     """Create a new wake on LAN component."""
 
-    # Check permission
-    token = hub_users.get_request_token(request)
-    success, authorizing_user, reason = hub_users.check_user_permission("settings", "edit", token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
-
     component = hub_components.add_wake_on_lan_device(id, groups, mac_address, ip_address=ip_address)
 
     return {"success": True, "uuid": component.uuid}
 
 
-@router.post("/WOL/{uuid_str}/edit")
-async def edit_wake_on_lan_component(request: Request,
-                                     uuid_str: str,
+@router.post("/WOL/{uuid_str}/edit", dependencies=[Depends(hub_users.require_component_permission("edit"))])
+async def edit_wake_on_lan_component(uuid_str: str,
                                      id: str | None = Body(description="The ID of the projector to add.", default=None),
                                      groups: list[str] | None = Body(description="The groups of the projector to add.",
                                                                      default=None),
@@ -120,17 +96,9 @@ async def edit_wake_on_lan_component(request: Request,
                                                             default="")):
     """Edit the given wake on LAN component."""
 
-    # Load the component first, so we can use the groups to authenticate
     component = hub_components.get_wake_on_lan_component(uuid_str)
     if component is None:
         return {"success": False, "reason": "Component does not exist"}
-
-    # Check permission
-    token = hub_users.get_request_token(request)
-    success, authorizing_user, reason = hub_users.check_user_permission("components", "edit",
-                                                                        groups=component.groups, token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
 
     if id is not None:
         component.id = id
@@ -160,9 +128,8 @@ async def get_component_groups(uuid_str: str):
     return {"success": True, "groups": component.groups}
 
 
-@router.post("/{uuid_str}/edit")
-async def edit_component(request: Request,
-                         uuid_str: str,
+@router.post("/{uuid_str}/edit", dependencies=[Depends(hub_users.require_component_permission("edit"))])
+async def edit_component(uuid_str: str,
                          id: str | None = Body(description="The ID of the component.", default=None),
                          groups: list[str] | None = Body(description="The groups of the component.", default=None),
                          description: str | None = Body(description="A short description of the component.",
@@ -173,13 +140,6 @@ async def edit_component(request: Request,
     component = hub_components.get_exhibit_component(uuid_str)
     if component is None:
         return {"success": False, "reason": "Component does not exist"}
-
-    # Check permission
-    token = hub_users.get_request_token(request)
-    success, authorizing_user, reason = hub_users.check_user_permission("components", "edit",
-                                                                        groups=component.groups, token=token)
-    if success is False:
-        return {"success": False, "reason": reason}
 
     if id is not None:
         component.id = id
@@ -192,7 +152,8 @@ async def edit_component(request: Request,
     return {"success": True}
 
 
-@router.post("/{component_uuid}/definition/{definition_uuid}", dependencies=[Depends(hub_users.require_component_permission("edit_content", uuid_param="component_uuid"))])
+@router.post("/{component_uuid}/definition/{definition_uuid}",
+             dependencies=[Depends(hub_users.require_component_permission("edit_content", uuid_param="component_uuid"))])
 async def set_component_definition(component_uuid: str, definition_uuid: str):
     """Set the definition for the component."""
 

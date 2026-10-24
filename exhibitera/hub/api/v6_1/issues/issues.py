@@ -15,79 +15,61 @@ import exhibitera.hub.features.users as hub_users
 
 router = APIRouter(prefix="/issue")
 
-@router.post("/create")
+@router.post("/create", dependencies=[Depends(hub_users.require_permission("maintenance", "edit"))])
 async def create_issue(
         details: dict[str, Any] = Body(embed=True),
-        permission: dict = Depends(hub_users.require_permission("maintenance", "edit"))
+        authorizing_user: str = Depends(hub_users.require_user)
 ):
     """Create a new issue."""
 
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
-
-    hub_issues.create_issue(details, username=permission["user"])
+    hub_issues.create_issue(details, username=authorizing_user)
     with hub_config.issueLock:
         hub_issues.save_issue_list()
     return {"success": True}
 
 
-@router.get("/{issue_id}/delete")
+@router.get("/{issue_id}/delete", dependencies=[Depends(hub_users.require_permission("maintenance", "edit"))])
 async def delete_issue(
-        issue_id: str,
-        permission: dict = Depends(hub_users.require_permission("maintenance", "edit"))
+        issue_id: str
 ):
     """Delete an issue."""
-
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
 
     hub_issues.remove_issue(issue_id)
     return {"success": True, "reason": ""}
 
 
-@router.get("/{issue_id}/archive")
+@router.get("/{issue_id}/archive", dependencies=[Depends(hub_users.require_permission("maintenance", "edit"))])
 async def archive_issue(
         issue_id: str,
-        permission: dict = Depends(hub_users.require_permission("maintenance", "edit"))
+        authorizing_user: str = Depends(hub_users.require_user)
 ):
     """Move the given issue to the archive."""
-
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
 
     # Check that the issue exists
     issue = hub_issues.get_issue(issue_id)
     if issue is None:
         return {"success": False, "reason": 'does_not_exist'}
 
-    hub_issues.archive_issue(issue_id, permission["user"])
+    hub_issues.archive_issue(issue_id, authorizing_user)
     return {"success": True}
 
 
-@router.get("/{issue_id}/restore")
+@router.get("/{issue_id}/restore", dependencies=[Depends(hub_users.require_permission("maintenance", "edit"))])
 async def restore_issue(
-        issue_id: str,
-        permission: dict = Depends(hub_users.require_permission("maintenance", "edit"))
+        issue_id: str
 ):
     """Move the given issue from the archive to the issue list."""
-
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
 
     success = hub_issues.restore_issue(issue_id)
     return {"success": success}
 
 
-@router.post("/deleteMedia")
+@router.post("/deleteMedia", dependencies=[Depends(hub_users.require_permission("maintenance", "edit"))])
 async def delete_issue_media(
         filenames: list[str] = Body(description="The filenames to be deleted."),
-        owner: str | None = Body(default=None, description="The ID of the Issue this media file belonged to."),
-        permission: dict = Depends(hub_users.require_permission("maintenance", "edit"))
+        owner: str | None = Body(default=None, description="The ID of the Issue this media file belonged to.")
 ):
     """Delete the media files linked to an issue and remove the reference."""
-
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
 
     for filename in filenames:
         if ex_files.filename_safe(filename) is False:
@@ -97,15 +79,12 @@ async def delete_issue_media(
     return {"success": True}
 
 
-@router.post("/edit")
+@router.post("/edit", dependencies=[Depends(hub_users.require_permission("maintenance", "edit"))])
 async def edit_issue(
         details: dict[str, Any] = Body(description="The details to be changed.", embed=True),
-        permission: dict = Depends(hub_users.require_permission("maintenance", "edit"))
+        authorizing_user: str = Depends(hub_users.require_user)
 ):
     """Make changes to an existing issue."""
-
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
 
     if "id" not in details:
         return {"success": False, "reason": "'details' must include property 'id'"}
@@ -114,21 +93,17 @@ async def edit_issue(
     if issue is None:
         return {"success": False, "reason": 'does_not_exist'}
 
-    hub_issues.edit_issue(details, permission["user"])
+    hub_issues.edit_issue(details, authorizing_user)
     with hub_config.issueLock:
         hub_issues.save_issue_list()
     return {"success": True}
 
 
-@router.get("/list/{match_uuid}")
+@router.get("/list/{match_uuid}", dependencies=[Depends(hub_users.require_permission("maintenance", "view"))])
 async def get_issue_list(
-        match_uuid: str,
-        permission: dict = Depends(hub_users.require_permission("maintenance", "view"))
+        match_uuid: str
 ):
     """Return a list of open issues."""
-
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
 
     if match_uuid != "__all":
         matched_issues = []
@@ -141,15 +116,11 @@ async def get_issue_list(
     return {"success": True, "issue_list": matched_issues}
 
 
-@router.get("/archive/list/{match_uuid}")
+@router.get("/archive/list/{match_uuid}", dependencies=[Depends(hub_users.require_permission("maintenance", "view"))])
 async def get_archived_issues(
-        match_uuid: str,
-        permission: dict = Depends(hub_users.require_permission("maintenance", "view"))
+        match_uuid: str
 ):
     """Return a list of open issues."""
-
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
 
     archive_file = ex_files.get_path(["issues", "archived.json"], user_file=True)
 
@@ -169,15 +140,11 @@ async def get_archived_issues(
     return {"success": True,  "issues": matched_issues}
 
 
-@router.get("/{issue_id}/media")
+@router.get("/{issue_id}/media", dependencies=[Depends(hub_users.require_permission("maintenance", "view"))])
 async def get_issue_media(
-        issue_id: str,
-        permission: dict = Depends(hub_users.require_permission("maintenance", "view"))
+        issue_id: str
 ):
     """Return a list of media files connected to the given ID."""
-
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
 
     issue = hub_issues.get_issue(issue_id)
 
@@ -187,15 +154,11 @@ async def get_issue_media(
     return {"success": True, "media": issue.details["media"]}
 
 
-@router.post("/uploadMedia")
+@router.post("/uploadMedia", dependencies=[Depends(hub_users.require_permission("maintenance", "edit"))])
 async def upload_issue_media(
-        files: list[UploadFile] = File(),
-        permission: dict = Depends(hub_users.require_permission("maintenance", "edit"))
+        files: list[UploadFile] = File()
 ):
     """Upload issue media files."""
-
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
 
     filenames = []
     for file in files:

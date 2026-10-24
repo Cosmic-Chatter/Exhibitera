@@ -71,6 +71,8 @@ def hub_env(tmp_path, monkeypatch):
     monkeypatch.setattr(hub_config, "program_list", [])
     monkeypatch.setattr(hub_config, "exhibit_configuration", {"components": []})
     monkeypatch.setattr(hub_config, "exhibit_modifications", {"components": []})
+    monkeypatch.setattr(hub_config, "json_schedule_list", [{"schedule": {}}])  # Hub always has today's schedule
+    monkeypatch.setattr(hub_config, "json_next_event", [])
 
     # Values that system.json updates write into the global config
     for attribute in ["current_exhibit", "gallery_name", "ip_address", "port"]:

@@ -15,30 +15,22 @@ import exhibitera.hub.features.users as hub_users
 router = APIRouter(prefix="/exhibition")
 
 
-@router.post("/create")
+@router.post("/create", dependencies=[Depends(hub_users.require_permission("exhibits", "edit"))])
 async def create_exhibition(
         name: str = Body(description="The name of the exhibition."),
-        clone_from: str | None = Body(default=None, description="The name of the exhibition to clone."),
-        permission: dict = Depends(hub_users.require_permission("exhibits", "edit"))
+        clone_from: str | None = Body(default=None, description="The name of the exhibition to clone.")
 ):
     """Create a new exhibition JSON file."""
-
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
 
     uuid_str = hub_exhibitions.create_exhibition(name, clone_from)
     return {"success": True, "reason": "", "uuid": uuid_str}
 
 
-@router.post("/{uuid_str}/edit")
+@router.post("/{uuid_str}/edit", dependencies=[Depends(hub_users.require_permission("exhibits", "edit"))])
 async def edit_exhibition(uuid_str: str,
                           details: dict[str, Any] = Body(
-                           description="A dictionary specifying the details of the exhibition.", embed=True),
-                          permission: dict = Depends(hub_users.require_permission("exhibits", "edit"))):
+                           description="A dictionary specifying the details of the exhibition.", embed=True)):
     """Update the given exhibition with the specified details."""
-
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
 
     path = ex_files.get_path(["exhibits", ex_files.with_extension(uuid_str, '.json')], user_file=True)
     ex_files.write_json(details, path)
@@ -48,52 +40,36 @@ async def edit_exhibition(uuid_str: str,
     return {"success": True, "reason": ""}
 
 
-@router.post("/applyModifications")
-async def apply_exhibition_modifications(
-        permission: dict = Depends(hub_users.require_permission("exhibits", "edit"))
-):
+@router.post("/applyModifications", dependencies=[Depends(hub_users.require_permission("exhibits", "edit"))])
+async def apply_exhibition_modifications():
     """Update any modifications to the current exhibition."""
-
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
 
     hub_exhibitions.update_exhibition_from_modifications()
     return {"success": True}
 
 
-@router.get("/modifications")
-async def get_exhibition_modifications(permission: dict = Depends(hub_users.require_permission("exhibits", "view"))):
+@router.get("/modifications", dependencies=[Depends(hub_users.require_permission("exhibits", "view"))])
+async def get_exhibition_modifications():
     """Update any modifications to the current exhibition."""
-
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
 
     return {"success": True, "modifications": hub_config.exhibit_modifications}
 
 
-@router.delete("/modifications")
+@router.delete("/modifications", dependencies=[Depends(hub_users.require_permission("exhibits", "edit"))])
 async def delete_exhibition_modifications(
-        to_remove: list[str] = Body(description="Component UUIDs of modifications to remove", embed=True),
-        permission: dict = Depends(hub_users.require_permission("exhibits", "edit"))
+        to_remove: list[str] = Body(description="Component UUIDs of modifications to remove", embed=True)
 ):
     """Delete the given modifications from the modification list."""
-
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
 
     hub_exhibitions.remove_modifications(to_remove)
     return {"success": True}
 
 
-@router.delete("/{uuid_str}")
+@router.delete("/{uuid_str}", dependencies=[Depends(hub_users.require_permission("exhibits", "edit"))])
 async def delete_exhibition(
-        uuid_str: str,
-        permission: dict = Depends(hub_users.require_permission("exhibits", "edit"))
+        uuid_str: str
 ):
     """Delete the specified exhibition."""
-
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
 
     hub_exhibitions.delete_exhibition(uuid_str)
     return {"success": True, "reason": ""}

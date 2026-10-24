@@ -20,18 +20,15 @@ import exhibitera.hub.features.users as hub_users
 router = APIRouter(prefix="/program")
 
 
-@router.post("/create")
+@router.post("/create", dependencies=[Depends(hub_users.require_permission("programs", "edit"))])
 async def create_program(
         details: dict[str, Any] = Body(embed=True),
         cloned_from: str = Body(description="Whether this is a clone of another program", default=''),
-        permission: dict = Depends(hub_users.require_permission("programs", "edit"))
+        authorizing_user: str = Depends(hub_users.require_user)
 ):
     """Create a new program."""
 
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
-
-    program = hub_programs.create_program(details, cloned_from=cloned_from, username=permission["user"])
+    program = hub_programs.create_program(details, cloned_from=cloned_from, username=authorizing_user)
     with hub_config.programLock:
         hub_programs.save_program_list()
     hub_schedules.get_next_scheduled_action()
@@ -63,14 +60,9 @@ async def get_program_locations():
     return {"success": True, "locations": locations}
 
 
-@router.get("/archive/list")
-async def get_archived_programs(
-        permission: dict = Depends(hub_users.require_permission("programs", "view"))
-):
+@router.get("/archive/list", dependencies=[Depends(hub_users.require_permission("programs", "view"))])
+async def get_archived_programs():
     """Return the list of archived programs."""
-
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
 
     archive_file = ex_files.get_path(["programs", "archived.json"], user_file=True)
 
@@ -95,16 +87,12 @@ async def get_program_dict(this_uuid: str):
         return {"success": True, "program": match.get_dict()}
 
 
-@router.post("/{this_uuid}/update")
+@router.post("/{this_uuid}/update", dependencies=[Depends(hub_users.require_permission("programs", "edit"))])
 async def update_program(
         this_uuid: str,
-        update = Body(description="A dictionary of parameters to update matching the fields of hub_programs.Program.", embed=True),
-        permission: dict = Depends(hub_users.require_permission("programs", "edit"))
+        update = Body(description="A dictionary of parameters to update matching the fields of hub_programs.Program.", embed=True)
 ):
     """Update the given program with the provided details."""
-
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
 
     with hub_config.programLock:
         program = hub_programs.get_program(this_uuid)
@@ -126,17 +114,13 @@ async def update_program(
     return {"success": True}
 
 
-@router.post("/uploadMedia")
+@router.post("/uploadMedia", dependencies=[Depends(hub_users.require_permission("programs", "edit"))])
 async def upload_program_media(
         file: UploadFile = File(),
         program_uuid: str = Body(description="The UUID of the program this media file is for."),
-        purpose: str = Body(description="The purpose of this file. One of ['thumbnail', 'trailer']."),
-        permission: dict = Depends(hub_users.require_permission("programs", "edit"))
+        purpose: str = Body(description="The purpose of this file. One of ['thumbnail', 'trailer'].")
 ):
     """Upload a program media file."""
-
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
 
     if not ex_files.filename_safe(program_uuid) or not ex_files.filename_safe(purpose):
         return {"success": False, "reason": 'unsafe_filename'}
@@ -168,16 +152,12 @@ async def upload_program_media(
     return {"success": True, "filename": filename}
 
 
-@router.post("/{program_uuid}/action")
+@router.post("/{program_uuid}/action", dependencies=[Depends(hub_users.require_permission("programs", "edit"))])
 async def update_program_action(
         program_uuid: str,
-        permission: dict = Depends(hub_users.require_permission("programs", "edit")),
         action: dict = Body(description="The details of the action", embed=True)
 ):
     """Add or edit a program action."""
-
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
 
     match = hub_programs.get_program(program_uuid)
 
@@ -197,16 +177,13 @@ async def update_program_action(
     return {"success": True, "program": match.get_dict()}
 
 
-@router.delete("/{program_uuid}/action/{action_uuid}")
+@router.delete("/{program_uuid}/action/{action_uuid}",
+               dependencies=[Depends(hub_users.require_permission("programs", "edit"))])
 async def delete_program_action(
         program_uuid: str,
-        action_uuid: str,
-        permission: dict = Depends(hub_users.require_permission("programs", "edit"))
+        action_uuid: str
 ):
     """Remove an action from a program."""
-
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
 
     match = hub_programs.get_program(program_uuid)
 
@@ -226,51 +203,40 @@ async def delete_program_action(
     return {"success": True, "program": match.get_dict()}
 
 
-@router.get("/{this_uuid}/checkSchedules")
+@router.get("/{this_uuid}/checkSchedules", dependencies=[Depends(hub_users.require_permission("programs", "view"))])
 async def check_program_schedules(
-        this_uuid: str,
-        permission: dict = Depends(hub_users.require_permission("programs", "view"))
+        this_uuid: str
 ):
     """Return the names of any current/future schedules that reference this program."""
-
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
 
     matches = hub_schedules.find_program_schedule_usage(this_uuid)
     return {"success": True, "schedules": matches}
 
 
-@router.delete("/{this_uuid}")
+@router.delete("/{this_uuid}", dependencies=[Depends(hub_users.require_permission("programs", "edit"))])
 async def delete_program(
         this_uuid: str,
-        permission: dict = Depends(hub_users.require_permission("programs", "edit"))
+        authorizing_user: str = Depends(hub_users.require_user)
 ):
     """Archive the given program and remove its media files."""
-
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
 
     program = hub_programs.get_program(this_uuid)
     if program is None:
         return {"success": False, "reason": "invalid_uuid"}
 
     hub_schedules.remove_program_from_schedules(this_uuid)
-    hub_programs.archive_program(this_uuid, permission["user"])
+    hub_programs.archive_program(this_uuid, authorizing_user)
     hub_config.program_list_last_update_date = datetime.datetime.now().isoformat()
     hub_schedules.get_next_scheduled_action()
 
     return {"success": True}
 
 
-@router.get("/{this_uuid}/restore")
+@router.get("/{this_uuid}/restore", dependencies=[Depends(hub_users.require_permission("programs", "edit"))])
 async def restore_program(
-        this_uuid: str,
-        permission: dict = Depends(hub_users.require_permission("programs", "edit"))
+        this_uuid: str
 ):
     """Move the given program from the archive to the active program list."""
-
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
 
     success = hub_programs.restore_program(this_uuid)
     hub_config.program_list_last_update_date = datetime.datetime.now().isoformat()

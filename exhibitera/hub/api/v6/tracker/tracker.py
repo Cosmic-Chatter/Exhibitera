@@ -15,16 +15,12 @@ import exhibitera.hub.features.users as hub_users
 router = APIRouter(prefix='/tracker')
 
 
-@router.post("/template/create")
+@router.post("/template/create", dependencies=[Depends(hub_users.require_permission("analytics", "edit"))])
 async def create_tracker_template(
         template: dict[str, Any] = Body(description='A dictionary containing the template'),
-        tracker_uuid: str = Body(description='The UUID for the template we are creating.'),
-        permission: dict = Depends(hub_users.require_permission("analytics", "edit"))
+        tracker_uuid: str = Body(description='The UUID for the template we are creating.')
 ):
     """Write the given tracker template to file"""
-
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
 
     template_path = ex_files.get_path(
         ["flexible-tracker", "templates", ex_files.with_extension(tracker_uuid, 'json')],
@@ -33,15 +29,11 @@ async def create_tracker_template(
     return {"success": success, "reason": reason}
 
 
-@router.delete("/template/{tracker_uuid}")
+@router.delete("/template/{tracker_uuid}", dependencies=[Depends(hub_users.require_permission("analytics", "edit"))])
 async def delete_tracker_template(
-        tracker_uuid: str,
-        permission: dict = Depends(hub_users.require_permission("analytics", "edit"))
+        tracker_uuid: str
 ):
     """Delete the specified tracker template."""
-
-    if not permission["success"]:
-        return {"success": False, "reason": permission["reason"]}
 
     file_path = ex_files.get_path(["flexible-tracker", "templates", ex_files.with_extension(tracker_uuid, 'json')], user_file=True)
     with hub_config.trackerTemplateWriteLock:
