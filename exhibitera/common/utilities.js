@@ -262,15 +262,16 @@ export function sortAlphabetically (array, property = null) {
   })
 }
 
-export function getDefinitionThumbnail (helperAddress, uuid) {
+export function getDefinitionThumbnail (helperAddress, uuid, api) {
   // Return a DOM element for the definition thumbnail.
   // The element will be a div containing an img that may convert to a video
+  // `api` is the API prefix of the component at helperAddress, such as from component.getHelperAPI()
 
   const div = document.createElement('div')
 
   const thumbUrl =
     helperAddress +
-    exConfig.api +
+    api +
     '/definitions/' +
     uuid +
     '/thumbnail?' +

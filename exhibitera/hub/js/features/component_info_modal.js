@@ -229,15 +229,14 @@ function configureComponentInfoModalForExhibitComponent (obj, permission) {
   configureNewDefinitionOptions(obj)
 
   // Fetch any DMX lighting scenes and show the tab if necessary
-  exUtilities.makeRequest({
+  obj.makeRequest({
     method: 'GET',
-    url: obj.getHelperURL(),
     endpoint: '/DMX/scenes'
   })
     .then((result) => {
       document.getElementById('componentInfoModalDMXTabButton').style.display = 'block'
       if (result?.success === true) {
-        hubDMX.populateDMXScenesForInfoModal(result.scenes, obj.getHelperURL())
+        hubDMX.populateDMXScenesForInfoModal(result.scenes, obj)
         document.getElementById('componentInfoModalDMXControls').style.display = 'flex'
         document.getElementById('componentInfoModalDMXIntro').style.display = 'none'
       } else {
@@ -1195,7 +1194,7 @@ async function populateComponentDefinitionList (definitions, permission) {
     }
     row.append(thumbCol)
 
-    thumbCol.appendChild(exUtilities.getDefinitionThumbnail(component.getHelperURL(), uuid))
+    thumbCol.appendChild(exUtilities.getDefinitionThumbnail(component.getHelperURL(), uuid, component.getHelperAPI()))
 
     const app = document.createElement('div')
     app.classList = 'col-12 bg-secondary text-dark rounded-bottom pb-1'

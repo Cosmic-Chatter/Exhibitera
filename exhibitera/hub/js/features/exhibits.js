@@ -1,4 +1,3 @@
-import exConfig from '../../../common/config.js'
 import * as exUtilities from '../../../common/utilities.js'
 
 import hubConfig from '../../config.js'
@@ -269,9 +268,8 @@ async function createExhibitionModificationHTML (mod, exhib) {
     modDef = modDefReq.definition
 
     const exhibDefUUID = exhib.components.find(obj => obj.uuid === mod.uuid)?.definition ?? 'error'
-    const exhibDefReq = await exUtilities.makeRequest({
+    const exhibDefReq = await hubTools.getExhibitComponent(mod.uuid).makeRequest({
       method: 'GET',
-      url: hubTools.getExhibitComponent(mod.uuid).getHelperURL(),
       endpoint: '/definitions/' + exhibDefUUID + '/load'
     })
     exhibDef = exhibDefReq.definition
@@ -309,8 +307,8 @@ async function createExhibitionModificationHTML (mod, exhib) {
   if (badConnection) {
     col.querySelector('.bad-connection-warning').innerHTML = '<div class=\'text-center text-warning fst-italic\'>Cannot connect to component</div>'
   }
-  col.querySelector('.mod-div').appendChild(exUtilities.getDefinitionThumbnail(component.getHelperURL(), mod.definition))
-  col.querySelector('.exhib-div').appendChild(exUtilities.getDefinitionThumbnail(component.getHelperURL(), exhibDef?.uuid ?? 'error'))
+  col.querySelector('.mod-div').appendChild(exUtilities.getDefinitionThumbnail(component.getHelperURL(), mod.definition, component.getHelperAPI()))
+  col.querySelector('.exhib-div').appendChild(exUtilities.getDefinitionThumbnail(component.getHelperURL(), exhibDef?.uuid ?? 'error', component.getHelperAPI()))
   col.querySelector('.btn-close').addEventListener('click', (ev) => {
     const toRemove = JSON.parse(modal.dataset.toRemove)
     toRemove.push(component.uuid)
@@ -488,7 +486,7 @@ async function editExhibitCreateComponentHTML (component) {
     // Handle the case where we try to load a video into the img tag
 
     const value = definitionPreviewImage.dataset.selectedDefinition
-    definitionPreviewVideo.src = componentObj.getHelperURL() + exConfig.api + '/definitions/' + value + '/thumbnail'
+    definitionPreviewVideo.src = componentObj.getHelperURL() + componentObj.getHelperAPI() + '/definitions/' + value + '/thumbnail'
     definitionPreviewVideo.play()
     definitionPreviewImage.style.display = 'none'
     definitionPreviewVideo.style.display = 'block'
@@ -553,7 +551,7 @@ async function editExhibitCreateComponentHTML (component) {
   const changeThumb = function () {
     definitionPreviewImage.dataset.selectedDefinition = definitionSelect.value
 
-    definitionPreviewImage.src = componentObj.getHelperURL() + exConfig.api + '/definitions/' + definitionSelect.value + '/thumbnail'
+    definitionPreviewImage.src = componentObj.getHelperURL() + componentObj.getHelperAPI() + '/definitions/' + definitionSelect.value + '/thumbnail'
     definitionPreviewVideo.style.display = 'none'
     definitionPreviewImage.style.display = 'block'
   }

@@ -113,11 +113,12 @@ def requests_in(paths: list[pathlib.Path], accept) -> list[tuple[str, str, str |
 def helper_urls_in(paths: list[pathlib.Path]) -> list[tuple[str, str]]:
     """Return (path template, location) for Apps URLs built directly, such as image sources.
 
-    Matches `<component>.getHelperURL() + <config>.api + <path>`.
+    Matches `<component>.getHelperURL() + <component>.getHelperAPI() + <path>`, or an older style
+    that uses `<config>.api` in place of getHelperAPI().
     """
 
     found = []
-    pattern = re.compile(r"getHelperURL\(\)\s*\+\s*\w+\.api\s*\+\s*([^\n;]+)")
+    pattern = re.compile(r"getHelperURL\(\)\s*\+\s*\w+\.(?:api|getHelperAPI\(\))\s*\+\s*([^\n;]+)")
     for path in paths:
         source = path.read_text(encoding="UTF-8")
         for match in pattern.finditer(source):

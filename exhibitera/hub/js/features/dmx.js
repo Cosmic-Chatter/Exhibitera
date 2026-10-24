@@ -1,7 +1,6 @@
-import * as exUtilities from '../../../common/utilities.js'
-
-export function populateDMXScenesForInfoModal (scenes, helperURL) {
+export function populateDMXScenesForInfoModal (scenes, component) {
   // Take an array of scenes and build an HTML representation for each scene.
+  // `component` is the ExhibitComponent that controls the scenes.
 
   const container = document.getElementById('componentInfoModalDMXSceneList')
   container.innerHTML = ''
@@ -10,9 +9,8 @@ export function populateDMXScenesForInfoModal (scenes, helperURL) {
     const col = document.createElement('div')
     col.classList = 'col-6 col-sm-4 mt-2 handCursor dmx-entry'
     col.addEventListener('click', (event) => {
-      exUtilities.makeRequest({
+      component.makeRequest({
         method: 'GET',
-        url: helperURL,
         endpoint: '/DMX/scene/' + scene.uuid + '/set'
       })
         .then((response) => {

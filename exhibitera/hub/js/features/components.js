@@ -374,6 +374,18 @@ class BaseComponent {
   }
 }
 
+function protocolVersionLessThan (version, other) {
+  // Compare protocol versions like '6' and '6.1' part by part, so that '6.10' comes after '6.2'
+
+  const parts = String(version).split('.').map(Number)
+  const otherParts = String(other).split('.').map(Number)
+  for (let i = 0; i < Math.max(parts.length, otherParts.length); i++) {
+    const difference = (parts[i] ?? 0) - (otherParts[i] ?? 0)
+    if (difference !== 0) return difference < 0
+  }
+  return false
+}
+
 class ExhibitComponent extends BaseComponent {
   // A component representing an device running a Exhibitera App or using the API
 
@@ -381,6 +393,7 @@ class ExhibitComponent extends BaseComponent {
     super(uuid, id, groups)
 
     this.type = 'exhibit_component'
+    this.api_level = 0 // The protocol version the component reports, or 0 if it hasn't yet
     this.helperAddress = null
     this.state = {}
     this.exhibiteraAppID = ''
@@ -393,10 +406,19 @@ class ExhibitComponent extends BaseComponent {
     return this.helperAddress
   }
 
+  getHelperAPI () {
+    // Return the API prefix for requests to this component: the newest protocol version that both
+    // Hub and the component support. An older Apps doesn't serve newer versions, and Hub's code is
+    // only written for its own.
+
+    if (!this.api_level || !protocolVersionLessThan(this.api_level, exConfig.api_level)) return exConfig.api
+    return '/v' + this.api_level
+  }
+
   getScreenshot () {
     // Return a url pointing to a screenshot of the current display
 
-    let url = this.getHelperURL() + exConfig.api + '/system/screenshot'
+    let url = this.getHelperURL() + this.getHelperAPI() + '/system/screenshot'
     if (this.exhibiteraAppID === 'third_party') {
       url = this.getHelperURL() + '/core/screenshot'
     }
@@ -409,6 +431,7 @@ class ExhibitComponent extends BaseComponent {
     super.updateFromServer(update)
 
     const fields = [
+      'api_level',
       'definition',
       'exhibiteraAppID',
       'helperAddress',
@@ -430,6 +453,7 @@ class ExhibitComponent extends BaseComponent {
     if (opt.url == null) {
       return Promise.reject(new Error('helperAddress not found'))
     }
+    if (opt.api == null) opt.api = this.getHelperAPI()
 
     // If this is a request that can be fulfilled by the Core API, do it.
     const coreEndpoints = {

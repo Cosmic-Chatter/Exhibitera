@@ -26,6 +26,7 @@ def get_webpage_update():
     component_dict_list = []
     for item in hub_config.componentList:
         temp = {"class": "exhibitComponent",
+                "api_level": item.config["api_level"],  # The protocol version this component speaks
                 "exhibiteraAppID": item.config["app_id"],
                 "helperAddress": item.helper_address,
                 "id": item.id,

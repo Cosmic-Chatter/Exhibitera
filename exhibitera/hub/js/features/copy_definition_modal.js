@@ -335,9 +335,8 @@ export async function copyDefinitionModalPerformCopy () {
       const thisDef = structuredClone(definition)
       thisDef.uuid = exUtilities.uuid()
 
-      await exUtilities.makeRequest({
+      await destComp.makeRequest({
         method: 'POST',
-        url: destUrl,
         endpoint: '/definitions/write',
         params: { definition: thisDef },
         timeout: 120000
@@ -347,9 +346,8 @@ export async function copyDefinitionModalPerformCopy () {
       // Transfer Supporting Files concurrently
       const filePromises = filesToCopy.map(async (file) => {
         try {
-          await exUtilities.makeRequest({
+          await destComp.makeRequest({
             method: 'POST',
-            url: destUrl,
             endpoint: '/files/retrieve',
             params: {
               file_url: `${sourceComponent.getHelperURL()}/content/${file.name}`,
