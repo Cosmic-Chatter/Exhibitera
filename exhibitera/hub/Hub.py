@@ -16,10 +16,10 @@ import uvicorn
 
 # Non-standard modules
 import distro
-from fastapi import Body, FastAPI, File, Request, UploadFile
+from fastapi import Body, FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 import requests
 
@@ -246,33 +246,38 @@ app.mount("/js",
 app.mount("/_static",
           StaticFiles(directory=ex_files.get_path(["_static"])),
           name="_static")
-try:
-    app.mount("/static", StaticFiles(directory=ex_files.get_path(["static"], user_file=True)),
-              name="static")
-except RuntimeError:
-    # Directory does not exist, so create it
-    os.mkdir(ex_files.get_path(["static"], user_file=True))
-    app.mount("/static", StaticFiles(directory=ex_files.get_path(["static"], user_file=True)),
-              name="static")
-try:
-    app.mount("/issues", StaticFiles(directory=ex_files.get_path(["issues"], user_file=True)),
-              name="issues")
-except RuntimeError:
-    # Directory does not exist, so create it
-    os.mkdir(ex_files.get_path(["issues"], user_file=True))
-    app.mount("/issues", StaticFiles(directory=ex_files.get_path(["issues"], user_file=True)),
-              name="issues")
-try:
-    app.mount("/programs", StaticFiles(directory=ex_files.get_path(["programs"], user_file=True)),
-              name="programs")
-except RuntimeError:
-    # Directory does not exist, so create it
-    os.mkdir(ex_files.get_path(["programs"], user_file=True))
-    app.mount("/programs", StaticFiles(directory=ex_files.get_path(["programs"], user_file=True)),
-              name="programs")
-app.mount("/",
-          StaticFiles(directory=ex_files.get_path([""]), html=True),
-          name="root")
+
+# Folders of user files served to the web console. Issues and programs are served only from
+# their media folders, since their parent folders also hold the issue and program lists.
+for url_path, folder in [("/static", ["static"]),
+                         ("/issues/media", ["issues", "media"]),
+                         ("/programs/media", ["programs", "media"])]:
+    directory = ex_files.get_path(folder, user_file=True)
+    os.makedirs(directory, exist_ok=True)
+    app.mount(url_path, StaticFiles(directory=directory), name=url_path.strip("/").replace("/", "_"))
+
+# The files served from Hub's own folder. Nothing else in it is public: the folder also holds
+# Hub's source code and, when running from source, its user data (including users and keys).
+ROOT_FILES = {
+    "index.html": "text/html",
+    "tracker.html": "text/html",
+    "config.js": "text/javascript",
+    "manifest.json": "application/json",
+}
+ROOT_FOLDER = ex_files.get_path([""])
+
+
+@app.get("/", include_in_schema=False)
+async def serve_web_console():
+    return await serve_root_file("index.html")
+
+
+@app.get("/{filename}", include_in_schema=False)
+async def serve_root_file(filename: str):
+    if filename not in ROOT_FILES:
+        raise HTTPException(status_code=404)
+    return FileResponse(os.path.join(ROOT_FOLDER, filename), media_type=ROOT_FILES[filename])
+
 
 def run():
     ex_utilities.configure_logging("hub.log")
