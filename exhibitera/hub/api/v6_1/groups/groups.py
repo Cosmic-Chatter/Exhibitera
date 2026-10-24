@@ -76,7 +76,7 @@ async def delete_group(
     return {"success": True}
 
 
-@router.get("/{uuid_str}/restore", dependencies=[Depends(hub_users.require_permission("settings", "edit"))])
+@router.post("/{uuid_str}/restore", dependencies=[Depends(hub_users.require_permission("settings", "edit"))])
 async def restore_group(
         uuid_str: str
 ):

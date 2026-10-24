@@ -28,7 +28,7 @@ async def create_issue(
     return {"success": True}
 
 
-@router.get("/{issue_id}/delete", dependencies=[Depends(hub_users.require_permission("maintenance", "edit"))])
+@router.delete("/{issue_id}", dependencies=[Depends(hub_users.require_permission("maintenance", "edit"))])
 async def delete_issue(
         issue_id: str
 ):
@@ -38,7 +38,7 @@ async def delete_issue(
     return {"success": True, "reason": ""}
 
 
-@router.get("/{issue_id}/archive", dependencies=[Depends(hub_users.require_permission("maintenance", "edit"))])
+@router.post("/{issue_id}/archive", dependencies=[Depends(hub_users.require_permission("maintenance", "edit"))])
 async def archive_issue(
         issue_id: str,
         authorizing_user: str = Depends(hub_users.require_user)
@@ -54,7 +54,7 @@ async def archive_issue(
     return {"success": True}
 
 
-@router.get("/{issue_id}/restore", dependencies=[Depends(hub_users.require_permission("maintenance", "edit"))])
+@router.post("/{issue_id}/restore", dependencies=[Depends(hub_users.require_permission("maintenance", "edit"))])
 async def restore_issue(
         issue_id: str
 ):

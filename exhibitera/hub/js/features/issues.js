@@ -410,13 +410,13 @@ export function showArchivedIssuesModal () {
 }
 
 export function modifyIssue (id, mode) {
-  // Ask Hub to remove or archive the specified issue
-  // mode is one of 'archive' or 'delete'
+  // Ask Hub to delete, archive, or restore the specified issue
+  // mode is one of 'archive', 'delete', or 'restore'
 
-  return hubTools.makeServerRequest({
-    method: 'GET',
-    endpoint: '/issue/' + id + '/' + mode
-  })
+  let request = { method: 'POST', endpoint: '/issue/' + id + '/' + mode }
+  if (mode === 'delete') request = { method: 'DELETE', endpoint: '/issue/' + id }
+
+  return hubTools.makeServerRequest(request)
     .then((result) => {
       if (result?.success) {
         getIssueList()

@@ -232,7 +232,7 @@ async def delete_program(
     return {"success": True}
 
 
-@router.get("/{this_uuid}/restore", dependencies=[Depends(hub_users.require_permission("programs", "edit"))])
+@router.post("/{this_uuid}/restore", dependencies=[Depends(hub_users.require_permission("programs", "edit"))])
 async def restore_program(
         this_uuid: str
 ):

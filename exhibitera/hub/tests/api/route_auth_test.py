@@ -121,18 +121,18 @@ PROTECTED_V6_1 = {
     ("GET", "/exhibition/{uuid_str}/details"): ("user",),
     ("GET", "/group/archive/list"): ("settings", "view"),
     ("GET", "/group/{uuid_str}/details"): ("settings", "edit"),
-    ("GET", "/group/{uuid_str}/restore"): ("settings", "edit"),
+    ("POST", "/group/{uuid_str}/restore"): ("settings", "edit"),
     ("GET", "/issue/archive/list/{match_uuid}"): ("maintenance", "view"),
     ("GET", "/issue/list/{match_uuid}"): ("maintenance", "view"),
-    ("GET", "/issue/{issue_id}/archive"): ("maintenance", "edit"),
-    ("GET", "/issue/{issue_id}/delete"): ("maintenance", "edit"),
+    ("POST", "/issue/{issue_id}/archive"): ("maintenance", "edit"),
+    ("DELETE", "/issue/{issue_id}"): ("maintenance", "edit"),
     ("GET", "/issue/{issue_id}/media"): ("maintenance", "view"),
-    ("GET", "/issue/{issue_id}/restore"): ("maintenance", "edit"),
+    ("POST", "/issue/{issue_id}/restore"): ("maintenance", "edit"),
     ("GET", "/maintenance/"): ("maintenance", "view"),
     ("GET", "/maintenance/{uuid_str}"): ("maintenance", "view"),
     ("GET", "/program/archive/list"): ("programs", "view"),
     ("GET", "/program/{this_uuid}/checkSchedules"): ("programs", "view"),
-    ("GET", "/program/{this_uuid}/restore"): ("programs", "edit"),
+    ("POST", "/program/{this_uuid}/restore"): ("programs", "edit"),
     ("GET", "/schedule/date_specific/list"): ("schedule", "view"),
     ("GET", "/schedule/{schedule_name}"): ("schedule", "view"),
     ("GET", "/schedule/{schedule_name}/JSONString"): ("schedule", "view"),
@@ -313,7 +313,8 @@ def test_issue_changes_record_the_user(client, hub_env, editor, monkeypatch, pre
     api.post(f"{prefix}/issue/edit", json={"details": {"id": issue["id"], "priority": "high"}})
     assert hub_config.issue_list[0].details["lastUpdateUsername"] == editor_uuid()
 
-    api.get(f"{prefix}/issue/{issue['id']}/archive")
+    archive_method = api.get if prefix == "/v6" else api.post
+    archive_method(f"{prefix}/issue/{issue['id']}/archive")
     archive = api.get(f"{prefix}/issue/archive/list/__all").json()
     assert archive["issues"][0]["archivedUsername"] == editor_uuid()
 

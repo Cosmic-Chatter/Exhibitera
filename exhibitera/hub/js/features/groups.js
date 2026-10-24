@@ -187,7 +187,7 @@ export function restoreGroup (uuid) {
   // Move a group from the archive back to the active list
 
   return hubTools.makeServerRequest({
-    method: 'GET',
+    method: 'POST',
     endpoint: '/group/' + uuid + '/restore'
   })
 }

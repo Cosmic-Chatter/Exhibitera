@@ -714,7 +714,7 @@ export function restoreProgram (uuid) {
   // Ask Hub to move the given program out of the archive and back into the active list.
 
   hubTools.makeServerRequest({
-    method: 'GET',
+    method: 'POST',
     endpoint: '/program/' + uuid + '/restore'
   })
     .then((result) => {
