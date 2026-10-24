@@ -8,6 +8,7 @@ export function makeServerRequest (opt) {
   // Shortcut for making a server request and returning a Promise
 
   opt.url = hubConfig.serverAddress
+  if (opt.api == null) opt.api = hubConfig.api
   return exUtilities.makeRequest(opt)
 }
 

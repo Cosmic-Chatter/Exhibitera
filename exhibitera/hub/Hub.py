@@ -19,11 +19,12 @@ import distro
 from fastapi import Body, FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 import requests
 
 # Exhibitera modules
+from exhibitera.common.caching import RevalidatePagesMiddleware
 import exhibitera.common.config as ex_config
 import exhibitera.common.files as ex_files
 import exhibitera.common.utilities as ex_utilities
@@ -57,20 +58,20 @@ from exhibitera.hub.api.v6.system import system as system_v6
 from exhibitera.hub.api.v6.tracker import tracker as tracker_v6
 from exhibitera.hub.api.v6.users import users as users_v6
 
-# API version 6.1
-from exhibitera.hub.api.v6_1.analytics import analytics as analytics_v6_1
-from exhibitera.hub.api.v6_1.components import components as components_v6_1
-from exhibitera.hub.api.v6_1.data import data as data_v6_1
-from exhibitera.hub.api.v6_1.exhibitions import exhibitions as exhibitions_v6_1
-from exhibitera.hub.api.v6_1.groups import groups as groups_v6_1
-from exhibitera.hub.api.v6_1.issues import issues as issues_v6_1
-from exhibitera.hub.api.v6_1.maintenance import maintenance as maintenance_v6_1
-from exhibitera.hub.api.v6_1.programs import programs as programs_v6_1
-from exhibitera.hub.api.v6_1.projectors import projectors as projectors_v6_1
-from exhibitera.hub.api.v6_1.schedule import schedule as schedule_v6_1
-from exhibitera.hub.api.v6_1.system import system as system_v6_1
-from exhibitera.hub.api.v6_1.tracker import tracker as tracker_v6_1
-from exhibitera.hub.api.v6_1.users import users as users_v6_1
+# Internal API, used by Hub's own web pages
+from exhibitera.hub.api.internal.analytics import analytics as analytics_internal
+from exhibitera.hub.api.internal.components import components as components_internal
+from exhibitera.hub.api.internal.data import data as data_internal
+from exhibitera.hub.api.internal.exhibitions import exhibitions as exhibitions_internal
+from exhibitera.hub.api.internal.groups import groups as groups_internal
+from exhibitera.hub.api.internal.issues import issues as issues_internal
+from exhibitera.hub.api.internal.maintenance import maintenance as maintenance_internal
+from exhibitera.hub.api.internal.programs import programs as programs_internal
+from exhibitera.hub.api.internal.projectors import projectors as projectors_internal
+from exhibitera.hub.api.internal.schedule import schedule as schedule_internal
+from exhibitera.hub.api.internal.system import system as system_internal
+from exhibitera.hub.api.internal.tracker import tracker as tracker_internal
+from exhibitera.hub.api.internal.users import users as users_internal
 
 # Set up the automatic documentation
 def exhibitera_schema():
@@ -187,6 +188,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(RevalidatePagesMiddleware)
 app.openapi = exhibitera_schema
 
 
@@ -213,20 +215,23 @@ app.include_router(system_v6.router, prefix='/v6')
 app.include_router(tracker_v6.router, prefix='/v6')
 app.include_router(users_v6.router, prefix='/v6')
 
-# API version 6.1
-app.include_router(analytics_v6_1.router, prefix='/v6.1')
-app.include_router(components_v6_1.router, prefix='/v6.1')
-app.include_router(data_v6_1.router, prefix='/v6.1')
-app.include_router(exhibitions_v6_1.router, prefix='/v6.1')
-app.include_router(groups_v6_1.router, prefix='/v6.1')
-app.include_router(issues_v6_1.router, prefix='/v6.1')
-app.include_router(maintenance_v6_1.router, prefix='/v6.1')
-app.include_router(programs_v6_1.router, prefix='/v6.1')
-app.include_router(projectors_v6_1.router, prefix='/v6.1')
-app.include_router(schedule_v6_1.router, prefix='/v6.1')
-app.include_router(system_v6_1.router, prefix='/v6.1')
-app.include_router(tracker_v6_1.router, prefix='/v6.1')
-app.include_router(users_v6_1.router, prefix='/v6.1')
+# Internal API. Until the protocol endpoints move to their own routers, these are also served
+# under /v6.1, which current Apps calls.
+for internal_router in [analytics_internal.router,
+                        components_internal.router,
+                        data_internal.router,
+                        exhibitions_internal.router,
+                        groups_internal.router,
+                        issues_internal.router,
+                        maintenance_internal.router,
+                        programs_internal.router,
+                        projectors_internal.router,
+                        schedule_internal.router,
+                        system_internal.router,
+                        tracker_internal.router,
+                        users_internal.router]:
+    app.include_router(internal_router, prefix='/internal')
+    app.include_router(internal_router, prefix='/v6.1')
 
 
 @lru_cache()
@@ -268,15 +273,21 @@ ROOT_FOLDER = ex_files.get_path([""])
 
 
 @app.get("/", include_in_schema=False)
-async def serve_web_console():
-    return await serve_root_file("index.html")
+async def serve_web_console(request: Request):
+    return await serve_root_file(request, "index.html")
 
 
 @app.get("/{filename}", include_in_schema=False)
-async def serve_root_file(filename: str):
+async def serve_root_file(request: Request, filename: str):
     if filename not in ROOT_FILES:
         raise HTTPException(status_code=404)
-    return FileResponse(os.path.join(ROOT_FOLDER, filename), media_type=ROOT_FILES[filename])
+
+    path = os.path.join(ROOT_FOLDER, filename)
+    response = FileResponse(path, media_type=ROOT_FILES[filename], stat_result=os.stat(path))
+    if request.headers.get("if-none-match") == response.headers["etag"]:
+        # The browser's copy is current
+        return Response(status_code=304, headers={"etag": response.headers["etag"]})
+    return response
 
 
 def run():

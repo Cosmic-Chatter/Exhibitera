@@ -1,3 +1,4 @@
+import exConfig from '../../../common/config.js'
 import * as exUtilities from '../../../common/utilities.js'
 
 import hubConfig from '../../config.js'
@@ -487,7 +488,7 @@ async function editExhibitCreateComponentHTML (component) {
     // Handle the case where we try to load a video into the img tag
 
     const value = definitionPreviewImage.dataset.selectedDefinition
-    definitionPreviewVideo.src = componentObj.getHelperURL() + hubConfig.api + '/definitions/' + value + '/thumbnail'
+    definitionPreviewVideo.src = componentObj.getHelperURL() + exConfig.api + '/definitions/' + value + '/thumbnail'
     definitionPreviewVideo.play()
     definitionPreviewImage.style.display = 'none'
     definitionPreviewVideo.style.display = 'block'
@@ -552,7 +553,7 @@ async function editExhibitCreateComponentHTML (component) {
   const changeThumb = function () {
     definitionPreviewImage.dataset.selectedDefinition = definitionSelect.value
 
-    definitionPreviewImage.src = componentObj.getHelperURL() + hubConfig.api + '/definitions/' + definitionSelect.value + '/thumbnail'
+    definitionPreviewImage.src = componentObj.getHelperURL() + exConfig.api + '/definitions/' + definitionSelect.value + '/thumbnail'
     definitionPreviewVideo.style.display = 'none'
     definitionPreviewImage.style.display = 'block'
   }

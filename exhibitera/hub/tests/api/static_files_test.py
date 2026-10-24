@@ -46,7 +46,7 @@ def test_tracker_accepts_a_query_string(client):
     "/version.txt",
     "/README.md",
     "/features/users.py",
-    "/api/v6_1/users/users.py",
+    "/api/internal/users/users.py",
     "/tests/api/conftest.py",
 ])
 def test_source_files_are_not_served(client, path):

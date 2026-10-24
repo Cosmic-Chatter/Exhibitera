@@ -1,4 +1,3 @@
-import exConfig from '../../../common/config.js'
 import * as exFiles from '../../../common/files.js'
 import * as exUtilities from '../../../common/utilities.js'
 import hubConfig from '../../config.js'
@@ -570,7 +569,7 @@ export function uploadIssueMediaFile () {
     }
 
     const xhr = new XMLHttpRequest()
-    xhr.open('POST', hubConfig.serverAddress + exConfig.api + '/issue/uploadMedia', true)
+    xhr.open('POST', hubConfig.serverAddress + hubConfig.api + '/issue/uploadMedia', true)
     xhr.onreadystatechange = function () {
       if (this.readyState !== 4) return
       if (this.status === 200) {

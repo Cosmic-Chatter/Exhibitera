@@ -1,4 +1,5 @@
 export default {
+  api: '/internal', // The API that Hub's own pages use to talk to Hub
   availableExhibits: [], // An array of strings
   componentGroups: [],
   componentInfoModalStatusMessageTimer: 0, // Holds setTimeout() reference

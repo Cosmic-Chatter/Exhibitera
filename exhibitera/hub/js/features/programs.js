@@ -1,4 +1,3 @@
-import exConfig from '../../../common/config.js'
 import * as exUtilities from '../../../common/utilities.js'
 
 import hubConfig from '../../config.js'
@@ -208,7 +207,7 @@ export function uploadProgramMediaFile (button, purpose) {
   formData.append('program_uuid', document.getElementById('saveProgramButton').dataset.uuid)
 
   const xhr = new XMLHttpRequest()
-  xhr.open('POST', hubConfig.serverAddress + exConfig.api + '/program/uploadMedia', true)
+  xhr.open('POST', hubConfig.serverAddress + hubConfig.api + '/program/uploadMedia', true)
   xhr.onreadystatechange = function () {
     if (this.readyState !== 4) return
     if (this.status === 200) {

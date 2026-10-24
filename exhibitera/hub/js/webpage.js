@@ -1,6 +1,5 @@
 /* global bootstrap */
 
-import exConfig from '../../common/config.js'
 import * as exUtilities from '../../common/utilities.js'
 
 import hubConfig from '../config.js'
@@ -748,7 +747,7 @@ hubUsers.authenticateUser()
   .then(() => {
     // Subscribe to updates from Hub once we're logged in
     if (hubConfig.user?.uuid == null) return
-    const eventSource = new EventSource(hubConfig.serverAddress + exConfig.api + '/system/updateStream')
+    const eventSource = new EventSource(hubConfig.serverAddress + hubConfig.api + '/system/updateStream')
     eventSource.addEventListener('update', function (event) {
       const update = JSON.parse(event.data)
       parseUpdate(update)

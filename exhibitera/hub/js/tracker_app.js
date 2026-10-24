@@ -1,4 +1,4 @@
-import exConfig from '../../common/config.js'
+import hubConfig from '../config.js'
 import * as exTracker from './features/tracker.js'
 
 class TimingObject {
@@ -385,7 +385,7 @@ function checkConnection () {
   // Send a message to the server checking that the connection is stable.
 
   const xhr = new XMLHttpRequest()
-  xhr.open('GET', exConfig.api + '/system/checkConnection', true)
+  xhr.open('GET', hubConfig.api + '/system/checkConnection', true)
   xhr.timeout = 1000
   xhr.setRequestHeader('Content-Type', 'application/json')
   xhr.overrideMimeType('text/plain; charset=x-user-defined')
@@ -510,7 +510,7 @@ function sendData () {
   const requestString = JSON.stringify(requestDict)
 
   const xhr = new XMLHttpRequest()
-  xhr.open('POST', exConfig.api + '/data/' + configurationName + '/append', true)
+  xhr.open('POST', hubConfig.api + '/data/' + configurationName + '/append', true)
   xhr.timeout = 5000
   xhr.setRequestHeader('Content-Type', 'application/json')
   xhr.overrideMimeType('text/plain; charset=x-user-defined')

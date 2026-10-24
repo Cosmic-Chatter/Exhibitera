@@ -200,7 +200,9 @@ OPEN_V6_1 = {
 # Endpoints that are allowed to read the token themselves
 TOKEN_READERS = {("POST", "/user/login")}
 
-TABLES = {"/v6": (PROTECTED_V6, OPEN_V6), "/v6.1": (PROTECTED_V6_1, OPEN_V6_1)}
+# Until the protocol endpoints move to their own routers, /internal and /v6.1 serve the same endpoints
+TABLES = {"/v6": (PROTECTED_V6, OPEN_V6), "/v6.1": (PROTECTED_V6_1, OPEN_V6_1),
+          "/internal": (PROTECTED_V6_1, OPEN_V6_1)}
 
 
 def api_routes(prefix: str) -> dict[tuple[str, str], APIRoute]:
