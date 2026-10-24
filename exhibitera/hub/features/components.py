@@ -379,7 +379,7 @@ class ExhibitComponent(BaseComponent):
                 print(f"{self.id}: command sent to helper: {command}")
             logging.info(f"{self.id}: command sent to helper: {command}")
 
-            if self.config["app_id"] == 'external':
+            if self.config["app_id"] == 'third_party':
                 # Core API
                 endpoint = '/core/' + command
             else:

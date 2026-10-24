@@ -6,7 +6,6 @@ import exConfig from './config.js'
 
 const exhibiteraAppIdDisplayNames = {
   dmx_control: 'DMX Control',
-  external: '3rd Party App', // For apps using the Core API
   image_compare: 'Image Compare',
   infostation: 'InfoStation',
   media_browser: 'Media Browser',
@@ -16,6 +15,7 @@ const exhibiteraAppIdDisplayNames = {
   projector: 'Projector',
   static_component: 'Static Component',
   survey_kiosk: 'Survey Kiosk',
+  third_party: '3rd Party App', // For apps using the Core API
   timelapse_viewer: 'Timelapse Viewer',
   timeline_explorer: 'Timeline Explorer',
   voting_kiosk: 'Voting Kiosk',

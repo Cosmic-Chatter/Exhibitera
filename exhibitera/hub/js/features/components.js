@@ -397,7 +397,7 @@ class ExhibitComponent extends BaseComponent {
     // Return a url pointing to a screenshot of the current display
 
     let url = this.getHelperURL() + exConfig.api + '/system/screenshot'
-    if (this.exhibiteraAppID === 'external') {
+    if (this.exhibiteraAppID === 'third_party') {
       url = this.getHelperURL() + '/core/screenshot'
     }
     return url

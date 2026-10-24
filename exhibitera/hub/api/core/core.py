@@ -31,7 +31,7 @@ async def handle_ping(data: dict[str, Any], request: Request):
         return response
 
     # Translate API fields
-    data["exhibiteraAppID"] = "external"
+    data["exhibiteraAppID"] = "third_party"
     data["api_level"] = 0
     if data.get("current_interaction", "") != "":
         data["currentInteraction"] = data["current_interaction"]
