@@ -1657,8 +1657,7 @@ export function loginFromDropdown () {
   })
     .then((response) => {
       if ('authToken' in response) {
-        // Set a cookie
-        document.cookie = 'authToken="' + response.authToken + '"; max-age=31536000; path=/'
+        saveAuthToken(response.authToken)
       }
       if (response.success === true) {
         // Reload the page now that the authentication cookie is set.
@@ -1698,8 +1697,43 @@ export function makeAuthenticatedServerRequest (opt) {
   return exCommon.makeServerRequest(opt)
 }
 
-export function authenticateUser () {
-  // If authToken exists in the cookie, use it to log in
+function saveAuthToken (token) {
+  // Save the Hub authentication token in a cookie, so we stay logged in
+
+  document.cookie = 'authToken="' + token + '"; max-age=31536000; path=/'
+}
+
+function takeLoginHandoff () {
+  // Return the one-time login code that Hub passes in the URL fragment when it opens this page, or ''.
+  // The code is removed from the address bar, so it isn't kept in the browser history.
+
+  const params = new URLSearchParams(window.location.hash.slice(1))
+  const code = params.get('exHandoff')
+  if (code == null) return ''
+
+  params.delete('exHandoff')
+  const fragment = params.toString()
+  history.replaceState(history.state, '', window.location.pathname + window.location.search + (fragment === '' ? '' : '#' + fragment))
+  return code
+}
+
+export async function authenticateUser () {
+  // Log in with the one-time code from Hub, if there is one, or the authToken saved in the cookie
+
+  const handoff = takeLoginHandoff()
+  if (handoff !== '') {
+    const response = await exCommon.makeServerRequest({
+      method: 'POST',
+      endpoint: '/user/login',
+      params: { handoff }
+    }).catch(() => null)
+    if (response?.success === true) {
+      saveAuthToken(response.authToken)
+      configureUser(response.user)
+      return
+    }
+    // The code was expired or invalid, so fall back to the saved login
+  }
 
   let token = getAuthToken()
 

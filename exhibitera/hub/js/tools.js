@@ -109,6 +109,40 @@ export function openMediaInNewTab (filenames, fileTypes) {
   imageWindow.document.write(html)
 }
 
+export function openAppsPage (url) {
+  // Open a page on an Apps component in a new tab, carrying over the current login.
+  // Apps runs on a different computer, so it can't use Hub's login cookie. Instead, pass a
+  // one-time code in the URL fragment, which the page exchanges for its own login.
+  // Returns false if the browser wouldn't open a tab.
+
+  // Open the tab right away, while we're still handling the click, so it isn't blocked as a pop-up
+  const newWindow = window.open('', '_blank')
+  if (newWindow == null) return false
+  newWindow.opener = null
+
+  if (hubConfig.user?.uuid == null) {
+    // Not logged in, so there's nothing to carry over
+    newWindow.location = url
+    return true
+  }
+
+  makeServerRequest({
+    method: 'POST',
+    endpoint: '/user/loginHandoff'
+  })
+    .then((response) => {
+      if (response?.success === true) {
+        newWindow.location = url + '#exHandoff=' + encodeURIComponent(response.code)
+      } else {
+        newWindow.location = url
+      }
+    })
+    .catch(() => {
+      newWindow.location = url
+    })
+  return true
+}
+
 export async function showUpdateInfoModal (id, kind, details) {
   // Populate the model with details about the update and show it.
 

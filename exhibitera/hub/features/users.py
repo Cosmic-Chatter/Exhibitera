@@ -2,6 +2,8 @@
 import datetime
 import getpass
 import os.path
+import secrets
+import time
 from typing import Any
 import uuid
 
@@ -179,6 +181,41 @@ def get_encryption_key() -> bytes:
                 f.write(str(hub_config.encryption_key, 'UTF-8'))
 
     return hub_config.encryption_key
+
+
+# Seconds that a login handoff code remains valid
+LOGIN_HANDOFF_LIFETIME = 60
+
+
+def create_login_handoff(user_uuid: str) -> str:
+    """Create a one-time code that lets another page log in as the given user.
+
+    Hub passes this to Apps pages it opens, which are on a different computer and can't use Hub's
+    login cookie. The code is exchanged for a normal login token by /user/login, so the long-lived
+    token itself never appears in a URL.
+    """
+
+    code = secrets.token_urlsafe(32)
+    now = time.monotonic()
+    with hub_config.loginHandoffLock:
+        # Remove expired codes so they don't accumulate
+        for expired in [k for k, (_, expiration) in hub_config.login_handoffs.items() if expiration < now]:
+            del hub_config.login_handoffs[expired]
+        hub_config.login_handoffs[code] = (user_uuid, now + LOGIN_HANDOFF_LIFETIME)
+    return code
+
+
+def redeem_login_handoff(code: str) -> str | None:
+    """Return the uuid of the user that the given code was created for, or None if it isn't valid.
+
+    Each code can be redeemed once.
+    """
+
+    with hub_config.loginHandoffLock:
+        user_uuid, expiration = hub_config.login_handoffs.pop(code, (None, 0))
+    if user_uuid is None or expiration < time.monotonic() or get_user(uuid_str=user_uuid) is None:
+        return None
+    return user_uuid
 
 
 def encrypt_token(uuid_str: str) -> str:

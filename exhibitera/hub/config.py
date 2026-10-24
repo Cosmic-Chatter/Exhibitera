@@ -27,6 +27,7 @@ programLock: threading.Lock = threading.Lock()
 exhibitionsLock: threading.Lock = threading.Lock()
 maintenanceLock: threading.Lock = threading.Lock()
 issueMediaLock: threading.Lock = threading.Lock()
+loginHandoffLock: threading.Lock = threading.Lock()
 
 # Lists
 componentList: list = []
@@ -65,3 +66,4 @@ exhibit_list: list[str] = []
 encryption_key: bytes | None = None
 user_list: list = []
 user_display_name_cache: dict[str, str] = {}
+login_handoffs: dict[str, tuple[str, float]] = {}  # One-time login codes: code -> (user uuid, expiration time)

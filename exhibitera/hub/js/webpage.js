@@ -408,6 +408,15 @@ document.getElementById('componentInfoModalViewScreenshot').addEventListener('cl
   console.log(component)
   hubTools.openMediaInNewTab([component.getScreenshot()], ['image'])
 })
+// Links to Apps setup pages carry over the current login
+document.addEventListener('click', (event) => {
+  const link = event.target.closest('a.apps-page-link, a.defintion-new-option')
+  if (link == null || [null, '', '#'].includes(link.getAttribute('href'))) return
+  if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return // Let the browser handle it
+
+  // If the browser blocks us from opening the tab, let it follow the link normally (without the login)
+  if (hubTools.openAppsPage(link.href)) event.preventDefault()
+})
 document.getElementById('componentInfoModalEditDMXButton').addEventListener('click', (event) => {
   const component = hubTools.getExhibitComponent(document.getElementById('componentInfoModal').dataset.uuid)
   window.open(component.getHelperURL() + '/dmx_control/?standalone=true', '_blank').focus()

@@ -1126,27 +1126,25 @@ async function populateComponentDefinitionList (definitions, permission) {
     const dropdownMenu = document.createElement('div')
     dropdownMenu.classList = 'dropdown-menu'
 
+    // The folder that holds this app's pages on the Apps component
+    let appFolder = definition.app
+    if (appFolder === 'word_cloud_input') {
+      appFolder = 'word_cloud/input'
+    } else if (appFolder === 'word_cloud_viewer') {
+      appFolder = 'word_cloud/viewer'
+    }
+
     const previewOption = document.createElement('a')
     previewOption.classList = 'dropdown-item'
-    previewOption.setAttribute('href', component.getHelperURL() + '/' + definition.app + '.html?standalone=true&definition=' + uuid)
+    previewOption.setAttribute('href', component.getHelperURL() + '/' + appFolder + '/?standalone=true&definition=' + uuid)
     previewOption.setAttribute('target', '_blank')
     previewOption.innerHTML = 'Preview'
     dropdownMenu.appendChild(previewOption)
 
     if (permission === 'edit' || permission === 'edit_content') {
-      let app = definition.app
-      let page = 'setup.html'
-      if (app === 'word_cloud_input') {
-        app = 'word_cloud'
-        page = 'input/setup.html'
-      } else if (app === 'word_cloud_viewer') {
-        app = 'word_cloud'
-        page = 'viewer/setup.html'
-      }
-
       const editOption = document.createElement('a')
-      editOption.classList = 'dropdown-item'
-      editOption.setAttribute('href', component.getHelperURL() + '/' + app + '/' + page + '?definition=' + uuid)
+      editOption.classList = 'dropdown-item apps-page-link'
+      editOption.setAttribute('href', component.getHelperURL() + '/' + appFolder + '/setup.html?definition=' + uuid)
       editOption.setAttribute('target', '_blank')
       editOption.innerHTML = 'Edit'
       dropdownMenu.appendChild(editOption)

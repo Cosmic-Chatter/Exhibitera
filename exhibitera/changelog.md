@@ -3,7 +3,15 @@ _If you are upgrading from Exhibitera 5.3, Hub and Apps must all be upgraded at 
 
 ## Hub
 
+### General
+- When opening an Apps setup page from Hub, you'll now be logged in automatically.
+
+### Programs
+_Programs represent recurring events that take place in a specific location, like a theater._
+- Configure things like digital signage or DMX lighting to change relative to the start and end time of a program.
+
 ### Schedule
+- Add Programs to a schedule to bundle together recurring actions.
 - Times are displayed in 12- or 24-hour format depending on your location and preference.
 - Fixed issue in which scheduled actions did not occur on time on days in which a Daylight Saving Time change occurs.
 

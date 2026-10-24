@@ -5,7 +5,7 @@ import sys
 import threading
 
 # Non-standard modules
-from fastapi import FastAPI, Body
+from fastapi import FastAPI, Body, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -159,6 +159,8 @@ async def serve_html(file_name):
     file_path = ex_files.get_path([file_name + ".html"], user_file=True)
     if not os.path.isfile(file_path):
         file_path = ex_files.get_path([file_name + ".html"], user_file=False)
+    if not os.path.isfile(file_path):
+        raise HTTPException(status_code=404)
     with open(file_path, "r", encoding='UTF-8') as f:
         page = str(f.read())
     return page

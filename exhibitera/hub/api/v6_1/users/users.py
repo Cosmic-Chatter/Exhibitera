@@ -17,16 +17,23 @@ def log_in(response: Response,
            request: Request,
            credentials: tuple[str, str] = Body(description="A tuple containing the username and password.",
                                                default=("", "")),
-           token: str = Body(description="An authentication cookie.", default="")
+           token: str = Body(description="An authentication cookie.", default=""),
+           handoff: str = Body(description="A one-time code from /user/loginHandoff.", default="")
            ):
     """Authenticate the user and return the permissions and an authentication token."""
 
-    if token == "":
-        token = hub_users.get_request_token(request)
+    if handoff != "":
+        user_uuid = hub_users.redeem_login_handoff(handoff)
+        if user_uuid is None:
+            return {"success": False, "reason": "authentication_failed"}
+        token = ""  # Issue a new token below
+    else:
+        if token == "":
+            token = hub_users.get_request_token(request)
 
-    success, user_uuid = hub_users.authenticate_user(token=token, credentials=credentials)
-    if success is False:
-        return {"success": False, "reason": "authentication_failed"}
+        success, user_uuid = hub_users.authenticate_user(token=token, credentials=credentials)
+        if success is False:
+            return {"success": False, "reason": "authentication_failed"}
 
     user = hub_users.get_user(uuid_str=user_uuid)
     response_dict = {"success": True, "user": user.get_dict()}
@@ -37,6 +44,17 @@ def log_in(response: Response,
         response.set_cookie(key="authToken", value=token, max_age=int(3e7))  # Expire cookie in approx 1 yr
         response_dict['authToken'] = token
     return response_dict
+
+
+@router.post("/user/loginHandoff", dependencies=[Depends(hub_users.require_user)])
+def create_login_handoff(authorizing_user: str = Depends(hub_users.require_user)):
+    """Return a one-time code that logs an Apps page in as the current user.
+
+    Exchange the code with /user/login within a minute. Pass it in a URL fragment (#), so that
+    it isn't sent to the Apps server.
+    """
+
+    return {"success": True, "code": hub_users.create_login_handoff(authorizing_user)}
 
 
 @router.post("/user/create", dependencies=[Depends(hub_users.require_permission("users", "edit"))])
