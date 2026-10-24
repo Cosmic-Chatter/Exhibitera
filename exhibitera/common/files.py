@@ -302,7 +302,7 @@ def write_json(data: dict[str, Any] | list,
                 with open(path, 'a', encoding='UTF-8') as f:
                     f.write(json_str)
             else:
-                _replace_file_contents(path, json_str)
+                replace_file_contents(path, json_str)
     except FileNotFoundError:
         success = False
         reason = f"File {path} does not exist"
@@ -315,7 +315,7 @@ def write_json(data: dict[str, Any] | list,
     return success, reason
 
 
-def _replace_file_contents(path: str | os.PathLike, text: str) -> None:
+def replace_file_contents(path: str | os.PathLike, text: str) -> None:
     """Atomically replace the contents of the file at path with text.
 
     The text is written to a hidden temporary file in the same directory, which then

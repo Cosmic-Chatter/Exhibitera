@@ -2,11 +2,32 @@
 *.log
 .DS_Store
 node_modules
-/venv_3_11/*
+
+# Development tools
+.idea/
+.pytest_cache/
+venv*/
 /package.json
 /package-lock.json
-*/venv/*
-exhibitera/apps/configuration/*
-exhibitera/apps/definitions/*
-/exhibitera/apps/static/*
-exhibitera/apps/content/*
+
+# User data created when running Hub from source
+exhibitera/hub/analytics/
+exhibitera/hub/components/
+exhibitera/hub/configuration/
+exhibitera/hub/data/
+exhibitera/hub/exhibits/
+exhibitera/hub/flexible-tracker/
+exhibitera/hub/issues/
+exhibitera/hub/programs/
+exhibitera/hub/schedules/
+exhibitera/hub/static/
+
+# User data created when running Apps from source
+exhibitera/apps/configuration/
+exhibitera/apps/content/
+exhibitera/apps/data/
+exhibitera/apps/definitions/
+exhibitera/apps/static/
+exhibitera/apps/temp/
+exhibitera/apps/thumbnails/
+exhibitera/apps/webview_storage/

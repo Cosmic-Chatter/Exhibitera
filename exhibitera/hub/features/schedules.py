@@ -18,19 +18,9 @@ import exhibitera.hub.features.programs as hub_programs
 
 
 def create_schedule(name: str, entries: dict[str, dict]) -> tuple[bool, dict]:
-    """Create a new schedule."""
+    """Create a new schedule, or add the entries to the existing schedule with this name."""
 
-    # First, try to open the named schedule
-    success, schedule = load_json_schedule(name)
-
-    if success is False:
-        # Write a blank schedule
-        try:
-            with open(ex_files.with_extension(name, 'json'), 'w', encoding='UTF-8') as f:
-                f.write('')
-        except PermissionError:
-            return False, {}
-
+    # update_json_schedule() creates the file if it doesn't exist yet
     updated = update_json_schedule(name, entries)
     return True, updated
 
@@ -181,7 +171,7 @@ def update_json_schedule(schedule_name: str, updates: dict) -> dict:
             # Calculate the time from midnight for use when sorting, etc.
             update["time_in_seconds"] = seconds_from_midnight(update["time"])
 
-        schedule[key] = update
+            schedule[key] = update
 
         _write_json_schedule_unlocked(schedule_name, schedule)
         hub_config.last_update_time = time.time()

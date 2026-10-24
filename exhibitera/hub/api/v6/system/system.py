@@ -121,12 +121,15 @@ async def check_connection():
 
 @router.get("/configuration/{target}", dependencies=[Depends(hub_users.require_permission("settings", "view"))])
 async def get_json_configuration(target: str):
-    """Return the requested JSON configuration."""
+    """Return the requested JSON configuration.
 
-    if not ex_files.filename_safe(target):
-        return {"success": False, "reason": "unsafe_filename"}
+    Only "system" is available: the configuration folder also holds users and other private data.
+    """
 
-    config_path = ex_files.get_path(["configuration", ex_files.with_extension(target, "json")], user_file=True)
+    if target != "system":
+        return {"success": False, "reason": "unknown_configuration"}
+
+    config_path = ex_files.get_path(["configuration", "system.json"], user_file=True)
     configuration = ex_files.load_json(config_path)
     if configuration is  None:
         return {"success": False, "reason": "File does not exist."}
@@ -182,16 +185,15 @@ async def handle_ping(data: dict[str, Any], request: Request):
 @router.post("/configuration/{target}/update", dependencies=[Depends(hub_users.require_permission("settings", "edit"))])
 async def update_system_configuration(target: str,
                                       configuration=Body(description="A JSON object specifying the configuration.", embed=True)):
-    """Write the given object to the matching JSON file as the configuration."""
+    """Write the given object to the matching JSON file as the configuration.
 
-    if target == "system":
-        hub_tools.update_system_configuration(configuration)
-    else:
-        if not ex_files.filename_safe(target):
-            return {"success": False, "reason": "unsafe_filename"}
-        config_path = ex_files.get_path(["configuration", ex_files.with_extension(target, "json")], user_file=True)
-        ex_files.write_json(configuration, config_path)
+    Only "system" is available: the configuration folder also holds users and other private data.
+    """
 
+    if target != "system":
+        return {"success": False, "reason": "unknown_configuration"}
+
+    hub_tools.update_system_configuration(configuration)
     return {"success": True}
 
 

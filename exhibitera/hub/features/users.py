@@ -1,6 +1,7 @@
 # Standard modules
 import datetime
 import getpass
+import logging
 import os.path
 import secrets
 import time
@@ -78,8 +79,11 @@ class User:
         try:
             result = password_hasher.verify(self.password_hash, password)
             self.update_last_activity()
-        except argon2.exceptions.VerificationError:
+        except (argon2.exceptions.VerificationError, argon2.exceptions.InvalidHashError):
             result = False
+            if not password_hash_valid(self.password_hash):
+                stored_in = "root_admin.txt" if self.uuid == "admin" else "users.json"
+                logging.error(f"The stored password for {self.username} in {stored_in} is damaged, so they can't log in.")
         return result
 
     def check_permission(self, action, needed_level, groups: list[str] | None = None) -> bool:
@@ -165,22 +169,36 @@ class User:
 
 
 def get_encryption_key() -> bytes:
-    """Retrieve the encryption key or create it if it doesn't exist."""
+    """Retrieve the encryption key or create it if it doesn't exist or is damaged."""
 
     if hub_config.encryption_key is None:
         key_path = ex_files.get_path(["configuration", "encryption_key.txt"], user_file=True)
+        key = None
         if os.path.exists(key_path):
             # Load key from disk
             with open(key_path, 'r', encoding='UTF-8') as f:
-                key_str = f.read()
-                hub_config.encryption_key = bytes(key_str, 'UTF-8')
-        else:
+                key = bytes(f.read().strip(), 'UTF-8')
+            if not encryption_key_valid(key):
+                logging.error(f"get_encryption_key: {key_path} is damaged, so a new key has been created. "
+                              f"Everyone will need to log in again.")
+                key = None
+        if key is None:
             # Generate new key
-            hub_config.encryption_key = Fernet.generate_key()
-            with open(key_path, 'w', encoding='UTF-8') as f:
-                f.write(str(hub_config.encryption_key, 'UTF-8'))
+            key = Fernet.generate_key()
+            ex_files.replace_file_contents(key_path, str(key, 'UTF-8'))
+        hub_config.encryption_key = key
 
     return hub_config.encryption_key
+
+
+def encryption_key_valid(key: bytes) -> bool:
+    """Return whether the given bytes are a usable encryption key."""
+
+    try:
+        Fernet(key)
+    except (ValueError, TypeError):
+        return False
+    return True
 
 
 # Seconds that a login handoff code remains valid
@@ -242,8 +260,28 @@ def create_root_admin(password: str):
     password_hash = hash_password(password)
 
     with hub_config.galleryConfigurationLock:
-        with open(path, 'w', encoding='UTF-8') as f:
-            f.write(password_hash)
+        # Replace the file in one step, so an interruption can't leave the admin locked out
+        ex_files.replace_file_contents(path, password_hash)
+
+
+def root_admin_valid() -> bool:
+    """Return whether root_admin.txt exists and holds a usable password hash."""
+
+    path = ex_files.get_path(["configuration", "root_admin.txt"], user_file=True)
+    if not os.path.exists(path):
+        return False
+    with open(path, 'r', encoding='UTF-8') as f:
+        return password_hash_valid(f.read())
+
+
+def password_hash_valid(password_hash: str) -> bool:
+    """Return whether the given string is a complete Argon2 password hash."""
+
+    try:
+        argon2.extract_parameters(password_hash)
+    except argon2.exceptions.InvalidHashError:
+        return False
+    return True
 
 
 def command_line_setup_print_gui():
@@ -309,10 +347,13 @@ def check_for_first_user():
 
 
 def check_for_root_admin():
-    """Check that the file root_admin.txt exists or prompt to create it."""
+    """Check that root_admin.txt exists and is valid, or prompt to create it."""
 
     path = ex_files.get_path(["configuration", "root_admin.txt"], user_file=True)
-    if not os.path.exists(path):
+    if not root_admin_valid():
+        if os.path.exists(path):
+            logging.error(f"check_for_root_admin: {path} is damaged, so a new admin password is needed.")
+            print(f"The admin password file {path} is damaged.")
         command_line_setup_print_gui()
         print("To begin, you must create a password for the root")
         print("admin account. You will be able to use this password to")
