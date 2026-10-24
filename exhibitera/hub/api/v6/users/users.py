@@ -1,13 +1,8 @@
-# Standard modules
-from typing import Any
-
 # Third-party modules
-from fastapi import APIRouter, Body, Depends, Request, Response
+from fastapi import APIRouter, Body, Request, Response
 
 # Exhibitera modules
 import exhibitera.common.config as ex_config
-import exhibitera.common.utilities as ex_utilities
-import exhibitera.hub.config as hub_config
 import exhibitera.hub.features.users as hub_users
 
 router = APIRouter()
@@ -37,114 +32,6 @@ def log_in(response: Response,
         response.set_cookie(key="authToken", value=token, max_age=int(3e7))  # Expire cookie in approx 1 yr
         response_dict['authToken'] = token
     return response_dict
-
-
-@router.post("/user/create", dependencies=[Depends(hub_users.require_permission("users", "edit"))])
-def create_user(
-        username: str = Body(description="The username"),
-        password: str = Body(description="The password for the account to create."),
-        display_name: str = Body(description="The name of the account holder."),
-        permissions: dict | None = Body(description="A dictionary of permissions for the new account.",default=None)
-):
-    """Create a new user account."""
-
-    success, user_dict = hub_users.create_user(username, display_name, password, permissions=permissions)
-
-    response = {"success": success, "user": user_dict}
-    if success is False:
-        response["reason"] = "username_taken"
-    return response
-
-
-@router.post("/user/{uuid_str}/edit", dependencies=[Depends(hub_users.require_permission("users", "edit"))])
-def edit_user(
-        uuid_str: str,
-        username: str | None = Body(description="The username", default=None),
-        password: str | None = Body(description="A new password.", default=None),
-        display_name: str | None = Body(description="The name of the account holder.", default=None),
-        permissions: dict | None = Body(description="A dictionary of permissions for the account.", default=None)
-):
-    """Edit the given user."""
-
-    user = hub_users.get_user(uuid_str=uuid_str)
-    if user is None:
-        return {"success": False, "reason": "user_does_not_exist"}
-
-    if username is not None and username != user.username:
-        if hub_users.check_username_available(username) is True:
-            user.username = username
-        else:
-            return {"success": False, "reason": "username_taken"}
-
-    if display_name is not None:
-        user.display_name = display_name
-    if password is not None:
-        user.password_hash = hub_users.hash_password(password)
-    if permissions is not None:
-        user.permissions = permissions
-    hub_users.save_users()
-
-    return {"success": True, "user": user.get_dict()}
-
-
-@router.post("/user/{uuid_str}/editPreferences", dependencies=[Depends(hub_users.require_user)])
-def edit_user_preferences(uuid_str: str,
-                          preferences: dict[str, Any] = Body(description="A dictionary of preferences to update.",
-                                                             embed=True),
-                          authorizing_user: str = Depends(hub_users.require_user)):
-    """Update the preferences for the given user."""
-
-    if uuid_str != authorizing_user:
-        # Only the user can change their preferences
-        return {"success": False, "reason": "invalid_credentials"}
-
-    user = hub_users.get_user(uuid_str=uuid_str)
-    if user is None:
-        return {"success": False, "reason": "user_does_not_exist"}
-    result = ex_utilities.deep_merge(preferences, user.preferences)
-    user.preferences = result
-    hub_users.save_users()
-
-    return {"success": True, "user": user.get_dict()}
-
-
-@router.delete("/user/{uuid_str}", dependencies=[Depends(hub_users.require_permission("users", "edit"))])
-def delete_user(
-        uuid_str: str
-):
-    """Delete the given user"""
-
-    return {"success": hub_users.delete_user(uuid_str)}
-
-
-@router.post("/users/list", dependencies=[Depends(hub_users.require_user)])
-def list_users(permissions: dict[str, str] = Body(description="A dictionary of permissions to match.",
-                                                  default={},
-                                                  embed=True)):
-    """Return a list of users matching the provided criteria"""
-
-    matched_users = []
-
-    for user in hub_config.user_list:
-        error = False
-        for key in permissions:
-
-            if user.check_permission(key, permissions[key]) is False:
-                error = True
-        if not error:
-            matched_users.append(user.get_dict())
-
-    return {"success": True, "users": matched_users}
-
-
-@router.get("/user/{user_uuid}/displayName")
-def get_user_display_name(user_uuid: str):
-    """Get the display name for a user account."""
-
-    display_name = hub_users.get_user_display_name(user_uuid)
-    if display_name is None:
-        return {"success": False, "reason": "user_does_not_exist"}
-    return {"success": True, "display_name": display_name}
 
 
 @router.post('/user/{user_uuid}/changePassword')

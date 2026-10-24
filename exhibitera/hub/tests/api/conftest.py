@@ -20,7 +20,12 @@ import exhibitera.hub.features.components as hub_components
 import exhibitera.hub.features.users as hub_users
 import exhibitera.hub.Hub as hub
 
-API_PREFIXES = ["/v6", "/v6.1"]
+# The internal API, used by Hub's own pages. /v6.1 also serves it until the protocol endpoints
+# move to their own routers.
+INTERNAL_PREFIXES = ["/internal", "/v6.1"]
+
+# The protocol endpoints that Apps calls: released Apps 6.0 uses /v6, and current Apps uses /v6.1
+PROTOCOL_PREFIXES = ["/v6", "/v6.1"]
 
 USER_DIRECTORIES = ["analytics", "components", "configuration", "data", "exhibits",
                     os.path.join("flexible-tracker", "templates"), "issues", "programs", "schedules", "static"]

@@ -4,7 +4,6 @@
 import pytest
 
 # Exhibitera modules
-import exhibitera.hub.api.v6.system.system as system_v6
 import exhibitera.hub.api.internal.system.system as system_internal
 import exhibitera.hub.features.components as hub_components
 
@@ -19,9 +18,8 @@ def projector(hub_env, monkeypatch):
     return hub_components.add_projector("Test projector", ["G1"], "10.0.0.1", password=PASSWORD)
 
 
-@pytest.mark.parametrize("system", [system_v6, system_internal], ids=["v6", "v6.1"])
-def test_update_stream_does_not_include_passwords(projector, system):
-    update = system.get_webpage_update()
+def test_update_stream_does_not_include_passwords(projector):
+    update = system_internal.get_webpage_update()
 
     projectors = [c for c in update["components"] if c["class"] == "projector"]
     assert len(projectors) == 1

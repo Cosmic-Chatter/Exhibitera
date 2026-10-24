@@ -5,13 +5,14 @@ import sys
 import threading
 
 # Non-standard modules
-from fastapi import FastAPI, Body, HTTPException
+from fastapi import FastAPI, Body, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 import uvicorn
 
 # Exhibitera modules
+from exhibitera.common.caching import RevalidatePagesMiddleware, file_response
 import exhibitera.common.config as ex_config
 import exhibitera.common.files as ex_files
 import exhibitera.common.utilities as ex_utilities
@@ -60,6 +61,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(RevalidatePagesMiddleware)
 app.mount("/common",
           StaticFiles(directory=ex_files.get_path(["..", 'common']), html=True),
           name="common")
@@ -149,21 +151,19 @@ def get_config():
 
 
 @app.get("/", response_class=HTMLResponse)
-async def root():
-    return await serve_html("setup")
+async def root(request: Request):
+    return await serve_html(request, "setup")
 
 
 @app.get("/{file_name}.html", response_class=HTMLResponse)
-async def serve_html(file_name):
+async def serve_html(request: Request, file_name: str):
     # First try a local file and then an Exhibitera file
     file_path = ex_files.get_path([file_name + ".html"], user_file=True)
     if not os.path.isfile(file_path):
         file_path = ex_files.get_path([file_name + ".html"], user_file=False)
     if not os.path.isfile(file_path):
         raise HTTPException(status_code=404)
-    with open(file_path, "r", encoding='UTF-8') as f:
-        page = str(f.read())
-    return page
+    return file_response(request, file_path, "text/html")
 
 
 @app.get("/README.md", response_class=HTMLResponse)

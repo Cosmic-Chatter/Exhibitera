@@ -9,7 +9,7 @@ import pytest
 
 # Exhibitera modules
 import exhibitera.common.files as ex_files
-from conftest import API_PREFIXES
+from conftest import INTERNAL_PREFIXES
 
 ARCHIVE = os.path.join("issues", "archived.json")
 
@@ -34,7 +34,7 @@ def write_archive(hub_env, contents: str):
         f.write(contents)
 
 
-@pytest.mark.parametrize("prefix", API_PREFIXES)
+@pytest.mark.parametrize("prefix", INTERNAL_PREFIXES)
 def test_archived_issues_are_listed(client, add_user, hub_env, loads, prefix):
     write_archive(hub_env, json.dumps([
         {"id": "a", "relatedComponentUUIDs": ["component-1"]},
@@ -51,7 +51,7 @@ def test_archived_issues_are_listed(client, add_user, hub_env, loads, prefix):
     assert [x["id"] for x in matched["issues"]] == ["a"]
 
 
-@pytest.mark.parametrize("prefix", API_PREFIXES)
+@pytest.mark.parametrize("prefix", INTERNAL_PREFIXES)
 @pytest.mark.parametrize("contents", [None, "", '[{"id": '])
 def test_missing_or_damaged_archive_is_empty(client, add_user, hub_env, loads, prefix, contents):
     if contents is not None:

@@ -14,7 +14,7 @@ import pytest
 # Exhibitera modules
 import exhibitera.hub.config as hub_config
 import exhibitera.hub.features.users as hub_users
-from conftest import API_PREFIXES, INITIAL_SYSTEM_CONFIGURATION, make_permissions
+from conftest import INITIAL_SYSTEM_CONFIGURATION, INTERNAL_PREFIXES, PROTOCOL_PREFIXES, make_permissions
 
 AUTH_FAILURES = {"authentication_failed", "insufficient_permission"}
 
@@ -35,8 +35,8 @@ LOCKED_ENDPOINTS = [
     ("GET", "/exhibition/missing-exhibition/details", None, None),
 ]
 
-# Endpoints called by Apps components and kiosks, which never have a logged-in user
-OPEN_ENDPOINTS = [
+# Protocol endpoints called by Apps components and kiosks, which never have a logged-in user
+PROTOCOL_OPEN_ENDPOINTS = [
     ("POST", "/system/ping", {"uuid": "{component}"}),
     ("GET", "/system/checkConnection", None),
     ("POST", "/analytics/{component}/append", {"data": {"key": "value"}}),
@@ -44,15 +44,15 @@ OPEN_ENDPOINTS = [
     ("POST", "/data/Word_Cloud_test/rawText", {"text": "hello", "mode": "a"}),
     ("GET", "/data/Word_Cloud_test/rawText", None),
     ("GET", "/component/{component}/groups", None),
+]
+
+# Internal endpoints that Hub's pages can use without logging in, such as the Flexible Tracker
+INTERNAL_OPEN_ENDPOINTS = [
     ("GET", "/tracker/templates/list", None),
     ("GET", "/tracker/template/missing-template", None),
     ("GET", "/user/missing-user/displayName", None),
     ("GET", "/system/getHelpText", None),
     ("POST", "/schedule/getSecondsFromMidnight", {"time_str": "10:00 AM"}),
-]
-
-# Group name lookup and programs only exist in v6.1
-OPEN_ENDPOINTS_V6_1 = [
     ("GET", "/group/missing-group/name", None),
     ("GET", "/program/", None),
     ("GET", "/program/location/Lobby", None),
@@ -69,7 +69,7 @@ CORE_OPEN_ENDPOINTS = [
 
 
 def locked_cases():
-    cases = [(prefix, *endpoint) for prefix in API_PREFIXES for endpoint in LOCKED_ENDPOINTS]
+    cases = [(prefix, *endpoint) for prefix in INTERNAL_PREFIXES for endpoint in LOCKED_ENDPOINTS]
     return [pytest.param(*case, id=f"{case[1]} {case[0]}{case[2]}") for case in cases]
 
 
@@ -78,8 +78,8 @@ def permission_cases():
 
 
 def open_cases():
-    cases = [(prefix + path, method, body) for prefix in API_PREFIXES for method, path, body in OPEN_ENDPOINTS]
-    cases += [("/v6.1" + path, method, body) for method, path, body in OPEN_ENDPOINTS_V6_1]
+    cases = [(prefix + path, method, body) for prefix in PROTOCOL_PREFIXES for method, path, body in PROTOCOL_OPEN_ENDPOINTS]
+    cases += [(prefix + path, method, body) for prefix in INTERNAL_PREFIXES for method, path, body in INTERNAL_OPEN_ENDPOINTS]
     cases += [(path, method, body) for method, path, body in CORE_OPEN_ENDPOINTS]
     return [pytest.param(*case, id=f"{case[1]} {case[0]}") for case in cases]
 
@@ -152,7 +152,7 @@ def test_locked_endpoint_allows_permitted_user(client, add_user, component, pref
     assert failure_reason(response) not in AUTH_FAILURES
 
 
-@pytest.mark.parametrize("prefix", API_PREFIXES)
+@pytest.mark.parametrize("prefix", INTERNAL_PREFIXES)
 def test_view_permission_cannot_update_configuration(client, add_user, prefix):
     token = add_user("viewer", settings="view")
     response = client(token).post(f"{prefix}/system/configuration/test_config/update",
@@ -163,7 +163,7 @@ def test_view_permission_cannot_update_configuration(client, add_user, prefix):
 
 # Component permissions are scoped by group
 
-@pytest.mark.parametrize("prefix", API_PREFIXES)
+@pytest.mark.parametrize("prefix", INTERNAL_PREFIXES)
 @pytest.mark.parametrize("path, body", [
     ("/component/{component}/queueCommand", {"command": "refresh_page"}),
     ("/component/{component}/definition/test-definition", None),
@@ -180,7 +180,7 @@ def test_component_permission_is_group_scoped(client, add_user, add_component, p
     assert denied.json() == {"success": False, "reason": "insufficient_permission"}
 
 
-@pytest.mark.parametrize("prefix", API_PREFIXES)
+@pytest.mark.parametrize("prefix", INTERNAL_PREFIXES)
 def test_component_edit_permission_implies_edit_content(client, add_user, component, prefix):
     token = add_user("editor", components={"edit": ["G1"]})
     response = client(token).post(f"{prefix}/component/{component.uuid}/queueCommand",
@@ -191,14 +191,14 @@ def test_component_edit_permission_implies_edit_content(client, add_user, compon
 
 # Rejected requests must not have side effects
 
-@pytest.mark.parametrize("prefix", API_PREFIXES)
+@pytest.mark.parametrize("prefix", INTERNAL_PREFIXES)
 def test_anonymous_queue_command_is_not_queued(client, component, prefix):
     client().post(f"{prefix}/component/{component.uuid}/queueCommand", json={"command": "refresh_page"})
 
     assert component.config["commands"] == []
 
 
-@pytest.mark.parametrize("prefix", API_PREFIXES)
+@pytest.mark.parametrize("prefix", INTERNAL_PREFIXES)
 def test_permitted_queue_command_is_queued(client, add_user, component, prefix):
     token = add_user("content_editor", components={"edit_content": ["G1"]})
     client(token).post(f"{prefix}/component/{component.uuid}/queueCommand", json={"command": "refresh_page"})
@@ -206,14 +206,14 @@ def test_permitted_queue_command_is_queued(client, add_user, component, prefix):
     assert component.config["commands"] == ["refresh_page"]
 
 
-@pytest.mark.parametrize("prefix", API_PREFIXES)
+@pytest.mark.parametrize("prefix", INTERNAL_PREFIXES)
 def test_anonymous_delete_keeps_component(client, component, prefix):
     client().delete(f"{prefix}/component/{component.uuid}/delete")
 
     assert component in hub_config.componentList
 
 
-@pytest.mark.parametrize("prefix", API_PREFIXES)
+@pytest.mark.parametrize("prefix", INTERNAL_PREFIXES)
 def test_anonymous_configuration_update_is_not_written(client, hub_env, prefix):
     client().post(f"{prefix}/system/configuration/system/update", json={"configuration": {"port": 1}})
     client().post(f"{prefix}/system/configuration/test_config/update", json={"configuration": {"key": "value"}})
@@ -222,7 +222,7 @@ def test_anonymous_configuration_update_is_not_written(client, hub_env, prefix):
     assert not os.path.exists(hub_env / "configuration" / "test_config.json")
 
 
-@pytest.mark.parametrize("prefix", API_PREFIXES)
+@pytest.mark.parametrize("prefix", INTERNAL_PREFIXES)
 def test_anonymous_exhibition_set_is_ignored(client, hub_env, prefix):
     client().post(f"{prefix}/exhibition/some-exhibition/set")
 
@@ -231,14 +231,14 @@ def test_anonymous_exhibition_set_is_ignored(client, hub_env, prefix):
 
 # The update stream
 
-@pytest.mark.parametrize("prefix", API_PREFIXES)
+@pytest.mark.parametrize("prefix", INTERNAL_PREFIXES)
 def test_update_stream_rejects_anonymous(client, prefix):
     response = client().get(f"{prefix}/system/updateStream")
 
     assert response.json() == {"success": False, "reason": "authentication_failed"}
 
 
-@pytest.mark.parametrize("prefix", API_PREFIXES)
+@pytest.mark.parametrize("prefix", INTERNAL_PREFIXES)
 def test_update_stream_requires_only_a_logged_in_user(client, prefix):
     # The stream never ends, so check the route's dependency instead of reading the response
     route = next(r for r in client().app.routes if getattr(r, "path", "") == f"{prefix}/system/updateStream")
@@ -258,7 +258,7 @@ def test_open_endpoint_allows_anonymous(client, component, path, method, body):
 
 # Endpoints that already required a login must keep the same failure responses
 
-@pytest.mark.parametrize("prefix", API_PREFIXES)
+@pytest.mark.parametrize("prefix", INTERNAL_PREFIXES)
 @pytest.mark.parametrize("method, path, body", [
     ("DELETE", "/data/test_data", None),  # Uses the require_permission dependency
     ("POST", "/tracker/template/create", {"name": "test"}),  # Uses the require_permission dependency
@@ -287,7 +287,7 @@ def test_locked_endpoint_accepts_bearer_token(client, add_user, component, prefi
     assert failure_reason(response) not in AUTH_FAILURES
 
 
-@pytest.mark.parametrize("prefix", API_PREFIXES)
+@pytest.mark.parametrize("prefix", INTERNAL_PREFIXES)
 def test_manually_checked_endpoint_accepts_bearer_token(client, add_user, prefix):
     token = add_user("settings_editor", settings="edit")
     response = client().post(f"{prefix}/component/static/create", json={"id": "test", "groups": []},
@@ -296,7 +296,7 @@ def test_manually_checked_endpoint_accepts_bearer_token(client, add_user, prefix
     assert response.json().get("success") is True
 
 
-@pytest.mark.parametrize("prefix", API_PREFIXES)
+@pytest.mark.parametrize("prefix", INTERNAL_PREFIXES)
 def test_invalid_bearer_token_is_rejected(client, prefix):
     response = client().get(f"{prefix}/system/configuration/test_config", headers=bearer("not-a-valid-token"))
 

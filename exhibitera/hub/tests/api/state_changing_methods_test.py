@@ -75,14 +75,6 @@ def test_get_does_not_restore_issues(editor):
     assert issue_id not in issue_ids()
 
 
-@pytest.mark.parametrize("action", ["delete", "archive"])
-def test_v6_still_accepts_get_for_older_clients(editor, action):
-    issue_id = new_issue()
-
-    assert editor.get(f"/v6/issue/{issue_id}/{action}").json()["success"] is True
-    assert issue_id not in issue_ids()
-
-
 # Groups and programs
 
 def test_restore_group(editor):

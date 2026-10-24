@@ -16,86 +16,23 @@ import pytest
 import exhibitera.hub.config as hub_config
 import exhibitera.hub.features.users as hub_users
 import exhibitera.hub.Hub as hub
-from conftest import make_permissions
+from conftest import INTERNAL_PREFIXES, make_permissions
 
 # The permission each endpoint requires:
 #   ("category", "level")                 -- the user needs this permission
 #   ("components", "level", "group")      -- the user needs this permission for the component's groups
 #   ("user",)                             -- any logged-in user
 
-PROTECTED_V6 = {
-    ("DELETE", "/component/{uuid_str}/delete"): ("settings", "edit"),
-    ("DELETE", "/data/{name}"): ("analytics", "edit"),
-    ("DELETE", "/exhibition/modifications"): ("exhibits", "edit"),
-    ("DELETE", "/exhibition/{uuid_str}"): ("exhibits", "edit"),
-    ("DELETE", "/group/{uuid_str}"): ("settings", "edit"),
-    ("DELETE", "/maintenance/{uuid_str}"): ("maintenance", "edit"),
-    ("DELETE", "/schedule/{schedule_name}"): ("schedule", "edit"),
-    ("DELETE", "/schedule/{schedule_name}/action/{action_id}"): ("schedule", "edit"),
-    ("DELETE", "/tracker/template/{tracker_uuid}"): ("analytics", "edit"),
-    ("DELETE", "/user/{uuid_str}"): ("users", "edit"),
-    ("GET", "/data/list"): ("analytics", "view"),
-    ("GET", "/data/{name}/csv"): ("analytics", "view"),
-    ("GET", "/exhibition/available"): ("user",),
-    ("GET", "/exhibition/modifications"): ("exhibits", "view"),
-    ("GET", "/exhibition/{uuid_str}/details"): ("user",),
-    ("GET", "/group/{uuid_str}/details"): ("settings", "edit"),
-    ("GET", "/issue/archive/list/{match_uuid}"): ("maintenance", "view"),
-    ("GET", "/issue/list/{match_uuid}"): ("maintenance", "view"),
-    ("GET", "/issue/{issue_id}/archive"): ("maintenance", "edit"),
-    ("GET", "/issue/{issue_id}/delete"): ("maintenance", "edit"),
-    ("GET", "/issue/{issue_id}/media"): ("maintenance", "view"),
-    ("GET", "/issue/{issue_id}/restore"): ("maintenance", "edit"),
-    ("GET", "/maintenance/"): ("maintenance", "view"),
-    ("GET", "/maintenance/{uuid_str}"): ("maintenance", "view"),
-    ("GET", "/schedule/date_specific/list"): ("schedule", "view"),
-    ("GET", "/schedule/{schedule_name}"): ("schedule", "view"),
-    ("GET", "/schedule/{schedule_name}/JSONString"): ("schedule", "view"),
-    ("GET", "/system/configuration/{target}"): ("settings", "view"),
-    ("GET", "/system/updateStream"): ("user",),
-    ("POST", "/component/WOL/create"): ("settings", "edit"),
-    ("POST", "/component/WOL/{uuid_str}/edit"): ("components", "edit", "group"),
-    ("POST", "/component/static/create"): ("settings", "edit"),
-    ("POST", "/component/static/{uuid_str}/edit"): ("components", "edit", "group"),
-    ("POST", "/component/{component_uuid}/definition/{definition_uuid}"): ("components", "edit_content", "group"),
-    ("POST", "/component/{uuid_str}/edit"): ("components", "edit", "group"),
-    ("POST", "/component/{uuid_str}/queueCommand"): ("components", "edit_content", "group"),
-    ("POST", "/exhibition/applyModifications"): ("exhibits", "edit"),
-    ("POST", "/exhibition/create"): ("exhibits", "edit"),
-    ("POST", "/exhibition/{uuid_str}/edit"): ("exhibits", "edit"),
-    ("POST", "/exhibition/{uuid_str}/set"): ("exhibits", "edit"),
-    ("POST", "/group/create"): ("settings", "edit"),
-    ("POST", "/group/{uuid_str}/edit"): ("settings", "edit"),
-    ("POST", "/issue/create"): ("maintenance", "edit"),
-    ("POST", "/issue/deleteMedia"): ("maintenance", "edit"),
-    ("POST", "/issue/edit"): ("maintenance", "edit"),
-    ("POST", "/issue/uploadMedia"): ("maintenance", "edit"),
-    ("POST", "/maintenance/{uuid_str}"): ("maintenance", "edit"),
-    ("POST", "/projector/create"): ("settings", "edit"),
-    ("POST", "/projector/{uuid_str}/edit"): ("components", "edit", "group"),
-    ("POST", "/schedule/convert"): ("schedule", "edit"),
-    ("POST", "/schedule/create"): ("schedule", "edit"),
-    ("POST", "/schedule/{schedule_name}/action/{action_id}/update"): ("schedule", "edit"),
-    ("POST", "/system/configuration/{target}/update"): ("settings", "edit"),
-    ("POST", "/tracker/template/create"): ("analytics", "edit"),
-    ("POST", "/user/create"): ("users", "edit"),
-    ("POST", "/user/{uuid_str}/edit"): ("users", "edit"),
-    ("POST", "/user/{uuid_str}/editPreferences"): ("user",),
-    ("POST", "/users/list"): ("user",),
-}
+# /v6 only serves the protocol for released Apps 6.0, which never needs a login
+PROTECTED_V6 = {}
 
 OPEN_V6 = {
     ("GET", "/component/{uuid_str}/groups"),
     ("GET", "/data/{name}/rawText"),
     ("GET", "/system/checkConnection"),
-    ("GET", "/system/getHelpText"),
-    ("GET", "/tracker/template/{template_uuid}"),
-    ("GET", "/tracker/templates/list"),
-    ("GET", "/user/{user_uuid}/displayName"),
     ("POST", "/analytics/{component_uuid}/append"),
     ("POST", "/data/{name}/append"),
     ("POST", "/data/{name}/rawText"),
-    ("POST", "/schedule/getSecondsFromMidnight"),
     ("POST", "/system/ping"),
     ("POST", "/user/login"),
     ("POST", "/user/{user_uuid}/changePassword"),
@@ -303,7 +240,7 @@ def editor_uuid():
     return next(u.uuid for u in hub_config.user_list if u.username == "editor")
 
 
-@pytest.mark.parametrize("prefix", ["/v6", "/v6.1"])
+@pytest.mark.parametrize("prefix", INTERNAL_PREFIXES)
 def test_issue_changes_record_the_user(client, hub_env, editor, monkeypatch, prefix):
     monkeypatch.setattr(hub_config, "issue_list", [])
     api = client(editor)
@@ -315,8 +252,7 @@ def test_issue_changes_record_the_user(client, hub_env, editor, monkeypatch, pre
     api.post(f"{prefix}/issue/edit", json={"details": {"id": issue["id"], "priority": "high"}})
     assert hub_config.issue_list[0].details["lastUpdateUsername"] == editor_uuid()
 
-    archive_method = api.get if prefix == "/v6" else api.post
-    archive_method(f"{prefix}/issue/{issue['id']}/archive")
+    api.post(f"{prefix}/issue/{issue['id']}/archive")
     archive = api.get(f"{prefix}/issue/archive/list/__all").json()
     assert archive["issues"][0]["archivedUsername"] == editor_uuid()
 
@@ -349,7 +285,7 @@ def uuid_of(username):
     return next(u.uuid for u in hub_config.user_list if u.username == username)
 
 
-@pytest.mark.parametrize("prefix", ["/v6", "/v6.1"])
+@pytest.mark.parametrize("prefix", INTERNAL_PREFIXES)
 def test_users_can_only_edit_their_own_preferences(client, two_users, prefix):
     own_token, admin_token = two_users
     body = {"preferences": {"status_mode": "maintenance"}}
@@ -391,7 +327,7 @@ def test_users_can_edit_their_own_preferences_with_no_permissions(client, add_us
 
 # Component permissions are scoped to the component's current groups
 
-@pytest.mark.parametrize("prefix", ["/v6", "/v6.1"])
+@pytest.mark.parametrize("prefix", INTERNAL_PREFIXES)
 @pytest.mark.parametrize("path, body", [
     ("/component/{uuid}/edit", {"description": "New description"}),
     ("/component/static/{uuid}/edit", {"description": "New description"}),

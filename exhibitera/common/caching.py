@@ -1,7 +1,12 @@
 """HTTP caching for the pages and scripts that Hub and Apps serve."""
 
+# Standard modules
+import os
+
 # Third-party modules
 from starlette.datastructures import MutableHeaders
+from starlette.requests import Request
+from starlette.responses import FileResponse, Response
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 # Content types that browsers must check for updates before reusing
@@ -34,3 +39,15 @@ class RevalidatePagesMiddleware:
             await send(message)
 
         await self.app(scope, receive, send_with_cache_control)
+
+
+def file_response(request: Request, path: str | os.PathLike, media_type: str) -> Response:
+    """Return the file, or an empty "not modified" reply if the browser already has this version.
+
+    Starlette's StaticFiles does this for mounted folders, but FileResponse doesn't.
+    """
+
+    response = FileResponse(path, media_type=media_type, stat_result=os.stat(path))
+    if request.headers.get("if-none-match") == response.headers["etag"]:
+        return Response(status_code=304, headers={"etag": response.headers["etag"]})
+    return response

@@ -66,6 +66,13 @@ def test_protocol_endpoint_exists(version, method, path):
     assert (method, f"/v{version}{path}") in hub_routes()
 
 
+def test_v6_serves_only_the_protocol():
+    # /v6 exists for released Apps 6.0. Hub's own pages use /internal.
+    v6_routes = {(method, path[len("/v6"):]) for method, path in hub_routes() if path.startswith("/v6/")}
+
+    assert v6_routes == PROTOCOL["6"]
+
+
 @pytest.mark.parametrize("method, path", sorted(CORE))
 def test_core_endpoint_exists(method, path):
     assert (method, path) in hub_routes()

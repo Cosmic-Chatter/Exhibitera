@@ -19,12 +19,12 @@ import distro
 from fastapi import Body, FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
-from fastapi.responses import FileResponse, JSONResponse, Response
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 import requests
 
 # Exhibitera modules
-from exhibitera.common.caching import RevalidatePagesMiddleware
+from exhibitera.common.caching import RevalidatePagesMiddleware, file_response
 import exhibitera.common.config as ex_config
 import exhibitera.common.files as ex_files
 import exhibitera.common.utilities as ex_utilities
@@ -44,18 +44,11 @@ import exhibitera.hub.features.users as hub_users
 # API modules
 from exhibitera.hub.api.core import core as core_api
 
-# API version 6
+# Protocol for released Apps 6.0
 from exhibitera.hub.api.v6.analytics import analytics as analytics_v6
 from exhibitera.hub.api.v6.components import components as components_v6
 from exhibitera.hub.api.v6.data import data as data_v6
-from exhibitera.hub.api.v6.exhibitions import exhibitions as exhibitions_v6
-from exhibitera.hub.api.v6.groups import groups as groups_v6
-from exhibitera.hub.api.v6.issues import issues as issues_v6
-from exhibitera.hub.api.v6.maintenance import maintenance as maintenance_v6
-from exhibitera.hub.api.v6.projectors import projectors as projectors_v6
-from exhibitera.hub.api.v6.schedule import schedule as schedule_v6
 from exhibitera.hub.api.v6.system import system as system_v6
-from exhibitera.hub.api.v6.tracker import tracker as tracker_v6
 from exhibitera.hub.api.v6.users import users as users_v6
 
 # Internal API, used by Hub's own web pages
@@ -201,18 +194,11 @@ async def auth_error_handler(request: Request, exc: hub_users.AuthError):
 # Link API routers
 app.include_router(core_api.router, prefix='/core')
 
-# API version 6
+# Protocol for released Apps 6.0
 app.include_router(analytics_v6.router, prefix='/v6')
 app.include_router(components_v6.router, prefix='/v6')
 app.include_router(data_v6.router, prefix='/v6')
-app.include_router(exhibitions_v6.router, prefix='/v6')
-app.include_router(groups_v6.router, prefix='/v6')
-app.include_router(issues_v6.router, prefix='/v6')
-app.include_router(maintenance_v6.router, prefix='/v6')
-app.include_router(projectors_v6.router, prefix='/v6')
-app.include_router(schedule_v6.router, prefix='/v6')
 app.include_router(system_v6.router, prefix='/v6')
-app.include_router(tracker_v6.router, prefix='/v6')
 app.include_router(users_v6.router, prefix='/v6')
 
 # Internal API. Until the protocol endpoints move to their own routers, these are also served
@@ -282,12 +268,7 @@ async def serve_root_file(request: Request, filename: str):
     if filename not in ROOT_FILES:
         raise HTTPException(status_code=404)
 
-    path = os.path.join(ROOT_FOLDER, filename)
-    response = FileResponse(path, media_type=ROOT_FILES[filename], stat_result=os.stat(path))
-    if request.headers.get("if-none-match") == response.headers["etag"]:
-        # The browser's copy is current
-        return Response(status_code=304, headers={"etag": response.headers["etag"]})
-    return response
+    return file_response(request, os.path.join(ROOT_FOLDER, filename), ROOT_FILES[filename])
 
 
 def run():
