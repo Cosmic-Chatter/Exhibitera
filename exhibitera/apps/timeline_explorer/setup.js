@@ -1,6 +1,5 @@
 /* global bootstrap, Coloris */
 
-import exConfig from '../../common/config.js'
 import * as exFiles from '../../common/files.js'
 import * as exUtilities from '../../common/utilities.js'
 import * as exCommon from '../js/exhibitera_app_common.js'
@@ -541,14 +540,14 @@ function editItem (itemUUID) {
       preview = imagePreview
     }
     preview.style.display = 'block'
-    preview.src = exConfig.api + '/files/' + itemDef.filename + '/thumbnail'
+    preview.src = exCommon.config.api + '/files/' + itemDef.filename + '/thumbnail'
   }
 
   // Optional thumbnail
   // if (itemDef.custom_thumbnail && itemDef.custom_thumbnail !== '') {
   //   // Show preview
   //   thumbImageTPreview.style.display = 'block'
-  //   thumbImageTPreview.src = exConfig.api + '/files/' + itemDef.custom_thumbnail + '/thumbnail'
+  //   thumbImageTPreview.src = exCommon.config.api + '/files/' + itemDef.custom_thumbnail + '/thumbnail'
   // }
 
   // Build nav to edit title, time, level, description in each language
@@ -1077,7 +1076,7 @@ for (const id of ['editItemFileSelect', 'editItemPreviewImage', 'editItemPreview
           preview = imagePreview
         }
         preview.style.display = 'block'
-        preview.src = exConfig.api + '/files/' + files[0] + '/thumbnail'
+        preview.src = exCommon.config.api + '/files/' + files[0] + '/thumbnail'
 
         exSetup.previewDefinition(true)
       })

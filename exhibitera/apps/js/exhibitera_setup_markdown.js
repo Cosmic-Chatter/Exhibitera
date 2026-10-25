@@ -1,7 +1,6 @@
 /* global bootstrap, showdown, TinyMDE */
 // Create rich markdown editors for setup pages.
 
-import exConfig from '../../common/config.js'
 import * as exFiles from '../../common/files.js'
 import * as exFileSelect from './exhibitera_file_select_modal.js'
 import * as appsCommon from './exhibitera_app_common.js'
@@ -225,13 +224,13 @@ export class ExhibiteraMarkdownEditor {
             exMarkdownSelectVideo.style.display = 'none'
             exMarkdownSelectLoop.style.display = 'none'
 
-            exMarkdownSelectImage.src = appsCommon.config.helperAddress + exConfig.api + '/files/' + files[0] + '/thumbnail'
+            exMarkdownSelectImage.src = appsCommon.config.helperAddress + appsCommon.config.api + '/files/' + files[0] + '/thumbnail'
           } else {
             exMarkdownSelectImage.style.display = 'none'
             exMarkdownSelectVideo.style.display = 'block'
             exMarkdownSelectLoop.style.display = 'block'
 
-            exMarkdownSelectVideo.src = appsCommon.config.helperAddress + exConfig.api + '/files/' + files[0] + '/thumbnail'
+            exMarkdownSelectVideo.src = appsCommon.config.helperAddress + appsCommon.config.api + '/files/' + files[0] + '/thumbnail'
           }
         })
     })

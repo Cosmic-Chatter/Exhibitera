@@ -1,6 +1,5 @@
 /* global bootstrap textFit */
 
-import exConfig from '../../common/config.js'
 import * as exFiles from '../../common/files.js'
 import * as exUtilities from '../../common/utilities.js'
 import * as exCommon from '../js/exhibitera_app_common.js'
@@ -66,7 +65,7 @@ function createCard (obj) {
 
   const iconWidth = String(Math.round(window.innerWidth * window.devicePixelRatio / numCols))
 
-  const thumb = exCommon.config.helperAddress + exConfig.api + '/files/' + thumbName + '/thumbnail/' + iconWidth + '?force_image=true'
+  const thumb = exCommon.config.helperAddress + exCommon.config.api + '/files/' + thumbName + '/thumbnail/' + iconWidth + '?force_image=true'
 
   const title = exMarkdown.formatText(def.languages?.[currentLang]?.content?.[obj.uuid]?.title ?? '', { string: true, removeParagraph: true })
 

@@ -1,6 +1,5 @@
 /* global bootstrap, showdown */
 
-import exConfig from '../../common/config.js'
 import * as exUtilities from '../../common/utilities.js'
 import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exFileSelect from '../js/exhibitera_file_select_modal.js'
@@ -218,7 +217,7 @@ function wizardBuildPairDetailsPage () {
 
     const image1 = document.createElement('img')
     image1.classList = 'w-100'
-    image1.src = exCommon.config.helperAddress + exConfig.api + '/files/' + item.image1 + '/thumbnail'
+    image1.src = exCommon.config.helperAddress + exCommon.config.api + '/files/' + item.image1 + '/thumbnail'
     image1Col.appendChild(image1)
 
     const image1Label = document.createElement('label')
@@ -232,7 +231,7 @@ function wizardBuildPairDetailsPage () {
 
     const image2 = document.createElement('img')
     image2.classList = 'w-100'
-    image2.src = exCommon.config.helperAddress + exConfig.api + '/files/' + item.image2 + '/thumbnail'
+    image2.src = exCommon.config.helperAddress + exCommon.config.api + '/files/' + item.image2 + '/thumbnail'
     image2Col.appendChild(image2)
 
     const image2Label = document.createElement('label')
@@ -437,7 +436,7 @@ function createItemHTML (item, num, show = false, wizard = false) {
   image1.style.width = '100%'
   image1.style.objectFit = 'contain'
   if ((item.image1 !== '') && (item.image1 != null)) {
-    image1.src = exCommon.config.helperAddress + exConfig.api + '/files/' + item.image1 + '/thumbnail'
+    image1.src = exCommon.config.helperAddress + exCommon.config.api + '/files/' + item.image1 + '/thumbnail'
   } else {
     image1.style.display = 'none'
   }
@@ -462,7 +461,7 @@ function createItemHTML (item, num, show = false, wizard = false) {
         const file = result[0]
         if (file == null) return
         selectImage1Button.innerHTML = file
-        image1.src = exCommon.config.helperAddress + exConfig.api + '/files/' + file + '/thumbnail'
+        image1.src = exCommon.config.helperAddress + exCommon.config.api + '/files/' + file + '/thumbnail'
         exSetup.updateWorkingDefinition(['content', item.uuid, 'image1'], file)
         image1.style.display = 'block'
         exSetup.previewDefinition(true)
@@ -487,7 +486,7 @@ function createItemHTML (item, num, show = false, wizard = false) {
   image2.style.width = '100%'
   image2.style.objectFit = 'contain'
   if ((item.image2 !== '') && (item.image2 != null)) {
-    image2.src = exCommon.config.helperAddress + exConfig.api + '/files/' + item.image2 + '/thumbnail'
+    image2.src = exCommon.config.helperAddress + exCommon.config.api + '/files/' + item.image2 + '/thumbnail'
   } else {
     image2.style.display = 'none'
   }
@@ -510,7 +509,7 @@ function createItemHTML (item, num, show = false, wizard = false) {
         const file = result[0]
         if (file == null) return
         selectImage2Button.innerHTML = file
-        image2.src = exCommon.config.helperAddress + exConfig.api + '/files/' + file + '/thumbnail'
+        image2.src = exCommon.config.helperAddress + exCommon.config.api + '/files/' + file + '/thumbnail'
         exSetup.updateWorkingDefinition(['content', item.uuid, 'image2'], file)
         image2.style.display = 'block'
         exSetup.previewDefinition(true)

@@ -1,5 +1,4 @@
 /* global bootstrap */
-import exConfig from '../../common/config.js'
 import * as exFiles from '../../common/files.js'
 import * as exUtilities from '../../common/utilities.js'
 import * as exCommon from './exhibitera_app_common.js'
@@ -549,7 +548,7 @@ function _populateThumbnail (file, thumbContainer) {
 
   if (mimetype === 'image') {
     thumb = document.createElement('img')
-    thumb.src = exCommon.config.helperAddress + exConfig.api + '/files/' + file + '/thumbnail/240'
+    thumb.src = exCommon.config.helperAddress + exCommon.config.api + '/files/' + file + '/thumbnail/240'
   } else if (mimetype === 'video') {
     thumb = document.createElement('video')
     thumb.setAttribute('loop', true)
@@ -557,7 +556,7 @@ function _populateThumbnail (file, thumbContainer) {
     thumb.setAttribute('disablePictureInPicture', true)
     thumb.setAttribute('webkit-playsinline', true)
     thumb.setAttribute('playsinline', true)
-    thumb.src = exCommon.config.helperAddress + exConfig.api + '/files/' + file + '/thumbnail/240'
+    thumb.src = exCommon.config.helperAddress + exCommon.config.api + '/files/' + file + '/thumbnail/240'
   } else if (mimetype === 'audio') {
     thumb = document.createElement('img')
     thumb.src = exCommon.config.helperAddress + getDefaultAudioIcon()
@@ -630,13 +629,13 @@ function previewFile (fileDetails) {
     vid.style.display = 'none'
     font.style.display = 'none'
     aud.parentElement.style.display = 'none'
-    img.src = exCommon.config.helperAddress + exConfig.api + '/files/' + file + '/thumbnail/240'
+    img.src = exCommon.config.helperAddress + exCommon.config.api + '/files/' + file + '/thumbnail/240'
   } else if (mimetype === 'video') {
     img.style.display = 'none'
     vid.style.display = 'block'
     font.style.display = 'none'
     aud.parentElement.style.display = 'none'
-    vid.src = exCommon.config.helperAddress + exConfig.api + '/files/' + file + '/thumbnail/240'
+    vid.src = exCommon.config.helperAddress + exCommon.config.api + '/files/' + file + '/thumbnail/240'
   } else if (mimetype === 'audio') {
     img.style.display = 'none'
     vid.style.display = 'none'
@@ -867,7 +866,7 @@ function uploadFile (options) {
     }
 
     const xhr = new XMLHttpRequest()
-    xhr.open('POST', exCommon.config.helperAddress + exConfig.api + '/files/upload', true)
+    xhr.open('POST', exCommon.config.helperAddress + exCommon.config.api + '/files/upload', true)
 
     xhr.onreadystatechange = function () {
       if (this.readyState !== 4) return
@@ -929,7 +928,7 @@ function downloadMultipleFiles () {
     filenamesToDownload.push(el.dataset.filename)
   }
 
-  fetch(exCommon.config.helperAddress + exConfig.api + '/files/createZip',
+  fetch(exCommon.config.helperAddress + exCommon.config.api + '/files/createZip',
     {
       method: 'POST',
       headers: {

@@ -24,14 +24,14 @@ import exhibitera.apps.features.system as apps_system
 
 # API modules
 from exhibitera.apps.api.core import core as core_api
-from exhibitera.apps.api.v6.data import data as data_v6
 from exhibitera.apps.api.v6.definitions import definitions as definitions_v6
-from exhibitera.apps.api.v6.dmx import dmx as dmx_v6
-from exhibitera.apps.api.v6.files import files as files_v6
-from exhibitera.apps.api.v6.system import system as system_v6
 
-# API version 6.1
-from exhibitera.apps.api.v6_1.definitions import definitions as definitions_v6_1
+# Internal API, used by Apps' own pages
+from exhibitera.apps.api.internal.data import data as data_internal
+from exhibitera.apps.api.internal.definitions import definitions as definitions_internal
+from exhibitera.apps.api.internal.dmx import dmx as dmx_internal
+from exhibitera.apps.api.internal.files import files as files_internal
+from exhibitera.apps.api.internal.system import system as system_internal
 
 # If we're not on Linux, prepare to use the webview
 if sys.platform != 'linux':
@@ -133,16 +133,24 @@ app.mount("/thumbnails",
 
 # Link API routers
 app.include_router(core_api.router, prefix='/core')
-app.include_router(data_v6.router, prefix='/v6')
-app.include_router(definitions_v6.router, prefix='/v6')
-app.include_router(dmx_v6.router, prefix='/v6')
-app.include_router(files_v6.router, prefix='/v6')
-app.include_router(system_v6.router, prefix='/v6')
-app.include_router(data_v6.router, prefix='/v6.1')
-app.include_router(definitions_v6_1.router, prefix='/v6.1')
-app.include_router(dmx_v6.router, prefix='/v6.1')
-app.include_router(files_v6.router, prefix='/v6.1')
-app.include_router(system_v6.router, prefix='/v6.1')
+
+# Internal API. Until the protocol endpoints move to their own routers, these are also served under
+# /v6.1 and /v6, which Hub calls.
+for internal_router in [data_internal.router,
+                        definitions_internal.router,
+                        dmx_internal.router,
+                        files_internal.router,
+                        system_internal.router]:
+    app.include_router(internal_router, prefix='/internal')
+    app.include_router(internal_router, prefix='/v6.1')
+
+# Protocol for released Hub 6.0, which deletes definitions with a GET request
+for v6_router in [data_internal.router,
+                  definitions_v6.router,
+                  dmx_internal.router,
+                  files_internal.router,
+                  system_internal.router]:
+    app.include_router(v6_router, prefix='/v6')
 
 
 @lru_cache()

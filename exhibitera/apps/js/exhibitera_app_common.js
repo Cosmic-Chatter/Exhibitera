@@ -4,6 +4,7 @@ import exConfig from '../../common/config.js'
 import * as exUtilities from '../../common/utilities.js'
 
 export const config = {
+  api: '/internal', // The API that Apps' own pages use to talk to this Apps server
   permissions: {
     audio: true,
     refresh: true,
@@ -22,7 +23,7 @@ export const config = {
   definitionLoader: null, // A function used by loadDefinition() to set up the specific app.
   fontCache: {},
   group: 'Default',
-  helperAddress: 'http://localhost:8000',
+  helperAddress: window.location.origin, // This Apps server
   id: 'TEMP ' + String(new Date().getTime()),
   notifications: {},
   remoteDisplay: false, // false == we are using the webview app, true == browser
@@ -179,6 +180,7 @@ export function makeHelperRequest (opt) {
   // Shortcut for making an Apps request and returning a Promise
 
   opt.url = config.helperAddress
+  if (opt.api == null) opt.api = config.api
   return exUtilities.makeRequest(opt)
 }
 
@@ -617,7 +619,7 @@ export function saveScreenshotAsThumbnail (filename) {
       const formData = new FormData()
       if (img != null) {
         formData.append('files', img, filename)
-        fetch(exConfig.api + '/files/uploadThumbnail', {
+        fetch(config.api + '/files/uploadThumbnail', {
           method: 'POST',
           body: formData
         })

@@ -1,4 +1,3 @@
-import exConfig from '../../common/config.js'
 import * as exUtilities from '../../common/utilities.js'
 import * as exFiles from '../../common/files.js'
 import * as exCommon from '../js/exhibitera_app_common.js'
@@ -404,12 +403,12 @@ function populateItemList (def) {
 
     const img1 = document.createElement('img')
     img1.classList = 'w-100 icon-image icon-image-top'
-    img1.src = exCommon.config.helperAddress + exConfig.api + '/files/' + item.image1 + '/thumbnail/' + thumbWidth
+    img1.src = exCommon.config.helperAddress + exCommon.config.api + '/files/' + item.image1 + '/thumbnail/' + thumbWidth
     iconContainer.appendChild(img1)
 
     const img2 = document.createElement('img')
     img2.classList = 'w-100 icon-image icon-image-bottom'
-    img2.src = exCommon.config.helperAddress + exConfig.api + '/files/' + item.image2 + '/thumbnail/' + thumbWidth
+    img2.src = exCommon.config.helperAddress + exCommon.config.api + '/files/' + item.image2 + '/thumbnail/' + thumbWidth
     img2.style.position = 'absolute'
     img2.style.top = 0
     img2.style.left = 0

@@ -1,6 +1,5 @@
 /* global bootstrap */
 
-import exConfig from '../../common/config.js'
 import * as exUtilities from '../../common/utilities.js'
 import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exFileSelect from '../js/exhibitera_file_select_modal.js'
@@ -398,7 +397,7 @@ document.getElementById('selectConversionVideoButton').addEventListener('click',
       if (result != null && result.length > 0) {
         event.target.setAttribute('data-filename', result[0])
         event.target.innerHTML = result[0]
-        document.getElementById('fileConversionVideoPreview').src = exCommon.config.helperAddress + exConfig.api + '/files/' + result[0] + '/thumbnail'
+        document.getElementById('fileConversionVideoPreview').src = exCommon.config.helperAddress + exCommon.config.api + '/files/' + result[0] + '/thumbnail'
 
         exCommon.makeHelperRequest({
           method: 'GET',

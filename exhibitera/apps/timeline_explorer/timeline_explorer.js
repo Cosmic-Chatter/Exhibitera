@@ -1,6 +1,5 @@
 /* global textFit */
 
-import exConfig from '../../common/config.js'
 import * as exFiles from '../../common/files.js'
 import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exMarkdown from '../js/exhibitera_app_markdown.js'
@@ -217,7 +216,7 @@ function createTimelineEntry (itemUUID, langCode) {
       } else {
         thumbRes = Math.round(width * 0.5)
       }
-      image.src = exCommon.config.helperAddress + exConfig.api + '/files/' + item.filename + '/thumbnail/' + String(thumbRes)
+      image.src = exCommon.config.helperAddress + exCommon.config.api + '/files/' + item.filename + '/thumbnail/' + String(thumbRes)
       mediaCol.appendChild(image)
     } else if (mimetype === 'video') {
       const video = document.createElement('video')

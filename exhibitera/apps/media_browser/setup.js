@@ -1,6 +1,5 @@
 /* global Coloris, bootstrap */
 
-import exConfig from '../../common/config.js'
 import * as exFiles from '../../common/files.js'
 import * as exUtilities from '../../common/utilities.js'
 import * as exCommon from '../js/exhibitera_app_common.js'
@@ -261,12 +260,12 @@ function onWizardMediaImport (files) {
 
     if (mimetype === 'image' || mimetype === 'audio') {
       preview = document.createElement('img')
-      preview.src = exConfig.api + '/files/' + file + '/thumbnail'
+      preview.src = exCommon.config.api + '/files/' + file + '/thumbnail'
       preview.className = 'card-img-top'
       preview.alt = file
     } else if (mimetype === 'video') {
       preview = document.createElement('video')
-      preview.src = exConfig.api + '/files/' + file + '/thumbnail'
+      preview.src = exCommon.config.api + '/files/' + file + '/thumbnail'
       preview.className = 'card-img-top'
       preview.muted = true
       preview.loop = true
@@ -693,14 +692,14 @@ function editItem (itemUUID) {
       preview = imagePreview
     }
     preview.style.display = 'block'
-    preview.src = exConfig.api + '/files/' + itemDef.filename + '/thumbnail'
+    preview.src = exCommon.config.api + '/files/' + itemDef.filename + '/thumbnail'
   }
 
   // Optional thumbnail
   if (itemDef.custom_thumbnail && itemDef.custom_thumbnail !== '') {
     // Show preview
     thumbImageTPreview.style.display = 'block'
-    thumbImageTPreview.src = exConfig.api + '/files/' + itemDef.custom_thumbnail + '/thumbnail'
+    thumbImageTPreview.src = exCommon.config.api + '/files/' + itemDef.custom_thumbnail + '/thumbnail'
   }
 
   // Build nav to edit title, caption, credit in each language
@@ -1386,7 +1385,7 @@ for (const id of ['editItemFileSelect', 'editItemPreviewImage', 'editItemPreview
           preview = imagePreview
         }
         preview.style.display = 'block'
-        preview.src = exConfig.api + '/files/' + files[0] + '/thumbnail'
+        preview.src = exCommon.config.api + '/files/' + files[0] + '/thumbnail'
 
         exSetup.previewDefinition(true)
       })
@@ -1408,7 +1407,7 @@ for (const id of ['editItemThumbnailSelect', 'editItemThumbPreviewImage']) {
 
         const thumbImageTPreview = document.getElementById('editItemThumbPreviewImage')
         thumbImageTPreview.style.display = 'block'
-        thumbImageTPreview.src = exConfig.api + '/files/' + files[0] + '/thumbnail'
+        thumbImageTPreview.src = exCommon.config.api + '/files/' + files[0] + '/thumbnail'
         exSetup.previewDefinition(true)
       })
   })

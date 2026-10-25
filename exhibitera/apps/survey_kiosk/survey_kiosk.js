@@ -1,6 +1,5 @@
 /* global textFit */
 
-import exConfig from '../../common/config.js'
 import * as exUtilities from '../../common/utilities.js'
 import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exMarkdown from '../js/exhibitera_app_markdown.js'
@@ -257,7 +256,7 @@ function getIcon (name) {
     // Get a thumbnail for performance reasons. Assume the icon will never be
     // more than half the width of the display.
     const width = Math.round(window.innerWidth * window.devicePixelRatio / 2)
-    return exConfig.api + '/files/' + name + '/thumbnail/' + String(width)
+    return exCommon.config.api + '/files/' + name + '/thumbnail/' + String(width)
   }
 }
 

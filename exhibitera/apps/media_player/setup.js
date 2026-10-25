@@ -1,6 +1,5 @@
 /* global bootstrap */
 
-import exConfig from '../../common/config.js'
 import * as exFiles from '../../common/files.js'
 import * as exUtilities from '../../common/utilities.js'
 import * as exCommon from '../js/exhibitera_app_common.js'
@@ -63,7 +62,7 @@ function wizardPopulateContent (files, clear = false) {
       thumb = document.createElement('img')
       thumb.classList = 'w-100 rounded'
     }
-    thumb.src = exConfig.api + '/files/' + filename + '/thumbnail'
+    thumb.src = exCommon.config.api + '/files/' + filename + '/thumbnail'
     thumbCol.appendChild(thumb)
 
     const titleCol = document.createElement('div')
@@ -1371,7 +1370,7 @@ function setItemContent (uuid, itemEl, file, type = 'file') {
     exSetup.updateWorkingDefinition(['content', uuid, 'subtitles'], {})
   } else if (mimetype === 'image') {
     if (type === 'file') {
-      image.src = exCommon.config.helperAddress + exConfig.api + '/files/' + file + '/thumbnail'
+      image.src = exCommon.config.helperAddress + exCommon.config.api + '/files/' + file + '/thumbnail'
     } else if (type === 'url') {
       image.src = file
     }
@@ -1406,7 +1405,7 @@ function setItemContent (uuid, itemEl, file, type = 'file') {
     } else itemEl.querySelector('.material-col').style.display = 'none'
   } else if (mimetype === 'video') {
     if (type === 'file') {
-      video.src = exCommon.config.helperAddress + exConfig.api + '/files/' + file + '/thumbnail'
+      video.src = exCommon.config.helperAddress + exCommon.config.api + '/files/' + file + '/thumbnail'
     } else if (type === 'url') {
       video.src = file
     }
