@@ -46,13 +46,83 @@ def test_code_logs_in_as_the_same_user(client, add_user):
     assert response["user"]["username"] == "staff"
 
 
-def test_redeemed_token_works_for_other_requests(client, add_user):
-    code = get_code(client, add_user("staff", settings="view"))
+def bearer(token: str) -> dict:
+    return {"Authorization": f"Bearer {token}"}
+
+
+# The token an Apps page gets only works for what Apps pages use: logging in and changing the user's
+# own password. Apps can't keep a token as safe as Hub's own pages can.
+
+@pytest.mark.parametrize("method, url", [("GET", "/internal/system/configuration/system"),
+                                         ("POST", "/internal/users/list"),
+                                         ("POST", "/internal/user/loginHandoff")])
+def test_redeemed_token_is_refused_by_other_endpoints(client, add_user, method, url):
+    code = get_code(client, add_user("staff", settings="edit", users="edit"))
     token = redeem(client, code)["authToken"]
 
-    response = client().get("/internal/system/configuration/system", headers={"Authorization": f"Bearer {token}"})
+    response = client().request(method, url, headers=bearer(token), json={})
+
+    assert response.json() == {"success": False, "reason": "authentication_failed"}
+
+
+@pytest.mark.parametrize("send", ["body", "header"])
+def test_redeemed_token_logs_in_again(client, add_user, send):
+    code = get_code(client, add_user("staff"))
+    token = redeem(client, code)["authToken"]
+
+    if send == "body":
+        response = client().post("/external/v6.1/user/login", json={"token": token})
+    else:
+        response = client().post("/external/v6.1/user/login", headers=bearer(token))
 
     assert response.json()["success"] is True
+    assert response.json()["user"]["username"] == "staff"
+
+
+def test_redeemed_token_can_change_the_users_own_password(client, add_user):
+    code = get_code(client, add_user("staff"))
+    user = hub_config.user_list[0]
+    user.password_hash = hub_users.hash_password("password")
+    token = redeem(client, code)["authToken"]
+
+    response = client().post(f"/external/v6.1/user/{user.uuid}/changePassword", headers=bearer(token),
+                             json={"current_password": "password", "new_password": "new"})
+
+    assert response.json() == {"success": True}
+
+
+def log_in_after(client, token, seconds, monkeypatch, prefix="/external/v6.1"):
+    later = hub_users.time.time() + seconds
+    monkeypatch.setattr(hub_users.time, "time", lambda: later)
+    return client().post(f"{prefix}/user/login", json={"token": token}).json()
+
+
+def test_redeemed_token_works_for_seven_days(client, add_user, monkeypatch):
+    token = redeem(client, get_code(client, add_user("staff")))["authToken"]
+
+    assert log_in_after(client, token, 7 * 24 * 60 * 60 - 60, monkeypatch)["success"] is True
+
+
+def test_redeemed_token_expires_after_seven_days(client, add_user, monkeypatch):
+    token = redeem(client, get_code(client, add_user("staff")))["authToken"]
+
+    assert log_in_after(client, token, 7 * 24 * 60 * 60 + 60, monkeypatch) == \
+        {"success": False, "reason": "authentication_failed"}
+
+
+def test_redeeming_does_not_set_hubs_cookie(client, add_user):
+    code = get_code(client, add_user("staff"))
+
+    response = client().post("/external/v6.1/user/login", json={"handoff": code})
+
+    assert "authToken" not in response.cookies
+
+
+def test_full_tokens_do_not_expire(client, add_user, monkeypatch):
+    token = add_user("staff")
+
+    # Full tokens are for Hub's own pages
+    assert log_in_after(client, token, 365 * 24 * 60 * 60, monkeypatch, prefix="/internal")["success"] is True
 
 
 def test_code_can_only_be_used_once(client, add_user):

@@ -1,6 +1,7 @@
 # Standard modules
 import datetime
 import getpass
+import json
 import logging
 import os.path
 import secrets
@@ -209,8 +210,8 @@ def create_login_handoff(user_uuid: str) -> str:
     """Create a one-time code that lets another page log in as the given user.
 
     Hub passes this to Apps pages it opens, which are on a different computer and can't use Hub's
-    login cookie. The code is exchanged for a normal login token by /user/login, so the long-lived
-    token itself never appears in a URL.
+    login cookie. The code is exchanged for an Apps login token by /user/login, so the token itself
+    never appears in a URL.
     """
 
     code = secrets.token_urlsafe(32)
@@ -236,20 +237,48 @@ def redeem_login_handoff(code: str) -> str | None:
     return user_uuid
 
 
-def encrypt_token(uuid_str: str) -> str:
-    """Encrypt the uuid as a token and return it."""
+# Seconds that an Apps login token remains valid
+APPS_TOKEN_LIFETIME = 7 * 24 * 60 * 60 # 7 days
+
+
+def encrypt_token(uuid_str: str, scope: str | None = None) -> str:
+    """Encrypt the uuid as a token and return it.
+
+    Pass scope="apps" for the limited token that Apps pages get. Apps can't keep a token as safe as
+    Hub's own pages can, so it only works where authenticate_user() is told to accept it, and it expires
+    after APPS_TOKEN_LIFETIME.
+    """
+
+    if scope is None:
+        payload = uuid_str
+    else:
+        payload = json.dumps({"user": uuid_str, "scope": scope})
 
     f = Fernet(get_encryption_key())
-    token = f.encrypt(bytes(uuid_str, 'UTF-8'))
+    token = f.encrypt(bytes(payload, 'UTF-8'))
     return str(token, 'UTF-8')
 
 
-def decrypt_token(token: str) -> str:
-    """Decrypt a token and return the uuid."""
+def decrypt_token(token: str) -> tuple[str, str | None]:
+    """Decrypt a token and return the uuid and the token's scope, or None for a full token.
+
+    Raises InvalidToken if the token is damaged or has expired.
+    """
 
     f = Fernet(get_encryption_key())
-    uuid_str = f.decrypt(token)
-    return str(uuid_str, 'UTF-8')
+    payload = str(f.decrypt(token), 'UTF-8')
+
+    # A full token is just the uuid
+    try:
+        contents = json.loads(payload)
+    except json.JSONDecodeError:
+        return payload, None
+    if not isinstance(contents, dict):
+        return payload, None
+
+    if f.extract_timestamp(token) + APPS_TOKEN_LIFETIME < time.time():
+        raise InvalidToken
+    return contents["user"], contents["scope"]
 
 
 def create_root_admin(password: str):
@@ -492,8 +521,13 @@ def check_username_available(username: str) -> bool:
     return True
 
 
-def authenticate_user(token: str = "", credentials: tuple[str, str] = ("", "")) -> tuple[bool, str]:
+def authenticate_user(token: str = "",
+                      credentials: tuple[str, str] = ("", ""),
+                      scope: str | None = None) -> tuple[bool, str]:
     """Authenticate the user using either a username/password or a token.
+
+    Full tokens are always accepted. A limited token, such as an Apps login, is only accepted when
+    `scope` matches it.
 
     If the user is authenticated successfully, return the matching uuid.
     """
@@ -507,8 +541,8 @@ def authenticate_user(token: str = "", credentials: tuple[str, str] = ("", "")) 
 
     if token != "":
         try:
-            user_uuid = decrypt_token(token)
-            user = get_user(uuid_str=user_uuid)
+            user_uuid, token_scope = decrypt_token(token)
+            user = get_user(uuid_str=user_uuid) if token_scope in (None, scope) else None
         except InvalidToken:
             user = None
         if user is None:
@@ -583,6 +617,21 @@ def require_user(request: Request) -> str:
 
 # Describes the check, so that tests can verify each route's requirement
 require_user.exhibitera_permission = ("user",)
+
+
+def require_apps_user(request: Request) -> str:
+    """FastAPI dependency like require_user(), except that it also accepts an Apps login token.
+
+    Use this only for what Apps pages need.
+    """
+
+    success, user_uuid = authenticate_user(token=get_request_token(request), scope="apps")
+    if success is False:
+        raise AuthError("authentication_failed")
+    return user_uuid
+
+
+require_apps_user.exhibitera_permission = ("user", "apps")
 
 
 def require_permission(category: str, action: str):

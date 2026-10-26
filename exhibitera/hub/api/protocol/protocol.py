@@ -10,7 +10,7 @@ only one implementation.
 from typing import Any
 
 # Third-party modules
-from fastapi import Body, Depends, Request
+from fastapi import Body, Depends, Request, Response
 
 # Exhibitera modules
 import exhibitera.common.files as ex_files
@@ -123,7 +123,20 @@ async def get_raw_text(name: str):
 
 # Users
 
-router.post("/user/login")(users_internal.log_in)
+@router.post("/user/login")
+def log_in(response: Response,
+           request: Request,
+           credentials: tuple[str, str] = Body(description="A tuple containing the username and password.",
+                                               default=("", "")),
+           token: str = Body(description="An authentication cookie.", default=""),
+           handoff: str = Body(description="A one-time code from /user/loginHandoff.", default="")
+           ):
+    """Authenticate the user and return the permissions and, for a new login, a limited authentication token.
+
+    The token only works for logging in and changing the user's own password.
+    """
+
+    return users_internal.respond_to_login(response, request, credentials, token, handoff, from_apps=True)
 
 
 @router.post('/user/{user_uuid}/changePassword', until="6")
@@ -152,7 +165,7 @@ def change_user_password_v6(user_uuid: str,
 
 
 router.post('/user/{user_uuid}/changePassword', since="6.1",
-            dependencies=[Depends(hub_users.require_user)])(users_internal.change_user_password)
+            dependencies=[Depends(hub_users.require_apps_user)])(users_internal.change_user_password)
 
 
 # Programs, for Apps setup pages and kiosks

@@ -22,22 +22,53 @@ def log_in(response: Response,
            ):
     """Authenticate the user and return the permissions and an authentication token."""
 
+    return respond_to_login(response, request, credentials, token, handoff, from_apps=False)
+
+
+def respond_to_login(response: Response,
+                     request: Request,
+                     credentials: tuple[str, str],
+                     token: str,
+                     handoff: str,
+                     from_apps: bool) -> dict[str, Any]:
+    """Authenticate the user and return the permissions and, for a new login, an authentication token.
+
+    Apps pages (from_apps=True) get a limited token, since Apps can't keep a token as safe as Hub's own
+    pages can. Hub's pages get a full token, which is also set as Hub's cookie.
+    """
+
     if handoff != "":
         user_uuid = hub_users.redeem_login_handoff(handoff)
         if user_uuid is None:
             return {"success": False, "reason": "authentication_failed"}
-        token = ""  # Issue a new token below
-    else:
-        if token == "":
-            token = hub_users.get_request_token(request)
 
-        success, user_uuid = hub_users.authenticate_user(token=token, credentials=credentials)
-        if success is False:
-            return {"success": False, "reason": "authentication_failed"}
+        # The code was made for an Apps page
+        return {"success": True,
+                "user": hub_users.get_user(uuid_str=user_uuid).get_dict(),
+                "authToken": hub_users.encrypt_token(user_uuid, scope="apps")}
+
+    if token == "":
+        token = hub_users.get_request_token(request)
+
+    success, user_uuid = hub_users.authenticate_user(token=token, credentials=credentials,
+                                                     scope="apps" if from_apps else None)
+    if success is False:
+        return {"success": False, "reason": "authentication_failed"}
+
+    # authenticate_user() prefers credentials over a token
+    used_token = credentials == ("", "")
+
+    # Apps pages only get limited tokens, so refuse a full one from them
+    if from_apps and used_token and hub_users.decrypt_token(token)[1] is None:
+        return {"success": False, "reason": "authentication_failed"}
 
     user = hub_users.get_user(uuid_str=user_uuid)
     response_dict = {"success": True, "user": user.get_dict()}
-    if token == "":
+
+    if from_apps:
+        if not used_token:
+            response_dict["authToken"] = hub_users.encrypt_token(user_uuid, scope="apps")
+    elif token == "":
         token = hub_users.encrypt_token(user_uuid)
         if ex_config.debug:
             print(token)
@@ -163,12 +194,15 @@ def get_user_display_name(user_uuid: str):
     return {"success": True, "display_name": display_name}
 
 
-@router.post('/user/{user_uuid}/changePassword', dependencies=[Depends(hub_users.require_user)])
+@router.post('/user/{user_uuid}/changePassword', dependencies=[Depends(hub_users.require_apps_user)])
 def change_user_password(user_uuid: str,
                          current_password: str = Body(description="The plaintext of the current password."),
                          new_password: str = Body(description="The plaintext of the password to set."),
-                         authorizing_user: str = Depends(hub_users.require_user)):
-    """Change the password for the given user"""
+                         authorizing_user: str = Depends(hub_users.require_apps_user)):
+    """Change the password for the given user
+
+    Apps logins are accepted, since this also requires the current password.
+    """
 
     # Any user can change their own password, even if they don't have any access to other users
     if user_uuid != authorizing_user:

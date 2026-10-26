@@ -106,7 +106,7 @@ PROTECTED_INTERNAL = {
     ("POST", "/system/configuration/{target}/update"): ("settings", "edit"),
     ("POST", "/tracker/template/create"): ("analytics", "edit"),
     ("POST", "/user/create"): ("users", "edit"),
-    ("POST", "/user/{user_uuid}/changePassword"): ("user",),
+    ("POST", "/user/{user_uuid}/changePassword"): ("user", "apps"),
     ("POST", "/user/loginHandoff"): ("user",),
     ("GET", "/projector/{uuid_str}/password"): ("components", "edit", "group"),
     ("POST", "/user/{uuid_str}/edit"): ("users", "edit"),
@@ -128,9 +128,10 @@ OPEN_INTERNAL = {
     ("POST", "/user/login"),
 }
 
-# Protocol 6.1, for current Apps. Apps setup pages send the user's login for changePassword.
+# Protocol 6.1, for current Apps. Apps setup pages send the user's login for changePassword. ("user", "apps")
+# means any logged-in user, including the limited login that Apps pages get.
 PROTECTED_PROTOCOL_6_1 = {
-    ("POST", "/user/{user_uuid}/changePassword"): ("user",),
+    ("POST", "/user/{user_uuid}/changePassword"): ("user", "apps"),
 }
 
 OPEN_PROTOCOL_6_1 = OPEN_PROTOCOL_6 - {("POST", "/user/{user_uuid}/changePassword")} | {
@@ -229,11 +230,25 @@ def test_protected_route_rejects_anonymous(client, prefix, method, path, spec):
 
 
 @pytest.mark.parametrize("prefix, method, path, spec",
-                         [case for case in protected_cases() if case.values[3] != ("user",)])
+                         [case for case in protected_cases() if case.values[3][0] != "user"])
 def test_protected_route_rejects_insufficient_permission(client, add_user, prefix, method, path, spec):
     response = request(client(add_user("no_permissions")), method, prefix + fill_path(path))
 
     assert response.json() == {"success": False, "reason": "insufficient_permission"}
+
+
+@pytest.mark.parametrize("prefix, method, path, spec",
+                         [case for case in protected_cases() if case.values[3] != ("user", "apps")])
+def test_protected_route_rejects_an_apps_login(client, add_user, prefix, method, path, spec):
+    # Even for a user who is allowed to do everything
+    add_user("everything", analytics="edit", exhibits="edit", maintenance="edit", programs="edit",
+             schedule="edit", settings="edit", users="edit",
+             components={"edit": ["__all"], "edit_content": ["__all"], "view": ["__all"]})
+    apps_token = hub_users.encrypt_token(uuid_of("everything"), scope="apps")
+
+    response = request(client(apps_token), method, prefix + fill_path(path))
+
+    assert response.json() == {"success": False, "reason": "authentication_failed"}
 
 
 # Endpoints that use the logged-in user
