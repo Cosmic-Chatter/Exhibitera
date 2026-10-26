@@ -126,6 +126,7 @@ OPEN_INTERNAL = {
     ("POST", "/data/{name}/append"),
     ("POST", "/schedule/getSecondsFromMidnight"),
     ("POST", "/user/login"),
+    ("POST", "/user/logout"),
 }
 
 # Protocol 6.1, for current Apps. Apps setup pages send the user's login for changePassword. ("user", "apps")

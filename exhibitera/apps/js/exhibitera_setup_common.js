@@ -1639,14 +1639,18 @@ export function createAdvancedSlider (el, value = null) {
   })
 }
 
+// Where the Hub login is saved. It's kept in localStorage rather than a cookie, because browsers send
+// cookies with every request and don't separate them by port, so Hub and Apps on the same computer
+// would share them.
+const authStorageKey = 'hubAuthToken'
+
 export function loginFromDropdown () {
   // Collect the username and password and attempt to log in the user.
 
   const username = document.getElementById('loginDropdownUsername').value.trim().toLowerCase()
   const password = document.getElementById('loginDropdownPassword').value
 
-  // Clear existing login token
-  document.cookie = 'authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC;'
+  clearAuthToken()
 
   exCommon.makeServerRequest({
     method: 'POST',
@@ -1660,30 +1664,28 @@ export function loginFromDropdown () {
         saveAuthToken(response.authToken)
       }
       if (response.success === true) {
-        // Reload the page now that the authentication cookie is set.
+        // Reload the page now that the login is saved.
         location.reload()
       }
     })
 }
 
 export function logoutUser () {
-  // Remove the user and delete the cookie.
+  // Remove the user and delete the saved login.
 
-  document.cookie = 'authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/'
+  clearAuthToken()
   location.reload()
 }
 
 function getAuthToken () {
-  // Return the Hub authentication token saved in the cookie, or an empty string.
+  // Return the saved Hub authentication token, or an empty string.
 
-  let token = ''
-  document.cookie.split(';').forEach((item) => {
-    item = item.trim()
-    if (item.startsWith('authToken="')) {
-      token = item.slice(11, -1)
-    }
-  })
-  return token
+  try {
+    return localStorage.getItem(authStorageKey) ?? ''
+  } catch {
+    // The browser doesn't allow storage
+    return ''
+  }
 }
 
 export function makeAuthenticatedServerRequest (opt) {
@@ -1698,9 +1700,23 @@ export function makeAuthenticatedServerRequest (opt) {
 }
 
 function saveAuthToken (token) {
-  // Save the Hub authentication token in a cookie, so we stay logged in
+  // Save the Hub authentication token, so we stay logged in
 
-  document.cookie = 'authToken="' + token + '"; max-age=31536000; path=/'
+  try {
+    localStorage.setItem(authStorageKey, token)
+  } catch {
+    // The browser doesn't allow storage, so the login lasts only until the page is reloaded
+  }
+}
+
+function clearAuthToken () {
+  // Delete the saved Hub authentication token
+
+  try {
+    localStorage.removeItem(authStorageKey)
+  } catch {
+    // The browser doesn't allow storage, so there's nothing to delete
+  }
 }
 
 function takeLoginHandoff () {
@@ -1718,7 +1734,7 @@ function takeLoginHandoff () {
 }
 
 export async function authenticateUser () {
-  // Log in with the one-time code from Hub, if there is one, or the authToken saved in the cookie
+  // Log in with the one-time code from Hub, if there is one, or the saved login
 
   const handoff = takeLoginHandoff()
   if (handoff !== '') {

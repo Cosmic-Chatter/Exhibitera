@@ -397,9 +397,6 @@ export function populateUsers () {
 export function loginFromDropdown () {
   // Collect the username and password and attempt to log in the user.
 
-  // Clear existing login token
-  document.cookie = 'authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC;'
-
   const username = document.getElementById('loginDropdownUsername').value.trim().toLowerCase()
   const password = document.getElementById('loginDropdownPassword').value
 
@@ -422,20 +419,7 @@ export function loginFromDropdown () {
 }
 
 export function authenticateUser () {
-  // If authToken exists in the cookie, use it to log in
-
-  let token = ''
-  for (let item of document.cookie.split(';')) {
-    item = item.trim()
-    if (item.startsWith('authToken="')) {
-      token = item.slice(11, -1)
-    }
-  }
-
-  if (token === '') {
-    token = 'This will fail' // Token cannot be an empty string
-    configureUser({}, false)
-  }
+  // Log in with the login cookie, if there is one. The browser sends it, since this page can't read it.
 
   return exTools.makeServerRequest({
     method: 'POST',
@@ -445,10 +429,8 @@ export function authenticateUser () {
       if (response.success === true) {
         configureUser(response.user)
       } else {
-        if (document.cookie !== '') {
-          document.cookie = 'authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC;'
-          location.reload()
-        }
+        // Hub removes a cookie it rejects
+        configureUser({}, false)
       }
     })
     .catch((error) => {
@@ -630,10 +612,18 @@ function configureUserPreferences () {
 }
 
 export function logoutUser () {
-  // Remove the user and delete the cookie.
+  // Ask Hub to delete the login cookie and then reload.
 
-  document.cookie = 'authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC;'
-  location.reload()
+  exTools.makeServerRequest({
+    method: 'POST',
+    endpoint: '/user/logout'
+  })
+    .catch((error) => {
+      console.error('Network or server error:', error)
+    })
+    .finally(() => {
+      location.reload()
+    })
 }
 
 export function deleteUser (uuid) {

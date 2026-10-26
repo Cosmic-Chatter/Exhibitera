@@ -53,6 +53,9 @@ def respond_to_login(response: Response,
     success, user_uuid = hub_users.authenticate_user(token=token, credentials=credentials,
                                                      scope="apps" if from_apps else None)
     if success is False:
+        if not from_apps:
+            # Hub's pages can't remove the HttpOnly cookie themselves
+            response.delete_cookie(key="authToken", httponly=True, samesite="lax")
         return {"success": False, "reason": "authentication_failed"}
 
     # authenticate_user() prefers credentials over a token
@@ -72,9 +75,20 @@ def respond_to_login(response: Response,
         token = hub_users.encrypt_token(user_uuid)
         if ex_config.debug:
             print(token)
-        response.set_cookie(key="authToken", value=token, max_age=int(3e7))  # Expire cookie in approx 1 yr
+        # HttpOnly, so that injected script can't read it, and SameSite, so that other websites can't
+        # make requests with it
+        response.set_cookie(key="authToken", value=token, max_age=int(3e7),  # Expire cookie in approx 1 yr
+                            httponly=True, samesite="lax")
         response_dict['authToken'] = token
     return response_dict
+
+
+@router.post("/user/logout")
+def log_out(response: Response):
+    """Remove the login cookie, which Hub's pages can't do themselves because it is HttpOnly."""
+
+    response.delete_cookie(key="authToken", httponly=True, samesite="lax")
+    return {"success": True}
 
 
 @router.post("/user/loginHandoff", dependencies=[Depends(hub_users.require_user)])
