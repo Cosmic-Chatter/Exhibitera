@@ -58,7 +58,7 @@ async def check_connection():
     """Confirm that the connection is active and provide the supported API levels"""
 
     return {"success": True,
-            "supported_apis": ['/core', '/v6', '/v6.1'],
+            "supported_apis": ['/core', '/v6', '/external/v6', '/external/v6.1'],
             "supported_api_levels": [0, 6, 6.1]}
 
 

@@ -2,7 +2,6 @@
 import asyncio
 import json
 import logging
-from typing import Any
 
 # Third-party modules
 from fastapi import APIRouter, Body, Depends, Request
@@ -12,7 +11,6 @@ from sse_starlette.sse import EventSourceResponse
 import exhibitera.common.config as ex_config
 import exhibitera.common.files as ex_files
 import exhibitera.hub.config as hub_config
-import exhibitera.hub.features.components as hub_components
 import exhibitera.hub.features.system as hub_system
 import exhibitera.hub.tools as hub_tools
 import exhibitera.hub.features.users as hub_users
@@ -118,7 +116,7 @@ async def check_connection():
     """Confirm that the connection is active and provide the supported API levels"""
 
     return {"success": True,
-            "supported_apis": ['/core', '/v6', '/v6.1'],
+            "supported_apis": ['/core', '/v6', '/external/v6', '/external/v6.1'],
             "supported_api_levels": [0, 6, 6.1]}
 
 
@@ -163,27 +161,6 @@ async def get_help_text():
             response = {"success": False, "reason": "Unable to read README.md"}
 
     return response
-
-
-@router.post("/ping")
-async def handle_ping(data: dict[str, Any], request: Request):
-    """Respond to an incoming heartbeat signal with ahy updates."""
-
-    if "uuid" not in data:
-        response = {"success": False,
-                    "reason": "Request missing 'uuid' field."}
-        return response
-
-    hub_components.update_exhibit_component_status(data, request.client.host)
-
-    component = hub_components.get_exhibit_component(data['uuid'])
-    dict_to_send = component.config.copy()
-    dict_to_send["id"] = component.id
-
-    if len(dict_to_send["commands"]) > 0:
-        # Clear the command list now that we are sending
-        component.config["commands"] = []
-    return dict_to_send
 
 
 @router.post("/configuration/{target}/update", dependencies=[Depends(hub_users.require_permission("settings", "edit"))])

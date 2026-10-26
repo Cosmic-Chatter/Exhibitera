@@ -27,6 +27,35 @@ from typing import Any, Callable, Iterable
 from fastapi import APIRouter, FastAPI
 
 
+def url_prefixes(version: str) -> list[str]:
+    """Return the URL prefixes that a server uses for the given protocol version.
+
+    Released 6.0 Hub and Apps call /v6, so version 6 is also served there. Every version is served under
+    /external.
+    """
+
+    if version == "6":
+        return ["/v6", "/external/v6"]
+    return [f"/external/v{version}"]
+
+
+def client_prefix(version: str) -> str:
+    """Return the URL prefix to use when calling a server that speaks the given protocol version.
+
+    Released 6.0 servers only serve /v6.
+    """
+
+    return "/v6" if version == "6" else f"/external/v{version}"
+
+
+def protocol_version(api_level: float | int | str) -> str:
+    """Convert the api_level a component reports in its pings, such as 6 or 6.1, to a version string."""
+
+    if isinstance(api_level, float) and api_level.is_integer():
+        api_level = int(api_level)
+    return str(api_level)
+
+
 def _version_key(version: str) -> tuple[int, ...]:
     """Order versions numerically, so that 6.10 comes after 6.2."""
 

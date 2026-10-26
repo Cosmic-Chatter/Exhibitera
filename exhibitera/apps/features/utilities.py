@@ -59,7 +59,8 @@ def load_configuration() -> bool:
         apps_config.defaults = None
         return False
 
-    system = apps_config.defaults.get("system", {})
+    system = apps_config.defaults.setdefault("system", {})
+    system.setdefault("remote_display", True)
 
     if system.get("debug", False) is True and sys.platform == "win32":
         # If we're in debug mode on Windows, attach a command prompt

@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 import pytest
 
 # Exhibitera modules
-from exhibitera.common.protocol_router import ProtocolRouter
+from exhibitera.common.protocol_router import ProtocolRouter, client_prefix, protocol_version, url_prefixes
 
 
 def make_app(router: ProtocolRouter, prefixes=lambda version: ["/v" + version]) -> FastAPI:
@@ -138,3 +138,24 @@ def test_empty_version_range_is_rejected():
 
     with pytest.raises(ValueError):
         router.get("/x", since="6.1", until="6")
+
+
+# Which URL prefixes each protocol version uses
+
+
+def test_released_version_6_keeps_its_original_prefix():
+    # Released 6.0 Hub and Apps only know /v6
+    assert url_prefixes("6") == ["/v6", "/external/v6"]
+    assert client_prefix("6") == "/v6"
+
+
+@pytest.mark.parametrize("version", ["6.1", "6.2", "7"])
+def test_later_versions_use_the_external_prefix(version):
+    assert url_prefixes(version) == [f"/external/v{version}"]
+    assert client_prefix(version) == f"/external/v{version}"
+
+
+@pytest.mark.parametrize("api_level, version", [(6, "6"), (6.0, "6"), (6.1, "6.1"), ("6.1", "6.1"), (7, "7")])
+def test_protocol_version_from_api_level(api_level, version):
+    # Components report their version as a number in their pings
+    assert protocol_version(api_level) == version

@@ -115,19 +115,6 @@ async def edit_wake_on_lan_component(uuid_str: str,
 
     return {"success": True}
 
-@router.get("/{uuid_str}/groups")
-async def get_component_groups(uuid_str: str):
-    """Return the list of groups the given component belongs to."""
-
-    # Don't authenticate, as we use this as part of the component auth process
-
-    component = hub_components.get_exhibit_component(uuid_str)
-    if component is None:
-        return {"success": False, "reason": "Component does not exist", "groups": []}
-
-    return {"success": True, "groups": component.groups}
-
-
 @router.post("/{uuid_str}/edit", dependencies=[Depends(hub_users.require_component_permission("edit"))])
 async def edit_component(uuid_str: str,
                          id: str | None = Body(description="The ID of the component.", default=None),

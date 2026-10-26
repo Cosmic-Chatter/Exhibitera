@@ -15,6 +15,7 @@ import uvicorn
 from exhibitera.common.caching import RevalidatePagesMiddleware, file_response
 import exhibitera.common.config as ex_config
 import exhibitera.common.files as ex_files
+from exhibitera.common.protocol_router import url_prefixes
 import exhibitera.common.utilities as ex_utilities
 import exhibitera.apps.config as apps_config
 import exhibitera.apps.features.files as apps_files
@@ -24,7 +25,9 @@ import exhibitera.apps.features.system as apps_system
 
 # API modules
 from exhibitera.apps.api.core import core as core_api
-from exhibitera.apps.api.v6.definitions import definitions as definitions_v6
+
+# Protocol, used by Hub
+from exhibitera.apps.api.protocol import protocol as protocol_api
 
 # Internal API, used by Apps' own pages
 from exhibitera.apps.api.internal.data import data as data_internal
@@ -134,23 +137,15 @@ app.mount("/thumbnails",
 # Link API routers
 app.include_router(core_api.router, prefix='/core')
 
-# Internal API. Until the protocol endpoints move to their own routers, these are also served under
-# /v6.1 and /v6, which Hub calls.
+protocol_api.router.include_in(app, url_prefixes)
+
+# Internal API
 for internal_router in [data_internal.router,
                         definitions_internal.router,
                         dmx_internal.router,
                         files_internal.router,
                         system_internal.router]:
     app.include_router(internal_router, prefix='/internal')
-    app.include_router(internal_router, prefix='/v6.1')
-
-# Protocol for released Hub 6.0, which deletes definitions with a GET request
-for v6_router in [data_internal.router,
-                  definitions_v6.router,
-                  dmx_internal.router,
-                  files_internal.router,
-                  system_internal.router]:
-    app.include_router(v6_router, prefix='/v6')
 
 
 @lru_cache()

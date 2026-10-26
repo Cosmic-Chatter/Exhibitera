@@ -12,7 +12,7 @@ user_data_folder_name: str = ""
 
 debug: bool = False
 
-api: str = '/v6.1'
+api: str = '/external/v6.1'
 api_level: float = 6.1
 software_version: dict[str, int] = {}
 software_update: dict[str, bool | dict[str, int]] = {

@@ -87,12 +87,6 @@ def test_internal_routes_exist(method, path):
     assert (method, path) in apps_routes()
 
 
-def test_v6_keeps_the_released_definitions_api():
-    # Released Hub 6.0 deletes definitions with a GET request
-    assert ("GET", "/v6/definitions/{this_uuid}/delete") in apps_routes()
-    assert ("DELETE", "/v6/definitions/{this_uuid}") not in apps_routes()
-
-
 def test_pages_talk_to_the_server_that_served_them():
     # Requests made while the page loads go to config.helperAddress before configureApp() runs, so its
     # default must be this server, not a fixed address like http://localhost:8000

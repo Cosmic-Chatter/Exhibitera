@@ -50,7 +50,19 @@ def test_config_without_system_section_loads(config_dir):
     write_config(config_dir, json.dumps({"app": {"uuid": "test"}}))
 
     assert apps_utilities.load_configuration() is True
-    assert apps_config.defaults == {"app": {"uuid": "test"}}
+    assert apps_config.defaults == {"app": {"uuid": "test"}, "system": {"remote_display": True}}
+
+
+@pytest.mark.parametrize("system, expected", [({}, True), ({"remote_display": False}, False),
+                                              ({"remote_display": True}, True)])
+def test_remote_display_setting_is_always_present(config_dir, system, expected):
+    # Apps' pages treat a missing setting as False, while the server treats it as True. Opening the app
+    # window when the server has only a remote display window closes Apps.
+    write_config(config_dir, json.dumps({"app": {"uuid": "test"}, "system": system}))
+
+    apps_utilities.load_configuration()
+
+    assert apps_config.defaults["system"]["remote_display"] is expected
 
 
 def test_valid_config_applies_settings(config_dir):

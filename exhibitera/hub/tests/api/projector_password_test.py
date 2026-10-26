@@ -30,7 +30,7 @@ def test_update_stream_does_not_include_passwords(projector):
 def test_editor_can_read_the_password(client, add_user, projector):
     token = add_user("editor", components={"edit": ["G1"]})
 
-    response = client(token).get(f"/v6.1/projector/{projector.uuid}/password")
+    response = client(token).get(f"/internal/projector/{projector.uuid}/password")
 
     assert response.json() == {"success": True, "password": PASSWORD}
 
@@ -39,7 +39,7 @@ def test_projector_without_a_password(client, add_user, projector):
     projector.password = None
     token = add_user("editor", components={"edit": ["G1"]})
 
-    response = client(token).get(f"/v6.1/projector/{projector.uuid}/password")
+    response = client(token).get(f"/internal/projector/{projector.uuid}/password")
 
     assert response.json() == {"success": True, "password": ""}
 
@@ -54,13 +54,13 @@ def test_projector_without_a_password(client, add_user, projector):
 def test_others_cannot_read_the_password(client, add_user, projector, permissions):
     token = add_user("other", **permissions)
 
-    response = client(token).get(f"/v6.1/projector/{projector.uuid}/password")
+    response = client(token).get(f"/internal/projector/{projector.uuid}/password")
 
     assert response.json() == {"success": False, "reason": "insufficient_permission"}
 
 
 def test_anonymous_cannot_read_the_password(client, projector):
-    response = client().get(f"/v6.1/projector/{projector.uuid}/password")
+    response = client().get(f"/internal/projector/{projector.uuid}/password")
 
     assert response.json() == {"success": False, "reason": "authentication_failed"}
 
@@ -68,7 +68,7 @@ def test_anonymous_cannot_read_the_password(client, projector):
 def test_unknown_projector(client, add_user, hub_env):
     token = add_user("editor", components={"edit": ["__all"]})
 
-    response = client(token).get("/v6.1/projector/does-not-exist/password")
+    response = client(token).get("/internal/projector/does-not-exist/password")
 
     assert response.json() == {"success": False, "reason": "Projector does not exist"}
 
@@ -76,6 +76,6 @@ def test_unknown_projector(client, add_user, hub_env):
 def test_editing_without_a_password_keeps_it(client, add_user, projector):
     token = add_user("editor", components={"edit": ["G1"]})
 
-    client(token).post(f"/v6.1/projector/{projector.uuid}/edit", json={"description": "Lobby"})
+    client(token).post(f"/internal/projector/{projector.uuid}/edit", json={"description": "Lobby"})
 
     assert projector.password == PASSWORD

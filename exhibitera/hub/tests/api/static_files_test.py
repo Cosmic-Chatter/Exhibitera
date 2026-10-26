@@ -60,7 +60,7 @@ def test_hub_folder_is_not_mounted_at_root():
 
 
 def test_api_still_works(client):
-    assert client.get("/v6.1/system/checkConnection").json()["success"] is True
+    assert client.get("/internal/system/checkConnection").json()["success"] is True
 
 
 # User data folders: only media is public

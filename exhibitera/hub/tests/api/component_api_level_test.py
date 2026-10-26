@@ -19,7 +19,7 @@ def stream_entry(uuid: str) -> dict:
     return next(c for c in system_internal.get_webpage_update()["components"] if c["uuid"] == uuid)
 
 
-@pytest.mark.parametrize("prefix, api_level", [("/v6", 6), ("/v6.1", 6.1)])
+@pytest.mark.parametrize("prefix, api_level", [("/v6", 6), ("/external/v6.1", 6.1)])
 def test_update_stream_reports_each_components_api_level(client, hub_env, prefix, api_level):
     client().post(f"{prefix}/system/ping", json={"uuid": "apps-uuid", "id": "Kiosk", "api_level": api_level,
                                                 "exhibiteraAppID": "media_player"})

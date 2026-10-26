@@ -11,6 +11,7 @@ import pytest
 
 # Exhibitera modules
 import exhibitera.apps.Apps as apps
+from exhibitera.common.protocol_router import url_prefixes
 from exhibitera.common.tests import api_scanning
 
 # The endpoints Hub and its web console call on Apps, for each protocol version
@@ -58,10 +59,23 @@ def apps_routes() -> set[tuple[str, str]]:
     return {(method, r.path) for r in apps.app.routes if isinstance(r, APIRoute) for method in r.methods}
 
 
-@pytest.mark.parametrize("version, method, path",
-                         [(v, m, p) for v, routes in PROTOCOL.items() for m, p in sorted(routes)])
-def test_protocol_endpoint_exists(version, method, path):
-    assert (method, f"/v{version}{path}") in apps_routes()
+@pytest.mark.parametrize("prefix, method, path",
+                         [(prefix, m, p) for v, routes in PROTOCOL.items() for prefix in url_prefixes(v)
+                          for m, p in sorted(routes)])
+def test_protocol_endpoint_exists(prefix, method, path):
+    assert (method, prefix + path) in apps_routes()
+
+
+@pytest.mark.parametrize("version, prefix", [(v, prefix) for v in PROTOCOL for prefix in url_prefixes(v)])
+def test_each_protocol_prefix_serves_only_its_version(version, prefix):
+    # Apps' own pages use /internal, so nothing else belongs here
+    served = {(method, path[len(prefix):]) for method, path in apps_routes() if path.startswith(prefix + "/")}
+
+    assert served == PROTOCOL[version]
+
+
+def test_unreleased_v6_1_prefix_is_not_served():
+    assert [path for _, path in apps_routes() if path.startswith("/v6.1/")] == []
 
 
 @pytest.mark.parametrize("method, path", sorted(CORE))

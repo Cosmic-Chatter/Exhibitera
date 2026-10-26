@@ -18,6 +18,7 @@ from fastapi.routing import APIRoute
 import pytest
 
 # Exhibitera modules
+from exhibitera.common.protocol_router import client_prefix, url_prefixes
 from exhibitera.common.tests import api_scanning
 import exhibitera.hub.Hub as hub
 
@@ -60,17 +61,30 @@ def hub_routes() -> set[tuple[str, str]]:
     return {(method, r.path) for r in hub.app.routes if isinstance(r, APIRoute) for method in r.methods}
 
 
-@pytest.mark.parametrize("version, method, path",
-                         [(v, m, p) for v, routes in PROTOCOL.items() for m, p in sorted(routes)])
-def test_protocol_endpoint_exists(version, method, path):
-    assert (method, f"/v{version}{path}") in hub_routes()
+@pytest.mark.parametrize("prefix, method, path",
+                         [(prefix, m, p) for v, routes in PROTOCOL.items() for prefix in url_prefixes(v)
+                          for m, p in sorted(routes)])
+def test_protocol_endpoint_exists(prefix, method, path):
+    assert (method, prefix + path) in hub_routes()
 
 
-def test_v6_serves_only_the_protocol():
-    # /v6 exists for released Apps 6.0. Hub's own pages use /internal.
-    v6_routes = {(method, path[len("/v6"):]) for method, path in hub_routes() if path.startswith("/v6/")}
+@pytest.mark.parametrize("version, prefix", [(v, prefix) for v in PROTOCOL for prefix in url_prefixes(v)])
+def test_each_protocol_prefix_serves_only_its_version(version, prefix):
+    # Hub's own pages use /internal, so nothing else belongs here
+    served = {(method, path[len(prefix):]) for method, path in hub_routes() if path.startswith(prefix + "/")}
 
-    assert v6_routes == PROTOCOL["6"]
+    assert served == PROTOCOL[version]
+
+
+def test_unreleased_v6_1_prefix_is_not_served():
+    # 6.1 was never released with /v6.1, so it uses /external/v6.1 instead
+    assert [path for _, path in hub_routes() if path.startswith("/v6.1/")] == []
+
+
+def test_apps_calls_hub_at_the_current_protocol_version():
+    config = (api_scanning.EXHIBITERA_DIR / "common" / "config.js").read_text(encoding="UTF-8")
+
+    assert f"api: '{client_prefix(CURRENT_APPS_VERSION)}'" in config
 
 
 @pytest.mark.parametrize("method, path", sorted(CORE))

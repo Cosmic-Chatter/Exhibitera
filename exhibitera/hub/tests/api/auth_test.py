@@ -55,6 +55,12 @@ INTERNAL_OPEN_ENDPOINTS = [
     ("POST", "/schedule/getSecondsFromMidnight", {"time_str": "10:00 AM"}),
     ("GET", "/group/missing-group/name", None),
     ("GET", "/program/", None),
+    ("GET", "/program/missing-program", None),
+]
+
+# Protocol endpoints added in 6.1, for Apps setup pages and kiosks
+PROTOCOL_6_1_OPEN_ENDPOINTS = [
+    ("GET", "/program/", None),
     ("GET", "/program/location/Lobby", None),
     ("GET", "/program/locations", None),
     ("GET", "/program/missing-program", None),
@@ -80,6 +86,7 @@ def permission_cases():
 def open_cases():
     cases = [(prefix + path, method, body) for prefix in PROTOCOL_PREFIXES for method, path, body in PROTOCOL_OPEN_ENDPOINTS]
     cases += [(prefix + path, method, body) for prefix in INTERNAL_PREFIXES for method, path, body in INTERNAL_OPEN_ENDPOINTS]
+    cases += [("/external/v6.1" + path, method, body) for method, path, body in PROTOCOL_6_1_OPEN_ENDPOINTS]
     cases += [(path, method, body) for method, path, body in CORE_OPEN_ENDPOINTS]
     return [pytest.param(*case, id=f"{case[1]} {case[0]}") for case in cases]
 
@@ -305,14 +312,14 @@ def test_invalid_bearer_token_is_rejected(client, prefix):
 
 def test_bearer_token_takes_precedence_over_cookie(client, add_user):
     token = add_user("viewer", settings="view")
-    response = client("not-a-valid-token").get("/v6.1/system/configuration/test_config", headers=bearer(token))
+    response = client("not-a-valid-token").get("/internal/system/configuration/test_config", headers=bearer(token))
 
     assert failure_reason(response) not in AUTH_FAILURES
 
 
 def test_non_bearer_authorization_header_falls_back_to_cookie(client, add_user):
     token = add_user("viewer", settings="view")
-    response = client(token).get("/v6.1/system/configuration/test_config",
+    response = client(token).get("/internal/system/configuration/test_config",
                                  headers={"Authorization": "Basic dXNlcjpwYXNz"})
 
     assert failure_reason(response) not in AUTH_FAILURES
@@ -320,7 +327,7 @@ def test_non_bearer_authorization_header_falls_back_to_cookie(client, add_user):
 
 def test_login_accepts_bearer_token(client, add_user):
     token = add_user("any_user")
-    response = client().post("/v6.1/user/login", json={}, headers=bearer(token))
+    response = client().post("/internal/user/login", json={}, headers=bearer(token))
 
     assert response.json()["success"] is True
     assert response.json()["user"]["username"] == "any_user"
@@ -331,7 +338,7 @@ def test_change_password_accepts_bearer_token(client, hub_env):
     hub_config.user_list.append(user)
     token = hub_users.encrypt_token(user.uuid)
 
-    response = client().post(f"/v6.1/user/{user.uuid}/changePassword",
+    response = client().post(f"/external/v6.1/user/{user.uuid}/changePassword",
                              json={"current_password": "old-password", "new_password": "new-password"},
                              headers=bearer(token))
 
@@ -339,7 +346,7 @@ def test_change_password_accepts_bearer_token(client, hub_env):
 
 
 def test_cross_origin_preflight_allows_authorization_header(client):
-    response = client().options("/v6.1/program/locations", headers={
+    response = client().options("/external/v6.1/program/locations", headers={
         "Origin": "http://10.0.0.50:8000",
         "Access-Control-Request-Method": "GET",
         "Access-Control-Request-Headers": "authorization",

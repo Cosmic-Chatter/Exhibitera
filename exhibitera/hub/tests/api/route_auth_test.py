@@ -23,10 +23,10 @@ from conftest import INTERNAL_PREFIXES, make_permissions
 #   ("components", "level", "group")      -- the user needs this permission for the component's groups
 #   ("user",)                             -- any logged-in user
 
-# /v6 only serves the protocol for released Apps 6.0, which never needs a login
-PROTECTED_V6 = {}
+# Protocol 6, for released Apps 6.0, which never needs a login
+PROTECTED_PROTOCOL_6 = {}
 
-OPEN_V6 = {
+OPEN_PROTOCOL_6 = {
     ("GET", "/component/{uuid_str}/groups"),
     ("GET", "/data/{name}/rawText"),
     ("GET", "/system/checkConnection"),
@@ -38,7 +38,8 @@ OPEN_V6 = {
     ("POST", "/user/{user_uuid}/changePassword"),
 }
 
-PROTECTED_V6_1 = {
+# The internal API, used by Hub's own pages
+PROTECTED_INTERNAL = {
     ("DELETE", "/component/{uuid_str}/delete"): ("settings", "edit"),
     ("DELETE", "/data/{name}"): ("analytics", "edit"),
     ("DELETE", "/exhibition/modifications"): ("exhibits", "edit"),
@@ -113,33 +114,39 @@ PROTECTED_V6_1 = {
     ("POST", "/users/list"): ("user",),
 }
 
-OPEN_V6_1 = {
-    ("GET", "/component/{uuid_str}/groups"),
-    ("GET", "/data/{name}/rawText"),
+OPEN_INTERNAL = {
     ("GET", "/group/{uuid_str}/name"),
     ("GET", "/program/"),
-    ("GET", "/program/location/{location}"),
-    ("GET", "/program/locations"),
     ("GET", "/program/{this_uuid}"),
     ("GET", "/system/checkConnection"),
     ("GET", "/system/getHelpText"),
     ("GET", "/tracker/template/{template_uuid}"),
     ("GET", "/tracker/templates/list"),
     ("GET", "/user/{user_uuid}/displayName"),
-    ("POST", "/analytics/{component_uuid}/append"),
     ("POST", "/data/{name}/append"),
-    ("POST", "/data/{name}/rawText"),
     ("POST", "/schedule/getSecondsFromMidnight"),
-    ("POST", "/system/ping"),
     ("POST", "/user/login"),
+}
+
+# Protocol 6.1, for current Apps. Apps setup pages send the user's login for changePassword.
+PROTECTED_PROTOCOL_6_1 = {
+    ("POST", "/user/{user_uuid}/changePassword"): ("user",),
+}
+
+OPEN_PROTOCOL_6_1 = OPEN_PROTOCOL_6 - {("POST", "/user/{user_uuid}/changePassword")} | {
+    ("GET", "/program/"),
+    ("GET", "/program/location/{location}"),
+    ("GET", "/program/locations"),
+    ("GET", "/program/{this_uuid}"),
 }
 
 # Endpoints that are allowed to read the token themselves
 TOKEN_READERS = {("POST", "/user/login")}
 
-# Until the protocol endpoints move to their own routers, /internal and /v6.1 serve the same endpoints
-TABLES = {"/v6": (PROTECTED_V6, OPEN_V6), "/v6.1": (PROTECTED_V6_1, OPEN_V6_1),
-          "/internal": (PROTECTED_V6_1, OPEN_V6_1)}
+TABLES = {"/internal": (PROTECTED_INTERNAL, OPEN_INTERNAL),
+          "/v6": (PROTECTED_PROTOCOL_6, OPEN_PROTOCOL_6),
+          "/external/v6": (PROTECTED_PROTOCOL_6, OPEN_PROTOCOL_6),
+          "/external/v6.1": (PROTECTED_PROTOCOL_6_1, OPEN_PROTOCOL_6_1)}
 
 
 def api_routes(prefix: str) -> dict[tuple[str, str], APIRoute]:
@@ -260,13 +267,13 @@ def test_issue_changes_record_the_user(client, hub_env, editor, monkeypatch, pre
 def test_program_changes_record_the_user(client, hub_env, editor, monkeypatch):
     api = client(editor)
 
-    response = api.post("/v6.1/program/create", json={"details": {"name": "Planetarium show"}})
+    response = api.post("/internal/program/create", json={"details": {"name": "Planetarium show"}})
     assert response.json()["success"] is True
     program = hub_config.program_list[0]
     assert program.get_dict()["creation_username"] == editor_uuid()
 
-    api.delete(f"/v6.1/program/{program.uuid}")
-    archive = api.get("/v6.1/program/archive/list").json()
+    api.delete(f"/internal/program/{program.uuid}")
+    archive = api.get("/internal/program/archive/list").json()
     assert archive["programs"][0]["archivedUsername"] == editor_uuid()
 
 
@@ -298,20 +305,22 @@ def test_users_can_only_edit_their_own_preferences(client, two_users, prefix):
     assert other == {"success": False, "reason": "invalid_credentials"}
 
 
-def test_users_can_change_their_own_password(client, two_users):
+@pytest.mark.parametrize("prefix", ["/internal", "/external/v6.1"])
+def test_users_can_change_their_own_password(client, two_users, prefix):
     own_token, _ = two_users
-    response = client(own_token).post(f"/v6.1/user/{uuid_of('own')}/changePassword",
+    response = client(own_token).post(f"{prefix}/user/{uuid_of('own')}/changePassword",
                                       json={"current_password": "password", "new_password": "new"})
 
     assert response.json() == {"success": True}
 
 
-def test_changing_another_users_password_requires_users_edit(client, two_users, add_user):
+@pytest.mark.parametrize("prefix", ["/internal", "/external/v6.1"])
+def test_changing_another_users_password_requires_users_edit(client, two_users, add_user, prefix):
     own_token, admin_token = two_users
     body = {"current_password": "password", "new_password": "new"}
 
-    denied = client(own_token).post(f"/v6.1/user/{uuid_of('user_admin')}/changePassword", json=body)
-    allowed = client(admin_token).post(f"/v6.1/user/{uuid_of('own')}/changePassword", json=body)
+    denied = client(own_token).post(f"{prefix}/user/{uuid_of('user_admin')}/changePassword", json=body)
+    allowed = client(admin_token).post(f"{prefix}/user/{uuid_of('own')}/changePassword", json=body)
 
     assert denied.json() == {"success": False, "reason": "invalid_credentials"}
     assert allowed.json() == {"success": True}
@@ -319,7 +328,7 @@ def test_changing_another_users_password_requires_users_edit(client, two_users, 
 
 def test_users_can_edit_their_own_preferences_with_no_permissions(client, add_user):
     token = add_user("nobody")
-    response = client(token).post(f"/v6.1/user/{uuid_of('nobody')}/editPreferences",
+    response = client(token).post(f"/internal/user/{uuid_of('nobody')}/editPreferences",
                                   json={"preferences": {"status_mode": "maintenance"}})
 
     assert response.json()["success"] is True

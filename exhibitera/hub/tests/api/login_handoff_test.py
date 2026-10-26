@@ -14,14 +14,14 @@ def clean_handoffs(monkeypatch):
 
 
 def get_code(client, token) -> str:
-    response = client(token).post("/v6.1/user/loginHandoff").json()
+    response = client(token).post("/internal/user/loginHandoff").json()
     assert response["success"] is True
     return response["code"]
 
 
 def redeem(client, code):
     # Apps pages are on another origin, so they never have Hub's cookie
-    return client().post("/v6.1/user/login", json={"handoff": code}).json()
+    return client().post("/external/v6.1/user/login", json={"handoff": code}).json()
 
 
 def test_logged_in_user_gets_a_code(client, add_user):
@@ -31,7 +31,7 @@ def test_logged_in_user_gets_a_code(client, add_user):
 
 
 def test_anonymous_user_cannot_get_a_code(client):
-    response = client().post("/v6.1/user/loginHandoff").json()
+    response = client().post("/internal/user/loginHandoff").json()
 
     assert response == {"success": False, "reason": "authentication_failed"}
 
@@ -50,7 +50,7 @@ def test_redeemed_token_works_for_other_requests(client, add_user):
     code = get_code(client, add_user("staff", settings="view"))
     token = redeem(client, code)["authToken"]
 
-    response = client().get("/v6.1/system/configuration/system", headers={"Authorization": f"Bearer {token}"})
+    response = client().get("/internal/system/configuration/system", headers={"Authorization": f"Bearer {token}"})
 
     assert response.json()["success"] is True
 
@@ -86,7 +86,7 @@ def test_code_for_a_deleted_user_is_rejected(client, add_user):
 def test_code_is_not_itself_a_login_token(client, add_user):
     code = get_code(client, add_user("staff", settings="view"))
 
-    response = client().get("/v6.1/system/configuration/system", headers={"Authorization": f"Bearer {code}"})
+    response = client().get("/internal/system/configuration/system", headers={"Authorization": f"Bearer {code}"})
 
     assert response.json() == {"success": False, "reason": "authentication_failed"}
 
@@ -113,7 +113,7 @@ def test_password_login_still_works(client, add_user):
     user = hub_config.user_list[0]
     user.password_hash = hub_users.hash_password("password")
 
-    response = client().post("/v6.1/user/login", json={"credentials": ["staff", "password"]}).json()
+    response = client().post("/internal/user/login", json={"credentials": ["staff", "password"]}).json()
 
     assert response["success"] is True
     assert "authToken" in response

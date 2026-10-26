@@ -65,7 +65,7 @@ def test_images_keep_normal_caching(client, path):
 
 
 def test_api_responses_are_unchanged(client):
-    response = client.get("/v6.1/system/checkConnection")
+    response = client.get("/internal/system/checkConnection")
 
     assert response.json()["success"] is True
     assert "cache-control" not in response.headers

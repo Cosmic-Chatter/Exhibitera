@@ -16,6 +16,7 @@ import wakeonlan
 # Exhibitera imports
 import exhibitera.common.config as ex_config
 import exhibitera.common.files as ex_files
+from exhibitera.common.protocol_router import client_prefix, protocol_version
 import exhibitera.hub.config as hub_config
 import exhibitera.hub.features.maintenance as ex_maintenance
 import exhibitera.hub.tools as c_tools
@@ -383,8 +384,9 @@ class ExhibitComponent(BaseComponent):
                 # Core API
                 endpoint = '/core/' + command
             else:
-                # Exhibitera API
-                endpoint = '/v' + str(self.config["api_level"]) + '/system/' + command
+                # Exhibitera protocol, at the version this computer speaks
+                version = protocol_version(self.config["api_level"])
+                endpoint = client_prefix(version) + '/system/' + command
 
             requests.get(self.helper_address + endpoint)
         else:

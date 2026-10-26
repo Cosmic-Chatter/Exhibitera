@@ -37,7 +37,6 @@ async def create_program(
 
 
 @router.get("/")
-@router.get("/location/{location}")
 async def get_program_list(location: Optional[str] = None):
     """Return the list of programs, optionally filtered by location."""
 
@@ -49,15 +48,6 @@ async def get_program_list(location: Optional[str] = None):
         matched_programs = [x.get_dict() for x in hub_config.program_list]
 
     return {"success": True, "program_list": matched_programs}
-
-
-@router.get("/locations")
-async def get_program_locations():
-    """Return a list of available program locations (which are all the available groups)."""
-
-    locations = [{"uuid": d["uuid"], "name": d["name"]} for d in hub_config.group_list]
-
-    return {"success": True, "locations": locations}
 
 
 @router.get("/archive/list", dependencies=[Depends(hub_users.require_permission("programs", "view"))])

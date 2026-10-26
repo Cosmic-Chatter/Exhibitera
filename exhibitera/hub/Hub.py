@@ -27,6 +27,7 @@ import requests
 from exhibitera.common.caching import RevalidatePagesMiddleware, file_response
 import exhibitera.common.config as ex_config
 import exhibitera.common.files as ex_files
+from exhibitera.common.protocol_router import url_prefixes
 import exhibitera.common.utilities as ex_utilities
 import exhibitera.hub.config as hub_config
 import exhibitera.hub.features.components as hub_components
@@ -44,15 +45,10 @@ import exhibitera.hub.features.users as hub_users
 # API modules
 from exhibitera.hub.api.core import core as core_api
 
-# Protocol for released Apps 6.0
-from exhibitera.hub.api.v6.analytics import analytics as analytics_v6
-from exhibitera.hub.api.v6.components import components as components_v6
-from exhibitera.hub.api.v6.data import data as data_v6
-from exhibitera.hub.api.v6.system import system as system_v6
-from exhibitera.hub.api.v6.users import users as users_v6
+# Protocol, used by Apps
+from exhibitera.hub.api.protocol import protocol as protocol_api
 
 # Internal API, used by Hub's own web pages
-from exhibitera.hub.api.internal.analytics import analytics as analytics_internal
 from exhibitera.hub.api.internal.components import components as components_internal
 from exhibitera.hub.api.internal.data import data as data_internal
 from exhibitera.hub.api.internal.exhibitions import exhibitions as exhibitions_internal
@@ -194,17 +190,10 @@ async def auth_error_handler(request: Request, exc: hub_users.AuthError):
 # Link API routers
 app.include_router(core_api.router, prefix='/core')
 
-# Protocol for released Apps 6.0
-app.include_router(analytics_v6.router, prefix='/v6')
-app.include_router(components_v6.router, prefix='/v6')
-app.include_router(data_v6.router, prefix='/v6')
-app.include_router(system_v6.router, prefix='/v6')
-app.include_router(users_v6.router, prefix='/v6')
+protocol_api.router.include_in(app, url_prefixes)
 
-# Internal API. Until the protocol endpoints move to their own routers, these are also served
-# under /v6.1, which current Apps calls.
-for internal_router in [analytics_internal.router,
-                        components_internal.router,
+# Internal API
+for internal_router in [components_internal.router,
                         data_internal.router,
                         exhibitions_internal.router,
                         groups_internal.router,
@@ -217,7 +206,6 @@ for internal_router in [analytics_internal.router,
                         tracker_internal.router,
                         users_internal.router]:
     app.include_router(internal_router, prefix='/internal')
-    app.include_router(internal_router, prefix='/v6.1')
 
 
 @lru_cache()

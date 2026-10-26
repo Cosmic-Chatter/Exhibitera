@@ -412,7 +412,9 @@ class ExhibitComponent extends BaseComponent {
     // only written for its own.
 
     if (!this.api_level || !protocolVersionLessThan(this.api_level, exConfig.api_level)) return exConfig.api
-    return '/v' + this.api_level
+    // Released 6.0 Apps only serves /v6
+    if (String(this.api_level) === '6') return '/v6'
+    return '/external/v' + this.api_level
   }
 
   getScreenshot () {
