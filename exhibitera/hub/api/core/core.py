@@ -30,6 +30,10 @@ async def handle_ping(data: dict[str, Any], request: Request):
                     "reason": "'uuid' field should be a UUID4 string."}
         return response
 
+    # The uuid names the component's file on disk
+    if not ex_files.filename_safe(data["uuid"]):
+        return {"success": False, "reason": "unsafe_uuid"}
+
     # Translate API fields
     data["exhibiteraAppID"] = "third_party"
     data["api_level"] = 0

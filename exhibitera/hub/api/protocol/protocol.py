@@ -40,6 +40,10 @@ async def handle_ping(data: dict[str, Any], request: Request):
                     "reason": "Request missing 'uuid' field."}
         return response
 
+    # The uuid names the component's file on disk
+    if not ex_files.filename_safe(data["uuid"]):
+        return {"success": False, "reason": "unsafe_uuid"}
+
     hub_components.update_exhibit_component_status(data, request.client.host)
 
     component = hub_components.get_exhibit_component(data['uuid'])
