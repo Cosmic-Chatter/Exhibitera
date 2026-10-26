@@ -13,6 +13,7 @@ import distro
 import requests
 
 # Exhibitera imports
+import exhibitera.common.config as ex_config
 import exhibitera.common.files as ex_files
 import exhibitera.common.utilities as ex_utilities
 import exhibitera.apps.config as apps_config
@@ -115,7 +116,7 @@ def smart_restart_check():
     server_address = f'http://{apps_config.defaults["control_server"]["ip_address"]}:{apps_config.defaults["control_server"]["port"]}'
     error = False
     try:
-        _ = requests.get(server_address + '/system/checkConnection', headers=headers, timeout=5)
+        _ = requests.get(server_address + ex_config.api + '/system/checkConnection', headers=headers, timeout=5)
     except (ConnectionError, requests.exceptions.RequestException):
         error = True
 

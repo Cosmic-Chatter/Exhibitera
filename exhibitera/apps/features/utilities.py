@@ -209,7 +209,7 @@ def handle_missing_defaults_file():
             user = input('Username: ').strip()
             password = getpass.getpass(prompt="Password: ")
             try:
-                result = requests.post(f"http://{ip}:{port}/user/login", json={"credentials": (user, password)}).json()
+                result = requests.post(f"http://{ip}:{port}{ex_config.api}/user/login", json={"credentials": (user, password)}).json()
 
                 if result.get("success", False) is True:
                     # Check if user has required permission

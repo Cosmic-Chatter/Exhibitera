@@ -18,6 +18,7 @@ from fastapi.routing import APIRoute
 import pytest
 
 # Exhibitera modules
+import exhibitera.common.config as ex_config
 from exhibitera.common.protocol_router import client_prefix, url_prefixes
 from exhibitera.common.tests import api_scanning
 import exhibitera.hub.Hub as hub
@@ -129,7 +130,6 @@ def test_apps_core_requests_use_core_endpoints():
             assert any(m == method and api_scanning.matches_route("/core" + template, path) for m, path in CORE), location
 
 
-@pytest.mark.xfail(strict=True, reason="Apps' Python calls Hub without an API version; fixed in a later step")
 def test_apps_python_calls_hub_with_an_api_version():
     unversioned = []
     for path in sorted((api_scanning.EXHIBITERA_DIR / "apps").rglob("*.py")):
@@ -141,3 +141,9 @@ def test_apps_python_calls_hub_with_an_api_version():
                 unversioned.append(f"{path.relative_to(api_scanning.EXHIBITERA_DIR)}:{number}")
 
     assert unversioned == []
+
+
+@pytest.mark.parametrize("method, path", [("GET", "/system/checkConnection"), ("POST", "/user/login")])
+def test_hub_serves_what_apps_python_calls(method, path):
+    # Smart Restart checks the connection, and the Linux command-line setup logs in
+    assert (method, ex_config.api + path) in hub_routes()
