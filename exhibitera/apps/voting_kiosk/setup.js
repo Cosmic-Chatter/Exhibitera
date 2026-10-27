@@ -476,7 +476,7 @@ function createSurveyOption (userDetails, populateEditor = false) {
   const headerText = document.createElement('div')
   headerText.setAttribute('id', 'OptionHeaderText_' + details.uuid)
   headerText.classList = 'text-light w-100 text-center font-weight-bold'
-  headerText.innerHTML = formatOptionHeader(details) || 'New option'
+  headerText.textContent = formatOptionHeader(details) || 'New option'
   headerCol.appendChild(headerText)
 
   const bottomRow = document.createElement('div')
@@ -645,7 +645,7 @@ function populateOptionEditor (id) {
 function setIconUserFile (file = '') {
   // Set the icon_user_file style option and format the GUI to match.
   if (file !== '') {
-    document.getElementById('optionInput_icon_user_file').innerHTML = file
+    document.getElementById('optionInput_icon_user_file').textContent = file
     document.getElementById('optionInput_icon_user_file_DeleteButtonCol').style.display = 'block'
     document.getElementById('optionInput_icon_user_file_Col').classList.add('col-lg-9')
   } else {
@@ -727,7 +727,7 @@ for (const el of document.getElementsByClassName('option-input')) {
     const field = event.target.getAttribute('data-field')
     if (id == null) return
     exSetup.updateWorkingDefinition(['options', id, field], event.target.value)
-    document.getElementById('OptionHeaderText_' + id).innerHTML = formatOptionHeader(exSetup.config.workingDefinition.options[id])
+    document.getElementById('OptionHeaderText_' + id).textContent = formatOptionHeader(exSetup.config.workingDefinition.options[id])
     exSetup.previewDefinition(true)
   })
 }

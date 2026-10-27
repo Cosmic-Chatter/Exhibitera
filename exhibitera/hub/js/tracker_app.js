@@ -121,7 +121,7 @@ class TimingObject {
     const seconds = Math.round((nowTime - this.startTime + this.elapsedTime) / 1000)
 
     const viewEL = document.getElementById('TimerCounterView_' + this.uuid)
-    viewEL.innerHTML = formatTime(seconds)
+    viewEL.textContent = formatTime(seconds)
   }
 }
 
@@ -177,14 +177,14 @@ function buildLayout (definition) {
 
     const title = document.createElement('H2')
     title.classList = 'card-title'
-    title.innerHTML = item.name
+    title.textContent = item.name
     body.appendChild(title)
 
     if (item?.label) {
       const label = document.createElement('label')
       label.classList = 'form-label'
       label.setAttribute('for', item.uuid + '_input')
-      label.innerHTML = item.label
+      label.textContent = item.label
       body.appendChild(label)
     }
 
@@ -226,7 +226,7 @@ function buildLayout (definition) {
           counterVal.setAttribute('data-name', item.name)
           counterVal.setAttribute('data-count', '0')
           counterVal.style.fontSize = '50px'
-          counterVal.innerHTML = 0
+          counterVal.textContent = 0
           flexRow.appendChild(counterVal)
 
           const counterCol3 = document.createElement('div')
@@ -316,7 +316,7 @@ function buildLayout (definition) {
 
         const sliderLabel = document.createElement('span')
         sliderLabel.setAttribute('id', item.uuid + '_input_label')
-        sliderLabel.innerHTML = start
+        sliderLabel.textContent = start
         col3.appendChild(sliderLabel)
         break
       }
@@ -422,7 +422,7 @@ function clearInput () {
   sliderList.forEach(item => {
     const start = item.getAttribute('data-start')
     item.value = start
-    document.getElementById(item.id + '_label').innerHTML = start
+    document.getElementById(item.id + '_label').textContent = start
   })
 
   textList.forEach(item => {
@@ -441,7 +441,7 @@ function incrementCounter (uuid, valueToAdd) {
   const value = parseInt(counterEl.getAttribute('data-count')) + valueToAdd
 
   counterEl.setAttribute('data-count', value)
-  counterEl.innerHTML = value
+  counterEl.textContent = value
 }
 
 function getTimer (uuid) {
@@ -530,7 +530,7 @@ function updateValue (fromID, toID) {
 
   const obj = document.getElementById(fromID)
 
-  document.getElementById(toID).innerHTML = obj.value
+  document.getElementById(toID).textContent = obj.value
 }
 
 function populateLayoutDropdown (templateList) {

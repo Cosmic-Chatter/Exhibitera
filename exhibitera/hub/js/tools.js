@@ -38,43 +38,47 @@ export function openMediaInNewTab (filenames, fileTypes) {
   } else {
     margin = 'auto'
   }
-  let html = `
-  <html>
-    <head>
-      <style>
-        @media (orientation: landscape) {
-          .zoomedOut{
-            display: block;
-            height: 100%;
-            margin: ${margin};
-            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-            cursor: zoom-in;
-            -webkit-user-select: none;
-          }
-        }
-        @media (orientation: portrait) {
-          .zoomedOut{
-            display: block;
-            width: 100%;
-            margin: ${margin};
-            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-            cursor: zoom-in;
-            -webkit-user-select: none;
-          }
-        }
 
-        .zoomedIn{
-          display: block;
-          margin: ${margin};
-          padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-          cursor: zoom-out;
-          -webkit-user-select: none;
-        }
-      </style>
-      <title>Exhibitera Hub Media Viewer</title>
-    </head>
-    <body style="margin: 0px">
+  // Build the page with DOM calls rather than an HTML string, since the filenames include addresses
+  // that come from components
+  const imageWindow = window.open('', '_blank')
+  if (imageWindow == null) return // Blocked as a pop-up
+  const doc = imageWindow.document
+  doc.title = 'Exhibitera Hub Media Viewer'
+  doc.body.style.margin = '0px'
+
+  const style = doc.createElement('style')
+  style.textContent = `
+    @media (orientation: landscape) {
+      .zoomedOut{
+        display: block;
+        height: 100%;
+        margin: ${margin};
+        padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+        cursor: zoom-in;
+        -webkit-user-select: none;
+      }
+    }
+    @media (orientation: portrait) {
+      .zoomedOut{
+        display: block;
+        width: 100%;
+        margin: ${margin};
+        padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+        cursor: zoom-in;
+        -webkit-user-select: none;
+      }
+    }
+
+    .zoomedIn{
+      display: block;
+      margin: ${margin};
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+      cursor: zoom-out;
+      -webkit-user-select: none;
+    }
   `
+  doc.head.appendChild(style)
 
   for (let i = 0; i < filenames.length; i++) {
     let fileType
@@ -85,29 +89,26 @@ export function openMediaInNewTab (filenames, fileTypes) {
     }
 
     if (fileType === 'image') {
-      html += `<img id="image${String(i)}" class='zoomedOut' src="${filenames[i]}" onclick="toggleZoom(${String(i)})">`
+      const image = doc.createElement('img')
+      image.className = 'zoomedOut'
+      image.src = filenames[i]
+      image.addEventListener('click', () => {
+        image.classList.toggle('zoomedIn')
+        image.classList.toggle('zoomedOut')
+      })
+      doc.body.appendChild(image)
     } else if (fileType === 'video') {
-      html += `<video class='zoomedOut' controls loop>
-      <source src="${filenames[i]}">
-      This file is not playing.
-    </video>`
+      const video = doc.createElement('video')
+      video.className = 'zoomedOut'
+      video.controls = true
+      video.loop = true
+      const source = doc.createElement('source')
+      source.src = filenames[i]
+      video.appendChild(source)
+      video.append('This file is not playing.')
+      doc.body.appendChild(video)
     }
   }
-
-  html += `
-    </body>
-      <script>
-
-        function toggleZoom(val) {
-          document.getElementById("image" + val).classList.toggle('zoomedIn');
-          document.getElementById("image" + val).classList.toggle('zoomedOut');
-        }
-      </script>
-    </html>
-  `
-
-  const imageWindow = window.open('', '_blank')
-  imageWindow.document.write(html)
 }
 
 export function openAppsPage (url) {

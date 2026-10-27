@@ -23,10 +23,10 @@ function parseUpdate (update) {
   if (update?.gallery) {
     hubConfig.currentExhibit = update.gallery.current_exhibit
     hubExhibit.updateAvailableExhibits(update.gallery.available_exhibits)
-    document.getElementById('exhibitNameField').innerHTML = hubTools.getExhibit(update.gallery.current_exhibit).name
+    document.getElementById('exhibitNameField').textContent = hubTools.getExhibit(update.gallery.current_exhibit).name
 
     if (update.gallery?.name) {
-      document.getElementById('galleryNameField').innerHTML = update.gallery.name
+      document.getElementById('galleryNameField').textContent = update.gallery.name
       document.title = update.gallery.name
     }
 
@@ -643,7 +643,7 @@ document.getElementById('showEditTrackerTemplateButton').addEventListener('click
 document.getElementById('deleteTrackerTemplateButton').addEventListener('click', () => {
   const trackerTemplateSelect = document.getElementById('trackerTemplateSelect')
   const name = trackerTemplateSelect.options[trackerTemplateSelect.selectedIndex].text
-  document.getElementById('deleteTrackerTemplateModalTemplateName').innerHTML = name
+  document.getElementById('deleteTrackerTemplateModalTemplateName').textContent = name
   exUtilities.showModal('#deleteTrackerTemplateModal')
 })
 document.getElementById('deleteTrackerTemplateFromModalButton')

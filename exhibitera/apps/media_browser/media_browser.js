@@ -67,7 +67,7 @@ function createCard (obj) {
 
   const thumb = exCommon.config.helperAddress + exCommon.config.api + '/files/' + thumbName + '/thumbnail/' + iconWidth + '?force_image=true'
 
-  const title = exMarkdown.formatText(def.languages?.[currentLang]?.content?.[obj.uuid]?.title ?? '', { string: true, removeParagraph: true })
+  const title = def.languages?.[currentLang]?.content?.[obj.uuid]?.title ?? ''
 
   const col = document.createElement('div')
   col.classList = 'cardCol col align-items-center justify-content-center d-flex'
@@ -137,7 +137,7 @@ function createCard (obj) {
 
     titleSpan = document.createElement('div')
     titleSpan.classList = 'cardTitle'
-    titleSpan.innerHTML = title
+    titleSpan.innerHTML = exMarkdown.formatText(title, { string: true, removeParagraph: true })
     titleCol.appendChild(titleSpan)
   }
 
@@ -183,7 +183,7 @@ function populateFilterOptions (order, filters) {
 
     const label = document.createElement('label')
     label.classList = 'form-label filter-label'
-    label.innerHTML = details.display_name
+    label.textContent = details.display_name
     label.setAttribute('for', 'filterSelect_' + uuid)
     div.appendChild(label)
 
@@ -343,10 +343,9 @@ function displayMedia (uuid) {
   const def = exCommon.config.definition
   const obj = def.content[uuid]
 
-  const title = exMarkdown.formatText(def.languages?.[currentLang].content?.[uuid]?.title ?? '', { string: true, removeParagraph: true })
-
-  const caption = exMarkdown.formatText(def.languages?.[currentLang].content?.[uuid]?.caption ?? '', { string: true, removeParagraph: true })
-  const credit = exMarkdown.formatText(def.languages?.[currentLang].content?.[uuid]?.credit ?? '', { string: true, removeParagraph: true })
+  const title = def.languages?.[currentLang].content?.[uuid]?.title ?? ''
+  const caption = def.languages?.[currentLang].content?.[uuid]?.caption ?? ''
+  const credit = def.languages?.[currentLang].content?.[uuid]?.credit ?? ''
 
   showMediaInLightbox(obj.filename, { title, caption, credit, thumbnail: obj?.custom_thumbnail })
 }
@@ -595,10 +594,10 @@ function showMediaInLightbox (media, details = {}) {
   const titleDiv = document.getElementById('mediaLightboxTitle')
   const captionDiv = document.getElementById('mediaLightboxCaption')
   const creditDiv = document.getElementById('mediaLightboxCredit')
-  titleDiv.innerHTML = details?.title ?? ''
-
-  captionDiv.innerHTML = details?.caption ?? ''
-  creditDiv.innerHTML = details?.credit ?? ''
+  // The title, caption and credit are Markdown
+  titleDiv.innerHTML = exMarkdown.formatText(details?.title ?? '', { string: true, removeParagraph: true })
+  captionDiv.innerHTML = exMarkdown.formatText(details?.caption ?? '', { string: true, removeParagraph: true })
+  creditDiv.innerHTML = exMarkdown.formatText(details?.credit ?? '', { string: true, removeParagraph: true })
 
   // Load the media with a callback to fade it in when it is loaded
   const mimetype = exFiles.guessMimetype(media)

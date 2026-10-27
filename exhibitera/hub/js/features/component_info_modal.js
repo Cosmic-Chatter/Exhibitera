@@ -80,7 +80,7 @@ export function showExhibitComponentInfo (uuid, groupUUID) {
 
   if (obj.platform_details) {
     if (obj.platform_details.operating_system) {
-      document.getElementById('componentInfoModalOperatingSystem').innerHTML = obj.platform_details.operating_system.replace('OS X', 'macOS')
+      document.getElementById('componentInfoModalOperatingSystem').textContent = obj.platform_details.operating_system.replace('OS X', 'macOS')
       document.getElementById('componentInfoModalOperatingSystemGroup').style.display = 'block'
     } else {
       document.getElementById('componentInfoModalOperatingSystemGroup').style.display = 'none'
@@ -92,7 +92,7 @@ export function showExhibitComponentInfo (uuid, groupUUID) {
       document.getElementById('componentInfoModalExhibteraGroup').style.display = 'none'
     }
     if (obj.platform_details.browser && obj.platform_details.browser !== 'null null') {
-      document.getElementById('componentInfoModalBrowser').innerHTML = obj.platform_details.browser
+      document.getElementById('componentInfoModalBrowser').textContent = obj.platform_details.browser
       document.getElementById('componentInfoModalBrowserGroup').style.display = 'block'
     } else {
       document.getElementById('componentInfoModalBrowserGroup').style.display = 'none'
@@ -106,19 +106,19 @@ export function showExhibitComponentInfo (uuid, groupUUID) {
     const protocolNames = {
       pjlink: 'PJLink'
     }
-    document.getElementById('componentInfoModalProtocol').innerHTML = protocolNames[obj.protocol]
+    document.getElementById('componentInfoModalProtocol').textContent = protocolNames[obj.protocol]
     document.getElementById('componentInfoModalProtocolGroup').style.display = 'block'
   } else {
     document.getElementById('componentInfoModalProtocolGroup').style.display = 'none'
   }
   if (obj.latency) {
-    document.getElementById('componentInfoModalLatency').innerHTML = String(obj.latency) + ' ms'
+    document.getElementById('componentInfoModalLatency').textContent = String(obj.latency) + ' ms'
     document.getElementById('componentInfoModalLatencyGroup').style.display = 'block'
   } else {
     document.getElementById('componentInfoModalLatencyGroup').style.display = 'none'
   }
   if (obj.lastContactDateTime) {
-    document.getElementById('componentInfoModalLastContact').innerHTML = exUtilities.formatDateTimeDifference(new Date(), new Date(obj.lastContactDateTime))
+    document.getElementById('componentInfoModalLastContact').textContent = exUtilities.formatDateTimeDifference(new Date(), new Date(obj.lastContactDateTime))
     document.getElementById('componentInfoModalLastContactGroup').style.display = 'block'
   } else {
     document.getElementById('componentInfoModalLastContactGroup').style.display = 'none'
@@ -285,7 +285,7 @@ function configureComponentInfoModalForProjector (obj) {
     }
   }
   if (obj.state?.model) {
-    document.getElementById('componentInfoModalModel').innerHTML = obj.state.model
+    document.getElementById('componentInfoModalModel').textContent = obj.state.model
     document.getElementById('componentInfoModalModelGroup').style.display = 'block'
   } else {
     document.getElementById('componentInfoModalModelGroup').style.display = 'none'
@@ -548,7 +548,7 @@ export function updateStaticComponentFromInfoModal () {
     .then((response) => {
       if (response?.success) {
         document.getElementById('componentInfoModalStaticSettingsSaveButton').style.display = 'none'
-        document.getElementById('componentInfoModalTitle').innerHTML = document.getElementById('componentInfoModalStaticSettingsID').value.trim()
+        document.getElementById('componentInfoModalTitle').textContent = document.getElementById('componentInfoModalStaticSettingsID').value.trim()
         updateComponentInfoDescription(update.description)
         hubComponents.rebuildComponentInterface()
       } else {
@@ -602,7 +602,7 @@ export function updateWakeOnLANComponentFromInfoModal () {
   })
     .then(() => {
       document.getElementById('componentInfoModalWakeOnLANSettingsSaveButton').style.display = 'none'
-      document.getElementById('componentInfoModalTitle').innerHTML = document.getElementById('componentInfoModalWakeOnLANSettingsID').value.trim()
+      document.getElementById('componentInfoModalTitle').textContent = document.getElementById('componentInfoModalWakeOnLANSettingsID').value.trim()
       updateComponentInfoDescription(update.description)
       hubComponents.rebuildComponentInterface()
     })
@@ -614,7 +614,7 @@ function updateComponentInfoDescription (value) {
 
   // Description at the top of the modal
   const descriptionEl = document.getElementById('componentInfoModalDescription')
-  descriptionEl.innerHTML = value
+  descriptionEl.textContent = value
   if (value !== '') {
     descriptionEl.style.display = 'block'
   } else {
@@ -652,7 +652,7 @@ function createProjectorLampStatusEntry (entry, number) {
   titleCol.classList = 'col-8 bg-primary text-white'
   titleCol.style.fontSize = '18px'
   titleCol.style.borderTopLeftRadius = '0.25rem'
-  titleCol.innerHTML = 'Lamp ' + String(number + 1)
+  titleCol.textContent = 'Lamp ' + String(number + 1)
   row1.appendChild(titleCol)
 
   const stateCol = document.createElement('div')
@@ -680,7 +680,7 @@ function createProjectorLampStatusEntry (entry, number) {
   hoursCol.classList = 'col-12 bg-secondary py-1 text-center text-white'
   hoursCol.style.borderBottomLeftRadius = '0.25rem'
   hoursCol.style.borderBottomRightRadius = '0.25rem'
-  hoursCol.innerHTML = String(entry[0]) + ' hours'
+  hoursCol.textContent = String(entry[0]) + ' hours'
   row2.appendChild(hoursCol)
 }
 
@@ -708,13 +708,13 @@ function createProjectorWarningEntry (entry, error, details = '') {
   titleCol.classList = 'col-8 bg-primary text-white'
   titleCol.style.fontSize = '18px'
   titleCol.style.borderTopLeftRadius = '0.25rem'
-  titleCol.innerHTML = entry
+  titleCol.textContent = entry
   row1.appendChild(titleCol)
 
   const stateCol = document.createElement('div')
   stateCol.classList = 'col-4 text-center py-1 '
   stateCol.style.borderTopRightRadius = '0.25rem'
-  stateCol.innerHTML = error
+  stateCol.textContent = error
   if (error === 'ok') {
     stateCol.innerHTML = 'Ok'
     stateCol.classList += ' bg-success text-white'
@@ -740,7 +740,7 @@ function createProjectorWarningEntry (entry, error, details = '') {
     detailsCol.classList = 'col-12 bg-secondary py-1 text-center text-white fst-italic small'
     detailsCol.style.borderBottomLeftRadius = '0.25rem'
     detailsCol.style.borderBottomRightRadius = '0.25rem'
-    detailsCol.innerHTML = details
+    detailsCol.textContent = details
     row2.appendChild(detailsCol)
   } else {
     titleCol.style.borderBottomLeftRadius = '0.25rem'
@@ -874,7 +874,7 @@ async function updateComponentInfoModalFromHelper (uuid, permission) {
   spaceUsedBar.style.width = String(100 - stats.disk_pct_free) + '%'
   spaceFreeBar.setAttribute('ariaValueNow', stats.disk_pct_free)
   spaceFreeBar.style.width = String(stats.disk_pct_free) + '%'
-  document.getElementById('componentInfoModalMaintenanceDiskSpaceFree').innerHTML = `Disk: ${String(Math.round(stats.disK_free_GB))} GB`
+  document.getElementById('componentInfoModalMaintenanceDiskSpaceFree').textContent = `Disk: ${String(Math.round(stats.disK_free_GB))} GB`
 
   if (stats.disk_pct_free > 20) {
     spaceUsedBar.classList.remove('bg-warning', 'bg-danger')
@@ -897,7 +897,7 @@ async function updateComponentInfoModalFromHelper (uuid, permission) {
   const CPUFreeBar = document.getElementById('componentInfoModalMaintenanceCPUFreeBar')
   CPUUsedBar.setAttribute('ariaValueNow', stats.cpu_load_pct)
   CPUUsedBar.style.width = String(stats.cpu_load_pct) + '%'
-  document.getElementById('componentInfoModalMaintenanceCPUUsed').innerHTML = `CPU: ${String(Math.round(stats.cpu_load_pct))}%`
+  document.getElementById('componentInfoModalMaintenanceCPUUsed').textContent = `CPU: ${String(Math.round(stats.cpu_load_pct))}%`
   CPUFreeBar.setAttribute('ariaValueNow', 100 - stats.cpu_load_pct)
   CPUFreeBar.style.width = String(100 - stats.cpu_load_pct) + '%'
 
@@ -917,7 +917,7 @@ async function updateComponentInfoModalFromHelper (uuid, permission) {
   const RAMFreeBar = document.getElementById('componentInfoModalMaintenanceRAMFreeBar')
   RAMUsedBar.setAttribute('ariaValueNow', stats.ram_used_pct)
   RAMUsedBar.style.width = String(stats.ram_used_pct) + '%'
-  document.getElementById('componentInfoModalMaintenanceRAMUsed').innerHTML = `RAM: ${String(Math.round(stats.ram_used_pct))}%`
+  document.getElementById('componentInfoModalMaintenanceRAMUsed').textContent = `RAM: ${String(Math.round(stats.ram_used_pct))}%`
   RAMFreeBar.setAttribute('ariaValueNow', 100 - stats.ram_used_pct)
   RAMFreeBar.style.width = String(100 - stats.ram_used_pct) + '%'
 
@@ -1005,7 +1005,7 @@ export function submitComponentBasicSettingsChange () {
   })
     .then((response) => {
       if (response.success === true) {
-        document.getElementById('componentInfoModalTitle').innerHTML = update.id
+        document.getElementById('componentInfoModalTitle').textContent = update.id
         document.getElementById('componentInfoModalBasicSettingsSaveButton').style.display = 'none'
       }
     })
@@ -1130,7 +1130,7 @@ async function populateComponentDefinitionList (definitions, permission) {
     }
 
     name.style.fontSize = '18px'
-    name.innerHTML = definition.name
+    name.textContent = definition.name
     btnGroup.appendChild(name)
 
     const dropdownBtn = document.createElement('button')
@@ -1199,7 +1199,7 @@ async function populateComponentDefinitionList (definitions, permission) {
     const app = document.createElement('div')
     app.classList = 'col-12 bg-secondary text-dark rounded-bottom pb-1'
     app.setAttribute('id', 'definitionButtonApp_' + uuid)
-    app.innerHTML = exUtilities.appNameToDisplayName(definition.app)
+    app.textContent = exUtilities.appNameToDisplayName(definition.app)
     if (permission === 'edit' || permission === 'edit_content') {
       app.addEventListener('click', () => {
         handleDefinitionItemSelection(uuid)
@@ -1222,7 +1222,7 @@ function setComponentInfoStatusMessage (msg, delay = false) {
 
   const el = document.getElementById('componentInfoStatusMessage')
 
-  el.innerHTML = msg
+  el.textContent = msg
   if (delay) {
     clearTimeout(exConfig.componentInfoModalStatusMessageTimer)
     exConfig.componentInfoModalStatusMessageTimer = setTimeout(() => {

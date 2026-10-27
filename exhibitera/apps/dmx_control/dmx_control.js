@@ -251,7 +251,7 @@ class DMXFixture {
 
     const headerText = document.createElement('div')
     headerText.classList = 'col-8 fixture-header'
-    headerText.innerHTML = this.name
+    headerText.textContent = this.name
     row.appendChild(headerText)
 
     const colorPickerCol = document.createElement('div')
@@ -313,9 +313,10 @@ class DMXFixture {
     const gearMenu = document.createElement('ul')
     gearMenu.classList = 'dropdown-menu'
     gearMenu.innerHTML = `
-    <span class="dropdown-item disabled fst-italic">Channels ${String(this.startChannel)} - ${String(this.startChannel + this.channelList.length - 1)}</span>
+    <span class="dropdown-item disabled fst-italic"></span>
     <hr class="dropdown-divider">
     `
+    gearMenu.querySelector('span').textContent = `Channels ${String(this.startChannel)} - ${String(this.startChannel + this.channelList.length - 1)}`
     dropdown.appendChild(gearMenu)
 
     const editButton = document.createElement('button')
@@ -349,7 +350,7 @@ class DMXFixture {
 
       const channelHeader = document.createElement('div')
       channelHeader.classList = 'col-12'
-      channelHeader.innerHTML = channelNameToDisplayName(channel)
+      channelHeader.textContent = channelNameToDisplayName(channel)
       channelRow.appendChild(channelHeader)
 
       const channelSliderCol = document.createElement('div')
@@ -406,7 +407,7 @@ class DMXFixture {
 
         // 3. Update State and Text
         row2.classList.toggle('is-expanded')
-        expandMessage.innerHTML = isExpanding ? 'Tap to collapse' : 'Tap to expand'
+        expandMessage.textContent = isExpanding ? 'Tap to collapse' : 'Tap to expand'
       })
     })
 
@@ -562,7 +563,7 @@ class DMXFixtureGroup {
 
       const channelHeader = document.createElement('div')
       channelHeader.classList = 'col-12'
-      channelHeader.innerHTML = channelNameToDisplayName(channel)
+      channelHeader.textContent = channelNameToDisplayName(channel)
       channelRow.appendChild(channelHeader)
 
       const channelSliderCol = document.createElement('div')
@@ -651,7 +652,7 @@ class DMXFixtureGroup {
 
         // 3. Update State and Text
         row2.classList.toggle('is-expanded')
-        expandMessage.innerHTML = isExpanding ? 'Tap to collapse' : 'Tap to expand'
+        expandMessage.textContent = isExpanding ? 'Tap to collapse' : 'Tap to expand'
       })
     })
 
@@ -746,7 +747,7 @@ class DMXScene {
 
     const header = document.createElement('div')
     header.classList = 'col-12 text-center rounded-top fixture-header'
-    header.innerHTML = this.name
+    header.textContent = this.name
     col.appendChild(header)
 
     const bottomRow = document.createElement('div')
@@ -907,7 +908,7 @@ function showAddFixtureModal (fixture = null) {
       const fixture = universe.fixtures[key]
       const option = document.createElement('option')
       option.value = fixture.uuid
-      option.innerHTML = fixture.name
+      option.textContent = fixture.name
       cloneFixtureList.appendChild(option)
     }
   } else {
@@ -1218,7 +1219,7 @@ function createFixtureCheckbox (fixture, type, collection = null) {
   const label = document.createElement('label')
   label.class = 'form-check-label'
   label.setAttribute('for', type + 'fixtureCheckbox_' + fixture.uuid)
-  label.innerHTML = fixture.name
+  label.textContent = fixture.name
   container.appendChild(label)
 
   return col
@@ -1258,7 +1259,7 @@ function addChannelToModal () {
 
   for (const entry of options) {
     const option = document.createElement('option')
-    option.innerHTML = entry[0]
+    option.textContent = entry[0]
     if (entry[1] === '') {
       option.setAttribute('disabled', true)
     } else {
@@ -1315,7 +1316,7 @@ function updateModalChannelCounts () {
 
   let i = 0
   for (const el of channelList.querySelectorAll('.channel-count')) {
-    el.innerHTML = String(i + 1) + ' (' + String(startingChannel + i) + ')'
+    el.textContent = String(i + 1) + ' (' + String(startingChannel + i) + ')'
     i += 1
   }
 }
@@ -1779,9 +1780,9 @@ function showAddUniverseMOdal () {
         for (const controller of controllers) {
           const option = document.createElement('option')
           if (controller.model === 'OpenDMX') {
-            option.innerHTML = `OpenDMX (S/N: ${controller.serial_number}, bus: ${controller.bus}, address: ${controller.address})`
+            option.textContent = `OpenDMX (S/N: ${controller.serial_number}, bus: ${controller.bus}, address: ${controller.address})`
           } else if (controller.model === 'uDMX') {
-            option.innerHTML = `uDMX (Bus: ${controller.bus}, address: ${controller.address})`
+            option.textContent = `uDMX (Bus: ${controller.bus}, address: ${controller.address})`
           }
           option.setAttribute('data-value', JSON.stringify(controller))
 

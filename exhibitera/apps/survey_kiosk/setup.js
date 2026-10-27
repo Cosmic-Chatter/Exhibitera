@@ -292,42 +292,44 @@ function wizardCreateAnswers (questionUUID) {
   const col = document.createElement('div')
   col.classList = 'col-12'
   col.innerHTML = `
-  <H3>${question}</H3>
-  <label class="form-label" for="wizardAnswerTypeSelect_${questionUUID}">Choose answer options</label>
-  <select id="wizardAnswerTypeSelect_${questionUUID}" class="form-select">
+  <H3></H3>
+  <label class="form-label" for="wizardAnswerTypeSelect_{id}">Choose answer options</label>
+  <select id="wizardAnswerTypeSelect_{id}" class="form-select">
     <option value="thumbs">Thumbs-up/down</option>
     <option value="threeStars">Stars (1 - 3)</option>
     <option value="fiveStars">Stars (1 - 5)</option>
     <option value="custom">Write your own answers</option>
   </select>
-  <div id="wizardCustomAnswersGUI_${questionUUID}" class="row gy-2 mt-2" style="display: none;">
+  <div id="wizardCustomAnswersGUI_{id}" class="row gy-2 mt-2" style="display: none;">
     <div class="col-12">
       <div class="form-check form-check-inline">
-        <input class="form-check-input" type="checkbox" id="wizardRandomizeAnswers_${questionUUID}">
-        <label class="form-check-label" for="wizardRandomizeAnswers_${questionUUID}">Randomize options</label>
+        <input class="form-check-input" type="checkbox" id="wizardRandomizeAnswers_{id}">
+        <label class="form-check-label" for="wizardRandomizeAnswers_{id}">Randomize options</label>
       </div>
       <div class="form-check form-check-inline">
-        <input class="form-check-input" type="checkbox" id="wizardMultipleSelect_${questionUUID}">
-        <label class="form-check-label" for="wizardMultipleSelect_${questionUUID}">
+        <input class="form-check-input" type="checkbox" id="wizardMultipleSelect_{id}">
+        <label class="form-check-label" for="wizardMultipleSelect_{id}">
           Allow multiple selections
           <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Allow the user to select multiple options." style="font-size: 0.55em;">?</span>
         </label>
       </div>
     </div>
     <div class="col-3">
-      <button id="wizardAddAnswerOptionButton_${questionUUID}" class="btn btn-primary">Add option</button>
+      <button id="wizardAddAnswerOptionButton_{id}" class="btn btn-primary">Add option</button>
     </div>
     <div class="col-9">
-      <div id="wizardCustomAnswersRow_${questionUUID}" class="row gy-2"></div>
+      <div id="wizardCustomAnswersRow_{id}" class="row gy-2"></div>
     </div>
-    <div id="wizardCustomAnswersNoOptionsWarning_${questionUUID}" class="col-12 text-warning" style="display: none;">
+    <div id="wizardCustomAnswersNoOptionsWarning_{id}" class="col-12 text-warning" style="display: none;">
       You must add at least one answer option.
     </div>
-    <div id="wizardCustomAnswersBlankOptionsWarning_${questionUUID}" class="col-12 text-warning" style="display: none;">
+    <div id="wizardCustomAnswersBlankOptionsWarning_{id}" class="col-12 text-warning" style="display: none;">
       Answer options must not be blank (you can remove text after completing the setup wizard).
     </div>
   </div>
   `
+  col.querySelector('H3').textContent = question
+  exSetup.fillTemplateIDs(col, questionUUID)
   document.getElementById('wizardAnswersList').appendChild(col)
 
   document.getElementById('wizardAnswerTypeSelect_' + questionUUID).addEventListener('change', (event) => {
@@ -675,11 +677,6 @@ function rebuildOptions (itemUUID, lang) {
   accord.innerText = ''
 
   for (const optionUUID of item?.option_order ?? []) {
-    const optionText = exMarkdown.formatText(
-      defLang?.[optionUUID]?.text ?? '',
-      { string: true, removeParagraph: true }
-    )
-
     // Create accordion-item
     const accordItem = document.createElement('div')
     accordItem.className = 'accordion-item'
@@ -699,7 +696,7 @@ function rebuildOptions (itemUUID, lang) {
 
     const nameSpan = document.createElement('span')
     nameSpan.setAttribute('id', `itemOptionName_${optionUUID}_${lang}`)
-    nameSpan.innerHTML = optionText
+    nameSpan.innerHTML = exMarkdown.formatText(defLang?.[optionUUID]?.text ?? '', { string: true, removeParagraph: true })
     button.appendChild(nameSpan)
 
     header.appendChild(button)
@@ -725,27 +722,28 @@ function rebuildOptions (itemUUID, lang) {
     toolsCol.classList = 'col-12 d-flex'
     toolsCol.innerHTML = `
         <button
-        id="${item.uuid}_option_${optionUUID}_${lang}_moveUpButton"
+        id="{id}_moveUpButton"
         type="button"
         class="btn btn-sm btn-outline-info"
         >
         ▲
         </button>
         <button
-          id="${item.uuid}_option_${optionUUID}_${lang}_moveDownButton"
+          id="{id}_moveDownButton"
           type="button"
           class="btn btn-sm btn-outline-info ms-1"
         >
         ▼
         </button>
         <button
-          id="${item.uuid}_option_${optionUUID}_${lang}_deleteButton"
+          id="{id}_deleteButton"
           type="button"
           class="btn btn-sm btn-outline-danger ms-auto"
         >
         Delete
         </button>
       `
+    exSetup.fillTemplateIDs(toolsCol, `${item.uuid}_option_${optionUUID}_${lang}`)
     row.appendChild(toolsCol)
 
     document.getElementById(`${item.uuid}_option_${optionUUID}_${lang}_moveUpButton`).addEventListener('click', (ev) => {
@@ -912,44 +910,43 @@ function createSurveyItemGUI (item) {
     } else badgeText = 'Text'
   }
 
-  const html = `
+  surveyItems.insertAdjacentHTML('beforeend', `
     <div class="accordion-item">
       <h2 class="accordion-header">
         <div
           class="accordion-button d-flex justify-content-between align-items-center collapsed"
           style="cursor: pointer;"
           data-bs-toggle="collapse"
-          data-bs-target="#${item.uuid}_accordion"
+          data-bs-target="#{id}_accordion"
           aria-expanded="false"
-          aria-controls="${item.uuid}_accordion"
+          aria-controls="{id}_accordion"
         >
-          <span class='flex-grow-1' id="${item.uuid}_accordionName">
-          ${exMarkdown.formatText(def.languages?.[def.language_order[0]]?.items?.[item.uuid]?.header?.text ?? '', { string: true, removeParagraph: true })}
+          <span class='flex-grow-1' id="{id}_accordionName">
           </span>
           <small>
-            <span class='badge rounded-pill border me-2'>${badgeText}</span>
+            <span class='badge rounded-pill border me-2 item-badge'></span>
           </small>
         </div>
       </h2>
-      <div id="${item.uuid}_accordion" class="accordion-collapse collapse " data-bs-parent="#surveyItems">
+      <div id="{id}_accordion" class="accordion-collapse collapse " data-bs-parent="#surveyItems">
         <div class="accordion-body">
           <div class="d-flex">
             <button
-            id="${item.uuid}_accordion_moveUpButton"
+            id="{id}_accordion_moveUpButton"
             type="button"
             class="btn btn-sm btn-outline-info"
             >
             ▲
             </button>
             <button
-              id="${item.uuid}_accordion_moveDownButton"
+              id="{id}_accordion_moveDownButton"
               type="button"
               class="btn btn-sm btn-outline-info ms-1"
             >
             ▼
             </button>
             <button
-              id="${item.uuid}_accordion_deleteButton"
+              id="{id}_accordion_deleteButton"
               type="button"
               class="btn btn-sm btn-outline-danger ms-auto"
             >
@@ -959,15 +956,18 @@ function createSurveyItemGUI (item) {
           <hr>
           
           <nav class="mt-3">
-            <div id="${item.uuid}_accordion_tabs" class="nav nav-tabs" role="tablist">
+            <div id="{id}_accordion_tabs" class="nav nav-tabs" role="tablist">
             </div>
           </nav>
-          <div class="tab-content" id="${item.uuid}_accordion_content">
+          <div class="tab-content" id="{id}_accordion_content">
         </div>
       </div>
     </div>
-  `
-  surveyItems.insertAdjacentHTML('beforeend', html)
+  `)
+  const accordionItem = surveyItems.lastElementChild
+  exSetup.fillTemplateIDs(accordionItem, item.uuid)
+  accordionItem.querySelector('.item-badge').textContent = badgeText
+  document.getElementById(item.uuid + '_accordionName').innerHTML = exMarkdown.formatText(def.languages?.[def.language_order[0]]?.items?.[item.uuid]?.header?.text ?? '', { string: true, removeParagraph: true })
   document.getElementById(item.uuid + '_accordion_moveUpButton').addEventListener('click', (ev) => {
     changeItemOrder(item.uuid, 'up')
   })
@@ -1057,19 +1057,20 @@ function createSurveyItemGUIText (item) {
 
   endDurationCol.innerHTML = `
     <div 
-      id="endScreenDuration_${item.uuid}"
+      id="endScreenDuration_{id}"
       class="advanced-slider" 
       data-name="End screen duration" 
-      data-path="items>${item.uuid}>end_screen_duration" 
+      data-path="items>{id}>end_screen_duration" 
       data-min="1" 
       data-max="15" 
-      data-start="${item?.end_screen_duration ?? 3}" 
       data-step="1" 
       data-unit="sec" 
       data-note="How long to display the end screen."
     ></div>
   `
+  exSetup.fillTemplateIDs(endDurationCol, item.uuid)
   const endDurationEl = document.getElementById('endScreenDuration_' + item.uuid)
+  endDurationEl.dataset.start = item?.end_screen_duration ?? 3
   exSetup.createAdvancedSlider(endDurationEl)
   if (!(item?.end_screen === true)) endDurationEl.style.display = 'none'
 
@@ -1085,7 +1086,7 @@ function createSurveyItemGUIText (item) {
     tabButton.setAttribute('data-bs-target', '#' + item.uuid + '_accordion_contentPane_' + code)
     tabButton.setAttribute('type', 'button')
     tabButton.setAttribute('role', 'tab')
-    tabButton.innerHTML = exLang.getLanguageDisplayName(code, true)
+    tabButton.textContent = exLang.getLanguageDisplayName(code, true)
     nav.appendChild(tabButton)
 
     // Create corresponding pane
@@ -1347,7 +1348,7 @@ function createSurveyItemGUIVote (item) {
     tabButton.setAttribute('data-bs-target', '#' + item.uuid + '_accordion_contentPane_' + code)
     tabButton.setAttribute('type', 'button')
     tabButton.setAttribute('role', 'tab')
-    tabButton.innerHTML = exLang.getLanguageDisplayName(code, true)
+    tabButton.textContent = exLang.getLanguageDisplayName(code, true)
     nav.appendChild(tabButton)
 
     // Create corresponding pane

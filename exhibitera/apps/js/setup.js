@@ -369,10 +369,7 @@ function populateHelpTab () {
     rawResponse: true
   })
     .then((result) => {
-      const formattedText = markdownConverter.makeHtml(result)
-
-      // Add the formatted text
-      document.getElementById('mainHelpTextDiv').innerHTML = formattedText
+      document.getElementById('mainHelpTextDiv').innerHTML = markdownConverter.makeHtml(result)
     })
 }
 

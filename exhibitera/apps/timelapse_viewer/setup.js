@@ -367,7 +367,7 @@ for (const id of ['wizardSelectFirstImageButton', 'wizardSelectLastImageButton']
       .then((result) => {
         if (result != null && result.length > 0) {
           event.target.setAttribute('data-filename', result[0])
-          event.target.innerHTML = result[0]
+          event.target.textContent = result[0]
         }
       })
   })
@@ -396,7 +396,7 @@ document.getElementById('selectConversionVideoButton').addEventListener('click',
     .then((result) => {
       if (result != null && result.length > 0) {
         event.target.setAttribute('data-filename', result[0])
-        event.target.innerHTML = result[0]
+        event.target.textContent = result[0]
         document.getElementById('fileConversionVideoPreview').src = exCommon.config.helperAddress + exCommon.config.api + '/files/' + result[0] + '/thumbnail'
 
         exCommon.makeHelperRequest({
@@ -428,7 +428,7 @@ document.getElementById('selectFirstImageButton').addEventListener('click', (eve
     .then((result) => {
       if (result != null && result.length > 0) {
         event.target.setAttribute('data-filename', result[0])
-        event.target.innerHTML = result[0]
+        event.target.textContent = result[0]
       }
     })
 })
@@ -437,7 +437,7 @@ document.getElementById('selectLastImageButton').addEventListener('click', (even
     .then((result) => {
       if (result != null && result.length > 0) {
         event.target.setAttribute('data-filename', result[0])
-        event.target.innerHTML = result[0]
+        event.target.textContent = result[0]
       }
     })
 })

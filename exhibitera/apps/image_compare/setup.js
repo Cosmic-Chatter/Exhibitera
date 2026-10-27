@@ -1,4 +1,4 @@
-/* global bootstrap, showdown */
+/* global bootstrap */
 
 import * as exUtilities from '../../common/utilities.js'
 import * as exCommon from '../js/exhibitera_app_common.js'
@@ -6,8 +6,6 @@ import * as exFileSelect from '../js/exhibitera_file_select_modal.js'
 import * as exSetup from '../js/exhibitera_setup_common.js'
 import * as exMarkdown from '../js/exhibitera_setup_markdown.js'
 import * as exLang from '../js/exhibitera_setup_languages.js'
-
-const markdownConverter = new showdown.Converter({ parseImgDimensions: true })
 
 async function initializeWizard () {
   // Set up the wizard
@@ -188,7 +186,7 @@ function wizardBuildPairDetailsPage () {
     tabButton.setAttribute('data-bs-target', '#wizardPairDetailsPane_' + item.uuid)
     tabButton.setAttribute('type', 'button')
     tabButton.setAttribute('role', 'tab')
-    tabButton.innerHTML = String(num)
+    tabButton.textContent = String(num)
     nav.appendChild(tabButton)
 
     // Create corresponding pane
@@ -314,7 +312,7 @@ function editDefinition (uuid = '') {
   // Attractor
   const attractorSelect = document.getElementById('attractorSelect')
   if (def.attractor && def.attractor.trim() !== '') {
-    attractorSelect.innerHTML = def.attractor
+    attractorSelect.textContent = def.attractor
   } else {
     attractorSelect.innerHTML = 'Select file'
   }
@@ -392,9 +390,7 @@ function createItemHTML (item, num, show = false, wizard = false) {
   tabButton.setAttribute('type', 'button')
   tabButton.setAttribute('role', 'tab')
   // Convert possible Markdown-formatted name
-  const temp = document.createElement('div')
-  temp.innerHTML = markdownConverter.makeHtml(item?.localization?.[def?.language_order?.[0] ?? null]?.name || String(num))
-  tabButton.innerHTML = temp.firstElementChild.innerHTML
+  tabButton.innerHTML = exMarkdown.formatText(item?.localization?.[def?.language_order?.[0] ?? null]?.name || String(num), { string: true, removeParagraph: true })
 
   if (wizard === false) {
     document.getElementById('contentNav').appendChild(tabButton)
@@ -449,7 +445,7 @@ function createItemHTML (item, num, show = false, wizard = false) {
   const selectImage1Button = document.createElement('button')
   selectImage1Button.classList = 'btn btn-outline-primary w-100 filename-button'
   if ((item.image1 !== '') && (item.image1 != null)) {
-    selectImage1Button.innerHTML = item.image1
+    selectImage1Button.textContent = item.image1
   } else {
     selectImage1Button.innerHTML = 'Select image 1'
   }
@@ -460,7 +456,7 @@ function createItemHTML (item, num, show = false, wizard = false) {
       .then((result) => {
         const file = result[0]
         if (file == null) return
-        selectImage1Button.innerHTML = file
+        selectImage1Button.textContent = file
         image1.src = exCommon.config.helperAddress + exCommon.config.api + '/files/' + file + '/thumbnail'
         exSetup.updateWorkingDefinition(['content', item.uuid, 'image1'], file)
         image1.style.display = 'block'
@@ -499,7 +495,7 @@ function createItemHTML (item, num, show = false, wizard = false) {
   const selectImage2Button = document.createElement('button')
   selectImage2Button.classList = 'btn btn-outline-primary w-100 filename-button'
   if ((item.image2 !== '') && (item.image2 != null)) {
-    selectImage2Button.innerHTML = item.image2
+    selectImage2Button.textContent = item.image2
   } else {
     selectImage2Button.innerHTML = 'Select image 2'
   }
@@ -508,7 +504,7 @@ function createItemHTML (item, num, show = false, wizard = false) {
       .then((result) => {
         const file = result[0]
         if (file == null) return
-        selectImage2Button.innerHTML = file
+        selectImage2Button.textContent = file
         image2.src = exCommon.config.helperAddress + exCommon.config.api + '/files/' + file + '/thumbnail'
         exSetup.updateWorkingDefinition(['content', item.uuid, 'image2'], file)
         image2.style.display = 'block'
@@ -605,7 +601,7 @@ function createItemHTML (item, num, show = false, wizard = false) {
       let i = 1
       for (const el of wizardImagesNav.children) {
         if (i === 1) el.click()
-        el.innerHTML = String(i)
+        el.textContent = String(i)
         i++
       }
     }
@@ -672,7 +668,7 @@ function createItemLocalizationHTML (item, pane, itemNum) {
     tabButton.setAttribute('data-bs-target', '#itemLocalizationPane_' + item.uuid + '_' + code)
     tabButton.setAttribute('type', 'button')
     tabButton.setAttribute('role', 'tab')
-    tabButton.innerHTML = String(lang.english_name)
+    tabButton.textContent = String(lang.english_name)
     tabList.appendChild(tabButton)
 
     // Create corresponding pane
@@ -719,11 +715,9 @@ function createItemLocalizationHTML (item, pane, itemNum) {
         // If this is the primary language, update the name on the tab
         if (thisLangI === 0) {
           if (name !== '') {
-            const temp = document.createElement('div')
-            temp.innerHTML = markdownConverter.makeHtml(name)
-            itemTab.innerHTML = temp.firstElementChild.innerHTML
+            itemTab.innerHTML = exMarkdown.formatText(name, { string: true, removeParagraph: true })
           } else {
-            itemTab.innerHTML = String(itemNum)
+            itemTab.textContent = String(itemNum)
           }
         }
         exSetup.previewDefinition(true)
@@ -871,7 +865,7 @@ function createHomeTextLocalizationHTML (tabList = null, navContent = null) {
     tabButton.setAttribute('data-bs-target', '#homeTextLocalizationPane_' + code)
     tabButton.setAttribute('type', 'button')
     tabButton.setAttribute('role', 'tab')
-    tabButton.innerHTML = String(lang.english_name)
+    tabButton.textContent = String(lang.english_name)
     tabList.appendChild(tabButton)
 
     // Create corresponding pane
@@ -1044,7 +1038,7 @@ document.getElementById('attractorSelect').addEventListener('click', (event) => 
   exFileSelect.createFileSelectionModal({ filetypes: ['image', 'video'], multiple: false })
     .then((files) => {
       if (files.length === 1) {
-        event.target.innerHTML = files[0]
+        event.target.textContent = files[0]
         event.target.dataset.filename = files[0]
         onAttractorFileChange()
       }

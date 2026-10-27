@@ -282,7 +282,7 @@ async function createExhibitionModificationHTML (mod, exhib) {
   col.innerHTML = `
   <div class='row border rounded gx-2'>
     <div class="col-12 position-relative d-flex justify-content-center align-items-center">
-      <span class="text-center fs-4 fw-bold pt-1">${component.id}</span>
+      <span class="text-center fs-4 fw-bold pt-1 component-name"></span>
       <button class="btn-close position-absolute end-0 me-2"></button>
     </div>
     <div class='col-12 bad-connection-warning'>
@@ -290,7 +290,7 @@ async function createExhibitionModificationHTML (mod, exhib) {
     <div class='col-5 text-center'>
     <span class='fs-6'>Original</span>
     <div class='exhib-div py-1'></div>
-    <div class="fs-5">${exhibDef?.name ?? '<i>No definition</i>'}</div>
+    <div class="fs-5 exhib-name"></div>
     </div>
     <div class='col-2 fs-1 d-flex justify-content-center align-items-center'>
     →
@@ -298,10 +298,21 @@ async function createExhibitionModificationHTML (mod, exhib) {
     <div class='col-5 text-center'>
     <span class='fs-6'>Modified to</span>
     <div class='mod-div py-1'></div>
-    <div class="fs-5">${modDef?.name ?? '<i>No definition</i>'}</div>
+    <div class="fs-5 mod-name"></div>
     </div>
   </div>
   `
+
+  col.querySelector('.component-name').textContent = component.id
+  for (const [selector, def] of [['.exhib-name', exhibDef], ['.mod-name', modDef]]) {
+    const nameEl = col.querySelector(selector)
+    if (def?.name != null) {
+      nameEl.textContent = def.name
+    } else {
+      nameEl.classList.add('fst-italic')
+      nameEl.textContent = 'No definition'
+    }
+  }
 
   compareRow.appendChild(col)
   if (badConnection) {
@@ -440,7 +451,7 @@ async function editExhibitCreateComponentHTML (component) {
 
   const nameDiv = document.createElement('div')
   nameDiv.classList = 'fs-5'
-  nameDiv.innerHTML = componentObj.id
+  nameDiv.textContent = componentObj.id
   header.appendChild(nameDiv)
 
   const deleteButton = document.createElement('button')
@@ -621,7 +632,7 @@ function createExhibitActionEntryHTML (item, allowEdit = hubTools.checkPermissio
 
   const eventDescription = document.createElement('div')
   eventDescription.classList = 'text-center'
-  eventDescription.innerHTML = description
+  eventDescription.textContent = description
   eventDescriptionOuterContainer.appendChild(eventDescription)
 
   if (allowEdit) {
@@ -682,7 +693,7 @@ export function editExhibitAddComponentPopulateList () {
     const li = document.createElement('li')
     const button = document.createElement('button')
     button.classList = 'dropdown-item text-wrap'
-    button.innerHTML = component.id
+    button.textContent = component.id
     button.addEventListener('click', () => {
       editExhibitAddComponent(component)
     })

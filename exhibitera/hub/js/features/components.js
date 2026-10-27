@@ -102,7 +102,7 @@ class BaseComponent {
     } else if (hubUsers.checkUserPreference('components_size') === 'large') {
       displayNameEl.classList.add('fs-5')
     }
-    displayNameEl.innerHTML = displayName
+    displayNameEl.textContent = displayName
     displayNameCol.appendChild(displayNameEl)
 
     const statusFieldCol = document.createElement('div')
@@ -119,7 +119,7 @@ class BaseComponent {
 
     const statusFieldEl = document.createElement('div')
     statusFieldEl.setAttribute('id', this.uuid + '_' + group + '_StatusField')
-    statusFieldEl.innerHTML = this.getStatus().name
+    statusFieldEl.textContent = this.getStatus().name
     if (hubUsers.checkUserPreference('components_size') === 'small') {
       statusFieldEl.classList.add('small')
     } else if (hubUsers.checkUserPreference('components_size') === 'large') {
@@ -326,11 +326,11 @@ class BaseComponent {
 
       let btnClass
       if (hubUsers.checkUserPreference('status_mode') === 'realtime') {
-        statusFieldEl.innerHTML = this.status.name
+        statusFieldEl.textContent = this.status.name
         btnClass = this.status.colorClass
       } else {
       // Maintenance status mode
-        statusFieldEl.innerHTML = this.maintenanceStatus.name
+        statusFieldEl.textContent = this.maintenanceStatus.name
         btnClass = this.maintenanceStatus.colorClass
       }
 
@@ -645,7 +645,7 @@ class ExhibitComponentGroup {
       mainButton.classList.add('btn-lg')
     }
     mainButton.setAttribute('type', 'button')
-    mainButton.innerHTML = hubTools.getActiveGroupName(this.group)
+    mainButton.textContent = hubTools.getActiveGroupName(this.group)
     btnGroup.appendChild(mainButton)
 
     if (permission === 'edit') {

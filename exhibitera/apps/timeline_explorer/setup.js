@@ -53,7 +53,7 @@ async function wizardForward (currentPage) {
         const label = document.createElement('label')
         label.classList = 'form-label mt-2'
         label.setAttribute('for', 'wizardHeaderInput_' + lang)
-        label.innerHTML = exLang.getLanguageDisplayName(lang, true)
+        label.textContent = exLang.getLanguageDisplayName(lang, true)
         headerDiv.appendChild(label)
 
         const headerCommandBar = document.createElement('div')
@@ -114,7 +114,7 @@ async function wizardForward (currentPage) {
       for (const item of missingContent) {
         const col = document.createElement('div')
         col.classList = 'col-12 col-md-4'
-        col.innerHTML = item
+        col.textContent = item
         missingRow.appendChild(col)
       }
     }
@@ -367,17 +367,6 @@ function rebuildItemList () {
     const itemDef = def.content[uuid]
     const itemLangDef = def.languages[defaultLang].content[uuid]
 
-    let itemName
-    if ((itemLangDef?.title ?? '') !== '' || (itemLangDef?.time ?? '') !== '') {
-      itemName = exMarkdown.formatText(itemLangDef.title, { string: true, removeParagraph: true })
-      let time = exMarkdown.formatText(itemLangDef.time ?? '', { string: true, removeParagraph: true })
-      if (time !== '') time += '<br>'
-      const title = exMarkdown.formatText(itemLangDef.title, { string: true, removeParagraph: true })
-      itemName = time + title
-    } else if ((itemDef?.filename ?? '') !== '') {
-      itemName = itemDef.filename
-    } else itemName = 'New Item'
-
     const col = document.createElement('div')
     col.classList = 'col'
 
@@ -387,10 +376,22 @@ function rebuildItemList () {
     button.addEventListener('click', () => {
       editItem(uuid)
     })
-    button.innerHTML = itemName
+    if ((itemLangDef?.title ?? '') !== '' || (itemLangDef?.time ?? '') !== '') {
+      showItemTimeAndTitle(button, itemLangDef)
+    } else if ((itemDef?.filename ?? '') !== '') {
+      button.textContent = itemDef.filename
+    } else button.textContent = 'New Item'
     col.appendChild(button)
     itemsList.appendChild(col)
   }
+}
+
+function showItemTimeAndTitle (button, langDef) {
+  // Label an item's button with its time and title, which are Markdown
+
+  button.innerHTML = exMarkdown.formatText(langDef.time ?? '', { string: true, removeParagraph: true })
+  if (button.innerHTML !== '') button.append(document.createElement('br'))
+  button.insertAdjacentHTML('beforeend', exMarkdown.formatText(langDef.title ?? '', { string: true, removeParagraph: true }))
 }
 
 function addItem (details = {}, after = '') {
@@ -566,7 +567,7 @@ function editItem (itemUUID) {
     tabButton.setAttribute('data-bs-target', '#editItemContent_' + code)
     tabButton.setAttribute('type', 'button')
     tabButton.setAttribute('role', 'tab')
-    tabButton.innerHTML = exLang.getLanguageDisplayName(code, true)
+    tabButton.textContent = exLang.getLanguageDisplayName(code, true)
     nav.appendChild(tabButton)
 
     // Create corresponding pane
@@ -588,7 +589,7 @@ function editItem (itemUUID) {
 
       const label = document.createElement('label')
       label.classList = 'form-label'
-      label.innerHTML = field.charAt(0).toUpperCase() + field.slice(1)
+      label.textContent = field.charAt(0).toUpperCase() + field.slice(1)
       col.appendChild(label)
 
       const commandBar = document.createElement('div')
@@ -607,10 +608,7 @@ function editItem (itemUUID) {
           if (code === def.language_order[0]) {
             // Update the button when editing the default language
             if (field === 'title' || field === 'time') {
-              let time = exMarkdown.formatText(exSetup.config.workingDefinition.languages[code].content[itemUUID].time ?? '', { string: true, removeParagraph: true })
-              if (time !== '') time += '<br>'
-              const title = exMarkdown.formatText(exSetup.config.workingDefinition.languages[code].content[itemUUID].title, { string: true, removeParagraph: true })
-              document.getElementById('itemButton_' + itemUUID).innerHTML = time + title
+              showItemTimeAndTitle(document.getElementById('itemButton_' + itemUUID), exSetup.config.workingDefinition.languages[code].content[itemUUID])
             }
           }
           exSetup.previewDefinition(true)
@@ -719,7 +717,7 @@ function rebuildLanguageElements (langOrder) {
     tabButton.setAttribute('data-bs-target', '#headerContent_' + code)
     tabButton.setAttribute('type', 'button')
     tabButton.setAttribute('role', 'tab')
-    tabButton.innerHTML = exLang.getLanguageDisplayName(code, true)
+    tabButton.textContent = exLang.getLanguageDisplayName(code, true)
     headerPaneNav.appendChild(tabButton)
 
     // Create corresponding pane
@@ -809,7 +807,9 @@ async function checkContentExists () {
     missingContentListDiv.style.display = 'block'
 
     for (const file of missingContent) {
-      missingContentList.innerHTML += `<li>${file}</li>`
+      const li = document.createElement('li')
+      li.textContent = file
+      missingContentList.appendChild(li)
     }
   }
 }
@@ -880,7 +880,9 @@ async function onBulkImportFileUpload (ev) {
     bulkUploadMissingContentDiv.style.display = 'block'
     bulkUploadMissingContent.innerText = ''
     for (const file of missingFiles) {
-      bulkUploadMissingContent.innerHTML += `<li>${file}</li>`
+      const li = document.createElement('li')
+      li.textContent = file
+      bulkUploadMissingContent.appendChild(li)
     }
   }
 }

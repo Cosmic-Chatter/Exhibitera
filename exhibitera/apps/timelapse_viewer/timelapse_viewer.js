@@ -31,7 +31,7 @@ function loadDefinition (definition) {
   root.style.setProperty('--attractor-background', definition?.attractor?.attractor_background ?? '#000000b7')
   root.style.setProperty('--attractor-height', parseFloat(definition?.attractor?.attractor_height ?? 70))
   root.style.setProperty('--attractor-font-adjust', parseFloat(definition?.attractor?.font_adjust ?? 0))
-  document.getElementById('attractor').innerHTML = definition?.attractor?.text ?? ''
+  document.getElementById('attractor').textContent = definition?.attractor?.text ?? ''
   root.style.setProperty('--attractor-text-color', definition?.attractor?.text_color ?? '#f5f5f0')
 
   // Fonts

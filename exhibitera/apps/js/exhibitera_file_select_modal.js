@@ -532,7 +532,7 @@ function _populateComponentContent (fileDict, options) {
 
     // Filename
     const filename = entry.querySelector('.const-file-name')
-    filename.innerHTML = shortenFilename(file)
+    filename.textContent = shortenFilename(file)
     filename.title = file
   })
 }
@@ -612,8 +612,8 @@ function previewFile (fileDetails) {
   const aud = document.getElementById('exFileSelectModalFilePreviewAudio')
   const font = document.getElementById('exFileSelectModalFilePreviewFont')
 
-  document.getElementById('exFileSelectModalFilePreviewFilename').innerHTML = file
-  document.getElementById('exFileSelectModalFilePreviewFilesize').innerHTML = fileDetails.size_text
+  document.getElementById('exFileSelectModalFilePreviewFilename').textContent = file
+  document.getElementById('exFileSelectModalFilePreviewFilesize').textContent = fileDetails.size_text
   document.getElementById('exFileSelectModalFilePreview').setAttribute('data-filename', file)
 
   // Configure downlaod button
@@ -837,7 +837,7 @@ function onUploadContentChange () {
   if (fileInput.files.length === 1) {
     document.getElementById('exFileSelectModalUploadfilename').innerHTML = '1 file selected'
   } else {
-    document.getElementById('exFileSelectModalUploadfilename').innerHTML = String(fileInput.files.length) + ' files selected'
+    document.getElementById('exFileSelectModalUploadfilename').textContent = String(fileInput.files.length) + ' files selected'
   }
   if (collision) {
     document.getElementById('exFileSelectModalUploadOverwriteWarning').style.display = 'block'
@@ -1036,11 +1036,11 @@ function renameFile () {
       entry.setAttribute('data-details', JSON.stringify(fileDetails))
       entry.setAttribute('data-filename', newName)
       entry.querySelector('.const-file-name').title = newName
-      entry.querySelector('.const-file-name').innerHTML = shortenFilename(newName)
+      entry.querySelector('.const-file-name').textContent = shortenFilename(newName)
       entry.querySelector('.const-file-select-box').setAttribute('data-filename', newName)
 
       // Update the preview filename
-      document.getElementById('exFileSelectModalFilePreviewFilename').innerHTML = newName
+      document.getElementById('exFileSelectModalFilePreviewFilename').textContent = newName
       document.getElementById('exFileSelectModalFilePreviewEditContainer').style.display = 'none'
       document.getElementById('exFileSelectModalFilePreviewFilename').style.display = 'block'
     })

@@ -117,11 +117,12 @@ export function createLanguagePicker (parent, callbacks = {}) {
   languageCodeInputCol.classList = 'col-12 col-md-6 custom-lang-col_' + uuid
   languageCodeInputCol.style.display = 'none'
   languageCodeInputCol.innerHTML = `
-    <label for="languageCodeInput_${uuid}" class="form-label">
+    <label class="form-label">
       Language code
       <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="The unique ISO 639-1 code for the language. E.g., de for German." style="font-size: 0.55em;">?</span>
     </label>
     `
+  languageCodeInputCol.querySelector('label').htmlFor = 'languageCodeInput_' + uuid
   row.appendChild(languageCodeInputCol)
 
   const languageCodeInput = document.createElement('input')
@@ -135,11 +136,12 @@ export function createLanguagePicker (parent, callbacks = {}) {
   languageDisplayNameInputCol.classList = 'col-12 col-md-6 custom-lang-col_' + uuid
   languageDisplayNameInputCol.style.display = 'none'
   languageDisplayNameInputCol.innerHTML = `
-    <label for="languageDisplayNameInput_${uuid}" class="form-label">
+    <label class="form-label">
       Display name
       <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="The name of the language in that language. E.g., Deutsch for German." style="font-size: 0.55em;">?</span>
     </label>
     `
+  languageDisplayNameInputCol.querySelector('label').htmlFor = 'languageDisplayNameInput_' + uuid
   row.appendChild(languageDisplayNameInputCol)
 
   const languageDisplayNameInput = document.createElement('input')
@@ -153,11 +155,12 @@ export function createLanguagePicker (parent, callbacks = {}) {
   languageEnglishNameInputCol.classList = 'col-12 col-md-6 custom-lang-col_' + uuid
   languageEnglishNameInputCol.style.display = 'none'
   languageEnglishNameInputCol.innerHTML = `
-    <label for="languageDisplayNameInput_${uuid}" class="form-label">
+    <label class="form-label">
       English name
       <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="The English name of the language." style="font-size: 0.55em;">?</span>
     </label>
     `
+  languageEnglishNameInputCol.querySelector('label').htmlFor = 'languageEnglishNameInput_' + uuid
   row.appendChild(languageEnglishNameInputCol)
 
   const languageEnglishNameInput = document.createElement('input')
@@ -290,7 +293,7 @@ function createLanguageHTML (languageList, code, displayName, englishName, isDef
   cardBody.appendChild(englishNameCol)
 
   const englishNameDiv = document.createElement('div')
-  englishNameDiv.innerHTML = englishName
+  englishNameDiv.textContent = englishName
   englishNameCol.appendChild(englishNameDiv)
 
   if (isDefault === true) {

@@ -211,7 +211,7 @@ function populateEditUserGroupsRow (permissions) {
 
     const label = document.createElement('label')
     label.classList = 'form-label fst-italic'
-    label.innerHTML = group.name
+    label.textContent = group.name
     col.appendChild(label)
 
     const select = document.createElement('select')
@@ -385,7 +385,7 @@ export function populateUsers () {
 
       const button = document.createElement('button')
       button.classList = 'btn btn-secondary w-100 h-100'
-      button.innerHTML = user.display_name
+      button.textContent = user.display_name
       button.addEventListener('click', () => {
         showEditUserModal(user)
       })
@@ -467,12 +467,12 @@ function configureUser (userDict, login = true) {
     document.getElementById('userMenu').style.display = 'block'
 
     // Set the name of the account
-    document.getElementById('userMenuUserDisplayName').innerHTML = userDict.display_name
+    document.getElementById('userMenuUserDisplayName').textContent = userDict.display_name
     let initials = ''
     for (const word of userDict.display_name.split(' ')) {
       initials += word.slice(0, 1)
     }
-    document.getElementById('userMenuUserShortName').innerHTML = initials
+    document.getElementById('userMenuUserShortName').textContent = initials
 
     configureUserPreferences()
   } else {

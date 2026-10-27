@@ -96,7 +96,7 @@ async function wizardForward (currentPage) {
       for (const item of missingContent) {
         const col = document.createElement('div')
         col.classList = 'col-12 col-md-4'
-        col.innerHTML = item
+        col.textContent = item
         missingRow.appendChild(col)
       }
     }
@@ -423,7 +423,7 @@ function editDefinition (uuid = '') {
   // Attractor
   const attractorSelect = document.getElementById('attractorSelect')
   if ((def?.attractor ?? '').trim() !== '') {
-    attractorSelect.innerHTML = def.attractor
+    attractorSelect.textContent = def.attractor
   } else {
     attractorSelect.innerHTML = 'Select file'
   }
@@ -522,13 +522,6 @@ function rebuildItemList () {
     const itemDef = def.content[uuid]
     const itemLangDef = def.languages[defaultLang].content[uuid]
 
-    let itemName
-    if ((itemLangDef?.title ?? '') !== '') {
-      itemName = exMarkdown.formatText(itemLangDef.title, { string: true, removeParagraph: true })
-    } else if ((itemDef?.filename ?? '') !== '') {
-      itemName = itemDef.filename
-    } else itemName = 'New Item'
-
     const col = document.createElement('div')
     col.classList = 'col'
 
@@ -538,7 +531,11 @@ function rebuildItemList () {
     button.addEventListener('click', () => {
       editItem(uuid)
     })
-    button.innerHTML = itemName
+    if ((itemLangDef?.title ?? '') !== '') {
+      button.innerHTML = exMarkdown.formatText(itemLangDef.title, { string: true, removeParagraph: true })
+    } else if ((itemDef?.filename ?? '') !== '') {
+      button.textContent = itemDef.filename
+    } else button.textContent = 'New Item'
 
     col.appendChild(button)
     itemsList.appendChild(col)
@@ -718,7 +715,7 @@ function editItem (itemUUID) {
     tabButton.setAttribute('data-bs-target', '#editItemContent_' + code)
     tabButton.setAttribute('type', 'button')
     tabButton.setAttribute('role', 'tab')
-    tabButton.innerHTML = exLang.getLanguageDisplayName(code, true)
+    tabButton.textContent = exLang.getLanguageDisplayName(code, true)
     nav.appendChild(tabButton)
 
     // Create corresponding pane
@@ -740,7 +737,7 @@ function editItem (itemUUID) {
 
       const label = document.createElement('label')
       label.classList = 'form-label'
-      label.innerHTML = field.charAt(0).toUpperCase() + field.slice(1)
+      label.textContent = field.charAt(0).toUpperCase() + field.slice(1)
       col.appendChild(label)
 
       const commandBar = document.createElement('div')
@@ -1069,7 +1066,9 @@ async function checkContentExists () {
     missingContentListDiv.style.display = 'block'
 
     for (const file of missingContent) {
-      missingContentList.innerHTML += `<li>${file}</li>`
+      const li = document.createElement('li')
+      li.textContent = file
+      missingContentList.appendChild(li)
     }
   }
 }
@@ -1140,7 +1139,9 @@ async function onBulkImportFileUpload (ev) {
     bulkUploadMissingContentDiv.style.display = 'block'
     bulkUploadMissingContent.innerText = ''
     for (const file of missingFiles) {
-      bulkUploadMissingContent.innerHTML += `<li>${file}</li>`
+      const li = document.createElement('li')
+      li.textContent = file
+      bulkUploadMissingContent.appendChild(li)
     }
   }
 }
@@ -1320,7 +1321,7 @@ document.getElementById('attractorSelect').addEventListener('click', (event) => 
   exFileSelect.createFileSelectionModal({ filetypes: ['image', 'video'], multiple: false })
     .then((files) => {
       if (files.length === 1) {
-        event.target.innerHTML = files[0]
+        event.target.textContent = files[0]
         event.target.setAttribute('data-filename', files[0])
         onAttractorFileChange()
       }

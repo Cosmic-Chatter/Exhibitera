@@ -62,8 +62,8 @@ function populateSummary () {
 
   // Hub
   if (document.getElementById('useHubToggle').checked === true) {
-    document.getElementById('summaryHubIP').innerHTML = document.getElementById('hubIPInput').value.trim()
-    document.getElementById('summaryHubPort').innerHTML = document.getElementById('hubPortInput').value.trim()
+    document.getElementById('summaryHubIP').textContent = document.getElementById('hubIPInput').value.trim()
+    document.getElementById('summaryHubPort').textContent = document.getElementById('hubPortInput').value.trim()
 
     document.getElementById('summaryNoControlCenter').style.display = 'none'
     document.getElementById('summaryHubDetails').style.display = 'block'
@@ -73,7 +73,7 @@ function populateSummary () {
   }
   // Remote display
   if (document.getElementById('useRemoteDisplayToggle').checked === true) {
-    document.getElementById('summaryPort').innerHTML = document.getElementById('remoteDisplayPortInput').value.trim()
+    document.getElementById('summaryPort').textContent = document.getElementById('remoteDisplayPortInput').value.trim()
     document.getElementById('summaryNoRemoteDisplay').style.display = 'none'
     document.getElementById('summaryRemoteDisplayDetails').style.display = 'block'
   } else {

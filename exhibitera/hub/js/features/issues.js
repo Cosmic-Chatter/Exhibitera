@@ -140,7 +140,7 @@ export function createIssueHTML (issue, full = true, archived = false) {
 
   const title = document.createElement('H5')
   title.setAttribute('class', 'card-title')
-  title.innerHTML = issue.issueName
+  title.textContent = issue.issueName
   body.appendChild(title)
 
   const content = document.createElement('div')
@@ -154,7 +154,7 @@ export function createIssueHTML (issue, full = true, archived = false) {
     if (component == null) continue
     const tag = document.createElement('span')
     tag.setAttribute('class', 'badge bg-secondary me-1')
-    tag.innerHTML = component.id
+    tag.textContent = component.id
     content.appendChild(tag)
   }
 
@@ -163,7 +163,7 @@ export function createIssueHTML (issue, full = true, archived = false) {
     tag.setAttribute('class', 'badge bg-success me-1')
     hubTools.getUserDisplayName(uuid)
       .then((displayName) => {
-        tag.innerHTML = displayName
+        tag.textContent = displayName
       })
     content.appendChild(tag)
   }
@@ -171,7 +171,7 @@ export function createIssueHTML (issue, full = true, archived = false) {
   const desc = document.createElement('p')
   desc.classList = 'card-text mt-2'
   desc.style.whiteSpace = 'pre-wrap' // To preserve new lines
-  desc.innerHTML = issue.issueDescription
+  desc.textContent = issue.issueDescription
   content.appendChild(desc)
 
   const row1 = document.createElement('div')
@@ -277,12 +277,12 @@ export function createIssueHTML (issue, full = true, archived = false) {
       archivedDateCol.style.fontSize = '0.7rem'
 
       const archivedDate = new Date(issue.archiveDate)
-      archivedDateCol.innerHTML = `Archived ${archivedDate.toLocaleDateString(undefined, dateOptions)}`
+      archivedDateCol.textContent = `Archived ${archivedDate.toLocaleDateString(undefined, dateOptions)}`
       row2.appendChild(archivedDateCol)
 
       hubTools.getUserDisplayName(issue.archivedUsername)
         .then((displayName) => {
-          archivedDateCol.innerHTML = `Archived ${archivedDate.toLocaleDateString(undefined, dateOptions)} by ${displayName}`
+          archivedDateCol.textContent = `Archived ${archivedDate.toLocaleDateString(undefined, dateOptions)} by ${displayName}`
         })
     }
   } else {
@@ -292,13 +292,13 @@ export function createIssueHTML (issue, full = true, archived = false) {
     createdDateCol.style.fontSize = '0.7rem'
 
     const createdDate = new Date(issue.creationDate)
-    createdDateCol.innerHTML = `Created ${createdDate.toLocaleDateString(undefined, dateOptions)}`
+    createdDateCol.textContent = `Created ${createdDate.toLocaleDateString(undefined, dateOptions)}`
     row2.appendChild(createdDateCol)
 
     if ('createdUsername' in issue && issue.createdUsername !== '') {
       hubTools.getUserDisplayName(issue.createdUsername)
         .then((displayName) => {
-          createdDateCol.innerHTML = `Created ${createdDate.toLocaleDateString(undefined, dateOptions)} by ${displayName}`
+          createdDateCol.textContent = `Created ${createdDate.toLocaleDateString(undefined, dateOptions)} by ${displayName}`
         })
     }
 
@@ -309,13 +309,13 @@ export function createIssueHTML (issue, full = true, archived = false) {
       updatedDateCol.style.fontSize = '0.7rem'
 
       const updatedDate = new Date(issue.lastUpdateDate)
-      updatedDateCol.innerHTML = `Updated ${updatedDate.toLocaleDateString(undefined, dateOptions)}`
+      updatedDateCol.textContent = `Updated ${updatedDate.toLocaleDateString(undefined, dateOptions)}`
       row2.appendChild(updatedDateCol)
 
       if ('lastUpdateUsername' in issue && issue.lastUpdateUsername !== '') {
         hubTools.getUserDisplayName(issue.lastUpdateUsername)
           .then((displayName) => {
-            updatedDateCol.innerHTML = `Updated ${updatedDate.toLocaleDateString(undefined, dateOptions)} by ${displayName}`
+            updatedDateCol.textContent = `Updated ${updatedDate.toLocaleDateString(undefined, dateOptions)} by ${displayName}`
           })
       }
     }
@@ -542,7 +542,7 @@ export function onIssueMediaUploadChange () {
 
   const fileInput = document.getElementById('issueMediaUpload')
   const file = fileInput.files[0]
-  document.getElementById('issueMediaUploadFilename').innerHTML = 'File: ' + file.name
+  document.getElementById('issueMediaUploadFilename').textContent = 'File: ' + file.name
 
   // Check for HEIC file
   if (file.type === 'image/heic') {

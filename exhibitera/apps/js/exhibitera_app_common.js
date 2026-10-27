@@ -478,7 +478,7 @@ function readHelperUpdate (update, changeApp = true) {
 
 function checkAgain () {
   try {
-    document.getElementById('helperConnectionWarningAddress').innerHTML = config.helperAddress
+    document.getElementById('helperConnectionWarningAddress').textContent = config.helperAddress
     document.getElementById('helperConnectionWarning').style.display = 'block'
   } catch {
     // Will fail if these elements don't exist
@@ -683,7 +683,7 @@ export function createLanguageSwitcher (def, localize) {
     const span = document.createElement('span')
     span.classList = 'ps-2'
     span.style.verticalAlign = 'middle'
-    span.innerHTML = name
+    span.textContent = name
     button.appendChild(span)
 
     langSwitchOptions.appendChild(li)

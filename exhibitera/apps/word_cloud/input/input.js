@@ -144,17 +144,17 @@ function loadDefinition (definition) {
       document.getElementById('inputField').placeholder = 'Type to enter response'
     }
     if (definition?.content?.localization?.clear && definition.content.localization.clear.trim() !== '') {
-      document.getElementById('clearButton').innerHTML = definition.content.localization.clear
+      document.getElementById('clearButton').textContent = definition.content.localization.clear
     } else {
       document.getElementById('clearButton').innerHTML = 'Clear'
     }
     if (definition?.content?.localization?.submit && definition.content.localization.submit.trim() !== '') {
-      document.getElementById('submitButton').innerHTML = definition.content.localization.submit
+      document.getElementById('submitButton').textContent = definition.content.localization.submit
     } else {
       document.getElementById('submitButton').innerHTML = 'Submit'
     }
     if (definition?.content?.localization?.backspace && definition.content.localization.backspace.trim() !== '') {
-      document.querySelector('.hg-button-bksp').querySelector('span').innerHTML = definition.content.localization.backspace
+      document.querySelector('.hg-button-bksp').querySelector('span').textContent = definition.content.localization.backspace
     } else {
       document.querySelector('.hg-button-bksp').querySelector('span').innerHTML = 'backspace'
     }

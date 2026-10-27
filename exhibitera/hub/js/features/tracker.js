@@ -221,7 +221,7 @@ function populateWidgetProperties (widgetDef) {
 
         const label = document.createElement('label')
         label.setAttribute('for', 'editTrackerTemplateSlider' + field + widgetDef.uuid)
-        label.innerHTML = field
+        label.textContent = field
         col.appendChild(label)
 
         const input = document.createElement('input')
@@ -324,7 +324,7 @@ function editTrackerTemplateUpdateProperty (uuid, property, value) {
   // Update the given property for the widget specified by the uuid.
 
   if (property === 'name') {
-    document.getElementById('editTrackerWidgetNameField_' + uuid).innerHTML = value
+    document.getElementById('editTrackerWidgetNameField_' + uuid).textContent = value
   }
   if (property === 'options') {
     value = value.split(',').map(s => s.trim()).filter(Boolean)
@@ -368,7 +368,7 @@ export function populateEditTrackerTemplateCurrentLayout (template) {
     const name = document.createElement('div')
     name.classList = ' text-light w-100 text-center font-weight-bold widget-header'
     name.setAttribute('id', 'editTrackerWidgetNameField_' + widgetDef.uuid)
-    name.innerHTML = widgetDef.name
+    name.textContent = widgetDef.name
     nameCol.appendChild(name)
 
     const row2 = document.createElement('div')
@@ -532,7 +532,7 @@ function _showEditTrackerTemplateModal (template) {
   // Set the provided template in the data attributes, reset all the fields,
   // and show the modal
 
-  document.getElementById('editTrackerTemplateModalTitle').innerHTML = 'Edit template: ' + template.name
+  document.getElementById('editTrackerTemplateModalTitle').textContent = 'Edit template: ' + template.name
   document.getElementById('editTrackerTemplatePropertiesDiv').innerHTML = ''
 
   const modal = document.getElementById('editTrackerTemplateModal')

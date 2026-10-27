@@ -305,9 +305,7 @@ export function showAppHelpModal (app) {
     rawResponse: true
   })
     .then((result) => {
-      const formattedText = markdownConverter.makeHtml(result)
-      // Add the formatted text
-      helpTextDiv.innerHTML = formattedText
+      helpTextDiv.innerHTML = markdownConverter.makeHtml(result)
 
       // Set the max-width of all images inside the #helpTextDiv element
       document.querySelectorAll('#helpTextDiv img').forEach((img) => {
@@ -784,6 +782,17 @@ export function createAdvancedColorPickers () {
   }
 }
 
+export function fillTemplateIDs (el, id) {
+  // Replace the {id} placeholder in the attributes of el and the elements inside it. This lets
+  // HTML templates stay fixed strings while still giving each copy its own ids.
+
+  for (const child of [el, ...el.querySelectorAll('*')]) {
+    for (const attr of child.attributes) {
+      if (attr.value.includes('{id}')) attr.value = attr.value.replaceAll('{id}', id)
+    }
+  }
+}
+
 export function createAdvancedColorPicker (el, name, path) {
   // Create the GUI for an advanced color picker
   // 'name' is the name of the picker to be displayed in the label
@@ -794,37 +803,39 @@ export function createAdvancedColorPicker (el, name, path) {
 
   el.innerHTML = `
     <div class="border rounded px-2 py-2">
-      <label class="form-label">${name}</label>
+      <label class="form-label constACP-name"></label>
       <div class="row">
         <div class="col-6">
-          <select id="ACPModeSelect_${id}" class="form-select constACP-mode">
+          <select id="ACPModeSelect_{id}" class="form-select constACP-mode">
             <option value="color">Solid color</option>
             <option value="gradient">Color gradient</option>
             <option value="image">Image</option>
           </select>
         </div>
-        <div id="ACPColorCol_${id}" class="col-6">
-          <input id="ACPColor_${id}" type="text" class="coloris form-control constACP-color" value="#22222E">
+        <div id="ACPColorCol_{id}" class="col-6">
+          <input id="ACPColor_{id}" type="text" class="coloris form-control constACP-color" value="#22222E">
         </div>
-        <div id="ACPGradientCol_${id}" class="col-6 d-none">
+        <div id="ACPGradientCol_{id}" class="col-6 d-none">
           <div class="row gy-1">
             <div class="col-6">
-              <input id="ACPGradient_gradient1_${id}" type="text" class="coloris form-control constACP-gradient1" value="#22222E">
-              <input id="ACPGradient_gradient2_${id}" type="text" class="coloris form-control constACP-gradient2" value="#22222E">
+              <input id="ACPGradient_gradient1_{id}" type="text" class="coloris form-control constACP-gradient1" value="#22222E">
+              <input id="ACPGradient_gradient2_{id}" type="text" class="coloris form-control constACP-gradient2" value="#22222E">
             </div>
             <div class="col-6">
-              <label for="ACPAnglePicker_${id}" class="form-label">Angle</label>
-              <input id="ACPAnglePicker_${id}" class="form-control constACP-angle" type="number" min="0" max="359" value="0">
+              <label for="ACPAnglePicker_{id}" class="form-label">Angle</label>
+              <input id="ACPAnglePicker_{id}" class="form-control constACP-angle" type="number" min="0" max="359" value="0">
             </div>
           </div>
         </div>
-        <div id="ACPImageCol_${id}" class="col-6 d-none">
-          <button id="ACPImage_${id}" class="btn btn-outline-primary w-100 text-break constACP-image">Select image</button>
+        <div id="ACPImageCol_{id}" class="col-6 d-none">
+          <button id="ACPImage_{id}" class="btn btn-outline-primary w-100 text-break constACP-image">Select image</button>
         </div>
         
       </div>
     </div>
   `
+  el.querySelector('.constACP-name').textContent = name
+  fillTemplateIDs(el, id)
 
   // Add event listeners
   document.getElementById(`ACPModeSelect_${id}`).addEventListener('change', (event) => {
@@ -945,7 +956,7 @@ export function updateAdvancedColorPicker (path,
 
     el.querySelector('.constACP-angle').value = details?.gradient_angle ?? defaults?.gradient_angle
 
-    el.querySelector('.constACP-image').innerHTML = details?.image ?? defaults?.image
+    el.querySelector('.constACP-image').textContent = details?.image ?? defaults?.image
 
     const id = el.getAttribute('data-constACP-id')
     _onAdvancedColorPickerModeChange(id, path, details?.mode ?? defaults.mode)
@@ -990,22 +1001,30 @@ export function createAdvancedFontPicker (details) {
   details.parent.setAttribute('data-constAFP-id', id)
 
   details.parent.innerHTML = `
-    <label class="form-label">${details.name}</label>
+    <label class="form-label"></label>
     <div class="dropdown w-100">
-      <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start d-flex justify-content-between align-items-center AFP-dropdown-toggle text-light" type="button" data-bs-toggle="dropdown" aria-expanded="false" id="AFPBtn_${id}">
+      <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start d-flex justify-content-between align-items-center AFP-dropdown-toggle text-light" type="button" data-bs-toggle="dropdown" aria-expanded="false">
         <span class="AFP-btn-text text-truncate pe-2" style="max-width: 90%;">Select Font</span>
       </button>
-      <ul class="dropdown-menu AFP-menu shadow p-0" aria-labelledby="AFPBtn_${id}"></ul>
+      <ul class="dropdown-menu AFP-menu shadow p-0"></ul>
     </div>
-    <input type="hidden" id="AFPSelect_${id}" class="AFP-select" data-default-font="${details.font}" data-default-axes="${details.axes}" data-path="${details.path}">
-    <div class="AFP-axes-container mt-2" id="AFPAxes_${id}"></div>
+    <input type="hidden" class="AFP-select">
+    <div class="AFP-axes-container mt-2"></div>
   `
+  details.parent.querySelector('label').textContent = details.name
+  details.parent.querySelector('.AFP-dropdown-toggle').id = 'AFPBtn_' + id
+  details.parent.querySelector('.AFP-axes-container').id = 'AFPAxes_' + id
 
-  const inputEl = document.getElementById(`AFPSelect_${id}`)
+  const inputEl = details.parent.querySelector('.AFP-select')
+  inputEl.id = 'AFPSelect_' + id
+  inputEl.setAttribute('data-default-font', details.font)
+  inputEl.setAttribute('data-default-axes', details.axes)
+  inputEl.setAttribute('data-path', details.path)
   if (details.value) inputEl.value = details.value
 
   // Event delegation for the dropdown items
   const menuEl = details.parent.querySelector('.AFP-menu')
+  menuEl.setAttribute('aria-labelledby', 'AFPBtn_' + id)
   menuEl.addEventListener('click', (event) => {
     const item = event.target.closest('.dropdown-item')
     if (!item) return
@@ -1430,20 +1449,27 @@ async function _onAdvancedFontPickerChange (el, saveChange = true) {
         currentValue = axis.default
       }
 
-      const sliderHTML = `
-        <div class="row align-items-center mb-1">
-          <div class="col-4 text-end">
-            <small class="text-muted" title="${axis.tag}">${axis.name}</small>
-          </div>
-          <div class="col-8">
-            <input type="range" class="form-range font-axis-slider" 
-              data-axis="${axis.tag}" 
-              min="${axis.min}" max="${axis.max}" 
-              step="${axis.step}" value="${currentValue}">
-          </div>
+      // The axis names come from the font file
+      const row = document.createElement('div')
+      row.classList = 'row align-items-center mb-1'
+      row.innerHTML = `
+        <div class="col-4 text-end">
+          <small class="text-muted"></small>
+        </div>
+        <div class="col-8">
+          <input type="range" class="form-range font-axis-slider">
         </div>
       `
-      axesContainer.insertAdjacentHTML('beforeend', sliderHTML)
+      const label = row.querySelector('small')
+      label.title = axis.tag
+      label.textContent = axis.name
+      const slider = row.querySelector('input')
+      slider.setAttribute('data-axis', axis.tag)
+      slider.setAttribute('min', axis.min)
+      slider.setAttribute('max', axis.max)
+      slider.setAttribute('step', axis.step)
+      slider.setAttribute('value', currentValue)
+      axesContainer.appendChild(row)
     })
 
     // Bind event listeners to the newly injected sliders
@@ -1567,20 +1593,6 @@ export function createAdvancedSlider (el, value = null) {
 
   const path = el.dataset.path.split('>')
 
-  let labelHTML = ''
-  if (el.dataset?.unit) {
-    // white-space: nowrap keeps the unit on one line; the flex-shrink rule below
-    // keeps it from being compressed.
-    labelHTML = `<span class="input-group-text exAS_label" style="flex: 0 0 auto; white-space: nowrap;">${el.dataset.unit}</span>`
-  }
-  let noteHTML = ''
-  if (el.dataset?.note) {
-    noteHTML =
-    `
-    <span class="badge bg-info ml-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="${el.dataset.note}" style="font-size: 0.55em;">?</span>
-    `
-  }
-
   // Width of the number input: widest value (in characters) plus the input's
   // horizontal padding (.25rem each side, set by .exAS_number) and 1px borders.
   // The 'ch' unit resolves against the input's own font-size (0.75rem), so this
@@ -1590,25 +1602,54 @@ export function createAdvancedSlider (el, value = null) {
   const numberWidth = `calc(${nChars + 0.5}ch + 0.5rem + 2px)`
 
   el.innerHTML = `
-      <label class="form-label">
-        ${el.dataset.name}
-        ${noteHTML}
-      </label>
+      <label class="form-label"></label>
       <div class="d-flex align-items-center">
         <div class="flex-grow-1 d-flex align-items-center" style="min-width: 0;">
-          <input type="range" id="exAS_slider_${id}" class="form-range w-100 exAS_slider" min="${el.dataset.min}" max="${el.dataset.max}" start="${value ?? el.dataset.start}" step="${el.dataset.step}">
+          <input type="range" class="form-range w-100 exAS_slider">
         </div>
         <div class="ps-2 flex-shrink-0">
           <div class="input-group flex-nowrap">
-            <input type="number" id="exAS_number_${id}" class="form-control exAS_number" style="flex: 0 0 auto; width: ${numberWidth};" min="${el.dataset.min}" max="${el.dataset.max}" start="${value ?? el.dataset.start}" step="${el.dataset.step}">
-            ${labelHTML}
+            <input type="number" class="form-control exAS_number" style="flex: 0 0 auto;">
           </div>
         </div>
       </div>
   `
 
-  const slider = document.getElementById(`exAS_slider_${id}`)
-  const number = document.getElementById(`exAS_number_${id}`)
+  const label = el.querySelector('label')
+  label.textContent = el.dataset.name
+  if (el.dataset?.note) {
+    const note = document.createElement('span')
+    note.classList = 'badge bg-info ml-1 align-middle'
+    note.setAttribute('data-bs-toggle', 'tooltip')
+    note.setAttribute('data-bs-placement', 'top')
+    note.title = el.dataset.note
+    note.style.fontSize = '0.55em'
+    note.textContent = '?'
+    label.append(' ', note)
+  }
+
+  const slider = el.querySelector('.exAS_slider')
+  const number = el.querySelector('.exAS_number')
+  slider.id = 'exAS_slider_' + id
+  number.id = 'exAS_number_' + id
+  number.style.width = numberWidth
+  for (const input of [slider, number]) {
+    input.setAttribute('min', el.dataset.min)
+    input.setAttribute('max', el.dataset.max)
+    input.setAttribute('start', value ?? el.dataset.start)
+    input.setAttribute('step', el.dataset.step)
+  }
+
+  if (el.dataset?.unit) {
+    // white-space: nowrap keeps the unit on one line; the flex-shrink rule
+    // keeps it from being compressed.
+    const unit = document.createElement('span')
+    unit.classList = 'input-group-text exAS_label'
+    unit.style.flex = '0 0 auto'
+    unit.style.whiteSpace = 'nowrap'
+    unit.textContent = el.dataset.unit
+    number.after(unit)
+  }
 
   number.value = value ?? el.dataset.start
   slider.value = value ?? el.dataset.start
@@ -1799,12 +1840,12 @@ function configureUser (userDict, login = true) {
     document.getElementById('userMenu').style.display = 'block'
 
     // Set the name of the account
-    document.getElementById('userMenuUserDisplayName').innerHTML = userDict.display_name
+    document.getElementById('userMenuUserDisplayName').textContent = userDict.display_name
     let initials = ''
     userDict.display_name.split(' ').forEach((word) => {
       initials += word.slice(0, 1)
     })
-    document.getElementById('userMenuUserShortName').innerHTML = initials
+    document.getElementById('userMenuUserShortName').textContent = initials
   } else {
     document.getElementById('helpNewAccountMessage').style.display = 'block'
     document.getElementById('loginMenu').style.display = 'block'

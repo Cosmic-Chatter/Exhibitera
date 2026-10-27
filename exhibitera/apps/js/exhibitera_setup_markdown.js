@@ -115,7 +115,9 @@ export class ExhibiteraMarkdownEditor {
     const focus = this.tinyMDE.getSelection()
     const anchor = this.tinyMDE.getSelection(true)
 
-    const modalHTML = `
+    // Create a temporary container to hold the HTML.
+    const tempDiv = document.createElement('div')
+    tempDiv.innerHTML = `
       <div class="modal" id="insertMediaModal" tabindex="-1" aria-labelledby="insertMediaModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
           <div class="modal-content">
@@ -178,10 +180,6 @@ export class ExhibiteraMarkdownEditor {
         </div>
       </div>
     `
-
-    // Create a temporary container to hold the HTML.
-    const tempDiv = document.createElement('div')
-    tempDiv.innerHTML = modalHTML
 
     // Get the actual modal element.
     const modalElement = tempDiv.firstElementChild

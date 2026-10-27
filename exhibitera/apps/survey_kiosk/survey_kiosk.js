@@ -183,7 +183,7 @@ function buildLayoutVote (index) {
 
   if (thisItem.type === 'multiple_vote') {
     const nextButton = document.createElement('button')
-    nextButton.innerHTML = currentDefinition.languages?.[currentLang]?.items?.[uuid]?.next_button?.text ?? 'Next'
+    nextButton.textContent = currentDefinition.languages?.[currentLang]?.items?.[uuid]?.next_button?.text ?? 'Next'
     nextButton.classList = 'btn noselect next-button disabled'
     nextButton.style.opacity = 0
     nextButton.addEventListener('click', () => {
@@ -216,7 +216,7 @@ function buildLayoutText (index) {
 
   if ((item?.end_screen ?? false) === false) {
     const nextButton = document.createElement('button')
-    nextButton.innerHTML = currentDefinition.languages?.[currentLang]?.items?.[uuid]?.next_button?.text || 'Next' // Convert empty string '' to 'Next' too
+    nextButton.textContent = currentDefinition.languages?.[currentLang]?.items?.[uuid]?.next_button?.text || 'Next' // Convert empty string '' to 'Next' too
     nextButton.classList = 'btn noselect next-button'
     nextButton.addEventListener('click', () => {
       nextButtonTouched(index)

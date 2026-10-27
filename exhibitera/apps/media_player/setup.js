@@ -330,7 +330,7 @@ function editDefinition (uuid = '') {
   // Set the appropriate values for the watermark
   if ((def?.watermark?.file ?? '') !== '') {
     const watermarkSelect = document.getElementById('watermarkSelect')
-    watermarkSelect.innerHTML = def.watermark.file
+    watermarkSelect.textContent = def.watermark.file
     watermarkSelect.setAttribute('data-filename', def.watermark.file)
   }
   exSetup.createAdvancedSlider(document.getElementById('watermarkXPos'), def?.watermark?.x_position)
@@ -404,7 +404,7 @@ function createItemHTML (item, num) {
 
   const number = document.createElement('div')
   number.classList = 'w-100 fw-bold h4 mb-3'
-  number.innerHTML = num
+  number.textContent = num
   numberCol.appendChild(number)
 
   const nameCol = document.createElement('div')
@@ -413,7 +413,7 @@ function createItemHTML (item, num) {
 
   const name = document.createElement('div')
   name.classList = 'w-100 file-field'
-  name.innerHTML = item.filename
+  name.textContent = item.filename
   nameCol.appendChild(name)
 
   const orderButtonsCol = document.createElement('div')
@@ -685,7 +685,7 @@ function createItemHTML (item, num) {
   const materialInput = document.createElement('button')
   materialInput.classList = 'btn btn-outline-primary w-100'
   if (('material' in item) && (item.material !== '') && (item.material != null)) {
-    materialInput.innerHTML = item.material
+    materialInput.textContent = item.material
   } else {
     materialInput.innerHTML = 'Select material'
   }
@@ -699,7 +699,7 @@ function createItemHTML (item, num) {
       const file = files[0]
       exSetup.updateWorkingDefinition(['content', item.uuid, 'material'], file)
       exSetup.previewDefinition(true)
-      materialInput.innerHTML = file
+      materialInput.textContent = file
     })
   })
 
@@ -819,7 +819,7 @@ function showConfigureSubtitlesModal (itemUUID) {
 
   // Add any existing subtitles
   if (exSetup.config.workingDefinition?.content?.[itemUUID]?.subtitles?.filename) {
-    selectButton.innerHTML = exSetup.config.workingDefinition.content[itemUUID].subtitles.filename
+    selectButton.textContent = exSetup.config.workingDefinition.content[itemUUID].subtitles.filename
   } else {
     selectButton.innerHTML = 'Select subtitles file'
   }
@@ -945,7 +945,7 @@ function createTreeSubEntries (parent, dict, path = []) {
       // A nested dict
       const name = document.createElement('span')
       name.classList = 'caret'
-      name.innerHTML = key
+      name.textContent = key
       li.appendChild(name)
       const ul = document.createElement('ul')
       ul.classList = 'nested'
@@ -957,7 +957,9 @@ function createTreeSubEntries (parent, dict, path = []) {
       createTreeSubEntries(ul, dict[key], [...path, key])
     } else {
       const span = document.createElement('span')
-      span.innerHTML = `<u>${key}</u>: ${dict[key]}`
+      const keyName = document.createElement('u')
+      keyName.textContent = key
+      span.append(keyName, ': ' + String(dict[key]))
       span.style.cursor = 'pointer'
       span.addEventListener('click', () => {
         selectAnnotationJSONPath([...path, key])
@@ -1023,7 +1025,7 @@ function addAnnotationFromModal () {
     annotation.path = path
     annotation.file = file
     annotation.type = type
-    document.getElementById('Annotation' + annotation.uuid + 'Title').innerHTML = '<b>Annotation: </b>' + path.slice(-1)
+    document.getElementById('Annotation' + annotation.uuid + 'Title').replaceChildren(boldLabel('Annotation: '), String(path.slice(-1)))
   }
 
   const annotations = workingDefinition?.content?.[itemUUID]?.annotations ?? {}
@@ -1033,6 +1035,14 @@ function addAnnotationFromModal () {
   exSetup.previewDefinition(true)
   document.getElementById('annotateFromJSONModalTreeView').innerText = ''
   exUtilities.hideModal('#annotateFromJSONModal')
+}
+
+function boldLabel (text) {
+  // Return a bold element with the given text, for labeling an annotation
+
+  const label = document.createElement('b')
+  label.textContent = text
+  return label
 }
 
 async function createAnnoationHTML (itemUUID, details) {
@@ -1049,11 +1059,10 @@ async function createAnnoationHTML (itemUUID, details) {
   const title = document.createElement('div')
   title.classList = 'col-10 offset-1 text-center'
   title.setAttribute('id', 'Annotation' + details.uuid + 'Title')
-  let titleText
   if (details.type === 'text') {
-    titleText = '<b>Text Annotation: </b>' + exMarkdown.formatText(details.text, { removeParagraph: true, string: true })
-  } else titleText = '<b>JSON Annotation: </b>' + details.path.slice(-1)
-  title.innerHTML = titleText
+    title.replaceChildren(boldLabel('Text Annotation: '))
+    title.insertAdjacentHTML('beforeend', exMarkdown.formatText(details.text, { removeParagraph: true, string: true }))
+  } else title.replaceChildren(boldLabel('JSON Annotation: '), String(details.path.slice(-1)))
   row.appendChild(title)
 
   const actionCol = document.createElement('div')
@@ -1126,7 +1135,8 @@ async function createAnnoationHTML (itemUUID, details) {
       callback: (content) => {
         exSetup.updateWorkingDefinition(['content', itemUUID, 'annotations', details.uuid, 'text'], content)
         exSetup.previewDefinition(true)
-        title.innerHTML = '<b>Text Annotation: </b>' + exMarkdown.formatText(content, { removeParagraph: true, string: true })
+        title.replaceChildren(boldLabel('Text Annotation: '))
+        title.insertAdjacentHTML('beforeend', exMarkdown.formatText(content, { removeParagraph: true, string: true }))
       }
     })
   }
@@ -1352,7 +1362,7 @@ function setItemContent (uuid, itemEl, file, type = 'file') {
   itemEl.setAttribute('data-filename', file)
   itemEl.setAttribute('data-type', type)
 
-  fileField.innerHTML = file
+  fileField.textContent = file
   if (mimetype === 'audio') {
     image.src = exFileSelect.getDefaultAudioIcon()
     image.style.display = 'block'
@@ -1573,7 +1583,7 @@ document.getElementById('watermarkSelect').addEventListener('click', (event) => 
   exFileSelect.createFileSelectionModal({ filetypes: ['image'], multiple: false })
     .then((files) => {
       if (files.length === 1) {
-        event.target.innerHTML = files[0]
+        event.target.textContent = files[0]
         event.target.setAttribute('data-filename', files[0])
         onWatermarkFileChange()
       }

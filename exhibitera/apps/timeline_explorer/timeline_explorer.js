@@ -140,10 +140,8 @@ function localize (lang) {
     createTimelineEntry(itemUUID, lang)
   }
 
-  const headerText = exMarkdown.formatText(definition?.languages?.[lang]?.header_text ?? '', { string: true, removeParagraph: true })
-
-  header.innerHTML = headerText
-  if (headerText !== '') {
+  header.innerHTML = exMarkdown.formatText(definition?.languages?.[lang]?.header_text ?? '', { string: true, removeParagraph: true })
+  if (header.innerHTML !== '') {
     root.style.setProperty('--header-height', 'calc(7.5 * var(--base-unit))')
     textFit(header, { maxFontSize: 1000 })
   } else {

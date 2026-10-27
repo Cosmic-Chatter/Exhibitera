@@ -163,28 +163,30 @@ function createKeyValueHTML (key = '', value = '') {
 
   const uuid = exUtilities.uuid()
 
-  const html = `
-  <div id="keyValue_${uuid}" data-uuid="${uuid}" class="keyValuePair col-12">
+  keyList.insertAdjacentHTML('beforebegin', `
+  <div id="keyValue_{id}" data-uuid="{id}" class="keyValuePair col-12">
     <div class="row align-items-center">
       <div class="col-12 col-md-5">
         <div class="form-floating mb-3">
-          <input id="key_${uuid}" type="text" class="form-control keyValueInput" placeholder="" value="${key}">
-          <label for="key_${uuid}">Key</label>
+          <input id="key_{id}" type="text" class="form-control keyValueInput" placeholder="">
+          <label for="key_{id}">Key</label>
         </div>
       </div>
       <div class="col-12 col-md-5">
         <div class="form-floating mb-3">
-          <input id="value_${uuid}" type="text" class="form-control keyValueInput" placeholder="" value="${value}">
-          <label for="value_${uuid}">Value</label>
+          <input id="value_{id}" type="text" class="form-control keyValueInput" placeholder="">
+          <label for="value_{id}">Value</label>
         </div>
       </div>
       <div class="col-12 col-md-2 col-xxl-1">
-        <button id="deleteButton_${uuid}" data-uuid="${uuid}"  class="btn btn-danger w-100 mb-3 keyValue-delete">X</button>
+        <button id="deleteButton_{id}" data-uuid="{id}"  class="btn btn-danger w-100 mb-3 keyValue-delete">X</button>
       </div>
     </div>
   </div>
-  `
-  keyList.insertAdjacentHTML('beforebegin', html)
+  `)
+  exSetup.fillTemplateIDs(keyList.previousElementSibling, uuid)
+  document.getElementById('key_' + uuid).value = key
+  document.getElementById('value_' + uuid).value = value
 }
 
 function rebuildPropertyDict () {

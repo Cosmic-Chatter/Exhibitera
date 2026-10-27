@@ -36,7 +36,7 @@ exCommon.askForDefaults()
       // Using Hub
       document.getElementById('standaloneWelcome').style.display = 'none'
       document.getElementById('hubWelcome').style.display = 'block'
-      document.getElementById('hubAddress').innerHTML = exCommon.config.serverAddress
+      document.getElementById('hubAddress').textContent = exCommon.config.serverAddress
 
       exCommon.sendPing()
       setInterval(exCommon.sendPing, 5000)

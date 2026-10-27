@@ -362,7 +362,7 @@ function rebuildTabs () {
     tabButton.setAttribute('data-bs-target', '#headerContent_' + code)
     tabButton.setAttribute('type', 'button')
     tabButton.setAttribute('role', 'tab')
-    tabButton.innerHTML = exLang.getLanguageDisplayName(code, true)
+    tabButton.textContent = exLang.getLanguageDisplayName(code, true)
     nav.appendChild(tabButton)
 
     // Create corresponding pane
@@ -458,46 +458,45 @@ function createInfoStationTabGUI (item) {
   const def = exSetup.config.workingDefinition
   const infoTabs = document.getElementById('infoTabs')
 
-  const html = `
+  infoTabs.insertAdjacentHTML('beforeend', `
       <div class="accordion-item">
         <h2 class="accordion-header">
           <div
             class="accordion-button d-flex justify-content-between align-items-center collapsed"
             style="cursor: pointer;"
             data-bs-toggle="collapse"
-            data-bs-target="#${item.uuid}_accordion"
+            data-bs-target="#{id}_accordion"
             aria-expanded="false"
-            aria-controls="${item.uuid}_accordion"
+            aria-controls="{id}_accordion"
           >
-            <span class='flex-grow-1' id="${item.uuid}_accordionName">
-            ${exMarkdown.formatText(def.languages?.[def.language_order[0]]?.tabs?.[item.uuid]?.button_text ?? '', { string: true, removeParagraph: true })}
+            <span class='flex-grow-1' id="{id}_accordionName">
             </span>
           </div>
         </h2>
-        <div id="${item.uuid}_accordion" class="accordion-collapse collapse " data-bs-parent="#infoTabs">
+        <div id="{id}_accordion" class="accordion-collapse collapse " data-bs-parent="#infoTabs">
           <div class="accordion-body">
             <div class="d-flex">
               <button
-              id="${item.uuid}_accordion_moveUpButton"
+              id="{id}_accordion_moveUpButton"
               type="button"
               class="btn btn-sm btn-outline-info"
               >
               ▲
               </button>
               <button
-                id="${item.uuid}_accordion_moveDownButton"
+                id="{id}_accordion_moveDownButton"
                 type="button"
                 class="btn btn-sm btn-outline-info ms-1"
               >
               ▼
               </button>
               <button
-                id="${item.uuid}_accordion_deleteButton"
+                id="{id}_accordion_deleteButton"
                 type="button"
                 class="btn btn-sm btn-outline-danger ms-auto"
                 data-bs-toggle="popover"
                 title="Are you sure?"
-                data-bs-content="<a id='deleteTab_${item.uuid}' class='btn btn-danger w-100 tab-delete' data-uuid='${item.uuid}'>Confirm</a>"
+                data-bs-content="<a id='deleteTab_{id}' class='btn btn-danger w-100 tab-delete' data-uuid='{id}'>Confirm</a>"
                 data-bs-trigger="focus"
                 data-bs-html="true"
               >
@@ -507,15 +506,16 @@ function createInfoStationTabGUI (item) {
             <hr>
             
             <nav class="mt-3">
-              <div id="${item.uuid}_accordion_tabs" class="nav nav-tabs" role="tablist">
+              <div id="{id}_accordion_tabs" class="nav nav-tabs" role="tablist">
               </div>
             </nav>
-            <div class="tab-content" id="${item.uuid}_accordion_content">
+            <div class="tab-content" id="{id}_accordion_content">
           </div>
         </div>
       </div>
-    `
-  infoTabs.insertAdjacentHTML('beforeend', html)
+    `)
+  exSetup.fillTemplateIDs(infoTabs.lastElementChild, item.uuid)
+  document.getElementById(item.uuid + '_accordionName').innerHTML = exMarkdown.formatText(def.languages?.[def.language_order[0]]?.tabs?.[item.uuid]?.button_text ?? '', { string: true, removeParagraph: true })
   document.getElementById(item.uuid + '_accordion_moveUpButton').addEventListener('click', (ev) => {
     changeItemOrder(item.uuid, 'up')
   })
@@ -541,7 +541,7 @@ function createInfoStationTabGUI (item) {
     tabButton.setAttribute('data-bs-target', '#' + item.uuid + '_accordion_contentPane_' + code)
     tabButton.setAttribute('type', 'button')
     tabButton.setAttribute('role', 'tab')
-    tabButton.innerHTML = exLang.getLanguageDisplayName(code, true)
+    tabButton.textContent = exLang.getLanguageDisplayName(code, true)
     nav.appendChild(tabButton)
 
     // Create corresponding pane
@@ -721,7 +721,7 @@ document.getElementById('attractorSelect').addEventListener('click', (event) => 
   exFileSelect.createFileSelectionModal({ filetypes: ['image', 'video'], multiple: false })
     .then((files) => {
       if (files.length === 1) {
-        event.target.innerHTML = files[0]
+        event.target.textContent = files[0]
         event.target.setAttribute('data-filename', files[0])
         onAttractorFileChange()
       }

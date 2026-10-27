@@ -153,7 +153,10 @@ function createNotificationHTML (notification, componentName) {
 
   const li = document.createElement('li')
   li.classList = 'dropdown-item'
-  li.innerHTML = `<button class="btn btn-block ${colorClass}">${componentName}: ${notification.message}</button>`
+  const button = document.createElement('button')
+  button.classList = 'btn btn-block ' + colorClass
+  button.textContent = componentName + ': ' + notification.message
+  li.appendChild(button)
 
   return li
 }

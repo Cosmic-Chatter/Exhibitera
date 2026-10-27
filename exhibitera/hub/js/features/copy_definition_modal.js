@@ -61,10 +61,19 @@ export async function showCopyDefinitionModal (componentUUID, definitionUUID, de
     for (const file of content) {
       const li = document.createElement('li')
       li.classList.add('mb-1')
-      li.innerHTML = `
-      <span class="file-status ms-2" data-filename="${file.name}"></span>
-    ${file.name} <span class="text-muted small">(${file.size_text})</span>
-  `
+
+      const status = document.createElement('span')
+      status.classList = 'file-status ms-2'
+      status.dataset.filename = file.name
+      li.appendChild(status)
+
+      li.append(' ' + file.name + ' ')
+
+      const size = document.createElement('span')
+      size.classList = 'text-muted small'
+      size.textContent = '(' + file.size_text + ')'
+      li.appendChild(size)
+
       fileList.appendChild(li)
     }
 
@@ -95,7 +104,7 @@ export async function showCopyDefinitionModal (componentUUID, definitionUUID, de
     if (compsToShow.length === 0) continue
 
     const label = document.createElement('label')
-    label.innerHTML = hubTools.getGroup(group)?.name ?? group
+    label.textContent = hubTools.getGroup(group)?.name ?? group
     label.classList = 'text-secondary'
     destDiv.appendChild(label)
 
@@ -155,8 +164,20 @@ function copyDefinitionModalCreateDestinationHTML (component, group, def, conten
   spinner.setAttribute('role', 'status')
   badgeContainer.appendChild(spinner)
 
-  badgeContainer.insertAdjacentHTML('beforeend', `<span data-uuid="${component.uuid}" class="ms-2 badge text-bg-success copy-success" style="display:none; font-size: 0.55em">Copied</span>`)
-  badgeContainer.insertAdjacentHTML('beforeend', `<span data-uuid="${component.uuid}" class="ms-2 badge text-bg-danger copy-fail" style="display:none;">Error</span>`)
+  const successBadge = document.createElement('span')
+  successBadge.dataset.uuid = component.uuid
+  successBadge.classList = 'ms-2 badge text-bg-success copy-success'
+  successBadge.style.display = 'none'
+  successBadge.style.fontSize = '0.55em'
+  successBadge.textContent = 'Copied'
+  badgeContainer.appendChild(successBadge)
+
+  const failBadge = document.createElement('span')
+  failBadge.dataset.uuid = component.uuid
+  failBadge.classList = 'ms-2 badge text-bg-danger copy-fail'
+  failBadge.style.display = 'none'
+  failBadge.textContent = 'Error'
+  badgeContainer.appendChild(failBadge)
 
   label.appendChild(badgeContainer)
   checkGroup.appendChild(label)
@@ -180,7 +201,14 @@ async function checkDestinationStatus (component, badgeContainer, spinner, input
     if (contentResponse.content) {
       for (const file of content) {
         if (contentResponse.content.includes(file.name)) {
-          badgeContainer.insertAdjacentHTML('beforeend', `<span class="badge bg-warning ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="${file.name} already exists here and will be overwritten." style="font-size: 0.55em;">!</span>`)
+          const warning = document.createElement('span')
+          warning.classList = 'badge bg-warning ms-1 align-middle'
+          warning.dataset.bsToggle = 'tooltip'
+          warning.dataset.bsPlacement = 'top'
+          warning.title = file.name + ' already exists here and will be overwritten.'
+          warning.style.fontSize = '0.55em'
+          warning.textContent = '!'
+          badgeContainer.appendChild(warning)
           tooltipAdded = true
         }
       }
@@ -232,7 +260,7 @@ function copyDefinitionModalCreateSourceHTML (filename, sizeText, isDefinition =
 
   const size = document.createElement('div')
   size.classList = 'col-4'
-  size.innerHTML = sizeText
+  size.textContent = sizeText
   row.appendChild(size)
 
   return col
@@ -301,7 +329,7 @@ export async function copyDefinitionModalPerformCopy () {
     completedBytes += bytes
     const percent = Math.min(Math.round((completedBytes / totalBytes) * 100), 100)
     progressBar.style.width = percent + '%'
-    progressBar.innerHTML = percent + '%'
+    progressBar.textContent = percent + '%'
   }
 
   const totalDests = uniqueDestinations.size
@@ -366,7 +394,7 @@ export async function copyDefinitionModalPerformCopy () {
           if (statusIcon) {
             const prog = fileProgress[file.name]
             if (prog.success + prog.error === totalDests) {
-              statusIcon.innerHTML = prog.error > 0 ? '⚠️' : '✅'
+              statusIcon.textContent = prog.error > 0 ? '⚠️' : '✅'
             }
           }
         }
