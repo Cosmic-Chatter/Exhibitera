@@ -20,8 +20,8 @@ import exhibitera.common.utilities as ex_utilities
 import exhibitera.hub.config as hub_config
 import exhibitera.hub.features.components as hub_components
 
-password_hasher = argon2.PasswordHasher(time_cost=1,
-                                        memory_cost=1024,
+password_hasher = argon2.PasswordHasher(time_cost=2,
+                                        memory_cost=19 * 1024,  # 19 MiB
                                         parallelism=1,
                                         hash_len=24,
                                         type=argon2.Type.ID)
@@ -80,6 +80,8 @@ class User:
         try:
             result = password_hasher.verify(self.password_hash, password)
             self.update_last_activity()
+            if password_hasher.check_needs_rehash(self.password_hash):
+                set_password(self, password)
         except (argon2.exceptions.VerificationError, argon2.exceptions.InvalidHashError):
             result = False
             if not password_hash_valid(self.password_hash):
@@ -284,9 +286,13 @@ def decrypt_token(token: str) -> tuple[str, str | None]:
 def create_root_admin(password: str):
     """Create the root admin by saving a hashed password to disk. """
 
-    path = ex_files.get_path(["configuration", "root_admin.txt"], user_file=True)
+    save_root_admin_hash(hash_password(password))
 
-    password_hash = hash_password(password)
+
+def save_root_admin_hash(password_hash: str):
+    """Save the given password hash for the root admin."""
+
+    path = ex_files.get_path(["configuration", "root_admin.txt"], user_file=True)
 
     with hub_config.galleryConfigurationLock:
         # Replace the file in one step, so an interruption can't leave the admin locked out
@@ -701,10 +707,19 @@ def get_admin():
 
 
 def hash_password(password: str) -> str:
-    """Return the argon2 hash of the given password"""
+    """Return the argon2 hash of the given password, with a random salt"""
 
-    return password_hasher.hash(bytes(password, 'UTF-8'),
-                                salt=bytes("Constellation", "UTF-8"))
+    return password_hasher.hash(bytes(password, 'UTF-8'))
+
+
+def set_password(user: User, password: str):
+    """Hash the given password for the user and save it."""
+
+    user.password_hash = hash_password(password)
+    if user.uuid == "admin":
+        save_root_admin_hash(user.password_hash)
+    else:
+        save_users()
 
 
 def refresh_display_name_cache():

@@ -151,15 +151,11 @@ def change_user_password_v6(user_uuid: str,
     user = hub_users.get_user(uuid_str=user_uuid)
 
     # First, check that the current password is correct
-    if hub_users.hash_password(current_password) != user.password_hash:
+    if user is None or not user.authenticate(current_password):
         return {"success": False, "reason": "authentication_failed"}
 
     # Then, update the password
-    if user.uuid != "admin":
-        user.password_hash = hub_users.hash_password(new_password)
-        hub_users.save_users()
-    else:
-        hub_users.create_root_admin(new_password)
+    hub_users.set_password(user, new_password)
 
     return {"success": True}
 
