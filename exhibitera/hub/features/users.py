@@ -13,6 +13,9 @@ import uuid
 import argon2
 from cryptography.fernet import Fernet, InvalidToken
 from fastapi import Request
+from starlette.datastructures import MutableHeaders
+from starlette.responses import Response
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 # Exhibitera modules
 import exhibitera.common.files as ex_files
@@ -36,7 +39,8 @@ class User:
                  password_hash: str,
                  permissions_dict: dict | None = None,
                  preferences_dict: dict | None = None,
-                 uuid_str: str = ""):
+                 uuid_str: str = "",
+                 token_version: int = 0):
         """Create a new User"""
 
         if permissions_dict is None:
@@ -68,6 +72,8 @@ class User:
         self.permissions = permissions_dict
         self.preferences = preferences_dict
         self.last_activity = datetime.datetime.now().isoformat()
+        # Login tokens record the version they were made with. Increasing it revokes them all.
+        self.token_version = token_version
 
         if uuid_str == "":
             self.uuid = str(uuid.uuid4())
@@ -81,7 +87,7 @@ class User:
             result = password_hasher.verify(self.password_hash, password)
             self.update_last_activity()
             if password_hasher.check_needs_rehash(self.password_hash):
-                set_password(self, password)
+                set_password(self, password, revoke_tokens=False)
         except (argon2.exceptions.VerificationError, argon2.exceptions.InvalidHashError):
             result = False
             if not password_hash_valid(self.password_hash):
@@ -162,6 +168,7 @@ class User:
         }
         if not omit_password:
             this_dict["password_hash"] = self.password_hash
+            this_dict["token_version"] = self.token_version
 
         return this_dict
 
@@ -239,8 +246,12 @@ def redeem_login_handoff(code: str) -> str | None:
     return user_uuid
 
 
-# Seconds that an Apps login token remains valid
-APPS_TOKEN_LIFETIME = 7 * 24 * 60 * 60 # 7 days
+# Seconds that a login token remains valid
+FULL_TOKEN_LIFETIME = 30 * 24 * 60 * 60  # 30 days
+APPS_TOKEN_LIFETIME = 7 * 24 * 60 * 60  # 7 days
+
+# Seconds before Hub gives a page using the login cookie a fresh token, so regular users stay logged in
+TOKEN_RENEWAL_AGE = 24 * 60 * 60  # 1 day
 
 
 def encrypt_token(uuid_str: str, scope: str | None = None) -> str:
@@ -248,21 +259,23 @@ def encrypt_token(uuid_str: str, scope: str | None = None) -> str:
 
     Pass scope="apps" for the limited token that Apps pages get. Apps can't keep a token as safe as
     Hub's own pages can, so it only works where authenticate_user() is told to accept it, and it expires
-    after APPS_TOKEN_LIFETIME.
+    after APPS_TOKEN_LIFETIME. A full token expires after FULL_TOKEN_LIFETIME.
+
+    The token records the user's current token_version, so it stops working when that changes.
     """
 
-    if scope is None:
-        payload = uuid_str
-    else:
-        payload = json.dumps({"user": uuid_str, "scope": scope})
+    user = get_user(uuid_str=uuid_str)
+    contents = {"user": uuid_str, "version": user.token_version if user is not None else 0}
+    if scope is not None:
+        contents["scope"] = scope
 
     f = Fernet(get_encryption_key())
-    token = f.encrypt(bytes(payload, 'UTF-8'))
+    token = f.encrypt(bytes(json.dumps(contents), 'UTF-8'))
     return str(token, 'UTF-8')
 
 
-def decrypt_token(token: str) -> tuple[str, str | None]:
-    """Decrypt a token and return the uuid and the token's scope, or None for a full token.
+def decrypt_token(token: str) -> tuple[str, str | None, int]:
+    """Decrypt a token and return the uuid, the scope (None for a full token), and the token version.
 
     Raises InvalidToken if the token is damaged or has expired.
     """
@@ -270,23 +283,128 @@ def decrypt_token(token: str) -> tuple[str, str | None]:
     f = Fernet(get_encryption_key())
     payload = str(f.decrypt(token), 'UTF-8')
 
-    # A full token is just the uuid
     try:
         contents = json.loads(payload)
     except json.JSONDecodeError:
-        return payload, None
+        contents = None
     if not isinstance(contents, dict):
-        return payload, None
+        # Tokens made before token versions were just the uuid
+        contents = {"user": payload}
 
-    if f.extract_timestamp(token) + APPS_TOKEN_LIFETIME < time.time():
+    scope = contents.get("scope", None)
+    lifetime = FULL_TOKEN_LIFETIME if scope is None else APPS_TOKEN_LIFETIME
+    if f.extract_timestamp(token) + lifetime < time.time():
         raise InvalidToken
-    return contents["user"], contents["scope"]
+    return contents["user"], scope, contents.get("version", 0)
+
+
+def token_age(token: str) -> float:
+    """Return the number of seconds since the token was made."""
+
+    return time.time() - Fernet(get_encryption_key()).extract_timestamp(token)
+
+
+def user_for_token(token: str, scope: str | None = None) -> User | None:
+    """Return the user the token belongs to, or None if it isn't valid.
+
+    Full tokens are always accepted. A limited token is only accepted when `scope` matches it.
+    """
+
+    try:
+        user_uuid, token_scope, version = decrypt_token(token)
+    except InvalidToken:
+        return None
+    if token_scope not in (None, scope):
+        return None
+    user = get_user(uuid_str=user_uuid)
+    if user is None or version != user.token_version:
+        return None
+    return user
+
+
+def set_login_cookie(response: Response, token: str):
+    """Give the browser the login cookie for Hub's pages."""
+
+    # HttpOnly, so that injected script can't read it, and SameSite, so that other websites can't
+    # make requests with it
+    response.set_cookie(key="authToken", value=token, max_age=FULL_TOKEN_LIFETIME,
+                        httponly=True, samesite="lax")
+
+
+class RenewLoginMiddleware:
+    """Give a page using a login cookie more than a day old a fresh one, so active users stay logged in.
+
+    This is plain ASGI middleware, rather than Starlette's BaseHTTPMiddleware, so that streaming
+    responses (like Hub's update stream) still notice when a browser disconnects.
+    """
+
+    def __init__(self, app: ASGIApp):
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        token = Request(scope).cookies.get("authToken", "")
+
+        async def send_with_renewal(message: Message) -> None:
+            if message["type"] == "http.response.start" and token != "":
+                headers = MutableHeaders(scope=message)
+                # Don't override a response that sets or removes the cookie itself, such as logging out
+                sets_cookie = any(value.startswith("authToken=") for value in headers.getlist("set-cookie"))
+                if not sets_cookie:
+                    renewal = renewed_login_cookie(token)
+                    if renewal is not None:
+                        headers.append("set-cookie", renewal)
+            await send(message)
+
+        await self.app(scope, receive, send_with_renewal)
+
+
+def renewed_login_cookie(token: str) -> str | None:
+    """Return a Set-Cookie header with a fresh token, if the given token is valid and due for renewal."""
+
+    try:
+        user_uuid, token_scope, _ = decrypt_token(token)
+    except InvalidToken:
+        return None
+    if token_scope is not None or token_age(token) < TOKEN_RENEWAL_AGE:
+        return None
+    if user_for_token(token) is None:
+        return None
+
+    response = Response()
+    set_login_cookie(response, encrypt_token(user_uuid))
+    return response.headers["set-cookie"]
 
 
 def create_root_admin(password: str):
-    """Create the root admin by saving a hashed password to disk. """
+    """Create the root admin by saving a hashed password to disk, revoking any existing admin logins."""
 
+    admin_path = ex_files.get_path(["configuration", "root_admin.txt"], user_file=True)
+    if os.path.exists(admin_path):
+        save_root_admin_token_version(load_root_admin_token_version() + 1)
     save_root_admin_hash(hash_password(password))
+
+
+def load_root_admin_token_version() -> int:
+    """Return the root admin's token version, which is kept beside root_admin.txt."""
+
+    path = ex_files.get_path(["configuration", "root_admin_token_version.txt"], user_file=True)
+    try:
+        with open(path, 'r', encoding='UTF-8') as f:
+            return int(f.read().strip())
+    except (FileNotFoundError, ValueError):
+        return 0
+
+
+def save_root_admin_token_version(version: int):
+    """Save the root admin's token version."""
+
+    path = ex_files.get_path(["configuration", "root_admin_token_version.txt"], user_file=True)
+    with hub_config.galleryConfigurationLock:
+        ex_files.replace_file_contents(path, str(version))
 
 
 def save_root_admin_hash(password_hash: str):
@@ -432,7 +550,8 @@ def load_users():
                                          user["password_hash"],
                                          permissions_dict=user["permissions"],
                                          preferences_dict=user.get("preferences", None),
-                                         uuid_str=user["uuid"])
+                                         uuid_str=user["uuid"],
+                                         token_version=user.get("token_version", 0))
                                     )
 
 
@@ -546,15 +665,11 @@ def authenticate_user(token: str = "",
         return False, ""
 
     if token != "":
-        try:
-            user_uuid, token_scope = decrypt_token(token)
-            user = get_user(uuid_str=user_uuid) if token_scope in (None, scope) else None
-        except InvalidToken:
-            user = None
+        user = user_for_token(token, scope=scope)
         if user is None:
             return False, ""
         user.update_last_activity()
-        return True, user_uuid
+        return True, user.uuid
 
     username, password = credentials
     user = get_user(username=username)
@@ -703,7 +818,7 @@ def get_admin():
         "schedule": "edit",
         "settings": "edit",
         "users": "edit"
-    }, uuid_str='admin')
+    }, uuid_str='admin', token_version=load_root_admin_token_version())
 
 
 def hash_password(password: str) -> str:
@@ -712,12 +827,19 @@ def hash_password(password: str) -> str:
     return password_hasher.hash(bytes(password, 'UTF-8'))
 
 
-def set_password(user: User, password: str):
-    """Hash the given password for the user and save it."""
+def set_password(user: User, password: str, revoke_tokens: bool = True):
+    """Hash the given password for the user and save it.
+
+    Unless revoke_tokens is False, the user's existing logins stop working, including on other computers.
+    """
 
     user.password_hash = hash_password(password)
+    if revoke_tokens:
+        user.token_version += 1
     if user.uuid == "admin":
         save_root_admin_hash(user.password_hash)
+        if revoke_tokens:
+            save_root_admin_token_version(user.token_version)
     else:
         save_users()
 

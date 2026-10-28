@@ -5,7 +5,6 @@ from typing import Any
 from fastapi import APIRouter, Body, Depends, Request, Response
 
 # Exhibitera modules
-import exhibitera.common.config as ex_config
 import exhibitera.common.utilities as ex_utilities
 import exhibitera.hub.config as hub_config
 import exhibitera.hub.features.users as hub_users
@@ -73,12 +72,7 @@ def respond_to_login(response: Response,
             response_dict["authToken"] = hub_users.encrypt_token(user_uuid, scope="apps")
     elif token == "":
         token = hub_users.encrypt_token(user_uuid)
-        if ex_config.debug:
-            print(token)
-        # HttpOnly, so that injected script can't read it, and SameSite, so that other websites can't
-        # make requests with it
-        response.set_cookie(key="authToken", value=token, max_age=int(3e7),  # Expire cookie in approx 1 yr
-                            httponly=True, samesite="lax")
+        hub_users.set_login_cookie(response, token)
         response_dict['authToken'] = token
     return response_dict
 
@@ -142,7 +136,8 @@ def edit_user(
     if display_name is not None:
         user.display_name = display_name
     if password is not None:
-        user.password_hash = hub_users.hash_password(password)
+        # Also logs the user out everywhere
+        hub_users.set_password(user, password)
     if permissions is not None:
         user.permissions = permissions
     hub_users.save_users()

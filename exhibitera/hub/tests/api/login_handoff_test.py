@@ -91,10 +91,10 @@ def test_redeemed_token_can_change_the_users_own_password(client, add_user):
     assert response.json() == {"success": True}
 
 
-def log_in_after(client, token, seconds, monkeypatch, prefix="/external/v6.1"):
+def log_in_after(client, token, seconds, monkeypatch):
     later = hub_users.time.time() + seconds
     monkeypatch.setattr(hub_users.time, "time", lambda: later)
-    return client().post(f"{prefix}/user/login", json={"token": token}).json()
+    return client().post("/external/v6.1/user/login", json={"token": token}).json()
 
 
 def test_redeemed_token_works_for_seven_days(client, add_user, monkeypatch):
@@ -116,13 +116,6 @@ def test_redeeming_does_not_set_hubs_cookie(client, add_user):
     response = client().post("/external/v6.1/user/login", json={"handoff": code})
 
     assert "authToken" not in response.cookies
-
-
-def test_full_tokens_do_not_expire(client, add_user, monkeypatch):
-    token = add_user("staff")
-
-    # Full tokens are for Hub's own pages
-    assert log_in_after(client, token, 365 * 24 * 60 * 60, monkeypatch, prefix="/internal")["success"] is True
 
 
 def test_code_can_only_be_used_once(client, add_user):

@@ -178,6 +178,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.add_middleware(RevalidatePagesMiddleware)
+app.add_middleware(hub_users.RenewLoginMiddleware)
 app.openapi = exhibitera_schema
 
 
