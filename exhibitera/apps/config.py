@@ -27,7 +27,7 @@ dmx_active: bool = False
 smart_restart: dict[str: Any] = {
     "mode": "patient",  # off | aggressive | patient
     "interval": 60,  # seconds between pings of the server
-    "last_contact_datetime": datetime.datetime(year=3000, month=1, day=1),
+    "last_contact_datetime": None,  # None until Hub is first reached
     "threshold": 3600,  # seconds since last_contact_datetime
     "active_hours_start": "6 am",
     "active_hours_end": "10 pm",

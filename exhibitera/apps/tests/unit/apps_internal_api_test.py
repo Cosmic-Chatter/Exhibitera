@@ -93,3 +93,18 @@ def test_pages_talk_to_the_server_that_served_them():
     config = re.search(r"export const config = \{(.*?)\n\}", source("apps/js/exhibitera_app_common.js"), re.S)
 
     assert re.search(r"^\s*helperAddress: window\.location\.origin,", config.group(1), re.M)
+
+
+def test_show_window_takes_its_options_only_from_the_body(monkeypatch):
+    from fastapi.testclient import TestClient
+    import exhibitera.apps.features.apps_webview as apps_webview
+
+    route = [r for r in apps.app.routes if isinstance(r, APIRoute) and r.path == "/app/showWindow/{window}"][0]
+    assert [p.name for p in route.dependant.query_params] == []
+
+    shown = []
+    monkeypatch.setattr(apps_webview, "show_webview_window", lambda window, **kwargs: shown.append((window, kwargs)))
+    response = TestClient(apps.app).post("/app/showWindow/setup", json={"parameters": {"a": "1"}, "reload": True})
+
+    assert response.status_code == 200
+    assert shown == [("setup", {"parameters": {"a": "1"}, "reload": True})]

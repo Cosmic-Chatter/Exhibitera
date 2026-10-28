@@ -243,51 +243,6 @@ def queue_json_schedule(schedule: dict) -> None:
         hub_config.schedule_timers = new_timers
 
 
-def convert_schedule_to_csv(schedule_name: str) -> tuple[bool, str]:
-    """Convert the given schedule to a comma-separated values string."""
-
-    success, schedule = load_json_schedule(schedule_name)
-    if success is False:
-        return False, ''
-
-    # Convert the dict of dicts to a list of dicts
-    dict_list = []
-    for key in list(schedule.keys()):
-        # Create dict with only the keys we want
-        sub_dict = {
-            "time": schedule[key].get("time", "7 AM"),
-            "action": schedule[key].get("action", ""),
-            "target": schedule[key].get("target", ""),
-            "value": schedule[key].get("value", ""),
-        }
-        # Convert list entries into comma-separated strings
-        for entry in ["target", "value"]:
-            if isinstance(sub_dict[entry], list):
-                string = ""
-                length = len(sub_dict[entry])
-                if length == 0:
-                    pass
-                elif length == 1:
-                    string = sub_dict[entry][0]
-                else:
-                    for item in sub_dict[entry]:
-                        string += item + ","
-                    # Remove the trailing comma
-                    string = string[:-1]
-                sub_dict[entry] = string
-        dict_list.append(sub_dict)
-
-    try:
-        output = io.StringIO()
-        writer = csv.DictWriter(output, ["time", "action", "target", "value"])
-        writer.writeheader()
-        writer.writerows(dict_list)
-    except csv.Error:
-        return False, ""
-
-    return True, output.getvalue()
-
-
 def get_all_schedule_names_to_check() -> list[str]:
     """Return the filenames (without extension) of every schedule that is current or could occur in the future.
     """

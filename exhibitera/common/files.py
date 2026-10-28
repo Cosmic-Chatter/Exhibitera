@@ -127,6 +127,21 @@ def create_csv(file_path: str | os.PathLike, filename: str = "") -> str:
     return json_list_to_csv(dict_list, filename=filename)
 
 
+# Spreadsheet apps treat a cell starting with one of these as a formula
+FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
+
+
+def escape_csv_cell(value):
+    """Return the value with a leading ' if a spreadsheet app would otherwise treat it as a formula.
+
+    Exported data can include text typed by visitors, which mustn't run when staff open the file.
+    """
+
+    if isinstance(value, str) and value.startswith(FORMULA_PREFIXES):
+        return "'" + value
+    return value
+
+
 def json_list_to_csv(dict_list: list, filename: str = "") -> str:
     """Convert a list JSON dicts to a comma-separated string"""
 
@@ -152,10 +167,10 @@ def json_list_to_csv(dict_list: list, filename: str = "") -> str:
                 value_to_write = this_dict[key]
                 if isinstance(value_to_write, str):
                     value_to_write = value_to_write.replace("\n", " ")
-                new_dict[key] = value_to_write
+                new_dict[escape_csv_cell(key)] = escape_csv_cell(value_to_write)
             else:
                 for sub_key in all_keys[key]:
-                    new_dict[key + " - " + sub_key] = sub_key in this_dict[key]
+                    new_dict[escape_csv_cell(key + " - " + sub_key)] = sub_key in this_dict[key]
         reformed_dict_list.append(new_dict)
 
     # Build the CSV, optionally write it to disk, and then return it

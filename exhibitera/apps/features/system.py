@@ -122,6 +122,9 @@ def smart_restart_check():
 
     if not error:
         apps_config.smart_restart["last_contact_datetime"] = datetime.datetime.now()
+    elif apps_config.smart_restart["last_contact_datetime"] is None:
+        # A restart won't help a computer that has never been connected
+        logging.warning("Smart Restart: connection check to %s failed. Have not reached Hub since Apps started, so not restarting.", server_address)
     else:
         # Connection check failed, so let's see how long it has been
         sec_since_last_contact = (datetime.datetime.now() - apps_config.smart_restart["last_contact_datetime"]).total_seconds()
