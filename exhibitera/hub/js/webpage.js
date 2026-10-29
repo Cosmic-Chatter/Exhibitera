@@ -23,7 +23,7 @@ function parseUpdate (update) {
   if (update?.gallery) {
     hubConfig.currentExhibit = update.gallery.current_exhibit
     hubExhibit.updateAvailableExhibits(update.gallery.available_exhibits)
-    document.getElementById('exhibitNameField').textContent = hubTools.getExhibit(update.gallery.current_exhibit).name
+    document.getElementById('exhibitNameField').textContent = hubTools.getExhibitName(update.gallery.current_exhibit)
 
     if (update.gallery?.name) {
       document.getElementById('galleryNameField').textContent = update.gallery.name

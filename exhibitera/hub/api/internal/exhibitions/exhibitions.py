@@ -79,8 +79,10 @@ async def delete_exhibition(
 async def set_exhibition(uuid_str: str):
     """Set the specified exhibition as the current one."""
 
-    hub_tools.update_system_configuration({"current_exhibit": uuid_str})
+    # Only save it as current once it has loaded, so a missing exhibition can't become the current one
     success, reason = hub_exhibitions.load_exhibition(uuid_str)
+    if success:
+        hub_tools.update_system_configuration({"current_exhibit": uuid_str})
     return {"success": success, "reason": reason}
 
 
