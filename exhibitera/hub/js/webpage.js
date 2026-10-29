@@ -54,7 +54,8 @@ function parseUpdate (update) {
 
       hubNotifications.rebuildNotificationList()
     }
-    if (update.gallery?.exhibit_modified ?? false) {
+    // Seeing the changes needs permission to view exhibits
+    if ((update.gallery?.exhibit_modified ?? false) && hubTools.checkPermission('exhibits', 'view')) {
       document.getElementById('exhibitModifiedButton').style.display = 'block'
     } else {
       document.getElementById('exhibitModifiedButton').style.display = 'none'

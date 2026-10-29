@@ -1542,6 +1542,10 @@ function _createAdvancedFontOption (menu, name, path, inputEl) {
   })
 }
 
+// The latest change to each font picker. Changes can overlap, such as when a picker is reset and then set to a
+// definition's font, and the font files are checked in the background, so an older change can finish last.
+const latestFontPickerChanges = new WeakMap()
+
 async function _onAdvancedFontPickerChange (el, saveChange = true) {
   // Process the change in an advanced font picker hidden input
 
@@ -1606,10 +1610,16 @@ async function _onAdvancedFontPickerChange (el, saveChange = true) {
   // Now populate any variable font axes
   if (!axesContainer) return
 
+  const change = {}
+  latestFontPickerChanges.set(el, change)
+
   axesContainer.innerHTML = '<small class="text-muted">Analyzing font...</small>'
 
   // Dynamically fetch the axes directly from the selected file
   const availableAxes = await getVariableFontAxes(fontDef.path)
+
+  // Only the latest change may show its sliders, or a slow check of an earlier font could replace them
+  if (latestFontPickerChanges.get(el) !== change) return
 
   axesContainer.innerHTML = '' // Clear loading text
 

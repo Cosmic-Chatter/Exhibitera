@@ -29,11 +29,16 @@ except ModuleNotFoundError:
 
 
 def get_available_definitions(app_id: str = "all") -> dict[str, Any]:
-    """Return all the *.json definition files that match the given app_id (or all of them)."""
+    """Return all the *.json definition files that match the given app_id (or all of them).
+
+    Previews saved by the setup pages (__preview_<app>.json) aren't real definitions, so they're skipped.
+    """
 
     all_def = glob.glob(ex_files.get_path(["definitions"], user_file=True) + "/*.json")
     to_return = {}
     for path in all_def:
+        if os.path.basename(path).startswith("__preview"):
+            continue
         json_def = ex_files.load_json(path)
         if json_def is not None:
             try:
