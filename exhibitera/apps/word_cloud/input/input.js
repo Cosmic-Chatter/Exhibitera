@@ -121,7 +121,6 @@ function loadDefinition (definition) {
     document.querySelector('.simple-keyboard').innerText = ''
     keyboard = new Keyboard({
       onChange: input => onChange(input),
-      onKeyPress: button => onKeyPress(button),
       layout: {
         default: [
           'Q W E R T Y U I O P',
@@ -224,12 +223,6 @@ function onInputFocus (event) {
     inputName: event.target.id
   })
 }
-function onInputChange (event) {
-  keyboard.setInput(event.target.value, event.target.id)
-}
-function onKeyPress (button) {
-  if (button === '{lock}' || button === '{shift}') handleShiftButton()
-}
 document.querySelector('#inputField').addEventListener('input', event => {
   keyboard?.setInput(event.target.value)
 })
@@ -245,7 +238,6 @@ exCommon.configureApp({
   parseUpdate: updateFunc
 })
 
-const currentDefintion = ''
 let collectionName = 'default'
 
 document.getElementById('clearButton').addEventListener('click', clear)

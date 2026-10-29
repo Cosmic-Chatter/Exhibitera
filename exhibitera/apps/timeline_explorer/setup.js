@@ -1,4 +1,4 @@
-/* global bootstrap, Coloris */
+/* global bootstrap */
 
 import * as exFiles from '../../common/files.js'
 import * as exUtilities from '../../common/utilities.js'
@@ -63,7 +63,7 @@ async function wizardForward (currentPage) {
         headerInput.setAttribute('id', 'wizardHeaderInput_' + lang)
         headerDiv.appendChild(headerInput)
 
-        const headerEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+        exMarkdown.createMarkdownEditor({
           content: '',
           editorDiv: headerInput,
           commandDiv: headerCommandBar,
@@ -365,7 +365,8 @@ function rebuildItemList () {
 
   for (const uuid of def.content_order) {
     const itemDef = def.content[uuid]
-    const itemLangDef = def.languages[defaultLang].content[uuid]
+    // A definition can have items but no languages, if its last language was deleted
+    const itemLangDef = def.languages?.[defaultLang]?.content?.[uuid]
 
     const col = document.createElement('div')
     col.classList = 'col'
@@ -598,7 +599,7 @@ function editItem (itemUUID) {
       const input = document.createElement('div')
       col.appendChild(input)
 
-      const editor = new exMarkdown.ExhibiteraMarkdownEditor({
+      exMarkdown.createMarkdownEditor({
         content: exSetup.config.workingDefinition.languages?.[code]?.content?.[itemUUID]?.[field] ?? '',
         editorDiv: input,
         commandDiv: commandBar,
@@ -629,7 +630,7 @@ function editItem (itemUUID) {
     col.appendChild(label)
 
     const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
-    const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+    tooltipTriggerList.forEach((el) => bootstrap.Tooltip.getOrCreateInstance(el))
 
     const importance = document.createElement('select')
     importance.classList = 'form-select'
@@ -747,7 +748,7 @@ function rebuildLanguageElements (langOrder) {
     const headerInput = document.createElement('div')
     headerCol.appendChild(headerInput)
 
-    const titleEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+    exMarkdown.createMarkdownEditor({
       content: exSetup.config.workingDefinition.languages?.[code]?.header_text ?? '',
       editorDiv: headerInput,
       commandDiv: headerCommandBar,
@@ -1036,7 +1037,7 @@ document.getElementById('clearItemsConfirmButton').addEventListener('click', () 
   exSetup.previewDefinition(true)
   exUtilities.hideModal('#clearItemsModal')
 })
-document.getElementById('addItemButton').addEventListener('click', addItem)
+document.getElementById('addItemButton').addEventListener('click', () => addItem())
 document.getElementById('addItemAfterCurrentButton').addEventListener('click', () => {
   const currentItem = document.getElementById('editPane').dataset.uuid
   addItem({}, currentItem)

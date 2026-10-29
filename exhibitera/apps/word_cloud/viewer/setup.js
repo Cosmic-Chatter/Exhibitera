@@ -1,4 +1,4 @@
-/* global Coloris WordCloud */
+/* global WordCloud */
 
 import * as exUtilities from '../../../common/utilities.js'
 import * as exCommon from '../../js/exhibitera_app_common.js'
@@ -187,7 +187,7 @@ async function clearDefinitionInput (full = true) {
   document.getElementById('refreshRateInput').value = 15
 
   // Content details
-  const editor = new exMarkdown.ExhibiteraMarkdownEditor({
+  exMarkdown.createMarkdownEditor({
     content: '',
     editorDiv: document.getElementById('promptInput'),
     commandDiv: document.getElementById('promptInputCommandBar'),
@@ -244,7 +244,7 @@ function editDefinition (uuid = '') {
   document.getElementById('refreshRateInput').value = def?.behavior?.refresh_rate ?? 15
 
   // Content
-  const editor = new exMarkdown.ExhibiteraMarkdownEditor({
+  exMarkdown.createMarkdownEditor({
     content: def?.content?.prompt ?? '',
     editorDiv: document.getElementById('promptInput'),
     commandDiv: document.getElementById('promptInputCommandBar'),

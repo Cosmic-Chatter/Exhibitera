@@ -291,7 +291,7 @@ async function clearDefinitionInput (full = true) {
 
   // Markdown fields
   for (const item of ['header', 'subheader', 'footer', 'subfooter']) {
-    const editor = new exMarkdown.ExhibiteraMarkdownEditor({
+    exMarkdown.createMarkdownEditor({
       content: '',
       editorDiv: document.getElementById(item + 'Input'),
       commandDiv: document.getElementById(item + 'InputCommandBar'),
@@ -303,7 +303,7 @@ async function clearDefinitionInput (full = true) {
     })
   }
 
-  const successEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+  exMarkdown.createMarkdownEditor({
     content: 'Thank you!',
     editorDiv: document.getElementById('success_messageInput'),
     commandDiv: document.getElementById('success_messageInputCommandBar'),
@@ -316,7 +316,7 @@ async function clearDefinitionInput (full = true) {
 
   // Reset option edit fields
   document.getElementById('optionRow').innerHTML = ''
-  const editor = new exMarkdown.ExhibiteraMarkdownEditor({
+  exMarkdown.createMarkdownEditor({
     content: '',
     editorDiv: document.getElementById('optionInput_label'),
     commandDiv: document.getElementById('optionInputCommandBar_label'),
@@ -374,7 +374,7 @@ function editDefinition (uuid = '') {
 
   // Markdown fields
   for (const item of ['header', 'subheader', 'footer', 'subfooter']) {
-    const editor = new exMarkdown.ExhibiteraMarkdownEditor({
+    exMarkdown.createMarkdownEditor({
       content: def?.text?.[item] ?? '',
       editorDiv: document.getElementById(item + 'Input'),
       commandDiv: document.getElementById(item + 'InputCommandBar'),
@@ -386,7 +386,7 @@ function editDefinition (uuid = '') {
     })
   }
 
-  const successEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+  exMarkdown.createMarkdownEditor({
     content: def?.text?.success_message ?? 'Thank you!',
     editorDiv: document.getElementById('success_messageInput'),
     commandDiv: document.getElementById('success_messageInputCommandBar'),
@@ -627,7 +627,7 @@ function populateOptionEditor (id) {
   document.getElementById('optionEditor').setAttribute('data-option-id', id)
 
   // Fill in the input fields
-  const editor = new exMarkdown.ExhibiteraMarkdownEditor({
+  exMarkdown.createMarkdownEditor({
     content: details?.label ?? '',
     editorDiv: document.getElementById('optionInput_label'),
     commandDiv: document.getElementById('optionInputCommandBar_label'),

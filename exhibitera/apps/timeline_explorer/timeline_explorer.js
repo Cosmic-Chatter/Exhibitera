@@ -351,7 +351,7 @@ timelinePane.addEventListener('scroll', () => {
 
 // Interrupt keyboard scroll if user touches the screen
 function interruptScroll () {
-  Object.keys(keys).forEach(k => keys[k] = false)
+  Object.keys(keys).forEach((k) => { keys[k] = false })
   isScrolling = false // Instantly kill the animation loop
 
   // Sync the target coordinates to the exact pixel the user touched
@@ -417,7 +417,7 @@ function scrollRenderLoop () {
 }
 
 document.addEventListener('keydown', (e) => {
-  if (keys.hasOwnProperty(e.key)) {
+  if (Object.hasOwn(keys, e.key)) {
     e.preventDefault() // Stop native jagged scroll
     keys[e.key] = true
 
@@ -433,14 +433,14 @@ document.addEventListener('keydown', (e) => {
 })
 
 document.addEventListener('keyup', (e) => {
-  if (keys.hasOwnProperty(e.key)) {
+  if (Object.hasOwn(keys, e.key)) {
     keys[e.key] = false
   }
 })
 
 // Stop scrolling if the window loses focus
 window.addEventListener('blur', () => {
-  Object.keys(keys).forEach(k => keys[k] = false)
+  Object.keys(keys).forEach((k) => { keys[k] = false })
 })
 
 // Attractor

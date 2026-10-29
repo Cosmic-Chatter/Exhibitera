@@ -373,7 +373,6 @@ let lastTouchX = null // X cordinate of the last touchmove event
 let currentClick = false
 let stopInput = false
 
-const currentDefintion = ''
 let continueAnimating = true // true when we are animating for the attractor
 let animationFramerate = 30
 let animationStepSize = 1

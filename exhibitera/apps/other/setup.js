@@ -265,11 +265,6 @@ async function checkCORS (url, wizard = false) {
   return success
 }
 
-function updateProperties () {
-  // When a change happens, rebuild the definition's properties dictionary
-
-}
-
 // Set helperAddress for calls to exCommon.makeHelperRequest
 exCommon.config.helperAddress = window.location.origin
 

@@ -357,9 +357,7 @@ function addItem (wizard = false) {
 
   if (workingDefinition.content_order.length > 7) {
     // We've reached the max number of items
-    if (wizard) {
-
-    } else {
+    if (!wizard) {
       document.getElementById('imagePairMaxNumberWarning').style.display = 'block'
     }
     return
@@ -701,7 +699,7 @@ function createItemLocalizationHTML (item, pane, itemNum) {
     const thisLangI = i
     const nameInput = document.createElement('div')
     nameCol.appendChild(nameInput)
-    const nameEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+    exMarkdown.createMarkdownEditor({
       content: item?.localization?.[code]?.name || '',
       editorDiv: nameInput,
       commandDiv: nameInputCommandBar,
@@ -742,7 +740,7 @@ function createItemLocalizationHTML (item, pane, itemNum) {
     const image1NameInput = document.createElement('div')
     image1NameCol.appendChild(image1NameInput)
 
-    const image1NameEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+    exMarkdown.createMarkdownEditor({
       content: item?.localization?.[code]?.image1_name || '',
       editorDiv: image1NameInput,
       commandDiv: image1CommandBar,
@@ -770,7 +768,7 @@ function createItemLocalizationHTML (item, pane, itemNum) {
     const image2NameInput = document.createElement('div')
     image2NameCol.appendChild(image2NameInput)
 
-    const image2NameEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+    exMarkdown.createMarkdownEditor({
       content: item?.localization?.[code]?.image1_name || '',
       editorDiv: image2NameInput,
       commandDiv: image2CommandBar,
@@ -798,7 +796,7 @@ function createItemLocalizationHTML (item, pane, itemNum) {
     const infoTitleInput = document.createElement('div')
     infoTitleCol.appendChild(infoTitleInput)
 
-    const titleEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+    exMarkdown.createMarkdownEditor({
       content: item?.localization?.[code]?.info_title || '',
       editorDiv: infoTitleInput,
       commandDiv: infoTitleCommandBar,
@@ -826,7 +824,7 @@ function createItemLocalizationHTML (item, pane, itemNum) {
     const infoBodyInput = document.createElement('div')
     infoBodyCol.appendChild(infoBodyInput)
 
-    const textEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+    exMarkdown.createMarkdownEditor({
       content: item?.localization?.[code]?.info_text || '',
       editorDiv: infoBodyInput,
       commandDiv: infoBodyCommandBar,
@@ -894,7 +892,7 @@ function createHomeTextLocalizationHTML (tabList = null, navContent = null) {
 
     const titleInput = document.createElement('div')
     titleCol.appendChild(titleInput)
-    const titleEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+    exMarkdown.createMarkdownEditor({
       content: def?.misc_text?.title?.localization?.[code] || '',
       editorDiv: titleInput,
       commandDiv: titleCommandBar,
@@ -919,7 +917,7 @@ function createHomeTextLocalizationHTML (tabList = null, navContent = null) {
 
     const subtitleInput = document.createElement('div')
     subtitleCol.appendChild(subtitleInput)
-    const subtitleEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+    exMarkdown.createMarkdownEditor({
       content: def?.misc_text?.subtitle?.localization?.[code] || '',
       editorDiv: subtitleInput,
       commandDiv: subtitleCommandBar,

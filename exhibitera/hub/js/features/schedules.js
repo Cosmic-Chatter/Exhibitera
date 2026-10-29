@@ -232,7 +232,7 @@ export function populateSchedule (schedule) {
       // Note: The event listener to detect is the delete button is clicked is defined in webpage.js
       deleteButton.addEventListener('click', function () { deleteButton.focus() })
       deleteButtonCol.appendChild(deleteButton)
-      new bootstrap.Popover(deleteButton)
+      bootstrap.Popover.getOrCreateInstance(deleteButton)
     }
 
     const divider = document.createElement('div')

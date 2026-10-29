@@ -7,7 +7,6 @@ const overlay = document.getElementById('overlayDiv')
 const base = document.getElementById('baseDiv')
 
 let homeScreenDisabled = false
-const currentDefintion = ''
 let clicked = 0
 let currentLang = null
 let inactivityTimer = 0 // Reference to setTimeout for reseting the view

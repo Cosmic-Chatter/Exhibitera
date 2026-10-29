@@ -1,4 +1,4 @@
-/* global Coloris, bootstrap */
+/* global bootstrap */
 
 import * as exUtilities from '../../common/utilities.js'
 import * as exCommon from '../js/exhibitera_app_common.js'
@@ -53,7 +53,7 @@ async function wizardForward (currentPage) {
 
       // Build the Markdown text editor
       const defaultLang = exSetup.config.workingDefinition.language_order[0]
-      const titleEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+      exMarkdown.createMarkdownEditor({
         content: exSetup.config.workingDefinition.languages?.[defaultLang]?.header?.text ?? '',
         editorDiv: document.getElementById('wizardHeaderInput'),
         commandDiv: document.getElementById('wizardHeaderCommandBar'),
@@ -114,7 +114,6 @@ function wizardCreateTab (userDetails) {
   // Create the GUI representation of a new question in the wizard
 
   const tabOrder = exSetup.config.workingDefinition?.tab_order ?? []
-  const defaultLang = exSetup.config.workingDefinition.language_order[0]
 
   const defaults = {
     uuid: exUtilities.uuid(),
@@ -392,7 +391,7 @@ function rebuildTabs () {
     const headerInput = document.createElement('div')
     headerCol.appendChild(headerInput)
 
-    const titleEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+    exMarkdown.createMarkdownEditor({
       content: exSetup.config.workingDefinition.languages?.[code]?.header?.text ?? '',
       editorDiv: headerInput,
       commandDiv: headerCommandBar,
@@ -523,7 +522,7 @@ function createInfoStationTabGUI (item) {
     changeItemOrder(item.uuid, 'down')
   })
   const deleteButton = document.getElementById(item.uuid + '_accordion_deleteButton')
-  const popover = new bootstrap.Popover(deleteButton)
+  bootstrap.Popover.getOrCreateInstance(deleteButton)
   deleteButton.addEventListener('click', (ev) => {
     deleteButton.focus()
   })
@@ -572,7 +571,7 @@ function createInfoStationTabGUI (item) {
     const buttonTextInput = document.createElement('div')
     buttonTextCol.appendChild(buttonTextInput)
 
-    const buttonEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+    exMarkdown.createMarkdownEditor({
       content: exSetup.config.workingDefinition.languages?.[code]?.tabs?.[item.uuid]?.button_text ?? '',
       editorDiv: buttonTextInput,
       commandDiv: buttonTextCommandBar,
@@ -604,7 +603,7 @@ function createInfoStationTabGUI (item) {
     const textInput = document.createElement('div')
     textCol.appendChild(textInput)
 
-    const textEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+    exMarkdown.createMarkdownEditor({
       content: exSetup.config.workingDefinition.languages?.[code]?.tabs?.[item.uuid]?.text ?? '',
       editorDiv: textInput,
       commandDiv: textInputCMD,

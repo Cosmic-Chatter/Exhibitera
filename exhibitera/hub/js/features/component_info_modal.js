@@ -183,7 +183,7 @@ export function showExhibitComponentInfo (uuid, groupUUID) {
   // Must be after all the settings are configured
   const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
   for (const triggerEl of tooltipTriggerList) {
-    const tt = new bootstrap.Tooltip(triggerEl)
+    bootstrap.Tooltip.getOrCreateInstance(triggerEl)
   }
 
   document.getElementById('componentInfoModalSettingsSaveButton').style.display = 'none'

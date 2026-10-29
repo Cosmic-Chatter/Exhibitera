@@ -42,7 +42,7 @@ class FakeElement extends EventTarget {
     this.tagName = tagName.toUpperCase()
     this.attributes = {}
     this.children = []
-    this.style = {}
+    this.style = { setProperty () {}, removeProperty () {} }
     this.textContent = ''
     this.value = ''
     this.disabled = false

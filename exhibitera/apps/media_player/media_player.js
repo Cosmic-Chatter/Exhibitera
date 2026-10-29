@@ -6,7 +6,7 @@ import * as appsMarkdown from '../js/exhibitera_app_markdown.js'
 function updateParser (update) {
   // Read updates specific to the media player
 
-  if ('audio' in update?.permissions) {
+  if (update?.permissions != null && 'audio' in update.permissions) {
     document.getElementById('fullscreenVideo').muted = !update.permissions.audio
     document.getElementById('audioPlayer').muted = !update.permissions.audio
   }
@@ -437,7 +437,6 @@ appsCommon.configureApp({
   parseUpdate: updateParser
 })
 
-const currentDefintion = ''
 let sourceAdvanceTimer = null // Will hold reference to a setTimeout instance to move to the next media.
 let progressTimer = null // Will track the progress of a source towards completion
 

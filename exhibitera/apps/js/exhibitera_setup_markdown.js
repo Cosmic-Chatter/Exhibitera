@@ -11,6 +11,14 @@ const timerThreshold = 2000 // ms to wait before calling the callback
 const undoCacheLimit = 1000
 const undoCacheUpdateThreshold = 250 // ms minimum between adding undo actions
 
+export function createMarkdownEditor (options) {
+  // Create a Markdown editor in options.editorDiv and return it. Use this when the editor manages
+  // itself through its callback and the caller doesn't need to keep a reference.
+  // See ExhibiteraMarkdownEditor for the options.
+
+  return new ExhibiteraMarkdownEditor(options)
+}
+
 export class ExhibiteraMarkdownEditor {
   constructor (options) {
     // Validate required parameters
@@ -191,7 +199,7 @@ export class ExhibiteraMarkdownEditor {
     const modalInstance = new bootstrap.Modal(modalElement)
 
     // Create the markdown editor for the caption
-    const captionEditor = new ExhibiteraMarkdownEditor({
+    createMarkdownEditor({
       content: '',
       editorDiv: document.getElementById('captionInput'),
       commandDiv: document.getElementById('captionCommandBar'),

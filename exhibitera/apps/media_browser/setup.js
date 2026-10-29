@@ -1,5 +1,3 @@
-/* global Coloris, bootstrap */
-
 import * as exFiles from '../../common/files.js'
 import * as exUtilities from '../../common/utilities.js'
 import * as exCommon from '../js/exhibitera_app_common.js'
@@ -520,7 +518,8 @@ function rebuildItemList () {
 
   for (const uuid of def.content_order) {
     const itemDef = def.content[uuid]
-    const itemLangDef = def.languages[defaultLang].content[uuid]
+    // A definition can have items but no languages, if its last language was deleted
+    const itemLangDef = def.languages?.[defaultLang]?.content?.[uuid]
 
     const col = document.createElement('div')
     col.classList = 'col'
@@ -746,7 +745,7 @@ function editItem (itemUUID) {
       const input = document.createElement('div')
       col.appendChild(input)
 
-      const editor = new exMarkdown.ExhibiteraMarkdownEditor({
+      exMarkdown.createMarkdownEditor({
         content: exSetup.config.workingDefinition.languages?.[code]?.content?.[itemUUID]?.[field] ?? '',
         editorDiv: input,
         commandDiv: commandBar,
@@ -1344,7 +1343,7 @@ document.getElementById('loopResultsCheckbox').addEventListener('change', (event
   exSetup.previewDefinition(true)
 })
 
-document.getElementById('addItemButton').addEventListener('click', addItem)
+document.getElementById('addItemButton').addEventListener('click', () => addItem())
 document.getElementById('addItemAfterCurrentButton').addEventListener('click', () => {
   const currentItem = document.getElementById('editPane').dataset.uuid
   addItem({}, currentItem)

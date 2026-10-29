@@ -614,4 +614,4 @@ if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').match
 
 // Initialize popovers
 const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]')
-const popoverList = [...popoverTriggerList].map(popoverTriggerEl => new bootstrap.Popover(popoverTriggerEl))
+popoverTriggerList.forEach((el) => bootstrap.Popover.getOrCreateInstance(el))

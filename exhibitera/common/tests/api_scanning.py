@@ -13,7 +13,7 @@ EXHIBITERA_DIR = pathlib.Path(__file__).resolve().parents[2]
 
 # Third-party libraries bundled with Exhibitera
 VENDORED = ("bootstrap", "opentype", "wordcloud2", "pluralize", "swearWords", "showdown", "js-3d-model-viewer",
-            "simple-keyboard", "profanity-cleaner")
+            "simple-keyboard", "profanity-cleaner", "js/platform.js")
 
 
 def javascript_files(*folders: str) -> list[pathlib.Path]:

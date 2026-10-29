@@ -715,12 +715,12 @@ document.getElementById('hubSettingsSaveButton').addEventListener('click', updat
 // Activate all popovers
 const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]')
 for (const triggerEl of popoverTriggerList) {
-  const po = new bootstrap.Popover(triggerEl)
+  bootstrap.Popover.getOrCreateInstance(triggerEl)
 }
 
 // Enable all tooltips
 const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
-const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+tooltipTriggerList.forEach((el) => bootstrap.Tooltip.getOrCreateInstance(el))
 
 hubConfig.serverAddress = location.origin
 

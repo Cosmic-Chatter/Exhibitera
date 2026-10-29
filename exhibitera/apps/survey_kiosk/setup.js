@@ -80,7 +80,7 @@ async function wizardForward (currentPage) {
     exSetup.wizardGoTo('Answers')
   } else if (currentPage === 'Answers') {
     exSetup.wizardGoTo('ColorMode')
-  } else if (currentPage = 'ColorMode') {
+  } else if (currentPage === 'ColorMode') {
     wizardCreateDefinition()
   }
 }
@@ -438,7 +438,7 @@ async function clearDefinitionInput (full = true) {
 
   // Markdown fields
   for (const item of []) {
-    const editor = new exMarkdown.ExhibiteraMarkdownEditor({
+    exMarkdown.createMarkdownEditor({
       content: '',
       editorDiv: document.getElementById(item + 'Input'),
       commandDiv: document.getElementById(item + 'InputCommandBar'),
@@ -501,7 +501,7 @@ function editDefinition (uuid = '') {
 
   // Markdown fields
   for (const item of []) {
-    const editor = new exMarkdown.ExhibiteraMarkdownEditor({
+    exMarkdown.createMarkdownEditor({
       content: def?.text?.[item] ?? '',
       editorDiv: document.getElementById(item + 'Input'),
       commandDiv: document.getElementById(item + 'InputCommandBar'),
@@ -771,7 +771,7 @@ function rebuildOptions (itemUUID, lang) {
     const textInput = document.createElement('div')
     textCol.appendChild(textInput)
 
-    const headerEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+    exMarkdown.createMarkdownEditor({
       content: exSetup.config.workingDefinition.languages?.[lang]?.items?.[item.uuid]?.options?.[optionUUID]?.text ?? '',
       editorDiv: textInput,
       commandDiv: textCommandBar,
@@ -1116,7 +1116,7 @@ function createSurveyItemGUIText (item) {
     const headerInput = document.createElement('div')
     headerCol.appendChild(headerInput)
 
-    const headerEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+    exMarkdown.createMarkdownEditor({
       content: exSetup.config.workingDefinition.languages?.[code]?.items?.[item.uuid]?.header?.text ?? '',
       editorDiv: headerInput,
       commandDiv: headerCommandBar,
@@ -1167,7 +1167,7 @@ function createSurveyItemGUIText (item) {
     const bodyInput = document.createElement('div')
     bodyCol.appendChild(bodyInput)
 
-    const bodyEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+    exMarkdown.createMarkdownEditor({
       content: exSetup.config.workingDefinition.languages?.[code]?.items?.[item.uuid]?.body?.text ?? '',
       editorDiv: bodyInput,
       commandDiv: bodyCommandBar,
@@ -1378,7 +1378,7 @@ function createSurveyItemGUIVote (item) {
     const headerInput = document.createElement('div')
     headerCol.appendChild(headerInput)
 
-    const headerEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+    exMarkdown.createMarkdownEditor({
       content: exSetup.config.workingDefinition.languages?.[code]?.items?.[item.uuid]?.header?.text ?? '',
       editorDiv: headerInput,
       commandDiv: headerCommandBar,

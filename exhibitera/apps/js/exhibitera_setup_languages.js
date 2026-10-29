@@ -252,7 +252,7 @@ export function createLanguagePicker (parent, callbacks = {}) {
 
   // Activate tooltips
   const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
-  const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+  tooltipTriggerList.forEach((el) => bootstrap.Tooltip.getOrCreateInstance(el))
 }
 
 export function clearLanguagePicker (el) {

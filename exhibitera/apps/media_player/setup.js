@@ -1127,7 +1127,7 @@ async function createAnnoationHTML (itemUUID, details) {
     const textInput = document.createElement('div')
     textCol.appendChild(textInput)
 
-    const textEditor = new exMarkdown.ExhibiteraMarkdownEditor({
+    exMarkdown.createMarkdownEditor({
       content: details?.text ?? '',
       editorDiv: textInput,
       commandDiv: textCommandBar,

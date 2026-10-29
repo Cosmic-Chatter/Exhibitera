@@ -248,7 +248,6 @@ const WordCloudOptions = {
   fontWeight: '400'
 }
 
-const currentDefinition = ''
 let collectionName = 'default'
 let textUpdateRate = 15
 let textCase = 'lowercase'

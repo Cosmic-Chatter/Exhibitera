@@ -1,5 +1,3 @@
-/* global Coloris */
-
 import * as exUtilities from '../../../common/utilities.js'
 import * as exCommon from '../../js/exhibitera_app_common.js'
 import * as exSetup from '../../js/exhibitera_setup_common.js'
@@ -118,7 +116,7 @@ async function clearDefinitionInput (full = true) {
   document.getElementById('maxCharacterCount').value = '-1'
 
   // Content details
-  const editor = new exMarkdown.ExhibiteraMarkdownEditor({
+  exMarkdown.createMarkdownEditor({
     content: '',
     editorDiv: document.getElementById('promptInput'),
     commandDiv: document.getElementById('promptInputCommandBar'),
@@ -170,7 +168,7 @@ function editDefinition (uuid = '') {
   document.getElementById('maxCharacterCount').value = def?.behavior?.max_character_count ?? -1
 
   // Content
-  const editor = new exMarkdown.ExhibiteraMarkdownEditor({
+  exMarkdown.createMarkdownEditor({
     content: def?.content?.prompt ?? '',
     editorDiv: document.getElementById('promptInput'),
     commandDiv: document.getElementById('promptInputCommandBar'),

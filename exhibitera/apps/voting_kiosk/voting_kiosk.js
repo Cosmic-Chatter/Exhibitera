@@ -411,7 +411,6 @@ exCommon.configureApp({
 let badConnection = false
 
 let configurationName = 'default'
-const currentDefintion = ''
 let voteCounts = {}
 let recordingInterval = 60 // Send votes every this many minutes
 let voteCounter = setInterval(sendData, recordingInterval * 1000)

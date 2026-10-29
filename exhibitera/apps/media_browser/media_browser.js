@@ -283,7 +283,7 @@ function _populateResultsRow (currentKey) {
 
     // Iterate through the matches to make sure we've matched on every filter
     let totalMathces = 0
-    for (const [matchKey, matchValue] of Object.entries(filterMathces)) {
+    for (const matchValue of Object.values(filterMathces)) {
       if (matchValue === 1) totalMathces += 1
     }
     if (totalMathces === filters.length) filteredData.push(item)
@@ -353,7 +353,7 @@ function displayMedia (uuid) {
 function updateParser (update) {
   // Read updates specific to the media browser
 
-  if (update?.permissions?.audio) {
+  if (update?.permissions != null && 'audio' in update.permissions) {
     document.getElementById('mediaLightboxVideo').muted = !update.permissions.audio
     document.getElementById('mediaLightboxAudio').muted = !update.permissions.audio
   }
