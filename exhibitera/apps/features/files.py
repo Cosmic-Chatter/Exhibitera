@@ -39,8 +39,8 @@ def get_available_definitions(app_id: str = "all") -> dict[str, Any]:
             try:
                 if app_id == "all" or json_def["app"] == app_id:
                     to_return[json_def["uuid"]] = json_def
-            except KeyError:
-                print("Error: Key not found: 'app'")
+            except KeyError as e:
+                logging.error("Definition %s is missing the key %s", os.path.basename(path), e)
 
     return to_return
 
@@ -56,7 +56,7 @@ def delete_file(file: str, absolute: bool = False):
     if not os.path.exists(file_path):
         return
 
-    print("Deleting file:", file_path)
+    logging.info("Deleting file: %s", file_path)
     with ex_config.binary_file_lock:
         os.remove(file_path)
 
@@ -186,10 +186,10 @@ def create_definition_thumbnail(filename: str, width: int = 600) -> tuple[bool, 
         except subprocess.TimeoutExpired:
             proc.kill()
     except OSError as e:
-        print("create_definition_thumbnail: error:", e)
+        logging.error("create_definition_thumbnail: error: %s", e)
         return False, 'OSError'
     except ImportError as e:
-        print("create_definition_thumbnail: error loading FFmpeg: ", e)
+        logging.error("create_definition_thumbnail: error loading FFmpeg: %s", e)
         return False, 'ImportError'
 
     return True, ""
@@ -279,10 +279,10 @@ def create_thumbnail(filename: str,
             update_thumbnail_archive(filename, width, thumb_filename_image, False)
             update_thumbnail_archive(filename, width, thumb_filename_video)
     except OSError as e:
-        print("create_thumbnail: error:", e)
+        logging.error("create_thumbnail: error: %s", e)
         return False, 'OSError'
     except ImportError as e:
-        print("create_thumbnail: error loading FFmpeg: ", e)
+        logging.error("create_thumbnail: error loading FFmpeg: %s", e)
         return False, 'ImportError'
 
     return True, ""
@@ -370,7 +370,7 @@ def get_video_file_details(filename: str) -> tuple[bool, dict[str, Any]]:
             details['height'] = 0
 
     except (OSError, ImportError, ValueError) as e:
-        print(f"get_video_file_details error: {e}")
+        logging.error("get_video_file_details: error: %s", e)
         success = False
 
     return success, details
@@ -399,13 +399,13 @@ def convert_video_to_frames(filename: str, file_type: str = 'jpg'):
                                    creationflags=apps_utilities.get_subprocess_flags())
 
     except OSError as e:
-        print("convert_video_to_frame: error:", e)
+        logging.error("convert_video_to_frame: error: %s", e)
         success = False
     except ImportError as e:
-        print("convert_video_to_frame: error loading FFmpeg: ", e)
+        logging.error("convert_video_to_frame: error loading FFmpeg: %s", e)
         success = False
     except subprocess.TimeoutExpired as e:
-        print("convert_video_to_frame: conversion timed out: ", e)
+        logging.error("convert_video_to_frame: conversion timed out: %s", e)
         success = False
 
     return success
@@ -443,12 +443,11 @@ def get_thumbnail(filename: str,
     thumb_name = get_thumbnail_name(filename, force_image=force_image, width=width)
     mimetype = ex_files.get_mimetype(filename)
     if mimetype == "":
-        if ex_config.debug:
-            print(f"get_thumbnail: bad mimetype {mimetype} for file {filename}")
+        logging.debug("get_thumbnail: unknown file type for %s", filename)
         return None, ''
 
     if thumb_name == "":
-        print(f"get_thumbnail: thumbnail name is blank.")
+        logging.warning("get_thumbnail: no thumbnail name for %s", filename)
         return None, mimetype
 
     thumb_path = ex_files.get_path(["thumbnails", "v2", thumb_name], user_file=True)
@@ -501,7 +500,6 @@ def get_all_directory_contents(directory: str = "content") -> tuple[list, list[d
     """Recursively search for files in the content directory and its subdirectories"""
 
     if directory not in ["content", "static"]:
-        print("get_all_directory_contents: invalid directory: " + directory)
         logging.warning("get_all_directory_contents: invalid directory: " + directory)
         return [], []
 
@@ -533,12 +531,12 @@ def check_directory_structure():
         try:
             os.listdir(content_path)
         except FileNotFoundError:
-            print(f"Warning: {directory} directory not found. Creating it...")
+            logging.warning("The %s directory was not found. Creating it.", directory)
 
             try:
                 os.mkdir(content_path)
             except PermissionError:
-                print("Error: unable to create directory. Do you have write permission?")
+                logging.error("Unable to create the %s directory. Check that Apps has write permission.", directory)
 
     sub_dirs = [ex_files.get_path(["thumbnails", "v2"], user_file=True),
                 ex_files.get_path(["thumbnails", "definitions"], user_file=True)

@@ -1,6 +1,7 @@
 # Handle migration from past versions of Exhibitera Apps
 
 import csv
+import logging
 import os
 import re
 import shutil
@@ -253,7 +254,7 @@ def _delete_definition(filename):
 
     file_path = ex_files.get_path(["definitions", filename], user_file=True)
     if not os.path.exists(file_path):
-        print("Bad filepath:", file_path)
+        logging.warning("Cannot delete definition %s: file not found", file_path)
         return
     backup_path = ex_files.get_path(["definitions", filename + '.backup'], user_file=True)
     shutil.copy(file_path, backup_path)

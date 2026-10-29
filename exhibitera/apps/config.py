@@ -1,6 +1,5 @@
 """Defines configuration variables that can be shared across various modules that use the helper.py module"""
 
-import datetime
 import threading
 from typing import Any
 
@@ -10,12 +9,8 @@ defaults: dict[str, Any] = {}
 uuid: str = ''
 
 commandList: list[str] = []  # List of queued commands to send to the client
-missingContentWarningList: list[dict] = []  # Holds a list of warning about missing content
-NEXT_EVENT: tuple[datetime.time, list[str]] | None = None  # A tuple with the next event to occur and the time it happens
-schedule: list[tuple[datetime.time, str]] = []  # List of upcoming actions and their times
 thumbnail_archive: dict[str, Any] | None = None
 software_version: dict[str, int] = {}
-debug: bool = True
 
 # DMX resources
 dmx_universe = None
@@ -40,13 +35,8 @@ software_update: dict[str, Any] = {
 }
 software_update_timer: threading.Timer | None = None
 
-# If we are serving the HTML file from over the network, this will be set
-# to True. If the HTML file has been loaded locally, it will stay False
-HELPING_REMOTE_CLIENT: bool = False
-
 # Threading resources
 server_process: threading.Thread
-defaults_file_lock: threading.Lock = threading.Lock()
 thumbnail_lock: threading.Lock = threading.Lock()
 
 # Pywebview resources

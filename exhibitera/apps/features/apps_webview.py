@@ -74,7 +74,7 @@ def show_webview_window(app: str,
     }
 
     if app not in endpoints or app not in names:
-        print('apps_webview.show_webview_window: Error: app ' + app + ' not recognized.')
+        logging.error("apps_webview.show_webview_window: app %s not recognized.", app)
         return
 
     # If reload=True, destroy any existing copy of this window
@@ -150,7 +150,7 @@ def on_window_closing():
         return
 
     if len(webview.windows) == 2:
-        print("Shutting down")
+        logging.info("Last window closed. Shutting down.")
         apps_config.root_window.destroy()
 
 

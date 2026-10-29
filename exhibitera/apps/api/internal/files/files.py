@@ -1,5 +1,6 @@
 # Standard modules
 from functools import lru_cache
+import logging
 import os
 import shutil
 from typing import Annotated
@@ -183,14 +184,14 @@ def upload_files(files: list[UploadFile] = File(),
         filename = file.filename
 
         if not ex_files.filename_safe(filename):
-            print("upload_files: error: invalid filename: ", filename)
+            logging.warning("upload_files: invalid filename: %s", filename)
             continue
 
         path_with_filename = path.copy()
         path_with_filename.append(filename)
 
         file_path = ex_files.get_path(path_with_filename, user_file=True)
-        print(f"Saving uploaded file to {file_path}")
+        logging.info("Saving uploaded file to %s", file_path)
         with ex_config.binary_file_lock:
             try:
                 with open(file_path, 'wb') as out_file:

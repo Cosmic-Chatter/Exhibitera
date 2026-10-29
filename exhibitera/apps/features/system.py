@@ -24,7 +24,7 @@ def reboot():
 
     reboot_allowed = apps_config.defaults["permissions"].get("restart", True)
     if reboot_allowed:
-        print("Rebooting...")
+        logging.info("Restarting the computer.")
         if sys.platform == "darwin":  # MacOS
             os.system("osascript -e 'tell app \"System Events\" to restart'")
         elif sys.platform == "linux":
@@ -32,7 +32,7 @@ def reboot():
         elif sys.platform == "win32":
             os.system("shutdown -t 0 -r")
     else:
-        print("Restart requested but not permitted by current permissions.")
+        logging.info("Restart requested but not permitted by current permissions.")
 
 
 def shutdown():
@@ -44,7 +44,7 @@ def shutdown():
     sleep_allowed = apps_config.defaults["permissions"].get("sleep", False)
 
     if shutdown_allowed:
-        print("Shutting down...")
+        logging.info("Shutting down the computer.")
         if sys.platform == "darwin":  # MacOS
             os.system("osascript -e 'tell app \"System Events\" to shutdown'")
         elif sys.platform == "linux":
@@ -52,10 +52,10 @@ def shutdown():
         elif sys.platform == "win32":
             os.system("shutdown -t 0 -s")
     elif sleep_allowed:
-        print("Shutdown requested but not permitted. Sleeping displays...")
+        logging.info("Shutdown requested but not permitted. Sleeping displays instead.")
         sleep_display()
     else:
-        logging.info( "Shutdown requested but not permitted by configuration.")
+        logging.info("Shutdown requested but not permitted by configuration.")
 
 
 def sleep_display():
@@ -75,7 +75,6 @@ def smart_restart_act():
     """Attempt to process a restart by following the rules"""
 
     if apps_config.smart_restart["mode"] == "off":
-        print("Smart Restart off")
         logging.info("Smart Restart (mode: %s): Restart denied (Smart Restart is off)", apps_config.smart_restart["mode"])
         return
     elif apps_config.smart_restart["mode"] == "aggressive":
@@ -96,7 +95,6 @@ def smart_restart_act():
                          apps_config.smart_restart["mode"],
                          active_start,
                          active_end)
-            print("Patient reboot denied by active hours")
 
 
 def smart_restart_check():
@@ -129,7 +127,6 @@ def smart_restart_check():
         # Connection check failed, so let's see how long it has been
         sec_since_last_contact = (datetime.datetime.now() - apps_config.smart_restart["last_contact_datetime"]).total_seconds()
         logging.warning("Connection check failed. Seconds since last connection: %s", sec_since_last_contact)
-        print(f"Smart Restart: connection check to address {server_address} failed. Seconds since last connection: {sec_since_last_contact}")
         if sec_since_last_contact > apps_config.smart_restart["threshold"]:
             # A reboot may be necessary
             logging.warning("Smart Restart: Threshold exceeded, recommending reboot.")

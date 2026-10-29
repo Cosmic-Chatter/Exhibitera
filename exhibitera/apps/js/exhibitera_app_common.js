@@ -337,7 +337,6 @@ function readServerUpdate (update) {
 
   readUpdate(update)
 
-  const sendUpdate = false
   const updateDict = {}
 
   if (update.id) {

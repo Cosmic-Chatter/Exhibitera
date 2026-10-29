@@ -1,4 +1,5 @@
 # Standard modules
+import logging
 import os
 from typing import Any
 
@@ -104,7 +105,7 @@ async def remove_dmx_fixture(uuid_str: str):
 
     fixture = apps_dmx.get_fixture(uuid_str)
     if fixture is None:
-        print(f"Cannot remove fixture {uuid_str}. It does not exist.")
+        logging.warning("Cannot remove fixture %s. It does not exist.", uuid_str)
         return {"success": False, "reason": "Fixture does not exist."}
     fixture.delete()
     apps_dmx.write_dmx_configuration()

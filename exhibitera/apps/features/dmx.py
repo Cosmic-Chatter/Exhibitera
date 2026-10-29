@@ -344,9 +344,7 @@ def create_universe(controller: str = "OpenDMX",
     """Create a new DMXUniverse."""
 
     if apps_config.dmx_universe is not None:
-        print("create_universe: error: DMX universe already exits.")
-        if apps_config.debug:
-            logging.error("create_universe: error: DMX universe already exits.")
+        logging.error("create_universe: DMX universe already exists.")
         return None
 
     try:

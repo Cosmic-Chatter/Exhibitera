@@ -1,6 +1,5 @@
 /* global Coloris, bootstrap */
 
-import config from '../../common/config.js'
 import * as exUtilities from '../../common/utilities.js'
 import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exSetup from '../js/exhibitera_setup_common.js'
