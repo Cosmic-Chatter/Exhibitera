@@ -20,10 +20,24 @@ HTMLElement.prototype.visibleHeight = function () {
   return Math.max(visibleBottom - visibleTop, 0) // The visible height of the element
 }
 
+// Unsaved changes
+//
+// Opening a definition fills in the editor, and that can also fill in defaults in workingDefinition, which
+// isn't an edit. So the saved state is recorded when the person first interacts with the page after a
+// definition is opened, created, or saved, and only changes after that count. Events from code aren't trusted.
+
+let initialDefinition = null
+let savedDefinitionState = null // null until the person interacts with the definition
+
 export const config = {
   availableDefinitions: {},
   clearDefinition: null,
-  initialDefinition: null,
+  get initialDefinition () { return initialDefinition },
+  set initialDefinition (definition) {
+    // A definition was opened, created, or saved, so start tracking changes again
+    initialDefinition = definition
+    savedDefinitionState = null
+  },
   loadDefinition: null,
   onDefinitionSave: null,
   fontCache: {}, // Keys with any value indicate that font has already been made
@@ -96,6 +110,164 @@ export const config = {
     { code: 'xh', name: 'IsiXhosa', name_en: 'Xhosa' },
     { code: 'zu', name: 'IsiXhosa', name_en: 'Zulu' }
   ]
+}
+
+function stableStringify (value) {
+  // Convert the given value to JSON with its keys sorted, so equal definitions always give the same text.
+
+  return JSON.stringify(value, (key, item) => {
+    if (item == null || typeof item !== 'object' || Array.isArray(item)) return item
+    return Object.fromEntries(Object.keys(item).sort().map((k) => [k, item[k]]))
+  })
+}
+
+function currentDefinitionState () {
+  // Return the definition being edited, including the name typed for it, as text that can be compared.
+
+  return stableStringify({
+    definition: config.workingDefinition,
+    name: document.getElementById('definitionNameInput')?.value ?? ''
+  })
+}
+
+// Record the saved state at the person's first interaction. Listen during capture, so the state is
+// recorded before the event's own handlers change anything.
+for (const type of ['pointerdown', 'keydown', 'input', 'change', 'drop']) {
+  document.addEventListener(type, (event) => {
+    if (event.isTrusted && savedDefinitionState == null) savedDefinitionState = currentDefinitionState()
+  }, true)
+}
+
+export function definitionHasUnsavedChanges () {
+  // Return true if the person has changed the definition since it was opened, created, or last saved.
+
+  return savedDefinitionState != null && currentDefinitionState() !== savedDefinitionState
+}
+
+// Ask before leaving the page with unsaved changes. The browser shows its own message.
+window.addEventListener('beforeunload', (event) => {
+  if (definitionHasUnsavedChanges()) {
+    event.preventDefault()
+    event.returnValue = ''
+  }
+})
+
+function askInDialog (title, paragraphs, buttons) {
+  // Show a dialog and return a Promise that resolves with the value of the button the person chose,
+  // or null if they closed the dialog another way.
+  // 'paragraphs' should be an array of strings for the body
+  // 'buttons' should be an array of {label, value, style}, where style is a Bootstrap button class
+
+  const modal = document.createElement('div')
+  modal.classList.add('modal', 'fade')
+  modal.setAttribute('tabindex', '-1')
+  const dialog = document.createElement('div')
+  dialog.classList.add('modal-dialog', 'modal-dialog-centered')
+  const content = document.createElement('div')
+  content.classList.add('modal-content')
+
+  const header = document.createElement('div')
+  header.classList.add('modal-header')
+  const heading = document.createElement('h5')
+  heading.classList.add('modal-title')
+  heading.textContent = title
+  header.append(heading)
+
+  const body = document.createElement('div')
+  body.classList.add('modal-body')
+  for (const text of paragraphs) {
+    const paragraph = document.createElement('p')
+    paragraph.textContent = text
+    body.append(paragraph)
+  }
+
+  const footer = document.createElement('div')
+  footer.classList.add('modal-footer')
+
+  content.append(header, body, footer)
+  dialog.append(content)
+  modal.append(dialog)
+
+  return new Promise((resolve) => {
+    let choice = null
+    for (const details of buttons) {
+      const button = document.createElement('button')
+      button.setAttribute('type', 'button')
+      button.classList.add('btn', details.style)
+      button.textContent = details.label
+      button.addEventListener('click', () => {
+        choice = details.value
+        bootstrap.Modal.getOrCreateInstance(modal).hide()
+      })
+      footer.append(button)
+    }
+    modal.addEventListener('hidden.bs.modal', () => {
+      modal.remove()
+      resolve(choice)
+    })
+    document.body.append(modal)
+    bootstrap.Modal.getOrCreateInstance(modal).show()
+  })
+}
+
+export async function confirmDiscardChanges () {
+  // Before the definition being edited is replaced, ask the person whether to discard any unsaved changes.
+  // Return a Promise that resolves true if there are no unsaved changes or the person discards them.
+
+  if (!definitionHasUnsavedChanges()) return true
+
+  const name = document.getElementById('definitionNameInput')?.value ?? ''
+  const choice = await askInDialog('Discard unsaved changes?',
+    [name === '' ? "Your changes haven't been saved." : `Your changes to "${name}" haven't been saved.`],
+    [{ label: 'Keep editing', value: false, style: 'btn-secondary' },
+      { label: 'Discard changes', value: true, style: 'btn-danger' }])
+  return choice === true
+}
+
+const MINIMUM_SAVING_TIME = 750 // ms. Saves are often nearly instant, which would make 'Saving…' flash.
+let saveLabelTimer = null
+let savingStarted = 0
+
+function showSaveProgress (status) {
+  // Show on the save button how a save is going. 'Saving…' stays for at least MINIMUM_SAVING_TIME so it
+  // can be read, and 'Saved' returns to 'Save' after two seconds. The button is disabled while saving.
+  // 'status' should be one of ['saving', 'saved', 'ready']
+
+  const button = document.getElementById('definitionSaveButton')
+  if (button == null) return
+
+  clearTimeout(saveLabelTimer)
+
+  if (status === 'saving') {
+    savingStarted = Date.now()
+    button.disabled = true
+    button.textContent = 'Saving…'
+    return
+  }
+
+  const remaining = savingStarted + MINIMUM_SAVING_TIME - Date.now()
+  if (remaining > 0) {
+    saveLabelTimer = setTimeout(() => showSaveProgress(status), remaining)
+    return
+  }
+
+  button.disabled = false
+  if (status === 'saved') {
+    button.textContent = 'Saved'
+    saveLabelTimer = setTimeout(() => showSaveProgress('ready'), 2000)
+  } else {
+    button.textContent = 'Save'
+  }
+}
+
+function reportSaveFailure (reason = '') {
+  // Tell the person that the definition wasn't saved and their changes are still only on the page.
+  // 'reason' is the explanation from Apps, if it gave one
+
+  const paragraphs = ["Exhibitera Apps didn't save this definition, so your changes are only on this page.",
+    'Check that Exhibitera Apps is still running, then try saving again.']
+  if (reason !== '') paragraphs.push(`Apps reported: ${reason}`)
+  askInDialog('Definition not saved', paragraphs, [{ label: 'OK', value: true, style: 'btn-primary' }])
 }
 
 export async function configure (options) {
@@ -393,6 +565,7 @@ export function prepareWizard () {
 async function showSetupWizard () {
   // Show the modal for the setup wizard
 
+  if (!(await confirmDiscardChanges())) return
   await config.initializeWizard()
   exUtilities.showModal('#setupWizardModal')
 }
@@ -453,7 +626,7 @@ export function initializeDefinition () {
   if (temp == null) return
   temp.uuid = exUtilities.uuid()
   config.initialDefinition = temp
-  config.workingDefinition = temp
+  config.workingDefinition = structuredClone(temp)
   previewDefinition(false)
 }
 
@@ -523,22 +696,32 @@ export async function saveDefinition (name = '') {
   if (name === '') definition.name = document.getElementById('definitionNameInput').value
   definition.uuid = initialDefinition.uuid
 
+  showSaveProgress('saving')
   return exCommon.writeDefinition(definition)
     .then((result) => {
-      if (result?.success) {
-        // Update the UUID in case we have created a new definition
-        config.initialDefinition = structuredClone(definition)
-
-        // If we have a completion handler, call it with the definition
-        if (config.onDefinitionSave != null) config.onDefinitionSave(config.workingDefinition)
-        exCommon.getAvailableDefinitions(config.app)
-          .then((response) => {
-            if (response?.success) {
-              populateAvailableDefinitions(response.definitions)
-              document.getElementById('availableDefinitionSelect').value = definition.uuid
-            }
-          })
+      if (!result?.success) {
+        showSaveProgress('ready')
+        reportSaveFailure(result?.reason ?? '')
+        return
       }
+      showSaveProgress('saved')
+
+      // Update the UUID in case we have created a new definition
+      config.initialDefinition = structuredClone(definition)
+
+      // If we have a completion handler, call it with the definition
+      if (config.onDefinitionSave != null) config.onDefinitionSave(config.workingDefinition)
+      exCommon.getAvailableDefinitions(config.app)
+        .then((response) => {
+          if (response?.success) {
+            populateAvailableDefinitions(response.definitions)
+            document.getElementById('availableDefinitionSelect').value = definition.uuid
+          }
+        })
+    }, (error) => {
+      showSaveProgress('ready')
+      reportSaveFailure()
+      throw error
     })
 }
 
@@ -580,19 +763,25 @@ function createEventListeners () {
   }
 
   // New definition buttons
-  document.getElementById('newDefinitionButton').addEventListener('click', () => {
-    config.clearDefinition()
+  // Each of these replaces the definition being edited
+  document.getElementById('newDefinitionButton').addEventListener('click', async () => {
+    if (await confirmDiscardChanges()) config.clearDefinition()
   })
-  document.getElementById('cloneDefinitionButton').addEventListener('click', cloneDefinition)
+  document.getElementById('cloneDefinitionButton').addEventListener('click', async () => {
+    if (await confirmDiscardChanges()) cloneDefinition()
+  })
 
   // Edit definition button
-  document.getElementById('editDefinitionButton').addEventListener('click', () => {
-    config.loadDefinition()
+  document.getElementById('editDefinitionButton').addEventListener('click', async () => {
+    if (await confirmDiscardChanges()) config.loadDefinition()
   })
 
   // Save definition button
   document.getElementById('definitionSaveButton').addEventListener('click', () => {
     saveDefinition()
+      .catch(() => {
+        // The person has already been told the save failed
+      })
   })
 
   // Preview definition button

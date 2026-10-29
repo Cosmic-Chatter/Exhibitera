@@ -19,6 +19,7 @@ _Programs represent recurring events that take place in a specific location, lik
 
 ### General
 - Integrate your app with physical exhibit buttons by using a Makey Makey or similar device. An option to enable hardware control has been added to select apps to allow for tactile interaction.
+- When editing a definition, you now get a warning if you are about to lose unsaved changes.
 
 #### Font improvements
 Exert more control over the appearance of text using Exhibitera's new font system. Noto is now the default font, providing consistent character appearance across every supported language. Additionally:

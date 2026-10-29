@@ -3,6 +3,7 @@ import copy
 import ctypes
 import errno
 import getpass
+import logging
 import os
 import psutil
 import shutil
@@ -49,14 +50,19 @@ def get_system_stats() -> dict[str, Union[int, float]]:
 
 
 def load_configuration() -> bool:
-    """Load config.json and set up Exhibitera Apps based on its contents."""
+    """Load config.json and set up Exhibitera Apps based on its contents.
+
+    If config.json can't be read, as after a typo in a hand edit, use the last working configuration
+    instead, so the exhibit keeps running rather than showing first-time setup.
+    """
 
     defaults_path = ex_files.get_path(["configuration", "config.json"], user_file=True)
     apps_config.defaults = ex_files.load_json(defaults_path)
 
     if not isinstance(apps_config.defaults, dict):
-        # Missing or malformed config.json
-        apps_config.defaults = None
+        apps_config.defaults = restore_last_working_configuration(defaults_path)
+    if apps_config.defaults is None:
+        # Missing config.json, or no working copy to use
         return False
 
     system = apps_config.defaults.setdefault("system", {})
@@ -83,7 +89,41 @@ def load_configuration() -> bool:
         apps_config.smart_restart["active_hours_start"] = system["active_hours"]["start"]
         apps_config.smart_restart["active_hours_end"] = system["active_hours"]["end"]
 
+    save_working_copy(apps_config.defaults)
     return True
+
+
+def save_working_copy(defaults: dict[str, Any]):
+    """Save the given configuration as config.json.backup.
+
+    Call this only with a configuration that loaded or saved successfully. It's used in place of config.json
+    if that file later can't be read.
+    """
+
+    ex_files.write_json(defaults, ex_files.get_path(["configuration", "config.json.backup"], user_file=True))
+
+
+def restore_last_working_configuration(defaults_path: str) -> dict[str, Any] | None:
+    """Replace an unreadable config.json with the last working configuration and return it.
+
+    The unreadable file is kept as config.json.invalid so staff can see what went wrong. Return None if
+    config.json is missing, since that means Apps should run first-time setup, or if there is no working copy.
+    """
+
+    if not os.path.exists(defaults_path):
+        # Deleting config.json is how staff reset Apps, so start first-time setup
+        return None
+
+    backup = ex_files.load_json(ex_files.get_path(["configuration", "config.json.backup"], user_file=True))
+    if not isinstance(backup, dict):
+        return None
+
+    invalid_path = defaults_path + ".invalid"
+    shutil.copyfile(defaults_path, invalid_path)
+    ex_files.write_json(backup, defaults_path)
+    logging.error("config.json could not be read, so Apps is using its last working configuration. "
+                  "The unreadable file was saved as %s", invalid_path)
+    return backup
 
 
 def update_configuration(data: dict[str, Any], cull: bool = False):
@@ -114,7 +154,9 @@ def update_configuration(data: dict[str, Any], cull: bool = False):
 
     apps_config.defaults = new_defaults
     defaults_path = ex_files.get_path(["configuration", "config.json"], user_file=True)
-    ex_files.write_json(apps_config.defaults, defaults_path)
+    success, _ = ex_files.write_json(apps_config.defaults, defaults_path)
+    if success:
+        save_working_copy(apps_config.defaults)
 
     if ex_config.debug:
         print("apps_utilities.update_defaults: update written.")

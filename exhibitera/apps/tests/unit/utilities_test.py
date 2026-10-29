@@ -75,3 +75,72 @@ def test_valid_config_applies_settings(config_dir):
     assert apps_config.smart_restart["active_hours_start"] == "8:00"
     assert apps_config.smart_restart["active_hours_end"] == "18:00"
     assert logging.getLogger().level == logging.DEBUG
+
+
+# Falling back to the last working configuration
+#
+# A typo in a hand-edited config.json would otherwise send Apps to first-time setup, which shows the
+# setup wizard on the visitor screen and gives the computer a new identity in Hub.
+
+GOOD_CONFIG = {"app": {"uuid": "kiosk-uuid", "id": "Kiosk", "definition": "def-A"},
+               "system": {"remote_display": True, "standalone": True}}
+
+
+def read_json(path):
+    with open(path, encoding="UTF-8") as f:
+        return json.load(f)
+
+
+def test_loading_a_good_config_keeps_a_copy(config_dir):
+    write_config(config_dir, json.dumps(GOOD_CONFIG))
+
+    apps_utilities.load_configuration()
+
+    assert read_json(config_dir / "config.json.backup") == GOOD_CONFIG
+
+
+def test_saving_the_config_updates_the_copy(config_dir):
+    write_config(config_dir, json.dumps(GOOD_CONFIG))
+    apps_utilities.load_configuration()
+
+    apps_utilities.update_configuration({"app": {"definition": "def-B"}})
+
+    assert read_json(config_dir / "config.json.backup")["app"]["definition"] == "def-B"
+
+
+@pytest.mark.parametrize("contents", ["", '{"app": {"id": "Kiosk",}}', "[1, 2, 3]"])
+def test_broken_config_falls_back_to_the_last_working_one(config_dir, contents, caplog):
+    write_config(config_dir, json.dumps(GOOD_CONFIG))
+    apps_utilities.load_configuration()
+    write_config(config_dir, contents)
+
+    with caplog.at_level(logging.ERROR):
+        assert apps_utilities.load_configuration() is True
+
+    assert apps_config.defaults["app"]["uuid"] == "kiosk-uuid"
+    assert apps_config.defaults["app"]["definition"] == "def-A"
+    assert "config.json.invalid" in caplog.text
+
+
+def test_broken_config_is_kept_for_staff_to_fix(config_dir):
+    write_config(config_dir, json.dumps(GOOD_CONFIG))
+    apps_utilities.load_configuration()
+    write_config(config_dir, '{"app": {"id": "Kiosk",}}')
+
+    apps_utilities.load_configuration()
+
+    assert (config_dir / "config.json.invalid").read_text(encoding="UTF-8") == '{"app": {"id": "Kiosk",}}'
+    assert read_json(config_dir / "config.json") == GOOD_CONFIG
+
+
+def test_broken_config_without_a_copy_still_starts_setup(config_dir):
+    write_config(config_dir, '{"app": {"id": "Kiosk",}}')
+
+    assert apps_utilities.load_configuration() is False
+
+
+def test_broken_copy_is_not_used(config_dir):
+    write_config(config_dir, "")
+    (config_dir / "config.json.backup").write_text("[]", encoding="UTF-8")
+
+    assert apps_utilities.load_configuration() is False
