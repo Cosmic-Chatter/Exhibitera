@@ -1890,7 +1890,7 @@ if (searchParams.has('standalone')) {
   // We are displaying this because it was clicked from the web console DMX tab
 } else {
   // We are displaying this as the main app
-  exCommon.askForDefaults()
+  exCommon.askForDefaults(false)
     .then(() => {
       exCommon.sendPing()
 

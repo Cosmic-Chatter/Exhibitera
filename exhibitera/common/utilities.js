@@ -46,22 +46,31 @@ export function makeRequest (opt) {
       xhr.setRequestHeader(name, value)
     }
 
+    // Every outcome must resolve or reject, so callers can retry or report the failure
     xhr.onload = function () {
       if (xhr.status >= 200 && xhr.status < 300) {
         if (opt?.rawResponse ?? false) {
           resolve(xhr.responseText)
-        } else {
+          return
+        }
+        try {
           resolve(JSON.parse(xhr.responseText))
+        } catch {
+          reject(new Error(`Response to ${opt.method} ${path} is not JSON`))
         }
       } else {
         console.log('Submitted data: ', opt.params)
-        console.log('Response: ', JSON.parse(xhr.response))
+        console.log('Response: ', xhr.response)
         reject(new Error(`Unable to complete ${opt.method} to ${path} with the above data`))
       }
     }
     xhr.onerror = function () {
       console.log('Submitted data: ', opt.params)
-      reject(new Error(`Unable to complete ${opt.method} to ${opt.url + opt.endpoint} with the above data`))
+      reject(new Error(`Unable to complete ${opt.method} to ${path} with the above data`))
+    }
+    // Browsers don't call onerror for a timeout
+    xhr.ontimeout = function () {
+      reject(new Error(`${opt.method} to ${path} timed out after ${xhr.timeout} ms`))
     }
     let paramText = null
     if (opt.params != null) {
@@ -79,31 +88,16 @@ export function appNameToDisplayName (appName) {
 }
 
 export function uuid () {
-  // Generate a new UUID v4 without using the crypto library (we may not be in HTTPS).
+  // Generate a new UUID v4.
+  // crypto.randomUUID() needs HTTPS, which we may not have, but crypto.getRandomValues() works everywhere.
   // Format: 8-4-4-4-12
 
-  const chars = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
-  let result = ''
-  for (let i = 0; i < 8; i++) {
-    result += chars[Math.floor(Math.random() * 36)]
-  }
-  result += '-'
-  for (let i = 0; i < 4; i++) {
-    result += chars[Math.floor(Math.random() * 36)]
-  }
-  result += '-'
-  for (let i = 0; i < 4; i++) {
-    result += chars[Math.floor(Math.random() * 36)]
-  }
-  result += '-'
-  for (let i = 0; i < 4; i++) {
-    result += chars[Math.floor(Math.random() * 36)]
-  }
-  result += '-'
-  for (let i = 0; i < 12; i++) {
-    result += chars[Math.floor(Math.random() * 36)]
-  }
-  return result
+  const bytes = crypto.getRandomValues(new Uint8Array(16))
+  bytes[6] = (bytes[6] & 0x0f) | 0x40 // Version 4
+  bytes[8] = (bytes[8] & 0x3f) | 0x80 // Variant 1
+
+  const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`
 }
 
 export function showModal (modal) {

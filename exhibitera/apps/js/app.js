@@ -17,7 +17,7 @@ exCommon.config.exhibiteraAppID = 'none'
 exCommon.config.debug = true
 exCommon.config.helperAddress = window.location.origin
 
-exCommon.askForDefaults()
+exCommon.askForDefaults(false) // This page opens the definition's app itself, below
   .then(() => {
     if (exCommon.config.definitionUUID !== '') {
       exCommon.loadDefinition(exCommon?.config?.definitionUUID)

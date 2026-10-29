@@ -110,8 +110,8 @@ export function configureApp (opt = {}) {
         })
     }
   } else {
-  // We are displaying this for real
-    askForDefaults()
+  // We are displaying this for real. The definition is loaded below, so don't let askForDefaults() load it too.
+    askForDefaults(false)
       .then(() => {
         // If we've already got a definition, load it
         if (config.definitionUUID && config.definitionUUID !== '') {
@@ -246,20 +246,15 @@ export function sendPing () {
         params: requestDict
       })
       .then(readServerUpdate)
-      .catch(handlePingError)
+      .catch(() => {
+        // Hub is unreachable, so keep showing the current definition and try again at the next ping
+      })
   }
 
   // First, check the helper for updates, then send the ping
   checkForHelperUpdates()
     .then(pingRequest)
     .catch(pingRequest)
-}
-
-function handlePingError () {
-  // Called when a ping fails, usually because the conntection to Hub was lost.
-
-  // Load the saved definition
-  loadDefinition(config.definitionUUID)
 }
 
 export function wakeDisplay () {
@@ -420,6 +415,7 @@ function readHelperUpdate (update, changeApp = true) {
   readUpdate(update)
 
   // App settings
+  const previousDefinition = config.definitionUUID
   if (update?.app?.id) config.id = update.app.id
   if (update?.app?.definition) config.definitionUUID = update.app.definition
 
@@ -443,9 +439,8 @@ function readHelperUpdate (update, changeApp = true) {
     changeApp === true &&
     config.standalone === true &&
     update?.app?.definition &&
-    update.app.definition !== config.definitionUUID
+    update.app.definition !== previousDefinition
   ) {
-    config.definitionUUID = update.app.definition
     definitionChanged = true
     makeHelperRequest({
       method: 'GET',
@@ -463,7 +458,7 @@ function readHelperUpdate (update, changeApp = true) {
       })
   }
 
-  if (definitionChanged) {
+  if (definitionChanged && typeof config.definitionLoader === 'function') {
     loadDefinition(config.definitionUUID)
       .then((result) => {
         config.definitionLoader(result.definition)
@@ -476,28 +471,32 @@ function readHelperUpdate (update, changeApp = true) {
   }
 }
 
-function checkAgain () {
-  try {
-    document.getElementById('helperConnectionWarningAddress').textContent = config.helperAddress
-    document.getElementById('helperConnectionWarning').style.display = 'block'
-  } catch {
-    // Will fail if these elements don't exist
-  }
-  console.log('Could not get defaults... checking again')
-  setTimeout(askForDefaults, 500)
+function showHelperConnectionWarning (show) {
+  const warning = document.getElementById('helperConnectionWarning')
+  if (warning == null) return // Not every page has the warning
+
+  document.getElementById('helperConnectionWarningAddress').textContent = config.helperAddress
+  warning.style.display = show ? 'block' : 'none'
 }
 
 export function askForDefaults (changeApp = true) {
   // Send a message to the local helper and ask for the latest configuration, then use it.
   // Set changeApp === false to supress changing the app based on the current definition
+  // Keeps trying until Apps answers, so the returned Promise only resolves once the configuration is in use.
 
   return makeHelperRequest({
     method: 'GET',
     endpoint: '/system/configuration'
   })
     .then((update) => {
+      showHelperConnectionWarning(false)
       readHelperUpdate(update, changeApp)
-    }, checkAgain)
+    }, () => {
+      showHelperConnectionWarning(true)
+      console.log('Could not get defaults... checking again')
+      return new Promise((resolve) => setTimeout(resolve, 500))
+        .then(() => askForDefaults(changeApp))
+    })
 }
 
 export function checkForHelperUpdates () {
