@@ -462,14 +462,20 @@ def get_thumbnail(filename: str,
     return thumb_path, mimetype
 
 
-def get_definition_thumbnail(uuid_str: str) -> tuple[str, str]:
-    """Retrieve the thumbnail for the given definition or a default one."""
+def find_definition_thumbnail(uuid_str: str) -> str | None:
+    """Return the filename of the given definition's own thumbnail in thumbnails/definitions, or None if it has none."""
 
     thumbs = ex_files.get_directory_contents(['thumbnails', 'definitions'])
     matches = [x for x in thumbs if uuid_str in x]
+    return matches[0] if len(matches) > 0 else None
 
-    if len(matches) > 0:
-        thumb_path = ex_files.get_path(['thumbnails', 'definitions', matches[0]], user_file=True)
+
+def get_definition_thumbnail(uuid_str: str) -> tuple[str, str]:
+    """Retrieve the thumbnail for the given definition or a default one."""
+
+    thumbnail = find_definition_thumbnail(uuid_str)
+    if thumbnail is not None:
+        thumb_path = ex_files.get_path(['thumbnails', 'definitions', thumbnail], user_file=True)
         return thumb_path, ex_files.get_mimetype(thumb_path)
 
     # Need to find a default image

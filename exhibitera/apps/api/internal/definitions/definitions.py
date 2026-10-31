@@ -99,7 +99,7 @@ async def load_definition_thumbnail(this_uuid: str):
 
 @router.get("/definitions/{this_uuid}/getContentList")
 async def get_definition_content_list(this_uuid: str):
-    """Return a list of all content used by the given definition."""
+    """Return a list of all content used by the given definition, and the name of its own thumbnail, if any."""
 
     if not ex_files.filename_safe(this_uuid):
         return {"success": False, "reason": "unsafe_filename"}
@@ -241,4 +241,5 @@ async def get_definition_content_list(this_uuid: str):
 
     return {"success": True,
             "total_size": ex_files.convert_bytes_to_readable(total_size),
-            "content": content_details}
+            "content": content_details,
+            "thumbnail": apps_files.find_definition_thumbnail(this_uuid)}  # The definition's own, not its media's

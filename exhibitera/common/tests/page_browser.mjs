@@ -64,6 +64,8 @@ export async function openPage (site, page, { search = '' } = {}) {
   window.matchMedia = () => ({ matches: false, addEventListener () {}, removeEventListener () {} })
   window.FontFace = class { constructor (family) { this.family = family } }
   window.ResizeObserver = class { observe () {} unobserve () {} disconnect () {} }
+  // Enough of CSS.escape for the identifiers and filenames the pages use in selectors
+  window.CSS = { escape: (value) => String(value).replace(/[^\w-]/g, (char) => '\\' + char) }
   // jsdom doesn't lay out pages, so it has no innerText. Without CSS, it matches textContent.
   Object.defineProperty(window.HTMLElement.prototype, 'innerText', {
     get () { return this.textContent },

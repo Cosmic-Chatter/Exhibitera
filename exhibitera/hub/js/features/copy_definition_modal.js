@@ -38,6 +38,9 @@ export async function showCopyDefinitionModal (componentUUID, definitionUUID, de
     console.error('Failed to fetch source content list:', err)
   }
 
+  // The definition's own thumbnail, if it has one. Older versions of Apps don't report it.
+  modal.dataset.sourceThumbnail = contentList?.thumbnail ?? ''
+
   // Populate source files
   const sourceDiv = document.getElementById('copyDefinitionModalSourceFiles')
   sourceDiv.innerHTML = ''
@@ -289,6 +292,7 @@ export async function copyDefinitionModalPerformCopy () {
   const sourceUUID = modal.dataset.component
   const sourceComponent = hubTools.getExhibitComponent(sourceUUID)
   const filesToCopy = JSON.parse(modal.getAttribute('data-sourceFiles')) ?? []
+  const thumbnail = modal.dataset.sourceThumbnail ?? ''
 
   // Load the definition to be copies
   const defResponse = await sourceComponent.makeRequest({
@@ -370,6 +374,25 @@ export async function copyDefinitionModalPerformCopy () {
         timeout: 120000
       })
       updateProgress(defSizeEstimate)
+
+      // Copy the definition's own thumbnail under the copy's UUID. It only affects how the definition
+      // appears in lists, so a failure doesn't fail the copy.
+      if (thumbnail !== '') {
+        const extension = thumbnail.includes('.') ? thumbnail.slice(thumbnail.lastIndexOf('.')) : ''
+        try {
+          await destComp.makeRequest({
+            method: 'POST',
+            endpoint: '/files/retrieve',
+            params: {
+              file_url: `${sourceComponent.getHelperURL()}/thumbnails/definitions/${thumbnail}`,
+              path_list: ['thumbnails', 'definitions', thisDef.uuid + extension]
+            },
+            timeout: 120000
+          })
+        } catch (err) {
+          console.warn(`Could not copy the definition thumbnail to ${destComp.id}:`, err)
+        }
+      }
 
       // Transfer Supporting Files concurrently
       const filePromises = filesToCopy.map(async (file) => {
