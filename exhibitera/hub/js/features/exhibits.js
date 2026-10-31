@@ -306,8 +306,8 @@ async function createExhibitionModificationHTML (mod, exhib) {
   col.querySelector('.component-name').textContent = component.id
   for (const [selector, def] of [['.exhib-name', exhibDef], ['.mod-name', modDef]]) {
     const nameEl = col.querySelector(selector)
-    if (def?.name != null) {
-      nameEl.textContent = def.name
+    if (def != null) {
+      nameEl.textContent = hubTools.getDefinitionDisplayName(def)
     } else {
       nameEl.classList.add('fst-italic')
       nameEl.textContent = 'No definition'
@@ -554,7 +554,7 @@ async function editExhibitCreateComponentHTML (component) {
     definitionSelect.appendChild(header)
 
     for (const def of appDict[app]) {
-      const option = new Option(def.name, def.uuid)
+      const option = new Option(hubTools.getDefinitionDisplayName(def), def.uuid)
       definitionSelect.appendChild(option)
     }
   }

@@ -33,17 +33,9 @@ async function wizardForward (currentPage) {
   // Check if the wizard is ready to advance and perform the move
 
   if (currentPage === 'Welcome') {
-    const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
-    if (defName !== '') {
-      document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'none'
-      exSetup.wizardGoTo('Languages')
-    } else {
-      document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'block'
-    }
+    if (exSetup.wizardCheckDefinitionName()) exSetup.wizardGoTo('Languages')
   } else if (currentPage === 'Languages') {
-    if (document.getElementById('wizardLanguages').children.length > 0) {
-      document.getElementById('wizardLanguagesBlankWarning').style.display = 'none'
-
+    if (exSetup.wizardCheckLanguages()) {
       // Populate with a header input for each language
       const headerDiv = document.getElementById('wizardHeaderInputDiv')
       headerDiv.innerHTML = ''
@@ -74,8 +66,6 @@ async function wizardForward (currentPage) {
         })
       }
       exSetup.wizardGoTo('Header')
-    } else {
-      document.getElementById('wizardLanguagesBlankWarning').style.display = 'block'
     }
   } else if (currentPage === 'Header') {
     exSetup.wizardGoTo('Option')
@@ -219,15 +209,7 @@ async function wizardCreateDefinition () {
     })
   }
 
-  const uuid = exSetup.config.workingDefinition.uuid
-
-  await exSetup.saveDefinition(defName)
-  const result = await exCommon.getAvailableDefinitions('timeline_explorer')
-  exSetup.populateAvailableDefinitions(result.definitions)
-  document.getElementById('availableDefinitionSelect').value = uuid
-
-  editDefinition(uuid)
-  exUtilities.hideModal('#setupWizardModal')
+  await exSetup.finishWizard(defName)
 }
 
 function generateSpreadsheetTemplate (wizard = true) {
@@ -336,9 +318,7 @@ function editDefinition (uuid = '') {
   document.getElementById('enableHardwareControlCheckbox').checked = def?.hardware_control_enabled ?? false
 
   exSetup.updateAdvancedColorPicker('style>background', def?.style?.background, { mode: 'color', color: '#719abf' })
-  exSetup.updateColorPickers(def?.style?.color ?? {})
-  exSetup.updateAdvancedFontPickers(def?.style?.font ?? {})
-  exSetup.updateTextSizeSliders(def?.style?.text_size ?? {})
+  exSetup.showDefinitionStyle(def)
 
   const langSelect = document.getElementById('language-picker')
   exLang.createLanguagePicker(langSelect, {
@@ -946,16 +926,7 @@ exCommon.config.helperAddress = window.location.origin
 // Wizard
 
 // Connect the forward and back buttons
-Array.from(document.querySelectorAll('.wizard-forward')).forEach((el) => {
-  el.addEventListener('click', () => {
-    wizardForward(el.getAttribute('data-current-page'))
-  })
-})
-Array.from(document.querySelectorAll('.wizard-back')).forEach((el) => {
-  el.addEventListener('click', () => {
-    wizardBack(el.getAttribute('data-current-page'))
-  })
-})
+exSetup.connectWizardButtons(wizardForward, wizardBack)
 
 document.getElementById('wizardDownloadTemplateButton').addEventListener('click', () => {
   generateSpreadsheetTemplate()
@@ -1153,30 +1124,12 @@ document.getElementById('bulkImportButton').addEventListener('click', () => {
 })
 
 // Style fields
-const colorInputs = document.querySelectorAll('.coloris')
+exSetup.connectColorInputs()
 
-for (const input of colorInputs) {
-  input.addEventListener('change', function () {
-    const value = this.value.trim()
-    const property = this.dataset.property
-    exSetup.updateWorkingDefinition(['style', 'color', property], value)
-    exSetup.previewDefinition(true)
-  })
-}
-
-document.getElementById('manageFontsButton').addEventListener('click', (event) => {
-  exFileSelect.createFileSelectionModal({ filetypes: ['otf', 'ttf', 'woff', 'woff2'], manage: true })
-    .then(exSetup.refreshAdvancedFontPickers)
-})
+exSetup.connectFontManager()
 
 // Text size fields
-Array.from(document.querySelectorAll('.text-size-slider')).forEach((el) => {
-  el.addEventListener('input', (event) => {
-    const property = event.target.getAttribute('data-property')
-    exSetup.updateWorkingDefinition(['style', 'text_size', property], parseFloat(event.target.value))
-    exSetup.previewDefinition(true)
-  })
-})
+exSetup.connectTextSizeSliders()
 
 // Set helper address for use with exCommon.makeHelperRequest
 exCommon.config.helperAddress = window.location.origin

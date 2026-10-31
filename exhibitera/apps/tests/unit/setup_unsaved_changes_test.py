@@ -144,6 +144,42 @@ def test_saved_returns_to_save_after_two_seconds():
     assert result == {"before": SAVED, "after": SAVE}
 
 
+@pytest.mark.parametrize("name", ["", "   "])
+def test_definition_without_a_name_is_not_saved(name):
+    result = run_setup(f"""
+        edit()
+        document.getElementById('definitionNameInput').value = {name!r}
+        await browser.settle(exSetup.saveDefinition())
+        const dialog = shownDialog()
+        report({{
+          written: browser.requests.some((r) => r.url.endsWith('/definitions/write')),
+          dialog: dialog ? allText(dialog) : null,
+          button: {BUTTON_STATE},
+          unsaved: exSetup.definitionHasUnsavedChanges()
+        }})
+    """)
+
+    assert result["written"] is False
+    assert "name is required" in result["dialog"].lower()
+    assert result["button"]["disabled"] is False  # The save never started
+    assert result["unsaved"] is True
+
+
+def test_name_is_saved_without_surrounding_spaces():
+    result = run_setup("""
+        edit()
+        document.getElementById('definitionNameInput').value = '  Lobby  loop  '
+        await exSetup.saveDefinition()
+        const write = browser.requests.find((r) => r.url.endsWith('/definitions/write'))
+        report({
+          saved: JSON.parse(write.body).definition.name,
+          shown: document.getElementById('definitionNameInput').value
+        })
+    """)
+
+    assert result == {"saved": "Lobby  loop", "shown": "Lobby  loop"}
+
+
 @pytest.mark.parametrize("reply", ["'error'", "{ body: { success: false, reason: 'unsafe_filename' } }"])
 def test_failed_save_keeps_the_changes_and_says_so(reply):
     result = run_setup(f"""

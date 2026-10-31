@@ -29,13 +29,7 @@ async function wizardForward (currentPage) {
   // Check if the wizard is ready to advance and perform the move
 
   if (currentPage === 'Welcome') {
-    const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
-    if (defName !== '') {
-      document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'none'
-      exSetup.wizardGoTo('Media')
-    } else {
-      document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'block'
-    }
+    if (exSetup.wizardCheckDefinitionName()) exSetup.wizardGoTo('Media')
   } else if (currentPage === 'Media') {
     const firstName = document.getElementById('wizardSelectFirstImageButton').dataset.filename
     const lastName = document.getElementById('wizardSelectLastImageButton').dataset.filename
@@ -94,15 +88,7 @@ async function wizardCreateDefinition () {
     video_mode: 'cover'
   })
 
-  const uuid = exSetup.config.workingDefinition.uuid
-
-  await exSetup.saveDefinition(defName)
-  const result = await exCommon.getAvailableDefinitions('timelapse_viewer')
-  exSetup.populateAvailableDefinitions(result.definitions)
-  document.getElementById('availableDefinitionSelect').value = uuid
-
-  editDefinition(uuid)
-  exUtilities.hideModal('#setupWizardModal')
+  await exSetup.finishWizard(defName)
 }
 
 async function clearDefinitionInput (full = true) {
@@ -344,16 +330,7 @@ let matchedFiles = []
 // Wizard
 
 // Connect the forward and back buttons
-Array.from(document.querySelectorAll('.wizard-forward')).forEach((el) => {
-  el.addEventListener('click', () => {
-    wizardForward(el.getAttribute('data-current-page'))
-  })
-})
-Array.from(document.querySelectorAll('.wizard-back')).forEach((el) => {
-  el.addEventListener('click', () => {
-    wizardBack(el.getAttribute('data-current-page'))
-  })
-})
+exSetup.connectWizardButtons(wizardForward, wizardBack)
 
 document.getElementById('wizardManageContentButton').addEventListener('click', () => {
   exFileSelect.createFileSelectionModal({ manage: true, filetypes: ['image', 'video'] })
@@ -497,10 +474,7 @@ Array.from(document.getElementsByClassName('attractor-check')).forEach((el) => {
 })
 
 // Font upload
-document.getElementById('manageFontsButton').addEventListener('click', (event) => {
-  exFileSelect.createFileSelectionModal({ filetypes: ['otf', 'ttf', 'woff', 'woff2'], manage: true })
-    .then(exSetup.refreshAdvancedFontPickers)
-})
+exSetup.connectFontManager()
 
 // Realtime-sliders should adjust as we drag them
 Array.from(document.querySelectorAll('.realtime-slider')).forEach((el) => {

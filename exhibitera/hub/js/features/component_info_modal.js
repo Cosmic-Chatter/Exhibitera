@@ -888,7 +888,7 @@ async function updateComponentInfoModalFromHelper (uuid, permission) {
   }
 
   // CPU
-  if (obj?.platform_details?.operating_system.toLowerCase().includes('windows')) {
+  if (obj?.platform_details?.operating_system?.toLowerCase().includes('windows')) {
     document.getElementById('componentInfoModalMaintenanceCPUBar').style.display = 'none'
   } else {
     document.getElementById('componentInfoModalMaintenanceCPUBar').style.display = 'block'
@@ -1081,14 +1081,10 @@ async function populateComponentDefinitionList (definitions, permission) {
   componentInfoModalDefinitionList.innerHTML = ''
 
   const sortedByName = Object.keys(definitions).sort((a, b) => {
-    try {
-      const aName = definitions[a].name.toLowerCase()
-      const bName = definitions[b].name.toLowerCase()
-      if (aName > bName) return 1
-      if (aName < bName) return -1
-    } catch {
-
-    }
+    const aName = (definitions[a].name ?? '').toLowerCase()
+    const bName = (definitions[b].name ?? '').toLowerCase()
+    if (aName > bName) return 1
+    if (aName < bName) return -1
     return 0
   })
   for (const uuid of sortedByName) {
@@ -1130,7 +1126,7 @@ async function populateComponentDefinitionList (definitions, permission) {
     }
 
     name.style.fontSize = '18px'
-    name.textContent = definition.name
+    name.textContent = hubTools.getDefinitionDisplayName(definition)
     btnGroup.appendChild(name)
 
     const dropdownBtn = document.createElement('button')
@@ -1178,7 +1174,7 @@ async function populateComponentDefinitionList (definitions, permission) {
         copyOption.classList = 'dropdown-item'
         copyOption.innerHTML = 'Copy to...'
         copyOption.addEventListener('click', () => {
-          hubCopyDef.showCopyDefinitionModal(component.uuid, definition.uuid, definition.name)
+          hubCopyDef.showCopyDefinitionModal(component.uuid, definition.uuid, hubTools.getDefinitionDisplayName(definition))
         })
         dropdownMenu.appendChild(copyOption)
       }

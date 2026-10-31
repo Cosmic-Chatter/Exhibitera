@@ -3,7 +3,6 @@
 import * as exUtilities from '../../../common/utilities.js'
 import * as exCommon from '../../js/exhibitera_app_common.js'
 import * as exSetup from '../../js/exhibitera_setup_common.js'
-import * as exFileSelect from '../../js/exhibitera_file_select_modal.js'
 import * as exMarkdown from '../../js/exhibitera_setup_markdown.js'
 
 async function initializeWizard () {
@@ -26,13 +25,7 @@ async function wizardForward (currentPage) {
   // Check if the wizard is ready to advance and perform the move
 
   if (currentPage === 'Welcome') {
-    const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
-    if (defName !== '') {
-      document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'none'
-      exSetup.wizardGoTo('Collection')
-    } else {
-      document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'block'
-    }
+    if (exSetup.wizardCheckDefinitionName()) exSetup.wizardGoTo('Collection')
   } else if (currentPage === 'Collection') {
     const collection = document.getElementById('wizardCollection').value.trim()
     if (collection !== '') {
@@ -99,14 +92,7 @@ async function wizardCreateDefinition () {
     })
   }
 
-  const uuid = exSetup.config.workingDefinition.uuid
-
-  await exSetup.saveDefinition(defName)
-  const result = await exCommon.getAvailableDefinitions('word_cloud_viewer')
-  exSetup.populateAvailableDefinitions(result.definitions)
-  document.getElementById('availableDefinitionSelect').value = uuid
-  editDefinition(uuid)
-  exUtilities.hideModal('#setupWizardModal')
+  await exSetup.finishWizard(defName)
 }
 
 function createWordList (textDict) {
@@ -266,9 +252,7 @@ function editDefinition (uuid = '') {
   document.getElementById('textCaseSelect').value = def?.style?.text_case ?? 'lowercase'
 
   exSetup.updateAdvancedColorPicker('style>background', def?.style?.background)
-  exSetup.updateColorPickers(def?.style?.color ?? {})
-  exSetup.updateAdvancedFontPickers(def?.style?.font ?? {})
-  exSetup.updateTextSizeSliders(def?.style?.text_size ?? {})
+  exSetup.showDefinitionStyle(def)
 
   if (['random-light', 'random-dark'].includes(def?.style?.color?.words ?? 'random_dark')) {
     document.getElementById('colorPicker_wordsGroup').style.display = 'none'
@@ -318,16 +302,7 @@ exCommon.config.helperAddress = window.location.origin
 // Wizard
 
 // Connect the forward and back buttons
-Array.from(document.querySelectorAll('.wizard-forward')).forEach((el) => {
-  el.addEventListener('click', () => {
-    wizardForward(el.getAttribute('data-current-page'))
-  })
-})
-Array.from(document.querySelectorAll('.wizard-back')).forEach((el) => {
-  el.addEventListener('click', () => {
-    wizardBack(el.getAttribute('data-current-page'))
-  })
-})
+exSetup.connectWizardButtons(wizardForward, wizardBack)
 
 // Update the word cloud preview when changing wizard options
 Array.from(document.querySelectorAll('.wizard-style-option')).forEach((el) => {
@@ -372,20 +347,10 @@ document.getElementById('textCaseSelect').addEventListener('change', (event) => 
 })
 
 // Font upload
-document.getElementById('manageFontsButton').addEventListener('click', (event) => {
-  exFileSelect.createFileSelectionModal({ filetypes: ['otf', 'ttf', 'woff', 'woff2'], manage: true })
-    .then(exSetup.refreshAdvancedFontPickers)
-})
+exSetup.connectFontManager()
 
 // Color
-for (const el of document.querySelectorAll('.coloris')) {
-  el.addEventListener('change', function () {
-    const value = this.value.trim()
-    const property = this.dataset.property
-    exSetup.updateWorkingDefinition(['style', 'color', property], value)
-    exSetup.previewDefinition(true)
-  })
-}
+exSetup.connectColorInputs()
 
 // Realtime-sliders should adjust as we drag them
 Array.from(document.querySelectorAll('.realtime-slider')).forEach((el) => {

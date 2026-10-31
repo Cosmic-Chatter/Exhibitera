@@ -37,17 +37,9 @@ async function wizardForward (currentPage) {
   const workingDefinition = exSetup.config.workingDefinition
 
   if (currentPage === 'Welcome') {
-    const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
-    if (defName !== '') {
-      document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'none'
-      exSetup.wizardGoTo('Languages')
-    } else {
-      document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'block'
-    }
+    if (exSetup.wizardCheckDefinitionName()) exSetup.wizardGoTo('Languages')
   } else if (currentPage === 'Languages') {
-    if (document.getElementById('wizardLanguages').children.length > 0) {
-      document.getElementById('wizardLanguagesBlankWarning').style.display = 'none'
-
+    if (exSetup.wizardCheckLanguages()) {
       // Add languages to workingDefinition
       const langOrder = []
       for (const langEl of document.getElementById('wizardLanguages').children) {
@@ -63,8 +55,6 @@ async function wizardForward (currentPage) {
       }
       exSetup.updateWorkingDefinition(['language_order'], langOrder)
       exSetup.wizardGoTo('SelectImages')
-    } else {
-      document.getElementById('wizardLanguagesBlankWarning').style.display = 'block'
     }
   } else if (currentPage === 'SelectImages') {
     const numItems = document.getElementById('wizardImagesNav').childElementCount
@@ -122,8 +112,6 @@ function wizardBack (currentPage) {
 async function wizardCreateDefinition () {
   // Use the provided details to build a definition file.
 
-  const uuid = exSetup.config.workingDefinition.uuid
-
   // Definition name
   const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
   exSetup.updateWorkingDefinition(['name'], defName)
@@ -155,12 +143,7 @@ async function wizardCreateDefinition () {
   exUtilities.hideModal('#setupWizardModal')
   resetWizardFields() // Must clear navs before building new ones for the main editor
 
-  await exSetup.saveDefinition(defName)
-  const result = await exCommon.getAvailableDefinitions('image_compare')
-  exSetup.populateAvailableDefinitions(result.definitions)
-  document.getElementById('availableDefinitionSelect').value = uuid
-  editDefinition(uuid)
-  exUtilities.hideModal('#setupWizardModal')
+  await exSetup.finishWizard(defName)
 }
 
 function wizardBuildPairDetailsPage () {
@@ -335,9 +318,7 @@ function editDefinition (uuid = '') {
       mode: 'color',
       color: '#000'
     })
-  exSetup.updateColorPickers(def?.style?.color ?? {})
-  exSetup.updateAdvancedFontPickers(def?.style?.font ?? {})
-  exSetup.updateTextSizeSliders(def?.style?.text_size ?? {})
+  exSetup.showDefinitionStyle(def)
 
   // Configure the preview frame
   document.getElementById('previewFrame').src = 'index.html?standalone=true&definition=' + def.uuid
@@ -1009,16 +990,7 @@ exLang.createLanguagePicker(document.getElementById('language-select'), rebuildI
 // Wizard
 
 // Connect the forward and back buttons
-for (const el of document.querySelectorAll('.wizard-forward')) {
-  el.addEventListener('click', () => {
-    wizardForward(el.dataset.currentPage)
-  })
-}
-for (const el of document.querySelectorAll('.wizard-back')) {
-  el.addEventListener('click', () => {
-    wizardBack(el.dataset.currentPage)
-  })
-}
+exSetup.connectWizardButtons(wizardForward, wizardBack)
 
 document.getElementById('wizardAddImagePairButton').addEventListener('click', () => {
   const warning = document.getElementById('wizardMaxImagePairsWarning')
@@ -1067,29 +1039,13 @@ document.getElementById('imagePairMaxNumberWarningDismissButton').addEventListen
 })
 
 // Style fields
-for (const el of document.querySelectorAll('.coloris')) {
-  el.addEventListener('change', function () {
-    const value = this.value.trim()
-    const property = this.dataset.property
-    exSetup.updateWorkingDefinition(['style', 'color', property], value)
-    exSetup.previewDefinition(true)
-  })
-}
+exSetup.connectColorInputs()
 
 // Font fields
-document.getElementById('manageFontsButton').addEventListener('click', (event) => {
-  exFileSelect.createFileSelectionModal({ filetypes: ['otf', 'ttf', 'woff', 'woff2'], manage: true })
-    .then(exSetup.refreshAdvancedFontPickers)
-})
+exSetup.connectFontManager()
 
 // Text size fields
-for (const el of document.querySelectorAll('.text-size-slider')) {
-  el.addEventListener('input', (event) => {
-    const property = event.target.dataset.property
-    exSetup.updateWorkingDefinition(['style', 'text_size', property], parseFloat(event.target.value))
-    exSetup.previewDefinition(true)
-  })
-}
+exSetup.connectTextSizeSliders()
 
 // Set helper address for use with exCommon.makeHelperRequest
 exCommon.config.helperAddress = window.location.origin

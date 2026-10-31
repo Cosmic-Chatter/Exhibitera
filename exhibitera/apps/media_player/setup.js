@@ -134,13 +134,7 @@ async function wizardForward (currentPage) {
   // Check if the wizard is ready to advance and perform the move
 
   if (currentPage === 'Welcome') {
-    const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
-    if (defName !== '') {
-      document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'none'
-      exSetup.wizardGoTo('Content')
-    } else {
-      document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'block'
-    }
+    if (exSetup.wizardCheckDefinitionName()) exSetup.wizardGoTo('Content')
   } else if (currentPage === 'Content') {
     const wizardContentRow = document.getElementById('wizardContentRow')
     if (wizardContentRow.children.length === 0) {
@@ -239,15 +233,7 @@ async function wizardCreateDefinition () {
     })
   }
 
-  const uuid = exSetup.config.workingDefinition.uuid
-
-  await exSetup.saveDefinition(defName)
-  const result = await exCommon.getAvailableDefinitions('media_player')
-  exSetup.populateAvailableDefinitions(result.definitions)
-  document.getElementById('availableDefinitionSelect').value = uuid
-
-  editDefinition(uuid)
-  exUtilities.hideModal('#setupWizardModal')
+  await exSetup.finishWizard(defName)
 }
 
 async function clearDefinitionInput (full = true) {
@@ -323,9 +309,7 @@ function editDefinition (uuid = '') {
   document.getElementById('progressIndicatorSizeSelect').value = def?.behavior?.progress_indicator?.size ?? '1'
 
   exSetup.updateAdvancedColorPicker('style>background', def?.style?.background)
-  exSetup.updateColorPickers(def?.style?.color ?? {})
-  exSetup.updateAdvancedFontPickers(def?.style?.font ?? {})
-  exSetup.updateTextSizeSliders(def?.style?.text_size ?? {}, { mode: 'color', color: '#000' })
+  exSetup.showDefinitionStyle(def)
 
   // Set the appropriate values for the watermark
   if ((def?.watermark?.file ?? '') !== '') {
@@ -1501,16 +1485,7 @@ tooltipTriggerList.map(function (tooltipTriggerEl) {
 // Wizard
 
 // Connect the forward and back buttons
-for (const el of document.querySelectorAll('.wizard-forward')) {
-  el.addEventListener('click', () => {
-    wizardForward(el.getAttribute('data-current-page'))
-  })
-}
-for (const el of document.querySelectorAll('.wizard-back')) {
-  el.addEventListener('click', () => {
-    wizardBack(el.getAttribute('data-current-page'))
-  })
-}
+exSetup.connectWizardButtons(wizardForward, wizardBack)
 document.getElementById('wizardAddContentBUtton').addEventListener('click', () => {
   exFileSelect.createFileSelectionModal({
     filetypes: ['audio', 'image', 'video', 'glb', 'mtl', 'obj']
@@ -1626,27 +1601,11 @@ document.getElementById('progressIndicatorSizeSelect').addEventListener('change'
   exSetup.previewDefinition(true)
 })
 
-document.querySelectorAll('.coloris').forEach((element) => {
-  element.addEventListener('change', function () {
-    const value = this.value.trim()
-    const property = this.getAttribute('data-property')
-    exSetup.updateWorkingDefinition(['style', 'color', property], value)
-    exSetup.previewDefinition(true)
-  })
-})
-document.getElementById('manageFontsButton').addEventListener('click', (event) => {
-  exFileSelect.createFileSelectionModal({ filetypes: ['otf', 'ttf', 'woff', 'woff2'], manage: true })
-    .then(exSetup.refreshAdvancedFontPickers)
-})
+exSetup.connectColorInputs()
+exSetup.connectFontManager()
 
 // Text size fields
-Array.from(document.querySelectorAll('.text-size-slider')).forEach((el) => {
-  el.addEventListener('input', (event) => {
-    const property = event.target.getAttribute('data-property')
-    exSetup.updateWorkingDefinition(['style', 'text_size', property], parseFloat(event.target.value))
-    exSetup.previewDefinition(true)
-  })
-})
+exSetup.connectTextSizeSliders()
 
 clearDefinitionInput()
 

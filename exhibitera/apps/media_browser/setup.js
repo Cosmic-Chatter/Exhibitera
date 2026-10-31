@@ -34,19 +34,10 @@ async function wizardForward (currentPage) {
   // Check if the wizard is ready to advance and perform the move
 
   if (currentPage === 'Welcome') {
-    const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
-    if (defName !== '') {
-      document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'none'
-      exSetup.wizardGoTo('Languages')
-    } else {
-      document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'block'
-    }
+    if (exSetup.wizardCheckDefinitionName()) exSetup.wizardGoTo('Languages')
   } else if (currentPage === 'Languages') {
-    if (document.getElementById('wizardLanguages').children.length > 0) {
-      document.getElementById('wizardLanguagesBlankWarning').style.display = 'none'
+    if (exSetup.wizardCheckLanguages()) {
       exSetup.wizardGoTo('ImportOptions')
-    } else {
-      document.getElementById('wizardLanguagesBlankWarning').style.display = 'block'
     }
   } else if (currentPage === 'ImportOptions') {
     if (document.getElementById('wizardMediaImportOptionsSingle').checked) {
@@ -223,15 +214,7 @@ async function wizardCreateDefinition () {
     })
   }
 
-  const uuid = exSetup.config.workingDefinition.uuid
-
-  await exSetup.saveDefinition(defName)
-  const result = await exCommon.getAvailableDefinitions('media_browser')
-  exSetup.populateAvailableDefinitions(result.definitions)
-  document.getElementById('availableDefinitionSelect').value = uuid
-
-  editDefinition(uuid)
-  exUtilities.hideModal('#setupWizardModal')
+  await exSetup.finishWizard(defName)
 }
 
 function onWizardMediaImport (files) {
@@ -444,9 +427,7 @@ function editDefinition (uuid = '') {
   exSetup.createAdvancedSlider(document.getElementById('lightboxCreditHeightSlider'), def?.style?.layout?.lightbox_credit_height)
 
   exSetup.updateAdvancedColorPicker('style>background', def?.style?.background)
-  exSetup.updateColorPickers(def?.style?.color ?? {})
-  exSetup.updateAdvancedFontPickers(def?.style?.font ?? {})
-  exSetup.updateTextSizeSliders(def?.style?.text_size ?? {})
+  exSetup.showDefinitionStyle(def)
 
   // Set up any existing languages and tabs
   // In Ex5.3, we added the language_order field. If it doesn't exist
@@ -1202,16 +1183,7 @@ exCommon.config.helperAddress = window.location.origin
 // Wizard
 
 // Connect the forward and back buttons
-Array.from(document.querySelectorAll('.wizard-forward')).forEach((el) => {
-  el.addEventListener('click', () => {
-    wizardForward(el.getAttribute('data-current-page'))
-  })
-})
-Array.from(document.querySelectorAll('.wizard-back')).forEach((el) => {
-  el.addEventListener('click', () => {
-    wizardBack(el.getAttribute('data-current-page'))
-  })
-})
+exSetup.connectWizardButtons(wizardForward, wizardBack)
 
 document.getElementById('wizardMediaImportButton').addEventListener('click', () => {
   exFileSelect.createFileSelectionModal({
@@ -1459,27 +1431,11 @@ Array.from(document.querySelectorAll('.lightbox-slider')).forEach((el) => {
 })
 
 // Style fields
-document.querySelectorAll('.coloris').forEach((element) => {
-  element.addEventListener('change', function () {
-    const value = this.value.trim()
-    const property = this.getAttribute('data-property')
-    exSetup.updateWorkingDefinition(['style', 'color', property], value)
-    exSetup.previewDefinition(true)
-  })
-})
-document.getElementById('manageFontsButton').addEventListener('click', (event) => {
-  exFileSelect.createFileSelectionModal({ filetypes: ['otf', 'ttf', 'woff', 'woff2'], manage: true })
-    .then(exSetup.refreshAdvancedFontPickers)
-})
+exSetup.connectColorInputs()
+exSetup.connectFontManager()
 
 // Text size fields
-Array.from(document.querySelectorAll('.text-size-slider')).forEach((el) => {
-  el.addEventListener('input', (event) => {
-    const property = event.target.getAttribute('data-property')
-    exSetup.updateWorkingDefinition(['style', 'text_size', property], parseFloat(event.target.value))
-    exSetup.previewDefinition(true)
-  })
-})
+exSetup.connectTextSizeSliders()
 
 // Populate available languages
 exLang.createLanguagePicker(document.getElementById('language-picker'), {

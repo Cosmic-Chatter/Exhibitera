@@ -26,13 +26,7 @@ async function wizardForward (currentPage) {
   // Check if the wizard is ready to advance and perform the move
 
   if (currentPage === 'Welcome') {
-    const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
-    if (defName !== '') {
-      document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'none'
-      exSetup.wizardGoTo('Question')
-    } else {
-      document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'block'
-    }
+    if (exSetup.wizardCheckDefinitionName()) exSetup.wizardGoTo('Question')
   } else if (currentPage === 'Question') {
     exSetup.wizardGoTo('Answers')
   } else if (currentPage === 'Answers') {
@@ -197,15 +191,7 @@ async function wizardCreateDefinition () {
     })
   }
 
-  const uuid = exSetup.config.workingDefinition.uuid
-
-  await exSetup.saveDefinition(defName)
-  const result = await exCommon.getAvailableDefinitions('voting_kiosk')
-  exSetup.populateAvailableDefinitions(result.definitions)
-  document.getElementById('availableDefinitionSelect').value = uuid
-
-  editDefinition(uuid)
-  exUtilities.hideModal('#setupWizardModal')
+  await exSetup.finishWizard(defName)
 }
 
 function wizardCreateAnswerOption (userDetails) {
@@ -405,9 +391,7 @@ function editDefinition (uuid = '') {
   }
 
   exSetup.updateAdvancedColorPicker('style>background', def?.style?.background, { mode: 'color', color: '#22222E' })
-  exSetup.updateColorPickers(def?.style?.color ?? {})
-  exSetup.updateAdvancedFontPickers(def?.style?.font ?? {})
-  exSetup.updateTextSizeSliders(def?.style?.text_size ?? {})
+  exSetup.showDefinitionStyle(def)
 
   // Set the appropriate values for the layout options
   document.getElementById('columnCountSelect').value = def?.style?.layout?.num_columns ?? 'auto'
@@ -664,16 +648,7 @@ exCommon.config.helperAddress = window.location.origin
 // Wizard
 
 // Connect the forward and back buttons
-for (const el of document.querySelectorAll('.wizard-forward')) {
-  el.addEventListener('click', () => {
-    wizardForward(el.getAttribute('data-current-page'))
-  })
-}
-for (const el of document.querySelectorAll('.wizard-back')) {
-  el.addEventListener('click', () => {
-    wizardBack(el.getAttribute('data-current-page'))
-  })
-}
+exSetup.connectWizardButtons(wizardForward, wizardBack)
 
 document.getElementById('wizardAnswerTypeSelect').addEventListener('change', (event) => {
   if (event.target.value === 'custom') {
@@ -740,28 +715,12 @@ document.addEventListener('click', (event) => {
 })
 
 // Style fields
-for (const el of document.querySelectorAll('.color-picker')) {
-  el.addEventListener('change', function () {
-    const value = this.value.trim()
-    const property = this.dataset.property
-    exSetup.updateWorkingDefinition(['style', 'color', property], value)
-    exSetup.previewDefinition(true)
-  })
-}
+exSetup.connectColorInputs()
 
-document.getElementById('manageFontsButton').addEventListener('click', (event) => {
-  exFileSelect.createFileSelectionModal({ filetypes: ['otf', 'ttf', 'woff', 'woff2'], manage: true })
-    .then(exSetup.refreshAdvancedFontPickers)
-})
+exSetup.connectFontManager()
 
 // Text size fields
-Array.from(document.querySelectorAll('.text-size-slider')).forEach((el) => {
-  el.addEventListener('input', (event) => {
-    const property = event.target.getAttribute('data-property')
-    exSetup.updateWorkingDefinition(['style', 'text_size', property], parseFloat(event.target.value))
-    exSetup.previewDefinition(true)
-  })
-})
+exSetup.connectTextSizeSliders()
 
 // Layout fields
 document.getElementById('columnCountSelect').addEventListener('change', (event) => {

@@ -10,7 +10,7 @@ export function setComponentInfoModalMaintenanceStatus (uuid, id) {
     endpoint: '/maintenance/' + uuid
   })
     .then((result) => {
-      if (result.success && result.success === false) return
+      if (result?.success !== true) return // Hub refused, such as for a user without permission
 
       document.getElementById('componentInfoModalMaintenanceStatusSelector').value = result.status.status
       document.getElementById('componentInfoModalMaintenanceNote').value = result.status.notes

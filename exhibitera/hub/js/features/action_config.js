@@ -246,7 +246,7 @@ export class ActionConfigurator {
             valueSelector.appendChild(header)
 
             for (const def of appDict[app]) {
-              valueSelector.appendChild(new Option(def.name, def.uuid))
+              valueSelector.appendChild(new Option(hubTools.getDefinitionDisplayName(def), def.uuid))
             }
           }
         }

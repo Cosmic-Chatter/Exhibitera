@@ -499,6 +499,10 @@ export function populateAvailableDefinitions (definitions) {
 
   const select = document.getElementById('availableDefinitionSelect')
   select.innerText = ''
+
+  // Definitions made by hand or by older versions may have no name
+  for (const definition of Object.values(definitions)) definition.name ??= ''
+
   config.availableDefinitions = definitions
   const keys = Object.keys(definitions).sort((a, b) => {
     const aName = definitions[a].name.toLowerCase()
@@ -511,7 +515,7 @@ export function populateAvailableDefinitions (definitions) {
   for (const uuid of keys) {
     if (uuid.startsWith('__preview') || uuid.trim() === '') continue
 
-    const option = new Option(definitions[uuid].name, uuid)
+    const option = new Option(definitions[uuid].name || 'Unnamed definition', uuid)
     select.appendChild(option)
   }
 }
@@ -577,6 +581,53 @@ export function wizardGoTo (page) {
     el.style.display = 'none'
   }
   document.getElementById('wizardPane_' + page).style.display = 'block'
+}
+
+export function connectWizardButtons (forward, back) {
+  // Call forward or back with the wizard page that the clicked Next or Back button is on.
+
+  for (const el of document.querySelectorAll('.wizard-forward')) {
+    el.addEventListener('click', () => {
+      forward(el.getAttribute('data-current-page'))
+    })
+  }
+  for (const el of document.querySelectorAll('.wizard-back')) {
+    el.addEventListener('click', () => {
+      back(el.getAttribute('data-current-page'))
+    })
+  }
+}
+
+export function wizardCheckDefinitionName () {
+  // Check that the wizard's Welcome page has a definition name, and show a warning if not.
+  // Return true if the wizard can continue.
+
+  const named = document.getElementById('wizardDefinitionNameInput').value.trim() !== ''
+  document.getElementById('wizardDefinitionNameBlankWarning').style.display = named ? 'none' : 'block'
+  return named
+}
+
+export function wizardCheckLanguages () {
+  // Check that at least one language has been chosen in the wizard, and show a warning if not.
+  // Return true if the wizard can continue.
+
+  const chosen = document.getElementById('wizardLanguages').children.length > 0
+  document.getElementById('wizardLanguagesBlankWarning').style.display = chosen ? 'none' : 'block'
+  return chosen
+}
+
+export async function finishWizard (name) {
+  // Save the definition the wizard built, open it for editing, and close the wizard.
+
+  const uuid = config.workingDefinition.uuid
+
+  await saveDefinition(name)
+  const result = await exCommon.getAvailableDefinitions(config.app)
+  populateAvailableDefinitions(result.definitions)
+  document.getElementById('availableDefinitionSelect').value = uuid
+
+  config.loadDefinition(uuid)
+  exUtilities.hideModal('#setupWizardModal')
 }
 
 export function addWizardLanguage () {
@@ -692,8 +743,20 @@ export async function saveDefinition (name = '') {
 
   const definition = config.workingDefinition
   const initialDefinition = config.initialDefinition
+
+  // Save the name without surrounding spaces
+  const nameInput = document.getElementById('definitionNameInput')
+  const nameFromInput = name === ''
+  name = (nameFromInput ? nameInput.value : name).trim()
+  if (name === '') {
+    askInDialog('Name required', ['A name is required. Enter a name for this definition, then save again.'],
+      [{ label: 'OK', value: true, style: 'btn-primary' }])
+    return
+  }
+
+  if (nameFromInput) nameInput.value = name // Show the name as it was saved
   definition.app = config.app
-  if (name === '') definition.name = document.getElementById('definitionNameInput').value
+  definition.name = name
   definition.uuid = initialDefinition.uuid
 
   showSaveProgress('saving')
@@ -1156,6 +1219,46 @@ function getAdvancedColorPickersByPath (path) {
   // Return a NodeList of ACPs that match the given path
 
   return document.querySelectorAll(`.advanced-color-picker[data-constACP-path="${path}"]`)
+}
+
+export function showDefinitionStyle (def) {
+  // Set the color pickers, font pickers, and text size sliders to match the given definition.
+
+  updateColorPickers(def?.style?.color ?? {})
+  updateAdvancedFontPickers(def?.style?.font ?? {})
+  updateTextSizeSliders(def?.style?.text_size ?? {})
+}
+
+export function connectColorInputs () {
+  // Save changes to the color pickers (colorPicker_<property>) in the definition's style.
+
+  for (const el of document.querySelectorAll('.coloris[id^="colorPicker_"][data-property]')) {
+    el.addEventListener('change', function () {
+      updateWorkingDefinition(['style', 'color', this.dataset.property], this.value.trim())
+      previewDefinition(true)
+    })
+  }
+}
+
+export function connectTextSizeSliders () {
+  // Save changes to the text size sliders in the definition's style.
+
+  for (const el of document.querySelectorAll('.text-size-slider')) {
+    el.addEventListener('input', (event) => {
+      const property = event.target.getAttribute('data-property')
+      updateWorkingDefinition(['style', 'text_size', property], parseFloat(event.target.value))
+      previewDefinition(true)
+    })
+  }
+}
+
+export function connectFontManager () {
+  // Open the font manager from the Manage fonts button, then refresh the font pickers with any changes.
+
+  document.getElementById('manageFontsButton').addEventListener('click', () => {
+    exFileSelect.createFileSelectionModal({ filetypes: ['otf', 'ttf', 'woff', 'woff2'], manage: true })
+      .then(refreshAdvancedFontPickers)
+  })
 }
 
 export function updateColorPickers (colors) {

@@ -386,6 +386,12 @@ export function getExhibit (uuid) {
   return result
 }
 
+export function getDefinitionDisplayName (definition) {
+  // Return the name to show for the given definition.
+
+  return definition?.name || 'Unnamed definition'
+}
+
 export function getExhibitName (uuid) {
   // Return the name of the specified exhibit, if it exists.
 

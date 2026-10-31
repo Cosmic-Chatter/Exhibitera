@@ -23,17 +23,9 @@ async function wizardForward (currentPage) {
   // Check if the wizard is ready to advance and perform the move
 
   if (currentPage === 'Welcome') {
-    const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
-    if (defName !== '') {
-      document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'none'
-      exSetup.wizardGoTo('Languages')
-    } else {
-      document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'block'
-    }
+    if (exSetup.wizardCheckDefinitionName()) exSetup.wizardGoTo('Languages')
   } else if (currentPage === 'Languages') {
-    if (document.getElementById('wizardLanguages').children.length > 0) {
-      document.getElementById('wizardLanguagesBlankWarning').style.display = 'none'
-
+    if (exSetup.wizardCheckLanguages()) {
       // Add the selected langauges to the definition
       const langOrder = []
       for (const langEl of document.getElementById('wizardLanguages').children) {
@@ -53,8 +45,6 @@ async function wizardForward (currentPage) {
       document.getElementById('wizardQuestionList').innerText = ''
       exSetup.updateWorkingDefinition(['item_order'], [])
       exSetup.wizardGoTo('Questions')
-    } else {
-      document.getElementById('wizardLanguagesBlankWarning').style.display = 'block'
     }
   } else if (currentPage === 'Questions') {
     const questions = document.querySelectorAll('.wizard-question')
@@ -211,15 +201,7 @@ async function wizardCreateDefinition () {
     })
   }
 
-  const uuid = exSetup.config.workingDefinition.uuid
-
-  await exSetup.saveDefinition(defName)
-  const result = await exCommon.getAvailableDefinitions('survey_kiosk')
-  exSetup.populateAvailableDefinitions(result.definitions)
-  document.getElementById('availableDefinitionSelect').value = uuid
-
-  editDefinition(uuid)
-  exUtilities.hideModal('#setupWizardModal')
+  await exSetup.finishWizard(defName)
 }
 
 function wizarddCreateQuestion (userDetails) {
@@ -515,9 +497,7 @@ function editDefinition (uuid = '') {
 
   exSetup.updateAdvancedColorPicker('style>background', def?.style?.background, { mode: 'color', color: '#fff' })
   exSetup.updateAdvancedColorPicker('style>item_background', def?.style?.item_background, { mode: 'color', color: '#6c757d' })
-  exSetup.updateColorPickers(def?.style?.color ?? {})
-  exSetup.updateAdvancedFontPickers(def?.style?.font ?? {})
-  exSetup.updateTextSizeSliders(def?.style?.text_size ?? {})
+  exSetup.showDefinitionStyle(def)
 
   // Set the appropriate values for the layout options
   exSetup.createAdvancedSlider(document.getElementById('headerToButtonsSlider'), def?.style?.layout?.top_height)
@@ -1543,16 +1523,7 @@ exCommon.config.helperAddress = window.location.origin
 // Wizard
 
 // Connect the forward and back buttons
-for (const el of document.querySelectorAll('.wizard-forward')) {
-  el.addEventListener('click', () => {
-    wizardForward(el.getAttribute('data-current-page'))
-  })
-}
-for (const el of document.querySelectorAll('.wizard-back')) {
-  el.addEventListener('click', () => {
-    wizardBack(el.getAttribute('data-current-page'))
-  })
-}
+exSetup.connectWizardButtons(wizardForward, wizardBack)
 
 document.getElementById('wizardAddQuestionButton').addEventListener('click', (event) => {
   wizarddCreateQuestion()
@@ -1598,19 +1569,10 @@ for (const el of document.querySelectorAll('.color-picker')) {
   })
 }
 
-document.getElementById('manageFontsButton').addEventListener('click', (event) => {
-  exFileSelect.createFileSelectionModal({ filetypes: ['otf', 'ttf', 'woff', 'woff2'], manage: true })
-    .then(exSetup.refreshAdvancedFontPickers)
-})
+exSetup.connectFontManager()
 
 // Text size fields
-Array.from(document.querySelectorAll('.text-size-slider')).forEach((el) => {
-  el.addEventListener('input', (event) => {
-    const property = event.target.getAttribute('data-property')
-    exSetup.updateWorkingDefinition(['style', 'text_size', property], parseFloat(event.target.value))
-    exSetup.previewDefinition(true)
-  })
-})
+exSetup.connectTextSizeSliders()
 
 // Layout fields
 for (const el of document.querySelectorAll('.height-slider')) {

@@ -28,13 +28,7 @@ async function wizardForward (currentPage) {
   // Check if the wizard is ready to advance and perform the move
 
   if (currentPage === 'Welcome') {
-    const defName = document.getElementById('wizardDefinitionNameInput').value.trim()
-    if (defName !== '') {
-      document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'none'
-      exSetup.wizardGoTo('Mode')
-    } else {
-      document.getElementById('wizardDefinitionNameBlankWarning').style.display = 'block'
-    }
+    if (exSetup.wizardCheckDefinitionName()) exSetup.wizardGoTo('Mode')
   } else if (currentPage === 'Mode') {
     const header = document.getElementById('wizardSourceHeader')
     const filesGroup = document.getElementById('wizardSourceFilesGroup')
@@ -94,15 +88,7 @@ async function wizardCreateDefinition () {
     exSetup.updateWorkingDefinition(['url'], document.getElementById('wizardAppURLInput').value.trim())
   }
 
-  const uuid = exSetup.config.workingDefinition.uuid
-
-  await exSetup.saveDefinition(defName)
-  const result = await exCommon.getAvailableDefinitions('other')
-  exSetup.populateAvailableDefinitions(result.definitions)
-  document.getElementById('availableDefinitionSelect').value = uuid
-
-  editDefinition(uuid)
-  exUtilities.hideModal('#setupWizardModal')
+  await exSetup.finishWizard(defName)
 }
 
 async function clearDefinitionInput (full = true) {
@@ -274,16 +260,7 @@ exCommon.config.helperAddress = window.location.origin
 // Wizard
 
 // Connect the forward and back buttons
-for (const el of document.querySelectorAll('.wizard-forward')) {
-  el.addEventListener('click', () => {
-    wizardForward(el.getAttribute('data-current-page'))
-  })
-}
-for (const el of document.querySelectorAll('.wizard-back')) {
-  el.addEventListener('click', () => {
-    wizardBack(el.getAttribute('data-current-page'))
-  })
-}
+exSetup.connectWizardButtons(wizardForward, wizardBack)
 
 document.getElementById('wizardAppURLInput').addEventListener('change', (event) => {
   document.getElementById('wizardURLBlankErrorAlert').style.display = 'none'
