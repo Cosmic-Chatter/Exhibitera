@@ -9,6 +9,9 @@ _If you are upgrading from Exhibitera 5.3, Hub and Apps must all be upgraded at 
 ### Components
 - Copying a definition between components now also copies the definition's thumbnail.
 
+### Flexible Tracker
+- Timers now have a _Record start time_ option that saves the timestamp at which the timer is first started during a session.
+
 ### Programs
 _Programs represent recurring events that take place in a specific location, like a theater._
 - Configure things like digital signage or DMX lighting to change relative to the start and end time of a program.

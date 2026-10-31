@@ -15,26 +15,33 @@ export class FakeXMLHttpRequest {
 
   setRequestHeader () {}
 
+  overrideMimeType () {}
+
   send (body) {
     requests.push({ method: this.method, url: this.url, body })
     const reply = globalThis.server(this.method, this.url, body)
     setTimeout(() => {
-      // As in browsers, a timeout only calls ontimeout, and a network error only calls onerror
-      if (reply === 'timeout') {
-        this.ontimeout?.()
-      } else if (reply === 'error') {
-        this.onerror?.()
-      } else if (reply.bytes != null) {
-        this.status = reply.status ?? 200
+      // As in browsers, a finished request calls onreadystatechange, then a timeout only calls
+      // ontimeout and a network error only calls onerror
+      this.readyState = 4
+      if (reply === 'timeout' || reply === 'error') {
+        this.status = 0
+        this.onreadystatechange?.()
+        if (reply === 'timeout') this.ontimeout?.()
+        else this.onerror?.()
+        return
+      }
+
+      this.status = reply.status ?? 200
+      if (reply.bytes != null) {
         const bytes = new Uint8Array(reply.bytes)
         this.response = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength)
-        this.onload?.()
       } else {
-        this.status = reply.status ?? 200
         this.responseText = reply.text ?? JSON.stringify(reply.body)
         this.response = this.responseText
-        this.onload?.()
       }
+      this.onreadystatechange?.()
+      this.onload?.()
     }, reply?.delay ?? 0)
   }
 }

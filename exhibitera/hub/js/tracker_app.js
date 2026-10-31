@@ -4,10 +4,12 @@ import * as exTracker from './features/tracker.js'
 class TimingObject {
   // This class is to keep track of elapsed time for the timer input type
 
-  constructor (uuid, name, exclusive = false) {
+  constructor (uuid, name, exclusive = false, recordStartTime = false) {
     this.displayName = name
     this.uuid = uuid
     this.exclusive = exclusive // Exclusive timers will stop all other exclusive timers when started
+    this.recordStartTime = recordStartTime // Also record when the timer was first started
+    this.firstStartTime = null // When the timer was first started in this record
     this.elapsedTime = 0
     this.timerRunning = false
     this.startTime = null
@@ -55,6 +57,7 @@ class TimingObject {
     this.elapsedTime = 0
     this.timerRunning = false
     this.startTime = null
+    this.firstStartTime = null
     this.timerInterval = null
     document.getElementById('TimerCounterView_' + this.uuid).innerHTML = '0 sec'
   }
@@ -70,6 +73,7 @@ class TimingObject {
       }
       const d = new Date()
       this.startTime = d.getTime()
+      if (this.firstStartTime == null) this.firstStartTime = d // Restarting doesn't change it
       this.timerRunning = true
 
       const thisObject = this
@@ -123,6 +127,13 @@ class TimingObject {
     const viewEL = document.getElementById('TimerCounterView_' + this.uuid)
     viewEL.textContent = formatTime(seconds)
   }
+}
+
+function localTimestamp (date) {
+  // Format the given Date as an ISO 8601 timestamp in local time, without a time zone, as records store times.
+
+  const tzoffset = date.getTimezoneOffset() * 60000 // Time zone offset in milliseconds
+  return (new Date(date.getTime() - tzoffset)).toISOString().slice(0, -1)
 }
 
 function formatTime (totalSeconds) {
@@ -334,7 +345,7 @@ function buildLayout (definition) {
 
       case 'timer':
       {
-        const timer = new TimingObject(item.uuid, item.name, item?.exclusive ?? false)
+        const timer = new TimingObject(item.uuid, item.name, item?.exclusive ?? false, item?.record_start_time ?? false)
         inputGroup.appendChild(timer.createWidget())
         timerList.push(timer)
         break
@@ -464,6 +475,9 @@ function sendData () {
   timerList.forEach(item => {
     item.stopTimer()
     resultDict[item.displayName] = item.elapsedTime / 1000
+    if (item.recordStartTime && item.firstStartTime != null) {
+      resultDict[item.displayName + ' (Start time)'] = localTimestamp(item.firstStartTime)
+    }
   })
   counterList.forEach(item => {
     const name = item.getAttribute('data-name')
@@ -499,9 +513,7 @@ function sendData () {
   })
 
   // Append the date and time of this recording
-  const tzoffset = (new Date()).getTimezoneOffset() * 60000 // Time zone offset in milliseconds
-  const dateStr = (new Date(Date.now() - tzoffset)).toISOString().slice(0, -1)
-  resultDict.Date = dateStr
+  resultDict.Date = localTimestamp(new Date())
 
   const requestDict = {
     data: resultDict

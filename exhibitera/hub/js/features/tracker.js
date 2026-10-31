@@ -87,7 +87,7 @@ function populateWidgetProperties (widgetDef) {
   } else if (widgetDef.type === 'text') {
     propsToEdit.push('lines')
   } else if (widgetDef.type === 'timer') {
-    propsToEdit.push('exclusive')
+    propsToEdit.push('exclusive', 'record_start_time')
   }
 
   const propsDiv = document.getElementById('editTrackerTemplatePropertiesDiv')
@@ -312,6 +312,36 @@ function populateWidgetProperties (widgetDef) {
       label2.innerHTML = 'False'
       label2.setAttribute('for', 'editTrackerTemplateExclusiveFalse_' + widgetDef.uuid)
       div2.appendChild(label2)
+    } else if (prop === 'record_start_time') {
+      const div = document.createElement('div')
+      div.classList = 'form-check mb-2'
+      propsDiv.appendChild(div)
+
+      const input = document.createElement('input')
+      input.classList = 'form-check-input'
+      input.setAttribute('id', 'editTrackerTemplateRecordStartTime_' + widgetDef.uuid)
+      input.setAttribute('type', 'checkbox')
+      input.checked = widgetDef?.record_start_time === true
+      input.addEventListener('change', (ev) => {
+        editTrackerTemplateUpdateProperty(widgetDef.uuid, prop, ev.target.checked)
+      })
+      div.appendChild(input)
+
+      const label = document.createElement('label')
+      label.classList = 'form-check-label'
+      label.setAttribute('for', 'editTrackerTemplateRecordStartTime_' + widgetDef.uuid)
+      label.textContent = 'Record start time'
+      div.appendChild(label)
+
+      const hint = document.createElement('span')
+      hint.classList = 'badge bg-info ms-1 align-middle'
+      hint.setAttribute('data-bs-toggle', 'tooltip')
+      hint.setAttribute('data-bs-placement', 'top')
+      hint.setAttribute('title', 'Also record when this timer is first started, as "<timer name> (Start time)". Stopping and restarting the timer doesn\'t change it.')
+      hint.style.fontSize = '0.55em'
+      hint.style.color = 'black'
+      hint.textContent = '?'
+      label.appendChild(hint)
     }
   }
 
@@ -479,6 +509,7 @@ export function editTrackerTemplateModalAddWidget (name, type) {
     widgetDef.lines = 5
   } else if (type === 'timer') {
     widgetDef.exclusive = false
+    widgetDef.record_start_time = false
   }
   template.widgets[widgetUUID] = widgetDef
 
