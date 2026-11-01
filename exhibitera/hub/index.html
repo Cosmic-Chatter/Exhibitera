@@ -2168,6 +2168,23 @@
             </div>
           </div>
 
+          <!-- Shown when a template is saved without a name -->
+          <div class="modal" tabindex="-1" role="dialog" id="trackerNameRequiredModal">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">Name required</h5>
+                </div>
+                <div class="modal-body">
+                  A name is required. Enter a name for this template, then save again.
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Delete tracker template modal -->
           <div class="modal" tabindex="-1" role="dialog" id="deleteTrackerTemplateModal">
             <div class="modal-dialog modal-dialog-centered" role="document">
@@ -2210,28 +2227,34 @@
           <H3 class='mt-2'>Flexible Tracker</H3>
           <i>With Flexible Tracker, you can create custom interfaces for surveys and evaluations.</i>
           <div class="row mt-3">
-            <div class='col-6 col-md-5 col-lg-4 col-xl-3'>
-              <input type="text" id='createTrackerTemplateName' class='form-control' placeholder="Enter template name"></input>
-            </div>
-            <div class="col-6 col-md-3 col-lg-3 col-xl-2">
-              <button id="createTrackerTemplateButton" class='btn btn-primary w-100'>Create template</button>
-            </div>
-          </div>
-          <div class="row mt-3">
-            <div class="col-12 mt-2">
+            <div class="col-12">
               <H4>Templates</H4>
               <i>Templates define the layout of a Flexible Tracker data collection interface.</i>
             </div>
-            <div class="col-6 col-md-2 mt-2">
+          </div>
+          <!-- Manage template buttons, as for exhibitions and programs -->
+          <div class="row mt-2 gy-2">
+            <div class="col-6 col-sm-4 col-md-4 col-lg-3 col-xl-2">
               <select id="trackerTemplateSelect" class="form-select"></select>
             </div>
-            <div class="col-6 col-md-3 col-lg-2 col-xl-2 mt-2">
+            <div class="col-3 col-sm-2 col-md-2">
               <button id="launchTrackerButton" class='btn btn-primary w-100'>Launch</button>
             </div>
-            <div class="col-6 col-md-3 col-lg-2 col-xl-2 mt-2">
-              <button id="showEditTrackerTemplateButton" class='btn btn-info w-100'>Edit</button>
+            <div class="col-3 col-sm-2 col-md-2">
+              <button id="showEditTrackerTemplateButton" class='btn btn-primary w-100'>Edit</button>
             </div>
-            <div class="col-6 col-md-3 col-lg-2 col-xl-2 mt-2">
+            <div class='col-4 col-sm-3 col-md-2'>
+              <div class="dropdown w-100">
+                <button class="btn btn-primary dropdown-toggle w-100" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  Create
+                </button>
+                <ul class="dropdown-menu w-100">
+                  <li><button id="createTrackerTemplateButton" class='dropdown-item'>Create new</button></li>
+                  <li><button id="cloneTrackerTemplateButton" class='dropdown-item'>Clone selected</button></li>
+                </ul>
+              </div>
+            </div>
+            <div class="col-4 col-sm-3 col-md-2">
               <button id="deleteTrackerTemplateButton" class='btn btn-danger w-100'>Delete</button>
             </div>
           </div>
@@ -2241,7 +2264,10 @@
               <hr class="mt-0">
               <div class="row gy-2 align-items-center">
                 <div class="col-12 col-md-5 col-lg-4">
-                  <H4 class="mb-0">Editing <span id="trackerTemplateEditorName"></span></H4>
+                  <div class="input-group">
+                    <label class="input-group-text" for="trackerTemplateEditorNameInput">Name</label>
+                    <input type="text" id="trackerTemplateEditorNameInput" class="form-control">
+                  </div>
                 </div>
                 <div class="col-12 col-md-auto">
                   <div class="form-check">

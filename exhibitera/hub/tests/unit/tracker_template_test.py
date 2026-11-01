@@ -76,7 +76,7 @@ def test_template_opens_in_the_tab_with_a_preview():
           errors: browser.errors,
           editorShown: document.getElementById('trackerTemplateEditor').style.display !== 'none',
           modalExists: document.getElementById('editTrackerTemplateModal') !== null,
-          name: document.getElementById('trackerTemplateEditorName').textContent,
+          name: document.getElementById('trackerTemplateEditorNameInput').value,
           guestFacing: document.getElementById('editTrackerTemplateGuestFacingCheckbox').checked,
           listed: listed(),
           selected: selected(),
@@ -274,7 +274,6 @@ def test_opening_or_creating_a_template_asks_first():
         await choose_('trackerUnsavedChangesKeepButton')
         const keptEdits = listed().length
 
-        document.getElementById('createTrackerTemplateName').value = 'Second tracker'
         document.getElementById('createTrackerTemplateButton').click()
         await browser.wait(400)
         const askedToCreate = dialogShown()

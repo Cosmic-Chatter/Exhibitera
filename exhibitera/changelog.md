@@ -13,6 +13,8 @@ _If you are upgrading from Exhibitera 5.3, Hub and Apps must all be upgraded at 
 - See a live preview of the tracker while editing a template.
 - See a preview of how the data will be recorded while editing a template.
 - Timers now have a _Record start time_ option that saves the timestamp at which the timer is first started during a session.
+- Change the name of a template after it is created. All collected data will remain associated with the template.
+- Clone an existing template to reuse its structure without contributing to the same data file.
 
 ### Programs
 _Programs represent recurring events that take place in a specific location, like a theater._

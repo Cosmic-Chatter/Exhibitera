@@ -641,6 +641,12 @@ document.getElementById('launchTrackerButton').addEventListener('click', hubTrac
 document.getElementById('showEditTrackerTemplateButton').addEventListener('click', () => {
   hubTracker.showTrackerTemplateEditor()
 })
+document.getElementById('cloneTrackerTemplateButton').addEventListener('click', () => {
+  hubTracker.cloneTrackerTemplate()
+})
+document.getElementById('trackerTemplateEditorNameInput').addEventListener('input', (event) => {
+  hubTracker.renameTrackerTemplate(event.target.value)
+})
 document.getElementById('deleteTrackerTemplateButton').addEventListener('click', () => {
   const trackerTemplateSelect = document.getElementById('trackerTemplateSelect')
   const name = trackerTemplateSelect.options[trackerTemplateSelect.selectedIndex].text

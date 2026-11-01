@@ -181,7 +181,9 @@ Flexible Tracker can collect a variety of data types. Each type provides a widge
 
 A _template_ defines the collection types available for a given session. It allows you to customize Flexible Tracker for your specific needs.
 
-To create a template, navigate to the Analytics tab. In the Flexible Tracker section, select the template you want to edit, first creating it if necessary. Then, click _Edit_ to open the template editor below. Use the _Add widget_ menu to add collection type widgets. The widgets are listed in the order they will appear; select one to customize its parameters, move it with the up and down arrows, or delete it. Click _Save_ to keep your changes. If you close the editor or open another template with unsaved changes, you will be asked whether to discard them.
+To create a template, navigate to the Analytics tab. In the Flexible Tracker section, choose _Create_ > _Create new_. The new template opens in the template editor below, ready for you to type its name. To edit an existing template, select it and click _Edit_. Use the _Add widget_ menu to add collection type widgets. The widgets are listed in the order they will appear; select one to customize its parameters, move it with the up and down arrows, or delete it. Click _Save_ to keep your changes. If you close the editor or open another template with unsaved changes, you will be asked whether to discard them.
+
+To rename a template, change its name at the top of the editor and click _Save_. Its data stay together, since they are stored by the template's ID rather than its name. To start a new template from an existing one, select it and choose _Create_ > _Clone selected_. The copy is named with " 2" added and opens in the editor. It collects its own data, separate from the original's.
 
 Beside the editor, a live preview shows the template as it would appear on an iPad, including any unsaved changes. You can try out the widgets in the preview: pressing _Record_ there shows the data that would be recorded, but doesn't save it. Because Flexible Tracker is a responsive web page, the exact arrangement of the widgets will depend on your device's screen size and shape.
 

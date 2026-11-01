@@ -488,7 +488,7 @@ export async function showTrackerTemplateEditor (uuid = '', { askFirst = true } 
   const editor = document.getElementById('trackerTemplateEditor')
   editor.dataset.template = JSON.stringify(template)
   editor.dataset.savedTemplate = editor.dataset.template
-  document.getElementById('trackerTemplateEditorName').textContent = template.name
+  document.getElementById('trackerTemplateEditorNameInput').value = template.name
   document.getElementById('editTrackerTemplateGuestFacingCheckbox').checked = template?.guest_facing === true
 
   // Load the preview the first time the editor opens, and send it the template once it has loaded
@@ -636,11 +636,30 @@ export function populateTrackerTemplateSelect (templateList) {
   }
 }
 
+export function renameTrackerTemplate (name) {
+  // Change the name of the template being edited. Data are stored by the template's UUID, so they stay
+  // together when it's renamed.
+
+  const template = getEditedTemplate()
+  template.name = name
+  setEditedTemplate(template)
+}
+
 export async function saveTrackerTemplate () {
   // Save the template being edited, and show on the Save button whether it worked.
 
   const template = getEditedTemplate()
   const button = document.getElementById('trackerTemplateEditorSaveButton')
+
+  // Save the name without surrounding spaces
+  const nameInput = document.getElementById('trackerTemplateEditorNameInput')
+  template.name = template.name.trim()
+  if (template.name === '') {
+    exUtilities.showModal('#trackerNameRequiredModal')
+    return
+  }
+  nameInput.value = template.name
+  setEditedTemplate(template)
 
   let response
   try {
@@ -655,23 +674,17 @@ export async function saveTrackerTemplate () {
 
   if (response?.success === true) {
     document.getElementById('trackerTemplateEditor').dataset.savedTemplate = JSON.stringify(template)
+
+    // Show any new name in the template list
+    populateTrackerTemplateSelect(await getAvailableTemplates())
+    document.getElementById('trackerTemplateSelect').value = template.uuid
   }
   button.textContent = response?.success === true ? 'Saved' : 'Not saved'
   setTimeout(() => { button.textContent = 'Save' }, 2000)
 }
 
-export async function createTrackerTemplate (name = '') {
-  // Ask the server to create a template with the name provided in the text entry
-  // field.
-
-  const createTrackerTemplateName = document.getElementById('createTrackerTemplateName')
-
-  if (name === '') {
-    name = createTrackerTemplateName.value.trim()
-  }
-
-  // Can't name a template the empty string
-  if (name === '') return
+export async function createTrackerTemplate (name = 'New template') {
+  // Create a template and open it for editing, ready to be named, as for new exhibitions and programs.
 
   // The new template opens for editing, replacing any template being edited
   if (!(await confirmDiscardTrackerChanges())) return
@@ -695,11 +708,44 @@ export async function createTrackerTemplate (name = '') {
   })
 
   if (result.success === true) {
-    createTrackerTemplateName.value = ''
     const templates = await getAvailableTemplates()
     populateTrackerTemplateSelect(templates)
     document.getElementById('trackerTemplateSelect').value = uuid
-    showTrackerTemplateEditor(uuid, { askFirst: false })
+    await showTrackerTemplateEditor(uuid, { askFirst: false })
+
+    // Ready to type the template's name
+    const nameInput = document.getElementById('trackerTemplateEditorNameInput')
+    nameInput.focus()
+    nameInput.select()
+  }
+}
+
+export async function cloneTrackerTemplate () {
+  // Save a copy of the template chosen in the template list and open it for editing. The copy has its
+  // own UUID, so it collects its own data.
+
+  const uuid = document.getElementById('trackerTemplateSelect').value
+  if (uuid === '') return
+
+  // The copy opens for editing, replacing any template being edited
+  if (!(await confirmDiscardTrackerChanges())) return
+
+  const template = await loadTemplate(uuid)
+  if (template == null) return
+  const clone = structuredClone(template)
+  clone.uuid = exUtilities.uuid()
+  clone.name += ' 2'
+
+  const result = await exTools.makeServerRequest({
+    method: 'POST',
+    endpoint: '/tracker/template/create',
+    params: { tracker_uuid: clone.uuid, template: clone }
+  })
+
+  if (result?.success === true) {
+    populateTrackerTemplateSelect(await getAvailableTemplates())
+    document.getElementById('trackerTemplateSelect').value = clone.uuid
+    showTrackerTemplateEditor(clone.uuid, { askFirst: false })
   }
 }
 
