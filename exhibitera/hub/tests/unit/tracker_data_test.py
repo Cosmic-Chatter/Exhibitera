@@ -72,8 +72,8 @@ def test_data_is_listed_by_name_and_grouped_by_app():
 
     assert result == {"errors": [], "groups": [
         ["Flexible Tracker", ["Old flow (archived)", "Q1: Lobby"]],
-        ["Voting Kiosk", ["Atrium vote"]],
         ["Survey Kiosk", ["Exit survey"]],
+        ["Voting Kiosk", ["Atrium vote"]],
         ["Word Cloud", ["Lobby"]],
         ["Other files", ["sensor log"]],
     ]}

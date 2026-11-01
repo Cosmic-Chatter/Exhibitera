@@ -179,8 +179,6 @@ Flexible Tracker can collect a variety of data types. Each type provides a widge
 
 #### Creating a template
 
-<img src="_static/images/tracker_template_edit.jpg" style="width: 50%; float: right; border: 2px solid gray; margin: 5px;"></img>
-
 A _template_ defines the collection types available for a given session. It allows you to customize Flexible Tracker for your specific needs.
 
 To create a template, navigate to the Analytics tab. In the Flexible Tracker section, select the template you want to edit, first creating it if necessary. Then, click _Edit_ to open the template editor below. Use the _Add widget_ menu to add collection type widgets. The widgets are listed in the order they will appear; select one to customize its parameters, move it with the up and down arrows, or delete it. Click _Save_ to keep your changes. If you close the editor or open another template with unsaved changes, you will be asked whether to discard them.

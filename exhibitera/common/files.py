@@ -176,7 +176,12 @@ def json_list_to_csv(dict_list: list, filename: str = "") -> str:
     # Build the CSV, optionally write it to disk, and then return it
     try:
         with io.StringIO(newline='') as f:
-            csv_writer = csv.DictWriter(f, get_unique_keys(reformed_dict_list))
+            columns = get_unique_keys(reformed_dict_list)
+            # Each row starts with when it was recorded
+            if "Date" in columns:
+                columns.remove("Date")
+                columns.insert(0, "Date")
+            csv_writer = csv.DictWriter(f, columns)
             csv_writer.writeheader()
             csv_writer.writerows(reformed_dict_list)
             result = f.getvalue()

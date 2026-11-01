@@ -1,12 +1,14 @@
 """Verify that Hub serves only its web pages from its own folder, never its source or data."""
 
+# Standard modules
+import os
+
 # Third-party modules
 from fastapi.testclient import TestClient
 from starlette.routing import Mount
 import pytest
 
 # Exhibitera modules
-import exhibitera.common.files as ex_files
 import exhibitera.hub.Hub as hub
 
 
@@ -72,7 +74,9 @@ def mounts() -> dict[str, str]:
 @pytest.mark.parametrize("folder", ["issues", "programs"])
 def test_only_media_is_mounted(folder):
     assert f"/{folder}" not in mounts()
-    assert mounts()[f"/{folder}/media"] == ex_files.get_path([folder, "media"], user_file=True)
+    # Compared with Hub's own folder rather than get_path(), since importing Apps in the same test
+    # process changes the shared data path that get_path() uses
+    assert mounts()[f"/{folder}/media"] == os.path.join(os.path.dirname(hub.__file__), folder, "media")
 
 
 @pytest.mark.parametrize("path", [
