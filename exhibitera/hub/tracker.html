@@ -70,7 +70,27 @@
           </div>
         </div>
       </div>
+      <div id="previewNotice" class="alert alert-info py-1 mt-2 mb-0" style="display: none;">Preview: records made here aren't saved.</div>
       <div id="cardRow" class="row mt-4"></div>
+    </div>
+
+    <!-- In preview mode, shows the record that would have been saved -->
+    <div class="modal" tabindex="-1" role="dialog" id="previewRecordModal">
+      <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Recorded data preview</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <p class="fst-italic">This is a preview, so the record below wasn't sent to Hub. The preview will not appear duing normal usage.</p>
+            <div id="previewRecordFields"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+          </div>
+        </div>
+      </div>
     </div>
 
   <script type="text/javascript" src="js/bootstrap_5_3/bootstrap.min.js"></script>

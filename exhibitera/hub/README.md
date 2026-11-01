@@ -183,9 +183,9 @@ Flexible Tracker can collect a variety of data types. Each type provides a widge
 
 A _template_ defines the collection types available for a given session. It allows you to customize Flexible Tracker for your specific needs.
 
-To create a template, navigate to the settings tab. In the Flexible Tracker section, select the template you want to edit, first creating it if necessary. Then, click _Edit_ to pop up the template editor. The left column contains the possible collection type widgets. Click on one to add it to the current layout, and customize its parameters using the fields in the right column.
+To create a template, navigate to the Analytics tab. In the Flexible Tracker section, select the template you want to edit, first creating it if necessary. Then, click _Edit_ to open the template editor below. Use the _Add widget_ menu to add collection type widgets. The widgets are listed in the order they will appear; select one to customize its parameters, move it with the up and down arrows, or delete it. Click _Save_ to keep your changes. If you close the editor or open another template with unsaved changes, you will be asked whether to discard them.
 
-With the left and right arrows, you can reorder how the widgets will appear. Because Flexible Tracker is a responsive web page, the exact arrangement of the widgets will depend on your device's screen size and shape.
+Beside the editor, a live preview shows the template as it would appear on an iPad, including any unsaved changes. You can try out the widgets in the preview: pressing _Record_ there shows the data that would be recorded, but doesn't save it. Because Flexible Tracker is a responsive web page, the exact arrangement of the widgets will depend on your device's screen size and shape.
 
 #### Recording data
 

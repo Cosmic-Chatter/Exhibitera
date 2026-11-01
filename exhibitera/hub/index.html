@@ -2150,50 +2150,19 @@
             </div>
           </div>
 
-          <!-- Edit tracker template modal -->
-          <div class="modal" tabindex="-1" role="dialog" id="editTrackerTemplateModal" >
-            <div class="modal-dialog modal-dialog-centered" role="document" style="max-width: min(95%, 1000px); width: min(95%, 1000px);">
+          <!-- Unsaved tracker template changes modal -->
+          <div class="modal" tabindex="-1" role="dialog" id="trackerUnsavedChangesModal">
+            <div class="modal-dialog modal-dialog-centered" role="document">
               <div class="modal-content">
                 <div class="modal-header">
-                  <h5 id="editTrackerTemplateModalTitle" class="modal-title h2">Edit template: TEST</h5>
+                  <h5 class="modal-title">Discard unsaved changes?</h5>
                 </div>
-                <div class="modal-body" style="height: calc(70vh);">
-                  <div id='editTrackerCurrentWidgets' class='row h-100'>
-                    <div class='col-4 col-sm-3 col-md-2 border-right'>
-                      <H3>Widgets</H3>
-                      <div id='editTrackerAvailableWidgets'>
-                        <button class="btn btn-secondary w-100 mt-1" id="editTrackerTemplateModalAddCounterButton">Counter</button>
-                        <button id="editTrackerTemplateModalAddDropdownButton" class="btn btn-secondary w-100 mt-1">Dropdown</button>
-                        <button id="editTrackerTemplateModalAddNumberButton" class="btn btn-secondary w-100 mt-1">Number</button>
-                        <button id="editTrackerTemplateModalAddSliderButton" class="btn btn-secondary w-100 mt-1">Slider</button>
-                        <button id="editTrackerTemplateModalAddTextButton" class="btn btn-secondary w-100 mt-1">Text</button>
-                        <button id="editTrackerTemplateModalAddTimerButton" class="btn btn-secondary w-100 mt-1">Timer</button>
-                      </div>
-                    </div>
-                    <div class='col-4 col-sm-5 col-md-6 border-right border-left h-100'>
-                      <H3>Current layout</H3>
-                      <i>The number of widgets per row will depend on which device Flexible Tracker is used on.</i>
-                      <div id='editTrackerTemplateModalCurrentLayout' class='row' style="max-height: 85%; overflow-y: auto;">
-                      </div>
-                    </div>
-                    <div class='col-4 border-left h-100 d-flex flex-column' style="max-height: 100%; overflow-y: auto;">
-                      <H3>Widget properties</H3>
-                      <div id="editTrackerTemplatePropertiesDiv"></div>
-                      
-                    </div>
-                  </div>
+                <div class="modal-body">
+                  Your changes to "<span id="trackerUnsavedChangesTemplateName"></span>" haven't been saved.
                 </div>
                 <div class="modal-footer">
-                  <div class="form-check me-auto">
-                    <input class="form-check-input" type="checkbox" value="" id="editTrackerTemplateGuestFacingCheckbox">
-                    <label class="form-check-label" for="editTrackerTemplateGuestFacingCheckbox">
-                      Guest-facing 
-                      <span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Enable guests to input responses without changing templates." style="font-size: 0.55em; color: black">?</span>
-                      <span class="badge bg-secondary">Beta</span>
-                    </label>
-                  </div>
-                  <button id="editTrackerTemplateModalSubmitChangesButton" type="button" class="btn btn-primary">Save</button>
-                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                  <button id="trackerUnsavedChangesKeepButton" type="button" class="btn btn-secondary">Keep editing</button>
+                  <button id="trackerUnsavedChangesDiscardButton" type="button" class="btn btn-danger">Discard changes</button>
                 </div>
               </div>
             </div>
@@ -2264,6 +2233,81 @@
             </div>
             <div class="col-6 col-md-3 col-lg-2 col-xl-2 mt-2">
               <button id="deleteTrackerTemplateButton" class='btn btn-danger w-100'>Delete</button>
+            </div>
+          </div>
+          <!-- Edit tracker template -->
+          <div id="trackerTemplateEditor" class="row gy-2 mt-2" style="display: none;">
+            <div class="col-12">
+              <hr class="mt-0">
+              <div class="row gy-2 align-items-center">
+                <div class="col-12 col-md-5 col-lg-4">
+                  <H4 class="mb-0">Editing <span id="trackerTemplateEditorName"></span></H4>
+                </div>
+                <div class="col-12 col-md-auto">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="" id="editTrackerTemplateGuestFacingCheckbox">
+                    <label class="form-check-label" for="editTrackerTemplateGuestFacingCheckbox">
+                      Guest-facing 
+                      <span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Enable guests to input responses without changing templates." style="font-size: 0.55em; color: black">?</span>
+                      <span class="badge bg-secondary">Beta</span>
+                    </label>
+                  </div>
+                </div>
+                <div class="col-6 col-md-2 col-xl-1 ms-md-auto">
+                  <button id="trackerTemplateEditorSaveButton" class="btn btn-success w-100">Save</button>
+                </div>
+                <div class="col-6 col-md-2 col-xl-1">
+                  <button id="trackerTemplateEditorCloseButton" class="btn btn-secondary w-100">Close</button>
+                </div>
+              </div>
+            </div>
+            <div class="col-12 col-lg-7">
+              <div class="row gy-2">
+                <div class="col-12 col-sm-6 col-xl-4">
+                  <div class="dropdown">
+                    <button class="btn btn-primary dropdown-toggle w-100" type="button" data-bs-toggle="dropdown" aria-expanded="false">Add widget</button>
+                    <ul class="dropdown-menu w-100">
+                      <li><button class="dropdown-item" data-add-tracker-widget="counter">Counter</button></li>
+                      <li><button class="dropdown-item" data-add-tracker-widget="dropdown">Dropdown</button></li>
+                      <li><button class="dropdown-item" data-add-tracker-widget="number">Number</button></li>
+                      <li><button class="dropdown-item" data-add-tracker-widget="slider">Slider</button></li>
+                      <li><button class="dropdown-item" data-add-tracker-widget="text">Text</button></li>
+                      <li><button class="dropdown-item" data-add-tracker-widget="timer">Timer</button></li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+              <div class="h5 mt-3">Widgets</div>
+              <div class="row gy-2">
+                <div class="col-5 border-end">
+                  <div id="trackerWidgetList" class="row row-cols-1 gy-2"></div>
+                  <div id="trackerWidgetListEmpty" class="fst-italic" style="display: none;">Add a widget to get started.</div>
+                </div>
+                <div class="col-7">
+                  <div id="trackerWidgetEditPane" style="display: none;">
+                    <div class="row gy-2 gx-1 mb-2">
+                      <div class="col-6 col-md-3">
+                        <button id="trackerWidgetUpButton" class="btn btn-info btn-sm w-100">▲</button>
+                      </div>
+                      <div class="col-6 col-md-3">
+                        <button id="trackerWidgetDownButton" class="btn btn-info btn-sm w-100">▼</button>
+                      </div>
+                      <div class="col-12 col-md-4 offset-md-2">
+                        <button id="trackerWidgetDeleteButton" class="btn btn-danger btn-sm w-100">Delete</button>
+                      </div>
+                    </div>
+                    <div id="editTrackerTemplatePropertiesDiv"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-12 col-lg-5">
+              <div class="h5 mb-0">Preview</div>
+              <i>Records made in the preview aren't saved. The number of widgets per row depends on the device.</i>
+              <!-- The preview is an iPad-sized page in landscape, scaled down to fit -->
+              <div id="trackerTemplatePreviewFrame" class="border rounded mt-2 overflow-hidden position-relative" style="aspect-ratio: 1024 / 768;">
+                <iframe id="trackerTemplatePreview" class="position-absolute top-0 start-0 border-0" style="width: 1024px; height: 768px; transform-origin: 0 0;" title="Tracker preview"></iframe>
+              </div>
             </div>
           </div>
           <div class='row mt-3'>

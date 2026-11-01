@@ -1,3 +1,5 @@
+/* global bootstrap */
+
 import hubConfig from '../config.js'
 import * as exTracker from './features/tracker.js'
 
@@ -515,6 +517,13 @@ function sendData () {
   // Append the date and time of this recording
   resultDict.Date = localTimestamp(new Date())
 
+  if (previewMode) {
+    // The template editor's preview shows the record instead of saving it
+    showPreviewRecord(resultDict)
+    clearInput()
+    return
+  }
+
   const requestDict = {
     data: resultDict
   }
@@ -577,6 +586,32 @@ async function loadLayout (toLoad = '') {
   }
 }
 
+function showPreviewTemplate (template) {
+  // Show a template sent by the template editor, including any unsaved changes.
+
+  buildLayout(template)
+  const guestFacing = template?.guest_facing ?? false
+  document.getElementById('titleCol').style.display = guestFacing ? 'none' : 'block'
+}
+
+function showPreviewRecord (record) {
+  // Show the record that would have been saved in an overlay, for the template editor's preview.
+
+  const fields = document.getElementById('previewRecordFields')
+  fields.innerHTML = ''
+
+  for (const [key, value] of Object.entries(record)) {
+    const line = document.createElement('div')
+    const name = document.createElement('span')
+    name.classList = 'fw-bold'
+    name.textContent = key + ': '
+    line.appendChild(name)
+    line.append(Array.isArray(value) ? value.join(', ') : String(value))
+    fields.appendChild(line)
+  }
+  bootstrap.Modal.getOrCreateInstance(document.getElementById('previewRecordModal')).show()
+}
+
 async function parseQueryString () {
   // Read the query string to determine what options to set
 
@@ -614,6 +649,9 @@ document.getElementById('definitionListDropdown').addEventListener('change', () 
 
 let configurationName = 'test'
 
+// In preview mode, the template editor sends the template to show, and records aren't saved
+const previewMode = new URLSearchParams(window.location.search).has('preview')
+
 // initialize arrays to hold references to each of our types of cards
 let counterList = []
 let dropdownList = []
@@ -622,7 +660,19 @@ let sliderList = []
 let textList = []
 let timerList = []
 
-const templates = await exTracker.getAvailableTemplates()
-populateLayoutDropdown(templates)
-setTimeout(parseQueryString, 300)
-setInterval(checkConnection, 500)
+let templates = []
+if (previewMode) {
+  document.getElementById('previewNotice').style.display = 'block'
+  document.getElementById('definitionListCol').style.display = 'none'
+  window.addEventListener('message', (event) => {
+    // Only the template editor, which is served by this Hub, sends templates
+    if (event.origin !== window.location.origin) return
+    if (event.data?.type !== 'trackerPreview') return
+    showPreviewTemplate(event.data.template)
+  })
+} else {
+  templates = await exTracker.getAvailableTemplates()
+  populateLayoutDropdown(templates)
+  setTimeout(parseQueryString, 300)
+  setInterval(checkConnection, 500)
+}

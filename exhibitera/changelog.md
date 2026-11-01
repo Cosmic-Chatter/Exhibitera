@@ -10,6 +10,8 @@ _If you are upgrading from Exhibitera 5.3, Hub and Apps must all be upgraded at 
 - Copying a definition between components now also copies the definition's thumbnail.
 
 ### Flexible Tracker
+- See a live preview of the tracker while editing a template.
+- See a preview of how the data will be recorded while editing a template.
 - Timers now have a _Record start time_ option that saves the timestamp at which the timer is first started during a session.
 
 ### Programs

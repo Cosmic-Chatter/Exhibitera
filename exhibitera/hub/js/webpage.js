@@ -639,7 +639,7 @@ document.getElementById('createTrackerTemplateButton').addEventListener('click',
 })
 document.getElementById('launchTrackerButton').addEventListener('click', hubTracker.launchTracker)
 document.getElementById('showEditTrackerTemplateButton').addEventListener('click', () => {
-  hubTracker.showEditTrackerTemplateModal()
+  hubTracker.showTrackerTemplateEditor()
 })
 document.getElementById('deleteTrackerTemplateButton').addEventListener('click', () => {
   const trackerTemplateSelect = document.getElementById('trackerTemplateSelect')
@@ -657,20 +657,14 @@ document.getElementById('showDeleteTrackerDataModalButton')
   .addEventListener('click', () => hubTracker.showDeleteTrackerDataModal())
 document.getElementById('deleteTrackerDataFromModalButton')
   .addEventListener('click', () => hubTracker.deleteTrackerDataFromModal())
-document.getElementById('editTrackerTemplateModalAddCounterButton')
-  .addEventListener('click', () => hubTracker.editTrackerTemplateModalAddWidget('New Counter', 'counter'))
-document.getElementById('editTrackerTemplateModalAddDropdownButton')
-  .addEventListener('click', () => hubTracker.editTrackerTemplateModalAddWidget('New Dropdown', 'dropdown'))
-document.getElementById('editTrackerTemplateModalAddNumberButton')
-  .addEventListener('click', () => hubTracker.editTrackerTemplateModalAddWidget('New Number', 'number'))
-document.getElementById('editTrackerTemplateModalAddSliderButton')
-  .addEventListener('click', () => hubTracker.editTrackerTemplateModalAddWidget('New Slider', 'slider'))
-document.getElementById('editTrackerTemplateModalAddTextButton')
-  .addEventListener('click', () => hubTracker.editTrackerTemplateModalAddWidget('New Text', 'text'))
-document.getElementById('editTrackerTemplateModalAddTimerButton')
-  .addEventListener('click', () => hubTracker.editTrackerTemplateModalAddWidget('New Timer', 'timer'))
-document.getElementById('editTrackerTemplateModalSubmitChangesButton')
-  .addEventListener('click', () => hubTracker.editTrackerTemplateModalSubmitChanges())
+for (const el of document.querySelectorAll('[data-add-tracker-widget]')) {
+  el.addEventListener('click', () => hubTracker.addTrackerWidget(el.dataset.addTrackerWidget))
+}
+document.getElementById('trackerWidgetUpButton').addEventListener('click', () => hubTracker.moveSelectedTrackerWidget(-1))
+document.getElementById('trackerWidgetDownButton').addEventListener('click', () => hubTracker.moveSelectedTrackerWidget(1))
+document.getElementById('trackerWidgetDeleteButton').addEventListener('click', hubTracker.deleteSelectedTrackerWidget)
+document.getElementById('trackerTemplateEditorSaveButton').addEventListener('click', hubTracker.saveTrackerTemplate)
+document.getElementById('trackerTemplateEditorCloseButton').addEventListener('click', () => hubTracker.closeTrackerTemplateEditor())
 document.getElementById('editTrackerTemplateGuestFacingCheckbox').addEventListener('change', hubTracker.makeGuestFacing)
 
 // Users tab

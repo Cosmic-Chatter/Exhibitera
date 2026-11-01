@@ -69,15 +69,6 @@ export function downloadTrackerData (name) {
 function populateWidgetProperties (widgetDef) {
   // Create HTML representation of widget properties to aid editing from the modal.
 
-  // Recolor the widget name to indicate which we are editing
-  for (const el of document.querySelectorAll('.widget-header')) {
-    el.classList.remove('text-info')
-    el.classList.add('text-light')
-  }
-  const nameField = document.getElementById('editTrackerWidgetNameField_' + widgetDef.uuid)
-  nameField.classList.add('text-info')
-  nameField.classList.remove('text-light')
-
   const propsToEdit = ['name', 'label']
 
   if (widgetDef.type === 'dropdown') {
@@ -194,6 +185,7 @@ function populateWidgetProperties (widgetDef) {
       const input = document.createElement('input')
       input.classList = 'form-control mb-2'
       input.setAttribute('id', 'editTrackerTemplateOptions_' + widgetDef.uuid)
+      input.setAttribute('placeholder', 'Option 1, Option 2, ...')
       let optionStr = ''
       for (const option of widgetDef.options) {
         optionStr += option + ', '
@@ -353,147 +345,211 @@ function populateWidgetProperties (widgetDef) {
 function editTrackerTemplateUpdateProperty (uuid, property, value) {
   // Update the given property for the widget specified by the uuid.
 
-  if (property === 'name') {
-    document.getElementById('editTrackerWidgetNameField_' + uuid).textContent = value
-  }
   if (property === 'options') {
     value = value.split(',').map(s => s.trim()).filter(Boolean)
   }
 
-  const modal = document.getElementById('editTrackerTemplateModal')
-  const template = JSON.parse(modal.dataset.template)
-
+  const template = getEditedTemplate()
   template.widgets[uuid][property] = value
+  setEditedTemplate(template)
 
-  // Update the data attribute with the updated template
-  modal.dataset.template = JSON.stringify(template)
+  // The list shows each widget's name
+  if (property === 'name') rebuildTrackerWidgetList()
 }
 
-export function populateEditTrackerTemplateCurrentLayout (template) {
-  // Take the current template dictionary and render a set of buttons
+// Template editor
+//
+// Templates are edited in the Analytics tab, beside a preview of the tracker that shows unsaved changes.
 
-  const modal = document.getElementById('editTrackerTemplateModal')
+const WIDGET_TYPE_NAMES = {
+  counter: 'Counter',
+  dropdown: 'Dropdown',
+  number: 'Number',
+  slider: 'Slider',
+  text: 'Text',
+  timer: 'Timer'
+}
 
-  const currentLayoutDiv = document.getElementById('editTrackerTemplateModalCurrentLayout')
-  currentLayoutDiv.innerHTML = ''
+// The preview is an iPad-sized page in landscape, so the tracker uses its tablet layout
+const PREVIEW_SIZE = { width: 1024, height: 768 }
 
-  for (const widgetUUID of template.widget_order) {
-    const widgetDef = template.widgets[widgetUUID]
+function scaleTrackerPreview () {
+  // Scale the iPad-sized preview to fit its column.
+
+  const frame = document.getElementById('trackerTemplatePreviewFrame')
+  if (frame.clientWidth === 0) return // Not shown yet
+  document.getElementById('trackerTemplatePreview').style.transform = `scale(${frame.clientWidth / PREVIEW_SIZE.width})`
+}
+
+function trackerTemplateHasUnsavedChanges () {
+  // Return true if the template being edited has changed since it was opened or last saved.
+
+  const editor = document.getElementById('trackerTemplateEditor')
+  if (editor.style.display === 'none' || editor.dataset.template == null) return false
+  return editor.dataset.template !== editor.dataset.savedTemplate
+}
+
+function confirmDiscardTrackerChanges () {
+  // Before the template being edited is closed or replaced, ask whether to discard any unsaved changes.
+  // Return a Promise that resolves true if there are no unsaved changes or the person discards them.
+
+  if (!trackerTemplateHasUnsavedChanges()) return Promise.resolve(true)
+
+  document.getElementById('trackerUnsavedChangesTemplateName').textContent = getEditedTemplate().name
+  const modal = document.getElementById('trackerUnsavedChangesModal')
+  const discardButton = document.getElementById('trackerUnsavedChangesDiscardButton')
+  const keepButton = document.getElementById('trackerUnsavedChangesKeepButton')
+
+  return new Promise((resolve) => {
+    let discard = false
+    const onDiscard = () => {
+      discard = true
+      exUtilities.hideModal(modal)
+    }
+    const onKeep = () => exUtilities.hideModal(modal)
+    discardButton.addEventListener('click', onDiscard)
+    keepButton.addEventListener('click', onKeep)
+
+    // Closing the dialog any other way keeps editing
+    modal.addEventListener('hidden.bs.modal', () => {
+      discardButton.removeEventListener('click', onDiscard)
+      keepButton.removeEventListener('click', onKeep)
+      resolve(discard)
+    }, { once: true })
+    exUtilities.showModal(modal)
+  })
+}
+
+// The tracker page also uses this module, so only set up the editor on the console, where it exists
+if (document.getElementById('trackerTemplateEditor') != null) {
+  window.addEventListener('resize', scaleTrackerPreview)
+  new ResizeObserver(scaleTrackerPreview).observe(document.getElementById('trackerTemplatePreviewFrame'))
+
+  // Ask before leaving the page with unsaved changes. The browser shows its own message.
+  window.addEventListener('beforeunload', (event) => {
+    if (trackerTemplateHasUnsavedChanges()) {
+      event.preventDefault()
+      event.returnValue = ''
+    }
+  })
+}
+
+function getEditedTemplate () {
+  // Return the template being edited, including unsaved changes.
+
+  return JSON.parse(document.getElementById('trackerTemplateEditor').dataset.template)
+}
+
+function setEditedTemplate (template) {
+  // Store the template being edited and show the change in the preview.
+
+  document.getElementById('trackerTemplateEditor').dataset.template = JSON.stringify(template)
+  updateTrackerPreview()
+}
+
+function updateTrackerPreview () {
+  // Send the template being edited to the preview, which shows it without saving anything.
+
+  const editor = document.getElementById('trackerTemplateEditor')
+  if (editor.dataset.template == null) return
+
+  const preview = document.getElementById('trackerTemplatePreview')
+  preview.contentWindow?.postMessage({ type: 'trackerPreview', template: getEditedTemplate() }, window.location.origin)
+}
+
+export async function showTrackerTemplateEditor (uuid = '', { askFirst = true } = {}) {
+  // Open the given template, or the one chosen in the template list, for editing in the Analytics tab.
+  // Set askFirst = false if the person has already been asked about unsaved changes.
+
+  if (uuid === '') uuid = document.getElementById('trackerTemplateSelect').value
+  if (uuid === '') return
+  if (askFirst && !(await confirmDiscardTrackerChanges())) return
+
+  const template = await loadTemplate(uuid)
+  if (template == null) return
+
+  const editor = document.getElementById('trackerTemplateEditor')
+  editor.dataset.template = JSON.stringify(template)
+  editor.dataset.savedTemplate = editor.dataset.template
+  document.getElementById('trackerTemplateEditorName').textContent = template.name
+  document.getElementById('editTrackerTemplateGuestFacingCheckbox').checked = template?.guest_facing === true
+
+  // Load the preview the first time the editor opens, and send it the template once it has loaded
+  const preview = document.getElementById('trackerTemplatePreview')
+  if (!preview.getAttribute('src')) {
+    preview.addEventListener('load', updateTrackerPreview)
+    preview.setAttribute('src', 'tracker.html?preview=true')
+  }
+
+  editor.style.display = ''
+  scaleTrackerPreview()
+  selectTrackerWidget(template.widget_order[0] ?? null)
+  updateTrackerPreview()
+}
+
+export async function closeTrackerTemplateEditor ({ askFirst = true } = {}) {
+  // Hide the template editor, first asking whether to discard any unsaved changes.
+  // Set askFirst = false to close without asking, such as when the template has been deleted.
+
+  if (askFirst && !(await confirmDiscardTrackerChanges())) return
+  document.getElementById('trackerTemplateEditor').style.display = 'none'
+}
+
+function rebuildTrackerWidgetList () {
+  // Show a button for each widget in the template being edited, highlighting the selected one.
+
+  const template = getEditedTemplate()
+  const list = document.getElementById('trackerWidgetList')
+  const selected = list.dataset.selected ?? ''
+  list.innerHTML = ''
+
+  for (const uuid of template.widget_order) {
+    const widget = template.widgets[uuid]
 
     const col = document.createElement('div')
-    col.classList = 'col-12 col-md-6 col-lg-4 mt-2 w-100'
+    col.classList = 'col'
+    list.appendChild(col)
 
-    const widget = document.createElement('div')
-    widget.classList = 'mx-1'
-    col.appendChild(widget)
-
-    const row1 = document.createElement('div')
-    row1.classList = 'row'
-    widget.appendChild(row1)
-
-    const nameCol = document.createElement('div')
-    nameCol.classList = 'col-12 bg-secondary rounded-top'
-    row1.appendChild(nameCol)
-
-    const name = document.createElement('div')
-    name.classList = ' text-light w-100 text-center font-weight-bold widget-header'
-    name.setAttribute('id', 'editTrackerWidgetNameField_' + widgetDef.uuid)
-    name.textContent = widgetDef.name
-    nameCol.appendChild(name)
-
-    const row2 = document.createElement('div')
-    row2.classList = 'row'
-    widget.appendChild(row2)
-
-    const editCol = document.createElement('div')
-    editCol.classList = 'col-4 mx-0 px-0'
-    row2.appendChild(editCol)
-
-    const edit = document.createElement('div')
-    edit.classList = 'text-light bg-primary w-100 h-100 justify-content-center d-flex ps-1'
-    edit.style.borderBottomLeftRadius = '0.25rem'
-    edit.innerHTML = 'Edit'
-    edit.style.cursor = 'pointer'
-    edit.addEventListener('click', function () {
-      // Get the latest template in case of changes
-      const newTemplate = JSON.parse(modal.dataset.template)
-
-      populateWidgetProperties(newTemplate.widgets[widgetDef.uuid])
+    const button = document.createElement('button')
+    button.classList = 'btn btn-outline-primary w-100 text-break'
+    if (uuid === selected) button.classList.add('active')
+    button.textContent = widget.name || WIDGET_TYPE_NAMES[widget.type]
+    button.setAttribute('title', WIDGET_TYPE_NAMES[widget.type] ?? '')
+    button.addEventListener('click', () => {
+      selectTrackerWidget(uuid)
     })
-    editCol.appendChild(edit)
-
-    const leftCol = document.createElement('div')
-    leftCol.classList = 'col-2 mx-0 px-0'
-    row2.appendChild(leftCol)
-
-    const left = document.createElement('div')
-    left.classList = 'text-light bg-info w-100 h-100 justify-content-center d-flex'
-    left.innerHTML = '▲'
-    left.style.cursor = 'pointer'
-
-    left.addEventListener('click', function () { editTrackerTemplateModalMoveWidget(widgetDef.uuid, -1) })
-    leftCol.appendChild(left)
-
-    const rightCol = document.createElement('div')
-    rightCol.classList = 'col-2 mx-0 px-0'
-    row2.appendChild(rightCol)
-
-    const right = document.createElement('div')
-    right.classList = 'text-light bg-info w-100 h-100 justify-content-center d-flex pe-1'
-    right.innerHTML = '▼'
-    right.style.cursor = 'pointer'
-    right.addEventListener('click', function () { editTrackerTemplateModalMoveWidget(widgetDef.uuid, 1) })
-    rightCol.appendChild(right)
-
-    const deleteCol = document.createElement('div')
-    deleteCol.classList = 'col-4 mx-0 px-0'
-    row2.appendChild(deleteCol)
-
-    const deleteButton = document.createElement('div')
-    deleteButton.classList = 'text-light bg-danger w-100 h-100 justify-content-center d-flex pe-1'
-    deleteButton.style.borderBottomRightRadius = '0.25rem'
-    deleteButton.innerHTML = 'Delete'
-    deleteButton.style.cursor = 'pointer'
-    deleteButton.addEventListener('click', function () { editTrackerTemplateModalDeleteWidget(widgetDef.uuid) })
-    deleteCol.appendChild(deleteButton)
-
-    currentLayoutDiv.appendChild(col)
+    col.appendChild(button)
   }
+
+  document.getElementById('trackerWidgetListEmpty').style.display = template.widget_order.length === 0 ? 'block' : 'none'
 }
 
-function editTrackerTemplateModalMoveWidget (uuid, dir) {
-  // Reorder the dictionary of widgets, moving the given uuid the specified number
-  // of places
+function selectTrackerWidget (uuid) {
+  // Show the given widget's properties for editing, or hide the properties if uuid is null.
 
-  const modal = document.getElementById('editTrackerTemplateModal')
-  const template = JSON.parse(modal.dataset.template)
+  document.getElementById('trackerWidgetList').dataset.selected = uuid ?? ''
+  rebuildTrackerWidgetList()
 
-  const uuidIndex = template.widget_order.indexOf(uuid)
-  if (dir === -1 && uuidIndex === 0) return
-  if (dir === 1 && uuidIndex === template.widget_order.length - 1) return
-
-  // Save the other value to swap them
-  const otherUuid = template.widget_order[uuidIndex + dir]
-  template.widget_order[uuidIndex + dir] = uuid
-  template.widget_order[uuidIndex] = otherUuid
-
-  // Update the data attribute with the updated template
-  modal.dataset.template = JSON.stringify(template)
-  populateEditTrackerTemplateCurrentLayout(template)
+  const editPane = document.getElementById('trackerWidgetEditPane')
+  if (uuid == null) {
+    editPane.style.display = 'none'
+    document.getElementById('editTrackerTemplatePropertiesDiv').innerHTML = ''
+    return
+  }
+  editPane.style.display = 'block'
+  populateWidgetProperties(getEditedTemplate().widgets[uuid])
 }
 
-export function editTrackerTemplateModalAddWidget (name, type) {
-  // Create a new widget with the given name and add it to the template.
+export function addTrackerWidget (type) {
+  // Add a new widget of the given type to the end of the template and select it.
 
-  const modal = document.getElementById('editTrackerTemplateModal')
-  const template = JSON.parse(modal.dataset.template)
-
+  const template = getEditedTemplate()
   const widgetUUID = exUtilities.uuid()
 
   template.widget_order.push(widgetUUID)
   const widgetDef = {
     label: '',
-    name,
+    name: 'New ' + WIDGET_TYPE_NAMES[type],
     type,
     uuid: widgetUUID
   }
@@ -513,26 +569,41 @@ export function editTrackerTemplateModalAddWidget (name, type) {
   }
   template.widgets[widgetUUID] = widgetDef
 
-  // Update the data attribute with the updated template
-  modal.dataset.template = JSON.stringify(template)
-  populateEditTrackerTemplateCurrentLayout(template)
+  setEditedTemplate(template)
+  selectTrackerWidget(widgetUUID)
 }
 
-function editTrackerTemplateModalDeleteWidget (uuid) {
-  // Delete the given widget and shift focus to the neighboring one
+export function moveSelectedTrackerWidget (dir) {
+  // Move the selected widget the given number of places: -1 for up, 1 for down.
 
-  const modal = document.getElementById('editTrackerTemplateModal')
-  const template = JSON.parse(modal.dataset.template)
+  const uuid = document.getElementById('trackerWidgetList').dataset.selected
+  if (!uuid) return
 
+  const template = getEditedTemplate()
+  const index = template.widget_order.indexOf(uuid)
+  const newIndex = index + dir
+  if (index === -1 || newIndex < 0 || newIndex >= template.widget_order.length) return
+
+  template.widget_order[index] = template.widget_order[newIndex]
+  template.widget_order[newIndex] = uuid
+
+  setEditedTemplate(template)
+  rebuildTrackerWidgetList()
+}
+
+export function deleteSelectedTrackerWidget () {
+  // Delete the selected widget and select the one after it, or before it if it was last.
+
+  const uuid = document.getElementById('trackerWidgetList').dataset.selected
+  if (!uuid) return
+
+  const template = getEditedTemplate()
+  const index = template.widget_order.indexOf(uuid)
   template.widget_order = template.widget_order.filter(item => item !== uuid)
   delete template.widgets[uuid]
 
-  modal.dataset.template = JSON.stringify(template)
-
-  const newCurrentWidgetUUID = template.widget_order[0]
-  populateEditTrackerTemplateCurrentLayout(template)
-
-  populateWidgetProperties(template.widgets[newCurrentWidgetUUID])
+  setEditedTemplate(template)
+  selectTrackerWidget(template.widget_order[index] ?? template.widget_order[index - 1] ?? null)
 }
 
 export function populateTrackerTemplateSelect (templateList) {
@@ -548,53 +619,28 @@ export function populateTrackerTemplateSelect (templateList) {
   }
 }
 
-export async function showEditTrackerTemplateModal (templateToLoad = '') {
-  // Retrieve the currently-selected layout and use it to configure the editTrackerTemplateModal
+export async function saveTrackerTemplate () {
+  // Save the template being edited, and show on the Save button whether it worked.
 
-  if (templateToLoad === '') {
-    templateToLoad = document.getElementById('trackerTemplateSelect').value
-  }
+  const template = getEditedTemplate()
+  const button = document.getElementById('trackerTemplateEditorSaveButton')
 
-  const template = await loadTemplate(templateToLoad)
-  _showEditTrackerTemplateModal(template)
-}
-
-function _showEditTrackerTemplateModal (template) {
-  // Set the provided template in the data attributes, reset all the fields,
-  // and show the modal
-
-  document.getElementById('editTrackerTemplateModalTitle').textContent = 'Edit template: ' + template.name
-  document.getElementById('editTrackerTemplatePropertiesDiv').innerHTML = ''
-
-  const modal = document.getElementById('editTrackerTemplateModal')
-  modal.dataset.template = JSON.stringify(template)
-  modal.dataset.uuid = template.uuid
-
-  populateEditTrackerTemplateCurrentLayout(template)
-  exUtilities.showModal('#editTrackerTemplateModal')
-}
-
-export function editTrackerTemplateModalSubmitChanges () {
-  // Send a message to the server with the updated template
-
-  const modal = document.getElementById('editTrackerTemplateModal')
-  const template = JSON.parse(modal.dataset.template)
-
-  const requestDict = {
-    tracker_uuid: template.uuid,
-    template
-  }
-
-  exTools.makeServerRequest({
-    method: 'POST',
-    endpoint: '/tracker/template/create',
-    params: requestDict
-  })
-    .then((response) => {
-      if (response.success === true) {
-        exUtilities.hideModal(modal)
-      }
+  let response
+  try {
+    response = await exTools.makeServerRequest({
+      method: 'POST',
+      endpoint: '/tracker/template/create',
+      params: { tracker_uuid: template.uuid, template }
     })
+  } catch {
+    response = null
+  }
+
+  if (response?.success === true) {
+    document.getElementById('trackerTemplateEditor').dataset.savedTemplate = JSON.stringify(template)
+  }
+  button.textContent = response?.success === true ? 'Saved' : 'Not saved'
+  setTimeout(() => { button.textContent = 'Save' }, 2000)
 }
 
 export async function createTrackerTemplate (name = '') {
@@ -609,6 +655,9 @@ export async function createTrackerTemplate (name = '') {
 
   // Can't name a template the empty string
   if (name === '') return
+
+  // The new template opens for editing, replacing any template being edited
+  if (!(await confirmDiscardTrackerChanges())) return
 
   const uuid = exUtilities.uuid()
 
@@ -632,7 +681,8 @@ export async function createTrackerTemplate (name = '') {
     createTrackerTemplateName.value = ''
     const templates = await getAvailableTemplates()
     populateTrackerTemplateSelect(templates)
-    showEditTrackerTemplateModal(uuid)
+    document.getElementById('trackerTemplateSelect').value = uuid
+    showTrackerTemplateEditor(uuid, { askFirst: false })
   }
 }
 
@@ -651,6 +701,10 @@ export async function deleteTrackerTemplate (uuid = '') {
     const templates = await getAvailableTemplates()
     populateTrackerTemplateSelect(templates)
     exUtilities.hideModal('#deleteTrackerTemplateModal')
+
+    // Don't leave a deleted template open for editing
+    const editor = document.getElementById('trackerTemplateEditor')
+    if (editor.dataset.template != null && getEditedTemplate().uuid === uuid) closeTrackerTemplateEditor({ askFirst: false })
   }
 }
 
@@ -726,12 +780,7 @@ export function launchTracker () {
 export function makeGuestFacing () {
   // Toggle on/off the option of making the template guest-facing
 
-  const modal = document.getElementById('editTrackerTemplateModal')
-  const checkbox = document.getElementById('editTrackerTemplateGuestFacingCheckbox')
-  const template = JSON.parse(modal.dataset.template)
-
-  template.guest_facing = checkbox.checked
-
-  // Update the data attribute with the updated template
-  modal.dataset.template = JSON.stringify(template)
+  const template = getEditedTemplate()
+  template.guest_facing = document.getElementById('editTrackerTemplateGuestFacingCheckbox').checked
+  setEditedTemplate(template)
 }
