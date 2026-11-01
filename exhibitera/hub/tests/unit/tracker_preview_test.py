@@ -156,3 +156,28 @@ def test_tracker_keeps_the_record_if_hub_refuses_it():
     """, "{ body: { success: false, reason: 'unknown_template' } }")
 
     assert result == {"errors": [], "afterFailure": {"cleared": False, "error": True}, "errorAfterRetry": False}
+
+
+def test_counters_do_not_go_below_zero():
+    result = run_preview("""
+        send(template)
+        await browser.wait(100)
+        const [minus, plus] = [...document.querySelectorAll('#cardRow .counter-button')]
+        const counter = document.getElementById('w1_counter')
+        minus.click()
+        const fromZero = [counter.getAttribute('data-count'), counter.textContent]
+        plus.click()
+        minus.click()
+        minus.click()
+        report({ errors: browser.errors, fromZero, afterOne: [counter.getAttribute('data-count'), counter.textContent] })
+    """)
+
+    assert result == {"errors": [], "fromZero": ["0", "0"], "afterOne": ["0", "0"]}
+
+
+def test_template_chooser_lists_the_available_templates():
+    result = run_tracker("""
+        report({ errors: browser.errors, options: [...document.getElementById('definitionListDropdown').options].map((o) => [o.value, o.textContent]) })
+    """, "{ body: { success: true } }")
+
+    assert result == {"errors": [], "options": [["", ""], ["t1", "Gallery flow"]]}

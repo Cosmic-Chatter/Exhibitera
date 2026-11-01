@@ -451,7 +451,8 @@ function incrementCounter (uuid, valueToAdd) {
   // Function to add the given number to the counter with the specified id
 
   const counterEl = document.getElementById(uuid + '_counter')
-  const value = parseInt(counterEl.getAttribute('data-count')) + valueToAdd
+  // A count of something can't be negative
+  const value = Math.max(0, parseInt(counterEl.getAttribute('data-count')) + valueToAdd)
 
   counterEl.setAttribute('data-count', value)
   counterEl.textContent = value
@@ -566,7 +567,7 @@ function populateLayoutDropdown (templateList) {
   // Take a list of layouts and fill up the dropdown list
 
   const definitionListDropdown = document.getElementById('definitionListDropdown')
-  for (const template of templates) {
+  for (const template of templateList) {
     definitionListDropdown.appendChild(new Option(template.name, template.uuid))
   }
 }
@@ -667,7 +668,6 @@ let sliderList = []
 let textList = []
 let timerList = []
 
-let templates = []
 if (previewMode) {
   document.getElementById('previewNotice').style.display = 'block'
   document.getElementById('definitionListCol').style.display = 'none'
@@ -678,8 +678,7 @@ if (previewMode) {
     showPreviewTemplate(event.data.template)
   })
 } else {
-  templates = await exTracker.getAvailableTemplates()
-  populateLayoutDropdown(templates)
+  populateLayoutDropdown(await exTracker.getAvailableTemplates())
   setTimeout(parseQueryString, 300)
   setInterval(checkConnection, 500)
 }

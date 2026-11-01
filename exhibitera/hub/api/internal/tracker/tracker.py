@@ -22,6 +22,9 @@ async def create_tracker_template(
 ):
     """Write the given tracker template to file"""
 
+    if not ex_files.filename_safe(tracker_uuid):
+        return {"success": False, "reason": "unsafe_filename"}
+
     template_path = ex_files.get_path(
         ["flexible-tracker", "templates", ex_files.with_extension(tracker_uuid, 'json')],
         user_file=True)
