@@ -68,30 +68,12 @@ function sendTextToServer () {
   // Send the server the text that the user has inputted
   const text = getCleanText()
 
-  if (exCommon.config.standalone === false) {
-    exCommon.makeServerRequest(
-      {
-        method: 'POST',
-        endpoint: '/data/Word_Cloud_' + collectionName + '/rawText',
-        params: { text }
-      })
-      .then((result) => {
-        if (result?.success === true) {
-          clear()
-        }
-      })
-  } else {
-    exCommon.makeHelperRequest({
-      method: 'POST',
-      endpoint: '/data/Word_Cloud_' + collectionName + '/rawText',
-      params: { text }
+  exCommon.appendWordCloudText(collectionName, text)
+    .then((result) => {
+      if (result?.success === true) {
+        clear()
+      }
     })
-      .then((result) => {
-        if (result?.success === true) {
-          clear()
-        }
-      })
-  }
 }
 
 function updateFunc (update) {

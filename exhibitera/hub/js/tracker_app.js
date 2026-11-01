@@ -531,13 +531,21 @@ function sendData () {
   const requestString = JSON.stringify(requestDict)
 
   const xhr = new XMLHttpRequest()
-  xhr.open('POST', hubConfig.api + '/data/' + configurationName + '/append', true)
+  // Records are stored by the template's UUID, so renaming the template doesn't split its data
+  xhr.open('POST', hubConfig.api + '/datasets/tracker/' + encodeURIComponent(templateUUID) + '/append', true)
   xhr.timeout = 5000
   xhr.setRequestHeader('Content-Type', 'application/json')
   xhr.overrideMimeType('text/plain; charset=x-user-defined')
   xhr.onreadystatechange = function () {
     if (this.readyState !== 4) return
-    if (this.status === 200) {
+    let response = null
+    try {
+      response = JSON.parse(this.responseText)
+    } catch {}
+    const saved = this.status === 200 && response?.success === true
+    // If the record wasn't saved, keep the inputs so it can be sent again
+    document.getElementById('recordErrorNotice').style.display = saved ? 'none' : 'block'
+    if (saved) {
       // Clear the inputs so that we can't double-submit data
       clearInput()
     }
@@ -572,7 +580,7 @@ async function loadLayout (toLoad = '') {
   }
 
   const template = await exTracker.loadTemplate(toLoad)
-  configurationName = template?.name ?? 'Tracker Data'
+  templateUUID = template?.uuid ?? toLoad
   buildLayout(template)
 
   const definitionListCol = document.getElementById('definitionListCol')
@@ -622,7 +630,6 @@ async function parseQueryString () {
   if (searchParams.has('layout')) {
     const layoutUUID = searchParams.get('layout')
     loadLayout(layoutUUID)
-    configurationName = layoutUUID
     document.getElementById('definitionListDropdown').value = layoutUUID
 
     const template = await exTracker.loadTemplate(layoutUUID)
@@ -647,7 +654,7 @@ document.getElementById('definitionListDropdown').addEventListener('change', () 
   loadLayout()
 })
 
-let configurationName = 'test'
+let templateUUID = ''
 
 // In preview mode, the template editor sends the template to show, and records aren't saved
 const previewMode = new URLSearchParams(window.location.search).has('preview')

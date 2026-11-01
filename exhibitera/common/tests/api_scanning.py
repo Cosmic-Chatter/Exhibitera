@@ -74,7 +74,8 @@ def path_template(expression: str) -> str:
 def matches_route(template: str, route_path: str) -> bool:
     """Whether a path template from the source could reach the given FastAPI route path."""
 
-    template_parts = template.rstrip("/").split("/")
+    # The query string doesn't choose the route
+    template_parts = template.split("?")[0].rstrip("/").split("/")
     route_parts = route_path.rstrip("/").split("/")
     if len(template_parts) != len(route_parts):
         return False

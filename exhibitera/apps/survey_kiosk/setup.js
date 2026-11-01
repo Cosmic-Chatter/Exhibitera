@@ -1592,6 +1592,7 @@ exSetup.configure({
   initializeWizard,
   loadDefinition: editDefinition,
   blankDefinition: {
+    data_id: '', // Hub stores this definition's responses by this ID. Set for each new definition.
     items: {},
     item_order: [],
     languages: {},

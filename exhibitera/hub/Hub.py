@@ -51,6 +51,7 @@ from exhibitera.hub.api.protocol import protocol as protocol_api
 # Internal API, used by Hub's own web pages
 from exhibitera.hub.api.internal.components import components as components_internal
 from exhibitera.hub.api.internal.data import data as data_internal
+from exhibitera.hub.api.internal.datasets import datasets as datasets_internal
 from exhibitera.hub.api.internal.exhibitions import exhibitions as exhibitions_internal
 from exhibitera.hub.api.internal.groups import groups as groups_internal
 from exhibitera.hub.api.internal.issues import issues as issues_internal
@@ -114,6 +115,7 @@ def load_default_configuration() -> None:
     hub_legacy.convert_schedule_targets_to_json()
     hub_legacy.convert_legacy_tracker_templates_to_json()
     hub_legacy.migrate_tracker_data()
+    hub_legacy.move_tracker_data_to_template_ids()
     hub_legacy.add_programs_permission()
 
     hub_tools.start_debug_loop()
@@ -196,6 +198,7 @@ protocol_api.router.include_in(app, url_prefixes)
 # Internal API
 for internal_router in [components_internal.router,
                         data_internal.router,
+                        datasets_internal.router,
                         exhibitions_internal.router,
                         groups_internal.router,
                         issues_internal.router,

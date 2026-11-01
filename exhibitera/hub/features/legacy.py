@@ -7,6 +7,7 @@ to aid in deprecating them.
 # Standard imports
 from collections import OrderedDict
 import configparser
+import logging
 import os
 import shutil
 import uuid
@@ -14,6 +15,7 @@ import uuid
 # Exhibitera imports
 import exhibitera.common.files as ex_files
 import exhibitera.hub.features.components as hub_components
+import exhibitera.hub.features.datasets as hub_datasets
 import exhibitera.hub.features.exhibitions as hub_exhibitions
 import exhibitera.hub.features.maintenance as hub_maintain
 import exhibitera.hub.features.schedules as hub_schedule
@@ -298,6 +300,48 @@ def migrate_tracker_data():
 
     rename_old = ex_files.get_path(["flexible-tracker", "old_data"], user_file=True)
     os.rename(old_data, rename_old)
+
+
+# Added in Ex6.1
+def move_tracker_data_to_template_ids():
+    """Move Flexible Tracker data stored by template name to data/tracker/<template UUID>.txt.
+
+    Data stored by name was lost if the name couldn't be used as a file name, and split when a template
+    was renamed. Files whose name matches more than one template are left in place and logged, since it
+    isn't clear which template they belong to. Other files in the data directory, such as those written
+    through the Core API, aren't touched.
+    """
+
+    template_dir = ex_files.get_path(["flexible-tracker", "templates"], user_file=True)
+    if not os.path.isdir(template_dir):
+        return
+
+    uuids_by_name: dict[str, list[str]] = {}
+    for file in os.listdir(template_dir):
+        if not file.lower().endswith(".json"):
+            continue
+        template = ex_files.load_json(os.path.join(template_dir, file))
+        if isinstance(template, dict) and "name" in template and "uuid" in template:
+            uuids_by_name.setdefault(template["name"], []).append(template["uuid"])
+
+    for name, uuids in uuids_by_name.items():
+        if not ex_files.filename_safe(name):
+            continue  # This name could never be saved as a file
+        old_path = ex_files.get_path(["data", ex_files.with_extension(name, "txt")], user_file=True)
+        if not os.path.exists(old_path):
+            continue
+        if len(uuids) > 1:
+            logging.warning("move_tracker_data_to_template_ids: not moving data/%s.txt, since %s templates have "
+                            "that name", name, len(uuids))
+            continue
+
+        new_path = hub_datasets.dataset_path("tracker", uuids[0])
+        if new_path is None or os.path.exists(new_path):
+            logging.warning("move_tracker_data_to_template_ids: not moving data/%s.txt, since %s already exists",
+                            name, new_path)
+            continue
+        os.replace(old_path, new_path)
+        logging.info("Moved Flexible Tracker data data/%s.txt to %s", name, new_path)
 
 
 # Added in Ex6.1 to add the programs permission

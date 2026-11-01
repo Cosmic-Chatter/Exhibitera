@@ -15,23 +15,37 @@ export async function getAvailableTemplates () {
 }
 
 export function getAvailableTrackerData (complete) {
-  // Ask Hub to send a list of availble data files
-  // Pass a function and it will be called with the list as the
-  // only parameter
+  // Ask Hub to send a list of the collected data. Pass a function and it will be called
+  // with the response, which lists datasets by ID and files stored by name.
 
   exTools.makeServerRequest({
     method: 'GET',
-    endpoint: '/data/list'
+    endpoint: '/datasets/list'
   })
     .then((response) => {
       if (!response?.success) {
-        console.log('Error retrieving tracker data list:', response.reason)
+        console.log('Error retrieving tracker data list:', response?.reason)
         return
       }
       if (typeof complete === 'function') {
-        complete(response.data)
+        complete(response)
       }
     })
+}
+
+function selectedTrackerData () {
+  // Return the details of the data chosen in the trackerDataSelect, or null if none is chosen
+
+  const option = document.getElementById('trackerDataSelect').selectedOptions[0]
+  if (option == null) return null
+  return { kind: option.dataset.kind, id: option.dataset.id, name: option.dataset.name }
+}
+
+function trackerDataEndpoint (data) {
+  // Datasets are found by ID. Files stored by name, such as those from the Core API, by name.
+
+  if (data.kind === 'file') return '/data/' + encodeURIComponent(data.name)
+  return '/datasets/' + data.kind + '/' + encodeURIComponent(data.id)
 }
 
 export async function loadTemplate (uuid) {
@@ -44,13 +58,16 @@ export async function loadTemplate (uuid) {
   return response.template
 }
 
-export function downloadTrackerData (name) {
-  // Ask the server to send the data for the currently selected tracker as a CSV
-  // and initiate a download.
+export function downloadTrackerData () {
+  // Ask the server to send the selected data as a CSV and initiate a download.
+  // Hub names the file, so it doesn't include characters that aren't allowed.
+
+  const data = selectedTrackerData()
+  if (data == null) return
 
   exTools.makeServerRequest({
     method: 'GET',
-    endpoint: '/data/' + name + '/csv'
+    endpoint: trackerDataEndpoint(data) + '/csv'
   })
     .then((result) => {
       if (result?.success) {
@@ -60,7 +77,7 @@ export function downloadTrackerData (name) {
         })
         const a = document.createElement('a')
         a.href = window.URL.createObjectURL(fileBlob)
-        a.download = name + '.csv'
+        a.download = result.filename ?? data.name + '.csv'
         a.click()
       }
     })
@@ -708,26 +725,50 @@ export async function deleteTrackerTemplate (uuid = '') {
   }
 }
 
-export function populateTrackerDataSelect (data) {
-  // Take a list of data filenames and populate the TrackerDataSelect
+// The groups in the trackerDataSelect, by the app that collected the data
+const TRACKER_DATA_GROUPS = [
+  ['flexible_tracker', 'Flexible Tracker'],
+  ['survey_kiosk', 'Survey Kiosk'],
+  ['voting_kiosk', 'Voting Kiosk'],
+  ['word_cloud', 'Word Cloud']
+]
+
+export function populateTrackerDataSelect (response) {
+  // Take the list of data from Hub and populate the trackerDataSelect, grouped by app
 
   const trackerDataSelect = document.getElementById('trackerDataSelect')
   trackerDataSelect.innerHTML = ''
 
-  const sortedList = exUtilities.sortAlphabetically(data)
-
-  for (const item of sortedList) {
-    const name = item.split('.').slice(0, -1).join('.')
-    trackerDataSelect.appendChild(new Option(name, name))
+  const addGroup = (label, items) => {
+    if (items.length === 0) return
+    const group = document.createElement('optgroup')
+    group.label = label
+    for (const item of items) {
+      const option = new Option(item.archived ? item.name + ' (archived)' : item.name, item.kind + '/' + item.id)
+      option.dataset.kind = item.kind
+      option.dataset.id = item.id
+      option.dataset.name = item.name
+      group.appendChild(option)
+    }
+    trackerDataSelect.appendChild(group)
   }
+  const byName = (items) => items.sort((a, b) => a.name.localeCompare(b.name))
+
+  const datasets = response.datasets ?? []
+  for (const [app, label] of TRACKER_DATA_GROUPS) {
+    addGroup(label, byName(datasets.filter((item) => item.app === app)))
+  }
+  const files = (response.files ?? []).map((name) => ({ kind: 'file', id: name, name, archived: false }))
+  addGroup('Other files', byName(files))
 }
 
 export function showDeleteTrackerDataModal () {
   // Show a modal confirming the request to delete a specific dataset. To be sure
   // populate the modal with data for a test.
 
-  const name = document.getElementById('trackerDataSelect').value
-  document.getElementById('deleteTrackerDataModalDeletedName').innerText = name
+  const data = selectedTrackerData()
+  if (data == null) return
+  document.getElementById('deleteTrackerDataModalDeletedName').innerText = data.name
   document.getElementById('deleteTrackerDataModalDeletedInput').value = ''
   document.getElementById('deleteTrackerDataModalSpellingError').style.display = 'none'
   exUtilities.showModal('#deleteTrackerDataModal')
@@ -748,14 +789,14 @@ export function deleteTrackerDataFromModal () {
 }
 
 export function deleteTrackerData () {
-  // Send a message to the server asking it to delete the data for the currently
-  // selected template
+  // Send a message to the server asking it to delete the selected data
 
-  const name = document.getElementById('trackerDataSelect').value
+  const data = selectedTrackerData()
+  if (data == null) return
 
   exTools.makeServerRequest({
     method: 'DELETE',
-    endpoint: '/data/' + name
+    endpoint: trackerDataEndpoint(data)
   })
     .then((result) => {
       if (result?.success) {

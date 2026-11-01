@@ -93,35 +93,15 @@ function getTextUpdateFromServer () {
       createWordCloud()
       return
     }
-
-    exCommon.makeServerRequest(
-      {
-        method: 'GET',
-        endpoint: '/data/Word_Cloud_' + collectionName + '/rawText'
-      })
-      .then((result) => {
-        if (result?.success === true) {
-          if (result.text && result.text !== '') {
-            WordCloudOptions.list = createWordList(countText(cleanText(result.text)))
-          }
-        }
-        createWordCloud()
-      })
-  } else {
-    exCommon.makeHelperRequest(
-      {
-        method: 'GET',
-        endpoint: '/data/Word_Cloud_' + collectionName + '/rawText'
-      })
-      .then((result) => {
-        if (result?.success === true) {
-          if (result.text && result.text !== '') {
-            WordCloudOptions.list = createWordList(countText(cleanText(result.text)))
-          }
-        }
-        createWordCloud()
-      })
   }
+
+  exCommon.getWordCloudText(collectionName)
+    .then((text) => {
+      if (text !== '') {
+        WordCloudOptions.list = createWordList(countText(cleanText(text)))
+      }
+      createWordCloud()
+    })
 }
 
 function updateFunc (update) {

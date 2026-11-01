@@ -744,6 +744,7 @@ exSetup.configure({
   initializeWizard,
   loadDefinition: editDefinition,
   blankDefinition: {
+    data_id: '', // Hub stores this definition's votes by this ID. Set for each new definition.
     options: {},
     option_order: [],
     text: {},

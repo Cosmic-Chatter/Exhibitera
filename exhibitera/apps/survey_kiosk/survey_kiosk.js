@@ -393,7 +393,6 @@ function loadDefinition (definition) {
   // Clean up the old survey, then create the new one.
 
   currentDefinition = definition
-  configurationName = definition.name
 
   response = {}
 
@@ -551,24 +550,11 @@ function sendData () {
   const dateStr = (new Date(Date.now() - tzoffset)).toISOString().slice(0, -1)
   response.Date = dateStr
 
-  const requestDict = {
-    method: 'POST',
-    endpoint: '/data/' + configurationName + '/append',
-    params: { data: response }
-  }
-
   // Submit the data to Hub or the helper, depending on if we're standalone
-  if (exCommon.config.standalone === true) {
-    exCommon.makeHelperRequest(requestDict)
-      .then(() => {
-        response = {}
-      })
-  } else {
-    exCommon.makeServerRequest(requestDict)
-      .then(() => {
-        response = {}
-      })
-  }
+  exCommon.sendKioskData('survey_kiosk', currentDefinition, response)
+    .then(() => {
+      response = {}
+    })
 }
 
 function restartSession () {
@@ -628,8 +614,7 @@ let inactivityTimeout = 10000 // ms
 let restartTimer = null
 const restartTimeout = 5000 // ms
 
-let configurationName = 'default'
-let currentDefinition = {}
+let currentDefinition = { name: 'default' }
 let currentLang = ''
 let currentIndex = 0
 let response = {}

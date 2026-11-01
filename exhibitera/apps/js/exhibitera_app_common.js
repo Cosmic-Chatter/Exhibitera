@@ -184,6 +184,60 @@ export function makeHelperRequest (opt) {
   return exUtilities.makeRequest(opt)
 }
 
+export function sendKioskData (app, definition, data) {
+  // Record data from Voting or Survey Kiosk. Hub stores it by the definition's data ID, so renaming
+  // the definition doesn't split its data. Definitions made before data IDs existed send only their name.
+  // Standalone, this Apps server stores it by name.
+
+  if (config.standalone === true) {
+    return makeHelperRequest({
+      method: 'POST',
+      endpoint: '/data/' + definition.name + '/append',
+      params: { data }
+    })
+  }
+  return makeServerRequest({
+    method: 'POST',
+    endpoint: '/datasets/kiosk/append',
+    params: { data_id: definition.data_id ?? null, name: definition.name, app, data }
+  })
+}
+
+export function appendWordCloudText (collection, text) {
+  // Add text to a Word Cloud collection, with Hub or, standalone, this Apps server
+
+  if (config.standalone === true) {
+    return makeHelperRequest({
+      method: 'POST',
+      endpoint: '/data/Word_Cloud_' + collection + '/rawText',
+      params: { text }
+    })
+  }
+  return makeServerRequest({
+    method: 'POST',
+    endpoint: '/datasets/wordCloud/append',
+    params: { collection, text }
+  })
+}
+
+export async function getWordCloudText (collection) {
+  // Return all the text in a Word Cloud collection, from Hub or, standalone, this Apps server
+
+  let result
+  if (config.standalone === true) {
+    result = await makeHelperRequest({
+      method: 'GET',
+      endpoint: '/data/Word_Cloud_' + collection + '/rawText'
+    })
+  } else {
+    result = await makeServerRequest({
+      method: 'GET',
+      endpoint: '/datasets/wordCloud/text?collection=' + encodeURIComponent(collection)
+    })
+  }
+  return result?.success === true ? (result.text ?? '') : ''
+}
+
 export function parseQueryString () {
   // Read the query string to determine what options to set
 

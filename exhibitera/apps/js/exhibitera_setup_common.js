@@ -676,6 +676,8 @@ export function initializeDefinition () {
   const temp = structuredClone(config.blankDefinition)
   if (temp == null) return
   temp.uuid = exUtilities.uuid()
+  // Apps whose data Hub stores by ID give each new definition its own
+  if ('data_id' in temp) temp.data_id = exUtilities.uuid()
   config.initialDefinition = temp
   config.workingDefinition = structuredClone(temp)
   previewDefinition(false)
@@ -710,6 +712,8 @@ function cloneDefinition () {
 
   defToClone.uuid = '' // Will be replaced with a new UUID on saving
   defToClone.name += ' 2'
+  // A clone collects its own data
+  if (defToClone.data_id != null) defToClone.data_id = exUtilities.uuid()
 
   exCommon.writeDefinition(defToClone)
     .then((result) => {

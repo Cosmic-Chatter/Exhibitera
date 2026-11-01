@@ -31,18 +31,6 @@ async def delete_data(
         return ex_files.delete_file(data_path)
 
 
-@router.get("/list", dependencies=[Depends(hub_users.require_permission("analytics", "view"))])
-async def get_available_data():
-    """Send a list of all the available data files."""
-
-    data_path = ex_files.get_path(["data"], user_file=True)
-    data_list = []
-    for file in os.listdir(data_path):
-        if file.lower().endswith(".txt"):
-            data_list.append(file)
-    return {"success": True,  "data": data_list}
-
-
 @router.post("/{name}/append")
 async def append_data(name: str,
                       data: dict[str, Any] = Body(description="The data to be appended.", embed=True)
@@ -68,4 +56,4 @@ async def get_tracker_data_csv(name: str):
     if not os.path.exists(data_path):
         return {"success": False, "reason": f"File {name}.txt does not exist!", "csv": ""}
     result = ex_files.create_csv(data_path)
-    return {"success": True, "csv": result}
+    return {"success": True, "csv": result, "filename": ex_files.with_extension(name, "csv")}

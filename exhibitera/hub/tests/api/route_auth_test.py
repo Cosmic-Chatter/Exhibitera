@@ -52,8 +52,10 @@ PROTECTED_INTERNAL = {
     ("DELETE", "/schedule/{schedule_name}/action/{action_id}"): ("schedule", "edit"),
     ("DELETE", "/tracker/template/{tracker_uuid}"): ("analytics", "edit"),
     ("DELETE", "/user/{uuid_str}"): ("users", "edit"),
-    ("GET", "/data/list"): ("analytics", "view"),
     ("GET", "/data/{name}/csv"): ("analytics", "view"),
+    ("GET", "/datasets/list"): ("analytics", "view"),
+    ("GET", "/datasets/{kind}/{dataset_id}/csv"): ("analytics", "view"),
+    ("DELETE", "/datasets/{kind}/{dataset_id}"): ("analytics", "edit"),
     ("GET", "/exhibition/available"): ("user",),
     ("GET", "/exhibition/modifications"): ("exhibits", "view"),
     ("GET", "/exhibition/{uuid_str}/details"): ("user",),
@@ -124,6 +126,7 @@ OPEN_INTERNAL = {
     ("GET", "/tracker/templates/list"),
     ("GET", "/user/{user_uuid}/displayName"),
     ("POST", "/data/{name}/append"),
+    ("POST", "/datasets/tracker/{template_uuid}/append"),
     ("POST", "/schedule/getSecondsFromMidnight"),
     ("POST", "/user/login"),
     ("POST", "/user/logout"),
@@ -136,6 +139,9 @@ PROTECTED_PROTOCOL_6_1 = {
 }
 
 OPEN_PROTOCOL_6_1 = OPEN_PROTOCOL_6 - {("POST", "/user/{user_uuid}/changePassword")} | {
+    ("GET", "/datasets/wordCloud/text"),
+    ("POST", "/datasets/kiosk/append"),
+    ("POST", "/datasets/wordCloud/append"),
     ("GET", "/program/"),
     ("GET", "/program/location/{location}"),
     ("GET", "/program/locations"),

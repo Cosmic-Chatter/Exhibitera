@@ -43,6 +43,10 @@ PROTOCOL = {
         ("GET", "/program/location/{location}"),
         ("GET", "/program/locations"),
         ("GET", "/program/{this_uuid}"),
+        # For Voting Kiosk, Survey Kiosk and Word Cloud data, stored by ID
+        ("POST", "/datasets/kiosk/append"),
+        ("POST", "/datasets/wordCloud/append"),
+        ("GET", "/datasets/wordCloud/text"),
     },
 }
 

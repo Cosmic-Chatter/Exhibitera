@@ -17,6 +17,7 @@ import exhibitera.common.files as ex_files
 from exhibitera.common.protocol_router import ProtocolRouter
 import exhibitera.hub.config as hub_config
 import exhibitera.hub.features.components as hub_components
+import exhibitera.hub.features.datasets as hub_datasets
 import exhibitera.hub.features.users as hub_users
 from exhibitera.hub.api.internal.data import data as data_internal
 from exhibitera.hub.api.internal.programs import programs as programs_internal
@@ -88,6 +89,39 @@ async def submit_analytics(component_uuid: str,
 
 
 router.post("/data/{name}/append")(data_internal.append_data)
+
+
+# Data stored by ID. Apps 6.0 and the Core API store data by name, above.
+@router.post("/datasets/kiosk/append", since="6.1")
+async def append_kiosk_record(
+        name: str = Body(description="The definition's name, used to label the data."),
+        app: str = Body(description="The app sending the record: voting_kiosk or survey_kiosk."),
+        data: dict[str, Any] = Body(description="The record to save."),
+        data_id: str | None = Body(default=None,
+                                   description="The definition's data ID. Definitions made before data IDs existed send null.")
+):
+    """Save a record from a Voting or Survey Kiosk."""
+
+    success, reason = hub_datasets.append_kiosk_record(data_id, name, app, data)
+    return {"success": success, "reason": reason}
+
+
+@router.post("/datasets/wordCloud/append", since="6.1")
+async def append_word_cloud_text(
+        collection: str = Body(description="The name of the collection, shared by Word Cloud Input and Viewer."),
+        text: str = Body(description="The text to add.")
+):
+    """Add text to a Word Cloud collection."""
+
+    success, reason = hub_datasets.append_word_cloud_text(collection, text)
+    return {"success": success, "reason": reason}
+
+
+@router.get("/datasets/wordCloud/text", since="6.1")
+async def get_word_cloud_text(collection: str):
+    """Return all the text in a Word Cloud collection."""
+
+    return {"success": True, "text": hub_datasets.get_word_cloud_text(collection)}
 
 
 @router.post("/data/{name}/rawText")

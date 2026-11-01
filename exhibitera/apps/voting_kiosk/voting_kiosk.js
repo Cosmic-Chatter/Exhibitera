@@ -193,7 +193,7 @@ function loadDefinition (definition) {
   // If there are votes left for the old survey, make sure they are recorded
   sendData()
 
-  configurationName = definition.name
+  currentDefinition = definition
 
   // Clear the vote categories
   voteCounts = {}
@@ -337,26 +337,8 @@ function sendData () {
     return
   }
 
-  const requestDict = {
-    data: resultDict
-  }
-
   // Submit the data to Hub or the helper, depending on if we're standalone
-  if (exCommon.config.standalone === true) {
-    exCommon.makeHelperRequest(
-      {
-        method: 'POST',
-        endpoint: '/data/' + configurationName + '/append',
-        params: requestDict
-      })
-  } else {
-    exCommon.makeServerRequest(
-      {
-        method: 'POST',
-        endpoint: '/data/' + configurationName + '/append',
-        params: requestDict
-      })
-  }
+  exCommon.sendKioskData('voting_kiosk', currentDefinition, resultDict)
 }
 
 function showSuccessMessage () {
@@ -410,7 +392,7 @@ exCommon.configureApp({
 
 let badConnection = false
 
-let configurationName = 'default'
+let currentDefinition = { name: 'default' }
 let voteCounts = {}
 let recordingInterval = 60 // Send votes every this many minutes
 let voteCounter = setInterval(sendData, recordingInterval * 1000)

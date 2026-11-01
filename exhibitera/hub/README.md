@@ -191,13 +191,31 @@ Beside the editor, a live preview shows the template as it would appear on an iP
 
 To use Flexible Tracker for data collection, select your desired template from the web console settings view and click the _Launch_ button. All available templates will be available from the dropdown list. Once you are ready to send a session (one set of observations), press the Record button. This will transmit the data to Hub for storage. Please note that a network connection to the server is required to send data; if such a connection is not available, a popup will appear and the Record button will be disabled.
 
-Data are stored in Hub under `data/<template name>.txt`. Each row is a single JSON object representing one session.
+If a record can't be saved, a warning appears and the entered values are kept, so you can press _Record_ again.
+
+Data are stored in Hub under `data/tracker/<template UUID>.txt`. Each row is a single JSON object representing one session. Because data are stored by the template's UUID, you can rename a template without splitting its data.
 
 #### Downloading and managing data
 
-Once you have collected some data, you can easily download it as a comma-separated values (CSV) file that cane be read by Microsoft Excel or another data analysis app. To do so, go to the settings view from the web console and select the appropriate template. Then, click the "Download data" button and a CSV download will be initiated in your browser.
+Once you have collected some data, you can download it as a comma-separated values (CSV) file that can be read by Microsoft Excel or another data analysis app. To do so, go to the Analytics tab and find the _Data_ section. Click _Refresh list_, then select the data you want. Data are grouped by the app that collected them: Flexible Tracker, Voting Kiosk, Survey Kiosk, and Word Cloud. Files written through the Core API are listed under _Other files_. Click _Download_ and a CSV download will begin in your browser. The file is named after the template or definition, with any characters that can't be used in file names (such as `/`, `:`, and `?`) replaced by `_`.
 
-By clicking the _Clear data_ button, you can erase the existing data. This action cannot be undone.
+Deleting a template doesn't delete its data. The template is archived, and its data stays in the list, marked _(archived)_, so you can still download it.
+
+By clicking _Delete_ and typing the data's name to confirm, you can erase the selected data. This action cannot be undone.
+
+##### How data are stored
+
+Hub stores collected data by ID, so names are only used for display and for naming downloads:
+
+| App | Stored in |
+| --- | --- |
+| Flexible Tracker | `data/tracker/<template UUID>.txt` |
+| Voting Kiosk and Survey Kiosk | `data/kiosk/<data ID>.txt`, named in `data/kiosk/index.json` |
+| Word Cloud | `data/word_cloud/<ID>.txt`, with its collection name in `data/word_cloud/index.json` |
+
+Each Voting and Survey Kiosk definition has a data ID. Copying a definition to another Apps component keeps the ID, so both copies add to the same data; cloning it in setup gives the clone a new ID. Definitions made before Exhibitera 6.1 have no data ID, so all of them with the same name share one dataset, as before.
+
+Data stored by earlier versions in `data/<name>.txt` are moved automatically: Flexible Tracker data when Hub starts, and kiosk and Word Cloud data the first time the kiosk records. If two templates have the same name, their old data file is left in place and listed under _Other files_. Files written through the Core API are never moved.
 
 
 ### Exhibitions tab

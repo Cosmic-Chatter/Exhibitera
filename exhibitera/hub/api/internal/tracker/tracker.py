@@ -7,7 +7,7 @@ from fastapi import APIRouter, Body, Depends
 
 # Exhibitera modules
 import exhibitera.common.files as ex_files
-import exhibitera.hub.config as hub_config
+import exhibitera.hub.features.datasets as hub_datasets
 import exhibitera.hub.tools as hub_tools
 import exhibitera.hub.features.users as hub_users
 
@@ -31,14 +31,14 @@ async def create_tracker_template(
 
 @router.delete("/template/{tracker_uuid}", dependencies=[Depends(hub_users.require_permission("analytics", "edit"))])
 async def delete_tracker_template(
-        tracker_uuid: str
+        tracker_uuid: str,
+        authorizing_user: str = Depends(hub_users.require_user)
 ):
-    """Delete the specified tracker template."""
+    """Archive the specified tracker template. Its data is kept, and can still be downloaded by name."""
 
-    file_path = ex_files.get_path(["flexible-tracker", "templates", ex_files.with_extension(tracker_uuid, 'json')], user_file=True)
-    with hub_config.trackerTemplateWriteLock:
-        response = ex_files.delete_file(file_path)
-    return response
+    if not hub_datasets.archive_tracker_template(tracker_uuid, authorizing_user):
+        return {"success": False, "reason": "unknown_template"}
+    return {"success": True}
 
 
 @router.get("/template/{template_uuid}")

@@ -99,32 +99,60 @@ def test_preview_record_is_shown_in_a_dismissable_overlay_but_not_saved():
     assert result["errors"] == []
     assert result["sentToHub"] is False
     assert result["shownAfterRecord"] is True
-    for text in ["not saved", "Visitors", "Tornado Machine", "Tornado Machine (Start time)", "Date"]:
+    for text in ["wasn't sent to Hub", "Visitors", "Tornado Machine", "Tornado Machine (Start time)", "Date"]:
         assert text in result["text"]
     assert result["dismissed"] is True
     assert result["inlineRecord"] is False
     assert result["timerReset"] == "Start"
 
 
-def test_tracker_still_saves_outside_preview():
-    result = page_scripts.run(f"""
+def run_tracker(script: str, append_reply: str):
+    return page_scripts.run(f"""
         const template = {json.dumps(TEMPLATE)}
         globalThis.server = (method, url) => {{
           const {{ pathname }} = new URL(url)
           if (pathname.endsWith('/tracker/templates/list')) return {{ body: [{{ uuid: 't1', name: 'Gallery flow' }}] }}
           if (pathname.endsWith('/tracker/template/t1')) return {{ body: {{ success: true, template }} }}
+          if (pathname.endsWith('/append')) return {append_reply}
           return {{ body: {{ success: true }} }}
         }}
         console.log = () => {{}}
         const window = await browser.openPage('hub', 'tracker.html', {{ search: '?layout=t1' }})
+        const document = window.document
         await browser.wait(800)
-        window.document.getElementById('recordButton').click()
+        const shown = (id) => document.getElementById(id).style.display !== 'none'
+        const count = () => document.getElementById('w1_counter').getAttribute('data-count')
+        // Count one visitor, then record
+        document.getElementById('w1_counter').setAttribute('data-count', '1')
+        document.getElementById('recordButton').click()
         await browser.wait(200)
-        report({{
-          errors: browser.errors,
-          saved: browser.requests.some((r) => r.url.endsWith('/data/Gallery%20flow/append')),
-          notice: window.document.getElementById('previewNotice').style.display
-        }})
+        {script}
     """, browser="page")
 
-    assert result == {"errors": [], "saved": True, "notice": "none"}
+
+def test_tracker_saves_records_by_template_uuid():
+    result = run_tracker("""
+        report({
+          errors: browser.errors,
+          saved: browser.requests.filter((r) => r.url.includes('/append')).map((r) => new URL(r.url).pathname),
+          notice: document.getElementById('previewNotice').style.display,
+          cleared: count() === '0',
+          error: shown('recordErrorNotice')
+        })
+    """, "{ body: { success: true } }")
+
+    assert result == {"errors": [], "saved": ["/internal/datasets/tracker/t1/append"], "notice": "none",
+                      "cleared": True, "error": False}
+
+
+def test_tracker_keeps_the_record_if_hub_refuses_it():
+    # So staff can try again instead of losing what they entered
+    result = run_tracker("""
+        const afterFailure = { cleared: count() === '0', error: shown('recordErrorNotice') }
+        globalThis.server = () => ({ body: { success: true } })
+        document.getElementById('recordButton').click()
+        await browser.wait(200)
+        report({ errors: browser.errors, afterFailure, errorAfterRetry: shown('recordErrorNotice') })
+    """, "{ body: { success: false, reason: 'unknown_template' } }")
+
+    assert result == {"errors": [], "afterFailure": {"cleared": False, "error": True}, "errorAfterRetry": False}

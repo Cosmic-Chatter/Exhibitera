@@ -29,7 +29,7 @@ LOCKED_ENDPOINTS = [
     ("GET", "/system/configuration/test_config", None, ("settings", "view")),
     ("POST", "/system/configuration/test_config/update", {"configuration": {"key": "value"}}, ("settings", "edit")),
     ("POST", "/users/list", {}, None),
-    ("GET", "/data/list", None, ("analytics", "view")),
+    ("GET", "/datasets/list", None, ("analytics", "view")),
     ("GET", "/data/test_data/csv", None, ("analytics", "view")),
     ("GET", "/exhibition/available", None, None),
     ("GET", "/exhibition/missing-exhibition/details", None, None),
