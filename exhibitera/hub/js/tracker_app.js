@@ -546,12 +546,22 @@ function sendData () {
     const saved = this.status === 200 && response?.success === true
     // If the record wasn't saved, keep the inputs so it can be sent again
     document.getElementById('recordErrorNotice').style.display = saved ? 'none' : 'block'
+    showRecordSaved(saved)
     if (saved) {
       // Clear the inputs so that we can't double-submit data
       clearInput()
     }
   }
   xhr.send(requestString)
+}
+
+function showRecordSaved (saved) {
+  // Briefly confirm that a record reached Hub, so staff don't record it twice
+
+  const notice = document.getElementById('recordSavedNotice')
+  clearTimeout(recordSavedTimeout)
+  notice.style.display = saved ? 'block' : 'none'
+  if (saved) recordSavedTimeout = setTimeout(() => { notice.style.display = 'none' }, 2000)
 }
 
 function updateValue (fromID, toID) {
@@ -656,6 +666,7 @@ document.getElementById('definitionListDropdown').addEventListener('change', () 
 })
 
 let templateUUID = ''
+let recordSavedTimeout = null
 
 // In preview mode, the template editor sends the template to show, and records aren't saved
 const previewMode = new URLSearchParams(window.location.search).has('preview')

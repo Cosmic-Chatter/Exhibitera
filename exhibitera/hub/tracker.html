@@ -43,6 +43,9 @@
   <body>
     <div class="container-fluid">
 
+      <!-- Floats over the page so the widgets don't move, and lets taps through to them -->
+      <div id="recordSavedNotice" class="alert alert-success position-fixed top-0 start-50 translate-middle-x mt-2 py-1 px-3 shadow" style="display: none; z-index: 1000; pointer-events: none;">Record saved</div>
+
       <div id="connectionWarning" class="position-fixed row w-100" style="display: none; z-index:999;">
         <div class="alert alert-danger col-auto mx-auto" role="alert">Server Connection Lost</div>
       </div>

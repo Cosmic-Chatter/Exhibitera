@@ -181,3 +181,37 @@ def test_template_chooser_lists_the_available_templates():
     """, "{ body: { success: true } }")
 
     assert result == {"errors": [], "options": [["", ""], ["t1", "Gallery flow"]]}
+
+
+def test_tracker_confirms_saved_records_briefly():
+    # So staff know the record reached Hub and don't record it twice
+    result = run_tracker("""
+        const afterRecord = { saved: shown('recordSavedNotice'), error: shown('recordErrorNotice') }
+        await browser.wait(2500)
+        report({ errors: browser.errors, afterRecord, later: shown('recordSavedNotice') })
+    """, "{ body: { success: true } }")
+
+    assert result == {"errors": [], "afterRecord": {"saved": True, "error": False}, "later": False}
+
+
+def test_tracker_does_not_confirm_records_hub_refuses():
+    result = run_tracker("""
+        report({ errors: browser.errors, saved: shown('recordSavedNotice'), error: shown('recordErrorNotice') })
+    """, "{ body: { success: false, reason: 'unknown_template' } }")
+
+    assert result == {"errors": [], "saved": False, "error": True}
+
+
+def test_saved_message_floats_over_the_page():
+    # Widgets mustn't move when it appears, or a quick tap could hit the wrong button
+    result = run_tracker("""
+        const notice = document.getElementById('recordSavedNotice')
+        report({
+          errors: browser.errors,
+          floats: notice.classList.contains('position-fixed') || notice.style.position === 'fixed',
+          letsTapsThrough: notice.style.pointerEvents === 'none',
+          shown: shown('recordSavedNotice')
+        })
+    """, "{ body: { success: true } }")
+
+    assert result == {"errors": [], "floats": True, "letsTapsThrough": True, "shown": True}
