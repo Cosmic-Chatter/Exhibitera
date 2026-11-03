@@ -219,6 +219,8 @@ function buildLayout (definition) {
 
           const decButton = document.createElement('button')
           decButton.classList = 'counter-button btn btn-danger w-100'
+          decButton.setAttribute('id', item.uuid + '_decrement')
+          decButton.disabled = true // Counters start at zero
           decButton.innerHTML = '-'
           decButton.addEventListener('click', () => {
             incrementCounter(item.uuid, -1)
@@ -239,6 +241,7 @@ function buildLayout (definition) {
           counterVal.setAttribute('id', item.uuid + '_counter')
           counterVal.setAttribute('data-name', item.name)
           counterVal.setAttribute('data-count', '0')
+          if (item?.max != null) counterVal.setAttribute('data-max', item.max)
           counterVal.style.fontSize = '50px'
           counterVal.textContent = 0
           flexRow.appendChild(counterVal)
@@ -249,6 +252,7 @@ function buildLayout (definition) {
 
           const incButton = document.createElement('button')
           incButton.classList = 'counter-button btn btn-success w-100'
+          incButton.setAttribute('id', item.uuid + '_increment')
           incButton.innerHTML = '+'
           incButton.addEventListener('click', () => {
             incrementCounter(item.uuid, 1)
@@ -267,6 +271,7 @@ function buildLayout (definition) {
         select.classList = 'form-select w-100'
         select.setAttribute('id', item.uuid + '_input')
         select.setAttribute('data-name', item.name)
+        select.setAttribute('data-required', item?.required === true)
 
         if (isMultiple) {
           select.setAttribute('multiple', true)
@@ -289,6 +294,9 @@ function buildLayout (definition) {
         input.setAttribute('type', 'number')
         input.setAttribute('id', item.uuid + '_input')
         input.setAttribute('data-name', item.name)
+        input.setAttribute('data-required', item?.required === true)
+        if (item?.min != null) input.setAttribute('min', item.min)
+        if (item?.max != null) input.setAttribute('max', item.max)
         input.classList = 'form-control'
         inputGroup.appendChild(input)
         break
@@ -305,9 +313,18 @@ function buildLayout (definition) {
         sliderRow.classList = 'row w-100 mx-0'
         inputGroup.appendChild(sliderRow)
 
-        const col9 = document.createElement('div')
-        col9.classList = 'col-9 ps-0'
-        sliderRow.appendChild(col9)
+        const labelCol = document.createElement('div')
+        labelCol.classList = 'col-12 text-center fs-5'
+        sliderRow.appendChild(labelCol)
+
+        const sliderLabel = document.createElement('span')
+        sliderLabel.setAttribute('id', item.uuid + '_input_label')
+        sliderLabel.textContent = start
+        labelCol.appendChild(sliderLabel)
+
+        const col12 = document.createElement('div')
+        col12.classList = 'col-12'
+        sliderRow.appendChild(col12)
 
         const slider = document.createElement('input')
         slider.setAttribute('type', 'range')
@@ -322,16 +339,23 @@ function buildLayout (definition) {
         slider.addEventListener('input', () => {
           updateValue(item.uuid + '_input', item.uuid + '_input_label')
         })
-        col9.appendChild(slider)
+        col12.appendChild(slider)
 
-        const col3 = document.createElement('div')
-        col3.classList = 'col-3 pe-0 text-center'
-        sliderRow.appendChild(col3)
+        if (item?.min_label || item?.max_label) {
+          // Text under each end of the slider, such as "Not at all" and "Very much"
+          const endLabels = document.createElement('div')
+          endLabels.classList = 'd-flex justify-content-between gap-2 small text-body-secondary'
+          col12.appendChild(endLabels)
+          for (const end of ['min', 'max']) {
+            // Long labels wrap, each staying under its end of the slider
+            const endLabel = document.createElement('span')
+            endLabel.classList = end === 'min' ? 'text-start' : 'text-end'
+            endLabel.setAttribute('id', item.uuid + '_' + end + '_label')
+            endLabel.textContent = item?.[end + '_label'] ?? ''
+            endLabels.appendChild(endLabel)
+          }
+        }
 
-        const sliderLabel = document.createElement('span')
-        sliderLabel.setAttribute('id', item.uuid + '_input_label')
-        sliderLabel.textContent = start
-        col3.appendChild(sliderLabel)
         break
       }
 
@@ -341,6 +365,7 @@ function buildLayout (definition) {
         textArea.classList = 'form-control w-100'
         textArea.setAttribute('id', item.uuid + '_input')
         textArea.setAttribute('data-name', item.name)
+        textArea.setAttribute('data-required', item?.required === true)
         textArea.setAttribute('rows', item?.lines ?? 5)
         inputGroup.appendChild(textArea)
         break
@@ -352,6 +377,21 @@ function buildLayout (definition) {
         inputGroup.appendChild(timer.createWidget())
         timerList.push(timer)
         break
+      }
+    }
+
+    if (['dropdown', 'number', 'text'].includes(item.type)) {
+      // Says why the widget needs attention when a record can't be saved
+      inputGroup.classList.add('has-validation')
+      const feedback = document.createElement('div')
+      feedback.classList = 'invalid-feedback'
+      feedback.setAttribute('id', item.uuid + '_feedback')
+      inputGroup.appendChild(feedback)
+
+      // The card isn't in the page yet, so find the input within it
+      const input = inputGroup.querySelector('#' + CSS.escape(item.uuid + '_input'))
+      for (const event of ['input', 'change']) {
+        input.addEventListener(event, () => input.classList.remove('is-invalid'))
       }
     }
 
@@ -422,12 +462,50 @@ function checkConnection () {
   xhr.send()
 }
 
+function checkWidgets () {
+  // Mark the widgets that are required but empty, or numbers outside their limits, and focus the first one.
+  // Return whether the record can be saved.
+
+  let firstInvalid = null
+  for (const input of [...dropdownList, ...numberList, ...textList]) {
+    const problem = widgetProblem(input)
+    input.classList.toggle('is-invalid', problem !== '')
+    document.getElementById(input.id.replace(/_input$/, '_feedback')).textContent = problem
+    if (problem !== '' && firstInvalid == null) firstInvalid = input
+  }
+  firstInvalid?.focus()
+  return firstInvalid == null
+}
+
+function widgetProblem (input) {
+  // Return why the given input can't be saved, or '' if it can
+
+  const empty = input.tagName === 'SELECT'
+    ? ![...input.options].some((opt) => opt.selected && (opt.value || opt.text))
+    : input.value.trim() === ''
+  if (empty) return input.getAttribute('data-required') === 'true' ? 'Required' : ''
+
+  if (input.type !== 'number') return ''
+  const value = parseFloat(input.value)
+  const min = input.getAttribute('min')
+  const max = input.getAttribute('max')
+  if ((min != null && value < parseFloat(min)) || (max != null && value > parseFloat(max))) {
+    if (min != null && max != null) return `Enter a number from ${min} to ${max}.`
+    if (min != null) return `Enter a number of at least ${min}.`
+    return `Enter a number of at most ${max}.`
+  }
+  return ''
+}
+
 function clearInput () {
   // Reset all cards back to their initial state
 
+  for (const input of [...dropdownList, ...numberList, ...textList]) {
+    input.classList.remove('is-invalid')
+  }
+
   counterList.forEach(item => {
-    item.innerHTML = '0'
-    item.setAttribute('data-count', '0')
+    setCounter(item, 0)
   })
   dropdownList.forEach(item => {
     item.value = ''
@@ -456,11 +534,23 @@ function incrementCounter (uuid, valueToAdd) {
   // Function to add the given number to the counter with the specified id
 
   const counterEl = document.getElementById(uuid + '_counter')
-  // A count of something can't be negative
-  const value = Math.max(0, parseInt(counterEl.getAttribute('data-count')) + valueToAdd)
+  // A count of something can't be negative, or go above the counter's maximum
+  let value = Math.max(0, parseInt(counterEl.getAttribute('data-count')) + valueToAdd)
+  const max = counterEl.getAttribute('data-max')
+  if (max != null) value = Math.min(parseInt(max), value)
+
+  setCounter(counterEl, value)
+}
+
+function setCounter (counterEl, value) {
+  // Show the given count, disabling - at zero and + at the counter's maximum, so staff can see they've reached the end
 
   counterEl.setAttribute('data-count', value)
   counterEl.textContent = value
+  const max = counterEl.getAttribute('data-max')
+  const uuid = counterEl.id.replace(/_counter$/, '')
+  document.getElementById(uuid + '_increment').disabled = max != null && value >= parseInt(max)
+  document.getElementById(uuid + '_decrement').disabled = value <= 0
 }
 
 function getTimer (uuid) {
@@ -476,6 +566,9 @@ function getTimer (uuid) {
 function sendData () {
   // Collect the current value from each card, build a dictionary, and
   // send it to Hub for storage.
+
+  // Required widgets must be filled in and numbers within their limits. Timers keep running until then.
+  if (!checkWidgets()) return
 
   const resultDict = {}
 

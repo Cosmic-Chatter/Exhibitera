@@ -88,12 +88,17 @@ function populateWidgetProperties (widgetDef) {
 
   const propsToEdit = ['name', 'label']
 
-  if (widgetDef.type === 'dropdown') {
-    propsToEdit.push('multiple', 'options')
+  // Counters, sliders, and timers always have a value, so only the other widgets can be required
+  if (widgetDef.type === 'counter') {
+    propsToEdit.push('counter_max')
+  } else if (widgetDef.type === 'dropdown') {
+    propsToEdit.push('multiple', 'options', 'required')
+  } else if (widgetDef.type === 'number') {
+    propsToEdit.push('number_limits', 'required')
   } else if (widgetDef.type === 'slider') {
-    propsToEdit.push('slider')
+    propsToEdit.push('slider', 'slider_labels')
   } else if (widgetDef.type === 'text') {
-    propsToEdit.push('lines')
+    propsToEdit.push('lines', 'required')
   } else if (widgetDef.type === 'timer') {
     propsToEdit.push('exclusive', 'record_start_time')
   }
@@ -190,29 +195,27 @@ function populateWidgetProperties (widgetDef) {
       div2.appendChild(label2)
     } else if (prop === 'options') {
       const label = document.createElement('label')
+      label.classList = 'form-label'
       label.innerHTML = 'Options'
-      label.setAttribute('for', 'editTrackerTemplateOptions_' + widgetDef.uuid)
       propsDiv.appendChild(label)
 
-      const hint = document.createElement('div')
-      hint.classList = 'fst-italic mb-2'
-      hint.innerHTML = 'Separate each option with a comma.'
-      propsDiv.appendChild(hint)
-
-      const input = document.createElement('input')
-      input.classList = 'form-control mb-2'
-      input.setAttribute('id', 'editTrackerTemplateOptions_' + widgetDef.uuid)
-      input.setAttribute('placeholder', 'Option 1, Option 2, ...')
-      let optionStr = ''
-      for (const option of widgetDef.options) {
-        optionStr += option + ', '
+      // One row per option, so options can contain commas, and can be moved and removed
+      const list = document.createElement('div')
+      list.setAttribute('id', 'editTrackerTemplateOptions_' + widgetDef.uuid)
+      propsDiv.appendChild(list)
+      for (const option of widgetDef?.options ?? []) {
+        list.appendChild(createOptionRow(widgetDef.uuid, list, option))
       }
-      optionStr = optionStr.slice(0, -2) // Remove trailing ', '
-      input.value = optionStr
-      input.addEventListener('change', (ev) => {
-        editTrackerTemplateUpdateProperty(widgetDef.uuid, prop, ev.target.value)
+      updateOptionButtons(list)
+
+      const addButton = document.createElement('button')
+      addButton.classList = 'btn btn-info btn-sm w-100 mb-2'
+      addButton.setAttribute('id', 'editTrackerTemplateAddOption_' + widgetDef.uuid)
+      addButton.textContent = 'Add option'
+      addButton.addEventListener('click', () => {
+        addOptionRow(widgetDef.uuid, list)
       })
-      propsDiv.appendChild(input)
+      propsDiv.appendChild(addButton)
     } else if (prop === 'slider') {
       const label = document.createElement('label')
       label.classList = 'form-label'
@@ -246,6 +249,119 @@ function populateWidgetProperties (widgetDef) {
         })
         col.appendChild(input)
       }
+    } else if (prop === 'slider_labels') {
+      const row = document.createElement('div')
+      row.classList = 'row mt-2 mb-2'
+      propsDiv.appendChild(row)
+
+      // Optional text shown under each end of the slider, such as "Not at all" and "Very much"
+      for (const [field, key, text] of [['MinLabel', 'min_label', 'Low end label'], ['MaxLabel', 'max_label', 'High end label']]) {
+        const col = document.createElement('div')
+        col.classList = 'col-6'
+        row.appendChild(col)
+
+        const label = document.createElement('label')
+        label.setAttribute('for', 'editTrackerTemplateSlider' + field + widgetDef.uuid)
+        label.textContent = text
+        col.appendChild(label)
+
+        const input = document.createElement('input')
+        input.classList = 'form-control'
+        input.setAttribute('id', 'editTrackerTemplateSlider' + field + widgetDef.uuid)
+        input.value = widgetDef?.[key] ?? ''
+        input.addEventListener('change', (ev) => {
+          editTrackerTemplateUpdateProperty(widgetDef.uuid, key, ev.target.value)
+        })
+        col.appendChild(input)
+      }
+    } else if (prop === 'counter_max') {
+      const label = document.createElement('label')
+      label.classList = 'form-label'
+      label.setAttribute('for', 'editTrackerTemplateCounterMax' + widgetDef.uuid)
+      label.innerHTML = `
+      Maximum
+      <span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="The counter can't go above this. Leave it blank for no maximum." style="font-size: 0.55em; color: black">?</span>
+      `
+      propsDiv.appendChild(label)
+
+      const input = document.createElement('input')
+      input.classList = 'form-control mb-2'
+      input.setAttribute('id', 'editTrackerTemplateCounterMax' + widgetDef.uuid)
+      input.setAttribute('type', 'number')
+      input.setAttribute('min', 1)
+      input.setAttribute('step', 1)
+      input.value = widgetDef?.max ?? ''
+      input.addEventListener('change', (ev) => {
+        // A blank maximum means no maximum
+        const value = ev.target.value.trim() === '' ? null : Math.max(1, Math.round(Number(ev.target.value)))
+        editTrackerTemplateUpdateProperty(widgetDef.uuid, 'max', value)
+      })
+      propsDiv.appendChild(input)
+    } else if (prop === 'number_limits') {
+      const label = document.createElement('label')
+      label.classList = 'form-label'
+      label.innerHTML = `
+      Limits
+      <span class="badge bg-info ms-1 align-middle" data-bs-toggle="tooltip" data-bs-placement="top" title="Records with a number outside these limits can't be saved. Leave a limit blank for no limit." style="font-size: 0.55em; color: black">?</span>
+      `
+      propsDiv.appendChild(label)
+
+      const row = document.createElement('div')
+      row.classList = 'row mb-2'
+      propsDiv.appendChild(row)
+
+      for (const [field, key] of [['Min', 'min'], ['Max', 'max']]) {
+        const col = document.createElement('div')
+        col.classList = 'col-6'
+        row.appendChild(col)
+
+        const label = document.createElement('label')
+        label.setAttribute('for', 'editTrackerTemplateNumber' + field + widgetDef.uuid)
+        label.textContent = field
+        col.appendChild(label)
+
+        const input = document.createElement('input')
+        input.classList = 'form-control'
+        input.setAttribute('id', 'editTrackerTemplateNumber' + field + widgetDef.uuid)
+        input.setAttribute('type', 'number')
+        input.value = widgetDef?.[key] ?? ''
+        input.addEventListener('change', (ev) => {
+          // A blank limit means no limit
+          const value = ev.target.value.trim() === '' ? null : Number(ev.target.value)
+          editTrackerTemplateUpdateProperty(widgetDef.uuid, key, value)
+        })
+        col.appendChild(input)
+      }
+    } else if (prop === 'required') {
+      const div = document.createElement('div')
+      div.classList = 'form-check mb-2'
+      propsDiv.appendChild(div)
+
+      const input = document.createElement('input')
+      input.classList = 'form-check-input'
+      input.setAttribute('id', 'editTrackerTemplateRequired_' + widgetDef.uuid)
+      input.setAttribute('type', 'checkbox')
+      input.checked = widgetDef?.required === true
+      input.addEventListener('change', (ev) => {
+        editTrackerTemplateUpdateProperty(widgetDef.uuid, prop, ev.target.checked)
+      })
+      div.appendChild(input)
+
+      const label = document.createElement('label')
+      label.classList = 'form-check-label'
+      label.setAttribute('for', 'editTrackerTemplateRequired_' + widgetDef.uuid)
+      label.textContent = 'Required'
+      div.appendChild(label)
+
+      const hint = document.createElement('span')
+      hint.classList = 'badge bg-info ms-1 align-middle'
+      hint.setAttribute('data-bs-toggle', 'tooltip')
+      hint.setAttribute('data-bs-placement', 'top')
+      hint.setAttribute('title', 'Records can\'t be saved until this is filled in.')
+      hint.style.fontSize = '0.55em'
+      hint.style.color = 'black'
+      hint.textContent = '?'
+      label.appendChild(hint)
     } else if (prop === 'lines') {
       const label = document.createElement('label')
       label.classList = 'form-label'
@@ -359,15 +475,83 @@ function populateWidgetProperties (widgetDef) {
   tooltipTriggerList.forEach((el) => bootstrap.Tooltip.getOrCreateInstance(el))
 }
 
+function createOptionRow (uuid, list, value = '') {
+  // Create a row for editing one dropdown option, with buttons to move and remove it.
+
+  const row = document.createElement('div')
+  row.classList = 'tracker-option-row input-group input-group-sm mb-1'
+
+  const input = document.createElement('input')
+  input.classList = 'form-control'
+  input.setAttribute('aria-label', 'Option')
+  input.value = value
+  input.addEventListener('change', () => saveOptionRows(uuid, list))
+  input.addEventListener('keydown', (ev) => {
+    // Enter adds the next option, as in a list
+    if (ev.key !== 'Enter') return
+    ev.preventDefault()
+    saveOptionRows(uuid, list)
+    addOptionRow(uuid, list, row)
+  })
+  row.appendChild(input)
+
+  for (const [action, text, color, label] of [['up', '▲', 'btn-info', 'Move up'], ['down', '▼', 'btn-info', 'Move down'], ['remove', '×', 'btn-danger', 'Remove']]) {
+    const button = document.createElement('button')
+    button.classList = 'btn ' + color
+    button.setAttribute('data-option-action', action)
+    button.setAttribute('aria-label', label)
+    button.textContent = text
+    button.addEventListener('click', () => {
+      if (action === 'up' && row.previousElementSibling) row.previousElementSibling.before(row)
+      if (action === 'down' && row.nextElementSibling) row.nextElementSibling.after(row)
+      if (action === 'remove') row.remove()
+      updateOptionButtons(list)
+      saveOptionRows(uuid, list)
+    })
+    row.appendChild(button)
+  }
+  return row
+}
+
+function addOptionRow (uuid, list, after = null) {
+  // Add an empty option row, after the given row or at the end, and focus it.
+
+  const row = createOptionRow(uuid, list)
+  if (after) after.after(row)
+  else list.appendChild(row)
+  updateOptionButtons(list)
+  row.querySelector('input').focus()
+}
+
+function updateOptionButtons (list) {
+  // The first option can't move up, and the last can't move down
+
+  const rows = [...list.querySelectorAll('.tracker-option-row')]
+  rows.forEach((row, index) => {
+    row.querySelector('[data-option-action="up"]').disabled = index === 0
+    row.querySelector('[data-option-action="down"]').disabled = index === rows.length - 1
+  })
+}
+
+function saveOptionRows (uuid, list) {
+  // Save the options in the order they're listed. Blank rows aren't saved.
+
+  const options = [...list.querySelectorAll('.tracker-option-row input')]
+    .map((input) => input.value.trim())
+    .filter(Boolean)
+  editTrackerTemplateUpdateProperty(uuid, 'options', options)
+}
+
 function editTrackerTemplateUpdateProperty (uuid, property, value) {
   // Update the given property for the widget specified by the uuid.
 
-  if (property === 'options') {
-    value = value.split(',').map(s => s.trim()).filter(Boolean)
-  }
-
   const template = getEditedTemplate()
-  template.widgets[uuid][property] = value
+  // null removes the property, such as a number limit left blank
+  if (value === null) {
+    delete template.widgets[uuid][property]
+  } else {
+    template.widgets[uuid][property] = value
+  }
   setEditedTemplate(template)
 
   // The list shows each widget's name

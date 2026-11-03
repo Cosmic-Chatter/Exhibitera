@@ -13,7 +13,11 @@ _If you are upgrading from Exhibitera 5.3, Hub and Apps must all be upgraded at 
 - See a live preview of the tracker while editing a template.
 - See a preview of how the data will be recorded while editing a template.
 - Continue collecting data even if the connection to Hub is temporarily lost.
-- Timers now have a _Record start time_ option that saves the timestamp at which the timer is first started during a session.
+- Timer widgets now have a _Record start time_ option that saves the timestamp at which the timer is first started during a session.
+- Dropdown, Number, and Text widgets can now be marked as required.
+- Counter widgets can now have a maximum set (their minimum is zero).
+- Number widgets can now have a minimum and maximum set.
+- Slider widgets can now have labels for the end of the slider.
 - Change the name of a template after it is created. All collected data will remain associated with the template.
 - Clone an existing template to reuse its structure without contributing to the same data file.
 

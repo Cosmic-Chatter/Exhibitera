@@ -170,12 +170,14 @@ Flexible Tracker can collect a variety of data types. Each type provides a widge
 
 | Type     | Description                                                                                                                              |
 |----------|------------------------------------------------------------------------------------------------------------------------------------------|
-| Counter  | Count by whole numbers, like a traditional tally counter.                                                                                |
+| Counter  | Count by whole numbers, like a traditional tally counter. The - button is disabled at zero. Can have a maximum, at which the + button is disabled. |
 | Dropdown | Select one or more options from a list                                                                                                   |
-| Number   | Record a single number, including decimals                                                                                               |
-| Slider   | Record a single number, bounded in a user-defined range. The value is selected using a slider.                                           | -                                           |
+| Number   | Record a single number, including decimals. Can have a minimum and maximum.                                                              |
+| Slider   | Record a single number, bounded in a user-defined range. The value is selected using a slider. Each end can have a label, such as "Not at all" and "Very much". |
 | Text     | A textbox for inputting any text                                                                                                         |
 | Timer    | Records the number of seconds. Can be started and stopped by the user. "Exclusive" timers pause all other exclusive timers when started. |
+
+Dropdown, Number, and Text widgets can be marked _Required_. A record can't be saved until every required widget is filled in and every number is within its limits. When you press _Record_, the widgets that need attention are marked in red with the reason, and timers keep running until the record is saved.
 
 #### Creating a template
 
