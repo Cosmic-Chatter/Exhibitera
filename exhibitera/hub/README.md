@@ -193,7 +193,7 @@ To use Flexible Tracker for data collection, select your desired template from t
 
 When a record is saved, a _Record saved_ message appears for a moment.
 
-If Hub can't be reached, Flexible Tracker keeps recording. Each record is stored on the device, and a message at the bottom of the page shows how many are waiting. When Hub is back, they're sent automatically, in the order they were recorded and with the time each was recorded. Records sent twice, because Hub's reply was lost, are only saved once. Don't reload the page while Hub can't be reached, since Hub serves the page itself. Records for a template that no longer exists are dropped. Deleted templates are archived, so open trackers can still save records for them.
+If Hub can't be reached, Flexible Tracker keeps recording. A red _!_ appears beside the template list, and each record is stored on the device. A yellow counter beside it shows how many records are waiting. Tap either one for details. When Hub is back, they're sent automatically, in the order they were recorded and with the time each was recorded. Records sent twice, because Hub's reply was lost, are only saved once. Don't reload the page while Hub can't be reached, since Hub serves the page itself. Records for a template that no longer exists are dropped. Deleted templates are archived, so open trackers can still save records for them.
 
 If the browser can't store data, for example in a private window, a warning appears instead and the entered values are kept, so you can press _Record_ again.
 

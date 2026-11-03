@@ -385,7 +385,8 @@ function badConnection () {
   // Show a warning. Records are kept on the device until Hub is back.
 
   connected = false
-  document.getElementById('connectionWarning').style.display = 'block'
+  showIndicator('connectionWarning', true)
+  updateTemplateChooser()
 }
 
 function goodConnection () {
@@ -393,7 +394,8 @@ function goodConnection () {
 
   const reconnected = !connected
   connected = true
-  document.getElementById('connectionWarning').style.display = 'none'
+  showIndicator('connectionWarning', false)
+  updateTemplateChooser()
   if (reconnected || Date.now() >= retryTime) sendWaitingRecords()
 }
 
@@ -636,8 +638,23 @@ function updateWaitingNotice () {
 
   const notice = document.getElementById('recordsWaitingNotice')
   const waiting = loadWaitingRecords().length
-  notice.textContent = `Saved on this device. ${waiting} waiting to send.`
-  notice.style.display = waiting > 0 ? 'block' : 'none'
+  const details = waiting === 1
+    ? '1 record is saved on this device, waiting to send to Hub.'
+    : `${waiting} records are saved on this device, waiting to send to Hub.`
+  if (notice.textContent !== String(waiting)) {
+    notice.textContent = String(waiting)
+    notice.setAttribute('aria-label', details)
+    bootstrap.Popover.getInstance(notice)?.setContent({ '.popover-body': details })
+  }
+  showIndicator('recordsWaitingNotice', waiting > 0)
+}
+
+function showIndicator (id, show) {
+  // Show or hide a status indicator beside the template select, closing its popover when it's hidden
+
+  const indicator = document.getElementById(id)
+  indicator.style.display = show ? 'inline-flex' : 'none'
+  if (!show) bootstrap.Popover.getInstance(indicator)?.hide()
 }
 
 function showRecordSaved (saved) {
@@ -679,15 +696,17 @@ async function loadLayout (toLoad = '') {
   templateUUID = template?.uuid ?? toLoad
   buildLayout(template)
 
-  const definitionListCol = document.getElementById('definitionListCol')
-  const titleCol = document.getElementById('titleCol')
-  if ((template?.guest_facing ?? false) === true) {
-    definitionListCol.style.display = 'none'
-    titleCol.style.display = 'none'
-  } else {
-    definitionListCol.style.display = 'block'
-    titleCol.style.display = 'block'
-  }
+  guestFacing = (template?.guest_facing ?? false) === true
+  document.getElementById('titleCol').style.display = guestFacing ? 'none' : 'block'
+  updateTemplateChooser()
+}
+
+function updateTemplateChooser () {
+  // Hide the template chooser in preview mode, for guest-facing templates, and while Hub can't be reached,
+  // since templates can't be loaded without it. d-none is needed to override the column's d-flex.
+
+  const hide = previewMode || guestFacing || !connected
+  document.getElementById('definitionListCol').classList.toggle('d-none', hide)
 }
 
 function showPreviewTemplate (template) {
@@ -744,6 +763,13 @@ if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').match
   document.querySelector('html').setAttribute('data-bs-theme', 'light')
 }
 
+document.querySelectorAll('.status-indicator').forEach((indicator) => {
+  // Each indicator's details are its label, so screen readers get them too
+  bootstrap.Popover.getOrCreateInstance(indicator, { content: () => indicator.getAttribute('aria-label') })
+  // Safari doesn't focus links when they're tapped, and the popover opens on focus
+  indicator.addEventListener('click', () => indicator.focus())
+})
+
 document.getElementById('recordButton').addEventListener('click', sendData)
 document.getElementById('clearButton').addEventListener('click', clearInput)
 document.getElementById('definitionListDropdown').addEventListener('change', () => {
@@ -759,6 +785,7 @@ const RETRY_DELAY = 3000 // ms to wait before sending again after Hub refuses a 
 let sendingWaitingRecords = false
 let retryTime = 0
 let connected = true
+let guestFacing = false // Guest-facing templates hide the title and template chooser
 let confirmRecordID = null // The record just made, which shows "Record saved" if it reaches Hub right away
 
 // In preview mode, the template editor sends the template to show, and records aren't saved
@@ -774,7 +801,7 @@ let timerList = []
 
 if (previewMode) {
   document.getElementById('previewNotice').style.display = 'block'
-  document.getElementById('definitionListCol').style.display = 'none'
+  updateTemplateChooser()
   window.addEventListener('message', (event) => {
     // Only the template editor, which is served by this Hub, sends templates
     if (event.origin !== window.location.origin) return

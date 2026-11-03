@@ -46,38 +46,34 @@
       <!-- Floats over the page so the widgets don't move, and lets taps through to them -->
       <div id="recordSavedNotice" class="alert alert-success position-fixed top-0 start-50 translate-middle-x mt-2 py-1 px-3 shadow" style="display: none; z-index: 1000; pointer-events: none;">Record saved</div>
 
-      <div id="recordsWaitingNotice" class="alert alert-warning position-fixed bottom-0 start-50 translate-middle-x mb-2 py-1 px-3 shadow" style="display: none; z-index: 1000; pointer-events: none;"></div>
-
-      <div id="connectionWarning" class="position-fixed row w-100" style="display: none; z-index:999; pointer-events: none;">
-        <div class="alert alert-danger col-auto mx-auto small py-2" role="alert">Hub can't be reached. Records are kept on this device until it's back.</div>
-      </div>
-
       <div class="row mt-2 ">
-        <div id="titleCol" class="col-12">
+        <div id="titleCol" class="col-12 col-sm-10">
           <H1>Flexible Tracker</H1>
         </div>
+        <div class="col-2 d-flex align-items-center justify-content-end pb-2 pb-sm-0">
+          <a id="connectionWarning" tabindex="0" role="button" class="badge rounded-pill text-bg-danger fs-6 text-decoration-none status-indicator" style="display: none;" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="bottom" aria-label="Hub can't be reached. Records are kept on this device until it's back.">!</a>
+              <a id="recordsWaitingNotice" tabindex="0" role="button" class="badge rounded-pill text-bg-warning fs-6 ms-2  text-decoration-none status-indicator" style="display: none;" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="bottom"></a>
+        </div>
         <div class="col-12">
-          <div class="row">
+          <div class="row gy-2">
             <div class="col-6 col-sm-4 col-md-3 col-lg-2">
               <button id="recordButton" class="btn btn-success w-100">Record</button>
             </div>
             <div class="col-6 col-sm-4 col-md-3 col-lg-2">
               <button id="clearButton" class="btn btn-danger w-100">Clear</button>
             </div>
-            <div id="definitionListCol" class="col-12 col-md-5 mt-2">
-              <div class="input-group">
-                Select Template:
-                <select id="definitionListDropdown" class="form-select ms-3" style="width: 40%;">
-                  <option value=""></option>
-                </select>
-              </div>
+            <div id="definitionListCol" class="col-12 col-sm-8 col-md-6 col-lg-6 d-flex align-items-center">
+              <span class="text-nowrap me-3">Template:</span>
+              <select id="definitionListDropdown" class="form-select">
+                <option value=""></option>
+              </select>
             </div>
           </div>
         </div>
       </div>
       <div id="previewNotice" class="alert alert-info py-1 mt-2 mb-0" style="display: none;">Preview: records made here aren't saved.</div>
       <div id="recordErrorNotice" class="alert alert-danger py-1 mt-2 mb-0" style="display: none;">This record wasn't saved. Check the connection to Hub and press Record again.</div>
-      <div id="cardRow" class="row mt-4"></div>
+      <div id="cardRow" class="row mt-md-4"></div>
     </div>
 
     <!-- In preview mode, shows the record that would have been saved -->
@@ -99,7 +95,7 @@
       </div>
     </div>
 
-  <script type="text/javascript" src="js/bootstrap_5_3/bootstrap.min.js"></script>
+  <script type="text/javascript" src="js/bootstrap_5_3/bootstrap.bundle.min.js"></script>
   <script type="text/javascript" src="js/showdown.min.js"></script>
 
   <script type="module" src="js/tracker_app.js"></script>

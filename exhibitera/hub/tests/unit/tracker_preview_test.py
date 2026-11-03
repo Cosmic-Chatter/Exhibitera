@@ -34,7 +34,13 @@ def run_preview(script: str):
           data: {{ type: 'trackerPreview', template }}, origin: window.location.origin
         }}))
         const template = {json.dumps(TEMPLATE)}
-        const shown = (id) => document.getElementById(id).style.display !== 'none'
+        // Bootstrap's display classes, such as d-flex, are !important, so they beat style.display = 'none'.
+        // jsdom doesn't apply CSS, so check for them here.
+        const shown = (id) => {{
+          const el = document.getElementById(id)
+          if (el.classList.contains('d-none')) return false
+          return el.style.display !== 'none' || [...el.classList].some((c) => /^d-(block|flex|inline|grid)/.test(c))
+        }}
         const cardNames = () => [...document.querySelectorAll('#cardRow .card-title, #cardRow h5, #cardRow h4')].map((el) => el.textContent)
         {script}
     """, browser="page")
@@ -106,9 +112,9 @@ def test_preview_record_is_shown_in_a_dismissable_overlay_but_not_saved():
     assert result["timerReset"] == "Start"
 
 
-def run_tracker(script: str, append_reply: str, setup: str = ""):
+def run_tracker(script: str, append_reply: str, setup: str = "", template: dict = TEMPLATE):
     return page_scripts.run(f"""
-        const template = {json.dumps(TEMPLATE)}
+        const template = {json.dumps(template)}
         globalThis.server = (method, url) => {{
           const {{ pathname }} = new URL(url)
           if (pathname.endsWith('/tracker/templates/list')) return {{ body: [{{ uuid: 't1', name: 'Gallery flow' }}] }}
@@ -120,8 +126,26 @@ def run_tracker(script: str, append_reply: str, setup: str = ""):
         const window = await browser.openPage('hub', 'tracker.html', {{ search: '?layout=t1' }})
         const document = window.document
         await browser.wait(800)
-        const shown = (id) => document.getElementById(id).style.display !== 'none'
+        // Bootstrap's display classes, such as d-flex, are !important, so they beat style.display = 'none'.
+        // jsdom doesn't apply CSS, so check for them here.
+        const shown = (id) => {{
+          const el = document.getElementById(id)
+          if (el.classList.contains('d-none')) return false
+          return el.style.display !== 'none' || [...el.classList].some((c) => /^d-(block|flex|inline|grid)/.test(c))
+        }}
         const count = () => document.getElementById('w1_counter').getAttribute('data-count')
+        // Indicators in the page never cover the widgets, even with the soft keyboard up. They're outside the
+        // template chooser, which is hidden while Hub can't be reached.
+        const inThePage = (el) => el.closest('.position-fixed') === null && el.closest('#definitionListCol') === null
+        // Tapping an indicator shows its details in a popover
+        const popoverText = async (id) => {{
+          document.getElementById(id).focus()
+          await browser.wait(400)
+          const text = document.querySelector('.popover')?.textContent ?? ''
+          document.getElementById(id).blur()
+          await browser.wait(400)
+          return text
+        }}
         const appended = () => browser.requests.filter((r) => r.url.includes('/append')).map((r) => JSON.parse(r.body))
         {setup}
         // Count one visitor, then record
@@ -152,17 +176,21 @@ def test_tracker_saves_records_by_template_uuid():
 
 def test_tracker_keeps_records_on_the_device_while_hub_is_unreachable():
     result = run_tracker("""
-        const waiting = () => shown('recordsWaitingNotice') ? document.getElementById('recordsWaitingNotice').textContent : ''
+        const waiting = () => shown('recordsWaitingNotice') ? document.getElementById('recordsWaitingNotice').textContent.trim() : ''
         const afterFirst = { cleared: count() === '0', error: shown('recordErrorNotice'), saved: shown('recordSavedNotice'), waiting: waiting() }
 
         // Hub goes away entirely
         globalThis.server = () => 'error'
         await browser.wait(700)
-        const offline = { warning: shown('connectionWarning'), recordEnabled: !document.getElementById('recordButton').disabled }
+        const offline = { warning: shown('connectionWarning'), recordEnabled: !document.getElementById('recordButton').disabled,
+                          warningText: document.getElementById('connectionWarning').textContent.trim(),
+                          warningInThePage: inThePage(document.getElementById('connectionWarning')),
+                          chooser: shown('definitionListCol'),
+                          warningPopover: await popoverText('connectionWarning') }
         document.getElementById('w1_counter').setAttribute('data-count', '2')
         document.getElementById('recordButton').click()
         await browser.wait(200)
-        const afterSecond = { cleared: count() === '0', waiting: waiting() }
+        const afterSecond = { cleared: count() === '0', waiting: waiting(), popover: await popoverText('recordsWaitingNotice') }
         const keptIDs = JSON.parse(window.localStorage.getItem('exhibitera_tracker_waiting_records')).map((r) => r.id)
 
         // Hub comes back
@@ -181,20 +209,26 @@ def test_tracker_keeps_records_on_the_device_while_hub_is_unreachable():
           sent: sent.map((r) => r.data.Visitors),
           sameIDs: sent.map((r) => r.record_id).join() === keptIDs.join(),
           waitingAfter: waiting(),
-          floats: notice.classList.contains('position-fixed') && notice.style.pointerEvents === 'none'
+          warningAfter: shown('connectionWarning'),
+          waitingInThePage: inThePage(notice),
+          chooserAfter: shown('definitionListCol')
         })
     """, "'error'")
 
     assert result["errors"] == []
-    assert result["afterFirst"] == {"cleared": True, "error": False, "saved": False,
-                                    "waiting": "Saved on this device. 1 waiting to send."}
-    assert result["offline"] == {"warning": True, "recordEnabled": True}
-    assert result["afterSecond"] == {"cleared": True, "waiting": "Saved on this device. 2 waiting to send."}
+    assert result["afterFirst"] == {"cleared": True, "error": False, "saved": False, "waiting": "1"}
+    assert result["offline"] == {"warning": True, "recordEnabled": True, "warningText": "!", "warningInThePage": True, "chooser": False,
+                                 "warningPopover": "Hub can't be reached. Records are kept on this device until it's back."}
+    assert result["afterSecond"] == {"cleared": True, "waiting": "2",
+                                     "popover": "2 records are saved on this device, waiting to send to Hub."}
     # Sent once each, in the order they were recorded, with the IDs they were kept with
     assert result["sent"] == [1, 2]
     assert result["sameIDs"] is True
     assert result["waitingAfter"] == ""
-    assert result["floats"] is True
+    assert result["warningAfter"] is False
+    assert result["waitingInThePage"] is True
+    # Templates can't be loaded without Hub, so the chooser is hidden until it's back
+    assert result["chooserAfter"] is True
 
 
 def test_tracker_tries_again_later_if_hub_refuses_a_record():
@@ -258,6 +292,14 @@ def test_counters_do_not_go_below_zero():
     """)
 
     assert result == {"errors": [], "fromZero": ["0", "0"], "afterOne": ["0", "0"]}
+
+
+def test_template_chooser_is_hidden_for_guest_facing_templates():
+    result = run_tracker("""
+        report({ errors: browser.errors, chooser: shown('definitionListCol'), title: shown('titleCol') })
+    """, "{ body: { success: true } }", template={**TEMPLATE, "guest_facing": True})
+
+    assert result == {"errors": [], "chooser": False, "title": False}
 
 
 def test_template_chooser_lists_the_available_templates():
