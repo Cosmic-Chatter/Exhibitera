@@ -6,6 +6,9 @@ _If you are upgrading from Exhibitera 5.3, Hub and Apps must all be upgraded at 
 ### General
 - When opening an Apps setup page from Hub, you'll now be logged in automatically.
 
+### Analytics
+- Filter collected data by date or column before downloading
+
 ### Components
 - Copying a definition between components now also copies the definition's thumbnail.
 

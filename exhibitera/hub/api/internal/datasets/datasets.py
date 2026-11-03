@@ -8,9 +8,10 @@ the Core API, are handled by the data API.
 from typing import Any
 
 # Third-party modules
-from fastapi import APIRouter, Body, Depends
+from fastapi import APIRouter, Body, Depends, Query
 
 # Exhibitera modules
+import exhibitera.common.files as ex_files
 import exhibitera.hub.features.datasets as hub_datasets
 import exhibitera.hub.features.users as hub_users
 
@@ -24,11 +25,37 @@ async def list_datasets():
     return {"success": True, "datasets": hub_datasets.list_datasets(), "files": hub_datasets.list_other_files()}
 
 
-@router.get("/{kind}/{dataset_id}/csv", dependencies=[Depends(hub_users.require_permission("analytics", "view"))])
-async def get_dataset_csv(kind: str, dataset_id: str):
-    """Return the given dataset as CSV text, with a file name based on its name."""
+@router.get("/{kind}/{dataset_id}/summary", dependencies=[Depends(hub_users.require_permission("analytics", "view"))])
+async def get_dataset_summary(kind: str, dataset_id: str,
+                              start: str | None = Query(None, description="Count records from this time."),
+                              end: str | None = Query(None, description="Count records until this time.")):
+    """Return the dataset's columns, the times of its first and last records, and how many are in the range."""
 
-    result = hub_datasets.dataset_csv(kind, dataset_id)
+    try:
+        start_time, end_time = ex_files.parse_time_range(start, end)
+    except ValueError:
+        return {"success": False, "reason": "invalid_time"}
+    records = hub_datasets.dataset_records(kind, dataset_id)
+    if records is None:
+        return {"success": False, "reason": "unknown_dataset"}
+    return {"success": True, **ex_files.summarize_records(records, start_time, end_time)}
+
+
+@router.get("/{kind}/{dataset_id}/csv", dependencies=[Depends(hub_users.require_permission("analytics", "view"))])
+async def get_dataset_csv(kind: str, dataset_id: str,
+                          start: str | None = Query(None, description="Include records from this time."),
+                          end: str | None = Query(None, description="Include records until this time."),
+                          columns: list[str] | None = Query(None, description="Include only these columns.")):
+    """Return the given dataset as CSV text, with a file name based on its name.
+
+    The records can be limited to a time range, given to the minute, and to the given columns.
+    """
+
+    try:
+        start_time, end_time = ex_files.parse_time_range(start, end)
+    except ValueError:
+        return {"success": False, "reason": "invalid_time"}
+    result = hub_datasets.dataset_csv(kind, dataset_id, start_time, end_time, columns)
     if result is None:
         return {"success": False, "reason": "unknown_dataset"}
     csv, filename = result

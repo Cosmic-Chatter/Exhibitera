@@ -2,12 +2,14 @@
 
 # Standard modules
 import csv
+import datetime
 import io
 import json
 import logging
 import mimetypes
 import os
 import pathlib
+import re
 import shutil
 import sys
 from typing import Any, Iterable
@@ -110,10 +112,13 @@ def filename_safe(filename: str) -> bool:
     return True
 
 
-def create_csv(file_path: str | os.PathLike, filename: str = "", exclude_keys: Iterable[str] = ()) -> str:
-    """Load a tracker text file and convert it to a CSV, leaving out the given keys"""
+def load_records(file_path: str | os.PathLike, exclude_keys: Iterable[str] = ()) -> list[dict[str, Any]] | None:
+    """Load the records from a data file, one JSON object per line, leaving out the given keys.
 
-    dict_list = []
+    Return None if the file doesn't exist.
+    """
+
+    records = []
     try:
         with open(file_path, 'r', encoding="UTF-8") as f:
             for line in f.readlines():
@@ -122,13 +127,112 @@ def create_csv(file_path: str | os.PathLike, filename: str = "", exclude_keys: I
                     if isinstance(record, dict):
                         for key in exclude_keys:
                             record.pop(key, None)
-                    dict_list.append(record)
+                    records.append(record)
                 except json.decoder.JSONDecodeError:
                     print("createCSV: error: skipping line with invalid JSON: " + line)
                     pass
     except FileNotFoundError:
+        return None
+    return records
+
+
+def create_csv(file_path: str | os.PathLike, filename: str = "", exclude_keys: Iterable[str] = ()) -> str:
+    """Load a tracker text file and convert it to a CSV, leaving out the given keys"""
+
+    records = load_records(file_path, exclude_keys)
+    if records is None:
         return ""
-    return json_list_to_csv(dict_list, filename=filename)
+    return json_list_to_csv(records, filename=filename)
+
+
+# Subsets of records, for downloading part of a dataset
+
+# Local times, as records store them: a date, a time to the minute, or a time with seconds, without a time zone
+TIME_PATTERN = re.compile(r"\d{4}-\d{2}-\d{2}(?P<time>T\d{2}:\d{2}(?P<seconds>:\d{2}(\.\d+)?)?)?")
+
+
+def parse_time(text: str) -> tuple[datetime.datetime, datetime.timedelta]:
+    """Return the given local time and how precisely it was given: a day, a minute, or exactly.
+
+    Raise ValueError if it isn't a date or time in one of the forms of TIME_PATTERN.
+    """
+
+    match = TIME_PATTERN.fullmatch(text)
+    if match is None:
+        raise ValueError(f"Invalid time: {text!r}")
+    time = datetime.datetime.fromisoformat(text)  # Raises ValueError for impossible times, such as month 13
+    if match["time"] is None:
+        return time, datetime.timedelta(days=1)
+    if match["seconds"] is None:
+        return time, datetime.timedelta(minutes=1)
+    return time, datetime.timedelta(0)
+
+
+def parse_time_range(start: str | None, end: str | None) -> tuple[datetime.datetime | None, datetime.datetime | None]:
+    """Return the given local times as the start and the end of a range, either of which may be None.
+
+    The end includes the whole of the day or minute it gives, so "2026-10-03" includes all of 3 October and
+    "2026-10-03T16:45" includes 16:45:59. Raise ValueError if either time isn't valid.
+    """
+
+    start_time = parse_time(start)[0] if start else None
+    end_time = None
+    if end:
+        end_time, precision = parse_time(end)
+        if precision:
+            end_time += precision - datetime.timedelta(microseconds=1)
+    return start_time, end_time
+
+
+def record_time(record: dict[str, Any]) -> datetime.datetime | None:
+    """Return when the given record was made, from its Date, or None if it doesn't have a valid one."""
+
+    try:
+        return datetime.datetime.fromisoformat(str(record["Date"]))
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
+def records_in_range(records: list[dict[str, Any]],
+                     start: datetime.datetime | None,
+                     end: datetime.datetime | None) -> list[dict[str, Any]]:
+    """Return the records made within the given range. With a range, records without a time are left out."""
+
+    if start is None and end is None:
+        return records
+    result = []
+    for record in records:
+        time = record_time(record)
+        if time is None:
+            continue
+        if (start is None or time >= start) and (end is None or time <= end):
+            result.append(record)
+    return result
+
+
+def select_columns(records: list[dict[str, Any]], columns: Iterable[str] | None) -> list[dict[str, Any]]:
+    """Return the records with only the given columns, or unchanged if columns is None."""
+
+    if columns is None:
+        return records
+    columns = set(columns)
+    return [{key: value for key, value in record.items() if key in columns} for record in records]
+
+
+def summarize_records(records: list[dict[str, Any]],
+                      start: datetime.datetime | None = None,
+                      end: datetime.datetime | None = None) -> dict[str, Any]:
+    """Return the records' columns, Date first, the times of the first and last records, and how many are in the range."""
+
+    columns = get_unique_keys(records)
+    if "Date" in columns:
+        columns.remove("Date")
+        columns.insert(0, "Date")
+    times = [time for time in (record_time(record) for record in records) if time is not None]
+    return {"columns": columns,
+            "first": min(times).isoformat() if times else None,
+            "last": max(times).isoformat() if times else None,
+            "count": len(records_in_range(records, start, end))}
 
 
 # Spreadsheet apps treat a cell starting with one of these as a formula

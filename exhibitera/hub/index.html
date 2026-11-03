@@ -2203,6 +2203,46 @@
             </div>
           </div>
 
+          <!-- Download part of a dataset: the records in a time range, with chosen columns -->
+          <div class="modal" tabindex="-1" role="dialog" id="downloadTrackerDataSubsetModal">
+            <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">Download subset of <span id="trackerDataSubsetName"></span></h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <div id="trackerDataSubsetTimeRange">
+                    <div class="h6">Time range</div>
+                    <div class="row gy-2">
+                      <div class="col-12 col-sm-6">
+                        <label for="trackerDataSubsetStart" class="form-label">From</label>
+                        <input type="datetime-local" id="trackerDataSubsetStart" class="form-control" step="60">
+                      </div>
+                      <div class="col-12 col-sm-6">
+                        <label for="trackerDataSubsetEnd" class="form-label">To</label>
+                        <input type="datetime-local" id="trackerDataSubsetEnd" class="form-control" step="60">
+                      </div>
+                    </div>
+                    <div class="form-text">Records without a time are left out once you change the range.</div>
+                  </div>
+                  <div id="trackerDataSubsetNoTimes" class="fst-italic" style="display: none;">These data don't record times, so they can't be limited to a time range.</div>
+                  <div class="d-flex align-items-center mt-3 mb-1">
+                    <div class="h6 mb-0 me-auto">Columns</div>
+                    <button id="trackerDataSubsetSelectAll" type="button" class="btn btn-link btn-sm">All</button>
+                    <button id="trackerDataSubsetSelectNone" type="button" class="btn btn-link btn-sm">None</button>
+                  </div>
+                  <div id="trackerDataSubsetColumns"></div>
+                </div>
+                <div class="modal-footer">
+                  <div id="trackerDataSubsetCount" class="me-auto fw-bold"></div>
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                  <button type="button" class="btn btn-primary" id="trackerDataSubsetDownloadButton">Download</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Delete tracker data modal -->
           <div class="modal" tabindex="-1" role="dialog" id="deleteTrackerDataModal">
             <div class="modal-dialog modal-dialog-centered" role="document">
@@ -2348,7 +2388,15 @@
               <button id="getAvailableTrackerDataButton" class='btn btn-primary w-100'>Refresh list</button>
             </div>
             <div class="col-6 col-md-3 col-lg-2 col-xl-2 mt-2">
-              <button id="downloadTrackerDataButton" class='btn btn-info w-100'>Download</button>
+              <div class="dropdown w-100">
+                <button class="btn btn-info dropdown-toggle w-100" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  Download
+                </button>
+                <ul id="downloadTrackerDataMenu" class="dropdown-menu w-100">
+                  <li><button id="downloadTrackerDataButton" class='dropdown-item'>Download all</button></li>
+                  <li><button id="showDownloadTrackerDataSubsetButton" class='dropdown-item'>Download subset</button></li>
+                </ul>
+              </div>
             </div>
             <div class="col-6 col-md-3 col-lg-2 col-xl-2 mt-2">
               <button id="showDeleteTrackerDataModalButton" class='btn btn-danger w-100'>Delete</button>

@@ -275,3 +275,115 @@ def test_migration_moves_tracker_data_to_its_template(hub_env):
                                             ("Plain name", "Plain name"), ("", "data"), ("CON", "CON_")])
 def test_download_names_replace_forbidden_characters(name, expected):
     assert hub_datasets.download_name(name) == expected
+
+
+# Subsets
+#
+# The console can download part of a dataset: the records in a time range, with chosen columns. Times are
+# given to the minute, and the end includes its whole minute.
+
+SUBSET_RECORDS = [{"Date": "2026-10-01T09:30:00.000", "Gallery": "North", "Visitors": 3, "Topics": ["Fossils"]},
+                  {"Date": "2026-10-02T14:05:30.500", "Gallery": "South", "Visitors": 5, "Topics": ["Fossils", "Gems"]},
+                  {"Date": "2026-10-03T16:45:59.900", "Gallery": "North", "Visitors": 2},
+                  {"Gallery": "East", "Visitors": 1}]
+
+
+def csv_lines(response) -> list[str]:
+    return response.json()["csv"].strip().splitlines()
+
+
+@pytest.fixture
+def subset_dataset(client, hub_env):
+    write_template(hub_env, "t1", "Lobby")
+    for i, record in enumerate(SUBSET_RECORDS):
+        client().post("/internal/datasets/tracker/t1/append", json={"data": record, "record_id": f"r{i}"})
+    return "/internal/datasets/tracker/t1"
+
+
+def test_summary_lists_columns_and_time_range(client, analyst, subset_dataset):
+    summary = client(analyst).get(subset_dataset + "/summary").json()
+
+    assert summary == {"success": True, "columns": ["Date", "Gallery", "Topics", "Visitors"],
+                       "first": "2026-10-01T09:30:00", "last": "2026-10-03T16:45:59.900000", "count": 4}
+
+
+def test_summary_counts_records_in_a_time_range(client, analyst, subset_dataset):
+    def count(**params):
+        return client(analyst).get(subset_dataset + "/summary", params=params).json()["count"]
+
+    # The end includes its whole minute. Records without a time are left out once there's a range.
+    assert count(start="2026-10-02T14:05", end="2026-10-03T16:45") == 2
+    assert count(start="2026-10-02T14:06") == 1
+    assert count(end="2026-10-01T09:30") == 1
+    assert count() == 4
+
+
+def test_csv_can_be_limited_to_a_time_range_and_columns(client, analyst, subset_dataset):
+    response = client(analyst).get(subset_dataset + "/csv", params={
+        "start": "2026-10-02T00:00", "end": "2026-10-03T23:59", "columns": ["Date", "Topics"]})
+
+    lines = csv_lines(response)
+    assert response.json()["success"] is True
+    # Multiple-choice columns are still expanded into one column per choice
+    assert lines[0] == "Date,Topics - Fossils,Topics - Gems"
+    assert len(lines) == 3
+    assert "Visitors" not in response.json()["csv"]
+    assert response.json()["filename"] == "Lobby.csv"
+
+
+def test_csv_without_a_subset_is_unchanged(client, analyst, subset_dataset):
+    lines = csv_lines(client(analyst).get(subset_dataset + "/csv"))
+
+    assert lines[0].startswith("Date,Gallery,")
+    assert len(lines) == 5
+
+
+def test_an_end_date_includes_the_whole_day(client, analyst, subset_dataset):
+    summary = client(analyst).get(subset_dataset + "/summary", params={"start": "2026-10-02", "end": "2026-10-03"}).json()
+
+    assert summary["count"] == 2
+
+
+@pytest.mark.parametrize("time", ["2026-10-02T00:00Z", "2026-10-02T00:00+02:00"])
+def test_times_with_a_time_zone_are_refused(client, analyst, subset_dataset, time):
+    # Records are stored in local time, without a time zone, so they can't be compared
+    summary = client(analyst).get(subset_dataset + "/summary", params={"start": time}).json()
+    download = client(analyst).get(subset_dataset + "/csv", params={"end": time}).json()
+
+    assert summary == {"success": False, "reason": "invalid_time"}
+    assert download["reason"] == "invalid_time"
+
+
+def test_invalid_times_are_refused(client, analyst, subset_dataset):
+    summary = client(analyst).get(subset_dataset + "/summary", params={"start": "yesterday"}).json()
+    download = client(analyst).get(subset_dataset + "/csv", params={"end": "2026-13-45T99:00"}).json()
+
+    assert summary == {"success": False, "reason": "invalid_time"}
+    assert download["success"] is False
+    assert download["reason"] == "invalid_time"
+
+
+def test_word_cloud_summary_has_no_times(client, hub_env, analyst):
+    client().post(WORD_CLOUD_APPEND, json={"collection": "Lobby", "text": "fossils"})
+    [entry] = listed(client, analyst, "word_cloud").values()
+
+    summary = client(analyst).get(f"/internal/datasets/word_cloud/{entry['id']}/summary").json()
+
+    assert summary == {"success": True, "columns": ["Text"], "first": None, "last": None, "count": 1}
+
+
+def test_other_files_can_be_downloaded_in_part(client, hub_env, analyst):
+    for record in SUBSET_RECORDS:
+        client().post("/internal/data/sensor log/append", json={"data": record})
+
+    summary = client(analyst).get("/internal/data/sensor log/summary", params={"start": "2026-10-03T00:00"}).json()
+    lines = csv_lines(client(analyst).get("/internal/data/sensor log/csv", params={
+        "start": "2026-10-03T00:00", "columns": ["Gallery"]}))
+
+    assert (summary["count"], summary["columns"]) == (1, ["Date", "Gallery", "Topics", "Visitors"])
+    assert lines == ["Gallery", "North"]
+
+
+def test_unknown_datasets_have_no_summary(client, analyst):
+    assert client(analyst).get("/internal/datasets/tracker/missing/summary").json() == \
+        {"success": False, "reason": "unknown_dataset"}

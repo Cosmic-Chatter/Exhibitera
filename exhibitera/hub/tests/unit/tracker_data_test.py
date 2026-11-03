@@ -35,6 +35,12 @@ def run_data_section(script: str):
           if (pathname === '/internal/tracker/templates/list') return {{ body: [] }}
           if (pathname === '/internal/datasets/list') return {{ body: {json.dumps(LIST)} }}
           if (pathname === '/internal/datasets/tracker/t1/csv') return {{ body: {{ success: true, csv: 'a,b\\n1,2', filename: 'Q1_ Lobby.csv' }} }}
+          if (pathname === '/internal/datasets/tracker/t1/summary') {{
+            // Two records from 2 October on, five in all
+            const count = new URL(url).searchParams.get('start') ? 2 : 5
+            return {{ body: {{ success: true, columns: ['Date', 'Gallery', 'Notes'], first: '2026-10-01T09:30:00', last: '2026-10-03T16:45:59.900000', count }} }}
+          }}
+          if (pathname === '/internal/datasets/word_cloud/w1/summary') return {{ body: {{ success: true, columns: ['Text'], first: null, last: null, count: 7 }} }}
           if (pathname === '/internal/data/sensor%20log/csv') return {{ body: {{ success: true, csv: '12.5', filename: 'sensor log.csv' }} }}
           if (method === 'DELETE') return {{ body: {{ success: true }} }}
           return {{ body: {{ success: false }} }}
@@ -115,3 +121,108 @@ def test_deleting_data_confirms_its_name():
 
     assert result == {"errors": [], "shownName": "Old flow",
                       "requested": ["DELETE /internal/datasets/tracker/t0", "DELETE /internal/data/sensor%20log"]}
+
+
+def run_subset(script: str):
+    return run_data_section("""
+        const modal = document.getElementById('downloadTrackerDataSubsetModal')
+        const start = document.getElementById('trackerDataSubsetStart')
+        const end = document.getElementById('trackerDataSubsetEnd')
+        const boxes = () => [...document.querySelectorAll('#trackerDataSubsetColumns input[type="checkbox"]')]
+        const columns = () => boxes().map((box) => [box.nextElementSibling.textContent, box.checked])
+        const count = () => document.getElementById('trackerDataSubsetCount').textContent
+        const downloadButton = document.getElementById('trackerDataSubsetDownloadButton')
+        const set = (el, value) => {
+          if (el.type === 'checkbox') el.checked = value
+          else el.value = value
+          el.dispatchEvent(new window.Event('change', { bubbles: true }))
+        }
+        const openSubset = async (name) => {
+          choose(name)
+          document.getElementById('showDownloadTrackerDataSubsetButton').click()
+          await browser.wait(400)
+        }
+    """ + script)
+
+
+def test_download_menu_offers_all_or_subset():
+    result = run_data_section("""
+        const menuItems = [...document.querySelectorAll('#downloadTrackerDataMenu .dropdown-item')].map((b) => [b.id, b.textContent.trim()])
+        report({ errors: browser.errors, menuItems })
+    """)
+
+    assert result == {"errors": [], "menuItems": [["downloadTrackerDataButton", "Download all"],
+                                                  ["showDownloadTrackerDataSubsetButton", "Download subset"]]}
+
+
+def test_subset_shows_the_time_range_columns_and_count():
+    result = run_subset("""
+        await openSubset('Q1: Lobby')
+        const opened = { shown: modal.classList.contains('show'), name: document.getElementById('trackerDataSubsetName').textContent,
+                         range: [start.value, end.value], columns: columns(), count: count(),
+                         timeRange: document.getElementById('trackerDataSubsetTimeRange').style.display !== 'none' }
+        set(start, '2026-10-02T00:00')
+        await browser.wait(200)
+        report({ errors: browser.errors, opened, count: count(), summaries: requested('/summary') })
+    """)
+
+    assert result == {"errors": [],
+                      "opened": {"shown": True, "name": "Q1: Lobby", "range": ["2026-10-01T09:30", "2026-10-03T16:45"],
+                                 "columns": [["Date", True], ["Gallery", True], ["Notes", True]], "count": "5 records",
+                                 "timeRange": True},
+                      "count": "2 records",
+                      "summaries": ["GET /internal/datasets/tracker/t1/summary",
+                                    "GET /internal/datasets/tracker/t1/summary"]}
+
+
+def test_subset_download_sends_the_range_and_columns():
+    result = run_subset("""
+        await openSubset('Q1: Lobby')
+        set(start, '2026-10-02T00:00')
+        set(boxes()[2], false)
+        await browser.wait(200)
+        downloadButton.click()
+        await browser.wait(400)
+        const request = browser.requests.filter((r) => r.url.includes('/csv')).at(-1)
+        const params = new URL(request.url).searchParams
+        report({
+          errors: browser.errors,
+          path: new URL(request.url).pathname,
+          // The end wasn't changed, so it isn't sent, and records without a time aren't left out by it
+          params: { start: params.getAll('start'), end: params.getAll('end'), columns: params.getAll('columns') },
+          downloads,
+          closed: !modal.classList.contains('show')
+        })
+    """)
+
+    assert result == {"errors": [], "path": "/internal/datasets/tracker/t1/csv",
+                      "params": {"start": ["2026-10-02T00:00"], "end": [], "columns": ["Date", "Gallery"]},
+                      "downloads": ["Q1_ Lobby.csv"], "closed": True}
+
+
+def test_subset_needs_a_column():
+    result = run_subset("""
+        await openSubset('Q1: Lobby')
+        document.getElementById('trackerDataSubsetSelectNone').click()
+        const none = { columns: columns().map(([, checked]) => checked), disabled: downloadButton.disabled }
+        document.getElementById('trackerDataSubsetSelectAll').click()
+        report({ errors: browser.errors, none, all: { columns: columns().map(([, checked]) => checked), disabled: downloadButton.disabled } })
+    """)
+
+    assert result == {"errors": [], "none": {"columns": [False, False, False], "disabled": True},
+                      "all": {"columns": [True, True, True], "disabled": False}}
+
+
+def test_data_without_times_has_no_time_range():
+    result = run_subset("""
+        await openSubset('Lobby')
+        report({
+          errors: browser.errors,
+          timeRange: document.getElementById('trackerDataSubsetTimeRange').style.display !== 'none',
+          noTimes: document.getElementById('trackerDataSubsetNoTimes').style.display !== 'none',
+          columns: columns(),
+          count: count()
+        })
+    """)
+
+    assert result == {"errors": [], "timeRange": False, "noTimes": True, "columns": [["Text", True]], "count": "7 records"}

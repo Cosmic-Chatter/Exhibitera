@@ -59,15 +59,21 @@ export async function loadTemplate (uuid) {
 }
 
 export function downloadTrackerData () {
-  // Ask the server to send the selected data as a CSV and initiate a download.
-  // Hub names the file, so it doesn't include characters that aren't allowed.
+  // Download all of the selected data as a CSV.
 
   const data = selectedTrackerData()
   if (data == null) return
+  saveTrackerDataCSV(data)
+}
 
-  exTools.makeServerRequest({
+function saveTrackerDataCSV (data, params = null) {
+  // Ask the server to send the given data as a CSV, optionally only part of it, and initiate a download.
+  // Hub names the file, so it doesn't include characters that aren't allowed.
+
+  const query = params != null && params.toString() !== '' ? '?' + params.toString() : ''
+  return exTools.makeServerRequest({
     method: 'GET',
-    endpoint: trackerDataEndpoint(data) + '/csv'
+    endpoint: trackerDataEndpoint(data) + '/csv' + query
   })
     .then((result) => {
       if (result?.success) {
@@ -80,7 +86,127 @@ export function downloadTrackerData () {
         a.download = result.filename ?? data.name + '.csv'
         a.click()
       }
+      return result
     })
+}
+
+// Downloading part of a dataset
+//
+// The subset modal limits the records to a time range and chooses their columns. Hub does the filtering,
+// and counts the records in the range as it changes.
+
+let subsetData = null // The data shown in the subset modal
+let subsetRange = { start: '', end: '' } // The range the modal opened with, which covers every record
+let subsetCountRequest = 0 // Ignores counts that arrive after a newer request
+let subsetCount = null // How many records are in the chosen range, or null if the range isn't valid
+
+export async function showDownloadTrackerDataSubsetModal () {
+  // Show the modal for downloading part of the selected data, filled in from its summary.
+
+  const data = selectedTrackerData()
+  if (data == null) return
+
+  const summary = await exTools.makeServerRequest({ method: 'GET', endpoint: trackerDataEndpoint(data) + '/summary' })
+  if (summary?.success !== true) return
+  subsetData = data
+
+  document.getElementById('trackerDataSubsetName').textContent = data.name
+
+  // datetime-local fields work to the minute, as YYYY-MM-DDTHH:MM
+  const hasTimes = summary.first != null
+  subsetRange = { start: summary.first?.slice(0, 16) ?? '', end: summary.last?.slice(0, 16) ?? '' }
+  document.getElementById('trackerDataSubsetStart').value = subsetRange.start
+  document.getElementById('trackerDataSubsetEnd').value = subsetRange.end
+  document.getElementById('trackerDataSubsetTimeRange').style.display = hasTimes ? 'block' : 'none'
+  document.getElementById('trackerDataSubsetNoTimes').style.display = hasTimes ? 'none' : 'block'
+
+  const columnsDiv = document.getElementById('trackerDataSubsetColumns')
+  columnsDiv.innerHTML = ''
+  summary.columns.forEach((column, index) => {
+    const div = document.createElement('div')
+    div.classList = 'form-check'
+    columnsDiv.appendChild(div)
+
+    const input = document.createElement('input')
+    input.classList = 'form-check-input'
+    input.setAttribute('type', 'checkbox')
+    input.setAttribute('id', 'trackerDataSubsetColumn_' + index)
+    input.value = column
+    input.checked = true
+    div.appendChild(input)
+
+    const label = document.createElement('label')
+    label.classList = 'form-check-label'
+    label.setAttribute('for', 'trackerDataSubsetColumn_' + index)
+    label.textContent = column
+    div.appendChild(label)
+  })
+
+  showSubsetCount(summary.count)
+  exUtilities.showModal('#downloadTrackerDataSubsetModal')
+}
+
+function subsetParams (includeColumns = true) {
+  // Return the query for the chosen subset. Each end of the range is only sent once it's been changed, so an
+  // unchanged range also includes records without a time.
+
+  const params = new URLSearchParams()
+  const start = document.getElementById('trackerDataSubsetStart').value
+  const end = document.getElementById('trackerDataSubsetEnd').value
+  if (start !== subsetRange.start && start !== '') params.append('start', start)
+  if (end !== subsetRange.end && end !== '') params.append('end', end)
+  if (includeColumns) {
+    for (const column of selectedSubsetColumns()) params.append('columns', column)
+  }
+  return params
+}
+
+function selectedSubsetColumns () {
+  return [...document.querySelectorAll('#trackerDataSubsetColumns input:checked')].map((input) => input.value)
+}
+
+export async function updateTrackerDataSubsetCount () {
+  // Count the records in the chosen time range.
+
+  if (subsetData == null) return
+  const request = ++subsetCountRequest
+  const params = subsetParams(false)
+  const query = params.toString() !== '' ? '?' + params.toString() : ''
+  const summary = await exTools.makeServerRequest({ method: 'GET', endpoint: trackerDataEndpoint(subsetData) + '/summary' + query })
+  if (request !== subsetCountRequest) return
+  showSubsetCount(summary?.success === true ? summary.count : null)
+}
+
+function showSubsetCount (count) {
+  // Show how many records the subset has. It can only be downloaded with records and at least one column.
+
+  subsetCount = count
+  let text = 'Invalid time range'
+  if (count === 0) text = 'No records'
+  else if (count === 1) text = '1 record'
+  else if (count != null) text = `${count} records`
+  document.getElementById('trackerDataSubsetCount').textContent = text
+  updateSubsetDownloadButton()
+}
+
+export function updateSubsetDownloadButton () {
+  document.getElementById('trackerDataSubsetDownloadButton').disabled =
+    subsetCount == null || subsetCount === 0 || selectedSubsetColumns().length === 0
+}
+
+export function selectAllTrackerDataSubsetColumns (checked) {
+  // Check or uncheck every column
+
+  for (const input of document.querySelectorAll('#trackerDataSubsetColumns input')) input.checked = checked
+  updateSubsetDownloadButton()
+}
+
+export async function downloadTrackerDataSubset () {
+  // Download the chosen subset and close the modal.
+
+  if (subsetData == null) return
+  const result = await saveTrackerDataCSV(subsetData, subsetParams())
+  if (result?.success) exUtilities.hideModal('#downloadTrackerDataSubsetModal')
 }
 
 function populateWidgetProperties (widgetDef) {

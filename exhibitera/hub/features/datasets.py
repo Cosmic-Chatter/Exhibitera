@@ -304,23 +304,37 @@ def list_other_files() -> list[str]:
                   if file.lower().endswith(".txt") and os.path.isfile(os.path.join(folder, file)))
 
 
-def dataset_csv(kind: str, dataset_id: str) -> tuple[str, str] | None:
-    """Return the given dataset as CSV text and the file name to download it as, or None if it doesn't exist."""
+def dataset_records(kind: str, dataset_id: str) -> list[dict[str, Any]] | None:
+    """Return the given dataset's records, or None if it doesn't exist."""
 
     path = dataset_path(kind, dataset_id)
     if path is None or not os.path.exists(path):
         return None
 
-    details = describe_dataset(kind, dataset_id)
     if kind == "word_cloud":
         # Word Cloud stores one entry per line, as plain text
         text, _, _ = ex_files.get_text(path)
-        csv = ex_files.json_list_to_csv([{"Text": line} for line in text.splitlines() if line.strip() != ""])
-        filename = download_name("Word_Cloud_" + details["name"])
-    else:
-        csv = ex_files.create_csv(path, exclude_keys=[RECORD_ID_KEY])
-        filename = download_name(details["name"])
-    return csv, filename + ".csv"
+        return [{"Text": line} for line in text.splitlines() if line.strip() != ""]
+    return ex_files.load_records(path, exclude_keys=[RECORD_ID_KEY])
+
+
+def dataset_csv(kind: str, dataset_id: str,
+                start: datetime.datetime | None = None,
+                end: datetime.datetime | None = None,
+                columns: list[str] | None = None) -> tuple[str, str] | None:
+    """Return the given dataset as CSV text and the file name to download it as, or None if it doesn't exist.
+
+    The records can be limited to a time range and to the given columns.
+    """
+
+    records = dataset_records(kind, dataset_id)
+    if records is None:
+        return None
+
+    records = ex_files.select_columns(ex_files.records_in_range(records, start, end), columns)
+    details = describe_dataset(kind, dataset_id)
+    prefix = "Word_Cloud_" if kind == "word_cloud" else ""
+    return ex_files.json_list_to_csv(records), download_name(prefix + details["name"]) + ".csv"
 
 
 def delete_dataset(kind: str, dataset_id: str) -> bool:
