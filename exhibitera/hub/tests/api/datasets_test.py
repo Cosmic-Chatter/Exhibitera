@@ -70,6 +70,32 @@ def test_tracker_records_for_unknown_templates_are_refused(client, hub_env):
     assert not (hub_env / "data" / "tracker" / "missing.txt").exists()
 
 
+def test_tracker_records_sent_twice_are_saved_once(client, hub_env):
+    # A tracker that loses Hub's reply sends the record again, with the same ID
+    write_template(hub_env, "t1", "Lobby")
+    body = {"data": {"Visitors": 3}, "record_id": "r1"}
+
+    first = client().post("/internal/datasets/tracker/t1/append", json=body).json()
+    second = client().post("/internal/datasets/tracker/t1/append", json=body).json()
+    client().post("/internal/datasets/tracker/t1/append", json={"data": {"Visitors": 4}, "record_id": "r2"})
+    client().post("/internal/datasets/tracker/t1/append", json={"data": {"Visitors": 5}})
+
+    assert first["success"] is True
+    assert second["success"] is True
+    assert [line["Visitors"] for line in read_lines(hub_env / "data" / "tracker" / "t1.txt")] == [3, 4, 5]
+
+
+def test_record_ids_are_left_out_of_downloads(client, hub_env, analyst):
+    write_template(hub_env, "t1", "Lobby")
+    client().post("/internal/datasets/tracker/t1/append", json={"data": {"Visitors": 3}, "record_id": "r1"})
+
+    csv = client(analyst).get("/internal/datasets/tracker/t1/csv").json()["csv"]
+
+    assert "r1" not in csv
+    assert "record_id" not in csv
+    assert "Visitors" in csv
+
+
 def test_tracker_data_is_listed_and_downloaded_by_template_name(client, hub_env, analyst):
     write_template(hub_env, "t1", "Q1: Lobby/East?")
     client().post("/internal/datasets/tracker/t1/append", json={"data": {"Visitors": 3}})

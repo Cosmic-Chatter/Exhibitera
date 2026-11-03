@@ -106,7 +106,7 @@ def test_preview_record_is_shown_in_a_dismissable_overlay_but_not_saved():
     assert result["timerReset"] == "Start"
 
 
-def run_tracker(script: str, append_reply: str):
+def run_tracker(script: str, append_reply: str, setup: str = ""):
     return page_scripts.run(f"""
         const template = {json.dumps(TEMPLATE)}
         globalThis.server = (method, url) => {{
@@ -122,6 +122,8 @@ def run_tracker(script: str, append_reply: str):
         await browser.wait(800)
         const shown = (id) => document.getElementById(id).style.display !== 'none'
         const count = () => document.getElementById('w1_counter').getAttribute('data-count')
+        const appended = () => browser.requests.filter((r) => r.url.includes('/append')).map((r) => JSON.parse(r.body))
+        {setup}
         // Count one visitor, then record
         document.getElementById('w1_counter').setAttribute('data-count', '1')
         document.getElementById('recordButton').click()
@@ -135,27 +137,110 @@ def test_tracker_saves_records_by_template_uuid():
         report({
           errors: browser.errors,
           saved: browser.requests.filter((r) => r.url.includes('/append')).map((r) => new URL(r.url).pathname),
+          data: appended()[0].data.Visitors,
+          // An ID lets Hub skip a record that's sent again because its reply was lost
+          hasID: typeof appended()[0].record_id === 'string' && appended()[0].record_id.length > 0,
           notice: document.getElementById('previewNotice').style.display,
           cleared: count() === '0',
           error: shown('recordErrorNotice')
         })
     """, "{ body: { success: true } }")
 
-    assert result == {"errors": [], "saved": ["/internal/datasets/tracker/t1/append"], "notice": "none",
-                      "cleared": True, "error": False}
+    assert result == {"errors": [], "saved": ["/internal/datasets/tracker/t1/append"], "data": 1, "hasID": True,
+                      "notice": "none", "cleared": True, "error": False}
 
 
-def test_tracker_keeps_the_record_if_hub_refuses_it():
-    # So staff can try again instead of losing what they entered
+def test_tracker_keeps_records_on_the_device_while_hub_is_unreachable():
     result = run_tracker("""
-        const afterFailure = { cleared: count() === '0', error: shown('recordErrorNotice') }
+        const waiting = () => shown('recordsWaitingNotice') ? document.getElementById('recordsWaitingNotice').textContent : ''
+        const afterFirst = { cleared: count() === '0', error: shown('recordErrorNotice'), saved: shown('recordSavedNotice'), waiting: waiting() }
+
+        // Hub goes away entirely
+        globalThis.server = () => 'error'
+        await browser.wait(700)
+        const offline = { warning: shown('connectionWarning'), recordEnabled: !document.getElementById('recordButton').disabled }
+        document.getElementById('w1_counter').setAttribute('data-count', '2')
+        document.getElementById('recordButton').click()
+        await browser.wait(200)
+        const afterSecond = { cleared: count() === '0', waiting: waiting() }
+        const keptIDs = JSON.parse(window.localStorage.getItem('exhibitera_tracker_waiting_records')).map((r) => r.id)
+
+        // Hub comes back
+        const sent = []
+        globalThis.server = (method, url, body) => {
+          if (url.includes('/append')) sent.push(JSON.parse(body))
+          return { body: { success: true } }
+        }
+        await browser.wait(1000)
+        const notice = document.getElementById('recordsWaitingNotice')
+        report({
+          errors: browser.errors,
+          afterFirst,
+          offline,
+          afterSecond,
+          sent: sent.map((r) => r.data.Visitors),
+          sameIDs: sent.map((r) => r.record_id).join() === keptIDs.join(),
+          waitingAfter: waiting(),
+          floats: notice.classList.contains('position-fixed') && notice.style.pointerEvents === 'none'
+        })
+    """, "'error'")
+
+    assert result["errors"] == []
+    assert result["afterFirst"] == {"cleared": True, "error": False, "saved": False,
+                                    "waiting": "Saved on this device. 1 waiting to send."}
+    assert result["offline"] == {"warning": True, "recordEnabled": True}
+    assert result["afterSecond"] == {"cleared": True, "waiting": "Saved on this device. 2 waiting to send."}
+    # Sent once each, in the order they were recorded, with the IDs they were kept with
+    assert result["sent"] == [1, 2]
+    assert result["sameIDs"] is True
+    assert result["waitingAfter"] == ""
+    assert result["floats"] is True
+
+
+def test_tracker_tries_again_later_if_hub_refuses_a_record():
+    result = run_tracker("""
+        const kept = shown('recordsWaitingNotice')
+        globalThis.server = () => ({ body: { success: true } })
+        await browser.wait(1000)
+        const soon = appended().length
+        await browser.wait(3000)
+        report({ errors: browser.errors, kept, soon, later: appended().length, waiting: shown('recordsWaitingNotice') })
+    """, "{ body: { success: false, reason: 'Could not write the file' } }")
+
+    # Waits a few seconds rather than asking again every half second
+    assert result == {"errors": [], "kept": True, "soon": 1, "later": 2, "waiting": False}
+
+
+def test_records_for_deleted_templates_are_dropped():
+    result = run_tracker("""
+        await browser.wait(4000)
+        report({
+          errors: browser.errors,
+          cleared: count() === '0',
+          error: shown('recordErrorNotice'),
+          saved: shown('recordSavedNotice'),
+          waiting: shown('recordsWaitingNotice'),
+          sends: appended().length
+        })
+    """, "{ body: { success: false, reason: 'unknown_template' } }")
+
+    assert result == {"errors": [], "cleared": True, "error": False, "saved": False, "waiting": False, "sends": 1}
+
+
+def test_tracker_keeps_the_record_in_its_inputs_without_browser_storage():
+    # In a private window, or with site data blocked, the record can only be kept on screen
+    result = run_tracker("""
+        const afterFailure = { cleared: count() === '0', error: shown('recordErrorNotice'), waiting: shown('recordsWaitingNotice') }
         globalThis.server = () => ({ body: { success: true } })
         document.getElementById('recordButton').click()
         await browser.wait(200)
-        report({ errors: browser.errors, afterFailure, errorAfterRetry: shown('recordErrorNotice') })
-    """, "{ body: { success: false, reason: 'unknown_template' } }")
+        report({ errors: browser.errors, afterFailure, cleared: count() === '0', error: shown('recordErrorNotice'), saved: shown('recordSavedNotice') })
+    """, "'error'", setup="""
+        Object.defineProperty(window, 'localStorage', { get () { throw new Error('Access denied') }, configurable: true })
+    """)
 
-    assert result == {"errors": [], "afterFailure": {"cleared": False, "error": True}, "errorAfterRetry": False}
+    assert result == {"errors": [], "afterFailure": {"cleared": False, "error": True, "waiting": False},
+                      "cleared": True, "error": False, "saved": True}
 
 
 def test_counters_do_not_go_below_zero():
@@ -194,12 +279,12 @@ def test_tracker_confirms_saved_records_briefly():
     assert result == {"errors": [], "afterRecord": {"saved": True, "error": False}, "later": False}
 
 
-def test_tracker_does_not_confirm_records_hub_refuses():
+def test_tracker_does_not_confirm_records_kept_on_the_device():
     result = run_tracker("""
-        report({ errors: browser.errors, saved: shown('recordSavedNotice'), error: shown('recordErrorNotice') })
-    """, "{ body: { success: false, reason: 'unknown_template' } }")
+        report({ errors: browser.errors, saved: shown('recordSavedNotice'), waiting: shown('recordsWaitingNotice') })
+    """, "'error'")
 
-    assert result == {"errors": [], "saved": False, "error": True}
+    assert result == {"errors": [], "saved": False, "waiting": True}
 
 
 def test_saved_message_floats_over_the_page():

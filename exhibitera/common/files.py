@@ -10,7 +10,7 @@ import os
 import pathlib
 import shutil
 import sys
-from typing import Any
+from typing import Any, Iterable
 import urllib
 import uuid
 import zipfile
@@ -110,15 +110,19 @@ def filename_safe(filename: str) -> bool:
     return True
 
 
-def create_csv(file_path: str | os.PathLike, filename: str = "") -> str:
-    """Load a tracker text file and convert it to a CSV"""
+def create_csv(file_path: str | os.PathLike, filename: str = "", exclude_keys: Iterable[str] = ()) -> str:
+    """Load a tracker text file and convert it to a CSV, leaving out the given keys"""
 
     dict_list = []
     try:
         with open(file_path, 'r', encoding="UTF-8") as f:
             for line in f.readlines():
                 try:
-                    dict_list.append(json.loads(line))
+                    record = json.loads(line)
+                    if isinstance(record, dict):
+                        for key in exclude_keys:
+                            record.pop(key, None)
+                    dict_list.append(record)
                 except json.decoder.JSONDecodeError:
                     print("createCSV: error: skipping line with invalid JSON: " + line)
                     pass

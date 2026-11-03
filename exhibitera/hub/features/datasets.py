@@ -14,6 +14,7 @@ record under this scheme.
 
 # Standard modules
 import datetime
+import json
 import logging
 import os
 import threading
@@ -31,7 +32,11 @@ KIOSK_APPS = ["survey_kiosk", "voting_kiosk"]
 # Characters that can't appear in a file name on at least one operating system
 FORBIDDEN_FILENAME_CHARACTERS = ['/', '\\', '<', '>', ':', '"', '|', '?', '*']
 
+# Stored with each Flexible Tracker record that has an ID, and left out of downloads
+RECORD_ID_KEY = "_record_id"
+
 index_lock = threading.Lock()
+tracker_record_lock = threading.Lock()
 
 
 # Paths
@@ -150,13 +155,42 @@ def archive_tracker_template(template_uuid: str, username: str) -> bool:
     return True
 
 
-def append_tracker_record(template_uuid: str, record: dict[str, Any]) -> tuple[bool, str]:
-    """Save a record for the given template. Archived templates are accepted, for trackers left open."""
+def append_tracker_record(template_uuid: str, record: dict[str, Any],
+                          record_id: str | None = None) -> tuple[bool, str]:
+    """Save a record for the given template. Archived templates are accepted, for trackers left open.
+
+    Trackers keep records on the device until Hub confirms them, so a record whose reply was lost is
+    sent again with the same ID. A record with an ID that's already saved is skipped.
+    """
 
     template, _ = find_tracker_template(template_uuid)
     if template is None:
         return False, "unknown_template"
-    return ex_files.write_json(record, dataset_path("tracker", template_uuid), append=True, indent=None)
+    path = dataset_path("tracker", template_uuid)
+    if record_id is None:
+        return ex_files.write_json(record, path, append=True, indent=None)
+
+    with tracker_record_lock:
+        if _has_tracker_record(path, record_id):
+            return True, ""
+        return ex_files.write_json({**record, RECORD_ID_KEY: record_id}, path, append=True, indent=None)
+
+
+def _has_tracker_record(path: str, record_id: str) -> bool:
+    """Return whether the given dataset already has a record with the given ID."""
+
+    if not os.path.exists(path):
+        return False
+    with open(path, "r", encoding="UTF-8") as f:
+        for line in f:
+            if record_id not in line:
+                continue
+            try:
+                if json.loads(line).get(RECORD_ID_KEY) == record_id:
+                    return True
+            except (json.JSONDecodeError, AttributeError):
+                pass
+    return False
 
 
 # Voting and Survey Kiosk
@@ -284,7 +318,7 @@ def dataset_csv(kind: str, dataset_id: str) -> tuple[str, str] | None:
         csv = ex_files.json_list_to_csv([{"Text": line} for line in text.splitlines() if line.strip() != ""])
         filename = download_name("Word_Cloud_" + details["name"])
     else:
-        csv = ex_files.create_csv(path)
+        csv = ex_files.create_csv(path, exclude_keys=[RECORD_ID_KEY])
         filename = download_name(details["name"])
     return csv, filename + ".csv"
 

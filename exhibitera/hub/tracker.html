@@ -46,8 +46,10 @@
       <!-- Floats over the page so the widgets don't move, and lets taps through to them -->
       <div id="recordSavedNotice" class="alert alert-success position-fixed top-0 start-50 translate-middle-x mt-2 py-1 px-3 shadow" style="display: none; z-index: 1000; pointer-events: none;">Record saved</div>
 
-      <div id="connectionWarning" class="position-fixed row w-100" style="display: none; z-index:999;">
-        <div class="alert alert-danger col-auto mx-auto" role="alert">Server Connection Lost</div>
+      <div id="recordsWaitingNotice" class="alert alert-warning position-fixed bottom-0 start-50 translate-middle-x mb-2 py-1 px-3 shadow" style="display: none; z-index: 1000; pointer-events: none;"></div>
+
+      <div id="connectionWarning" class="position-fixed row w-100" style="display: none; z-index:999; pointer-events: none;">
+        <div class="alert alert-danger col-auto mx-auto small py-2" role="alert">Hub can't be reached. Records are kept on this device until it's back.</div>
       </div>
 
       <div class="row mt-2 ">

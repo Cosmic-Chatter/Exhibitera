@@ -1,6 +1,7 @@
 /* global bootstrap */
 
 import hubConfig from '../config.js'
+import * as exUtilities from '../../common/utilities.js'
 import * as exTracker from './features/tracker.js'
 
 class TimingObject {
@@ -381,17 +382,19 @@ function buildLayout (definition) {
 }
 
 function badConnection () {
-  // Disable the interface and show a warning
+  // Show a warning. Records are kept on the device until Hub is back.
 
+  connected = false
   document.getElementById('connectionWarning').style.display = 'block'
-  document.getElementById('recordButton').setAttribute('disabled', true)
 }
 
 function goodConnection () {
-  // Hide the warning and enable the interface
+  // Hide the warning and send any records that are waiting
 
+  const reconnected = !connected
+  connected = true
   document.getElementById('connectionWarning').style.display = 'none'
-  document.getElementById('recordButton').removeAttribute('disabled')
+  if (reconnected || Date.now() >= retryTime) sendWaitingRecords()
 }
 
 function checkConnection () {
@@ -525,34 +528,116 @@ function sendData () {
     return
   }
 
-  const requestDict = {
-    data: resultDict
+  // Without a template there's nowhere to save the record
+  if (templateUUID === '') return
+
+  const record = { id: exUtilities.uuid(), template: templateUUID, data: resultDict }
+  if (keepWaitingRecord(record)) {
+    clearInput()
+    confirmRecordID = record.id
+    sendWaitingRecords()
+    return
   }
 
-  const requestString = JSON.stringify(requestDict)
+  // Without browser storage, the record can only be kept in the inputs until it's sent
+  sendRecord(record).then((result) => {
+    document.getElementById('recordErrorNotice').style.display = result === 'failed' ? 'block' : 'none'
+    showRecordSaved(result === 'saved')
+    if (result !== 'failed') clearInput()
+  })
+}
 
-  const xhr = new XMLHttpRequest()
-  // Records are stored by the template's UUID, so renaming the template doesn't split its data
-  xhr.open('POST', hubConfig.api + '/datasets/tracker/' + encodeURIComponent(templateUUID) + '/append', true)
-  xhr.timeout = 5000
-  xhr.setRequestHeader('Content-Type', 'application/json')
-  xhr.overrideMimeType('text/plain; charset=x-user-defined')
-  xhr.onreadystatechange = function () {
-    if (this.readyState !== 4) return
-    let response = null
-    try {
-      response = JSON.parse(this.responseText)
-    } catch {}
-    const saved = this.status === 200 && response?.success === true
-    // If the record wasn't saved, keep the inputs so it can be sent again
-    document.getElementById('recordErrorNotice').style.display = saved ? 'none' : 'block'
-    showRecordSaved(saved)
-    if (saved) {
-      // Clear the inputs so that we can't double-submit data
-      clearInput()
+function sendRecord (record) {
+  // Send the given record to Hub. Resolves to 'saved', 'dropped' if its template no longer exists,
+  // or 'failed' if it should be sent again later.
+
+  return new Promise((resolve) => {
+    const xhr = new XMLHttpRequest()
+    // Records are stored by the template's UUID, so renaming the template doesn't split its data
+    xhr.open('POST', hubConfig.api + '/datasets/tracker/' + encodeURIComponent(record.template) + '/append', true)
+    xhr.timeout = 5000
+    xhr.setRequestHeader('Content-Type', 'application/json')
+    xhr.overrideMimeType('text/plain; charset=x-user-defined')
+    xhr.ontimeout = () => resolve('failed')
+    xhr.onerror = () => resolve('failed')
+    xhr.onreadystatechange = function () {
+      if (this.readyState !== 4) return
+      let response = null
+      try {
+        response = JSON.parse(this.responseText)
+      } catch {}
+      if (this.status === 200 && response?.success === true) resolve('saved')
+      else if (response?.reason === 'unknown_template') resolve('dropped')
+      else resolve('failed')
     }
+    // The ID lets Hub skip a record that's sent again because its reply was lost
+    xhr.send(JSON.stringify({ data: record.data, record_id: record.id }))
+  })
+}
+
+function loadWaitingRecords () {
+  // Return the records kept on this device that haven't reached Hub, oldest first
+
+  try {
+    const records = JSON.parse(window.localStorage.getItem(WAITING_RECORDS_KEY))
+    return Array.isArray(records) ? records : []
+  } catch {
+    return []
   }
-  xhr.send(requestString)
+}
+
+function saveWaitingRecords (records) {
+  // Return whether the records could be stored on this device
+
+  try {
+    window.localStorage.setItem(WAITING_RECORDS_KEY, JSON.stringify(records))
+    return true
+  } catch {
+    return false
+  }
+}
+
+function keepWaitingRecord (record) {
+  // Store the record on this device until Hub confirms it. Return false if it can't be stored.
+
+  const kept = saveWaitingRecords([...loadWaitingRecords(), record])
+  updateWaitingNotice()
+  return kept
+}
+
+async function sendWaitingRecords () {
+  // Send the records kept on this device one at a time, oldest first, stopping at the first failure
+
+  if (sendingWaitingRecords) return
+  sendingWaitingRecords = true
+  try {
+    let next
+    while ((next = loadWaitingRecords()[0]) != null) {
+      const result = await sendRecord(next)
+      if (result === 'failed') {
+        // Try again once the connection is back, or after a few seconds
+        retryTime = Date.now() + RETRY_DELAY
+        confirmRecordID = null
+        break
+      }
+      // Records whose template no longer exists can't be saved, so they're dropped
+      saveWaitingRecords(loadWaitingRecords().filter((record) => record.id !== next.id))
+      if (next.id === confirmRecordID) showRecordSaved(result === 'saved')
+      updateWaitingNotice()
+    }
+  } finally {
+    sendingWaitingRecords = false
+    updateWaitingNotice()
+  }
+}
+
+function updateWaitingNotice () {
+  // Show how many records are kept on this device, waiting to be sent
+
+  const notice = document.getElementById('recordsWaitingNotice')
+  const waiting = loadWaitingRecords().length
+  notice.textContent = `Saved on this device. ${waiting} waiting to send.`
+  notice.style.display = waiting > 0 ? 'block' : 'none'
 }
 
 function showRecordSaved (saved) {
@@ -668,6 +753,14 @@ document.getElementById('definitionListDropdown').addEventListener('change', () 
 let templateUUID = ''
 let recordSavedTimeout = null
 
+// Records are kept on the device until Hub confirms them, so none are lost if Hub can't be reached
+const WAITING_RECORDS_KEY = 'exhibitera_tracker_waiting_records'
+const RETRY_DELAY = 3000 // ms to wait before sending again after Hub refuses a record
+let sendingWaitingRecords = false
+let retryTime = 0
+let connected = true
+let confirmRecordID = null // The record just made, which shows "Record saved" if it reaches Hub right away
+
 // In preview mode, the template editor sends the template to show, and records aren't saved
 const previewMode = new URLSearchParams(window.location.search).has('preview')
 
@@ -692,4 +785,5 @@ if (previewMode) {
   populateLayoutDropdown(await exTracker.getAvailableTemplates())
   setTimeout(parseQueryString, 300)
   setInterval(checkConnection, 500)
+  updateWaitingNotice()
 }

@@ -189,9 +189,13 @@ Beside the editor, a live preview shows the template as it would appear on an iP
 
 #### Recording data
 
-To use Flexible Tracker for data collection, select your desired template from the web console settings view and click the _Launch_ button. All available templates will be available from the dropdown list. Once you are ready to send a session (one set of observations), press the Record button. This will transmit the data to Hub for storage. Please note that a network connection to the server is required to send data; if such a connection is not available, a popup will appear and the Record button will be disabled.
+To use Flexible Tracker for data collection, select your desired template from the web console settings view and click the _Launch_ button. All available templates will be available from the dropdown list. Once you are ready to send a session (one set of observations), press the Record button. This will transmit the data to Hub for storage.
 
-When a record is saved, a _Record saved_ message appears for a moment. If a record can't be saved, a warning appears and the entered values are kept, so you can press _Record_ again.
+When a record is saved, a _Record saved_ message appears for a moment.
+
+If Hub can't be reached, Flexible Tracker keeps recording. Each record is stored on the device, and a message at the bottom of the page shows how many are waiting. When Hub is back, they're sent automatically, in the order they were recorded and with the time each was recorded. Records sent twice, because Hub's reply was lost, are only saved once. Don't reload the page while Hub can't be reached, since Hub serves the page itself. Records for a template that no longer exists are dropped. Deleted templates are archived, so open trackers can still save records for them.
+
+If the browser can't store data, for example in a private window, a warning appears instead and the entered values are kept, so you can press _Record_ again.
 
 Data are stored in Hub under `data/tracker/<template UUID>.txt`. Each row is a single JSON object representing one session. Because data are stored by the template's UUID, you can rename a template without splitting its data.
 

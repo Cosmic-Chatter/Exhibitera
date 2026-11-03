@@ -46,8 +46,11 @@ async def delete_dataset(kind: str, dataset_id: str):
 
 @router.post("/tracker/{template_uuid}/append")
 async def append_tracker_record(template_uuid: str,
-                                data: dict[str, Any] = Body(description="The record to save.", embed=True)):
+                                data: dict[str, Any] = Body(description="The record to save.", embed=True),
+                                record_id: str | None = Body(
+                                    None, max_length=64, embed=True,
+                                    description="Identifies the record, so it's saved once if it's sent again.")):
     """Save a Flexible Tracker record for the given template."""
 
-    success, reason = hub_datasets.append_tracker_record(template_uuid, data)
+    success, reason = hub_datasets.append_tracker_record(template_uuid, data, record_id)
     return {"success": success, "reason": reason}
