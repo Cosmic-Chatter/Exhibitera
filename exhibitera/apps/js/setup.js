@@ -4,6 +4,7 @@ import * as exCommon from './exhibitera_app_common.js'
 import * as exUtilities from '../../common/utilities.js'
 import * as exSetup from './exhibitera_setup_common.js'
 import * as exFileSelectModal from './exhibitera_file_select_modal.js'
+import { DataSubsetModal } from '../../common/data_subset.js'
 
 function updateParser (update) {
   // Take a list of defaults and build the interface for editing them.
@@ -303,18 +304,34 @@ function populateAvailableData () {
 }
 
 function downloadDataAsCSV () {
-  // Download the currently selected data file as a CSV file.
+  // Download all of the currently selected data file as a CSV file.
 
   const name = document.getElementById('dataSelect').value
   exCommon.makeHelperRequest({
     method: 'GET',
-    endpoint: '/data/' + name + '/csv'
+    endpoint: '/data/' + encodeURIComponent(name) + '/csv'
   })
     .then((result) => {
       if (result?.success) {
         exSetup.downloadPlaintextFile(result.csv, name + '.csv')
       }
     })
+}
+
+// Downloads part of the selected data file: the records in a time range, with chosen columns
+const dataSubsetModal = new DataSubsetModal({
+  prefix: 'dataSubset',
+  modalId: 'dataSubsetModal',
+  request: (endpoint) => exCommon.makeHelperRequest({ method: 'GET', endpoint }),
+  save: (result, name) => exSetup.downloadPlaintextFile(result.csv, name + '.csv')
+})
+
+function showDataSubsetModal () {
+  // Show the modal for downloading part of the selected data file.
+
+  const name = document.getElementById('dataSelect').value
+  if (name === '') return
+  dataSubsetModal.show('/data/' + encodeURIComponent(name), name)
 }
 
 function showDeleteDataModal () {
@@ -597,6 +614,8 @@ document.getElementById('startFullscreenToggle').addEventListener('change', (eve
 document.getElementById('dataDownloadButton').addEventListener('click', downloadDataAsCSV)
 document.getElementById('dataSelectListRefreshButton').addEventListener('click', populateAvailableData)
 document.getElementById('dataDeleteShowModalButton').addEventListener('click', showDeleteDataModal)
+document.getElementById('dataDownloadSubsetShowModalButton').addEventListener('click', showDataSubsetModal)
+dataSubsetModal.bind()
 document.getElementById('deleteDataFromModalButton').addEventListener('click', deleteDataFromModal)
 
 // Lighting page

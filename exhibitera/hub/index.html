@@ -10,6 +10,7 @@
     <link rel="icon" type="image/x-icon" href="_static/icons/green.ico">
 
     <link rel="stylesheet" href="css/bootstrap_5_3/bootstrap.min.css">
+    <link rel="stylesheet" href="css/bootstrap-icons.min.css">
     <link rel="stylesheet" href="css/webpage.css">
 
     <title></title>
@@ -2381,13 +2382,13 @@
               <H4>Data</H4>
               <i>Download data collected by Flexible Tracker or deposited by another Exhibitera-compatible app.</i>
             </div>
-            <div class="col-6 col-md-2 mt-2">
+            <div class="col-10 col-sm-6 col-md-4 mt-2 pe-1">
               <select id="trackerDataSelect" class="form-select"></select>
             </div>
-            <div class="col-6 col-md-3 col-lg-2 col-xl-2 mt-2">
-              <button id="getAvailableTrackerDataButton" class='btn btn-primary w-100'>Refresh list</button>
+            <div class="col-2 col-sm-1 ps-0 mt-2">
+              <button id="getAvailableTrackerDataButton" class="btn w-100" style="border: var(--bs-border-width) solid var(--bs-border-color);" data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh list"><span class="bi bi-arrow-clockwise"></span></button>
             </div>
-            <div class="col-6 col-md-3 col-lg-2 col-xl-2 mt-2">
+            <div class="col-6 col-sm-3 col-md-3 col-lg-2 col-xl-2 mt-2">
               <div class="dropdown w-100">
                 <button class="btn btn-info dropdown-toggle w-100" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                   Download
@@ -2398,7 +2399,7 @@
                 </ul>
               </div>
             </div>
-            <div class="col-6 col-md-3 col-lg-2 col-xl-2 mt-2">
+            <div class="col-6 col-sm-2 mt-2">
               <button id="showDeleteTrackerDataModalButton" class='btn btn-danger w-100'>Delete</button>
             </div>
           </div>

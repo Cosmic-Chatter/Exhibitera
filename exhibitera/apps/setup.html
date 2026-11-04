@@ -100,6 +100,46 @@
         </div>
       </div>
 
+      <!-- Download part of a data file: the records in a time range, with chosen columns -->
+      <div class="modal" tabindex="-1" role="dialog" id="dataSubsetModal">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Download subset of <span id="dataSubsetName"></span></h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div id="dataSubsetTimeRange">
+                <div class="h6">Time range</div>
+                <div class="row gy-2">
+                  <div class="col-12 col-sm-6">
+                    <label for="dataSubsetStart" class="form-label">From</label>
+                    <input type="datetime-local" id="dataSubsetStart" class="form-control" step="60">
+                  </div>
+                  <div class="col-12 col-sm-6">
+                    <label for="dataSubsetEnd" class="form-label">To</label>
+                    <input type="datetime-local" id="dataSubsetEnd" class="form-control" step="60">
+                  </div>
+                </div>
+                <div class="form-text">Records without a time are left out once you change the range.</div>
+              </div>
+              <div id="dataSubsetNoTimes" class="fst-italic" style="display: none;">These data don't record times, so they can't be limited to a time range.</div>
+              <div class="d-flex align-items-center mt-3 mb-1">
+                <div class="h6 mb-0 me-auto">Columns</div>
+                <button id="dataSubsetSelectAll" type="button" class="btn btn-link btn-sm">All</button>
+                <button id="dataSubsetSelectNone" type="button" class="btn btn-link btn-sm">None</button>
+              </div>
+              <div id="dataSubsetColumns"></div>
+            </div>
+            <div class="modal-footer">
+              <div id="dataSubsetCount" class="me-auto fw-bold"></div>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              <button type="button" class="btn btn-primary" id="dataSubsetDownloadButton">Download</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Delete  data modal -->
           <div class="modal" tabindex="-1" role="dialog" id="deleteDataModal">
             <div class="modal-dialog modal-dialog-centered" role="document">
@@ -538,7 +578,15 @@
                 </div>
               </div>
               <div class="col-4 col-sm-3 col-md-2">
-                <button id="dataDownloadButton" class="btn btn-primary w-100">Download</button>
+                <div class="dropdown w-100">
+                  <button class="btn btn-info dropdown-toggle w-100" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    Download
+                  </button>
+                  <ul id="dataDownloadMenu" class="dropdown-menu w-100">
+                    <li><button id="dataDownloadButton" class="dropdown-item">Download all</button></li>
+                    <li><button id="dataDownloadSubsetShowModalButton" class="dropdown-item">Download subset</button></li>
+                  </ul>
+                </div>
               </div>
               <div class="col-4 col-sm-3 col-md-2">
                 <button id="dataDeleteShowModalButton" class="btn btn-danger w-100">Delete</button>

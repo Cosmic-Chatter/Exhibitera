@@ -7,7 +7,7 @@ _If you are upgrading from Exhibitera 5.3, Hub and Apps must all be upgraded at 
 - When opening an Apps setup page from Hub, you'll now be logged in automatically.
 
 ### Analytics
-- Filter collected data by date or column before downloading
+- Filter collected data by date or column before downloading.
 
 ### Components
 - Copying a definition between components now also copies the definition's thumbnail.
@@ -44,6 +44,9 @@ Exert more control over the appearance of text using Exhibitera's new font syste
 - See rich previews when selecting a font during setup.
 - Support for variable fonts.
 - Support for Chinese (Hong Kong).
+
+### Data
+- Filter collected data by date or column before downloading.
 
 ### Image Compare
 - Enable hardware control to use physical buttons to select an image pair and swipe between images.
