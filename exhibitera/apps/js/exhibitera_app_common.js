@@ -123,14 +123,7 @@ export function configureApp (opt = {}) {
         }
 
         // Listen for fullscreen key, if not using a remote display
-        if (config.remoteDisplay === false) {
-          window.addEventListener('keydown', function (e) {
-            if (e.key === 'F11') {
-              e.preventDefault()
-              window.pywebview.api.toggle_fullscreen()
-            }
-          })
-        }
+        listenForFullscreenKey(window)
 
         if (config.standalone === false) {
           // Using Hub
@@ -530,6 +523,26 @@ function showHelperConnectionWarning (show) {
 
   document.getElementById('helperConnectionWarningAddress').textContent = config.helperAddress
   warning.style.display = show ? 'block' : 'none'
+}
+
+export function listenForFullscreenKey (target) {
+  // Toggle fullscreen when F11 is pressed in the given window. Key presses go to whichever page has focus, so
+  // apps that show content in an iframe also call this for the iframe's window each time it loads a page.
+  // With a remote display, fullscreen is up to the browser showing it.
+
+  if (config.remoteDisplay !== false) return
+  try {
+    if (target.exhibiteraFullscreenKey === true) return // Already listening
+    target.addEventListener('keydown', function (e) {
+      if (e.key === 'F11') {
+        e.preventDefault()
+        window.pywebview.api.toggle_fullscreen()
+      }
+    })
+    target.exhibiteraFullscreenKey = true
+  } catch {
+    // Browsers don't let a page listen inside another website's page
+  }
 }
 
 export function askForDefaults (changeApp = true) {

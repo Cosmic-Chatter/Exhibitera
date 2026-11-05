@@ -123,7 +123,7 @@ def show_app_window():
                                        url=url)
 
     new_window.events.closing += on_window_closing
-    new_window.events.loaded += on_window_loaded
+    new_window.events.loaded += on_app_window_loaded
     return new_window
 
 
@@ -140,6 +140,50 @@ def show_remote_display_window():
 
 def on_window_loaded():
     apps_config.block_closing = False
+
+
+def on_app_window_loaded(window):
+    on_window_loaded()
+    if sys.platform == 'win32':
+        focus_page(window)
+
+
+def focus_page(window):
+    """Give keyboard focus to the page in a window on Windows, so key presses such as F11 reach it.
+
+    pywebview focuses the WebView2 control when the window is shown, before the page inside it exists, so the
+    page doesn't get focus until someone clicks in it. Moving focus into the page once it has loaded fixes that.
+    """
+
+    try:
+        # pythonnet's .NET modules, which pywebview has already loaded
+        from System import Func, Object, Type
+        from System.Reflection import BindingFlags
+        from System.Windows.Forms import Form
+        from Microsoft.Web.WebView2.Core import CoreWebView2MoveFocusReason
+
+        form = window.native
+        webview2 = form.browser.webview
+
+        def _focus():
+            # Leave focus alone if another window, such as a settings window, is in front
+            if not Object.ReferenceEquals(Form.ActiveForm, form):
+                return
+
+            # The control only moves focus into the page when it gains focus, and it already has it,
+            # so ask its controller directly
+            field = webview2.GetType().GetField('_coreWebView2Controller',
+                                                BindingFlags.Instance | BindingFlags.NonPublic)
+            controller = field.GetValue(webview2) if field is not None else None
+            if controller is not None:
+                controller.MoveFocus(CoreWebView2MoveFocusReason.Programmatic)
+            else:
+                webview2.Focus()
+
+        # Controls can only be used from the window's own thread
+        form.Invoke(Func[Type](_focus))
+    except Exception as e:
+        logging.warning("apps_webview.focus_page: could not focus the page: %s", e)
 
 
 def on_window_closing():

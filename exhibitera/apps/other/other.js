@@ -23,6 +23,11 @@ function loadDefinition (def) {
   }
 }
 
+// When a visitor taps the content, key presses go to the iframe, so listen there for F11 too
+document.getElementById('iframe').addEventListener('load', (event) => {
+  exCommon.listenForFullscreenKey(event.target.contentWindow)
+})
+
 exCommon.configureApp({
   name: 'other',
   debug: true,

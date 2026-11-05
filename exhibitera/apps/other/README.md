@@ -24,6 +24,9 @@ Websites can choose to disable embedding as a security measure. For instance, a 
 
 _**Good to know**: If you control the webpage you're trying to load, you can enable embedding by ensuring you allow cross-origin requests (CORS)._
 
+#### Toggling fullscreen with F11
+Browsers don't let Exhibitera Apps listen for key presses inside another website, so once someone taps or clicks the website, F11 no longer toggles fullscreen. To leave fullscreen, close Exhibitera Apps (Alt-F4 on Windows) and turn off _Start in fullscreen_ before opening it again. In files mode, F11 works wherever you click.
+
 ## Uploading files
 Simple apps containing only a few files in a single directory can easily uploaded via the Custom App setup page. However, if your app contains many files or files in subdirectories, you will need to copy the files manually into Exhibitera Apps.
 
