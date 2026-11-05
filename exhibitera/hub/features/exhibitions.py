@@ -205,32 +205,33 @@ def execute_action(action: str,
                    value: list | str | None):
     """Execute the given action."""
 
-    if action == 'set_definition' and target is not None and value is not None:
-        if isinstance(value, list):
-            value = value[0]
-        if isinstance(target, list):
-            target = target[0]
-        print(f"Changing definition for {target} to {value}")
+    if action in ['set_definition', 'set_dmx_scene', 'set_exhibit']:
+        # These act on one target. Actions saved without a target or a value are skipped.
+        target = _first(target)
+        value = _first(value)
+        key = "value" if action == 'set_exhibit' else "uuid"
+        if not isinstance(target, dict) or target.get(key) in [None, '']:
+            logging.warning("execute_action: skipping %s, which has no target", action)
+            return
+        if action != 'set_exhibit' and value in [None, '']:
+            logging.warning("execute_action: skipping %s, which has no value", action)
+            return
 
-        logging.info("Changing definition for %s to %s", target, value)
-        add_exhibition_modification(target["uuid"], {"definition": value})
+        if action == 'set_definition':
+            print(f"Changing definition for {target} to {value}")
+            logging.info("Changing definition for %s to %s", target, value)
+            add_exhibition_modification(target["uuid"], {"definition": value})
+        elif action == 'set_dmx_scene':
+            logging.info('Setting DMX scene for %s to %s', target, value)
+            component = hub_components.get_exhibit_component(target["uuid"])
+            if component is not None:
+                component.queue_command("set_dmx_scene__" + value)
+        else:
+            print("Changing exhibit to:", target["value"])
+            logging.info("Changing exhibition to %s", target["value"])
+            load_exhibition(target["value"])
     elif action == 'clear_exhibition_mods':
         clear_modifications()
-    elif action == 'set_dmx_scene' and target is not None and value is not None:
-        if isinstance(value, list):
-            value = value[0]
-        if isinstance(target, list):
-            target = target[0]
-        logging.info('Setting DMX scene for %s to %s', target, value)
-        component = hub_components.get_exhibit_component(target["uuid"])
-        if component is not None:
-            component.queue_command("set_dmx_scene__" + value)
-    elif action == 'set_exhibit' and target is not None:
-        if isinstance(target, list) and len(target) > 0:
-            target = target[0]
-        print("Changing exhibit to:", target["value"])
-        logging.info("Changing exhibition to %s", target["value"])
-        load_exhibition(target["value"])
     elif target is not None:
         if isinstance(target, dict):
             target = [target]
@@ -256,6 +257,14 @@ def execute_action(action: str,
         command_all_components(action)
 
     hub_config.last_update_time = time.time()
+
+
+def _first(items):
+    """Return the first of a list of targets or values, None for an empty list, or anything else unchanged."""
+
+    if isinstance(items, list):
+        return items[0] if len(items) > 0 else None
+    return items
 
 
 def command_all_components(cmd: str):

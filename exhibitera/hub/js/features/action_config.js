@@ -200,6 +200,10 @@ export class ActionConfigurator {
     const valueSelector = this._el(this.valueSelectorId)
     const valueSelectorLabel = this._el(this.valueSelectorLabelId)
 
+    // Why the options couldn't be listed, if they couldn't, for explaining why the action can't be saved
+    this.valueProblem = null
+    const request = this._valueRequest = (this._valueRequest ?? 0) + 1
+
     if (!ACTIONS_WITH_VALUE_SELECTOR.includes(action)) {
       valueSelector.style.display = 'none'
       valueSelectorLabel.style.display = 'none'
@@ -217,49 +221,47 @@ export class ActionConfigurator {
       return
     }
     if (component == null) {
-      console.log('ActionConfigurator.configureValueSelector: component not available:', target.uuid)
+      this._showValueProblem(action, "This component can't be found")
       return
     }
-
     if ((component?.helperAddress ?? '') === '') {
-      if (this.errorAlertId != null) {
-        const alertEl = this._el(this.errorAlertId)
-        if (alertEl) alertEl.textContent = 'This component is not responding'
-      }
-      if (this.onError) this.onError('This component is not responding')
-      valueSelector.style.display = 'none'
-      valueSelectorLabel.style.display = 'none'
+      this._showValueProblem(action, 'This component is not responding')
       return
-    } else if (this.onErrorClear) {
-      this.onErrorClear()
     }
 
     let response
     try {
       if (action === 'set_definition') {
         response = await component.makeRequest({ method: 'GET', endpoint: '/definitions' })
-        if (response?.success === true) {
-          const appDict = hubTools.sortDefinitionsByApp(response.definitions)
-          for (const app of Object.keys(appDict).sort()) {
-            const header = new Option(exUtilities.appNameToDisplayName(app))
-            header.disabled = true
-            valueSelector.appendChild(header)
-
-            for (const def of appDict[app]) {
-              valueSelector.appendChild(new Option(hubTools.getDefinitionDisplayName(def), def.uuid))
-            }
-          }
-        }
       } else if (action === 'set_dmx_scene') {
         response = await component.makeRequest({ method: 'GET', endpoint: '/DMX/scenes' })
-        if (response?.success === true) {
-          for (const scene of response.scenes) {
-            valueSelector.appendChild(new Option(scene.name, scene.uuid))
-          }
-        }
       }
     } catch {
-      console.log('ActionConfigurator.configureValueSelector: invalid helper address')
+      response = null
+    }
+    // Ignore answers to an earlier request, such as for a component chosen before this one
+    if (request !== this._valueRequest) return
+    if (response?.success !== true) {
+      this._showValueProblem(action, 'This component is not responding')
+      return
+    }
+    if (this.onErrorClear) this.onErrorClear()
+
+    if (action === 'set_definition') {
+      const appDict = hubTools.sortDefinitionsByApp(response.definitions)
+      for (const app of Object.keys(appDict).sort()) {
+        const header = new Option(exUtilities.appNameToDisplayName(app))
+        header.disabled = true
+        valueSelector.appendChild(header)
+
+        for (const def of appDict[app]) {
+          valueSelector.appendChild(new Option(hubTools.getDefinitionDisplayName(def), def.uuid))
+        }
+      }
+    } else if (action === 'set_dmx_scene') {
+      for (const scene of response.scenes) {
+        valueSelector.appendChild(new Option(scene.name, scene.uuid))
+      }
     }
 
     // In the case of editing an action, preselect any existing value
@@ -272,6 +274,20 @@ export class ActionConfigurator {
 
     valueSelector.style.display = 'block'
     valueSelectorLabel.style.display = 'block'
+  }
+
+  _showValueProblem (action, problem) {
+    // Explain why the value selector has no options, and hide it.
+
+    const options = action === 'set_dmx_scene' ? 'lighting scenes' : 'definitions'
+    this.valueProblem = `${problem}, so its ${options} can't be listed`
+    if (this.errorAlertId != null) {
+      const alertEl = this._el(this.errorAlertId)
+      if (alertEl) alertEl.textContent = this.valueProblem
+    }
+    if (this.onError) this.onError(this.valueProblem)
+    this._el(this.valueSelectorId).style.display = 'none'
+    this._el(this.valueSelectorLabelId).style.display = 'none'
   }
 
   /**
