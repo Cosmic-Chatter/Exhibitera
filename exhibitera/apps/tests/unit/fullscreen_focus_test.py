@@ -167,6 +167,31 @@ def test_focus_problems_dont_stop_the_app(windows, caplog):
     assert 'WebView2 is gone' in caplog.text
 
 
+def test_new_window_opens_before_the_old_one_closes(monkeypatch):
+    # Windows only lets the program in front bring a new window to the front. Closing the old window first hands
+    # the front to another window, so the new one opened behind it, without covering the taskbar in fullscreen.
+    steps = []
+
+    def window(title):
+        return types.SimpleNamespace(title=title, destroy=lambda: steps.append('close ' + title),
+                                     events=types.SimpleNamespace(loaded=FakeEvent(), closing=FakeEvent()))
+
+    def create_window(title, **kwargs):
+        steps.append('open ' + title)
+        return window(title)
+
+    monkeypatch.setattr(apps_webview.webview, 'windows', [window('master'), window('Exhibitera Apps'),
+                                                          window('Exhibitera Apps - Configuration')])
+    monkeypatch.setattr(apps_webview.webview, 'create_window', create_window)
+    monkeypatch.setattr(apps_config, 'defaults', {'system': {'port': 8000}})
+    monkeypatch.setattr(apps_config, 'webview_fullscreen', False)
+
+    apps_webview.ExhibiteraWebviewAPI().toggle_fullscreen()
+
+    assert steps == ['open Exhibitera Apps', 'close Exhibitera Apps']
+    assert apps_config.webview_fullscreen is True
+
+
 def test_other_systems_are_left_alone(windows, monkeypatch):
     # pywebview's other backends don't have this problem
     monkeypatch.setattr(sys, 'platform', 'darwin')

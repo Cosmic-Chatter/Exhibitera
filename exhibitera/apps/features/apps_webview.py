@@ -106,11 +106,9 @@ def show_app_window():
     Includes logic for going back and forth from fullscreen.
     """
 
-    # Destroy any existing version of this app
-    for window in webview.windows:
-        if window.title == 'Exhibitera Apps':
-            apps_config.block_closing = True
-            window.destroy()
+    # Any existing version of this app is closed once the new one is open. Windows only lets the program in
+    # front bring a new window to the front, so closing first could leave the new window behind other windows.
+    old_windows = [window for window in webview.windows if window.title == 'Exhibitera Apps']
 
     url = 'http://localhost:' + str(apps_config.defaults["system"]["port"]) + "/app.html"
 
@@ -124,6 +122,11 @@ def show_app_window():
 
     new_window.events.closing += on_window_closing
     new_window.events.loaded += on_app_window_loaded
+
+    for window in old_windows:
+        apps_config.block_closing = True
+        window.destroy()
+
     return new_window
 
 
