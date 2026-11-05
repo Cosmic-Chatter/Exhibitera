@@ -260,7 +260,7 @@ async function createExhibitionModificationHTML (mod, exhib) {
   let modDef = {} // The definition we've modified to
   let badConnection = false
   try {
-    const modDefReq = await hubTools.getExhibitComponent(mod.uuid).makeRequest({
+    const modDefReq = await component.makeRequest({
       method: 'GET',
       endpoint: '/definitions/' + mod.definition + '/load'
     })
@@ -268,7 +268,7 @@ async function createExhibitionModificationHTML (mod, exhib) {
     modDef = modDefReq.definition
 
     const exhibDefUUID = exhib.components.find(obj => obj.uuid === mod.uuid)?.definition ?? 'error'
-    const exhibDefReq = await hubTools.getExhibitComponent(mod.uuid).makeRequest({
+    const exhibDefReq = await component.makeRequest({
       method: 'GET',
       endpoint: '/definitions/' + exhibDefUUID + '/load'
     })
@@ -303,7 +303,9 @@ async function createExhibitionModificationHTML (mod, exhib) {
   </div>
   `
 
-  col.querySelector('.component-name').textContent = component.id
+  // A component that Hub no longer has is shown by the name saved in the exhibition
+  col.querySelector('.component-name').textContent = component?.id ??
+    exhib.components.find(obj => obj.uuid === mod.uuid)?.id ?? 'Unknown component'
   for (const [selector, def] of [['.exhib-name', exhibDef], ['.mod-name', modDef]]) {
     const nameEl = col.querySelector(selector)
     if (def != null) {
@@ -316,13 +318,18 @@ async function createExhibitionModificationHTML (mod, exhib) {
 
   compareRow.appendChild(col)
   if (badConnection) {
-    col.querySelector('.bad-connection-warning').innerHTML = '<div class=\'text-center text-warning fst-italic\'>Cannot connect to component</div>'
+    const warning = document.createElement('div')
+    warning.classList = 'text-center text-warning fst-italic'
+    warning.textContent = component == null ? 'Component not found' : 'Cannot connect to component'
+    col.querySelector('.bad-connection-warning').appendChild(warning)
   }
-  col.querySelector('.mod-div').appendChild(exUtilities.getDefinitionThumbnail(component.getHelperURL(), mod.definition, component.getHelperAPI()))
-  col.querySelector('.exhib-div').appendChild(exUtilities.getDefinitionThumbnail(component.getHelperURL(), exhibDef?.uuid ?? 'error', component.getHelperAPI()))
+  if (component != null) {
+    col.querySelector('.mod-div').appendChild(exUtilities.getDefinitionThumbnail(component.getHelperURL(), mod.definition, component.getHelperAPI()))
+    col.querySelector('.exhib-div').appendChild(exUtilities.getDefinitionThumbnail(component.getHelperURL(), exhibDef?.uuid ?? 'error', component.getHelperAPI()))
+  }
   col.querySelector('.btn-close').addEventListener('click', (ev) => {
     const toRemove = JSON.parse(modal.dataset.toRemove)
-    toRemove.push(component.uuid)
+    toRemove.push(mod.uuid)
     modal.dataset.toRemove = JSON.stringify(toRemove)
 
     // Update the GUI
@@ -451,7 +458,8 @@ async function editExhibitCreateComponentHTML (component) {
 
   const nameDiv = document.createElement('div')
   nameDiv.classList = 'fs-5'
-  nameDiv.textContent = componentObj.id
+  // A component that Hub no longer has is shown by the name saved in the exhibition
+  nameDiv.textContent = componentObj?.id ?? component.id
   header.appendChild(nameDiv)
 
   const deleteButton = document.createElement('button')
@@ -514,12 +522,13 @@ async function editExhibitCreateComponentHTML (component) {
   definitionSelect.setAttribute('data-initial-definition', component.definition)
   definitionSelectCol.appendChild(definitionSelect)
 
-  const badComponent = function () {
-    // This component is offline
+  const badComponent = function (message = 'Component offline') {
+    // This component is offline, or Hub doesn't have it
     const badComponentCol = Object.assign(document.createElement('div'), {
       className: 'col-12',
-      innerHTML: '<div class="alert alert-danger fst-italic text-center py-2 mb-0">Component offline</div>'
+      innerHTML: '<div class="alert alert-danger fst-italic text-center py-2 mb-0"></div>'
     })
+    badComponentCol.firstChild.textContent = message
     bodyRow.appendChild(badComponentCol)
 
     // Hide the thumbnail and select
@@ -527,7 +536,7 @@ async function editExhibitCreateComponentHTML (component) {
   }
 
   if (componentObj == null) {
-    badComponent()
+    badComponent('Component not found')
     return
   }
 
