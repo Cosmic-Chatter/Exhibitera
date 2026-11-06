@@ -17,7 +17,10 @@ const exhibitActionConfigurator = new ActionConfigurator({
   targetSelectorLabelId: 'editExhibitActionTargetSelectorLabel',
   valueSelectorId: 'editExhibitActionValueSelector',
   valueSelectorLabelId: 'editExhibitActionValueSelectorLabel',
-  modalId: 'editExhibitActionModal'
+  modalId: 'editExhibitActionModal',
+  errorAlertId: 'editExhibitActionEditErrorAlert',
+  onError: () => editExhibitActionModal.showWarning('editExhibitActionEditErrorAlert'),
+  onErrorClear: () => editExhibitActionModal.hideWarning('editExhibitActionEditErrorAlert')
 })
 
 // Modal for creating or editing an action in an exhibition
@@ -28,7 +31,7 @@ const editExhibitActionModal = new ModalController({
     { id: 'editExhibitActionTargetSelector', value: null },
     { id: 'editExhibitActionValueSelector', value: null }
   ],
-  warningIDs: []
+  warningIDs: ['editExhibitActionEditErrorAlert']
 })
 
 export function configureVisibleGroups () {
@@ -785,6 +788,7 @@ export async function showEditExhibitActionModal (actionDict = null) {
 
   editExhibitActionModal.setData('uuid', exUtilities.uuid())
   editExhibitActionModal.setData('isEdit', 'false')
+  exhibitActionConfigurator.editing(actionDict?.target, actionDict?.value)
 
   if (actionDict != null) {
     editExhibitActionModal.setData('uuid', actionDict.uuid)
@@ -793,18 +797,11 @@ export async function showEditExhibitActionModal (actionDict = null) {
 
     actionSelector.value = actionDict.action
 
-    editExhibitActionConfigureTargetSelector(actionDict.action)
-    setTimeout(() => {
-      for (const target of actionDict.target) {
-        const targetStr = JSON.stringify(target)
-        for (const option of targetSelector.options) {
-          if (option.value === targetStr) option.selected = true
-        }
-      }
-    }, 0) // Make sure the DOM is updated
+    editExhibitActionConfigureTargetSelector(actionDict.action, actionDict.target)
+    exhibitActionConfigurator.selectTargets(actionDict.target)
 
+    // This also selects the saved value
     await editExhibitActionConfigureValueSelector(actionDict.action, actionDict.target)
-    valueSelector.value = actionDict.value
   }
   editExhibitActionModal.show()
 }
@@ -851,7 +848,12 @@ export function editExhibitActionSubmit () {
   }
 
   if (action === '') return
-  if (action === 'set_dmx_scene' && (value === '' || value == null)) return
+  const problem = exhibitActionConfigurator.problemWith(action, targets, value)
+  if (problem != null) {
+    document.getElementById('editExhibitActionEditErrorAlert').textContent = problem
+    editExhibitActionModal.showWarning('editExhibitActionEditErrorAlert')
+    return
+  }
 
   const actionsList = document.getElementById('editExhibitActionsList')
   const actionHTML = createExhibitActionEntryHTML({ action, target: targets, uuid, value })

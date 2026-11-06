@@ -512,6 +512,8 @@ export function scheduleConfigureEditModal (scheduleName,
     document.getElementById('scheduleEditScopeAlert').textContent = `This change will affect all ${scheduleName.charAt(0).toUpperCase() + scheduleName.slice(1)}s`
   }
 
+  scheduleActionConfigurator.editing(isAddition ? null : currentTarget, isAddition ? null : currentValue)
+
   // If we're editing an existing action, pre-fill the current options
   if (isAddition === false) {
     scheduleEditModal.populate([
@@ -528,21 +530,7 @@ export function scheduleConfigureEditModal (scheduleName,
       if (currentTarget != null) {
         setScheduleActionTargetSelector(currentAction, currentTarget)
 
-        // We need to stringify each of the targets to compare them with the options
-        const targets = (Array.isArray(currentTarget) ? currentTarget : [currentTarget]).map(target => JSON.stringify(target))
-        for (const option of targetSelector.options) {
-          option.selected = targets.includes(option.value)
-        }
-
-        // Keep any targets that Hub no longer has, or that haven't connected yet, unless they're deselected
-        const listed = Array.from(targetSelector.options).map(option => option.value)
-        for (const target of targets) {
-          if (listed.includes(target)) continue
-          const details = JSON.parse(target)
-          const option = new Option('Not found: ' + (details.uuid ?? details.value ?? ''), target)
-          targetSelector.appendChild(option)
-          option.selected = true
-        }
+        scheduleActionConfigurator.selectTargets(currentTarget)
 
         // Show the target selector and its label
         targetSelector.style.display = 'block'
@@ -584,24 +572,25 @@ export function sendScheduleUpdateFromModal () {
 
   const editErrorAlert = document.getElementById('scheduleEditErrorAlert')
   if (time === '' || time == null) {
-    editErrorAlert.innerText = 'You must specifiy a time for the action'
+    editErrorAlert.innerText = 'You must specify a time for the action'
     scheduleEditModal.showWarning('scheduleEditErrorAlert')
     return
   } else if (action === '' || action == null) {
-    editErrorAlert.innerText = 'You must specifiy an action'
+    editErrorAlert.innerText = 'You must specify an action'
     scheduleEditModal.showWarning('scheduleEditErrorAlert')
     return
-  } else if (action === 'set_exhibit' && target == null) {
-    editErrorAlert.innerText = 'You must specifiy an exhibition to set'
+  } else if (action === 'set_exhibit' && (target == null || target.length === 0)) {
+    editErrorAlert.innerText = 'You must specify an exhibition to set'
     scheduleEditModal.showWarning('scheduleEditErrorAlert')
     return
-  } else if (['power_on', 'power_off', 'refresh_page', 'restart', 'run_program', 'set_definition', 'set_dmx_scene'].includes(action) && target.length === 0) {
+  } else if (action === 'run_program' && target.length === 0) {
     editErrorAlert.innerText = 'You must specify a target for this action'
     scheduleEditModal.showWarning('scheduleEditErrorAlert')
     return
-  } else if (['set_definition', 'set_dmx_scene'].includes(action) && (value == null || value === '')) {
-    // The options may not have been listed, such as when the component is offline
-    editErrorAlert.innerText = scheduleActionConfigurator.valueProblem ?? 'You must specify a value for this action'
+  }
+  const problem = scheduleActionConfigurator.problemWith(action, target, value)
+  if (problem != null) {
+    editErrorAlert.innerText = problem
     scheduleEditModal.showWarning('scheduleEditErrorAlert')
     return
   }

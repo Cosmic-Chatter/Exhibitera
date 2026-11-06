@@ -23,7 +23,7 @@ export class ActionConfigurator {
     targetSelectorLabelId,
     valueSelectorId,
     valueSelectorLabelId,
-    modalId = null, // Used to look up dataset.currentValue when editing
+    modalId = null,
     errorAlertId = null,
     onError = null,
     onErrorClear = null,
@@ -43,6 +43,9 @@ export class ActionConfigurator {
     this.onError = onError
     this.onErrorClear = onErrorClear
     this.extraElements = extraElements
+
+    // When editing an action, its target and value, so the value is selected when that target's options are listed
+    this.savedValue = null
 
     // Flat list of every extra element ID across all actions, used to
     // reset/hide everything before showing the ones relevant to the
@@ -241,8 +244,19 @@ export class ActionConfigurator {
     }
     // Ignore answers to an earlier request, such as for a component chosen before this one
     if (request !== this._valueRequest) return
-    if (response?.success !== true) {
+    if (response == null) {
       this._showValueProblem(action, 'This component is not responding')
+      return
+    }
+    if (response.success !== true) {
+      // The component answered, but couldn't list the options, such as lighting scenes without DMX set up
+      if (response.reason === 'no_config_file' && action === 'set_dmx_scene') {
+        this._showValueProblem(action, "This component doesn't have DMX lighting set up", true)
+      } else if (response.reason === 'device_not_found' && action === 'set_dmx_scene') {
+        this._showValueProblem(action, "This component can't find its DMX controller")
+      } else {
+        this._showValueProblem(action, 'This component had a problem')
+      }
       return
     }
     if (this.onErrorClear) this.onErrorClear()
@@ -264,23 +278,62 @@ export class ActionConfigurator {
       }
     }
 
-    // In the case of editing an action, preselect any existing value
-    if (this.modalId != null) {
-      const modal = this._el(this.modalId)
-      if (modal?.dataset?.currentValue != null) {
-        valueSelector.value = modal.dataset.currentValue
-      }
+    // When editing an action, select its saved value
+    if (this.savedValue != null && this.savedValue.uuid === target.uuid) {
+      valueSelector.value = this.savedValue.value
     }
 
     valueSelector.style.display = 'block'
     valueSelectorLabel.style.display = 'block'
   }
 
-  _showValueProblem (action, problem) {
-    // Explain why the value selector has no options, and hide it.
+  editing (target = null, value = null) {
+    // Call when opening the editor, with the target and value of the action being edited, or none for a new action.
+
+    if (Array.isArray(target)) target = target[0]
+    this.savedValue = (target?.uuid != null && value != null) ? { uuid: target.uuid, value } : null
+  }
+
+  selectTargets (targets) {
+    // Select the given targets. Any that aren't listed, such as components Hub no longer has or that haven't
+    // connected yet, are added, so saving keeps them unless they're deselected.
+
+    const targetSelector = this._el(this.targetSelectorId)
+    const wanted = (Array.isArray(targets) ? targets : [targets]).filter((target) => target != null)
+      .map((target) => JSON.stringify(target))
+    for (const option of targetSelector.options) {
+      option.selected = wanted.includes(option.value)
+    }
+
+    const listed = Array.from(targetSelector.options).map((option) => option.value)
+    for (const target of wanted) {
+      if (listed.includes(target)) continue
+      const details = JSON.parse(target)
+      const option = new Option('Not found: ' + (details.uuid ?? details.value ?? ''), target)
+      targetSelector.appendChild(option)
+      option.selected = true
+    }
+  }
+
+  problemWith (action, target, value) {
+    // Return why an action with the given target and value can't be saved, or null if it can.
+
+    if (ACTION_TARGET_OPTIONS[action] != null && (target == null || target.length === 0)) {
+      return 'You must specify a target for this action'
+    }
+    if (ACTIONS_WITH_VALUE_SELECTOR.includes(action) && (value == null || value === '')) {
+      // The options may not have been listed, such as when the component is offline
+      return this.valueProblem ?? 'You must specify a value for this action'
+    }
+    return null
+  }
+
+  _showValueProblem (action, problem, complete = false) {
+    // Explain why the value selector has no options, and hide it. Unless the problem is complete, it's followed
+    // by the options that can't be listed.
 
     const options = action === 'set_dmx_scene' ? 'lighting scenes' : 'definitions'
-    this.valueProblem = `${problem}, so its ${options} can't be listed`
+    this.valueProblem = complete ? problem : `${problem}, so its ${options} can't be listed`
     if (this.errorAlertId != null) {
       const alertEl = this._el(this.errorAlertId)
       if (alertEl) alertEl.textContent = this.valueProblem

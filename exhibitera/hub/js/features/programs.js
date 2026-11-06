@@ -266,6 +266,7 @@ export async function showprogramActionEditModal (actionDict = null) {
 
   programActionEditModal.setData('uuid', exUtilities.uuid())
   programActionEditModal.setData('isEdit', 'false')
+  programActionConfigurator.editing(actionDict?.target, actionDict?.value)
 
   if (actionDict != null) {
     programActionEditModal.setData('uuid', actionDict.uuid)
@@ -295,18 +296,11 @@ export async function showprogramActionEditModal (actionDict = null) {
           targetSelectorLabel.style.display = 'block'
         }
       })
-      setTimeout(() => {
-        for (const target of actionDict.target) {
-          const targetStr = JSON.stringify(target)
-          for (const option of targetSelector.options) {
-            if (option.value === targetStr) option.selected = true
-          }
-        }
-      }, 0) // Make sure the DOM is updated
+      programActionConfigurator.selectTargets(actionDict.target)
     }
 
+    // This also selects the saved value
     await programActionConfigurator.configureValueSelector(actionDict.action, actionDict.target)
-    valueSelector.value = actionDict.value
   }
 
   programActionEditModal.show()
@@ -386,23 +380,21 @@ export function updateActionFromModal () {
 
   const editErrorAlert = document.getElementById('programActionEditErrorAlert')
   if (isNaN(time)) {
-    editErrorAlert.innerText = 'You must specifiy a time offset for the action'
+    editErrorAlert.innerText = 'You must specify a time offset for the action'
     programActionEditModal.showWarning('programActionEditErrorAlert')
     return
   } else if (action === '' || action == null) {
-    editErrorAlert.innerText = 'You must specifiy an action'
+    editErrorAlert.innerText = 'You must specify an action'
     programActionEditModal.showWarning('programActionEditErrorAlert')
     return
-  } else if (action === 'set_exhibit' && target == null) {
-    editErrorAlert.innerText = 'You must specifiy an exhibition to set'
+  } else if (action === 'set_exhibit' && (target == null || target.length === 0)) {
+    editErrorAlert.innerText = 'You must specify an exhibition to set'
     programActionEditModal.showWarning('programActionEditErrorAlert')
     return
-  } else if (['power_on', 'power_off'].includes(action) && target.length === 0) {
-    editErrorAlert.innerText = 'You must specifiy a target for this action'
-    programActionEditModal.showWarning('programActionEditErrorAlert')
-    return
-  } else if (['set_definition', 'set_dmx_scene'].includes(action) && value == null) {
-    editErrorAlert.innerText = 'You must specifiy a value for this action'
+  }
+  const problem = programActionConfigurator.problemWith(action, target, value)
+  if (problem != null) {
+    editErrorAlert.innerText = problem
     programActionEditModal.showWarning('programActionEditErrorAlert')
     return
   }
