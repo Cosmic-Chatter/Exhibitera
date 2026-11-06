@@ -102,10 +102,11 @@ function loadDefinition (def) {
     setAttractor('', '')
   }
 
+  // Start the inactivity timer first, so a problem showing the timeline can't stop it
+  resetInactivityTimer()
   localize(defaultLang)
   // Send a thumbnail to the helper
   setTimeout(() => exCommon.saveScreenshotAsThumbnail(def.uuid + '.png'), 100)
-  resetInactivityTimer()
 }
 
 function adjustFontSize (increment) {
@@ -137,13 +138,19 @@ function localize (lang) {
   document.getElementById('timelineContainer').innerHTML = ''
 
   for (const itemUUID of definition.content_order) {
+    // Skip any item that's listed but no longer in the content
+    if (definition.content?.[itemUUID] == null) continue
     createTimelineEntry(itemUUID, lang)
   }
 
   header.innerHTML = exMarkdown.formatText(definition?.languages?.[lang]?.header_text ?? '', { string: true, removeParagraph: true })
   if (header.innerHTML !== '') {
     root.style.setProperty('--header-height', 'calc(7.5 * var(--base-unit))')
-    textFit(header, { maxFontSize: 1000 })
+    try {
+      textFit(header, { maxFontSize: 1000 })
+    } catch {
+      // The header has no size, such as when the window is minimized, so leave the text at its usual size
+    }
   } else {
     root.style.setProperty('--header-height', '0px')
   }
@@ -306,6 +313,9 @@ function hideAttractor () {
 function showAttractor () {
   // Show the attractor and reset the timeline.
 
+  // Stop counting as active first, so a problem resetting the timeline can't keep it active
+  exCommon.config.currentInteraction = false
+
   if (attractorAvailable) {
     document.getElementById('attractorVideo').play()
     document.getElementById('attractorOverlay').style.display = 'block'
@@ -314,8 +324,6 @@ function showAttractor () {
   }
   adjustFontSize(-100)
   localize(defaultLang)
-
-  exCommon.config.currentInteraction = false
 }
 
 // Add event listeners

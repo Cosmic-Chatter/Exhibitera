@@ -74,6 +74,9 @@ export async function openPage (site, page, { search = '' } = {}) {
     unobserve () {}
     disconnect () {}
   }
+  // jsdom can't play media
+  window.HTMLMediaElement.prototype.play = () => Promise.resolve()
+  window.HTMLMediaElement.prototype.pause = () => {}
   // Enough of CSS.escape for the identifiers and filenames the pages use in selectors
   window.CSS = { escape: (value) => String(value).replace(/[^\w-]/g, (char) => '\\' + char) }
   // jsdom doesn't lay out pages, so it has no innerText. Without CSS, it matches textContent.
