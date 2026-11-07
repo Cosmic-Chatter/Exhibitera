@@ -809,6 +809,26 @@ export function createLoginEventListeners () {
   document.getElementById('passwordChangeModalSubmitButton').addEventListener('click', submitUserPasswordChange)
 }
 
+function saveOnShortcut (event) {
+  // Ctrl-S (Cmd-S on a Mac) saves the definition, rather than the browser saving the web page.
+
+  if (!(event.ctrlKey || event.metaKey) || event.shiftKey || event.altKey) return
+  if (event.key?.toLowerCase() !== 's') return
+  event.preventDefault()
+
+  // Don't save over a dialog, such as the setup wizard, or start a second save while one is underway
+  if (document.querySelector('.modal.show') != null) return
+  const button = document.getElementById('definitionSaveButton')
+  if (button == null || button.disabled) return
+
+  // Some fields record their value when it changes, which normally happens on leaving them. Record the
+  // field being typed in, so it's included.
+  const field = document.activeElement
+  if (field?.matches?.('input, select, textarea')) field.dispatchEvent(new Event('change', { bubbles: true }))
+
+  button.click()
+}
+
 function createEventListeners () {
   // Bind various event listeners to their elements.
 
@@ -850,6 +870,7 @@ function createEventListeners () {
         // The person has already been told the save failed
       })
   })
+  document.addEventListener('keydown', saveOnShortcut)
 
   // Preview definition button
   document.getElementById('previewRefreshButton').addEventListener('click', () => {
