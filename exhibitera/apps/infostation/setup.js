@@ -325,6 +325,11 @@ function addLanguage (code, displayName, englishName) {
 function rebuildTabs () {
   // Rebuild the tab interface
 
+  // Tabs' text is stored per language, so a language must be added before tabs can be edited
+  const noLanguages = (exSetup.config.workingDefinition?.language_order ?? []).length === 0
+  document.getElementById('contentNoLanguagesAlert').style.display = noLanguages ? 'block' : 'none'
+  document.getElementById('contentInterface').style.display = noLanguages ? 'none' : 'flex'
+
   // First rebuild the interface for setting the overall header per language
   const nav = document.getElementById('headerInputTabs')
   const pane = document.getElementById('headerInputContent')
