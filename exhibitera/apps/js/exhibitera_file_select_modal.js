@@ -777,16 +777,15 @@ function selectFile (target, allowMultiple, clickEvent) {
   // Update last clicked reference
   lastClickedSelectBox = target
 
-  // Check if multiple files are selected and show/hide the delete multiple button
-  if (allowMultiple === true) {
-    if (document.querySelectorAll('.const-file-select-box.const-file-selected').length > 1) {
-      document.getElementById('exFileSelectModalDeleteMultipleButtonCol').style.display = 'block'
-      document.getElementById('exFileSelectModalDownloadMultipleButtonCol').style.display = 'block'
-    } else {
-      document.getElementById('exFileSelectModalDeleteMultipleButtonCol').style.display = 'none'
-      document.getElementById('exFileSelectModalDownloadMultipleButtonCol').style.display = 'none'
-    }
-  }
+  if (allowMultiple === true) updateMultipleFileButtons()
+}
+
+function updateMultipleFileButtons () {
+  // Show the delete and download multiple buttons when more than one file is selected
+
+  const display = document.querySelectorAll('.const-file-select-box.const-file-selected').length > 1 ? 'block' : 'none'
+  document.getElementById('exFileSelectModalDeleteMultipleButtonCol').style.display = display
+  document.getElementById('exFileSelectModalDownloadMultipleButtonCol').style.display = display
 }
 
 function selectAllFiles () {
@@ -865,6 +864,8 @@ function uploadFile (options) {
       formData.append('files', file)
     }
 
+    const uploadedNames = Array.from(fileInput.files).map((file) => file.name)
+
     const xhr = new XMLHttpRequest()
     xhr.open('POST', exCommon.config.helperAddress + exCommon.config.api + '/files/upload', true)
 
@@ -877,6 +878,7 @@ function uploadFile (options) {
           document.getElementById('exFileSelectModalUploadProgressBarContainer').style.display = 'none'
           document.getElementById('exFileSelectModalUploadfilename').innerHTML = 'Upload new'
           populateComponentContent(options)
+            .then(() => showUploadedFiles(uploadedNames, options))
         }
       } else if (this.status === 422) {
         console.log(JSON.parse(this.responseText))
@@ -896,6 +898,27 @@ function uploadFile (options) {
 
     xhr.send(formData)
   }
+}
+
+function showUploadedFiles (filenames, options) {
+  // Select the files that were just uploaded and scroll the list to the first one. If only one file can be
+  // chosen, select just that first one.
+
+  const entries = Array.from(document.getElementById('exFileSelectModalFileList').querySelectorAll('.const-file-entry'))
+    .filter((entry) => filenames.includes(entry.getAttribute('data-filename')))
+  if (entries.length === 0) return // The list doesn't show files of these types
+
+  const toSelect = options.multiple ? entries : entries.slice(0, 1)
+  for (const entry of toSelect) {
+    const box = entry.querySelector('.const-file-select-box')
+    box.classList.add('const-file-selected', 'bg-success')
+    box.innerHTML = '✓'
+  }
+  lastClickedSelectBox = toSelect[0].querySelector('.const-file-select-box')
+  if (options.multiple) updateMultipleFileButtons()
+
+  // With several files, show the first at the top so the others follow it
+  entries[0].scrollIntoView({ block: entries.length > 1 ? 'start' : 'nearest' })
 }
 
 function deleteFiles (files) {

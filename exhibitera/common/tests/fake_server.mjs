@@ -7,6 +7,9 @@
 export const requests = []
 
 export class FakeXMLHttpRequest {
+  // Uploads report their progress here
+  upload = { addEventListener () {} }
+
   open (method, url) {
     this.method = method
     // Pages also request relative URLs, which the browser resolves against the page's address
