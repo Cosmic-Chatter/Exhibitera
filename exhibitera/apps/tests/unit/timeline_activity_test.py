@@ -54,7 +54,8 @@ def test_timeline_stops_counting_as_active():
     """, browser="page")
 
     assert result["errors"] == []
-    # The missing item is skipped, rather than stopping the rest of the timeline from being shown
-    assert result["loaded"] == {"active": True, "entries": 2}
+    # The missing item is skipped, rather than stopping the rest of the timeline from being shown. Loading
+    # doesn't count as a visitor using the app.
+    assert result["loaded"] == {"active": False, "entries": 2}
     assert result["tapped"] is True
     assert result["afterTimeout"] == {"active": False, "attractor": "block"}

@@ -286,8 +286,6 @@ function buttonTouched (button, name, index) {
   // `name` is the name of the data column
   // `index` is the index of the current question
 
-  setActive()
-
   const uuid = currentDefinition.item_order[index]
   const lastItem = index === currentDefinition.item_order.length - 1
   const thisItem = currentDefinition.items[uuid]
@@ -324,8 +322,6 @@ function buttonTouched (button, name, index) {
 function nextButtonTouched (index) {
   // Handle a next button being touched
 
-  setActive()
-
   const uuid = currentDefinition.item_order[index]
   const lastItem = index === currentDefinition.item_order.length - 1
   const thisItem = currentDefinition.items[uuid]
@@ -347,14 +343,6 @@ function nextButtonTouched (index) {
     restartSession()
   }
   console.log(response)
-}
-
-function setActive () {
-  exCommon.config.currentInteraction = true
-  const reset = function () {
-    exCommon.config.currentInteraction = false
-  }
-  setTimeout(reset, 10000)
 }
 
 function checkConnection () {
@@ -596,6 +584,7 @@ document.addEventListener('wheel', function (e) {
   }
 }, { passive: false })
 
+exCommon.trackInteractions()
 exCommon.configureApp({
   name: 'survey_kiosk',
   debug: true,

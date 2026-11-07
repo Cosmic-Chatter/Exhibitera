@@ -117,8 +117,6 @@ function calculateButtonRows (buttons) {
 function buttonTouched (button, name) {
   // Respond to the touch of a button by changing color and logging the vote
 
-  setActive()
-
   const cards = button.querySelectorAll('.card')
   for (const card of cards) {
     card.classList.remove('card-inactive')
@@ -145,14 +143,6 @@ function logVote (name, numVotes) {
   clearTimeout(touchBlocker)
   blockTouches = true
   touchBlocker = setTimeout(function () { blockTouches = false }, touchCooldown * 1000)
-}
-
-function setActive () {
-  exCommon.config.currentInteraction = true
-  const reset = function () {
-    exCommon.config.currentInteraction = false
-  }
-  setTimeout(reset, 10000)
 }
 
 function checkConnection () {
@@ -382,6 +372,7 @@ document.addEventListener('wheel', function (e) {
   }
 }, { passive: false })
 
+exCommon.trackInteractions()
 exCommon.configureApp({
   name: 'voting_kiosk',
   debug: true,

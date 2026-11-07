@@ -80,7 +80,6 @@ function updateSourceList (matchString) {
 
 function handleTouchStart (event, touch = true) {
   hideAttractor()
-  exCommon.config.currentInteraction = true
 
   if (touch) {
     touchStartX = event.touches[0].clientX
@@ -97,7 +96,6 @@ function handleTouchEnd (event) {
 }
 
 function handleTouchMove (event, touch = true) {
-  exCommon.config.currentInteraction = true
   if (touch === true && event.touches.length > 1) {
     event.preventDefault()
     return
@@ -168,7 +166,6 @@ function handleScroll (event) {
   // Cycle the images when a user scrolls the mouse scroll wheel.
 
   hideAttractor()
-  exCommon.config.currentInteraction = true
 
   const dy = event.originalEvent.deltaY
   const velocity = Math.abs(dy)
@@ -204,7 +201,6 @@ function handleKeyDown (event) {
   // Listen for arrow keys and switch images accordingly
 
   hideAttractor()
-  exCommon.config.currentInteraction = true
 
   const key = event.key
   const repeated = event.repeat
@@ -328,6 +324,8 @@ function animateTimelapse () {
 function showAttractor () {
   // Start animating the timelapse and show a moving hand icon to guide users
 
+  exCommon.endInteraction()
+  attractorShowing = true
   animateTimelapse()
   if (showFingerAnimation === true) {
     document.getElementById('handContainer').style.display = 'block'
@@ -358,10 +356,11 @@ function hideAttractor () {
   // Hide the moving hand icon
   document.getElementById('handContainer').style.display = 'none'
 
-  // Report analytics, if necessary
-  if (enableAnalytics && !exCommon.config.currentInteraction) {
+  // Report analytics when a visitor starts using the timelapse
+  if (enableAnalytics && attractorShowing) {
     exCommon.sendAnalytics({ action: 'hideAttractor' })
   }
+  attractorShowing = false
 
   // Set the attractor to start again in 30 s
   clearTimeout(attractorTimer)
@@ -382,6 +381,7 @@ let animationCustomDuration = null
 let attractorTimer = null // Will be replaced with index of setTimeout
 let attractorTimeout = 30000 // ms
 let attractorAvailable = false
+let attractorShowing = false
 let showFingerAnimation = true
 
 let sourceList = []
@@ -401,6 +401,7 @@ exCommon.configureApp({
 // Create event listeners
 const body = document.body
 
+exCommon.trackInteractions()
 body.addEventListener('touchstart', handleTouchStart)
 body.addEventListener('touchmove', handleTouchMove)
 body.addEventListener('touchend', handleTouchEnd)

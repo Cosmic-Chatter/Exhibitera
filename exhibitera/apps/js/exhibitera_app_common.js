@@ -17,7 +17,8 @@ export const config = {
   exhibiteraAppID: 'none',
   currentDefinition: '',
   currentExhibit: 'Default',
-  currentInteraction: false,
+  currentInteraction: false, // Whether a visitor is using the app, which Hub shows as active
+  interactionWindow: 30000, // How long the app counts as active after the last interaction, in ms
   definitionUUID: '',
   definition: {}, // Holds the current definition
   definitionLoader: null, // A function used by loadDefinition() to set up the specific app.
@@ -262,6 +263,46 @@ export function clearNotification (notificationUUID) {
   // Clear the given notification
 
   delete config.notifications[notificationUUID]
+}
+
+let interactionTimer = null
+
+export function trackInteractions () {
+  // Count the app as active while visitors use it: until config.interactionWindow after the last touch, click,
+  // key press, scroll, or typing, and while a video they started keeps playing. Call once, from apps that
+  // visitors interact with.
+
+  for (const type of ['pointerdown', 'touchstart', 'click', 'keydown', 'wheel', 'input']) {
+    document.addEventListener(type, markInteraction, { capture: true, passive: true })
+  }
+}
+
+export function markInteraction () {
+  // Count the app as active, from now until config.interactionWindow has passed.
+
+  config.currentInteraction = true
+  clearTimeout(interactionTimer)
+  interactionTimer = setTimeout(checkInteraction, config.interactionWindow)
+}
+
+function checkInteraction () {
+  // The window has passed, so stop counting as active, unless a video the visitor started is still playing.
+  // Attractors and other videos that play by themselves are set to autoplay, so they don't count.
+
+  const videoPlaying = Array.from(document.querySelectorAll('video'))
+    .some((video) => !video.paused && !video.ended && !video.autoplay)
+  if (videoPlaying) {
+    interactionTimer = setTimeout(checkInteraction, config.interactionWindow)
+    return
+  }
+  config.currentInteraction = false
+}
+
+export function endInteraction () {
+  // Stop counting as active now, such as when the attractor shows because the visitor has left.
+
+  clearTimeout(interactionTimer)
+  config.currentInteraction = false
 }
 
 export function sendPing () {

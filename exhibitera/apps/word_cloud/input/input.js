@@ -213,6 +213,7 @@ function onChange (input) {
   setLengthHint(input.length)
 }
 
+exCommon.trackInteractions()
 exCommon.configureApp({
   name: 'word_cloud_input',
   debug: true,

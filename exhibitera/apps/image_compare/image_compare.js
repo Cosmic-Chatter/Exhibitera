@@ -29,6 +29,7 @@ slider.style.top = (h / 2) - (slider.offsetHeight / 2) + 'px'
 slider.style.left = (w / 2) - (slider.offsetWidth / 2) + 'px'
 
 // Reset the timer
+exCommon.trackInteractions()
 document.body.addEventListener('click', resetActivityTimer)
 
 // Listen for click/tap and start the sliding
@@ -484,7 +485,7 @@ function showAttractor () {
 
   const attractorOverlay = document.getElementById('attractorOverlay')
 
-  exCommon.config.currentInteraction = false
+  exCommon.endInteraction()
   if (attractorAvailable) {
     if (attractorType === 'video') {
       document.getElementById('attractorVideo').play()
@@ -514,7 +515,6 @@ function hideAttractor () {
     if (attractorType === 'video') {
       document.getElementById('attractorVideo').pause()
     }
-    exCommon.config.currentInteraction = true
     resetActivityTimer()
     attractorOverlay.style.display = 'none'
   }, 400)

@@ -298,7 +298,6 @@ function resetInactivityTimer () {
 
   clearTimeout(attractorTimer)
   attractorTimer = setTimeout(showAttractor, inactivityTimeout * 1000) // sec -> ms
-  exCommon.config.currentInteraction = true
 }
 
 function hideAttractor () {
@@ -313,8 +312,7 @@ function hideAttractor () {
 function showAttractor () {
   // Show the attractor and reset the timeline.
 
-  // Stop counting as active first, so a problem resetting the timeline can't keep it active
-  exCommon.config.currentInteraction = false
+  exCommon.endInteraction()
 
   if (attractorAvailable) {
     document.getElementById('attractorVideo').play()
@@ -337,6 +335,7 @@ document.getElementById('fontSizeIncreaseButton').addEventListener('click', () =
   adjustFontSize(0.1)
 })
 
+exCommon.trackInteractions()
 document.getElementById('attractorOverlay').addEventListener('click', hideAttractor)
 document.addEventListener('touchstart', resetInactivityTimer)
 document.addEventListener('click', resetInactivityTimer)

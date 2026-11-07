@@ -289,7 +289,6 @@ function gotoTab (id) {
 function hideAttractor () {
   // Make the attractor layer invisible
 
-  exCommon.config.currentInteraction = true
   const attractorOverlay = document.getElementById('attractorOverlay')
   attractorOverlay.style.opacity = 0
   setTimeout(() => {
@@ -311,7 +310,6 @@ function updateFunc (update) {
 function resetActivityTimer () {
   // Cancel the existing activity timer and set a new one
 
-  exCommon.config.currentInteraction = true
   clearTimeout(inactivityTimer)
   inactivityTimer = setTimeout(showAttractor, timeoutDuration)
 }
@@ -348,7 +346,7 @@ function showAttractor () {
     }
   }
 
-  exCommon.config.currentInteraction = false
+  exCommon.endInteraction()
 
   const attractorOverlay = document.getElementById('attractorOverlay')
   const navTabContent = document.getElementById('nav-tabContent')
@@ -387,6 +385,7 @@ let defaultLang = ''
 let textTabs = [] // Holds ids of textTabs.
 let firstTab = ''
 
+exCommon.trackInteractions()
 document.addEventListener('touchstart', resetActivityTimer)
 document.addEventListener('click', resetActivityTimer)
 document.getElementById('fontSizeDecreaseButton').addEventListener('click', fontSizeDecrease)

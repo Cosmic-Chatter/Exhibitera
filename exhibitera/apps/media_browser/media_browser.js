@@ -530,7 +530,7 @@ function showAttractor () {
 
   const attractorOverlay = document.getElementById('attractorOverlay')
 
-  exCommon.config.currentInteraction = false
+  exCommon.endInteraction()
   if (attractorAvailable) {
     if (attractorType === 'video') {
       document.getElementById('attractorVideo').play()
@@ -563,7 +563,6 @@ function hideAttractor () {
     if (attractorType === 'video') {
       document.getElementById('attractorVideo').pause()
     }
-    exCommon.config.currentInteraction = true
     resetActivityTimer()
   }, 400)
 }
@@ -869,6 +868,7 @@ document.getElementById('previousPageButton').addEventListener('click', () => {
 document.getElementById('nextPageButton').addEventListener('click', () => {
   changePage('forward')
 })
+exCommon.trackInteractions()
 document.body.addEventListener('click', resetActivityTimer)
 document.getElementById('attractorOverlay').addEventListener('click', hideAttractor)
 document.getElementById('mediaLightboxImage').addEventListener('load', (e) => {
