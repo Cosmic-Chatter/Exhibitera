@@ -949,3 +949,83 @@ def test_definition_names_are_shown_as_text():
 
     # An app the picker doesn't know is left out
     assert result == {"errors": [], "uses": ["<b>Bold</b>"], "bold": False}
+
+
+# Renaming files that definitions use
+
+RENAMING = DELETING + """
+    const renamed = () => browser.requests.filter((r) => r.url.endsWith('/rename')).map((r) => JSON.parse(r.body).new_name)
+    const rename = async (from, to) => {
+      preview(from)
+      el('exFileSelectModalRenameFileButton').click()
+      el('exFileSelectModalFilePreviewEditField').value = to
+      el('exFileSelectModalFilePreviewEditSaveButton').click()
+      await browser.wait(200)
+    }
+    const editing = () => display('exFileSelectModalFilePreviewEditContainer') !== 'none'
+"""
+
+
+def test_files_not_in_use_are_renamed_without_asking():
+    result = run_picker({"manage": True}, RENAMING + """
+        await rename('photo03.jpg', 'fossil.jpg')
+        report({ errors: browser.errors, warning: warning(), renamed: renamed(), listed: entry('fossil.jpg') != null })
+    """)
+
+    assert result == {"errors": [], "warning": None, "renamed": ["fossil.jpg"], "listed": True}
+
+
+def test_renaming_a_file_in_use_asks_first():
+    result = run_picker({"manage": True}, RENAMING + f"""
+        replies.usage = {{ body: {{ success: true, usage: {{ 'photo03.jpg': {json.dumps([LOBBY])} }} }} }}
+        await rename('photo03.jpg', 'fossil.jpg')
+        const asked = {{ warning: warning(), renamed: renamed(), usageChecked: browser.requests.filter((r) => r.url.endsWith('/files/usage')).map((r) => JSON.parse(r.body).files) }}
+
+        press("Don't rename")
+        await browser.wait(200)
+        report({{ errors: browser.errors, asked, after: {{ warning: warning(), renamed: renamed(), editing: editing(), listed: entry('photo03.jpg') != null }} }})
+    """)
+
+    assert result == {"errors": [],
+                      "asked": {"warning": {"message": "photo03.jpg is used by these definitions, which will be left without it:",
+                                            "uses": ["Lobby loop (Media Player)"],
+                                            "buttons": ["Rename anyway", "Don't rename"]},
+                                "renamed": [], "usageChecked": [["photo03.jpg"]]},
+                      "after": {"warning": None, "renamed": [], "editing": False, "listed": True}}
+
+
+def test_a_file_in_use_can_be_renamed_anyway():
+    result = run_picker({"manage": True}, RENAMING + f"""
+        replies.usage = {{ body: {{ success: true, usage: {{ 'photo03.jpg': {json.dumps([LOBBY])} }} }} }}
+        await rename('photo03.jpg', 'fossil.jpg')
+        press('Rename anyway')
+        await browser.wait(200)
+        report({{ errors: browser.errors, warning: warning(), renamed: renamed(), listed: [entry('photo03.jpg') != null, entry('fossil.jpg') != null] }})
+    """)
+
+    assert result == {"errors": [], "warning": None, "renamed": ["fossil.jpg"], "listed": [False, True]}
+
+
+@pytest.mark.parametrize("reply", ["{ body: { success: false } }", "'error'"])
+def test_files_arent_renamed_if_their_use_cant_be_checked(reply):
+    result = run_picker({"manage": True}, RENAMING + f"""
+        replies.usage = {reply}
+        await rename('photo03.jpg', 'fossil.jpg')
+        report({{ errors: browser.errors, problem: problem(), warning: warning(), renamed: renamed(), editing: editing() }})
+    """)
+
+    # The new name is kept, to try again
+    assert result == {"errors": [], "warning": None, "renamed": [], "editing": True,
+                      "problem": "This file couldn't be renamed. Check the connection to Apps and try again."}
+
+
+def test_starting_something_else_clears_an_unanswered_question():
+    result = run_picker({"manage": True}, RENAMING + f"""
+        replies.usage = {{ body: {{ success: true, usage: {{ 'photo03.jpg': {json.dumps([LOBBY])} }} }} }}
+        await rename('photo03.jpg', 'fossil.jpg')
+        replies.usage = {{ body: {{ success: true, usage: {{}} }} }}
+        await deleteOne('photo05.jpg')
+        report({{ errors: browser.errors, warning: warning(), renamed: renamed(), deleted: deleted() }})
+    """)
+
+    assert result == {"errors": [], "warning": None, "renamed": [], "deleted": [["photo05.jpg"]]}

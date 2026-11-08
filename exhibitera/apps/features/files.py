@@ -54,26 +54,16 @@ def get_available_definitions(app_id: str = "all") -> dict[str, Any]:
 def find_file_uses(filenames: list[str]) -> dict[str, list[dict[str, str]]]:
     """Return the definitions that use each of the given content files, for the files that are used.
 
-    Every text value in a definition is searched, rather than the fields each app is known to use, so new fields
-    aren't missed. A value uses a file if it's the file's name, or refers to it as /content/<name>, as fonts and
-    Markdown text do. Timelapse Viewer chooses its files with a pattern, where * matches anything.
+    See _DefinitionReferences for what counts as using a file.
     """
 
-    # A reference ends where the name does, so photo.jpg doesn't match photo.jpg.bak
-    references = {name: re.compile(re.escape('/content/' + name) + r'(?=$|[\s)"\'?#])') for name in filenames}
+    references = {name: _file_reference(name) for name in filenames}
     uses: dict[str, list[dict[str, str]]] = {}
 
     for definition in get_available_definitions().values():
-        values = list(_text_values(definition))
-        pattern = definition.get("files") if definition.get("app") == "timelapse_viewer" else None
-        if isinstance(pattern, str) and pattern != "":
-            pattern = re.compile(re.escape(pattern).replace(r'\*', '.*'))
-        else:
-            pattern = None
-
+        definition_references = _DefinitionReferences(definition)
         for name in filenames:
-            used = any(value == name or references[name].search(value) for value in values)
-            if used or (pattern is not None and pattern.fullmatch(name)):
+            if definition_references.uses(name, references[name]):
                 uses.setdefault(name, []).append({"uuid": str(definition.get("uuid", "")),
                                                   "name": str(definition.get("name", "")),
                                                   "app": str(definition.get("app", ""))})
@@ -81,6 +71,55 @@ def find_file_uses(filenames: list[str]) -> dict[str, list[dict[str, str]]]:
     for definitions in uses.values():
         definitions.sort(key=lambda d: d["name"].lower())
     return uses
+
+
+def get_definition_content(definition: dict[str, Any]) -> list[str]:
+    """Return the files in the content directory that the given definition uses.
+
+    See _DefinitionReferences for what counts as using a file.
+    """
+
+    definition_references = _DefinitionReferences(definition)
+    return [name for name in _content_names()
+            if definition_references.uses(name, _file_reference(name))]
+
+
+def _file_reference(name: str) -> re.Pattern:
+    """Return a pattern that finds /content/<name> in text. It ends where the name does, so photo.jpg doesn't
+    match photo.jpg.bak.
+    """
+
+    return re.compile(re.escape('/content/' + name) + r'(?=$|[\s)"\'?#])')
+
+
+class _DefinitionReferences:
+    """The references a definition makes to content files.
+
+    Every text value in the definition is searched, rather than the fields each app is known to use, so fields
+    like attractors, or ones added later, aren't missed. A value uses a file if it's the file's name, or refers to it
+    as /content/<name>, as fonts and Markdown text do. Timelapse Viewer chooses its files with a pattern, where *
+    matches anything.
+    """
+
+    def __init__(self, definition: dict[str, Any]):
+        self.values = list(_text_values(definition))
+        pattern = definition.get("files") if definition.get("app") == "timelapse_viewer" else None
+        self.pattern = None
+        if isinstance(pattern, str) and pattern != "":
+            self.pattern = re.compile(re.escape(pattern).replace(r'\*', '.*'))
+
+    def uses(self, name: str, reference: re.Pattern) -> bool:
+        if self.pattern is not None and self.pattern.fullmatch(name):
+            return True
+        return any(value == name or reference.search(value) for value in self.values)
+
+
+def _content_names() -> list[str]:
+    """Return the name of every file in the content directory, including those in subdirectories."""
+
+    content_path = ex_files.get_path(["content"], user_file=True)
+    names = [os.path.relpath(os.path.join(dp, f), content_path) for dp, dn, fn in os.walk(content_path) for f in fn]
+    return [x for x in names if not any(part.startswith('.') for part in pathlib.PurePath(x).parts if part)]
 
 
 def _text_values(value: Any):

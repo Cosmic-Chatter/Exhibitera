@@ -1,7 +1,5 @@
 # Standard modules
-import glob
 import os.path
-import re
 from typing import Any
 import uuid
 
@@ -113,114 +111,8 @@ async def get_definition_content_list(this_uuid: str):
     if app is None:
         return {"success": False, "reason": f"Missing required 'app' key."}
 
-    content = set()
-
-    # First pull out any shared style elements
-    if (definition.get("style", {}).get("background", {}).get("image", "") != ""
-            and definition.get("style", {}).get("background", {}).get("mode") == "image"):
-        content.add(definition["style"]["background"]["image"])
-
-    for item in definition.get("style", {}).get("font", {}):
-        file = definition["style"]["font"][item]
-        # Check if this file in the content directory vs an Exhibitera source directory like _fonts/
-        if os.path.basename(os.path.dirname(file)) == 'content':
-            content.add(os.path.basename(file))
-
-    # Then add app-specific content fields
-    if app == "image_compare":
-        for item_uuid in definition["content"]:
-            item = definition["content"][item_uuid]
-            content.add(item["image1"])
-            content.add(item["image2"])
-    elif app== 'infostation':
-        pattern = r'!\[.*?\]\(/content/([^ \"\)]+).*?\)'
-
-        # Navigate the JSON structure: languages > [code] > tabs > [uuid] > text
-        languages = definition.get("languages", {})
-
-        for code, lang_def in languages.items():
-            tabs = lang_def.get("tabs", {})
-
-            for tab_uuid, tab_content in tabs.items():
-                markdown_text = tab_content.get("text", "")
-
-                # Find all matches in the current markdown string
-                matches = re.findall(pattern, markdown_text)
-
-                # Add found filenames to the existing 'content' set
-                for filename in matches:
-                    content.add(filename)
-    elif app == 'media_browser':
-        for item_uuid in definition.get('content_order', []):
-            item = definition["content"][item_uuid]
-            content.add(item.get("filename", ""))
-            content.add(item.get("custom_thumbnail", ""))
-    elif app == 'media_player':
-        if definition.get("watermark", {}).get('file', '') != '':
-            content.add(definition["watermark"]["file"])
-        for item_uuid in definition.get("content", {}):
-            item = definition["content"][item_uuid]
-            if item["type"] == "file":
-                content.add(item["filename"])
-            if (item.get("subtitles") or {}).get("filename", "") != '':
-                content.add(item["subtitles"]["filename"])
-            if "annotations" in item and isinstance(item["annotations"], dict):
-                for anno_uuid in item["annotations"]:
-                    # Iterate any annotations and copy any needed json files and font files
-                    anno = item["annotations"][anno_uuid]
-                    if anno.get('type', '') == "file":
-                        content.add(anno["file"])
-                    if os.path.basename(os.path.dirname(anno["font"])) == 'content':
-                        content.add(os.path.basename(anno["font"]))
-    elif app == "survey_kiosk":
-        # Find media from option icons
-        items = definition.get('items', {})
-        for item_uuid, item_def in items.items():
-            options = item_def.get("options", {})
-            for option_uuid, option_def in options.items():
-                content.add(option_def.get('icon_user_file', ''))
-                content.add(option_def.get("background", {}).get("image", ""))
-
-        # Find media in Markdown text
-        pattern = r'!\[.*?\]\(/content/([^ \"\)]+).*?\)'
-
-        # Navigate the JSON structure
-        languages = definition.get("languages", {})
-
-        for code, lang_def in languages.items():
-            items = lang_def.get("items", {})
-
-            for item_uuid, item_content in items.items():
-                # Access the 'body' dict, then the 'text' field
-                body = item_content.get("body", {})
-                markdown_text = body.get("text", "")
-
-                # Extract filenames using the regex
-                matches = re.findall(pattern, markdown_text)
-
-                for filename in matches:
-                    content.add(filename)
-    elif app == "timelapse_viewer":
-        if "font" in definition.get("attractor", {}):
-            if os.path.basename(os.path.dirname(definition["attractor"]["font"])) == 'content':
-                content.add(os.path.basename(definition["attractor"]["font"]))
-        content += glob.glob(definition["files"], root_dir=ex_files.get_path(["content"], user_file=True))
-    elif app == "timeline_explorer":
-        for item_uuid in definition.get('content_order', []):
-            item = definition["content"][item_uuid]
-            content.add(item.get("filename", ""))
-            content.add(item.get("custom_thumbnail", ""))
-    elif app == "voting_kiosk":
-        for item_uuid in definition.get("options", {}):
-            item = definition["options"][item_uuid]
-            if item.get("icon_user_file", "") != "":
-                content.add(item["icon_user_file"])
-    elif app == "word_cloud_input":
-        pass
-    elif app == "word_cloud_viewer":
-        pass
-    else:
-        return {"success": False, "reason": f"This endpoint is not yet implemented for {definition['app']}"}
+    # Every file the definition refers to, including attractors and Markdown media, whatever the app
+    content = apps_files.get_definition_content(definition)
 
     content_details = []
     total_size = 0

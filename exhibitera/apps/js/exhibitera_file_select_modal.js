@@ -197,9 +197,7 @@ export function createFileSelectionModal (userOptions) {
             <div id="exFileSelectModalInUseWarning" class="alert alert-warning py-2" role="alert" style="display: none;">
               <div id="exFileSelectModalInUseMessage"></div>
               <ul id="exFileSelectModalInUseList" class="mb-2"></ul>
-              <button id="exFileSelectModalDeleteAnywayButton" type="button" class="btn btn-sm btn-danger me-1 mb-1">Delete anyway</button>
-              <button id="exFileSelectModalDeleteUnusedButton" type="button" class="btn btn-sm btn-outline-danger me-1 mb-1"></button>
-              <button id="exFileSelectModalKeepFilesButton" type="button" class="btn btn-sm btn-secondary mb-1">Don't delete</button>
+              <div id="exFileSelectModalInUseActions"></div>
             </div>
             <div class="row mb-2 gy-2">
               <div class='col-6 col-md-2'>
@@ -399,19 +397,6 @@ export function createFileSelectionModal (userOptions) {
     document.getElementById('exFileSelectModalRenameFileButton').addEventListener('click', showRenameField)
     document.getElementById('exFileSelectModalFilePreviewEditCancelButton').addEventListener('click', cancelFileRename)
     document.getElementById('exFileSelectModalFilePreviewEditSaveButton').addEventListener('click', renameFile)
-
-    // Deleting files that definitions use
-    document.getElementById('exFileSelectModalDeleteAnywayButton').addEventListener('click', () => {
-      const { all } = pendingDelete
-      hideInUseWarning()
-      removeFiles(all)
-    })
-    document.getElementById('exFileSelectModalDeleteUnusedButton').addEventListener('click', () => {
-      const { unused } = pendingDelete
-      hideInUseWarning()
-      removeFiles(unused)
-    })
-    document.getElementById('exFileSelectModalKeepFilesButton').addEventListener('click', hideInUseWarning)
 
     // File delete
     const deleteBUtton = document.getElementById('exFileSelectModalDeleteFileButton')
@@ -1193,11 +1178,22 @@ function showUploadedFiles (filenames, options) {
   entries[0].scrollIntoView({ block: entries.length > 1 ? 'start' : 'nearest' })
 }
 
-// Files waiting to be deleted while the person decides about the ones definitions use
-let pendingDelete = { all: [], unused: [] }
-
 function deleteFailed (files) {
   showProblem((files.length === 1 ? "The file couldn't be deleted. " : "The files couldn't be deleted. ") + CONNECTION_PROBLEM)
+}
+
+function checkFileUsage (files) {
+  // Return a Promise resolving to the definitions that use each of the given files
+
+  return exCommon.makeHelperRequest({
+    method: 'POST',
+    endpoint: '/files/usage',
+    params: { files }
+  })
+    .then((result) => {
+      if (result?.success !== true) throw new Error('The files\' use couldn\'t be checked')
+      return result.usage ?? {}
+    })
 }
 
 function deleteFiles (files) {
@@ -1205,36 +1201,35 @@ function deleteFiles (files) {
 
   clearProblem()
   hideInUseWarning()
-  exCommon.makeHelperRequest({
-    method: 'POST',
-    endpoint: '/files/usage',
-    params: { files }
-  })
-    .then((result) => {
-      if (result?.success !== true) {
-        deleteFailed(files)
+  checkFileUsage(files)
+    .then((usage) => {
+      const unused = files.filter((file) => (usage[file] ?? []).length === 0)
+      if (unused.length === files.length) {
+        removeFiles(files)
         return
       }
-      const usage = result.usage ?? {}
-      if (files.every((file) => (usage[file] ?? []).length === 0)) removeFiles(files)
-      else showInUseWarning(files, usage)
+
+      const actions = [{ label: 'Delete anyway', style: 'btn-danger', run: () => removeFiles(files) }]
+      if (files.length > 1 && unused.length > 0) {
+        actions.push({ label: `Delete the ${unused.length} not in use`, style: 'btn-outline-danger', run: () => removeFiles(unused) })
+      }
+      actions.push({ label: "Don't delete", style: 'btn-secondary' })
+      showInUseWarning(files, usage, actions)
     }, () => deleteFailed(files))
 }
 
-function showInUseWarning (files, usage) {
-  // Say which definitions use the files, and let the person choose what to delete
+function showInUseWarning (files, usage, actions) {
+  // Say which definitions use the files, and offer the given actions. Each is { label, style, run }, and the
+  // warning closes when one is chosen.
 
   const used = files.filter((file) => (usage[file] ?? []).length > 0)
-  const unused = files.filter((file) => !used.includes(file))
-  pendingDelete = { all: files, unused }
-
   const describe = (definition) => {
     const app = exUtilities.appNameToDisplayName(definition.app)
     return app === 'Unknown Component' ? definition.name : `${definition.name} (${app})`
   }
   let message
   if (files.length === 1) message = `${files[0]} is used by these definitions, which will be left without it:`
-  else if (unused.length === 0) message = 'These files are used by definitions, which will be left without them:'
+  else if (used.length === files.length) message = 'These files are used by definitions, which will be left without them:'
   else message = 'Some of these files are used by definitions, which will be left without them:'
   document.getElementById('exFileSelectModalInUseMessage').textContent = message
 
@@ -1248,15 +1243,23 @@ function showInUseWarning (files, usage) {
     return item
   }))
 
-  const unusedButton = document.getElementById('exFileSelectModalDeleteUnusedButton')
-  unusedButton.textContent = `Delete the ${unused.length} not in use`
-  unusedButton.style.display = unused.length > 0 ? 'inline-block' : 'none'
+  document.getElementById('exFileSelectModalInUseActions').replaceChildren(...actions.map(({ label, style, run }) => {
+    const button = document.createElement('button')
+    button.type = 'button'
+    button.classList = `btn btn-sm ${style} me-1 mb-1`
+    button.textContent = label
+    button.addEventListener('click', () => {
+      hideInUseWarning()
+      run?.()
+    })
+    return button
+  }))
   document.getElementById('exFileSelectModalInUseWarning').style.display = 'block'
 }
 
 function hideInUseWarning () {
   document.getElementById('exFileSelectModalInUseWarning').style.display = 'none'
-  pendingDelete = { all: [], unused: [] }
+  document.getElementById('exFileSelectModalInUseActions').replaceChildren()
 }
 
 function removeFiles (files) {
@@ -1384,8 +1387,31 @@ function renameFile () {
     return
   }
 
+  // Definitions that use the file would be left without it, so ask first
+  clearProblem()
+  hideInUseWarning()
+  checkFileUsage([originalName])
+    .then((usage) => {
+      if ((usage[originalName] ?? []).length === 0) {
+        sendRename(originalName, newName)
+        return
+      }
+      showInUseWarning([originalName], usage, [
+        { label: 'Rename anyway', style: 'btn-danger', run: () => sendRename(originalName, newName) },
+        { label: "Don't rename", style: 'btn-secondary', run: cancelFileRename }
+      ])
+    }, renameFailed)
+}
+
+function renameFailed () {
   // The rename field stays open when a rename fails, so the name can be corrected
-  const failed = () => showProblem("This file couldn't be renamed. " + CONNECTION_PROBLEM)
+  showProblem("This file couldn't be renamed. " + CONNECTION_PROBLEM)
+}
+
+function sendRename (originalName, newName) {
+  // Ask Apps to rename the file, and update the list
+
+  const failed = renameFailed
   clearProblem()
   document.getElementById('exFileSelectModalFilePreviewEditFileExistsWarning').style.display = 'none'
   exCommon.makeHelperRequest({
