@@ -24,14 +24,16 @@ pytestmark = page_scripts.needs_jsdom
 EXISTING = [f"photo{i:02}.jpg" for i in range(30)]
 
 
-def run_picker(options: dict, script: str, before_opening: str = "", files: list[str] = EXISTING):
+def run_picker(options: dict, script: str, before_opening: str = "", files: list[str] = EXISTING,
+               details: dict | None = None):
     """Open the file picker with options and run script with helpers for using it.
 
-    before_opening runs once the page has loaded, before the picker opens.
+    before_opening runs once the page has loaded, before the picker opens. details gives files' sizes and dates.
     """
 
     return page_scripts.run(f"""
         let files = {json.dumps(files)}
+        const details = {json.dumps(details or {})}
         // What the server replies to each kind of request. The upload reply can be a function of the names uploaded.
         const replies = {{
           upload: (names) => {{
@@ -46,7 +48,7 @@ def run_picker(options: dict, script: str, before_opening: str = "", files: list
           const path = decodeURIComponent(new URL(url).pathname)
           if (path === '/internal/system/configuration') return {{ body: {{ app: {{}}, system: {{ standalone: true }} }} }}
           if (path === '/internal/files/availableContent') {{
-            return {{ body: {{ content: files, content_details: files.map((name) => ({{ name }})), static: [], static_details: [] }} }}
+            return {{ body: {{ content: files, content_details: files.map((name) => ({{ name, ...details[name] }})), static: [], static_details: [] }} }}
           }}
           // The test browser's form data can't read the page's files, so take the names from the test
           if (path === '/internal/files/upload') return replies.upload(uploading)
@@ -219,7 +221,7 @@ def test_uploading_keeps_the_search():
     """)
 
     assert result == {"errors": [], "search": "photo1", "selected": ["photo1x.jpg"],
-                      "shown": [f"photo{i}.jpg" for i in range(10, 20)] + ["photo1x.jpg"]}
+                      "shown": ["photo1x.jpg"] + [f"photo{i}.jpg" for i in range(10, 20)]}
 
 
 def test_search_is_cleared_when_it_would_hide_an_upload():
@@ -694,3 +696,114 @@ def test_renaming_updates_the_name_shown():
     """)
 
     assert result == {"errors": [], "text": LONG, "title": LONG, "end": "nel 2024.jpg"}
+
+
+# Sorting
+
+SORTING = """
+    const sortSelect = el('exFileSelectModalSortSelect')
+    const sortBy = (value) => {
+      sortSelect.value = value
+      sortSelect.dispatchEvent(new window.Event('change'))
+    }
+    const listed = () => [...document.querySelectorAll('.const-file-entry')].map((row) => row.dataset.filename)
+    const sortOptions = () => [...sortSelect.options].map((option) => option.textContent)
+"""
+
+# Sizes in bytes and when each last changed, in seconds since 1970. c.mp3 and d.jpg tie on both.
+MIXED = {"a.jpg": {"size": 300, "modified": 1_700_000_300},
+         "b.mp4": {"size": 100, "modified": 1_700_000_100},
+         "c.mp3": {"size": 200, "modified": 1_700_000_200},
+         "d.jpg": {"size": 200, "modified": 1_700_000_200}}
+
+
+def test_names_sort_with_numbers_in_order():
+    result = run_picker({}, SORTING + """
+        report({ errors: browser.errors, sort: sortSelect.value, listed: listed() })
+    """, files=["photo10.jpg", "Photo2.jpg", "photo1.jpg", "photo21.jpg"])
+
+    assert result == {"errors": [], "sort": "name", "listed": ["photo1.jpg", "Photo2.jpg", "photo10.jpg", "photo21.jpg"]}
+
+
+@pytest.mark.parametrize("sort, expected", [
+    ("name", ["a.jpg", "b.mp4", "c.mp3", "d.jpg"]),
+    ("name-reverse", ["d.jpg", "c.mp3", "b.mp4", "a.jpg"]),
+    # Ties are in order of name
+    ("newest", ["a.jpg", "c.mp3", "d.jpg", "b.mp4"]),
+    ("oldest", ["b.mp4", "c.mp3", "d.jpg", "a.jpg"]),
+    ("largest", ["a.jpg", "c.mp3", "d.jpg", "b.mp4"]),
+    ("smallest", ["b.mp4", "c.mp3", "d.jpg", "a.jpg"]),
+    # Images, then videos, then audio
+    ("type", ["a.jpg", "d.jpg", "b.mp4", "c.mp3"])])
+def test_sort_orders(sort, expected):
+    result = run_picker({"manage": True}, SORTING + f"""
+        sortBy('{sort}')
+        report({{ errors: browser.errors, listed: listed() }})
+    """, files=list(MIXED), details=MIXED)
+
+    assert result == {"errors": [], "listed": expected}
+
+
+def test_sorting_keeps_the_selection_search_and_thumbnails():
+    result = run_picker({"manage": True}, SORTING + """
+        await browser.wait(50)
+        select('c.mp3')
+        select('d.jpg')
+        search('.jpg')
+        const row = entry('d.jpg')
+        sortBy('largest')
+        report({ errors: browser.errors, listed: listed(), shown: shown(), selected: selected(),
+                 // The rows are moved rather than rebuilt, so their thumbnails don't load again
+                 sameRow: entry('d.jpg') === row })
+    """, files=list(MIXED), details=MIXED)
+
+    assert result == {"errors": [], "listed": ["a.jpg", "c.mp3", "d.jpg", "b.mp4"], "shown": ["a.jpg", "d.jpg"],
+                      "selected": ["c.mp3", "d.jpg"], "sameRow": True}
+
+
+def test_type_is_only_offered_for_more_than_one_type():
+    result = run_picker({"filetypes": ["image"]}, SORTING + """
+        report({ errors: browser.errors, options: sortOptions() })
+    """)
+
+    assert result == {"errors": [], "options": ["Name (A–Z)", "Name (Z–A)", "Newest first", "Oldest first",
+                                                "Largest first", "Smallest first"]}
+
+
+def test_the_sort_is_remembered():
+    result = run_picker({"manage": True}, SORTING + """
+        sortBy('newest')
+        el('exFileSelectModal').querySelector('[data-bs-dismiss="modal"]').click()
+        await browser.settle(picked, 300)
+        await browser.wait(50)
+
+        exFileSelect.createFileSelectionModal({ manage: true })
+        await browser.wait(300)
+        const reopened = { sort: el('exFileSelectModalSortSelect').value, listed: listed() }
+        el('exFileSelectModal').querySelector('[data-bs-dismiss="modal"]').click()
+        await browser.settle(picked, 300)
+        await browser.wait(50)
+
+        // A picker for one type of file doesn't offer Type, so a remembered Type sort falls back to name
+        localStorage.setItem('exhibitera.fileSelect.sort', 'type')
+        exFileSelect.createFileSelectionModal({ filetypes: ['image'] })
+        await browser.wait(300)
+        report({ errors: browser.errors, reopened, imagesOnly: el('exFileSelectModalSortSelect').value })
+    """, files=list(MIXED), details=MIXED)
+
+    assert result == {"errors": [], "reopened": {"sort": "newest", "listed": ["a.jpg", "c.mp3", "d.jpg", "b.mp4"]},
+                      "imagesOnly": "name"}
+
+
+def test_the_preview_shows_when_a_file_last_changed():
+    result = run_picker({"manage": True}, SORTING + """
+        const changed = () => el('exFileSelectModalFilePreviewModified').textContent
+        preview('a.jpg')
+        const known = changed()
+        preview('e.jpg')
+        report({ errors: browser.errors, known, unknown: changed() })
+    """, files=[*MIXED, "e.jpg"], details={**MIXED, "e.jpg": {"size": 1, "modified": None}})
+
+    assert result["errors"] == []
+    assert "2023" in result["known"]  # 14 November 2023
+    assert result["unknown"] == ""

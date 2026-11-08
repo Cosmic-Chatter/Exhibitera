@@ -1,6 +1,5 @@
 /* global bootstrap */
 import * as exFiles from '../../common/files.js'
-import * as exUtilities from '../../common/utilities.js'
 import * as exCommon from './exhibitera_app_common.js'
 
 let lastClickedSelectBox = null // For handling multiple selection on shift-click
@@ -75,6 +74,70 @@ function stopLoadingThumbnails () {
   thumbnailObserver?.disconnect()
 }
 
+// How the list of files can be sorted. The choice is remembered in this browser.
+const FILE_SORTS = [
+  { value: 'name', label: 'Name (A–Z)' },
+  { value: 'name-reverse', label: 'Name (Z–A)' },
+  { value: 'newest', label: 'Newest first' },
+  { value: 'oldest', label: 'Oldest first' },
+  { value: 'largest', label: 'Largest first' },
+  { value: 'smallest', label: 'Smallest first' },
+  { value: 'type', label: 'Type' }
+]
+const SORT_KEY = 'exhibitera.fileSelect.sort'
+const TYPE_ORDER = ['image', 'video', 'audio', 'font', 'model', 'spreadsheet']
+
+function rememberedSort () {
+  try {
+    return localStorage.getItem(SORT_KEY) ?? 'name'
+  } catch {
+    return 'name'
+  }
+}
+
+function rememberSort (sort) {
+  try {
+    localStorage.setItem(SORT_KEY, sort)
+  } catch {
+    // The sort just won't be remembered
+  }
+}
+
+function compareFiles (a, b, sort) {
+  // Compare two files' details for the given sort. Ties are in order of name.
+
+  // Numbers in order, so photo2 comes before photo10, ignoring case
+  const byName = String(a.name).localeCompare(String(b.name), undefined, { numeric: true, sensitivity: 'base' }) ||
+    (a.name < b.name ? -1 : a.name > b.name ? 1 : 0)
+  const typeIndex = (file) => {
+    const index = TYPE_ORDER.indexOf(exFiles.guessMimetype(String(file.name)))
+    return index === -1 ? TYPE_ORDER.length : index
+  }
+
+  let result = 0
+  if (sort === 'name-reverse') return -byName
+  else if (sort === 'newest') result = (b.modified ?? 0) - (a.modified ?? 0)
+  else if (sort === 'oldest') result = (a.modified ?? 0) - (b.modified ?? 0)
+  else if (sort === 'largest') result = (b.size ?? 0) - (a.size ?? 0)
+  else if (sort === 'smallest') result = (a.size ?? 0) - (b.size ?? 0)
+  else if (sort === 'type') result = typeIndex(a) - typeIndex(b)
+  return result || byName
+}
+
+function currentSort () {
+  return document.getElementById('exFileSelectModalSortSelect')?.value || 'name'
+}
+
+function sortFileList () {
+  // Put the listed files in the chosen order. The rows are moved, not rebuilt, so their thumbnails stay loaded.
+
+  const fileList = document.getElementById('exFileSelectModalFileList')
+  const sort = currentSort()
+  const rows = Array.from(fileList.children).map((row) => ({ row, details: JSON.parse(row.getAttribute('data-details')) }))
+  rows.sort((a, b) => compareFiles(a.details, b.details, sort))
+  fileList.append(...rows.map(({ row }) => row))
+}
+
 const CONNECTION_PROBLEM = 'Check the connection to Apps and try again.'
 
 function showProblem (message) {
@@ -130,8 +193,8 @@ export function createFileSelectionModal (userOptions) {
           </div>
           <div class="modal-body">
             <div id="exFileSelectModalError" class="alert alert-danger py-2" role="alert" style="display: none;"></div>
-            <div class="row mb-2">
-              <div class='col-4 col-sm-3 col-md-2'>
+            <div class="row mb-2 gy-2">
+              <div class='col-6 col-md-2'>
                 <div class="form-check">
                   <input class="form-check-input" type="checkbox" value="" id="exFileSelectModalThumbnailCheckbox" checked>
                   <label class="form-check-label" for="exFileSelectModalThumbnailCheckbox">
@@ -139,7 +202,7 @@ export function createFileSelectionModal (userOptions) {
                   </label>
                 </div>
               </div>
-              <div class='col-4 col-sm-3 col-md-2'>
+              <div class='col-6 col-md-2'>
                 <div id="selectAllCol" class="dropdown">
                   <button class="btn btn-sm btn-primary w-100 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                     Multiple
@@ -151,7 +214,10 @@ export function createFileSelectionModal (userOptions) {
                   </ul>
                 </div>
               </div>
-              <div class="col-4 col-sm-6 col-md-4 offset-md-4">
+              <div class="col-5 col-md-3 offset-md-1">
+                <select id="exFileSelectModalSortSelect" class="form-select form-select-sm" aria-label="Sort"></select>
+              </div>
+              <div class="col-7 col-md-4">
               <div class="input-group input-group-sm">
                 <input id="exFileSelectModalSearchField" type="text" placeholder="Search" class="form-control" aria-label="Search">
               </div>
@@ -176,9 +242,10 @@ export function createFileSelectionModal (userOptions) {
                   </div>
                 </div>
                 <div class='col-6 col-md-12 mt-2 text-center h6' style="word-wrap: break-word">
-                  <div style="height: 60px; overflow-y: auto;">
+                  <div style="height: 80px; overflow-y: auto;">
                     <div id="exFileSelectModalFilePreviewFilename" ></div>
                     <div id="exFileSelectModalFilePreviewFilesize" class="text-secondary mt-1 small"></div>
+                    <div id="exFileSelectModalFilePreviewModified" class="text-secondary small"></div>
                   </div>
                   <div id="exFileSelectModalFilePreviewEditContainer" class='row align-items-center'>
                     <div class='col-12'>
@@ -255,6 +322,20 @@ export function createFileSelectionModal (userOptions) {
       </div>
     `
     document.body.appendChild(modal)
+
+    // Sort menu. Sorting by type only helps when more than one type can be listed.
+    const sortSelect = document.getElementById('exFileSelectModalSortSelect')
+    for (const sort of FILE_SORTS) {
+      if (sort.value === 'type' && options.filetypes.length === 1) continue
+      sortSelect.appendChild(new Option(sort.label, sort.value))
+    }
+    sortSelect.value = rememberedSort()
+    if (sortSelect.value === '') sortSelect.value = 'name' // The remembered sort isn't offered here
+    sortSelect.addEventListener('change', () => {
+      rememberSort(sortSelect.value)
+      sortFileList()
+      document.getElementById('exFileSelectModalFileList').parentElement.scrollTop = 0
+    })
 
     // Thumbnails checkbox
     document.getElementById('exFileSelectModalThumbnailCheckbox').checked = rememberedShowThumbnails()
@@ -562,7 +643,7 @@ function _populateComponentContent (fileDict, options) {
   } else fileDirectory = fileDict.static_details
 
   // Alphabetize the list
-  const fileList = exUtilities.sortAlphabetically(fileDirectory, 'name')
+  const fileList = [...fileDirectory].sort((a, b) => compareFiles(a, b, currentSort()))
 
   // Clear any existing files, but keep the ones selected selected
   const wasSelected = new Set(Array.from(fileRow.querySelectorAll('.const-file-select-box.const-file-selected'))
@@ -749,6 +830,9 @@ function previewFile (fileDetails) {
 
   document.getElementById('exFileSelectModalFilePreviewFilename').textContent = file
   document.getElementById('exFileSelectModalFilePreviewFilesize').textContent = fileDetails.size_text
+  document.getElementById('exFileSelectModalFilePreviewModified').textContent = fileDetails.modified == null
+    ? ''
+    : 'Changed ' + new Date(fileDetails.modified * 1000).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
   document.getElementById('exFileSelectModalFilePreview').setAttribute('data-filename', file)
 
   // Configure download button
@@ -1250,6 +1334,7 @@ function renameFile () {
       entry.setAttribute('data-details', JSON.stringify(fileDetails))
       entry.setAttribute('data-filename', newName)
       showFilename(entry.querySelector('.const-file-name'), newName)
+      sortFileList()
       entry.querySelector('.const-file-select-box').setAttribute('data-filename', newName)
 
       // Update the preview filename

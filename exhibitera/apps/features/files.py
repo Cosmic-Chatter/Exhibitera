@@ -554,6 +554,11 @@ def get_all_directory_contents(directory: str = "content") -> tuple[list, list[d
         file_size, size_text = ex_files.get_file_size(path)
         file_details['size'] = file_size
         file_details['size_text'] = size_text
+        # When the file last changed, in seconds since 1970, for sorting by newest
+        try:
+            file_details['modified'] = os.path.getmtime(path)
+        except OSError:
+            file_details['modified'] = None
         content_details.append(file_details)
 
     return content, content_details
