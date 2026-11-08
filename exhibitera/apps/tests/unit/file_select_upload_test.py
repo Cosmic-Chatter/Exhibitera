@@ -115,7 +115,8 @@ def run_picker(options: dict, script: str, before_opening: str = "", files: list
 
         const el = (id) => document.getElementById(id)
         const display = (id) => el(id).style.display
-        const entry = (name) => document.querySelector(`.const-file-entry[data-filename="${{name}}"]`)
+        // Compared directly, since jsdom's selectors don't match some names, such as ones with emoji
+        const entry = (name) => [...document.querySelectorAll('.const-file-entry')].find((row) => row.dataset.filename === name)
         const uploadFiles = async (names) => {{
           uploading = names
           const input = el('exFileSelectModalUpload')
@@ -639,3 +640,57 @@ def test_thumbnails_are_shown_when_the_browser_blocks_storage():
     """)
 
     assert result == {"errors": [], "checked": False, "loaded": 30}
+
+
+# Long filenames
+
+NAMES = """
+    // How each listed file's name is shown: the part that can shrink, and the part that always shows
+    const nameParts = (name) => {
+      const shown = entry(name).querySelector('.const-file-name')
+      const [start, end] = shown.children
+      return {
+        text: shown.textContent,
+        title: shown.title,
+        start: start.textContent,
+        end: end.textContent,
+        startShrinks: start.classList.contains('text-truncate') && !start.classList.contains('flex-shrink-0'),
+        endShrinks: !end.classList.contains('flex-shrink-0'),
+        keepsSpaces: start.style.whiteSpace === 'pre' && end.style.whiteSpace === 'pre'
+      }
+    }
+"""
+
+LONG = "Fossil Collection Lobby Left Panel 2024.jpg"
+
+
+@pytest.mark.parametrize("filename, start, end", [
+    # The end of the name, where similar files usually differ, always shows
+    (LONG, "Fossil Collection Lobby Left Pa", "nel 2024.jpg"),
+    ("photo.jpg", "", "photo.jpg"),
+    ("README", "", "README"),
+    ("archive.tar.gz", "arc", "hive.tar.gz"),
+    # Emoji aren't split
+    ("Dinosaurs 🦖🦕 and more.png", "Dinosaurs 🦖🦕 ", "and more.png"),
+    ("Dinosaurs and more 🦖🦕.png", "Dinosaurs and", " more 🦖🦕.png")])
+def test_long_names_keep_their_end_visible(filename, start, end):
+    result = run_picker({}, NAMES + f"""
+        report({{ errors: browser.errors, ...nameParts({json.dumps(filename)}) }})
+    """, files=[filename])
+
+    assert result == {"errors": [], "text": filename, "title": filename, "start": start, "end": end,
+                      "startShrinks": True, "endShrinks": False, "keepsSpaces": True}
+
+
+def test_renaming_updates_the_name_shown():
+    result = run_picker({"manage": True}, NAMES + f"""
+        preview('photo03.jpg')
+        el('exFileSelectModalRenameFileButton').click()
+        el('exFileSelectModalFilePreviewEditField').value = {json.dumps(LONG)}
+        el('exFileSelectModalFilePreviewEditSaveButton').click()
+        await browser.wait(200)
+        const {{ text, title, end }} = nameParts({json.dumps(LONG)})
+        report({{ errors: browser.errors, text, title, end }})
+    """)
+
+    assert result == {"errors": [], "text": LONG, "title": LONG, "end": "nel 2024.jpg"}

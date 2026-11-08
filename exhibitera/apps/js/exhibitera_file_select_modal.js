@@ -151,7 +151,7 @@ export function createFileSelectionModal (userOptions) {
                   </ul>
                 </div>
               </div>
-              <div class="col-4 col-sm-6 col-md-4 offset-md-3 offset-lg-4">
+              <div class="col-4 col-sm-6 col-md-4 offset-md-4">
               <div class="input-group input-group-sm">
                 <input id="exFileSelectModalSearchField" type="text" placeholder="Search" class="form-control" aria-label="Search">
               </div>
@@ -597,7 +597,7 @@ function _populateComponentContent (fileDict, options) {
         </center>
       </div>
       <div class='col-3 ps-1 const-file-thumb-container'></div>
-      <div class='col-8 my-auto const-file-name'></div>
+      <div class='col-8 my-auto d-flex const-file-name'></div>
     `
     fileRow.appendChild(entry)
 
@@ -646,9 +646,7 @@ function _populateComponentContent (fileDict, options) {
     if (showThumbs === false) thumbContainer.style.display = 'none'
 
     // Filename
-    const filename = entry.querySelector('.const-file-name')
-    filename.textContent = shortenFilename(file)
-    filename.title = file
+    showFilename(entry.querySelector('.const-file-name'), file)
   })
 
   // The file last clicked, for shift-click, was replaced
@@ -711,13 +709,29 @@ function _populateThumbnail (file, thumbContainer) {
   thumb.style.objectFit = 'contain'
 }
 
-function shortenFilename (filename) {
-  // Shorten the given filename so it fits on one line
+const FILENAME_END_LENGTH = 8 // Characters before the extension that are always shown
 
-  if (filename.length > 30) {
-    return filename.substr(0, 15) + '...' + filename.substr(filename.length - 10, filename.length)
-  }
-  return filename
+function showFilename (element, filename) {
+  // Show the filename in element on one line. If it doesn't fit, the start of the name is cut short with an ellipsis,
+  // but its end and extension are always shown, since that's often what tells similar files apart.
+
+  const characters = Array.from(filename) // So emoji and other characters aren't split
+  let extensionStart = characters.lastIndexOf('.')
+  if (extensionStart <= 0) extensionStart = characters.length // No extension, or a name like ".hidden"
+  const endStart = Math.max(0, extensionStart - FILENAME_END_LENGTH)
+
+  const start = document.createElement('span')
+  start.classList = 'text-truncate'
+  start.textContent = characters.slice(0, endStart).join('')
+  const end = document.createElement('span')
+  end.classList = 'flex-shrink-0'
+  end.textContent = characters.slice(endStart).join('')
+  // Keep spaces where the name is split, which would otherwise be dropped
+  start.style.whiteSpace = 'pre'
+  end.style.whiteSpace = 'pre'
+
+  element.replaceChildren(start, end)
+  element.title = filename
 }
 
 function previewFile (fileDetails) {
@@ -1235,8 +1249,7 @@ function renameFile () {
       fileDetails.name = newName
       entry.setAttribute('data-details', JSON.stringify(fileDetails))
       entry.setAttribute('data-filename', newName)
-      entry.querySelector('.const-file-name').title = newName
-      entry.querySelector('.const-file-name').textContent = shortenFilename(newName)
+      showFilename(entry.querySelector('.const-file-name'), newName)
       entry.querySelector('.const-file-select-box').setAttribute('data-filename', newName)
 
       // Update the preview filename
