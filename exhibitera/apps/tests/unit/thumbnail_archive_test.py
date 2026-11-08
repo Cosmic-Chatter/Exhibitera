@@ -79,8 +79,9 @@ def test_rename_file_updates_archive(apps_dir):
     assert apps_files.rename_file("photo.jpg", "landscape.jpg") == {"success": True}
 
     assert writes == [ARCHIVE]
-    assert read_archive(tmp_path) == {"landscape.jpg": {"400": {"png": "landscape_400.png"}}}
-    assert os.path.exists(tmp_path / "thumbnails" / "v2" / "landscape_400.png")
+    new_thumb = apps_files.get_thumbnail_name("landscape.jpg")
+    assert read_archive(tmp_path) == {"landscape.jpg": {"400": {"png": new_thumb}}}
+    assert os.path.exists(tmp_path / "thumbnails" / "v2" / new_thumb)
 
 
 # Loading

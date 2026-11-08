@@ -2,6 +2,7 @@
 
 # Standard modules
 import glob
+import hashlib
 import logging
 import os
 import pathlib
@@ -112,7 +113,7 @@ def rename_file(old_name: str, new_name: str, absolute: bool = False):
             for mimetype_key in apps_config.thumbnail_archive[old_name][size_key]:
                 old_thumb_path_v2 = ex_files.get_path(
                     ["thumbnails", "v2", apps_config.thumbnail_archive[old_name][size_key][mimetype_key]], user_file=True)
-                new_thumb_name = get_thumbnail_name(ex_files.with_extension(new_name, mimetype_key), width=size_key)
+                new_thumb_name = get_thumbnail_name(new_name, force_image=mimetype_key == 'png', width=size_key)
                 new_thumb_path_v2 = ex_files.get_path(
                     ["thumbnails", "v2", new_thumb_name], user_file=True)
                 try:
@@ -159,6 +160,14 @@ def update_thumbnail_archive(filename: str, width: str | int, thumb_name: str, w
         archive_path = ex_files.get_path(["thumbnails", "v2", "thumbnail_archive.json"], user_file=True)
         with apps_config.thumbnail_lock:
             ex_files.write_json(apps_config.thumbnail_archive, archive_path)
+
+
+def write_thumbnail_archive() -> None:
+    """Save the thumbnail archive to disk."""
+
+    archive_path = ex_files.get_path(["thumbnails", "v2", "thumbnail_archive.json"], user_file=True)
+    with apps_config.thumbnail_lock:
+        ex_files.write_json(apps_config.thumbnail_archive, archive_path)
 
 
 def load_thumbnail_archive() -> None:
@@ -434,13 +443,25 @@ def get_thumbnail_name(filename: str, force_image: bool = False, width: str | in
     if mimetype == "audio":
         return ex_files.get_path(["_static", "icons", "audio_black.png"])
     elif mimetype == "image" or force_image is True:
-        return pathlib.Path(filename).stem + '_' + str(width) + '.png'
+        return _thumbnail_stem(filename) + '_' + width + '.png'
     elif mimetype == "model":
         return ex_files.get_path(["_static", "icons", "model_black.svg"])
     elif mimetype == "video":
-        return pathlib.Path(filename).stem + '_' + str(width) + '.mp4'
+        return _thumbnail_stem(filename) + '_' + width + '.mp4'
 
     return ""
+
+
+def _thumbnail_stem(filename: str) -> str:
+    """Return the start of the names of the given file's thumbnails.
+
+    It's the file's name without its extension, so it can be recognized, then a hash of its full name, so files that
+    differ only in their extension, like photo.jpg and photo.png, get thumbnails of their own. The readable part is
+    shortened so that long filenames still give names the filesystem allows.
+    """
+
+    digest = hashlib.sha256(filename.encode("UTF-8")).hexdigest()[:8]
+    return pathlib.Path(filename).stem[:100] + '_' + digest
 
 
 def get_thumbnail(filename: str,

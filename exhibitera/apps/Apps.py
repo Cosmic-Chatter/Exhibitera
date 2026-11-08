@@ -282,6 +282,7 @@ def run():
         apps_legacy.update_media_browser_definition_format()
         apps_legacy.update_timeline_definition_format()
         apps_legacy.update_dmx_config()
+        apps_legacy.migrate_thumbnail_names()
 
         # Load the current software version
         apps_config.software_version = ex_files.load_json(

@@ -1,5 +1,6 @@
 # Handle migration from past versions of Exhibitera Apps
 
+from collections import Counter
 import csv
 import logging
 import os
@@ -9,6 +10,7 @@ import uuid
 
 import exhibitera.common.files as ex_files
 import exhibitera.common.utilities as ex_utilities
+import exhibitera.apps.config as apps_config
 import exhibitera.apps.features.files as apps_files
 
 
@@ -378,3 +380,63 @@ def update_dmx_config():
     shutil.copy(config_path, backup_path)
     ex_files.write_json(config_dict, config_path)
 
+
+# Added in Ex6.1
+def migrate_thumbnail_names():
+    """Rename content thumbnails to names that include a hash of each file's full name.
+
+    Thumbnails used to be named after the file without its extension, so files like photo.jpg and photo.png shared
+    one. A thumbnail that more than one file claims is deleted, since there's no telling whose it is, and each file's
+    own is made when it's next needed. Running this again changes nothing.
+    """
+
+    apps_files.load_thumbnail_archive()
+    archive = apps_config.thumbnail_archive
+
+    def entries():
+        # Each (filename, width, kind) the archive lists, where kind is 'png' or 'mp4'
+        for filename, sizes in archive.items():
+            for width, kinds in (sizes.items() if isinstance(sizes, dict) else []):
+                for kind in (list(kinds) if isinstance(kinds, dict) else []):
+                    yield filename, width, kind
+
+    claims = Counter(archive[filename][width][kind] for filename, width, kind in entries())
+    changed = False
+    for filename, width, kind in list(entries()):
+        kinds = archive[filename][width]
+        old_name = kinds[kind]
+        new_name = apps_files.get_thumbnail_name(filename, force_image=kind == 'png', width=width)
+        if old_name == new_name:
+            continue
+        changed = True
+
+        old_path = ex_files.get_path(["thumbnails", "v2", old_name], user_file=True)
+        new_path = ex_files.get_path(["thumbnails", "v2", new_name], user_file=True)
+        try:
+            if claims[old_name] > 1:
+                if os.path.exists(old_path):
+                    os.remove(old_path)
+            elif os.path.exists(old_path):
+                os.replace(old_path, new_path)
+        except OSError as e:
+            logging.error("migrate_thumbnail_names: couldn't update %s: %s", old_name, e)
+
+        # A thumbnail that's missing or was shared is made again when it's needed
+        if claims[old_name] == 1 and os.path.exists(new_path):
+            kinds[kind] = new_name
+        else:
+            del kinds[kind]
+
+    if not changed:
+        return
+
+    # Drop entries left empty
+    for filename in list(archive):
+        sizes = archive[filename]
+        if isinstance(sizes, dict):
+            for width in list(sizes):
+                if sizes[width] == {}:
+                    del sizes[width]
+            if sizes == {}:
+                del archive[filename]
+    apps_files.write_thumbnail_archive()
