@@ -41,7 +41,9 @@ def run_picker(options: dict, script: str, before_opening: str = "", files: list
             return {{ body: {{ success: true, skipped: [] }} }}
           }},
           rename: {{ body: {{ success: true }} }},
-          delete: {{ body: {{ success: true }} }}
+          delete: {{ body: {{ success: true }} }},
+          // Which definitions use each file. By default, none.
+          usage: {{ body: {{ success: true, usage: {{}} }} }}
         }}
         let uploading = []
         globalThis.server = (method, url) => {{
@@ -54,6 +56,7 @@ def run_picker(options: dict, script: str, before_opening: str = "", files: list
           if (path === '/internal/files/upload') return replies.upload(uploading)
           if (path.endsWith('/rename')) return replies.rename
           if (path === '/internal/files/delete') return replies.delete
+          if (path === '/internal/files/usage') return replies.usage
           return {{ body: {{ success: false }} }}
         }}
         console.log = () => {{}}
@@ -807,3 +810,142 @@ def test_the_preview_shows_when_a_file_last_changed():
     assert result["errors"] == []
     assert "2023" in result["known"]  # 14 November 2023
     assert result["unknown"] == ""
+
+
+# Deleting files that definitions use
+
+DELETING = """
+    const confirmDelete = (id) => {
+      const confirm = document.createElement('a')
+      confirm.id = id
+      document.body.appendChild(confirm)
+      confirm.click()
+      confirm.remove()
+    }
+    const deleteOne = async (name) => {
+      preview(name)
+      confirmDelete('fileDeletePopover')
+      await browser.wait(200)
+    }
+    const deleteSelected = async () => {
+      confirmDelete('fileDeleteMultiplePopover')
+      await browser.wait(200)
+    }
+    const deleted = () => browser.requests.filter((r) => r.url.endsWith('/files/delete')).map((r) => JSON.parse(r.body).file)
+    const warning = () => {
+      const panel = el('exFileSelectModalInUseWarning')
+      if (panel.style.display === 'none') return null
+      return {
+        message: el('exFileSelectModalInUseMessage').textContent,
+        uses: [...panel.querySelectorAll('li')].map((li) => li.textContent),
+        buttons: [...panel.querySelectorAll('button')].filter((b) => b.style.display !== 'none').map((b) => b.textContent)
+      }
+    }
+    const press = (label) => [...el('exFileSelectModalInUseWarning').querySelectorAll('button')].find((b) => b.textContent === label).click()
+"""
+
+LOBBY = {"uuid": "d1", "name": "Lobby loop", "app": "media_player"}
+GALLERY = {"uuid": "d2", "name": "Gallery", "app": "infostation"}
+
+
+def test_files_not_in_use_are_deleted_without_asking_again():
+    result = run_picker({"manage": True}, DELETING + """
+        await deleteOne('photo03.jpg')
+        report({ errors: browser.errors, warning: warning(), deleted: deleted(), listed: entry('photo03.jpg') != null })
+    """)
+
+    assert result == {"errors": [], "warning": None, "deleted": [["photo03.jpg"]], "listed": False}
+
+
+def test_deleting_a_file_in_use_asks_first():
+    result = run_picker({"manage": True}, DELETING + f"""
+        replies.usage = {{ body: {{ success: true, usage: {{ 'photo03.jpg': {json.dumps([GALLERY, LOBBY])} }} }} }}
+        await deleteOne('photo03.jpg')
+        const asked = {{ warning: warning(), deleted: deleted() }}
+
+        press("Don't delete")
+        await browser.wait(200)
+        report({{ errors: browser.errors, asked, after: {{ warning: warning(), deleted: deleted(), listed: entry('photo03.jpg') != null }} }})
+    """)
+
+    assert result == {"errors": [],
+                      "asked": {"warning": {"message": "photo03.jpg is used by these definitions, which will be left without it:",
+                                            "uses": ["Gallery (InfoStation)", "Lobby loop (Media Player)"],
+                                            "buttons": ["Delete anyway", "Don't delete"]},
+                                "deleted": []},
+                      "after": {"warning": None, "deleted": [], "listed": True}}
+
+
+def test_a_file_in_use_can_be_deleted_anyway():
+    result = run_picker({"manage": True}, DELETING + f"""
+        replies.usage = {{ body: {{ success: true, usage: {{ 'photo03.jpg': {json.dumps([LOBBY])} }} }} }}
+        await deleteOne('photo03.jpg')
+        press('Delete anyway')
+        await browser.wait(200)
+        report({{ errors: browser.errors, warning: warning(), deleted: deleted(), listed: entry('photo03.jpg') != null }})
+    """)
+
+    assert result == {"errors": [], "warning": None, "deleted": [["photo03.jpg"]], "listed": False}
+
+
+def test_deleting_several_files_can_keep_the_ones_in_use():
+    result = run_picker({"manage": True}, DELETING + f"""
+        replies.usage = {{ body: {{ success: true, usage: {{ 'photo04.jpg': {json.dumps([GALLERY, LOBBY])} }} }} }}
+        for (const name of ['photo03.jpg', 'photo04.jpg', 'photo05.jpg']) select(name)
+        await deleteSelected()
+        const asked = warning()
+        press('Delete the 2 not in use')
+        await browser.wait(200)
+        report({{ errors: browser.errors, asked, deleted: deleted(), listed: ['photo03.jpg', 'photo04.jpg', 'photo05.jpg'].filter((n) => entry(n) != null),
+                  selected: selected() }})
+    """)
+
+    assert result == {"errors": [],
+                      "asked": {"message": "Some of these files are used by definitions, which will be left without them:",
+                                "uses": ["photo04.jpg: Gallery (InfoStation), Lobby loop (Media Player)"],
+                                "buttons": ["Delete anyway", "Delete the 2 not in use", "Don't delete"]},
+                      "deleted": [["photo03.jpg", "photo05.jpg"]],
+                      "listed": ["photo04.jpg"],
+                      "selected": ["photo04.jpg"]}
+
+
+def test_deleting_several_files_that_are_all_in_use():
+    result = run_picker({"manage": True}, DELETING + f"""
+        replies.usage = {{ body: {{ success: true, usage: {{ 'photo03.jpg': {json.dumps([LOBBY])}, 'photo04.jpg': {json.dumps([LOBBY])} }} }} }}
+        select('photo03.jpg')
+        select('photo04.jpg')
+        await deleteSelected()
+        const asked = warning()
+        press('Delete anyway')
+        await browser.wait(200)
+        report({{ errors: browser.errors, asked, deleted: deleted() }})
+    """)
+
+    assert result == {"errors": [],
+                      "asked": {"message": "These files are used by definitions, which will be left without them:",
+                                "uses": ["photo03.jpg: Lobby loop (Media Player)", "photo04.jpg: Lobby loop (Media Player)"],
+                                "buttons": ["Delete anyway", "Don't delete"]},
+                      "deleted": [["photo03.jpg", "photo04.jpg"]]}
+
+
+@pytest.mark.parametrize("reply", ["{ body: { success: false } }", "'error'"])
+def test_files_arent_deleted_if_their_use_cant_be_checked(reply):
+    result = run_picker({"manage": True}, DELETING + f"""
+        replies.usage = {reply}
+        await deleteOne('photo03.jpg')
+        report({{ errors: browser.errors, problem: problem(), warning: warning(), deleted: deleted() }})
+    """)
+
+    assert result == {"errors": [], "warning": None, "deleted": [],
+                      "problem": "The file couldn't be deleted. Check the connection to Apps and try again."}
+
+
+def test_definition_names_are_shown_as_text():
+    result = run_picker({"manage": True}, DELETING + """
+        replies.usage = { body: { success: true, usage: { 'photo03.jpg': [{ uuid: 'd1', name: '<b>Bold</b>', app: 'mystery' }] } } }
+        await deleteOne('photo03.jpg')
+        report({ errors: browser.errors, uses: warning().uses, bold: el('exFileSelectModalInUseWarning').querySelector('b') != null })
+    """)
+
+    # An app the picker doesn't know is left out
+    assert result == {"errors": [], "uses": ["<b>Bold</b>"], "bold": False}

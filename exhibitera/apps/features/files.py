@@ -51,6 +51,51 @@ def get_available_definitions(app_id: str = "all") -> dict[str, Any]:
     return to_return
 
 
+def find_file_uses(filenames: list[str]) -> dict[str, list[dict[str, str]]]:
+    """Return the definitions that use each of the given content files, for the files that are used.
+
+    Every text value in a definition is searched, rather than the fields each app is known to use, so new fields
+    aren't missed. A value uses a file if it's the file's name, or refers to it as /content/<name>, as fonts and
+    Markdown text do. Timelapse Viewer chooses its files with a pattern, where * matches anything.
+    """
+
+    # A reference ends where the name does, so photo.jpg doesn't match photo.jpg.bak
+    references = {name: re.compile(re.escape('/content/' + name) + r'(?=$|[\s)"\'?#])') for name in filenames}
+    uses: dict[str, list[dict[str, str]]] = {}
+
+    for definition in get_available_definitions().values():
+        values = list(_text_values(definition))
+        pattern = definition.get("files") if definition.get("app") == "timelapse_viewer" else None
+        if isinstance(pattern, str) and pattern != "":
+            pattern = re.compile(re.escape(pattern).replace(r'\*', '.*'))
+        else:
+            pattern = None
+
+        for name in filenames:
+            used = any(value == name or references[name].search(value) for value in values)
+            if used or (pattern is not None and pattern.fullmatch(name)):
+                uses.setdefault(name, []).append({"uuid": str(definition.get("uuid", "")),
+                                                  "name": str(definition.get("name", "")),
+                                                  "app": str(definition.get("app", ""))})
+
+    for definitions in uses.values():
+        definitions.sort(key=lambda d: d["name"].lower())
+    return uses
+
+
+def _text_values(value: Any):
+    """Yield every string in the given JSON value."""
+
+    if isinstance(value, str):
+        yield value
+    elif isinstance(value, dict):
+        for item in value.values():
+            yield from _text_values(item)
+    elif isinstance(value, list):
+        for item in value:
+            yield from _text_values(item)
+
+
 def delete_file(file: str, absolute: bool = False):
     """Delete a file"""
 

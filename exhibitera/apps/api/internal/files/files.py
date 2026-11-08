@@ -139,6 +139,13 @@ async def retrieve_file(file_url: Annotated[str, Body(description="The URL of th
     return {"success": success}
 
 
+@router.post("/files/usage")
+async def get_file_usage(files: list[str] = Body(description="The content files to look for", embed=True)):
+    """Return the definitions that use each of the given files, so staff can be warned before deleting one."""
+
+    return {"success": True, "usage": apps_files.find_file_uses(files)}
+
+
 @router.post("/files/delete")
 async def delete_file(file: str | list[str] = Body(description="The file(s) to delete", embed=True)):
     """Delete the specified file(s) from the content directory"""

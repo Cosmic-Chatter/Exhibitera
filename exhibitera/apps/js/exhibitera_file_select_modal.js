@@ -1,5 +1,6 @@
 /* global bootstrap */
 import * as exFiles from '../../common/files.js'
+import * as exUtilities from '../../common/utilities.js'
 import * as exCommon from './exhibitera_app_common.js'
 
 let lastClickedSelectBox = null // For handling multiple selection on shift-click
@@ -193,6 +194,13 @@ export function createFileSelectionModal (userOptions) {
           </div>
           <div class="modal-body">
             <div id="exFileSelectModalError" class="alert alert-danger py-2" role="alert" style="display: none;"></div>
+            <div id="exFileSelectModalInUseWarning" class="alert alert-warning py-2" role="alert" style="display: none;">
+              <div id="exFileSelectModalInUseMessage"></div>
+              <ul id="exFileSelectModalInUseList" class="mb-2"></ul>
+              <button id="exFileSelectModalDeleteAnywayButton" type="button" class="btn btn-sm btn-danger me-1 mb-1">Delete anyway</button>
+              <button id="exFileSelectModalDeleteUnusedButton" type="button" class="btn btn-sm btn-outline-danger me-1 mb-1"></button>
+              <button id="exFileSelectModalKeepFilesButton" type="button" class="btn btn-sm btn-secondary mb-1">Don't delete</button>
+            </div>
             <div class="row mb-2 gy-2">
               <div class='col-6 col-md-2'>
                 <div class="form-check">
@@ -391,6 +399,19 @@ export function createFileSelectionModal (userOptions) {
     document.getElementById('exFileSelectModalRenameFileButton').addEventListener('click', showRenameField)
     document.getElementById('exFileSelectModalFilePreviewEditCancelButton').addEventListener('click', cancelFileRename)
     document.getElementById('exFileSelectModalFilePreviewEditSaveButton').addEventListener('click', renameFile)
+
+    // Deleting files that definitions use
+    document.getElementById('exFileSelectModalDeleteAnywayButton').addEventListener('click', () => {
+      const { all } = pendingDelete
+      hideInUseWarning()
+      removeFiles(all)
+    })
+    document.getElementById('exFileSelectModalDeleteUnusedButton').addEventListener('click', () => {
+      const { unused } = pendingDelete
+      hideInUseWarning()
+      removeFiles(unused)
+    })
+    document.getElementById('exFileSelectModalKeepFilesButton').addEventListener('click', hideInUseWarning)
 
     // File delete
     const deleteBUtton = document.getElementById('exFileSelectModalDeleteFileButton')
@@ -1172,12 +1193,79 @@ function showUploadedFiles (filenames, options) {
   entries[0].scrollIntoView({ block: entries.length > 1 ? 'start' : 'nearest' })
 }
 
+// Files waiting to be deleted while the person decides about the ones definitions use
+let pendingDelete = { all: [], unused: [] }
+
+function deleteFailed (files) {
+  showProblem((files.length === 1 ? "The file couldn't be deleted. " : "The files couldn't be deleted. ") + CONNECTION_PROBLEM)
+}
+
 function deleteFiles (files) {
-  // Delete the given files
+  // Delete the given files, but first check whether any definitions use them. If they do, ask before deleting.
+
+  clearProblem()
+  hideInUseWarning()
+  exCommon.makeHelperRequest({
+    method: 'POST',
+    endpoint: '/files/usage',
+    params: { files }
+  })
+    .then((result) => {
+      if (result?.success !== true) {
+        deleteFailed(files)
+        return
+      }
+      const usage = result.usage ?? {}
+      if (files.every((file) => (usage[file] ?? []).length === 0)) removeFiles(files)
+      else showInUseWarning(files, usage)
+    }, () => deleteFailed(files))
+}
+
+function showInUseWarning (files, usage) {
+  // Say which definitions use the files, and let the person choose what to delete
+
+  const used = files.filter((file) => (usage[file] ?? []).length > 0)
+  const unused = files.filter((file) => !used.includes(file))
+  pendingDelete = { all: files, unused }
+
+  const describe = (definition) => {
+    const app = exUtilities.appNameToDisplayName(definition.app)
+    return app === 'Unknown Component' ? definition.name : `${definition.name} (${app})`
+  }
+  let message
+  if (files.length === 1) message = `${files[0]} is used by these definitions, which will be left without it:`
+  else if (unused.length === 0) message = 'These files are used by definitions, which will be left without them:'
+  else message = 'Some of these files are used by definitions, which will be left without them:'
+  document.getElementById('exFileSelectModalInUseMessage').textContent = message
+
+  const list = document.getElementById('exFileSelectModalInUseList')
+  list.replaceChildren(...(files.length === 1
+    ? usage[files[0]].map(describe)
+    : used.map((file) => `${file}: ${usage[file].map(describe).join(', ')}`)
+  ).map((text) => {
+    const item = document.createElement('li')
+    item.textContent = text
+    return item
+  }))
+
+  const unusedButton = document.getElementById('exFileSelectModalDeleteUnusedButton')
+  unusedButton.textContent = `Delete the ${unused.length} not in use`
+  unusedButton.style.display = unused.length > 0 ? 'inline-block' : 'none'
+  document.getElementById('exFileSelectModalInUseWarning').style.display = 'block'
+}
+
+function hideInUseWarning () {
+  document.getElementById('exFileSelectModalInUseWarning').style.display = 'none'
+  pendingDelete = { all: [], unused: [] }
+}
+
+function removeFiles (files) {
+  // Delete the given files from Apps
 
   const exFileSelectModal = document.getElementById('exFileSelectModal')
-  const failed = () => showProblem((files.length === 1 ? "The file couldn't be deleted. " : "The files couldn't be deleted. ") + CONNECTION_PROBLEM)
+  const failed = () => deleteFailed(files)
   clearProblem()
+  if (files.length === 0) return
   exCommon.makeHelperRequest({
     method: 'POST',
     endpoint: '/files/delete',
