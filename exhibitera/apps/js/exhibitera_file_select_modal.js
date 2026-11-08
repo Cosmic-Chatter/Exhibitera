@@ -5,6 +5,36 @@ import * as exCommon from './exhibitera_app_common.js'
 
 let lastClickedSelectBox = null // For handling multiple selection on shift-click
 
+// Files uploaded while the page is open, with when. Their addresses include it, so browsers don't show a cached copy
+// of a file that was replaced.
+const fileVersions = {}
+
+function withVersion (url, file) {
+  return fileVersions[file] == null ? url : url + '?v=' + fileVersions[file]
+}
+
+function thumbnailURL (file) {
+  return withVersion(exCommon.config.helperAddress + exCommon.config.api + '/files/' + file + '/thumbnail/240', file)
+}
+
+function contentURL (file) {
+  return withVersion(exCommon.config.helperAddress + '/content/' + file, file)
+}
+
+const CONNECTION_PROBLEM = 'Check the connection to Apps and try again.'
+
+function showProblem (message) {
+  // Tell the person something they tried didn't work
+
+  const alert = document.getElementById('exFileSelectModalError')
+  alert.textContent = message
+  alert.style.display = 'block'
+}
+
+function clearProblem () {
+  document.getElementById('exFileSelectModalError').style.display = 'none'
+}
+
 export function createFileSelectionModal (userOptions) {
   // Build a standard Exhibitera file selection modal
 
@@ -45,6 +75,7 @@ export function createFileSelectionModal (userOptions) {
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
+            <div id="exFileSelectModalError" class="alert alert-danger py-2" role="alert" style="display: none;"></div>
             <div class="row mb-2">
               <div class='col-4 col-sm-3 col-md-2'>
                 <div class="form-check">
@@ -446,6 +477,7 @@ function populateComponentContent (options) {
   })
     .then((result) => {
       _populateComponentContent(result, options)
+      filterComponentContent(document.getElementById('exFileSelectModalSearchField').value)
       previewFile({})
     })
 }
@@ -464,7 +496,9 @@ function _populateComponentContent (fileDict, options) {
   // Alphabetize the list
   const fileList = exUtilities.sortAlphabetically(fileDirectory, 'name')
 
-  // Clear any existing files
+  // Clear any existing files, but keep the ones selected selected
+  const wasSelected = new Set(Array.from(fileRow.querySelectorAll('.const-file-select-box.const-file-selected'))
+    .map((box) => box.getAttribute('data-filename')))
   fileRow.innerHTML = ''
   const showThumbs = document.getElementById('exFileSelectModalThumbnailCheckbox').checked
 
@@ -520,6 +554,10 @@ function _populateComponentContent (fileDict, options) {
     // Checkbox
     const check = entry.querySelector('.const-file-select-box')
     check.setAttribute('data-filename', file)
+    if (wasSelected.has(file)) {
+      check.classList.add('const-file-selected', 'bg-success')
+      check.innerHTML = '✓'
+    }
 
     entry.addEventListener('click', (event) => {
       selectFile(check, options.multiple, event)
@@ -535,6 +573,10 @@ function _populateComponentContent (fileDict, options) {
     filename.textContent = shortenFilename(file)
     filename.title = file
   })
+
+  // The file last clicked, for shift-click, was replaced
+  lastClickedSelectBox = null
+  if (options.multiple) updateMultipleFileButtons()
 }
 
 function _populateThumbnail (file, thumbContainer) {
@@ -548,7 +590,7 @@ function _populateThumbnail (file, thumbContainer) {
 
   if (mimetype === 'image') {
     thumb = document.createElement('img')
-    thumb.src = exCommon.config.helperAddress + exCommon.config.api + '/files/' + file + '/thumbnail/240'
+    thumb.src = thumbnailURL(file)
   } else if (mimetype === 'video') {
     thumb = document.createElement('video')
     thumb.setAttribute('loop', true)
@@ -556,7 +598,7 @@ function _populateThumbnail (file, thumbContainer) {
     thumb.setAttribute('disablePictureInPicture', true)
     thumb.setAttribute('webkit-playsinline', true)
     thumb.setAttribute('playsinline', true)
-    thumb.src = exCommon.config.helperAddress + exCommon.config.api + '/files/' + file + '/thumbnail/240'
+    thumb.src = thumbnailURL(file)
   } else if (mimetype === 'audio') {
     thumb = document.createElement('img')
     thumb.src = exCommon.config.helperAddress + getDefaultAudioIcon()
@@ -574,7 +616,7 @@ function _populateThumbnail (file, thumbContainer) {
     thumbInner.innerHTML = 'AaBb123'
 
     const clearFontName = file.replaceAll('.', '').replaceAll(' ', '') + 'Preview'
-    const fontDef = new FontFace(clearFontName, 'url(' + encodeURI(exCommon.config.helperAddress + '/content/' + file) + ')')
+    const fontDef = new FontFace(clearFontName, 'url(' + encodeURI(contentURL(file)) + ')')
     document.fonts.add(fontDef)
     thumbInner.style.setProperty('Font-Family', clearFontName)
     thumbInner.style.fontSize = '25px'
@@ -616,10 +658,10 @@ function previewFile (fileDetails) {
   document.getElementById('exFileSelectModalFilePreviewFilesize').textContent = fileDetails.size_text
   document.getElementById('exFileSelectModalFilePreview').setAttribute('data-filename', file)
 
-  // Configure downlaod button
+  // Configure download button
 
   const download = document.getElementById('exFileSelectModalDownloadFileButton')
-  download.href = exCommon.config.helperAddress + '/content/' + file
+  download.href = contentURL(file)
   download.download = file
 
   const mimetype = exFiles.guessMimetype(file)
@@ -629,19 +671,19 @@ function previewFile (fileDetails) {
     vid.style.display = 'none'
     font.style.display = 'none'
     aud.parentElement.style.display = 'none'
-    img.src = exCommon.config.helperAddress + exCommon.config.api + '/files/' + file + '/thumbnail/240'
+    img.src = thumbnailURL(file)
   } else if (mimetype === 'video') {
     img.style.display = 'none'
     vid.style.display = 'block'
     font.style.display = 'none'
     aud.parentElement.style.display = 'none'
-    vid.src = exCommon.config.helperAddress + exCommon.config.api + '/files/' + file + '/thumbnail/240'
+    vid.src = thumbnailURL(file)
   } else if (mimetype === 'audio') {
     img.style.display = 'none'
     vid.style.display = 'none'
     font.style.display = 'none'
     aud.parentElement.style.display = 'flex'
-    aud.src = exCommon.config.helperAddress + '/content/' + file
+    aud.src = contentURL(file)
   } else if (mimetype === 'model') {
     img.style.display = 'block'
     vid.style.display = 'none'
@@ -654,7 +696,7 @@ function previewFile (fileDetails) {
     aud.style.display = 'none'
     font.style.display = 'block'
 
-    const fontDef = new FontFace('fontPreview', 'url(' + encodeURI(exCommon.config.helperAddress + '/content/' + file) + ')')
+    const fontDef = new FontFace('fontPreview', 'url(' + encodeURI(contentURL(file)) + ')')
     document.fonts.add(fontDef)
     font.style.setProperty('Font-Family', 'fontPreview')
   } else if (mimetype === 'spreadsheet') {
@@ -851,6 +893,7 @@ function uploadFile (options) {
   const fileInput = document.getElementById('exFileSelectModalUpload')
 
   document.getElementById('exFileSelectModalUploadOverwriteWarning').style.display = 'none'
+  clearProblem()
 
   if (fileInput.files[0] != null) {
     document.getElementById('exFileSelectModalUploadSubmitCol').style.display = 'none'
@@ -871,18 +914,34 @@ function uploadFile (options) {
 
     xhr.onreadystatechange = function () {
       if (this.readyState !== 4) return
-      if (this.status === 200) {
-        const response = JSON.parse(this.responseText)
+      document.getElementById('exFileSelectModalUploadProgressBarContainer').style.display = 'none'
 
-        if (response.success) {
-          document.getElementById('exFileSelectModalUploadProgressBarContainer').style.display = 'none'
-          document.getElementById('exFileSelectModalUploadfilename').innerHTML = 'Upload new'
-          populateComponentContent(options)
-            .then(() => showUploadedFiles(uploadedNames, options))
-        }
-      } else if (this.status === 422) {
-        console.log(JSON.parse(this.responseText))
+      let response = null
+      try {
+        response = JSON.parse(this.responseText)
+      } catch {
+        // Not a reply from Apps
       }
+      if (this.status !== 200 || response?.success !== true) {
+        // Keep the chosen files, so the upload can be tried again
+        document.getElementById('exFileSelectModalUploadSubmitCol').style.display = 'block'
+        showProblem("The files couldn't be uploaded. " + CONNECTION_PROBLEM)
+        return
+      }
+
+      document.getElementById('exFileSelectModalUploadfilename').innerHTML = 'Upload new'
+      const skipped = response.skipped ?? []
+      if (skipped.length === 1) {
+        showProblem(`This file wasn't uploaded because its name isn't allowed: ${skipped[0]}. Rename it and try again.`)
+      } else if (skipped.length > 1) {
+        showProblem(`These files weren't uploaded because their names aren't allowed: ${skipped.join(', ')}. Rename them and try again.`)
+      }
+
+      const uploaded = uploadedNames.filter((name) => !skipped.includes(name))
+      const version = Date.now()
+      for (const name of uploaded) fileVersions[name] = version
+      populateComponentContent(options)
+        .then(() => showUploadedFiles(uploaded, options))
     }
 
     xhr.upload.addEventListener('progress', function (evt) {
@@ -902,12 +961,25 @@ function uploadFile (options) {
 
 function showUploadedFiles (filenames, options) {
   // Select the files that were just uploaded and scroll the list to the first one. If only one file can be
-  // chosen, select just that first one.
+  // chosen, select just that first one, in place of any file already selected.
 
-  const entries = Array.from(document.getElementById('exFileSelectModalFileList').querySelectorAll('.const-file-entry'))
+  const fileList = document.getElementById('exFileSelectModalFileList')
+  const entries = Array.from(fileList.querySelectorAll('.const-file-entry'))
     .filter((entry) => filenames.includes(entry.getAttribute('data-filename')))
   if (entries.length === 0) return // The list doesn't show files of these types
 
+  // Show the uploads, even if the search would hide them
+  if (entries.some((entry) => entry.getAttribute('data-filtered-out') === 'true')) {
+    document.getElementById('exFileSelectModalSearchField').value = ''
+    filterComponentContent('')
+  }
+
+  if (!options.multiple) {
+    fileList.querySelectorAll('.const-file-select-box').forEach((box) => {
+      box.classList.remove('const-file-selected', 'bg-success')
+      box.innerHTML = ''
+    })
+  }
   const toSelect = options.multiple ? entries : entries.slice(0, 1)
   for (const entry of toSelect) {
     const box = entry.querySelector('.const-file-select-box')
@@ -925,25 +997,32 @@ function deleteFiles (files) {
   // Delete the given files
 
   const exFileSelectModal = document.getElementById('exFileSelectModal')
+  const failed = () => showProblem((files.length === 1 ? "The file couldn't be deleted. " : "The files couldn't be deleted. ") + CONNECTION_PROBLEM)
+  clearProblem()
   exCommon.makeHelperRequest({
     method: 'POST',
     endpoint: '/files/delete',
     params: { file: files }
   })
     .then((result) => {
-      if (result?.success === true) {
-        for (const file of files) {
-          const entry = exFileSelectModal.querySelector(`.const-file-entry[data-filename="${file}"]`)
-          entry.parentElement.removeChild(entry)
-        }
-        previewFile({})
-        document.getElementById('exFileSelectModalFilePreview').dataset.filename = ''
+      if (result?.success !== true) {
+        failed()
+        return
       }
-    })
+      for (const file of files) {
+        const entry = exFileSelectModal.querySelector(`.const-file-entry[data-filename="${file}"]`)
+        entry?.remove()
+        delete fileVersions[file]
+      }
+      previewFile({})
+      document.getElementById('exFileSelectModalFilePreview').dataset.filename = ''
+    }, failed)
 }
 
 function downloadMultipleFiles () {
   // Download all selected files as a ZIP.
+
+  clearProblem()
 
   const filesToDownload = document.querySelectorAll('.const-file-select-box.const-file-selected')
   const filenamesToDownload = []
@@ -965,7 +1044,12 @@ function downloadMultipleFiles () {
       })
     }
   )
-    .then((response) => response.blob())
+    .then(async (response) => {
+      // Apps refuses with a JSON reply, so only save a ZIP file, rather than the error
+      if (response.ok && (response.headers.get('content-type') ?? '').includes('zip')) return response.blob()
+      const reply = await response.json().catch(() => null)
+      throw new Error(reply?.reason ?? 'no_zip')
+    })
     .then((blob) => {
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -974,6 +1058,12 @@ function downloadMultipleFiles () {
       document.body.appendChild(a) // append the element to the dom
       a.click()
       a.remove() // afterward, remove the element
+      window.URL.revokeObjectURL(url)
+    })
+    .catch((error) => {
+      if (error.message === 'unsafe_filename') {
+        showProblem("These files couldn't be downloaded because some of their names aren't allowed.")
+      } else showProblem("The files couldn't be downloaded. " + CONNECTION_PROBLEM)
     })
 
   document.getElementById('exFileSelectModalDeleteMultipleButtonCol').style.display = 'none'
@@ -1031,6 +1121,10 @@ function renameFile () {
     return
   }
 
+  // The rename field stays open when a rename fails, so the name can be corrected
+  const failed = () => showProblem("This file couldn't be renamed. " + CONNECTION_PROBLEM)
+  clearProblem()
+  document.getElementById('exFileSelectModalFilePreviewEditFileExistsWarning').style.display = 'none'
   exCommon.makeHelperRequest({
     method: 'POST',
     endpoint: '/files/' + originalName + '/rename',
@@ -1045,8 +1139,14 @@ function renameFile () {
           document.getElementById(
             'exFileSelectModalFilePreviewEditFileExistsWarning'
           ).style.display = 'block'
-        }
+        } else if (result?.reason === 'unsafe_filename') {
+          showProblem("This file couldn't be renamed because the new name isn't allowed. Names can't include / \\ : * ? \" < > |.")
+        } else failed()
         return
+      }
+      if (fileVersions[originalName] != null) {
+        fileVersions[newName] = fileVersions[originalName]
+        delete fileVersions[originalName]
       }
 
       // Update the preview pane
@@ -1066,5 +1166,5 @@ function renameFile () {
       document.getElementById('exFileSelectModalFilePreviewFilename').textContent = newName
       document.getElementById('exFileSelectModalFilePreviewEditContainer').style.display = 'none'
       document.getElementById('exFileSelectModalFilePreviewFilename').style.display = 'block'
-    })
+    }, failed)
 }

@@ -65,6 +65,12 @@ def delete_file(file: str, absolute: bool = False):
     with ex_config.binary_file_lock:
         os.remove(file_path)
 
+    delete_thumbnails(file)
+
+
+def delete_thumbnails(file: str):
+    """Delete the thumbnails made from the given content file, so they're made again when next needed."""
+
     load_thumbnail_archive()
     if file in apps_config.thumbnail_archive:
         for size_key in apps_config.thumbnail_archive[file]:

@@ -180,17 +180,20 @@ def upload_files(files: list[UploadFile] = File(),
     if not ex_files.path_safe(path):
         return {"success": False, "reason": "invalid_path"}
 
+    skipped = []  # Files with names that aren't allowed
     for file in files:
         filename = file.filename
 
         if not ex_files.filename_safe(filename):
             logging.warning("upload_files: invalid filename: %s", filename)
+            skipped.append(filename)
             continue
 
         path_with_filename = path.copy()
         path_with_filename.append(filename)
 
         file_path = ex_files.get_path(path_with_filename, user_file=True)
+        replacing = os.path.exists(file_path)
         logging.info("Saving uploaded file to %s", file_path)
         with ex_config.binary_file_lock:
             try:
@@ -198,7 +201,11 @@ def upload_files(files: list[UploadFile] = File(),
                     shutil.copyfileobj(file.file, out_file)
             finally:
                 file.file.close()
-    return {"success": True}
+
+        # The old file's thumbnails would otherwise be kept
+        if replacing and path == ['content']:
+            apps_files.delete_thumbnails(filename)
+    return {"success": True, "skipped": skipped}
 
 
 @router.get("/files/availableContent")

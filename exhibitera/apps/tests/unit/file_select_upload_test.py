@@ -1,8 +1,10 @@
-"""Verify that the file picker shows and selects the files that were just uploaded.
+"""Verify the file picker's uploads, and that it says when an upload, rename, or delete fails.
 
 After an upload, the list of files is rebuilt, so the new files could be anywhere in a long list and nothing was
 selected. The list should scroll to the first new file and select the new files, or only the first one when just
-one file can be chosen.
+one file can be chosen. Rebuilding the list used to drop the files already selected and ignore the search.
+
+Failures used to show nothing: a failed upload left the progress bar up with no way to try again.
 """
 
 # Standard modules
@@ -19,23 +21,31 @@ pytestmark = page_scripts.needs_jsdom
 EXISTING = [f"photo{i:02}.jpg" for i in range(30)]
 
 
-def upload(options: dict, filenames: list[str]):
-    """Open the file picker with options, upload filenames, and report what's selected and shown."""
+def run_picker(options: dict, script: str):
+    """Open the file picker with options and run script with helpers for using it."""
 
     return page_scripts.run(f"""
-        const uploading = {json.dumps(filenames)}
         let files = {json.dumps(EXISTING)}
+        // What the server replies to each kind of request. The upload reply can be a function of the names uploaded.
+        const replies = {{
+          upload: (names) => {{
+            files = [...new Set([...files, ...names])]
+            return {{ body: {{ success: true, skipped: [] }} }}
+          }},
+          rename: {{ body: {{ success: true }} }},
+          delete: {{ body: {{ success: true }} }}
+        }}
+        let uploading = []
         globalThis.server = (method, url) => {{
-          const path = new URL(url).pathname
+          const path = decodeURIComponent(new URL(url).pathname)
           if (path === '/internal/system/configuration') return {{ body: {{ app: {{}}, system: {{ standalone: true }} }} }}
           if (path === '/internal/files/availableContent') {{
             return {{ body: {{ content: files, content_details: files.map((name) => ({{ name }})), static: [], static_details: [] }} }}
           }}
-          if (path === '/internal/files/upload') {{
-            // The test browser's form data can't read the page's files, so take the names from the test
-            files = [...new Set([...files, ...uploading])]
-            return {{ body: {{ success: true }} }}
-          }}
+          // The test browser's form data can't read the page's files, so take the names from the test
+          if (path === '/internal/files/upload') return replies.upload(uploading)
+          if (path.endsWith('/rename')) return replies.rename
+          if (path === '/internal/files/delete') return replies.delete
           return {{ body: {{ success: false }} }}
         }}
         console.log = () => {{}}
@@ -50,22 +60,45 @@ def upload(options: dict, filenames: list[str]):
         exFileSelect.createFileSelectionModal({json.dumps(options)})
         await browser.wait(300)
 
-        // Choose files to upload, in the order given
-        const input = document.getElementById('exFileSelectModalUpload')
-        const chosen = uploading.map((name) => new window.File(['data'], name, {{ type: 'image/jpeg' }}))
-        Object.defineProperty(input, 'files', {{ configurable: true, value: chosen }})
-        input.dispatchEvent(new window.Event('change'))
-        document.getElementById('exFileSelectModalUploadSubmitButton').click()
-        await browser.wait(500)
+        const el = (id) => document.getElementById(id)
+        const display = (id) => el(id).style.display
+        const entry = (name) => document.querySelector(`.const-file-entry[data-filename="${{name}}"]`)
+        const uploadFiles = async (names) => {{
+          uploading = names
+          const input = el('exFileSelectModalUpload')
+          const chosen = names.map((name) => new window.File(['data'], name, {{ type: 'image/jpeg' }}))
+          Object.defineProperty(input, 'files', {{ configurable: true, value: chosen }})
+          input.dispatchEvent(new window.Event('change'))
+          el('exFileSelectModalUploadSubmitButton').click()
+          await browser.wait(500)
+        }}
+        const search = (text) => {{
+          el('exFileSelectModalSearchField').value = text
+          el('exFileSelectModalSearchField').dispatchEvent(new window.Event('input'))
+        }}
+        const select = (name) => entry(name).click()
+        const preview = (name) => entry(name).dispatchEvent(new window.Event('mouseenter'))
+        const selected = () => [...document.querySelectorAll('.const-file-select-box.const-file-selected')].map((b) => b.dataset.filename)
+        const shown = () => [...document.querySelectorAll('.const-file-entry')].filter((e) => e.style.display !== 'none').map((e) => e.dataset.filename)
+        // The message shown about a failure, if any
+        const problem = () => display('exFileSelectModalError') === 'none' ? '' : el('exFileSelectModalError').textContent.trim()
+        const uploadControls = () => ({{ upload: display('exFileSelectModalUploadSubmitCol'), progress: display('exFileSelectModalUploadProgressBarContainer') }})
+        {script}
+    """, browser="page")
 
-        const display = (id) => document.getElementById(id).style.display
+
+def upload(options: dict, filenames: list[str]):
+    """Upload filenames and report what's selected and shown."""
+
+    return run_picker(options, f"""
+        await uploadFiles({json.dumps(filenames)})
         report({{
           errors: browser.errors,
-          selected: [...document.querySelectorAll('.const-file-select-box.const-file-selected')].map((b) => b.dataset.filename),
+          selected: selected(),
           scrolledTo,
           multipleButtons: [display('exFileSelectModalDeleteMultipleButtonCol'), display('exFileSelectModalDownloadMultipleButtonCol')]
         }})
-    """, browser="page")
+    """)
 
 
 def test_uploaded_files_are_selected_and_shown():
@@ -100,3 +133,200 @@ def test_files_the_list_doesnt_show_are_skipped():
     assert result["errors"] == []
     assert result["selected"] == ["moth.jpg"]
     assert result["scrolledTo"] == ["moth.jpg"]
+
+
+# Selections and search
+
+def test_uploading_keeps_the_files_already_selected():
+    result = run_picker({"filetypes": ["image"]}, """
+        select('photo03.jpg')
+        await uploadFiles(['moth.jpg'])
+        report({ errors: browser.errors, selected: selected() })
+    """)
+
+    assert result == {"errors": [], "selected": ["moth.jpg", "photo03.jpg"]}
+
+
+def test_uploading_replaces_the_selection_when_one_file_can_be_chosen():
+    result = run_picker({"filetypes": ["image"], "multiple": False}, """
+        select('photo03.jpg')
+        await uploadFiles(['moth.jpg'])
+        report({ errors: browser.errors, selected: selected() })
+    """)
+
+    assert result == {"errors": [], "selected": ["moth.jpg"]}
+
+
+def test_uploading_keeps_the_search():
+    result = run_picker({"filetypes": ["image"]}, """
+        search('photo1')
+        await uploadFiles(['photo1x.jpg'])
+        report({ errors: browser.errors, search: el('exFileSelectModalSearchField').value, shown: shown(), selected: selected() })
+    """)
+
+    assert result == {"errors": [], "search": "photo1", "selected": ["photo1x.jpg"],
+                      "shown": [f"photo{i}.jpg" for i in range(10, 20)] + ["photo1x.jpg"]}
+
+
+def test_search_is_cleared_when_it_would_hide_an_upload():
+    result = run_picker({"filetypes": ["image"]}, """
+        search('photo1')
+        await uploadFiles(['moth.jpg'])
+        report({ errors: browser.errors, search: el('exFileSelectModalSearchField').value, shown: shown().length, selected: selected() })
+    """)
+
+    assert result == {"errors": [], "search": "", "shown": 31, "selected": ["moth.jpg"]}
+
+
+# Upload failures
+
+@pytest.mark.parametrize("reply", ["{ body: { success: false, reason: 'invalid_path' } }", "{ status: 500, text: 'Internal Server Error' }",
+                                   "'error'"])
+def test_failed_upload_says_so_and_can_be_tried_again(reply):
+    result = run_picker({"filetypes": ["image"]}, f"""
+        replies.upload = () => ({reply})
+        await uploadFiles(['moth.jpg'])
+        const failed = {{ problem: problem(), controls: uploadControls(), label: el('exFileSelectModalUploadfilename').textContent }}
+
+        // Trying again clears the message
+        replies.upload = () => ({{ body: {{ success: true, skipped: [] }} }})
+        el('exFileSelectModalUploadSubmitButton').click()
+        await browser.wait(500)
+        report({{ errors: browser.errors, failed, retried: problem() }})
+    """)
+
+    assert result["errors"] == []
+    assert result["failed"] == {"problem": "The files couldn't be uploaded. Check the connection to Apps and try again.",
+                                "controls": {"upload": "block", "progress": "none"}, "label": "1 file selected"}
+    assert result["retried"] == ""
+
+
+def test_upload_says_which_files_were_skipped():
+    result = run_picker({"filetypes": ["image"]}, """
+        replies.upload = (names) => {
+          files = [...files, 'moth.jpg']
+          return { body: { success: true, skipped: ['bad:name.jpg'] } }
+        }
+        await uploadFiles(['moth.jpg', 'bad:name.jpg'])
+        report({ errors: browser.errors, problem: problem(), selected: selected(), controls: uploadControls() })
+    """)
+
+    assert result == {"errors": [], "selected": ["moth.jpg"], "controls": {"upload": "none", "progress": "none"},
+                      "problem": "This file wasn't uploaded because its name isn't allowed: bad:name.jpg. "
+                                 "Rename it and try again."}
+
+
+# Rename and delete failures
+
+RENAME = """
+    preview('photo03.jpg')
+    el('exFileSelectModalRenameFileButton').click()
+    el('exFileSelectModalFilePreviewEditField').value = 'renamed.jpg'
+    el('exFileSelectModalFilePreviewEditSaveButton').click()
+    await browser.wait(200)
+"""
+
+
+@pytest.mark.parametrize("reply", ["{ body: { success: false, reason: 'unsafe_filename' } }", "'error'"])
+def test_failed_rename_says_so(reply):
+    result = run_picker({"manage": True}, f"""
+        replies.rename = {reply}
+        {RENAME}
+        report({{ errors: browser.errors, problem: problem(), stillNamed: entry('photo03.jpg') != null,
+                  editing: display('exFileSelectModalFilePreviewEditContainer') }})
+    """)
+
+    assert result["errors"] == []
+    assert result["stillNamed"] is True
+    assert result["editing"] == "flex"  # So the name can be corrected
+    if "unsafe" in reply:
+        assert result["problem"] == ("This file couldn't be renamed because the new name isn't allowed. "
+                                     "Names can't include / \\ : * ? \" < > |.")
+    else:
+        assert result["problem"] == "This file couldn't be renamed. Check the connection to Apps and try again."
+
+
+def test_rename_to_an_existing_name_says_so_beside_the_name():
+    result = run_picker({"manage": True}, f"""
+        replies.rename = {{ body: {{ success: false, error: 'file_exists' }} }}
+        {RENAME}
+        report({{ errors: browser.errors, problem: problem(), warning: display('exFileSelectModalFilePreviewEditFileExistsWarning') }})
+    """)
+
+    assert result == {"errors": [], "problem": "", "warning": "block"}
+
+
+@pytest.mark.parametrize("reply", ["{ body: { success: false, reason: 'unsafe_filename' } }", "'error'"])
+def test_failed_delete_says_so(reply):
+    result = run_picker({"manage": True}, f"""
+        replies.delete = {reply}
+        preview('photo03.jpg')
+        const confirm = document.createElement('a')
+        confirm.id = 'fileDeletePopover'
+        document.body.appendChild(confirm)
+        confirm.click()
+        await browser.wait(200)
+        report({{ errors: browser.errors, problem: problem(), stillListed: entry('photo03.jpg') != null }})
+    """)
+
+    assert result == {"errors": [], "stillListed": True,
+                      "problem": "The file couldn't be deleted. Check the connection to Apps and try again."}
+
+
+# Thumbnails
+
+def test_replaced_files_show_their_new_thumbnail():
+    result = run_picker({"filetypes": ["image"]}, """
+        const thumb = (name) => entry(name).querySelector('img').getAttribute('src')
+        const before = thumb('photo15.jpg')
+        await uploadFiles(['photo15.jpg'])
+        preview('photo15.jpg')
+        report({
+          errors: browser.errors,
+          sameAddress: thumb('photo15.jpg') === before,
+          previewMatches: el('exFileSelectModalFilePreviewImage').getAttribute('src').split('?')[1] === thumb('photo15.jpg').split('?')[1],
+          otherUnchanged: !thumb('photo16.jpg').includes('?')
+        })
+    """)
+
+    assert result == {"errors": [], "sameAddress": False, "previewMatches": True, "otherUnchanged": True}
+
+
+# Download multiple
+
+DOWNLOAD = """
+    // The picker downloads with fetch, which the test browser doesn't fake
+    globalThis.fetch = async () => {
+      if (zipReply === 'error') throw new TypeError('Failed to fetch')
+      return new Response(zipReply.body, { status: zipReply.status ?? 200, headers: { 'content-type': zipReply.type } })
+    }
+    const downloads = []
+    window.URL.createObjectURL = () => 'blob:zip'
+    window.URL.revokeObjectURL = () => {}
+    window.HTMLAnchorElement.prototype.click = function () { downloads.push(this.download) }
+    select('photo03.jpg')
+    select('photo04.jpg')
+    el('exFileSelectModalDownloadMultipleFileButton').click()
+    await browser.wait(300)
+    report({ errors: browser.errors, downloads, problem: problem() })
+"""
+
+ZIP = "{ body: 'PK', type: 'application/zip' }"
+
+
+def test_download_multiple_saves_a_zip():
+    result = run_picker({"manage": True}, f"const zipReply = {ZIP}\n" + DOWNLOAD)
+
+    assert result == {"errors": [], "downloads": ["files.zip"], "problem": ""}
+
+
+@pytest.mark.parametrize("reply, problem", [
+    ("{ body: JSON.stringify({ success: false, reason: 'unsafe_filename' }), type: 'application/json' }",
+     "These files couldn't be downloaded because some of their names aren't allowed."),
+    ("{ status: 500, body: 'Internal Server Error', type: 'text/plain' }",
+     "The files couldn't be downloaded. Check the connection to Apps and try again."),
+    ("'error'", "The files couldn't be downloaded. Check the connection to Apps and try again.")])
+def test_failed_download_says_so_rather_than_saving_the_error(reply, problem):
+    result = run_picker({"manage": True}, f"const zipReply = {reply}\n" + DOWNLOAD)
+
+    assert result == {"errors": [], "downloads": [], "problem": problem}
