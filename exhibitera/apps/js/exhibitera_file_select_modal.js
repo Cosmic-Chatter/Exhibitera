@@ -21,6 +21,60 @@ function contentURL (file) {
   return withVersion(exCommon.config.helperAddress + '/content/' + file, file)
 }
 
+// Whether to show thumbnails is remembered in this browser. If the browser blocks storage, they're shown.
+const SHOW_THUMBNAILS_KEY = 'exhibitera.fileSelect.showThumbnails'
+
+function rememberedShowThumbnails () {
+  try {
+    return localStorage.getItem(SHOW_THUMBNAILS_KEY) !== 'false'
+  } catch {
+    return true
+  }
+}
+
+function rememberShowThumbnails (show) {
+  try {
+    localStorage.setItem(SHOW_THUMBNAILS_KEY, String(show))
+  } catch {
+    // The setting just won't be remembered
+  }
+}
+
+// Thumbnails load as they come into view, so a large library doesn't load every thumbnail at once
+let thumbnailObserver = null
+const thumbnailLoaders = new WeakMap()
+
+function loadWhenShown (element, load) {
+  // Call load() once element is in view in the file list, or nearly so. Hidden elements wait until they're shown.
+
+  if (typeof IntersectionObserver === 'undefined') {
+    load()
+    return
+  }
+  if (thumbnailObserver == null) {
+    thumbnailObserver = new IntersectionObserver((entries, observer) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue
+        observer.unobserve(entry.target)
+        thumbnailLoaders.get(entry.target)?.()
+        thumbnailLoaders.delete(entry.target)
+      }
+    }, {
+      // Start a little before they're reached
+      root: document.getElementById('exFileSelectModalFileList').parentElement,
+      rootMargin: '300px'
+    })
+  }
+  thumbnailLoaders.set(element, load)
+  thumbnailObserver.observe(element)
+}
+
+function stopLoadingThumbnails () {
+  // Stop waiting to load the thumbnails of rows that have been removed
+
+  thumbnailObserver?.disconnect()
+}
+
 const CONNECTION_PROBLEM = 'Check the connection to Apps and try again.'
 
 function showProblem (message) {
@@ -203,7 +257,9 @@ export function createFileSelectionModal (userOptions) {
     document.body.appendChild(modal)
 
     // Thumbnails checkbox
+    document.getElementById('exFileSelectModalThumbnailCheckbox').checked = rememberedShowThumbnails()
     document.getElementById('exFileSelectModalThumbnailCheckbox').addEventListener('change', (event) => {
+      rememberShowThumbnails(event.target.checked)
       modal.querySelectorAll('.const-file-thumb-container').forEach((el) => {
         if (event.target.checked === true) {
           el.style.display = 'block'
@@ -311,6 +367,8 @@ export function createFileSelectionModal (userOptions) {
       // return no files.
 
       // Destroy the modal
+      stopLoadingThumbnails()
+      thumbnailObserver = null
       const modal = document.getElementById('exFileSelectModal')
       modal.parentElement.removeChild(modal)
 
@@ -509,6 +567,7 @@ function _populateComponentContent (fileDict, options) {
   // Clear any existing files, but keep the ones selected selected
   const wasSelected = new Set(Array.from(fileRow.querySelectorAll('.const-file-select-box.const-file-selected'))
     .map((box) => box.getAttribute('data-filename')))
+  stopLoadingThumbnails()
   fileRow.innerHTML = ''
   const showThumbs = document.getElementById('exFileSelectModalThumbnailCheckbox').checked
 
@@ -608,7 +667,7 @@ function _populateThumbnail (file, thumbContainer) {
 
   if (mimetype === 'image') {
     thumb = document.createElement('img')
-    thumb.src = thumbnailURL(file)
+    loadWhenShown(thumbContainer, () => { thumb.src = thumbnailURL(file) })
   } else if (mimetype === 'video') {
     thumb = document.createElement('video')
     thumb.setAttribute('loop', true)
@@ -616,7 +675,7 @@ function _populateThumbnail (file, thumbContainer) {
     thumb.setAttribute('disablePictureInPicture', true)
     thumb.setAttribute('webkit-playsinline', true)
     thumb.setAttribute('playsinline', true)
-    thumb.src = thumbnailURL(file)
+    loadWhenShown(thumbContainer, () => { thumb.src = thumbnailURL(file) })
   } else if (mimetype === 'audio') {
     thumb = document.createElement('img')
     thumb.src = exCommon.config.helperAddress + getDefaultAudioIcon()
@@ -634,8 +693,10 @@ function _populateThumbnail (file, thumbContainer) {
     thumbInner.innerHTML = 'AaBb123'
 
     const clearFontName = file.replaceAll('.', '').replaceAll(' ', '') + 'Preview'
-    const fontDef = new FontFace(clearFontName, 'url(' + encodeURI(contentURL(file)) + ')')
-    document.fonts.add(fontDef)
+    loadWhenShown(thumbContainer, () => {
+      const fontDef = new FontFace(clearFontName, 'url(' + encodeURI(contentURL(file)) + ')')
+      document.fonts.add(fontDef)
+    })
     thumbInner.style.setProperty('Font-Family', clearFontName)
     thumbInner.style.fontSize = '25px'
     thumbInner.style.overflow = 'hidden'

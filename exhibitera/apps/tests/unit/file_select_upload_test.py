@@ -24,11 +24,14 @@ pytestmark = page_scripts.needs_jsdom
 EXISTING = [f"photo{i:02}.jpg" for i in range(30)]
 
 
-def run_picker(options: dict, script: str):
-    """Open the file picker with options and run script with helpers for using it."""
+def run_picker(options: dict, script: str, before_opening: str = "", files: list[str] = EXISTING):
+    """Open the file picker with options and run script with helpers for using it.
+
+    before_opening runs once the page has loaded, before the picker opens.
+    """
 
     return page_scripts.run(f"""
-        let files = {json.dumps(EXISTING)}
+        let files = {json.dumps(files)}
         // What the server replies to each kind of request. The upload reply can be a function of the names uploaded.
         const replies = {{
           upload: (names) => {{
@@ -58,6 +61,52 @@ def run_picker(options: dict, script: str):
         const document = window.document
         const scrolledTo = []
         window.Element.prototype.scrollIntoView = function () {{ scrolledTo.push(this.dataset.filename) }}
+
+        // jsdom doesn't lay out pages, so it has no IntersectionObserver. This one says what's observed is in view,
+        // unless a test sets allInView to false; then scrollTo() brings rows into view. As in browsers, hidden
+        // elements are never in view, and are reported once they're shown.
+        let allInView = true
+        const observers = []
+        const displayed = (element) => element == null || element.nodeType !== 1 || (element.style.display !== 'none' && displayed(element.parentElement))
+        const recheck = () => {{
+          if (!allInView) return
+          for (const observer of observers) observer.show([...observer.observed])
+        }}
+        // Showing something happens in a change handler, so check once the handlers have run
+        window.document.addEventListener('change', () => setTimeout(recheck), true)
+        globalThis.IntersectionObserver = window.IntersectionObserver = class {{
+          constructor (callback, options) {{
+            this.callback = callback
+            this.options = options
+            this.observed = new Set()
+            observers.push(this)
+          }}
+
+          observe (target) {{
+            this.observed.add(target)
+            if (allInView) setTimeout(() => this.show([target]))
+          }}
+
+          unobserve (target) {{ this.observed.delete(target) }}
+          disconnect () {{ this.observed.clear() }}
+          show (targets) {{
+            const shown = targets.filter((target) => this.observed.has(target) && displayed(target))
+            if (shown.length > 0) this.callback(shown.map((target) => ({{ target, isIntersecting: true }})), this)
+          }}
+        }}
+        const scrollTo = (names) => {{
+          const rows = names.map((name) => document.querySelector(`.const-file-entry[data-filename="${{name}}"]`))
+          for (const observer of observers) observer.show(rows.flatMap((row) => [row, ...row.querySelectorAll('*')]))
+        }}
+        // The font files fonts are loaded from
+        const fontSources = []
+        globalThis.FontFace = window.FontFace = class {{
+          constructor (family, source) {{
+            this.family = family
+            fontSources.push(source)
+          }}
+        }}
+        {before_opening}
 
         const exFileSelect = await import({page_scripts.module_url("apps/js/exhibitera_file_select_modal.js")})
         // What the picker returns when it closes
@@ -509,3 +558,84 @@ def test_multiple_buttons_follow_select_all_and_unselect_all():
     """)
 
     assert result == {"errors": [], "one": HIDDEN, "all": SHOWN, "none": HIDDEN}
+
+
+# Thumbnails
+
+THUMBNAILS = """
+    // The address each listed file's thumbnail loads from, or null if it hasn't loaded. Fonts are shown in the font.
+    const thumbnailSources = () => Object.fromEntries([...document.querySelectorAll('.const-file-entry')].map((row) => {
+      const name = row.dataset.filename
+      const thumb = row.querySelector('.const-file-thumb-container').firstElementChild
+      const font = fontSources.find((source) => source.includes('/content/' + name))
+      return [name, thumb?.getAttribute('src') ?? font ?? null]
+    }))
+    const loaded = () => Object.entries(thumbnailSources()).filter(([, src]) => src != null).map(([name]) => name)
+    const thumbnailsShown = () => [...document.querySelectorAll('.const-file-thumb-container')].every((c) => c.style.display !== 'none')
+"""
+
+
+def test_thumbnails_load_as_they_scroll_into_view():
+    result = run_picker({}, THUMBNAILS + """
+        await browser.wait(50)
+        const atFirst = loaded()
+        scrollTo(['photo00.jpg', 'photo01.jpg', 'intro.mp4', 'Lobby.ttf'])
+        await browser.wait(50)
+        const sources = thumbnailSources()
+        report({ errors: browser.errors, atFirst, loaded: loaded(), video: sources['intro.mp4'], font: sources['Lobby.ttf'],
+                 margin: observers[0]?.options?.rootMargin })
+    """, before_opening="allInView = false", files=["photo00.jpg", "photo01.jpg", "photo02.jpg", "intro.mp4", "Lobby.ttf"])
+
+    assert result["errors"] == []
+    assert result["atFirst"] == []
+    assert sorted(result["loaded"]) == ["Lobby.ttf", "intro.mp4", "photo00.jpg", "photo01.jpg"]
+    assert result["video"].endswith("/files/intro.mp4/thumbnail/240")
+    assert result["font"] == "url(http://apps.test/content/Lobby.ttf)"
+    # Thumbnails a little below the list load before they're reached
+    assert result["margin"] == "300px"
+
+
+def test_hidden_thumbnails_dont_load():
+    # The Thumbnails checkbox was unticked last time
+    result = run_picker({}, THUMBNAILS + """
+        await browser.wait(50)
+        const hidden = { checked: el('exFileSelectModalThumbnailCheckbox').checked, loaded: loaded() }
+        el('exFileSelectModalThumbnailCheckbox').click()
+        await browser.wait(50)
+        report({ errors: browser.errors, hidden, shown: loaded() })
+    """, before_opening="localStorage.setItem('exhibitera.fileSelect.showThumbnails', 'false')")
+
+    assert result == {"errors": [], "hidden": {"checked": False, "loaded": []}, "shown": EXISTING}
+
+
+def test_the_thumbnails_checkbox_is_remembered():
+    result = run_picker({}, THUMBNAILS + """
+        const checkbox = () => el('exFileSelectModalThumbnailCheckbox')
+        checkbox().click()
+        const turnedOff = { checked: checkbox().checked, shown: thumbnailsShown() }
+        el('exFileSelectModal').querySelector('[data-bs-dismiss="modal"]').click()
+        await browser.settle(picked, 300)
+        await browser.wait(50)
+
+        // Open the picker again
+        exFileSelect.createFileSelectionModal({})
+        await browser.wait(300)
+        const reopened = { checked: checkbox().checked, shown: thumbnailsShown(), loaded: loaded().length }
+        report({ errors: browser.errors, turnedOff, reopened })
+    """)
+
+    assert result == {"errors": [], "turnedOff": {"checked": False, "shown": False},
+                      "reopened": {"checked": False, "shown": False, "loaded": 0}}
+
+
+def test_thumbnails_are_shown_when_the_browser_blocks_storage():
+    result = run_picker({}, THUMBNAILS + """
+        await browser.wait(50)
+        el('exFileSelectModalThumbnailCheckbox').click()
+        report({ errors: browser.errors, checked: el('exFileSelectModalThumbnailCheckbox').checked, loaded: loaded().length })
+    """, before_opening="""
+        Object.defineProperty(window, 'localStorage', { configurable: true, get () { throw new Error('SecurityError') } })
+        Object.defineProperty(globalThis, 'localStorage', { configurable: true, get () { throw new Error('SecurityError') } })
+    """)
+
+    assert result == {"errors": [], "checked": False, "loaded": 30}
