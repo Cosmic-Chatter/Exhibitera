@@ -1,10 +1,13 @@
-"""Verify the file picker's uploads, and that it says when an upload, rename, or delete fails.
+"""Verify the file picker: choosing files, uploads, and saying when an upload, rename, delete, or download fails.
 
 After an upload, the list of files is rebuilt, so the new files could be anywhere in a long list and nothing was
 selected. The list should scroll to the first new file and select the new files, or only the first one when just
 one file can be chosen. Rebuilding the list used to drop the files already selected and ignore the search.
 
 Failures used to show nothing: a failed upload left the progress bar up with no way to try again.
+
+Choose did nothing useful with no file selected, and the buttons for several selected files could disappear while they
+were still selected, such as after downloading them.
 """
 
 # Standard modules
@@ -57,7 +60,8 @@ def run_picker(options: dict, script: str):
         window.Element.prototype.scrollIntoView = function () {{ scrolledTo.push(this.dataset.filename) }}
 
         const exFileSelect = await import({page_scripts.module_url("apps/js/exhibitera_file_select_modal.js")})
-        exFileSelect.createFileSelectionModal({json.dumps(options)})
+        // What the picker returns when it closes
+        const picked = exFileSelect.createFileSelectionModal({json.dumps(options)})
         await browser.wait(300)
 
         const el = (id) => document.getElementById(id)
@@ -330,3 +334,178 @@ def test_failed_download_says_so_rather_than_saving_the_error(reply, problem):
     result = run_picker({"manage": True}, f"const zipReply = {reply}\n" + DOWNLOAD)
 
     assert result == {"errors": [], "downloads": [], "problem": problem}
+
+
+# Choosing
+
+CHOOSE = """
+    const chooseButton = el('exFileSelectModalChooseButton')
+    const result = async () => ({ errors: browser.errors, picked: await browser.settle(picked, 300) })
+    const press = (key, target = el('exFileSelectModal')) => {
+      target.dispatchEvent(new window.KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }))
+    }
+"""
+
+
+@pytest.mark.parametrize("multiple", [True, False])
+def test_choose_needs_a_selected_file(multiple):
+    result = run_picker({"filetypes": ["image"], "multiple": multiple}, CHOOSE + """
+        const disabled = [chooseButton.disabled]
+        select('photo03.jpg')
+        disabled.push(chooseButton.disabled)
+        select('photo03.jpg')
+        disabled.push(chooseButton.disabled)
+        select('photo04.jpg')
+        chooseButton.click()
+        report({ disabled, ...(await result()) })
+    """)
+
+    assert result == {"errors": [], "disabled": [True, False, True], "picked": {"resolved": ["photo04.jpg"]}}
+
+
+DOUBLE_CLICK = """
+    // As in browsers, a double-click is two clicks, then a dblclick
+    const doubleClick = (name) => {
+      select(name)
+      select(name)
+      entry(name).dispatchEvent(new window.MouseEvent('dblclick', { bubbles: true }))
+    }
+"""
+
+
+def test_double_click_chooses_a_file():
+    result = run_picker({"filetypes": ["image"], "multiple": False}, CHOOSE + DOUBLE_CLICK + """
+        select('photo03.jpg')
+        doubleClick('photo05.jpg')
+        report(await result())
+    """)
+
+    assert result == {"errors": [], "picked": {"resolved": ["photo05.jpg"]}}
+
+
+@pytest.mark.parametrize("already_selected", [False, True])
+def test_double_click_chooses_when_several_files_can_be_chosen(already_selected):
+    # Several files can be chosen, but don't have to be
+    result = run_picker({"filetypes": ["image"]}, CHOOSE + DOUBLE_CLICK + f"""
+        if ({str(already_selected).lower()}) select('photo05.jpg')
+        doubleClick('photo05.jpg')
+        report(await result())
+    """)
+
+    assert result == {"errors": [], "picked": {"resolved": ["photo05.jpg"]}}
+
+
+def test_double_click_also_chooses_the_files_already_selected():
+    result = run_picker({"filetypes": ["image"]}, CHOOSE + DOUBLE_CLICK + """
+        select('photo03.jpg')
+        doubleClick('photo05.jpg')
+        report(await result())
+    """)
+
+    assert result == {"errors": [], "picked": {"resolved": ["photo03.jpg", "photo05.jpg"]}}
+
+
+def test_double_click_does_nothing_more_when_managing_files():
+    # There's nothing to choose
+    result = run_picker({"manage": True}, CHOOSE + DOUBLE_CLICK + """
+        doubleClick('photo05.jpg')
+        report(await result())
+    """)
+
+    assert result == {"errors": [], "picked": {"waiting": True}}
+
+
+def test_enter_chooses_the_selected_files():
+    result = run_picker({"filetypes": ["image"]}, CHOOSE + """
+        press('Enter')
+        const withNothingSelected = await browser.settle(picked, 100)
+        select('photo03.jpg')
+        select('photo04.jpg')
+        press('Enter', entry('photo04.jpg'))
+        report({ withNothingSelected, ...(await result()) })
+    """)
+
+    assert result == {"errors": [], "withNothingSelected": {"waiting": True},
+                      "picked": {"resolved": ["photo03.jpg", "photo04.jpg"]}}
+
+
+@pytest.mark.parametrize("target", ["exFileSelectModalSearchField", "exFileSelectModalFilePreviewEditField",
+                                    "deselectAllButton", "exFileSelectModalRenameFileButton"])
+def test_enter_in_a_field_or_on_a_button_is_left_alone(target):
+    result = run_picker({"filetypes": ["image"]}, CHOOSE + f"""
+        select('photo03.jpg')
+        press('Enter', el('{target}'))
+        report(await result())
+    """)
+
+    assert result == {"errors": [], "picked": {"waiting": True}}
+
+
+def test_enter_does_nothing_when_managing_files():
+    result = run_picker({"manage": True}, CHOOSE + """
+        select('photo03.jpg')
+        press('Enter')
+        report(await result())
+    """)
+
+    assert result == {"errors": [], "picked": {"waiting": True}}
+
+
+# Buttons for several selected files
+
+MULTIPLE_BUTTONS = """
+    const multipleButtons = () => [display('exFileSelectModalDeleteMultipleButtonCol'), display('exFileSelectModalDownloadMultipleButtonCol')]
+"""
+SHOWN = ["block", "block"]
+HIDDEN = ["none", "none"]
+
+
+def test_multiple_buttons_stay_after_downloading():
+    result = run_picker({"manage": True}, MULTIPLE_BUTTONS + """
+        globalThis.fetch = async () => new Response('PK', { headers: { 'content-type': 'application/zip' } })
+        window.URL.createObjectURL = () => 'blob:zip'
+        window.URL.revokeObjectURL = () => {}
+        window.HTMLAnchorElement.prototype.click = () => {}
+        select('photo03.jpg')
+        select('photo04.jpg')
+        el('exFileSelectModalDownloadMultipleFileButton').click()
+        await browser.wait(300)
+        report({ errors: browser.errors, buttons: multipleButtons(), selected: selected() })
+    """)
+
+    assert result == {"errors": [], "buttons": SHOWN, "selected": ["photo03.jpg", "photo04.jpg"]}
+
+
+@pytest.mark.parametrize("reply, expected", [("{ body: { success: true } }", HIDDEN),
+                                             # The files are still there and selected
+                                             ("'error'", SHOWN)])
+def test_multiple_buttons_after_deleting(reply, expected):
+    result = run_picker({"manage": True}, MULTIPLE_BUTTONS + f"""
+        replies.delete = {reply}
+        select('photo03.jpg')
+        select('photo04.jpg')
+        const confirm = document.createElement('a')
+        confirm.id = 'fileDeleteMultiplePopover'
+        document.body.appendChild(confirm)
+        confirm.click()
+        await browser.wait(200)
+        report({{ errors: browser.errors, buttons: multipleButtons() }})
+    """)
+
+    assert result == {"errors": [], "buttons": expected}
+
+
+def test_multiple_buttons_follow_select_all_and_unselect_all():
+    result = run_picker({"manage": True}, MULTIPLE_BUTTONS + """
+        // Only one file is listed
+        search('photo03')
+        el('selectAllButton').click()
+        const one = multipleButtons()
+        search('')
+        el('selectAllButton').click()
+        const all = multipleButtons()
+        el('deselectAllButton').click()
+        report({ errors: browser.errors, one, all, none: multipleButtons() })
+    """)
+
+    assert result == {"errors": [], "one": HIDDEN, "all": SHOWN, "none": HIDDEN}

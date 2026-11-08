@@ -287,14 +287,24 @@ export function createFileSelectionModal (userOptions) {
     // Download multiple
     document.getElementById('exFileSelectModalDownloadMultipleButtonCol').addEventListener('click', downloadMultipleFiles)
 
-    // Choose button
-    document.getElementById('exFileSelectModalChooseButton').addEventListener('click', () => {
+    // Choose button. It's disabled until a file is selected.
+    const chooseButton = document.getElementById('exFileSelectModalChooseButton')
+    chooseButton.disabled = true
+    chooseButton.addEventListener('click', () => {
       modal.querySelectorAll('.const-file-selected').forEach((el) => {
         selectedFiles.push(el.getAttribute('data-filename'))
       })
       bootstrap.Modal.getInstance(modal).hide()
     },
     { once: true })
+
+    // Enter chooses the selected files, except where it already does something: in a field, or on a button or link
+    modal.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' || event.target.closest('input, textarea, select, button, a') != null) return
+      if (options.manage === true || chooseButton.disabled) return
+      event.preventDefault()
+      chooseButton.click()
+    })
 
     modal.addEventListener('hidden.bs.modal', () => {
       // If we dismiss the modal in any way other than clicking the Choose button,
@@ -562,6 +572,14 @@ function _populateComponentContent (fileDict, options) {
     entry.addEventListener('click', (event) => {
       selectFile(check, options.multiple, event)
     })
+    if (options.manage === false) {
+      // Double-clicking chooses the file, along with any others already selected
+      entry.addEventListener('dblclick', () => {
+        // The double-click's two clicks can leave the file unselected, so select it again
+        if (!check.classList.contains('const-file-selected')) selectFile(check, options.multiple, {})
+        document.getElementById('exFileSelectModalChooseButton').click()
+      })
+    }
 
     // Thumbnail
     const thumbContainer = entry.querySelector('.const-file-thumb-container')
@@ -576,7 +594,7 @@ function _populateComponentContent (fileDict, options) {
 
   // The file last clicked, for shift-click, was replaced
   lastClickedSelectBox = null
-  if (options.multiple) updateMultipleFileButtons()
+  selectionChanged()
 }
 
 function _populateThumbnail (file, thumbContainer) {
@@ -819,15 +837,18 @@ function selectFile (target, allowMultiple, clickEvent) {
   // Update last clicked reference
   lastClickedSelectBox = target
 
-  if (allowMultiple === true) updateMultipleFileButtons()
+  selectionChanged()
 }
 
-function updateMultipleFileButtons () {
-  // Show the delete and download multiple buttons when more than one file is selected
+function selectionChanged () {
+  // Show the delete and download multiple buttons when more than one file is selected, and only allow choosing when
+  // at least one is.
 
-  const display = document.querySelectorAll('.const-file-select-box.const-file-selected').length > 1 ? 'block' : 'none'
+  const count = document.querySelectorAll('#exFileSelectModalFileList .const-file-select-box.const-file-selected').length
+  const display = count > 1 ? 'block' : 'none'
   document.getElementById('exFileSelectModalDeleteMultipleButtonCol').style.display = display
   document.getElementById('exFileSelectModalDownloadMultipleButtonCol').style.display = display
+  document.getElementById('exFileSelectModalChooseButton').disabled = count === 0
 }
 
 function selectAllFiles () {
@@ -839,9 +860,7 @@ function selectAllFiles () {
     checkbox.classList.add('const-file-selected', 'bg-success')
     checkbox.innerHTML = '✓'
   })
-
-  document.getElementById('exFileSelectModalDeleteMultipleButtonCol').style.display = 'block'
-  document.getElementById('exFileSelectModalDownloadMultipleButtonCol').style.display = 'block'
+  selectionChanged()
 }
 
 function deselectAllFiles () {
@@ -853,6 +872,7 @@ function deselectAllFiles () {
     checkbox.classList.remove('const-file-selected', 'bg-success')
     checkbox.innerHTML = ''
   })
+  selectionChanged()
 }
 
 function onUploadContentChange () {
@@ -987,7 +1007,7 @@ function showUploadedFiles (filenames, options) {
     box.innerHTML = '✓'
   }
   lastClickedSelectBox = toSelect[0].querySelector('.const-file-select-box')
-  if (options.multiple) updateMultipleFileButtons()
+  selectionChanged()
 
   // With several files, show the first at the top so the others follow it
   entries[0].scrollIntoView({ block: entries.length > 1 ? 'start' : 'nearest' })
@@ -1016,6 +1036,7 @@ function deleteFiles (files) {
       }
       previewFile({})
       document.getElementById('exFileSelectModalFilePreview').dataset.filename = ''
+      selectionChanged()
     }, failed)
 }
 
@@ -1065,9 +1086,6 @@ function downloadMultipleFiles () {
         showProblem("These files couldn't be downloaded because some of their names aren't allowed.")
       } else showProblem("The files couldn't be downloaded. " + CONNECTION_PROBLEM)
     })
-
-  document.getElementById('exFileSelectModalDeleteMultipleButtonCol').style.display = 'none'
-  document.getElementById('exFileSelectModalDownloadMultipleButtonCol').style.display = 'none'
 }
 
 function deleteMultipleFiles () {
@@ -1079,8 +1097,6 @@ function deleteMultipleFiles () {
     filenamesToDelete.push(el.dataset.filename)
   }
   deleteFiles(filenamesToDelete)
-  document.getElementById('exFileSelectModalDeleteMultipleButtonCol').style.display = 'none'
-  document.getElementById('exFileSelectModalDownloadMultipleButtonCol').style.display = 'none'
 }
 
 function showRenameField () {
