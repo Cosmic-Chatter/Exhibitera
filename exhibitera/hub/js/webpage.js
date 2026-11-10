@@ -382,17 +382,20 @@ document.getElementById('componentInfoModalMaintenanceStatusSelector')
   })
 document.getElementById('componentInfoModalBasicSettingsSaveButton').addEventListener('click', hubComponentInfo.submitComponentBasicSettingsChange)
 
-for (const el of document.querySelectorAll('.componentInfoBasicSetting')) {
-  el.addEventListener('change', () => {
-    document.getElementById('componentInfoModalBasicSettingsSaveButton').style.display = 'block'
-  })
+function showSaveButtonOnEdit (selector, buttonID) {
+  // Show the save button as soon as one of the settings is edited. Text fields send input events as the person
+  // types, but change events only when they leave the field.
+
+  for (const el of document.querySelectorAll(selector)) {
+    for (const type of ['input', 'change']) {
+      el.addEventListener(type, () => {
+        document.getElementById(buttonID).style.display = 'block'
+      })
+    }
+  }
 }
-const settingEls = document.querySelectorAll('.componentInfoSetting')
-for (const el of settingEls) {
-  el.addEventListener('change', function () {
-    document.getElementById('componentInfoModalSettingsSaveButton').style.display = 'block'
-  })
-}
+showSaveButtonOnEdit('.componentInfoBasicSetting', 'componentInfoModalBasicSettingsSaveButton')
+showSaveButtonOnEdit('.componentInfoSetting', 'componentInfoModalSettingsSaveButton')
 document.getElementById('componentInfoModalSettingsSaveButton')
   .addEventListener('click', hubComponentInfo.submitComponentSettingsChange)
 document.getElementById('definitionTabAppFilterSelect').addEventListener('change', (event) => {
@@ -425,23 +428,11 @@ document.getElementById('componentInfoModalDMXIntroConfigureButton').addEventLis
   const component = hubTools.getExhibitComponent(document.getElementById('componentInfoModal').dataset.uuid)
   window.open(component.getHelperURL() + '/dmx_control/?standalone=true', '_blank').focus()
 })
-for (const el of document.querySelectorAll('.componentInfoProjectorSetting')) {
-  el.addEventListener('change', () => {
-    document.getElementById('componentInfoModalProjectorSettingsSaveButton').style.display = 'block'
-  })
-}
+showSaveButtonOnEdit('.componentInfoProjectorSetting', 'componentInfoModalProjectorSettingsSaveButton')
 document.getElementById('componentInfoModalProjectorSettingsSaveButton').addEventListener('click', hubComponentInfo.updateProjectorFromInfoModal)
-for (const el of document.querySelectorAll('.componentInfoStaticSetting')) {
-  el.addEventListener('change', () => {
-    document.getElementById('componentInfoModalStaticSettingsSaveButton').style.display = 'block'
-  })
-}
+showSaveButtonOnEdit('.componentInfoStaticSetting', 'componentInfoModalStaticSettingsSaveButton')
 document.getElementById('componentInfoModalStaticSettingsSaveButton').addEventListener('click', hubComponentInfo.updateStaticComponentFromInfoModal)
-for (const el of document.querySelectorAll('.componentInfoWakeOnLANSetting')) {
-  el.addEventListener('change', () => {
-    document.getElementById('componentInfoModalWakeOnLANSettingsSaveButton').style.display = 'block'
-  })
-}
+showSaveButtonOnEdit('.componentInfoWakeOnLANSetting', 'componentInfoModalWakeOnLANSettingsSaveButton')
 document.getElementById('componentInfoModalWakeOnLANSettingsSaveButton').addEventListener('click', hubComponentInfo.updateWakeOnLANComponentFromInfoModal)
 
 // Copy definition modal

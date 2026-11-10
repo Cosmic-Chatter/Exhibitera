@@ -364,6 +364,10 @@ class BaseComponent {
     if ('groups' in update && exUtilities.arraysEqual(this.groups, update.groups) === false) {
       this.setGroups(update.groups)
     }
+    if ('id' in update && update.id !== this.id) {
+      this.id = update.id
+      rebuildComponentInterface()
+    }
     if (update?.permissions) {
       if (JSON.stringify(this.permissions) !== JSON.stringify(update.permissions)) {
         this.setPermissions(update.permissions)
