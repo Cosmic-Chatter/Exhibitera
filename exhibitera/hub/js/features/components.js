@@ -176,9 +176,11 @@ class BaseComponent {
     dropdownMenu.innerHTML = ''
     const thisUUID = this.uuid
     let numOptions = 0
+    // A new component hasn't set its permissions, so offer what it does for any that aren't set
+    const permissions = exUtilities.withPermissionDefaults(this?.permissions)
 
     if (permission === 'edit') {
-      if (this?.permissions?.refresh === true) {
+      if (permissions.refresh === true) {
         numOptions += 1
         const refreshAction = document.createElement('a')
         refreshAction.classList = 'dropdown-item handCursor'
@@ -189,7 +191,7 @@ class BaseComponent {
         dropdownMenu.appendChild(refreshAction)
       }
 
-      if (this?.permissions?.sleep === true) {
+      if (permissions.sleep === true) {
         numOptions += 2
         const sleepAction = document.createElement('a')
         sleepAction.classList = 'dropdown-item handCursor'
@@ -208,7 +210,7 @@ class BaseComponent {
         dropdownMenu.appendChild(wakeAction)
       }
 
-      if (this?.permissions?.restart === true) {
+      if (permissions.restart === true) {
         numOptions += 1
         const restartAction = document.createElement('a')
         restartAction.classList = 'dropdown-item handCursor'
@@ -219,13 +221,13 @@ class BaseComponent {
         dropdownMenu.appendChild(restartAction)
       }
 
-      if (this?.permissions?.shutdown === true) {
+      if (permissions.shutdown === true) {
         numOptions += 1
         const shutdownAction = document.createElement('a')
         shutdownAction.classList = 'dropdown-item handCursor'
         shutdownAction.innerHTML = 'Power off component'
         shutdownAction.addEventListener('click', function () {
-          queueCommand(thisUUID, 'restart')
+          queueCommand(thisUUID, 'shutdown')
         }, false)
         dropdownMenu.appendChild(shutdownAction)
       }

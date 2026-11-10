@@ -397,7 +397,7 @@ function readUpdate (update) {
     } else if (cmd === 'wake_display' || cmd === 'power_on') {
       wakeDisplay()
     } else if (cmd === 'refresh_page') {
-      if (config?.permissions?.refresh === true) {
+      if (exUtilities.withPermissionDefaults(config.permissions).refresh === true) {
         location.reload()
       }
     } else if (cmd === 'reloadDefaults') {

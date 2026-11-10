@@ -4,6 +4,9 @@ Components report their operating system in their pings, which the maintenance p
 whether to show CPU use (Windows doesn't report it). Third-party components may not report an operating
 system at all, and the panel used to throw an error for them.
 
+A new component hasn't set any permissions, and the settings page used to leave them blank. It shows what the
+component does when a permission isn't set: only refreshing and restarting are allowed.
+
 Apps reports its version too. When a component reported no version, the dialog showed "undefined.undefined.undefined".
 """
 
@@ -28,11 +31,17 @@ MAINTENANCE_REPORT = {"success": True, "status": {"status": "On floor, working",
                                                    "working_pct": 100, "not_working_pct": 0}}
 
 
-def open_component_dialog(platform_details: dict, maintenance_reply: dict = MAINTENANCE_REPORT) -> dict:
+PERMISSIONS = ["audio", "refresh", "restart", "shutdown", "sleep"]
+
+
+def open_component_dialog(platform_details: dict, maintenance_reply: dict = MAINTENANCE_REPORT,
+                          permissions: dict | None = None) -> dict:
     component = {"class": "exhibitComponent", "uuid": "kiosk-1", "id": "Lobby kiosk", "groups": ["Default"],
                  "helperAddress": "http://kiosk.test", "api_level": 6.1, "ip_address": "10.0.0.5", "latency": 0,
                  "platform_details": platform_details, "maintenance_status": "On floor, working", "status": "ONLINE",
-                 "content": [], "definition": "", "notifications": {}, "permissions": {}, "description": ""}
+                 "content": [], "definition": "", "notifications": {}, "permissions": permissions or {}, "description": ""}
+    if permissions is None:
+        del component["permissions"]  # As from a component that hasn't reported any
     gallery = {"current_exhibit": "e1", "available_exhibits": [{"uuid": "e1", "name": "Main gallery"}],
                "exhibit_modified": False, "name": "Test gallery", "notifications": {}}
 
@@ -66,7 +75,10 @@ def open_component_dialog(platform_details: dict, maintenance_reply: dict = MAIN
         report({{
           errors: browser.errors,
           cpuShown: el('componentInfoModalMaintenanceCPUBar').style.display,
-          version: el('componentInfoModalExhibteraGroup').style.display === 'none' ? null : el('componentInfoModalExhibtera').textContent
+          version: el('componentInfoModalExhibteraGroup').style.display === 'none' ? null : el('componentInfoModalExhibtera').textContent,
+          permissions: Object.fromEntries([['audio', 'AutoplayAudio'], ['refresh', 'AllowRefresh'], ['restart', 'AllowRestart'],
+                                           ['shutdown', 'AllowShutdown'], ['sleep', 'AllowSleep']]
+            .map(([name, id]) => [name, el('componentInfoModalSettings' + id).value]))
         }})
     """, browser="page")
 
@@ -103,3 +115,19 @@ def test_exhibitera_version(version, shown):
 
     assert result["errors"] == []
     assert result["version"] == shown
+
+
+# What the component does when a permission isn't set
+UNSET = {"audio": "false", "refresh": "true", "restart": "true", "shutdown": "false", "sleep": "false"}
+
+
+@pytest.mark.parametrize("permissions, shown", [
+    (None, UNSET),
+    ({}, UNSET),
+    ({"sleep": True, "restart": False, "refresh": False}, {**UNSET, "sleep": "true", "restart": "false", "refresh": "false"}),
+    ({name: True for name in PERMISSIONS}, {name: "true" for name in PERMISSIONS})])
+def test_permissions_are_always_shown(permissions, shown):
+    result = open_component_dialog({"operating_system": "Windows 11"}, permissions=permissions)
+
+    assert result["errors"] == []
+    assert result["permissions"] == shown

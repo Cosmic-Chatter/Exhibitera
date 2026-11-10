@@ -205,11 +205,13 @@ function configureComponentInfoModalForExhibitComponent (obj, permission) {
   hubGroups.populateGroupsForSelect(groupSelect, obj.groups)
 
   document.getElementById('componentInfoModalFullSettingsButton').setAttribute('href', obj.helperAddress + '?showSettings=true')
-  document.getElementById('componentInfoModalSettingsAutoplayAudio').value = String(obj.permissions.audio)
-  document.getElementById('componentInfoModalSettingsAllowRefresh').value = String(obj.permissions.refresh)
-  document.getElementById('componentInfoModalSettingsAllowRestart').value = String(obj.permissions.restart)
-  document.getElementById('componentInfoModalSettingsAllowShutdown').value = String(obj.permissions.shutdown)
-  document.getElementById('componentInfoModalSettingsAllowSleep').value = String(obj.permissions.sleep)
+  // A new component hasn't set its permissions, so show what it does for any that aren't set
+  const permissions = exUtilities.withPermissionDefaults(obj.permissions)
+  document.getElementById('componentInfoModalSettingsAutoplayAudio').value = String(permissions.audio)
+  document.getElementById('componentInfoModalSettingsAllowRefresh').value = String(permissions.refresh)
+  document.getElementById('componentInfoModalSettingsAllowRestart').value = String(permissions.restart)
+  document.getElementById('componentInfoModalSettingsAllowShutdown').value = String(permissions.shutdown)
+  document.getElementById('componentInfoModalSettingsAllowSleep').value = String(permissions.sleep)
 
   document.getElementById('componentInfoModalSettingsPermissionsPane').style.display = 'flex'
   document.getElementById('componentInfoModalFullSettingsButton').style.display = 'inline-block'

@@ -26,15 +26,8 @@ async def send_update(config: apps_config = Depends(get_config)):
     response_dict = {
         "app": config.defaults.get("app", "none"),
         "commands": config.commandList,
-        "permissions": config.defaults.get("permissions",
-                                           {
-                                            "audio": False,
-                                            "refresh": False,
-                                            "restart": False,
-                                            "shutdown": False,
-                                            "sleep": False
-                                           }
-                                           )
+        # Pages apply the defaults for any permission that isn't saved
+        "permissions": config.defaults.get("permissions", {})
     }
     return response_dict
 

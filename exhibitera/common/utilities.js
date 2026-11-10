@@ -24,6 +24,21 @@ const exhibiteraAppIdDisplayNames = {
   word_cloud_viewer: 'Word Cloud Viewer'
 }
 
+// What Apps does when one of a component's permissions hasn't been set, as on a new component
+export const componentPermissionDefaults = {
+  audio: false, // Media Player starts muted
+  refresh: true,
+  restart: true,
+  shutdown: false,
+  sleep: false
+}
+
+export function withPermissionDefaults (permissions) {
+  // Return the given permissions, with the default for any that aren't set
+
+  return { ...componentPermissionDefaults, ...(permissions ?? {}) }
+}
+
 export function makeRequest (opt) {
   // Make a request to a server and return a Promise with the result
   // 'opt' should be an object with all the necessry options

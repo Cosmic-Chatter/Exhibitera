@@ -21,23 +21,13 @@ function updateParser (update) {
     }
   }
   if (update?.permissions) {
-    if ('audio' in update.permissions) {
-      document.getElementById('permissionsAudioInput').value = String(update.permissions.audio)
-    }
-    if ('refresh' in update.permissions) {
-      document.getElementById('permissionsRefreshInput').value = String(update.permissions.refresh)
-    }
-    if ('restart' in update.permissions) {
-      document.getElementById('permissionsRestartInput').value = String(update.permissions.restart)
-    }
-    if ('shutdown' in update.permissions) {
-      document.getElementById('permissionsShutdownInput').value = String(update.permissions.shutdown)
-    } else {
-      document.getElementById('permissionsShutdownInput').value = 'false'
-    }
-    if ('sleep' in update.permissions) {
-      document.getElementById('permissionsSleepInput').value = String(update.permissions.sleep)
-    }
+    // Show what Apps does for any permission that isn't set
+    const permissions = exUtilities.withPermissionDefaults(update.permissions)
+    document.getElementById('permissionsAudioInput').value = String(permissions.audio)
+    document.getElementById('permissionsRefreshInput').value = String(permissions.refresh)
+    document.getElementById('permissionsRestartInput').value = String(permissions.restart)
+    document.getElementById('permissionsShutdownInput').value = String(permissions.shutdown)
+    document.getElementById('permissionsSleepInput').value = String(permissions.sleep)
   }
   if (update?.smart_restart) {
     if ('state' in update.smart_restart) {
