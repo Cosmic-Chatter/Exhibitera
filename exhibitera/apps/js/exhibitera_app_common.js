@@ -77,7 +77,9 @@ makeHelperRequest({
 })
   .then((result) => {
     config.platformDetails.outdated = result?.outdated ?? false
-    config.platformDetails.exhibitera_version = result?.exhibitera_version ?? {}
+    // Older versions of Apps could report an empty version, so fall back on the version this page loaded
+    const reported = result?.exhibitera_version
+    config.platformDetails.exhibitera_version = Number.isInteger(reported?.major) ? reported : (config.software_version ?? {})
   })
 
 // Fix bootstrap modal accessibility issue

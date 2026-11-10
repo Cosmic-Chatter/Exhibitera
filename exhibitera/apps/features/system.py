@@ -145,12 +145,21 @@ def wake_display():
         os.system(nircmd_path + " sendkeypress ctrl")
 
 
+def get_software_version() -> dict[str, int]:
+    """Return this version of Apps, as {major, minor, patch}, loading it the first time it's needed."""
+
+    if not apps_config.software_version:
+        version_file = ex_files.load_json(ex_files.get_path(["_static", "semantic_version.json"])) or {}
+        apps_config.software_version = version_file.get("version", {})
+    return apps_config.software_version
+
+
 def get_platform_details() -> dict[str, Any]:
     """Retrieve basic information about the platform."""
 
     details = {
         "architecture": platform.architecture()[0],
-        "exhibitera_version": apps_config.software_version,
+        "exhibitera_version": get_software_version(),
         "os_version": platform.release()
     }
 

@@ -269,6 +269,9 @@ def run():
 
     ex_utilities.configure_logging("apps.log")
 
+    # Load the current software version. This is needed however Apps starts, including first-time setup.
+    apps_system.get_software_version()
+
     defaults_path = ex_files.get_path(['configuration', 'config.json'], user_file=True)
     if os.path.exists(defaults_path):
         if apps_utilities.load_configuration() is False:
@@ -283,10 +286,6 @@ def run():
         apps_legacy.update_timeline_definition_format()
         apps_legacy.update_dmx_config()
         apps_legacy.migrate_thumbnail_names()
-
-        # Load the current software version
-        apps_config.software_version = ex_files.load_json(
-            (ex_files.get_path(["_static", "semantic_version.json"]))).get("version", {})
 
         # Check the GitHub server for an available software update
         ex_utilities.check_for_software_update('apps')

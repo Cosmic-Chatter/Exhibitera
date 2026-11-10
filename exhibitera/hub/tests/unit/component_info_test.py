@@ -3,6 +3,8 @@
 Components report their operating system in their pings, which the maintenance panel uses to decide
 whether to show CPU use (Windows doesn't report it). Third-party components may not report an operating
 system at all, and the panel used to throw an error for them.
+
+Apps reports its version too. When a component reported no version, the dialog showed "undefined.undefined.undefined".
 """
 
 # Standard modules
@@ -60,9 +62,11 @@ def open_component_dialog(platform_details: dict, maintenance_reply: dict = MAIN
         const componentInfo = await import({page_scripts.module_url("hub/js/features/component_info_modal.js")})
         componentInfo.showExhibitComponentInfo('kiosk-1')
         await browser.wait(1500)
+        const el = (id) => window.document.getElementById(id)
         report({{
           errors: browser.errors,
-          cpuShown: window.document.getElementById('componentInfoModalMaintenanceCPUBar').style.display
+          cpuShown: el('componentInfoModalMaintenanceCPUBar').style.display,
+          version: el('componentInfoModalExhibteraGroup').style.display === 'none' ? null : el('componentInfoModalExhibtera').textContent
         }})
     """, browser="page")
 
@@ -72,7 +76,10 @@ def open_component_dialog(platform_details: dict, maintenance_reply: dict = MAIN
                                                          ({"operating_system": "OS X 14"}, "block"),
                                                          ({"operating_system": "Windows 11"}, "none")])
 def test_maintenance_panel_handles_any_platform_details(platform_details, cpu_shown):
-    assert open_component_dialog(platform_details) == {"errors": [], "cpuShown": cpu_shown}
+    result = open_component_dialog(platform_details)
+
+    assert result["errors"] == []
+    assert result["cpuShown"] == cpu_shown
 
 
 @pytest.mark.parametrize("reason", ["insufficient_permission", "invalid_uuid"])
@@ -80,3 +87,19 @@ def test_maintenance_panel_handles_a_refused_status_request(reason):
     result = open_component_dialog({"operating_system": "OS X 14"}, {"success": False, "reason": reason})
 
     assert result["errors"] == []
+
+
+@pytest.mark.parametrize("version, shown", [({"major": 6, "minor": 1, "patch": 0}, "6.1.0"),
+                                           # Apps that couldn't tell its version
+                                           ({}, None),
+                                           (None, None),
+                                           ({"major": 6}, None)])
+def test_exhibitera_version(version, shown):
+    platform_details = {"operating_system": "Windows 11"}
+    if version is not None:
+        platform_details["exhibitera_version"] = version
+
+    result = open_component_dialog(platform_details)
+
+    assert result["errors"] == []
+    assert result["version"] == shown

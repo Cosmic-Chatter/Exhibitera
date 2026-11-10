@@ -85,7 +85,9 @@ export function showExhibitComponentInfo (uuid, groupUUID) {
     } else {
       document.getElementById('componentInfoModalOperatingSystemGroup').style.display = 'none'
     }
-    if (obj.platform_details.exhibitera_version) {
+    // Only show a complete version. Components that couldn't tell their version may send an empty one.
+    const version = obj.platform_details.exhibitera_version
+    if (['major', 'minor', 'patch'].every((part) => Number.isInteger(version?.[part]))) {
       document.getElementById('componentInfoModalExhibtera').innerText = exUtilities.formatSemanticVersion(obj.platform_details.exhibitera_version)
       document.getElementById('componentInfoModalExhibteraGroup').style.display = 'block'
     } else {

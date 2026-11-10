@@ -178,7 +178,8 @@ export function formatDateTimeDifference (dt1, dt2) {
 export function formatSemanticVersion (obj) {
   // Take an object representing a semantic version and format it as a string
 
-  return (String(obj?.major) ?? '?') + '.' + (String(obj?.minor) ?? '?') + '.' + (String(obj?.patch) ?? '?')
+  // A missing part is shown as ?
+  return [obj?.major, obj?.minor, obj?.patch].map((part) => String(part ?? '?')).join('.')
 }
 
 export function semanticVersionLessThan (inputVer, referenceVer) {
