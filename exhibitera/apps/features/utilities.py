@@ -289,18 +289,6 @@ def handle_missing_defaults_file():
 
     if defaults["system"]["standalone"] is False:
         command_line_setup_print_gui()
-        print("--- Component Details ---")
-        print("")
-        print(" Since we're using Hub, we need to identify this component. Each app")
-        print("instance needs an ID, which uniquely identifies this component.")
-        print("A good ID might be something like 'Sports Intro Video'.")
-
-        this_id = ""
-        while this_id == "":
-            this_id = input("Enter ID: ").strip()
-        defaults["app"]["id"] = this_id
-
-        command_line_setup_print_gui()
 
         print("--- Screenshots ---")
         print("")
