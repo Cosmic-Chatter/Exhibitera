@@ -47,6 +47,7 @@
   --tab-bar-height: 7;
   --toolbar-height: 5;
   --section-corner-radius: 2;
+  --tab-button-corner-radius: 10;
 }
 
 /* Block pinch-to-zoom */
@@ -176,7 +177,12 @@ p, div {
   font-variation-settings: var(--caption-font-axes);
   font-size: max(min(calc((1.5vmax + var(--caption-font-size-adjust)*1vmax) * var(--font-size-adjust)), 3.5vmax), calc(1.5vmax + var(--caption-font-size-adjust)*1vmax));;
 }
+.tabButtonCol {
+  container-type: size;
+}
 .tabButton {
+  border-radius: calc(var(--tab-button-corner-radius) * 0.1vmin);
+  border-radius: calc(var(--tab-button-corner-radius) * 1cqmin);
   font-size: calc(2.5vmax + var(--tab-button-font-size-adjust) * 1vmax);
   font-family: var(--button-font);
   font-variation-settings: var(--button-font-axes);

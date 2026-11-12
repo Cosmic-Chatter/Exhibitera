@@ -55,6 +55,7 @@ Exert more control over the appearance of text using Exhibitera's new font syste
 
 ### InfoStation
 - Adjust the height of the tab bar in portrait orientation.
+- Adjust the corner radius of tab buttons.
 
 ### Timeline Explorer
 - Enable hardware control to move the timeline using physical buttons.

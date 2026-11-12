@@ -74,3 +74,60 @@ def test_setup_shows_both_sliders(layout, shown):
 
     assert result == {"errors": [], "tabBar": {"name": "Tab bar height", "path": "style>layout>tab_bar_height", "value": shown},
                       "sidebar": "40" if layout else "30"}
+
+
+# Corner radii
+
+def layout_variables(layout: dict, names: list[str]) -> dict:
+    configuration = {"app": {"definition": "d1"}, "system": {"standalone": True, "remote_display": True}}
+    return page_scripts.run(f"""
+        globalThis.server = (method, url) => {{
+          const {{ pathname }} = new URL(url)
+          if (pathname === '/internal/system/configuration') return {{ body: {json.dumps(configuration)} }}
+          if (pathname === '/internal/definitions/d1/load') return {{ body: {{ success: true, definition: {json.dumps(infostation_definition(layout))} }} }}
+          return {{ body: {{ success: false }} }}
+        }}
+        console.log = () => {{}}
+        const window = await browser.openPage('apps', 'infostation/index.html')
+        await browser.wait(500)
+        const style = window.document.documentElement.style
+        report({{ errors: browser.errors, values: Object.fromEntries({json.dumps(names)}.map((name) => [name, style.getPropertyValue('--' + name)])) }})
+    """, browser="page")
+
+
+@pytest.mark.parametrize("layout, radius", [({}, "10"), ({"tab_button_corner_radius": 50}, "50"),
+                                            # Square buttons
+                                            ({"tab_button_corner_radius": 0}, "0")])
+def test_tab_button_corner_radius(layout, radius):
+    assert layout_variables(layout, ["tab-button-corner-radius"]) == {"errors": [], "values": {"tab-button-corner-radius": radius}}
+
+
+def test_sections_can_have_square_corners():
+    # A radius of 0 used to be treated as not set, and became 2
+    assert layout_variables({"section_corner_radius": 0}, ["section-corner-radius"]) == {
+        "errors": [], "values": {"section-corner-radius": "0"}}
+
+
+@pytest.mark.parametrize("layout, shown", [({}, "10"), ({"tab_button_corner_radius": 50}, "50")])
+def test_setup_shows_the_tab_button_corner_radius(layout, shown):
+    definition = {**infostation_definition(layout), "uuid": "def-A"}
+    result = page_scripts.run(f"""
+        const {{ readFileSync }} = await import('node:fs')
+        const definition = {json.dumps(definition)}
+        globalThis.server = (method, url) => {{
+          const path = decodeURIComponent(new URL(url).pathname)
+          if (path === '/internal/system/configuration') return {{ body: {{ app: {{}}, system: {{ standalone: true }} }} }}
+          if (path.startsWith('/internal/definitions/app/')) return {{ body: {{ success: true, definitions: {{ 'def-A': definition }} }} }}
+          if (path === '/internal/files/availableContent') return {{ body: {{ success: true, content: [] }} }}
+          if (path.startsWith('/_fonts/')) return {{ bytes: readFileSync({json.dumps(str(page_scripts.EXHIBITERA_DIR / "apps"))} + path) }}
+          return {{ body: {{ version: {{}}, success: false }} }}
+        }}
+        console.log = () => {{}}
+        console.warn = () => {{}}
+        const window = await browser.openPage('apps', 'infostation/setup.html', {{ search: '?definition=def-A' }})
+        await browser.wait(1500)
+        const slider = window.document.getElementById('tabButtonCornerRadiusSlider')
+        report({{ errors: browser.errors, path: slider.dataset.path, max: slider.dataset.max, value: slider.querySelector('.exAS_slider').value }})
+    """, browser="page")
+
+    assert result == {"errors": [], "path": "style>layout>tab_button_corner_radius", "max": "50", "value": shown}

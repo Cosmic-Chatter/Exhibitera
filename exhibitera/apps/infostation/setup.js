@@ -283,6 +283,9 @@ function editDefinition (uuid = '') {
   const sectionCornerRadiusSlider = document.getElementById('sectionCornerRadiusSlider')
   exSetup.createAdvancedSlider(sectionCornerRadiusSlider, def?.style?.layout?.section_corner_radius)
 
+  const tabButtonCornerRadiusSlider = document.getElementById('tabButtonCornerRadiusSlider')
+  exSetup.createAdvancedSlider(tabButtonCornerRadiusSlider, def?.style?.layout?.tab_button_corner_radius)
+
   exSetup.updateAdvancedColorPicker('style>background',
     def?.style?.background,
     {

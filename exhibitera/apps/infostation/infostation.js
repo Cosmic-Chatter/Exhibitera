@@ -39,7 +39,9 @@ function loadDefinition (definition) {
   root.style.setProperty('--sidebar-width', definition?.style?.layout?.sidebar_width || 30)
   root.style.setProperty('--tab-bar-height', definition?.style?.layout?.tab_bar_height || 7)
   root.style.setProperty('--toolbar-height', definition?.style?.layout?.toolbar_height || 5)
-  root.style.setProperty('--section-corner-radius', definition?.style?.layout?.section_corner_radius || 2)
+  // A radius of 0 makes square corners, so only use the default when it isn't set
+  root.style.setProperty('--section-corner-radius', definition?.style?.layout?.section_corner_radius ?? 2)
+  root.style.setProperty('--tab-button-corner-radius', definition?.style?.layout?.tab_button_corner_radius ?? 10)
 
   if (parseInt(definition?.style?.layout?.header_height || 10) === 0) {
     document.getElementById('mastheadDiv').style.display = 'none'
