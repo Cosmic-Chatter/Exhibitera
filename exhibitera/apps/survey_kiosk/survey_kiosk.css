@@ -159,8 +159,38 @@ body {
     opacity: 0;
 }
 
+/* The "Are you still working?" popup takes the survey's colors and fonts */
+#inactivityModal .modal-content {
+    border: none;
+}
+
 #inactivityHeader {
     font-size: 4vmin;
+    color: var(--header-color);
+    font-family: var(--header-font);
+    font-variation-settings: var(--header-font-axes);
+}
+
+#inactivityRestartButton, #inactivityRestartButton:hover, #inactivityRestartButton:active {
+    color: var(--restart-button-text-color);
+    background-color: var(--restart-button-color);
+    font-family: var(--restart-font);
+    font-variation-settings: var(--restart-font-axes);
+}
+
+#inactivityContinueButton, #inactivityContinueButton:hover, #inactivityContinueButton:active {
+    color: var(--next-button-text-color);
+    background-color: var(--next-button-color);
+    font-family: var(--next-font);
+    font-variation-settings: var(--next-font-axes);
+}
+
+#inactivityRestartButton:hover, #inactivityContinueButton:hover {
+    filter: brightness(90%);
+}
+
+#inactivityRestartButton:active, #inactivityContinueButton:active {
+    filter: brightness(80%);
 }
 
 #langSwitchDropdown {
@@ -185,13 +215,6 @@ body {
     filter: brightness(80%);
     background-color: var(--restart-button-color);
     color: var(--restart-button-text-color);
-}
-
-#successMessageBody {
-    font-size: 3vmax!important;
-    font-family: var(--button-font);
-    font-variation-settings: var(--button-font-axes);
-    background-color: var(--success-message-color);
 }
 
 #topRow {

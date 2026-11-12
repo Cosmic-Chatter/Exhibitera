@@ -584,7 +584,78 @@ function rebuildItems () {
     const item = exSetup.config.workingDefinition?.items?.[uuid]
     if (item) createSurveyItemGUI(item)
   }
+  rebuildInterfaceText()
   exSetup.previewDefinition(true)
+}
+
+// The kiosk's own text, which each language can set. Text that isn't set is shown in English.
+const INTERFACE_TEXT = [
+  { key: 'restart', label: 'Restart button', english: 'Start over' },
+  { key: 'still_working', label: 'Popup question', english: 'Are you still working?' },
+  { key: 'keep_working', label: 'Keep working button', english: 'Keep working' }
+]
+
+function rebuildInterfaceText () {
+  // Build a tab for each language, to edit the Start over button and the "Are you still working?" popup
+
+  const nav = document.getElementById('interfaceTextNav')
+  const content = document.getElementById('interfaceTextContent')
+  nav.innerText = ''
+  content.innerText = ''
+
+  const def = exSetup.config.workingDefinition
+  let first = true
+  for (const code of def?.language_order ?? []) {
+    const tab = document.createElement('button')
+    tab.classList = 'nav-link'
+    tab.id = 'interfaceTextTab_' + code
+    tab.type = 'button'
+    tab.setAttribute('data-bs-toggle', 'tab')
+    tab.setAttribute('data-bs-target', '#interfaceTextPane_' + code)
+    tab.setAttribute('role', 'tab')
+    tab.textContent = exLang.getLanguageDisplayName(code, true)
+    nav.appendChild(tab)
+
+    const pane = document.createElement('div')
+    pane.classList = 'tab-pane fade'
+    pane.id = 'interfaceTextPane_' + code
+    pane.setAttribute('role', 'tabpanel')
+    content.appendChild(pane)
+
+    const row = document.createElement('div')
+    row.classList = 'row gy-2 mt-1 mb-3'
+    pane.appendChild(row)
+
+    for (const { key, label, english } of INTERFACE_TEXT) {
+      const col = document.createElement('div')
+      col.classList = 'col-12 col-md-4'
+      row.appendChild(col)
+
+      const input = document.createElement('input')
+      input.type = 'text'
+      input.classList = 'form-control'
+      input.id = `interfaceText_${code}_${key}`
+      input.placeholder = english
+      input.value = def.languages?.[code]?.interface?.[key] ?? ''
+      input.addEventListener('change', () => {
+        exSetup.updateWorkingDefinition(['languages', code, 'interface', key], input.value.trim())
+        exSetup.previewDefinition(true)
+      })
+
+      const labelEl = document.createElement('label')
+      labelEl.classList = 'form-label'
+      labelEl.htmlFor = input.id
+      labelEl.textContent = label
+      col.appendChild(labelEl)
+      col.appendChild(input)
+    }
+
+    if (first) {
+      tab.classList.add('active')
+      pane.classList.add('show', 'active')
+      first = false
+    }
+  }
 }
 
 function createOption (itemUUID) {

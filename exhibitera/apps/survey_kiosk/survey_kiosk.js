@@ -388,25 +388,6 @@ function loadDefinition (definition) {
 
   inactivityTimeout = parseFloat(definition?.behavior?.inactivity_timeout ?? 10) * 1000
 
-  // Text settings
-  for (const item of ['success_message']) {
-    const text = definition?.text?.[item] ?? ''
-    const col = document.getElementById(item + 'Col')
-    const el = document.getElementById(item)
-    if (text !== '') {
-      if (item !== 'success_message') {
-        col.style.display = 'block'
-        el.innerHTML = exMarkdown.formatText(text, { removeParagraph: true, string: true })
-      } else {
-        document.getElementById('successMessageBody').innerHTML = exMarkdown.formatText(text, { removeParagraph: true, string: true })
-      }
-    } else {
-      if (item !== 'success_message') {
-        col.style.display = 'none'
-      }
-    }
-  }
-
   // Color settings
   const root = document.querySelector(':root')
 
@@ -440,6 +421,9 @@ function loadDefinition (definition) {
   if ('item_background' in definition.style) {
     exCommon.setELementBackground(definition.style.item_background, document.getElementById('itemPane'), '#2f3e4f')
   }
+  // The "Are you still working?" popup has the same background as the questions
+  exCommon.setELementBackground(definition?.style?.item_background ?? { mode: 'color', color: '#2f3e4f' },
+    document.querySelector('#inactivityModal .modal-content'), '#2f3e4f')
 
   // Font settings
 
@@ -513,6 +497,15 @@ function localize (lang) {
 
   currentLang = lang
   exCommon.configureLanguage(lang)
+
+  // The restart button and the "Are you still working?" popup. Text that isn't set is in English.
+  const text = currentDefinition?.languages?.[lang]?.interface ?? {}
+  const textOr = (key, english) => (text[key] ?? '').trim() || english
+  document.getElementById('restartButton').textContent = textOr('restart', 'Start over')
+  document.getElementById('inactivityRestartButton').textContent = textOr('restart', 'Start over')
+  document.getElementById('inactivityHeader').textContent = textOr('still_working', 'Are you still working?')
+  document.getElementById('inactivityContinueButton').textContent = textOr('keep_working', 'Keep working')
+
   buildLayout(currentIndex)
 }
 
