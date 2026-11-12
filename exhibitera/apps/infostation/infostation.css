@@ -44,6 +44,7 @@
   --button-size: 30;
   --header-height: 10;
   --sidebar-width: 30;
+  --tab-bar-height: 7;
   --toolbar-height: 5;
   --section-corner-radius: 2;
 }
@@ -236,17 +237,23 @@ p, div {
 
 /* Handle portrait and landscape orientations */
 @media (orientation: portrait) {
+  :root {
+    /* The tab bar height, as a percent of the screen height. The bar is never shorter than its button text needs:
+       the text's line height, plus the buttons' padding and border and the bar's padding (Bootstrap's pt-3 and pb-1). */
+    --button-row-min-height: calc((2.5 + var(--tab-button-font-size-adjust)) * 1.5vmax + 2rem + 2px);
+    --button-row-height: calc(max(var(--tab-bar-height) * 1vh, var(--button-row-min-height)) * var(--button-rows));
+  }
   .tabButtonCol {
     width: calc(1%*var(--button-size))
   }
   #buttonRow {
-    height: calc(7vmax*var(--button-rows));
+    height: var(--button-row-height);
     overflow-y: auto;
     flex-wrap: nowrap;
     position: relative;
   }
   #nav-tabContent {
-    height: calc(100vh - 7vh*var(--button-rows) - var(--toolbar-height) * 1vh - 1vh * var(--header-height));
+    height: calc(100vh - var(--button-row-height) - var(--toolbar-height) * 1vh - 1vh * var(--header-height));
     width: 100vw;
     overflow-x: hidden;
     overflow-y: auto;

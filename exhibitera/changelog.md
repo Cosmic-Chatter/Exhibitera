@@ -53,6 +53,9 @@ Exert more control over the appearance of text using Exhibitera's new font syste
 ### Image Compare
 - Enable hardware control to use physical buttons to select an image pair and swipe between images.
 
+### InfoStation
+- Adjust the height of the tab bar in portrait orientation.
+
 ### Timeline Explorer
 - Enable hardware control to move the timeline using physical buttons.
 - Support for ultra-wide or ultra-tall displays.

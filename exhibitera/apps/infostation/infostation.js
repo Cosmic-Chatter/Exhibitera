@@ -37,6 +37,7 @@ function loadDefinition (definition) {
   root.style.setProperty('--button-size', definition?.style?.layout?.button_size || 30)
   root.style.setProperty('--header-height', definition?.style?.layout?.header_height || 10)
   root.style.setProperty('--sidebar-width', definition?.style?.layout?.sidebar_width || 30)
+  root.style.setProperty('--tab-bar-height', definition?.style?.layout?.tab_bar_height || 7)
   root.style.setProperty('--toolbar-height', definition?.style?.layout?.toolbar_height || 5)
   root.style.setProperty('--section-corner-radius', definition?.style?.layout?.section_corner_radius || 2)
 

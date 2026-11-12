@@ -274,6 +274,9 @@ function editDefinition (uuid = '') {
   const sidebarSizeSlider = document.getElementById('sidebarSizeSlider')
   exSetup.createAdvancedSlider(sidebarSizeSlider, def?.style?.layout?.sidebar_width)
 
+  const tabBarHeightSlider = document.getElementById('tabBarHeightSlider')
+  exSetup.createAdvancedSlider(tabBarHeightSlider, def?.style?.layout?.tab_bar_height)
+
   const toolbarSizeSlider = document.getElementById('toolbarSizeSlider')
   exSetup.createAdvancedSlider(toolbarSizeSlider, def?.style?.layout?.toolbar_height)
 
