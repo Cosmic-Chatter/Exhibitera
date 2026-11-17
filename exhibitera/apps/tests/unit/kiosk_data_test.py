@@ -51,6 +51,19 @@ def test_kiosk_records_go_to_hub_by_data_id():
     ]
 
 
+def test_kiosk_records_can_say_where_the_kiosk_is():
+    # Hub tags the record with the program running there
+    result = run_with_servers(False, """
+        await exCommon.sendKioskData('voting_kiosk', { name: 'Exit vote', data_id: 'd1' }, { A: 1 }, { location: 'lobby', minutesAfterProgram: 5 })
+        await exCommon.sendKioskData('voting_kiosk', { name: 'Exit vote', data_id: 'd1' }, { A: 2 }, { location: '' })
+        report(sent().map((request) => request.body))
+    """)
+
+    assert result == [{"data_id": "d1", "name": "Exit vote", "app": "voting_kiosk", "data": {"A": 1}, "location": "lobby",
+                       "minutes_after_program": 5},
+                      {"data_id": "d1", "name": "Exit vote", "app": "voting_kiosk", "data": {"A": 2}}]
+
+
 def test_standalone_kiosk_records_stay_with_apps():
     result = run_with_servers(True, """
         await exCommon.sendKioskData('survey_kiosk', { name: 'Lobby survey', data_id: 'd1' }, { Answer: 'Yes' })

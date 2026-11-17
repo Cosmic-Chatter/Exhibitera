@@ -327,8 +327,13 @@ function sendData () {
     return
   }
 
-  // Submit the data to Hub or the helper, depending on if we're standalone
-  exCommon.sendKioskData('voting_kiosk', currentDefinition, resultDict)
+  // Submit the data to Hub or the helper, depending on if we're standalone. With Hub, say where the kiosk is,
+  // if it's set to a location, so the votes are tagged with the program running there, or that ended a few
+  // minutes before: visitors often vote as they leave.
+  exCommon.sendKioskData('voting_kiosk', currentDefinition, resultDict, {
+    location: currentDefinition?.behavior?.location,
+    minutesAfterProgram: currentDefinition?.behavior?.minutes_after_program ?? 5
+  })
 }
 
 function showSuccessMessage () {

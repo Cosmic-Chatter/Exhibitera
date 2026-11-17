@@ -180,10 +180,12 @@ export function makeHelperRequest (opt) {
   return exUtilities.makeRequest(opt)
 }
 
-export function sendKioskData (app, definition, data) {
+export function sendKioskData (app, definition, data, options = {}) {
   // Record data from Voting or Survey Kiosk. Hub stores it by the definition's data ID, so renaming
   // the definition doesn't split its data. Definitions made before data IDs existed send only their name.
   // Standalone, this Apps server stores it by name.
+  // options.location is the UUID of the Hub group the kiosk is at, if it's set to one. Hub tags the
+  // record with the program running there, or that ended up to options.minutesAfterProgram minutes before.
 
   if (config.standalone === true) {
     return makeHelperRequest({
@@ -192,10 +194,15 @@ export function sendKioskData (app, definition, data) {
       params: { data }
     })
   }
+  const params = { data_id: definition.data_id ?? null, name: definition.name, app, data }
+  if (options?.location) {
+    params.location = options.location
+    if (options?.minutesAfterProgram != null) params.minutes_after_program = Number(options.minutesAfterProgram)
+  }
   return makeServerRequest({
     method: 'POST',
     endpoint: '/datasets/kiosk/append',
-    params: { data_id: definition.data_id ?? null, name: definition.name, app, data }
+    params
   })
 }
 

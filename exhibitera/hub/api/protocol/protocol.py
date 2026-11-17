@@ -98,11 +98,17 @@ async def append_kiosk_record(
         app: str = Body(description="The app sending the record: voting_kiosk or survey_kiosk."),
         data: dict[str, Any] = Body(description="The record to save."),
         data_id: str | None = Body(default=None,
-                                   description="The definition's data ID. Definitions made before data IDs existed send null.")
+                                   description="The definition's data ID. Definitions made before data IDs existed send null."),
+        location: str | None = Body(default=None,
+                                    description="The UUID of the group the kiosk is at, if it's set to one. The record "
+                                                "is tagged with the program running there."),
+        minutes_after_program: float = Body(default=0, ge=0, le=30,
+                                            description="With a location, how long after a program ends its votes "
+                                                        "still count, in minutes.")
 ):
     """Save a record from a Voting or Survey Kiosk."""
 
-    success, reason = hub_datasets.append_kiosk_record(data_id, name, app, data)
+    success, reason = hub_datasets.append_kiosk_record(data_id, name, app, data, location, minutes_after_program)
     return {"success": success, "reason": reason}
 
 

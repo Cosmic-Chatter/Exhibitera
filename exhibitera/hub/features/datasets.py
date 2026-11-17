@@ -25,6 +25,8 @@ from typing import Any
 import exhibitera.common.config as ex_config
 import exhibitera.common.files as ex_files
 import exhibitera.hub.config as hub_config
+import exhibitera.hub.features.programs as hub_programs
+import exhibitera.hub.features.schedules as hub_schedules
 
 KINDS = ["tracker", "kiosk", "word_cloud"]
 KIOSK_APPS = ["survey_kiosk", "voting_kiosk"]
@@ -34,6 +36,11 @@ FORBIDDEN_FILENAME_CHARACTERS = ['/', '\\', '<', '>', ':', '"', '|', '?', '*']
 
 # Stored with each Flexible Tracker record that has an ID, and left out of downloads
 RECORD_ID_KEY = "_record_id"
+
+# Stored with each kiosk record made during a program, as the program's UUID. Downloads show the program's name in the
+# Program column. The underscore keeps it from clashing with a kiosk's own fields, such as a vote option.
+PROGRAM_KEY = "_program"
+PROGRAM_COLUMN = "Program"
 
 index_lock = threading.Lock()
 tracker_record_lock = threading.Lock()
@@ -195,12 +202,16 @@ def _has_tracker_record(path: str, record_id: str) -> bool:
 
 # Voting and Survey Kiosk
 
-def append_kiosk_record(data_id: str | None, name: str, app: str, record: dict[str, Any]) -> tuple[bool, str]:
+def append_kiosk_record(data_id: str | None, name: str, app: str, record: dict[str, Any],
+                        location: str | None = None, minutes_after_program: float = 0) -> tuple[bool, str]:
     """Save a record from a Voting or Survey Kiosk.
 
     Definitions made before data IDs existed send only their name, and all of them with the same name
     share one dataset, as they shared one file before. The first dataset to record under a name claims
     the old file with that name.
+
+    A kiosk set to a location (one of Hub's groups) sends it, and the record is tagged with the program
+    running there when it was made, or that ended up to minutes_after_program before.
     """
 
     if app not in KIOSK_APPS:
@@ -227,7 +238,27 @@ def append_kiosk_record(data_id: str | None, name: str, app: str, record: dict[s
             _claim_old_file(name, path)
         _save_index("kiosk", index)
 
+    if isinstance(location, str) and location != "":
+        program = _program_running(record, location, minutes_after_program)
+        if program is not None:
+            record[PROGRAM_KEY] = program.uuid
+
     return ex_files.write_json(record, path, append=True, indent=None)
+
+
+def _program_running(record: dict[str, Any], location: str, minutes_after: float = 0) -> hub_programs.Program | None:
+    """Return the program running at the location when the record was made, or that ended up to minutes_after
+    before, or None.
+
+    The record's time is its Date, or now if it doesn't have one. If several programs count, it's the one that
+    started most recently, so a program that starts takes over from one that just ended.
+    """
+
+    when = ex_files.record_time(record) or datetime.datetime.now()
+    if when.tzinfo is not None:
+        when = when.astimezone().replace(tzinfo=None)  # Schedules are in Hub's local time
+    running = hub_schedules.programs_running_at(when, location, minutes_after)
+    return running[0] if running else None
 
 
 # Word Cloud
@@ -315,7 +346,24 @@ def dataset_records(kind: str, dataset_id: str) -> list[dict[str, Any]] | None:
         # Word Cloud stores one entry per line, as plain text
         text, _, _ = ex_files.get_text(path)
         return [{"Text": line} for line in text.splitlines() if line.strip() != ""]
-    return ex_files.load_records(path, exclude_keys=[RECORD_ID_KEY])
+    records = ex_files.load_records(path, exclude_keys=[RECORD_ID_KEY])
+    return _with_program_names(records) if records is not None else None
+
+
+def _with_program_names(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Show each record's program by its current name, in the Program column.
+
+    An archived program keeps its name. One deleted outright can only be shown by its UUID.
+    """
+
+    if not any(PROGRAM_KEY in record for record in records):
+        return records
+    names = hub_programs.get_program_names()
+    for record in records:
+        if PROGRAM_KEY in record:
+            program_uuid = record.pop(PROGRAM_KEY)
+            record[PROGRAM_COLUMN] = names.get(program_uuid) or program_uuid
+    return records
 
 
 def dataset_csv(kind: str, dataset_id: str,

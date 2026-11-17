@@ -407,22 +407,26 @@
               <div id="basicDetails" class="accordion-collapse collapse show" data-bs-parent="#topLevelAccordion">
                 <div class="accordion-body">
                   <div class="row gy-2">
-                    <div class="col-12 col-md-6 col-lg-4">
+                    <div class="col-12 col-md-6 col-xl-4">
                       <label for="definitionNameInput" class="form-label">Definition name</label>
                       <input type="text" class="form-control" id="definitionNameInput">
+                    </div>
+                    <div id="locationCol" class="col-12 col-md-6 col-xl-4" style="display: none;">
+                      <label for="locationSelect" class="form-label">
+                        Location
+                        <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="Where this kiosk is. Votes are tagged with the program active there, if any." style="font-size: 0.55em;">?</span>
+                      </label>
+                      <select id="locationSelect" class="form-select"></select>
+                      <div id="locationLoadWarning" class="form-text text-warning" style="display: none;">The locations couldn't be loaded from Hub.</div>
+                    </div>
+                    <div id="programWindowCol" class="col-12 col-lg-6 col-xl-4" style="display: none;">
+                      <div id="behaviorInput_minutes_after_program" class="advanced-slider" data-name="Post-program voting window" data-path="behavior>minutes_after_program" data-min="0" data-max="30" data-start="5" data-step="1" data-unit="min" data-note="After a program ends, how long votes still count for it. Visitors often vote as they leave a program. A program that starts in that time takes over."></div>
                     </div>
                     <div class="col-12 col-lg-6 col-xl-4">
                       <div id="behaviorInput_recording_interval" class="advanced-slider" data-name="Recording interval" data-path="behavior>recording_interval" data-min="1" data-max="300" data-start="60" data-step="1" data-unit="sec" data-note="The interval in seconds that votes are batched and sent to Hub."></div>
                     </div>
                     <div class="col-12 col-lg-6 col-xl-4">
                       <div id="behaviorInput_touch_cooldown" class="advanced-slider" data-name="Touch cooldown" data-path="behavior>touch_cooldown" data-min="0" data-max="10" data-start="2" data-step="0.5" data-unit="sec" data-note="The interval in seconds to wait before accepting another vote (helps to defeat spamming)."></div>
-
-
-                      <!-- <label for="behaviorInput_touch_cooldown" class="form-label">
-                        Touch cooldown
-                        <span class="badge bg-info ml-1 align-middle text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="The interval in seconds to wait before accepting another vote (helps to defeat spamming)." style="font-size: 0.55em;">?</span>
-                      </label>
-                      <input type="number" min="0" value="2" class="form-control behavior-input" id="behaviorInput_touch_cooldown" data-property="touch_cooldown"> -->
                     </div>
                   </div>
                 </div>

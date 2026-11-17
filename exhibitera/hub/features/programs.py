@@ -189,6 +189,17 @@ def delete_program_media_file(files: list[str]) -> None:
                 pass
 
 
+def get_program_names() -> dict[str, str]:
+    """Return the name of every program, current or archived, by UUID."""
+
+    archive_file = ex_files.get_path(["programs", "archived.json"], user_file=True)
+    with hub_config.programLock:
+        archive: list[dict] = ex_files.load_json(archive_file) or []
+    names = {details["uuid"]: details.get("name", "") for details in archive if "uuid" in details}
+    names.update({program.uuid: program.name for program in hub_config.program_list})
+    return names
+
+
 def remove_program(this_uuid: str) -> bool:
     """Remove a Program from hub_config.program_list and delete its media files."""
 

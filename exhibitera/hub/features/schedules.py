@@ -313,6 +313,59 @@ def remove_program_from_schedules(this_uuid: str) -> list[str]:
     return modified
 
 
+DAY_NAMES = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+
+
+def schedule_for_date(day: datetime.date) -> dict:
+    """Return the schedule that applies on the given date: its date-specific schedule, or else its weekday's."""
+
+    for name in [day.isoformat() + ".json", DAY_NAMES[day.weekday()] + ".json"]:
+        success, schedule = load_json_schedule(name)
+        if success:
+            return schedule
+    return {}
+
+
+def _scheduled_program_uuid(event: dict) -> str | None:
+    """Return the UUID of the program a 'run_program' event starts, or None for other events."""
+
+    if event.get("action") != "run_program":
+        return None
+    target = event.get("target")
+    if isinstance(target, list):
+        target = target[0] if len(target) > 0 else None
+    return target.get("uuid") if isinstance(target, dict) else None
+
+
+def programs_running_at(when: datetime.datetime, location: str,
+                        minutes_after: float = 0) -> list[hub_programs.Program]:
+    """Return the programs at the given location that are running at the given time, most recently started first.
+
+    A program runs from the time a schedule starts it, for its duration, plus minutes_after: visitors often vote as
+    they leave. The day before is checked too, for programs that run past midnight. `when` is in Hub's local time,
+    without a time zone.
+    """
+
+    running = []
+    for days_before in [0, 1]:
+        day = when.date() - datetime.timedelta(days=days_before)
+        midnight = datetime.datetime.combine(day, datetime.time())
+        for event in schedule_for_date(day).values():
+            program = hub_programs.get_program(_scheduled_program_uuid(event) or "")
+            if program is None or program.location != location:
+                continue
+            try:
+                start = midnight + datetime.timedelta(seconds=float(event["time_in_seconds"]))
+                end = start + datetime.timedelta(minutes=float(program.duration or 0) + minutes_after)
+            except (KeyError, TypeError, ValueError):
+                continue
+            if start <= when < end:
+                running.append((start, program))
+
+    running.sort(key=lambda pair: pair[0], reverse=True)
+    return [program for _, program in running]
+
+
 def expand_program_events(schedule: dict) -> dict:
     """Expand any 'run_program' events in a schedule into their constituent actions.
 
