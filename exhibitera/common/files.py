@@ -251,53 +251,64 @@ def escape_csv_cell(value):
 
 
 def json_list_to_csv(dict_list: list, filename: str = "") -> str:
-    """Convert a list JSON dicts to a comma-separated string"""
+    """Convert a list of JSON dicts to comma-separated text, optionally writing it to the given file.
 
-    # First, identify any keys that have lists as their value
-    all_keys = {}
-    keys = get_unique_keys(dict_list)
-    for key in keys:
-        # This function will return an empty list if the value is not a list,
-        # and a list of all unique values if it is.
-        unique_keys = get_unique_values(dict_list, key)
-        if len(unique_keys) > 0:
-            all_keys[key] = unique_keys
-        else:
-            all_keys[key] = None
+    Each key is a column, in alphabetical order with Date first. A key whose values are lists becomes a true/false
+    column for each item in them, named "<key> - <item>". Line breaks in text become spaces, and values and column
+    names that a spreadsheet would treat as formulas are escaped.
 
-    # Next, reformat the dict_list so that keys with a list have those values
-    # flattened into the main dict level
-    reformed_dict_list = []
+    Datasets can have a million records or more, so each column is worked out once, not once per record.
+    """
+
+    # Find every key, and the items of the keys whose values are lists, in one pass
+    keys = set()
+    list_items: dict[str, set] = {}
     for this_dict in dict_list:
-        new_dict = {}
+        keys.update(this_dict)
         for key, value in this_dict.items():
-            if all_keys[key] is None:  # Simple key
-                value_to_write = this_dict[key]
-                if isinstance(value_to_write, str):
-                    value_to_write = value_to_write.replace("\n", " ")
-                new_dict[escape_csv_cell(key)] = escape_csv_cell(value_to_write)
-            else:
-                for sub_key in all_keys[key]:
-                    new_dict[escape_csv_cell(key + " - " + sub_key)] = sub_key in this_dict[key]
-        reformed_dict_list.append(new_dict)
+            if isinstance(value, list):
+                list_items.setdefault(key, set()).update(value)
 
-    # Build the CSV, optionally write it to disk, and then return it
-    try:
-        with io.StringIO(newline='') as f:
-            columns = get_unique_keys(reformed_dict_list)
-            # Each row starts with when it was recorded
-            if "Date" in columns:
-                columns.remove("Date")
-                columns.insert(0, "Date")
-            csv_writer = csv.DictWriter(f, columns)
-            csv_writer.writeheader()
-            csv_writer.writerows(reformed_dict_list)
-            result = f.getvalue()
-    except IndexError:
-        print("JSON_list_to_CSV: Error: Nothing to write")
-        result = ""
+    # Work out each key's column, or columns for a key with lists. A key whose lists are all empty is an ordinary
+    # column. If two keys end up with the same column name, the later one in a record wins.
+    simple_columns: dict[str, str] = {}
+    list_columns: dict[str, list[tuple[str, Any]]] = {}
+    for key in keys:
+        if list_items.get(key):
+            list_columns[key] = [(escape_csv_cell(key + " - " + item), item) for item in list_items[key]]
+        else:
+            simple_columns[key] = escape_csv_cell(key)
+    columns = sorted(set(simple_columns.values()) | {column for pairs in list_columns.values() for column, _ in pairs})
+    # Each row starts with when it was recorded
+    if "Date" in columns:
+        columns.remove("Date")
+        columns.insert(0, "Date")
 
-    result = result.strip()
+    position = {column: i for i, column in enumerate(columns)}
+    simple_positions = {key: position[column] for key, column in simple_columns.items()}
+    list_positions = {key: [(position[column], item) for column, item in pairs] for key, pairs in list_columns.items()}
+
+    def rows():
+        for this_dict in dict_list:
+            row = [""] * len(columns)  # Missing values are empty
+            for key, value in this_dict.items():
+                index = simple_positions.get(key)
+                if index is not None:
+                    if isinstance(value, str):
+                        value = value.replace("\n", " ")
+                        if value.startswith(FORMULA_PREFIXES):
+                            value = "'" + value
+                    row[index] = value
+                else:
+                    for index, item in list_positions[key]:
+                        row[index] = item in value
+            yield row
+
+    with io.StringIO(newline='') as f:
+        csv_writer = csv.writer(f)
+        csv_writer.writerow(columns)
+        csv_writer.writerows(rows())
+        result = f.getvalue().strip()
 
     if filename != "":
         with open(filename, 'w', encoding="UTF-8", newline="") as f:

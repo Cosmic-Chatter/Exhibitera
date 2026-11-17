@@ -8,6 +8,7 @@ _If you are upgrading from Exhibitera 5.3, Hub and Apps must all be upgraded at 
 
 ### Analytics
 - Filter collected data by date or column before downloading.
+- Large datasets now prepare to download twice as quickly.
 
 ### Components
 - Copying a definition between components now also copies the definition's thumbnail.
@@ -60,6 +61,9 @@ Exert more control over the appearance of text using Exhibitera's new font syste
 ### Timeline Explorer
 - Enable hardware control to move the timeline using physical buttons.
 - Support for ultra-wide or ultra-tall displays.
+
+### Voting Kiosk
+- Connect collected votes with specific programs by setting the kiosk's location.
 
 
 # **Exhibitera 6**
