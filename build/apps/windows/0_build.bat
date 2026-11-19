@@ -12,7 +12,7 @@
     EXIT /B
   )
 
-  py -m venv %1/venv
+  py -3.13 -m venv %1/venv
 )
 
 @CALL 1_copy_files.bat %1
