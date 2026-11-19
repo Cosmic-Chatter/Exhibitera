@@ -30,7 +30,7 @@ _Programs represent recurring events that take place in a specific location, lik
 - Configure things like digital signage or DMX lighting to change relative to the start and end time of a program.
 
 ### Schedule
-- Add Programs to a schedule to bundle together recurring actions.
+- Add programs to a schedule to bundle together recurring actions.
 - Times are displayed in 12- or 24-hour format depending on your location and preference.
 - Fixed issue in which scheduled actions did not occur on time on days in which a Daylight Saving Time change occurs.
 
@@ -57,6 +57,9 @@ Exert more control over the appearance of text using Exhibitera's new font syste
 ### InfoStation
 - Adjust the height of the tab bar in portrait orientation.
 - Adjust the corner radius of tab buttons.
+
+### Survey Kiosk
+- Connect collected votes with specific programs by setting the kiosk's location.
 
 ### Timeline Explorer
 - Enable hardware control to move the timeline using physical buttons.

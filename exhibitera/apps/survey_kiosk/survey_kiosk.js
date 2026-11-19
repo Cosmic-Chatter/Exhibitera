@@ -531,8 +531,13 @@ function sendData () {
   const dateStr = (new Date(Date.now() - tzoffset)).toISOString().slice(0, -1)
   response.Date = dateStr
 
-  // Submit the data to Hub or the helper, depending on if we're standalone
-  exCommon.sendKioskData('survey_kiosk', currentDefinition, response)
+  // Submit the data to Hub or the helper, depending on if we're standalone. With Hub, say where the kiosk is,
+  // if it's set to a location, so the response is tagged with the program running there, or that ended a few
+  // minutes before: visitors often respond as they leave.
+  exCommon.sendKioskData('survey_kiosk', currentDefinition, response, {
+    location: currentDefinition?.behavior?.location,
+    minutesAfterProgram: currentDefinition?.behavior?.minutes_after_program ?? 5
+  })
     .then(() => {
       response = {}
     })

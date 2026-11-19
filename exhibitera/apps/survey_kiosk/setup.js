@@ -5,6 +5,7 @@ import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exFileSelect from '../js/exhibitera_file_select_modal.js'
 import * as exLang from '../js/exhibitera_setup_languages.js'
 import * as exSetup from '../js/exhibitera_setup_common.js'
+import * as exPrograms from '../js/exhibitera_setup_programs.js'
 import * as exMarkdown from '../js/exhibitera_setup_markdown.js'
 
 async function initializeWizard () {
@@ -457,6 +458,7 @@ async function clearDefinitionInput (full = true) {
   document.getElementById('nextButtonTextSizeSlider').value = 0
 
   exSetup.createAdvancedSliders()
+  exPrograms.showProgramSettings({})
 
   // Clear any created items
   document.getElementById('surveyItems').innerText = ''
@@ -480,6 +482,7 @@ function editDefinition (uuid = '') {
     const el = document.getElementById('behaviorInput_' + key)
     if (el != null) el.value = def.behavior[key]
   }
+  exPrograms.showProgramSettings(def)
 
   // Markdown fields
   for (const item of []) {
@@ -1595,6 +1598,7 @@ exCommon.config.helperAddress = window.location.origin
 
 // Connect the forward and back buttons
 exSetup.connectWizardButtons(wizardForward, wizardBack)
+exPrograms.connectProgramSettings()
 
 document.getElementById('wizardAddQuestionButton').addEventListener('click', (event) => {
   wizarddCreateQuestion()

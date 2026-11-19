@@ -1,9 +1,9 @@
-"""Verify Voting Kiosk's location, which Hub uses to tag votes with the program running there.
+"""Verify Voting Kiosk's and Survey Kiosk's location, which Hub uses to tag records with the program running there.
 
 The setup page offers Hub's groups as locations, only when Apps uses Hub. It starts blank, which opts out, and saves
 the group's UUID. A saved location Hub no longer has stays selected, so saving other changes doesn't drop it.
-The kiosk sends its location with each batch of votes, and how long after a program ends its votes still count,
-as visitors often vote as they leave. That's 0 to 30 minutes, 5 by default, and only shown once a location is chosen.
+The kiosk sends its location with each record, and how long after a program ends its records still count, as
+visitors often respond as they leave. That's 0 to 30 minutes, 5 by default, and only shown once a location is chosen.
 """
 
 # Standard modules
@@ -18,6 +18,7 @@ from exhibitera.common.tests import page_scripts
 pytestmark = page_scripts.needs_jsdom
 
 LOCATIONS = [{"uuid": "g2", "name": "Theater"}, {"uuid": "g1", "name": "Lobby"}]
+APPS = ["voting_kiosk", "survey_kiosk"]
 
 
 def voting_definition(uuid: str, behavior: dict) -> dict:
@@ -29,8 +30,27 @@ def voting_definition(uuid: str, behavior: dict) -> dict:
                         "o2": {"uuid": "o2", "label": "No", "value": "No"}}}
 
 
-def open_setup(behavior: dict, standalone: bool = False, locations_reply: str | None = None) -> dict:
-    definition = voting_definition("def-A", behavior)
+def survey_definition(uuid: str, behavior: dict) -> dict:
+    """A survey with one question, which sends its record when it's answered."""
+
+    return {"uuid": uuid, "name": "Exit survey", "app": "survey_kiosk", "data_id": "data-1",
+            "behavior": behavior, "text": {},
+            "style": {"color": {}, "text_size": {}, "font": {}, "layout": {}},
+            "item_order": ["i1"],
+            "items": {"i1": {"uuid": "i1", "type": "single_vote", "value": "Enjoyed",
+                             "option_order": ["o1", "o2"],
+                             "options": {"o1": {"uuid": "o1", "value": "Yes"}, "o2": {"uuid": "o2", "value": "No"}}}},
+            "language_order": ["en-gb"],
+            "languages": {"en-gb": {"display_name": "English", "english_name": "English",
+                                    "items": {"i1": {"header": {"text": "Did you enjoy it?"},
+                                                     "options": {"o1": {"text": "Yes"}, "o2": {"text": "No"}}}}}}}
+
+
+DEFINITIONS = {"voting_kiosk": voting_definition, "survey_kiosk": survey_definition}
+
+
+def open_setup(app: str, behavior: dict, standalone: bool = False, locations_reply: str | None = None) -> dict:
+    definition = DEFINITIONS[app]("def-A", behavior)
     if locations_reply is None:
         locations_reply = json.dumps({"body": {"success": True, "locations": LOCATIONS}})
     configuration = {"app": {}, "system": {"standalone": standalone},
@@ -54,7 +74,7 @@ def open_setup(behavior: dict, standalone: bool = False, locations_reply: str | 
         console.log = () => {{}}
         console.warn = () => {{}}
         console.error = () => {{}}
-        const window = await browser.openPage('apps', 'voting_kiosk/setup.html', {{ search: '?definition=def-A' }})
+        const window = await browser.openPage('apps', '{app}/setup.html', {{ search: '?definition=def-A' }})
         await browser.wait(1500)
         const document = window.document
         const exSetup = await import({page_scripts.module_url("apps/js/exhibitera_setup_common.js")})
@@ -90,8 +110,9 @@ MINUTES_AFTER = {"shown": True, "path": "behavior>minutes_after_program", "range
 NO_MINUTES_AFTER = {**MINUTES_AFTER, "shown": False}
 
 
-def test_the_location_starts_blank_and_lists_hubs_groups():
-    result = open_setup({})
+@pytest.mark.parametrize("app", APPS)
+def test_the_location_starts_blank_and_lists_hubs_groups(app):
+    result = open_setup(app, {})
 
     assert result["errors"] == []
     assert result["before"] == {"shown": True, "options": [NONE, ["Lobby", "g1"], ["Theater", "g2"]],
@@ -102,42 +123,50 @@ def test_the_location_starts_blank_and_lists_hubs_groups():
     assert result["minutesAfterWithoutLocation"] is False
 
 
-def test_a_saved_location_is_selected():
-    assert open_setup({"location": "g1"})["before"]["selected"] == "g1"
+@pytest.mark.parametrize("app", APPS)
+def test_a_saved_location_is_selected(app):
+    assert open_setup(app, {"location": "g1"})["before"]["selected"] == "g1"
 
 
-def test_a_location_hub_no_longer_has_stays_selected():
-    before = open_setup({"location": "gone"})["before"]
+@pytest.mark.parametrize("app", APPS)
+def test_a_location_hub_no_longer_has_stays_selected(app):
+    before = open_setup(app, {"location": "gone"})["before"]
 
     assert before["options"] == [NONE, ["Lobby", "g1"], ["Theater", "g2"], ["Unknown location", "gone"]]
     assert before["selected"] == "gone"
 
 
+@pytest.mark.parametrize("app", APPS)
 @pytest.mark.parametrize("reply", ["'error'", json.dumps({"body": {"success": False}})])
-def test_locations_that_cant_be_loaded(reply):
-    before = open_setup({"location": "g1"}, locations_reply=reply)["before"]
+def test_locations_that_cant_be_loaded(app, reply):
+    before = open_setup(app, {"location": "g1"}, locations_reply=reply)["before"]
 
     # The saved location is kept
     assert before == {"shown": True, "options": [NONE, ["Unknown location", "g1"]], "selected": "g1", "warning": True,
                       "minutesAfter": MINUTES_AFTER}
 
 
-def test_standalone_apps_have_no_location():
-    before = open_setup({}, standalone=True)["before"]
+@pytest.mark.parametrize("app", APPS)
+def test_standalone_apps_have_no_location(app):
+    before = open_setup(app, {}, standalone=True)["before"]
 
     assert before["shown"] is False
     assert before["minutesAfter"]["shown"] is False
 
 
-def test_a_saved_time_after_a_program_is_shown():
-    assert open_setup({"location": "g1", "minutes_after_program": 12})["before"]["minutesAfter"]["value"] == "12"
+@pytest.mark.parametrize("app", APPS)
+def test_a_saved_time_after_a_program_is_shown(app):
+    assert open_setup(app, {"location": "g1", "minutes_after_program": 12})["before"]["minutesAfter"]["value"] == "12"
 
 
-@pytest.mark.parametrize("behavior, sent", [({"location": "g1"}, ["g1", 5]),
-                                            ({"location": "g1", "minutes_after_program": 20}, ["g1", 20]),
-                                            ({"location": "g1", "minutes_after_program": 0}, ["g1", 0]),
-                                            ({"location": ""}, [None, None]), ({}, [None, None])])
-def test_the_kiosk_sends_its_location_with_its_votes(behavior, sent):
+SENDING = [({"location": "g1"}, ["g1", 5]),
+           ({"location": "g1", "minutes_after_program": 20}, ["g1", 20]),
+           ({"location": "g1", "minutes_after_program": 0}, ["g1", 0]),
+           ({"location": ""}, [None, None]), ({}, [None, None])]
+
+
+@pytest.mark.parametrize("behavior, sent", SENDING)
+def test_voting_kiosk_sends_its_location_with_its_votes(behavior, sent):
     definition = voting_definition("d1", {**behavior, "recording_interval": 1, "touch_cooldown": 0})
     configuration = {"app": {"definition": "d1"}, "system": {"standalone": False, "remote_display": True},
                      "control_server": {"ip_address": "hub.test", "port": 8082}}
@@ -161,3 +190,32 @@ def test_the_kiosk_sends_its_location_with_its_votes(behavior, sent):
     """, browser="page")
 
     assert result == {"errors": [], "votes": [{"yes": 1, "sent": sent}]}
+
+
+@pytest.mark.parametrize("behavior, sent", SENDING)
+def test_survey_kiosk_sends_its_location_with_its_responses(behavior, sent):
+    definition = survey_definition("d1", behavior)
+    configuration = {"app": {"definition": "d1"}, "system": {"standalone": False, "remote_display": True},
+                     "control_server": {"ip_address": "hub.test", "port": 8082}}
+    result = page_scripts.run(f"""
+        globalThis.server = (method, url) => {{
+          const {{ host, pathname }} = new URL(url)
+          if (host.startsWith('hub.test')) return {{ body: {{ success: true }} }}
+          if (pathname === '/internal/system/configuration') return {{ body: {json.dumps(configuration)} }}
+          if (pathname === '/internal/definitions/d1/load') return {{ body: {{ success: true, definition: {json.dumps(definition)} }} }}
+          return {{ body: {{ success: false }} }}
+        }}
+        console.log = () => {{}}
+        const window = await browser.openPage('apps', 'survey_kiosk/index.html')
+        // The kiosk saves a screenshot as its thumbnail, which jsdom can't draw
+        globalThis.html2canvas = window.html2canvas = () => new Promise(() => {{}})
+        await browser.wait(1500)
+        // Answering the only question sends the response
+        window.document.querySelector('#itemPane .button-col').click()
+        await browser.wait(500)
+        const responses = browser.requests.filter((r) => r.url.endsWith('/datasets/kiosk/append')).map((r) => JSON.parse(r.body))
+        report({{ errors: browser.errors, responses: responses.map((r) => ({{ app: r.app, answer: r.data.Enjoyed,
+                  sent: [r.location ?? null, r.minutes_after_program ?? null] }})) }})
+    """, browser="page")
+
+    assert result == {"errors": [], "responses": [{"app": "survey_kiosk", "answer": "Yes", "sent": sent}]}

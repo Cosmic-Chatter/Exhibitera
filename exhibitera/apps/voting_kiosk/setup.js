@@ -4,6 +4,7 @@ import * as exUtilities from '../../common/utilities.js'
 import * as exCommon from '../js/exhibitera_app_common.js'
 import * as exFileSelect from '../js/exhibitera_file_select_modal.js'
 import * as exSetup from '../js/exhibitera_setup_common.js'
+import * as exPrograms from '../js/exhibitera_setup_programs.js'
 import * as exMarkdown from '../js/exhibitera_setup_markdown.js'
 
 async function initializeWizard () {
@@ -267,61 +268,6 @@ function wizardCreateAnswerOption (userDetails) {
   buttonCol.appendChild(deleteButton)
 }
 
-// Hub's groups, which a kiosk can be set to as its location, as [{ uuid, name }]. null until loaded, or if
-// they couldn't be.
-let hubLocations = null
-let hubLocationsLoading = null
-// The location most recently asked to be shown, so a slower, earlier request doesn't replace it
-let locationToShow = ''
-
-function loadHubLocations () {
-  // Load Hub's groups once, sorted by name
-
-  hubLocationsLoading ??= exCommon.makeServerRequest({ method: 'GET', endpoint: '/program/locations' })
-    .then((result) => {
-      if (result?.success === true && Array.isArray(result.locations)) {
-        hubLocations = [...result.locations].sort((a, b) => String(a.name).localeCompare(String(b.name)))
-      }
-    }, () => {
-      // Hub couldn't be reached. The saved location is kept, and the warning says why there are no others.
-    })
-  return hubLocationsLoading
-}
-
-async function showLocation (locationUUID = '') {
-  // Show the location selector, with the given location selected. It's only used with Hub.
-
-  const col = document.getElementById('locationCol')
-  if (exCommon.config.standalone !== false) {
-    col.style.display = 'none'
-    showProgramWindow('')
-    return
-  }
-  col.style.display = 'block'
-  showProgramWindow(locationUUID)
-
-  locationToShow = locationUUID
-  await loadHubLocations()
-  if (locationToShow !== locationUUID) return
-
-  const select = document.getElementById('locationSelect')
-  const options = [new Option("None (don't record programs)", '')]
-  for (const location of hubLocations ?? []) options.push(new Option(location.name, location.uuid))
-  // Keep a location Hub no longer has, so saving other changes doesn't drop it
-  if (locationUUID !== '' && !(hubLocations ?? []).some((location) => location.uuid === locationUUID)) {
-    options.push(new Option('Unknown location', locationUUID))
-  }
-  select.replaceChildren(...options)
-  select.value = locationUUID
-  document.getElementById('locationLoadWarning').style.display = hubLocations == null ? 'block' : 'none'
-}
-
-function showProgramWindow (locationUUID) {
-  // How long after a program its votes count only matters once the kiosk has a location
-
-  document.getElementById('programWindowCol').style.display = locationUUID === '' ? 'none' : 'block'
-}
-
 async function clearDefinitionInput (full = true) {
   // Clear all input related to a defnition
 
@@ -329,7 +275,7 @@ async function clearDefinitionInput (full = true) {
 
   // Definition details
   document.getElementById('definitionNameInput').value = ''
-  showLocation('')
+  exPrograms.showProgramSettings({})
 
   // Markdown fields
   for (const item of ['header', 'subheader', 'footer', 'subfooter']) {
@@ -409,12 +355,11 @@ function editDefinition (uuid = '') {
   exSetup.configurePreviewFromDefinition(def)
 
   document.getElementById('definitionNameInput').value = def.name
-  showLocation(def?.behavior?.location ?? '')
+  exPrograms.showProgramSettings(def)
 
   // Set the appropriate values for the behavior fields
   exSetup.createAdvancedSlider(document.getElementById('behaviorInput_recording_interval'), def?.behavior?.recording_interval)
   exSetup.createAdvancedSlider(document.getElementById('behaviorInput_touch_cooldown'), def?.behavior?.touch_cooldown)
-  exSetup.createAdvancedSlider(document.getElementById('behaviorInput_minutes_after_program'), def?.behavior?.minutes_after_program)
 
   // Markdown fields
   for (const item of ['header', 'subheader', 'footer', 'subfooter']) {
@@ -720,10 +665,7 @@ document.getElementById('wizardAddAnswerOptionButton').addEventListener('click',
 // Main buttons
 
 // Definition fields
-document.getElementById('locationSelect').addEventListener('change', (event) => {
-  exSetup.updateWorkingDefinition(['behavior', 'location'], event.target.value)
-  showProgramWindow(event.target.value)
-})
+exPrograms.connectProgramSettings()
 Array.from(document.querySelectorAll('.definition-text-input')).forEach((el) => {
   el.addEventListener('change', (event) => {
     const key = event.target.getAttribute('data-def-key')

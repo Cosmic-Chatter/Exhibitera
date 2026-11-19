@@ -222,3 +222,14 @@ def test_the_program_column_can_be_chosen(client, hub_env, analyst):
 
     assert "Program" in summary["columns"] and "_program" not in summary["columns"]
     assert rows == [["Program", "Yes"], ["Planetarium show", "3"]]
+
+
+def test_survey_kiosk_responses_are_tagged_too(client, hub_env):
+    add_program("p1", "Planetarium show")
+    write_schedule(hub_env, "friday", [("p1", "10:00 AM")])
+    body = {"data_id": "s1", "name": "Exit survey", "app": "survey_kiosk",
+            "data": {"Date": f"{FRIDAY}T11:03:00.000", "Enjoyed": "Yes"}, "location": "lobby", "minutes_after_program": 5}
+
+    assert client().post(KIOSK_APPEND, json=body).json()["success"] is True
+    with open(ex_files.get_path(["data", "kiosk", "s1.txt"], user_file=True), "r", encoding="UTF-8") as f:
+        assert json.loads(f.read().splitlines()[-1])["_program"] == "p1"
