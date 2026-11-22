@@ -22,15 +22,20 @@ ADMIN = {"uuid": "u1", "username": "admin", "display_name": "Admin", "preference
                          "settings": "edit", "users": "edit"}}
 
 
-def component(uuid: str, name: str) -> dict:
+def component(uuid: str, name: str, api_level: float = 6.1) -> dict:
     return {"class": "exhibitComponent", "uuid": uuid, "id": name, "groups": ["Default"],
-            "helperAddress": f"http://{uuid}.test", "api_level": 6.1, "ip_address": "10.0.0.5", "latency": 0,
+            "helperAddress": f"http://{uuid}.test", "api_level": api_level, "ip_address": "10.0.0.5", "latency": 0,
             "platform_details": {}, "maintenance_status": "On floor, working", "status": "ONLINE",
             "content": [], "definition": "", "notifications": {}, "permissions": {}, "description": ""}
 
 
-def copy_definition(thumbnail: str | None, thumbnail_reply: str = "{ body: { success: true } }") -> dict:
-    """Copy the source's "lobby" definition to the destination and report what the destination was asked to do."""
+def copy_definition(thumbnail: str | None, thumbnail_reply: str = "{ body: { success: true } }",
+                    click_copy: bool = False, levels: tuple[float, float] = (6.1, 6.1)) -> dict:
+    """Copy the source's "lobby" definition to the destination and report what the destination was asked to do.
+
+    Set click_copy to start the copy with the dialog's Copy button, as a user does. `levels` are the protocol
+    versions of the source and destination.
+    """
 
     content_list = {"success": True, "total_size": "1 KB", "thumbnail": thumbnail,
                     "content": [{"name": "fossil.jpg", "size": 1000, "size_text": "1 KB"}]}
@@ -68,15 +73,22 @@ def copy_definition(thumbnail: str | None, thumbnail_reply: str = "{ body: { suc
         await browser.wait(1000)
         browser.sendUpdate({{
           gallery: {json.dumps(gallery)},
-          components: [{json.dumps(component("source", "Lobby kiosk"))}, {json.dumps(component("destination", "Atrium kiosk"))}]
+          components: [{json.dumps(component("source", "Lobby kiosk", levels[0]))},
+                       {json.dumps(component("destination", "Atrium kiosk", levels[1]))}]
         }})
         await browser.wait(300)
 
         const copyModal = await import({page_scripts.module_url("hub/js/features/copy_definition_modal.js")})
         await copyModal.showCopyDefinitionModal('source', 'lobby', 'Lobby loop')
         await browser.wait(500)
-        window.document.querySelector('input.copyDest[data-uuid="destination"]').checked = true
-        await copyModal.copyDefinitionModalPerformCopy()
+        const destination = window.document.querySelector('input.copyDest[data-uuid="destination"]')
+        destination.checked = true
+        destination.dispatchEvent(new window.Event('change'))
+        if ({'true' if click_copy else 'false'}) {{
+          window.document.getElementById('copyDefinitionModalSubmitButton').click()
+        }} else {{
+          await copyModal.copyDefinitionModalPerformCopy()
+        }}
         await browser.wait(500)
 
         const toDestination = browser.requests.filter((r) => new URL(r.url).host === 'destination.test')
@@ -85,7 +97,8 @@ def copy_definition(thumbnail: str | None, thumbnail_reply: str = "{ body: { suc
           errors: browser.errors,
           copied: window.document.querySelector('input.copyDest[data-uuid="destination"]').parentElement
             .querySelector('.copy-success').style.display === 'inline',
-          newUUID: JSON.parse(written.body).definition.uuid,
+          newUUID: written ? JSON.parse(written.body).definition.uuid : null,
+          writtenTo: written ? new URL(written.url).pathname : null,
           retrieved: toDestination.filter((r) => r.url.endsWith('/files/retrieve')).map((r) => JSON.parse(r.body))
             .sort((a, b) => a.file_url.localeCompare(b.file_url))
         }})
@@ -119,3 +132,14 @@ def test_failed_thumbnail_copy_does_not_fail_the_copy():
 
     assert result["errors"] == []
     assert result["copied"] is True
+
+
+@pytest.mark.parametrize("levels, prefix", [((6.1, 6.1), "/external/v6.1"), ((6.1, 6), "/v6"), ((6, 6.1), "/external/v6.1"),
+                                            ((6, 6), "/v6")])
+def test_the_copy_button_starts_the_copy(levels, prefix):
+    # The button was wired to a function that had moved to another file, so clicking it did nothing
+    result = copy_definition("lobby.png", click_copy=True, levels=levels)
+
+    assert result["errors"] == []
+    assert result["copied"] is True
+    assert result["writtenTo"] == prefix + "/definitions/write"
