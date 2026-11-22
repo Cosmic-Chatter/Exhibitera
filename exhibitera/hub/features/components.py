@@ -7,6 +7,9 @@ import time
 import uuid
 from typing import Any, Union
 import os
+import re
+import subprocess
+import sys
 
 # Non-standard imports
 import icmplib
@@ -851,24 +854,72 @@ def update_exhibit_component_status(data: dict[str, Any], ip: str):
         component.config["api_level"] = data["api_level"]
 
 
+# Set once Linux refuses to let Hub ping by itself, so later checks go straight to the ping command
+_use_system_ping = False
+
+
 def ip_address_alive(ip_address: str) -> tuple[bool, float | None]:
-    """Send a ping to the given IP address to see if it is alive"""
+    """Send a ping to the given IP address to see if it is alive.
+
+    Return whether it replied and the round trip time in milliseconds.
+    """
+
+    global _use_system_ping
 
     if ip_address is None or ip_address == "":
         return False, None
+
+    if _use_system_ping:
+        return _system_ping(ip_address)
 
     try:
         ping = icmplib.ping(ip_address, privileged=False, count=1)
         return ping.is_alive, ping.avg_rtt
     except icmplib.exceptions.SocketPermissionError:
-        if "wake_on_lan_privilege" not in hub_config.notifications:
-            print(
-                "Warning: to check the status of Wake on LAN devices, you must run Hub with administrator privileges.")
-            logging.info(f"Need administrator privilege to check Wake on LAN status")
-            hub_config.notifications["wake_on_lan_privilege"] = True
+        if sys.platform.startswith("linux"):
+            # Linux only lets programs ping without root if its net.ipv4.ping_group_range setting includes their
+            # user, and a container or service restriction can prevent it too. Its own ping command is always
+            # allowed, so use that instead.
+            _use_system_ping = True
+            return _system_ping(ip_address)
+        _warn_cannot_ping()
     except icmplib.exceptions.NameLookupError:
         pass
     except Exception as e:
         print(f"ip_address_alive: an unknown exception occurred when pinging {ip_address}", e)
 
     return False, None
+
+
+def _system_ping(ip_address: str) -> tuple[bool, float | None]:
+    """Ping the given address once with Linux's ping command, which is allowed to ping when Hub isn't."""
+
+    try:
+        result = subprocess.run(["ping", "-c", "1", "-W", "1", "--", ip_address],
+                                capture_output=True, text=True, timeout=3)
+    except FileNotFoundError:
+        _warn_cannot_ping()
+        return False, None
+    except subprocess.TimeoutExpired:
+        return False, None
+
+    if result.returncode == 0:
+        match = re.search(r"time[=<]([\d.]+) ?ms", result.stdout)
+        return True, float(match.group(1)) if match else None
+    if "not permitted" in result.stderr.lower() or "permission denied" in result.stderr.lower():
+        _warn_cannot_ping()
+    return False, None
+
+
+def _warn_cannot_ping():
+    """Warn, once, that Hub can't check whether Wake on LAN devices are on."""
+
+    if "wake_on_lan_privilege" in hub_config.notifications:
+        return
+    if sys.platform.startswith("linux"):
+        print("Warning: to check the status of Wake on LAN devices, Hub must be able to ping them. Install the "
+              "ping command, or allow pings with: sudo sysctl -w net.ipv4.ping_group_range=\"0 2147483647\"")
+    else:
+        print("Warning: to check the status of Wake on LAN devices, you must run Hub with administrator privileges.")
+    logging.info("Hub can't ping, so it can't check Wake on LAN status")
+    hub_config.notifications["wake_on_lan_privilege"] = True
