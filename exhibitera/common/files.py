@@ -510,6 +510,11 @@ def get_text(file_path: str) -> tuple[str, bool, str]:
     if not filename_safe(pathlib.Path(file_path).name):
         return "", False, "Invalid character in filename"
 
+    # Refuse paths that climb out of their folder, whichever slash they use. Names come from requests, and on Windows
+    # a backslash in one splits it into folders.
+    if ".." in pathlib.PurePosixPath(file_path).parts or ".." in pathlib.PureWindowsPath(file_path).parts:
+        return "", False, "Invalid path"
+
     result = ""
     success = True
     reason = ""

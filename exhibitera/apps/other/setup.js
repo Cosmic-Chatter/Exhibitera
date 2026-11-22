@@ -254,6 +254,19 @@ async function checkCORS (url, wizard = false) {
 // Set helperAddress for calls to exCommon.makeHelperRequest
 exCommon.config.helperAddress = window.location.origin
 
+// Apps in the preview use the Core API library to reach Exhibitera through the page showing them, as they do
+// through the Custom App page. Their settings come from the definition being edited, and the preview doesn't
+// report activity.
+window.exCommon = {
+  config: {
+    get definition () { return exSetup.config.workingDefinition },
+    get standalone () { return exCommon.config.standalone },
+    currentInteraction: false
+  },
+  makeHelperRequest: exCommon.makeHelperRequest,
+  makeServerRequest: exCommon.makeServerRequest
+}
+
 // Add event listeners
 // -------------------------------------------------------------
 

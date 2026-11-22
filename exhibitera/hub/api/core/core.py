@@ -89,6 +89,10 @@ async def submit_raw_text(name: str,
 async def get_raw_text(name: str):
     """Load the given file and return the raw text."""
 
+    # Only files in the data folder. On Windows, a backslash in the name would reach other folders.
+    if not ex_files.filename_safe(name):
+        return {"success": False, "reason": "unsafe_filename", "text": ""}
+
     file_path = ex_files.get_path(["data", ex_files.with_extension(name, 'txt')], user_file=True)
     result, success, reason = ex_files.get_text(file_path)
     return {"success": success, "reason": reason, "text": result}
