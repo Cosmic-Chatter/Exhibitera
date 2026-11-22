@@ -2122,23 +2122,26 @@ export async function authenticateUser () {
     // The code was expired or invalid, so fall back to the saved login
   }
 
-  let token = getAuthToken()
+  const token = getAuthToken()
 
   if (token === '') {
-    token = 'This will fail' // Token cannot be an empty string
     configureUser({}, false)
+    return
   }
 
-  return exCommon.makeServerRequest({
+  const response = await exCommon.makeServerRequest({
     method: 'POST',
     endpoint: '/user/login',
     params: { token }
-  })
-    .then((response) => {
-      if (response.success === true) {
-        configureUser(response.user)
-      }
-    })
+  }).catch(() => null)
+  if (response?.success === true) {
+    configureUser(response.user)
+  } else if (response != null) {
+    // Hub refused the saved login, such as when it has expired, so show that we're logged out. Otherwise the page
+    // would show both the login button and the setup tools.
+    clearAuthToken()
+    configureUser({}, false)
+  }
 }
 
 function configureUser (userDict, login = true) {
