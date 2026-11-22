@@ -1320,7 +1320,7 @@ export function createAdvancedFontPicker (details) {
   details.parent.innerHTML = `
     <label class="form-label"></label>
     <div class="dropdown w-100">
-      <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start d-flex justify-content-between align-items-center AFP-dropdown-toggle text-light" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+      <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start d-flex justify-content-between align-items-center AFP-dropdown-toggle text-body" type="button" data-bs-toggle="dropdown" aria-expanded="false">
         <span class="AFP-btn-text text-truncate pe-2" style="max-width: 90%;">Select Font</span>
       </button>
       <ul class="dropdown-menu AFP-menu shadow p-0"></ul>
@@ -1595,10 +1595,13 @@ async function populateAdvancedFontPicker (parentDiv, userFonts = null) {
 function _createAdvancedFontOption (menu, name, path, inputEl) {
   // Create a stylized dropdown item to represent the font and add it to the parent menu.
 
-  let safeName = name.replaceAll(' ', '').replaceAll('.', '').replaceAll('/', '').replaceAll('\\', '')
+  let safeName = name.replaceAll(' ', '').replaceAll('.', '').replaceAll('/', '').replaceAll('\\', '').replaceAll('"', '')
   if (safeName === 'Default') {
     safeName += inputEl.getAttribute('id').slice(10)
   }
+  // The name the preview font is loaded under. The prefix keeps it from being a CSS keyword, such as serif or
+  // monospace, which would show the browser's own font instead, so the font's axes couldn't change it.
+  safeName = 'exhibitera-font-' + safeName
 
   // Check if font already exists
   if (!(safeName in config.fontCache)) {
@@ -1624,7 +1627,7 @@ function _createAdvancedFontOption (menu, name, path, inputEl) {
   // Custom font preview
   const previewSpan = document.createElement('span')
   previewSpan.innerText = 'AaBbCc 123'
-  previewSpan.style.fontFamily = safeName
+  previewSpan.style.fontFamily = `"${safeName}"`
   previewSpan.style.fontSize = '1em'
   previewSpan.classList.add('text-muted', 'mt-1', 'w-100', 'text-truncate')
   btn.appendChild(previewSpan)
@@ -1724,7 +1727,7 @@ async function _onAdvancedFontPickerChange (el, saveChange = true) {
 
     const safeName = menuItem.dataset.safeName || ''
     if (btnText) btnText.innerText = menuItem.dataset.name || 'Select Font'
-    if (toggleBtn) toggleBtn.style.fontFamily = safeName
+    if (toggleBtn) toggleBtn.style.fontFamily = safeName ? `"${safeName}"` : ''
 
     // Apply axes to the dropdown button text for immediate UI feedback
     if (toggleBtn) {

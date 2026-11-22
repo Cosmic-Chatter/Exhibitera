@@ -72,3 +72,63 @@ def test_variable_font_has_axis_sliders():
 
     assert result["errors"] == []
     assert sorted(result["sliders"]) == ["wdth", "wght"]
+
+
+def test_font_buttons_use_the_themes_text_color():
+    # The button showing each picker's font used white text, which can't be read on a light page
+    result = page_scripts.run("""
+        globalThis.server = (method, url) => {
+          const path = decodeURIComponent(new URL(url).pathname)
+          if (path === '/internal/system/configuration') return { body: { app: {}, system: { standalone: true } } }
+          if (path === '/internal/files/availableContent') return { body: { success: true, content: [] } }
+          return { body: { version: {}, success: false } }
+        }
+        console.log = () => {}
+        console.warn = () => {}
+        const window = await browser.openPage('apps', 'infostation/setup.html')
+        await browser.wait(1000)
+        const buttons = [...window.document.querySelectorAll('.AFP-dropdown-toggle')]
+        const fixedColors = ['text-light', 'text-white', 'text-dark', 'text-black']
+        report({
+          buttons: buttons.length > 0,
+          fixed: buttons.filter((b) => fixedColors.some((c) => b.classList.contains(c))).length,
+          themed: buttons.every((b) => b.classList.contains('text-body'))
+        })
+    """, browser="page")
+
+    assert result == {"buttons": True, "fixed": 0, "themed": True}
+
+
+def test_font_previews_use_the_fonts_themselves():
+    # The previews loaded each font under its display name without spaces, so Serif and Monospace became the CSS
+    # keywords serif and monospace, and showed the browser's own fonts, which the weight and width sliders can't change
+    result = page_scripts.run("""
+        globalThis.server = (method, url) => {
+          const path = decodeURIComponent(new URL(url).pathname)
+          if (path === '/internal/system/configuration') return { body: { app: {}, system: { standalone: true } } }
+          if (path === '/internal/files/availableContent') return { body: { success: true, content: [] } }
+          return { body: { version: {}, success: false } }
+        }
+        console.log = () => {}
+        console.warn = () => {}
+        const window = await browser.openPage('apps', 'infostation/setup.html')
+        await browser.wait(1000)
+        const keywords = ['serif', 'sans-serif', 'monospace', 'cursive', 'fantasy', 'system-ui', 'math', 'emoji',
+                          'ui-serif', 'ui-sans-serif', 'ui-monospace', 'ui-rounded', 'fangsong']
+        const unquoted = (family) => family.replace(/^["']|["']$/g, '')
+        const picker = window.document.querySelector('.advanced-font-picker')
+        const previews = [...picker.querySelectorAll('.AFP-scroll-zone .dropdown-item')].map((item) => ({
+          font: item.dataset.value.split('/').pop(),
+          family: unquoted(item.querySelector('span:nth-child(2)').style.fontFamily)
+        }))
+        const selected = picker.querySelector('.dropdown-item.active')
+        report({
+          errors: browser.errors,
+          keywords: previews.filter((p) => keywords.includes(p.family.toLowerCase())).map((p) => p.font),
+          distinct: new Set(previews.map((p) => p.family)).size === previews.length,
+          button: unquoted(picker.querySelector('.AFP-dropdown-toggle').style.fontFamily) ===
+                  unquoted(selected.querySelector('span:nth-child(2)').style.fontFamily)
+        })
+    """, browser="page")
+
+    assert result == {"errors": [], "keywords": [], "distinct": True, "button": True}
