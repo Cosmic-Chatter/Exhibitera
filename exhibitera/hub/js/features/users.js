@@ -12,6 +12,8 @@ const editUserModal = new ModalController({
   defaultFields: [
     { id: 'editUserUsernameInput', value: '' },
     { id: 'editUserDisplayNameInput', value: '' },
+    { id: 'editUserPassword1Input', value: '' },
+    { id: 'editUserPassword2Input', value: '' },
     { id: 'editUserPermissionAnalytics', value: 'none' },
     { id: 'editUserPermissionExhibits', value: 'none' },
     { id: 'editUserPermissionMaintenance', value: 'none' },
