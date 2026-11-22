@@ -131,7 +131,7 @@ export async function editProgram (uuid = null) {
   }
 
   document.getElementById('editProgramPane').style.display = 'flex'
-  document.getElementById('saveProgramButton').style.display = 'block'
+  if (hubTools.checkPermission('programs', 'edit')) document.getElementById('saveProgramButton').style.display = 'block'
 }
 
 export async function updateProgram () {
@@ -685,6 +685,9 @@ function createArchivedProgramRow (program) {
   }
 
   row.appendChild(nameCol)
+
+  // Only an editor may restore a program
+  if (!hubTools.checkPermission('programs', 'edit')) return row
 
   const buttonCol = document.createElement('div')
   buttonCol.classList = 'col-4'

@@ -660,6 +660,8 @@ export function showManageFutureDateModal () {
   if (allowEdit) {
     document.getElementById('manageFutureDateModal').querySelector('.modal-title').textContent = 'Manage a future date'
     document.getElementById('manageFutureDateCreateScheduleButtonContainer').style.display = 'block'
+    // A viewer may have hidden it, if they used the dialog before an editor logged in
+    document.getElementById('manageFutureDateCalendarInput').style.display = ''
     document.getElementById('manageFutureDateEntryList').classList.add('mt-3')
   } else {
     document.getElementById('manageFutureDateModal').querySelector('.modal-title').textContent = 'View a future date'
@@ -728,7 +730,7 @@ export function populateFutureDateCalendarInput () {
   }
 
   if (date === '') {
-    document.getElementById('manageFutureDateCreateScheduleButtonContainer').style.display = 'block'
+    document.getElementById('manageFutureDateCreateScheduleButtonContainer').style.display = allowEdit ? 'block' : 'none'
     document.getElementById('manageFutureDateAddActionButton').style.display = 'none'
     document.getElementById('manageFutureDateDeleteScheduleButton').style.display = 'none'
     document.getElementById('manageFutureDateDownloadAsJSONDropdown').style.display = 'none'
@@ -741,7 +743,8 @@ export function populateFutureDateCalendarInput () {
   })
     .then((day) => {
       if (day.success === false) {
-        document.getElementById('manageFutureDateCreateScheduleButtonContainer').style.display = 'block'
+        // Only an editor may create a schedule for this date
+        document.getElementById('manageFutureDateCreateScheduleButtonContainer').style.display = allowEdit ? 'block' : 'none'
         document.getElementById('manageFutureDateAddActionButton').style.display = 'none'
         document.getElementById('manageFutureDateDeleteScheduleButton').style.display = 'none'
         document.getElementById('manageFutureDateDownloadAsJSONDropdown').style.display = 'none'
@@ -751,8 +754,9 @@ export function populateFutureDateCalendarInput () {
         if (allowEdit) {
           document.getElementById('manageFutureDateAddActionButton').style.display = 'block'
           document.getElementById('manageFutureDateDeleteScheduleButton').style.display = 'block'
-          document.getElementById('manageFutureDateDownloadAsJSONDropdown').style.display = 'block'
         }
+        // Viewers may download it too, as they can each day of the weekly schedule
+        document.getElementById('manageFutureDateDownloadAsJSONDropdown').style.display = 'block'
 
         // Find the appropriate button and highlight it
         document.getElementById('futureDateButton_' + date).classList.replace('btn-info', 'btn-success')

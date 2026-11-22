@@ -35,20 +35,18 @@ export function showExhibitComponentInfo (uuid, groupUUID) {
     return
   }
 
+  // Maintenance permission is none, view, or edit. Only an editor may change the status and notes.
   let maintenancePermission
-  if (hubUsers.checkUserPermission('maintenance', 'edit', groupUUID) === true) {
+  if (hubUsers.checkUserPermission('maintenance', 'edit') === true) {
     maintenancePermission = 'edit'
-    document.getElementById('componentInfoModalMaintenanceTabButton').style.display = 'block'
-  } else if (hubUsers.checkUserPermission('maintenance', 'edit_content', groupUUID) === true) {
-    maintenancePermission = 'edit_content'
-    document.getElementById('componentInfoModalMaintenanceTabButton').style.display = 'block'
-  } else if (hubUsers.checkUserPermission('maintenance', 'view', groupUUID) === true) {
+  } else if (hubUsers.checkUserPermission('maintenance', 'view') === true) {
     maintenancePermission = 'view'
-    document.getElementById('componentInfoModalMaintenanceTabButton').style.display = 'block'
   } else {
     maintenancePermission = 'none'
-    document.getElementById('componentInfoModalMaintenanceTabButton').style.display = 'none'
   }
+  document.getElementById('componentInfoModalMaintenanceTabButton').style.display = maintenancePermission === 'none' ? 'none' : 'block'
+  document.getElementById('componentInfoModalMaintenanceStatusSelector').disabled = maintenancePermission !== 'edit'
+  document.getElementById('componentInfoModalMaintenanceNote').disabled = maintenancePermission !== 'edit'
 
   const obj = hubTools.getExhibitComponent(uuid)
   const componentInfoModal = document.getElementById('componentInfoModal')
@@ -172,7 +170,7 @@ export function showExhibitComponentInfo (uuid, groupUUID) {
       configureComponentInfoModalForStatic(obj, permission, maintenancePermission)
     }
   } else if (obj.type === 'projector') {
-    configureComponentInfoModalForProjector(obj, permission, maintenancePermission)
+    configureComponentInfoModalForProjector(obj, permission)
 
     if (obj.status === hubConfig.STATUS.OFFLINE) {
       componentCannotConnect('projector')
@@ -240,7 +238,7 @@ function configureComponentInfoModalForExhibitComponent (obj, permission) {
     .then((result) => {
       document.getElementById('componentInfoModalDMXTabButton').style.display = 'block'
       if (result?.success === true) {
-        hubDMX.populateDMXScenesForInfoModal(result.scenes, obj)
+        hubDMX.populateDMXScenesForInfoModal(result.scenes, obj, permission)
         document.getElementById('componentInfoModalDMXControls').style.display = 'flex'
         document.getElementById('componentInfoModalDMXIntro').style.display = 'none'
       } else {
@@ -256,7 +254,7 @@ function configureComponentInfoModalForExhibitComponent (obj, permission) {
   document.getElementById('componentInfoModalViewScreenshot').style.display = 'block'
 }
 
-function configureComponentInfoModalForProjector (obj) {
+function configureComponentInfoModalForProjector (obj, permission) {
   // Set up the projector status pane of the componentInfoModal with the info
   // from the selected projector
 
@@ -319,7 +317,8 @@ function configureComponentInfoModalForProjector (obj) {
   }
 
   document.getElementById('componentInfoModalProjectorSettingsIPAddress').value = obj.ip_address
-  loadProjectorPassword(obj.uuid)
+  // Only full editors see the projector's settings, and Hub only gives them its password
+  if (permission === 'edit') loadProjectorPassword(obj.uuid)
   document.getElementById('componentInfoModalProjectorSettings').style.display = 'block'
   document.getElementById('componentInfoModalProjectorSettingsSaveButton').style.display = 'none'
   document.getElementById('componentInfoModalProjectorSettingsIDWarning').style.display = 'none'

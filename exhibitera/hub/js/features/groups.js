@@ -110,6 +110,17 @@ export function populateGroupsRow () {
     titleCol.classList = 'col-12'
     row.appendChild(titleCol)
 
+    if (!hubTools.checkPermission('settings', 'edit')) {
+      // A user who may only view settings sees the group without the menu to change it
+      const name = document.createElement('div')
+      name.classList = 'bg-primary text-white text-center px-2 py-1 ' + (group.description !== '' ? 'rounded-top' : 'rounded')
+      name.style.fontSize = '18px'
+      name.textContent = group.name
+      titleCol.appendChild(name)
+      appendGroupDescription(row, group)
+      continue
+    }
+
     const btnGroup = document.createElement('div')
     btnGroup.classList = 'btn-group w-100'
     titleCol.appendChild(btnGroup)
@@ -156,17 +167,24 @@ export function populateGroupsRow () {
       // Adjust the rounding on the name row to make room for the description
       name.style.borderBottomLeftRadius = '0'
       dropdownBtn.style.borderBottomRightRadius = '0'
-
-      const descCol = document.createElement('div')
-      descCol.classList = 'col-12'
-      row.appendChild(descCol)
-
-      const description = document.createElement('div')
-      description.classList = 'bg-secondary rounded-bottom text-white px-2 py-2'
-      description.textContent = group.description
-      descCol.appendChild(description)
     }
+    appendGroupDescription(row, group)
   }
+}
+
+function appendGroupDescription (row, group) {
+  // Add the group's description, if it has one, below its name.
+
+  if (group.description === '') return
+
+  const descCol = document.createElement('div')
+  descCol.classList = 'col-12'
+  row.appendChild(descCol)
+
+  const description = document.createElement('div')
+  description.classList = 'bg-secondary rounded-bottom text-white px-2 py-2'
+  description.textContent = group.description
+  descCol.appendChild(description)
 }
 
 export function deleteGroupFromModal () {
@@ -266,6 +284,9 @@ function populateArchivedGroupsList () {
             })
         }
       }
+
+      // Only an editor may restore a group
+      if (!hubTools.checkPermission('settings', 'edit')) continue
 
       const buttonCol = document.createElement('div')
       buttonCol.classList = 'col-12 col-md-3'

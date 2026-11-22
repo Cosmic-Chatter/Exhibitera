@@ -179,7 +179,8 @@ class BaseComponent {
     // A new component hasn't set its permissions, so offer what it does for any that aren't set
     const permissions = exUtilities.withPermissionDefaults(this?.permissions)
 
-    if (permission === 'edit') {
+    // Content editors may send commands too, as Hub allows them to
+    if (permission === 'edit' || permission === 'edit_content') {
       if (permissions.refresh === true) {
         numOptions += 1
         const refreshAction = document.createElement('a')
@@ -654,7 +655,8 @@ class ExhibitComponentGroup {
     mainButton.textContent = hubTools.getActiveGroupName(this.group)
     btnGroup.appendChild(mainButton)
 
-    if (permission === 'edit') {
+    // Content editors may send commands too, as Hub allows them to
+    if (permission === 'edit' || permission === 'edit_content') {
       const dropdownButton = document.createElement('button')
       dropdownButton.classList = 'btn btn-secondary dropdown-toggle dropdown-toggle-split'
       dropdownButton.setAttribute('type', 'button')

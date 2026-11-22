@@ -141,6 +141,18 @@ export function showEditUserModal (user = null) {
     configureEditUserModalForExistingUser(user)
   }
 
+  // A user who may only view users sees the account without being able to change it
+  const allowEdit = exTools.checkPermission('users', 'edit')
+  if (!allowEdit) editUserModal.setTitle('View user')
+  for (const el of document.querySelectorAll('#editUserModal .editUserField, #editUserModal .editUserGroupSelect')) {
+    el.disabled = !allowEdit
+  }
+  for (const id of ['editUserPassword1Input', 'editUserPassword2Input']) {
+    document.getElementById(id).style.display = allowEdit ? '' : 'none'
+    document.querySelector(`label[for="${id}"]`).style.display = allowEdit ? '' : 'none'
+  }
+  document.getElementById('editUserDeleteButton').style.display = allowEdit ? '' : 'none'
+
   document.getElementById('editUserSubmitButton').style.display = 'none'
   editUserModal.show()
 }
@@ -488,6 +500,8 @@ function configureUser (userDict, login = true) {
 
   if (userDict.permissions.components.edit.length > 0 || userDict.permissions.components.edit_content.length > 0 || userDict.permissions.components.view.length > 0) {
     document.getElementById('nav-components-tab').style.setProperty('display', 'block', 'important')
+    // Adding projectors, static components and Wake on LAN devices needs permission to edit settings
+    document.getElementById('showAddProjetorModalButton').closest('[class*="col-"]').style.display = exTools.checkPermission('settings', 'edit') ? '' : 'none'
     if (match === '') match = 'components'
   } else {
     document.getElementById('nav-components-tab').style.setProperty('display', 'none', 'important')
@@ -503,6 +517,7 @@ function configureUser (userDict, login = true) {
 
   if (exTools.checkPermission('exhibits', 'view')) {
     document.getElementById('nav-exhibits-tab').style.display = 'block'
+    configureExhibitPermissions()
     if (match === '') match = 'exhibits'
   } else {
     document.getElementById('nav-exhibits-tab').style.setProperty('display', 'none', 'important')
@@ -510,7 +525,8 @@ function configureUser (userDict, login = true) {
 
   if (exTools.checkPermission('programs', 'view')) {
     document.getElementById('nav-programs-tab').style.display = 'block'
-    if (match === '') match = 'exhibits'
+    configureProgramPermissions()
+    if (match === '') match = 'programs'
   } else {
     document.getElementById('nav-programs-tab').style.setProperty('display', 'none', 'important')
   }
@@ -525,6 +541,7 @@ function configureUser (userDict, login = true) {
 
   if (exTools.checkPermission('analytics', 'view')) {
     document.getElementById('nav-analytics-tab').style.display = 'block'
+    configureAnalyticsPermissions()
     if (match === '') match = 'analytics'
   } else {
     document.getElementById('nav-analytics-tab').style.setProperty('display', 'none', 'important')
@@ -532,6 +549,7 @@ function configureUser (userDict, login = true) {
 
   if (exTools.checkPermission('users', 'view')) {
     document.getElementById('nav-users-tab').style.display = 'block'
+    configureUserPermissions()
     if (match === '') match = 'users'
   } else {
     document.getElementById('nav-users-tab').style.setProperty('display', 'none', 'important')
@@ -539,6 +557,7 @@ function configureUser (userDict, login = true) {
 
   if (exTools.checkPermission('settings', 'view')) {
     document.getElementById('nav-settings-tab').style.display = 'block'
+    configureSettingsPermissions()
     if (match === '') match = 'settings'
   } else {
     document.getElementById('nav-settings-tab').style.setProperty('display', 'none', 'important')
@@ -649,9 +668,11 @@ function configureSchedulePermissions () {
   if (exTools.checkPermission('schedule', 'edit')) {
     // User may edit
     document.getElementById('showScheduleFromFileModalButton').parentElement.style.display = 'block'
+    document.getElementById('manageFutureDateButton').textContent = 'Manage future date'
   } else {
     // User may view
     document.getElementById('showScheduleFromFileModalButton').parentElement.style.display = 'none'
+    document.getElementById('manageFutureDateButton').textContent = 'View future date'
   }
 }
 
@@ -666,6 +687,65 @@ function configureMaintenancePermissions () {
     // User may view only
     createIssueButtonCol.style.setProperty('display', 'none', 'important')
   }
+}
+
+function configureUserPermissions () {
+  // Configure the users tab to respect the level of user permission.
+
+  const allowEdit = exTools.checkPermission('users', 'edit')
+  document.getElementById('showEditUserModalButton').parentElement.style.display = allowEdit ? '' : 'none'
+}
+
+function configureAnalyticsPermissions () {
+  // Configure the analytics tab to respect the level of user permission. A viewer may still launch trackers and
+  // download data, but not change templates or delete data.
+
+  const allowEdit = exTools.checkPermission('analytics', 'edit')
+  for (const id of ['showEditTrackerTemplateButton', 'createTrackerTemplateButton', 'deleteTrackerTemplateButton', 'showDeleteTrackerDataModalButton']) {
+    document.getElementById(id).closest('[class*="col-"]').style.display = allowEdit ? '' : 'none'
+  }
+}
+
+function configureSettingsPermissions () {
+  // Configure the settings tab to respect the level of user permission.
+
+  const allowEdit = exTools.checkPermission('settings', 'edit')
+  document.getElementById('settingsAddGroupButton').style.display = allowEdit ? '' : 'none'
+  for (const el of document.querySelectorAll('.hubSettingsInputField')) {
+    el.disabled = !allowEdit
+  }
+}
+
+function configureExhibitPermissions () {
+  // Configure the exhibitions tab to respect the level of user permission.
+
+  const allowEdit = exTools.checkPermission('exhibits', 'edit')
+
+  for (const id of ['setExhibitButton', 'createExhibitButton', 'exhibitDeleteSelectorButton', 'editExhibitShowActionModalButton', 'editExhibitSaveButton']) {
+    // Hide the whole column, so the remaining buttons close up
+    document.getElementById(id).closest('[class*="col-"]').style.display = allowEdit ? '' : 'none'
+  }
+  document.getElementById('editExhibitButton').textContent = allowEdit ? 'Edit' : 'View'
+  document.getElementById('editExhibitName').readOnly = !allowEdit
+  document.getElementById('exhibitModificationsModalApplyButton').style.display = allowEdit ? '' : 'none'
+}
+
+function configureProgramPermissions () {
+  // Configure the programs tab to respect the level of user permission.
+
+  const allowEdit = exTools.checkPermission('programs', 'edit')
+
+  for (const id of ['createProgramButton', 'deleteSelectedProgramButton']) {
+    document.getElementById(id).closest('[class*="col-"]').style.display = allowEdit ? '' : 'none'
+  }
+  document.getElementById('editProgramButton').textContent = allowEdit ? 'Edit' : 'View'
+  for (const id of ['editProgramNameField', 'editProgramDescriptionField', 'editProgramLocationField', 'editProgramDurationField', 'editProgramCapacityField']) {
+    document.getElementById(id).disabled = !allowEdit
+  }
+  for (const id of ['editProgramThumbnailButton', 'editProgramTrailerButton']) {
+    document.getElementById(id).closest('label').style.display = allowEdit ? '' : 'none'
+  }
+  document.getElementById('editProgramAddActionButton').style.display = allowEdit ? '' : 'none'
 }
 
 export function showPasswordChangeModal () {

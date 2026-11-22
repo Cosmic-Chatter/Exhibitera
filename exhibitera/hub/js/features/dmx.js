@@ -1,14 +1,19 @@
-export function populateDMXScenesForInfoModal (scenes, component) {
+export function populateDMXScenesForInfoModal (scenes, component, permission = 'view') {
   // Take an array of scenes and build an HTML representation for each scene.
-  // `component` is the ExhibitComponent that controls the scenes.
+  // `component` is the ExhibitComponent that controls the scenes. A viewer sees the scenes but can't set them, as
+  // with definitions. Scenes are set on the component itself, so Hub can't refuse them.
+
+  const allowSet = permission === 'edit' || permission === 'edit_content'
 
   const container = document.getElementById('componentInfoModalDMXSceneList')
   container.innerHTML = ''
 
   for (const scene of scenes) {
     const col = document.createElement('div')
-    col.classList = 'col-6 col-sm-4 mt-2 handCursor dmx-entry'
+    col.classList = 'col-6 col-sm-4 mt-2 dmx-entry'
+    if (allowSet) col.classList.add('handCursor')
     col.addEventListener('click', (event) => {
+      if (!allowSet) return
       component.makeRequest({
         method: 'GET',
         endpoint: '/DMX/scene/' + scene.uuid + '/set'

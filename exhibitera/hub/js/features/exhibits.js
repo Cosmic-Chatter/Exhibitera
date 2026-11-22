@@ -330,7 +330,9 @@ async function createExhibitionModificationHTML (mod, exhib) {
     col.querySelector('.mod-div').appendChild(exUtilities.getDefinitionThumbnail(component.getHelperURL(), mod.definition, component.getHelperAPI()))
     col.querySelector('.exhib-div').appendChild(exUtilities.getDefinitionThumbnail(component.getHelperURL(), exhibDef?.uuid ?? 'error', component.getHelperAPI()))
   }
-  col.querySelector('.btn-close').addEventListener('click', (ev) => {
+  // Only an editor may undo a modification
+  if (!hubTools.checkPermission('exhibits', 'edit')) col.querySelector('.btn-close').remove()
+  col.querySelector('.btn-close')?.addEventListener('click', (ev) => {
     const toRemove = JSON.parse(modal.dataset.toRemove)
     toRemove.push(mod.uuid)
     modal.dataset.toRemove = JSON.stringify(toRemove)
@@ -465,13 +467,16 @@ async function editExhibitCreateComponentHTML (component) {
   nameDiv.textContent = componentObj?.id ?? component.id
   header.appendChild(nameDiv)
 
-  const deleteButton = document.createElement('button')
-  deleteButton.classList = 'btn btn-danger btn-sm py-0'
-  deleteButton.innerHTML = '✕'
-  deleteButton.addEventListener('click', () => {
-    deleteButton.closest('.manageExhibit-component-col').remove()
-  })
-  header.appendChild(deleteButton)
+  const allowEdit = hubTools.checkPermission('exhibits', 'edit')
+  if (allowEdit) {
+    const deleteButton = document.createElement('button')
+    deleteButton.classList = 'btn btn-danger btn-sm py-0'
+    deleteButton.innerHTML = '✕'
+    deleteButton.addEventListener('click', () => {
+      deleteButton.closest('.manageExhibit-component-col').remove()
+    })
+    header.appendChild(deleteButton)
+  }
 
   const body = document.createElement('div')
   body.classList = 'col-12 bg-secondary rounded-bottom py-2'
@@ -523,6 +528,7 @@ async function editExhibitCreateComponentHTML (component) {
   definitionSelect.setAttribute('data-component-uuid', component.uuid)
   definitionSelect.setAttribute('data-component-id', component.id)
   definitionSelect.setAttribute('data-initial-definition', component.definition)
+  definitionSelect.disabled = !allowEdit
   definitionSelectCol.appendChild(definitionSelect)
 
   const badComponent = function (message = 'Component offline') {
